@@ -46,7 +46,7 @@ async function existingProject(configPath: string) {
     deps.pluginDistributionReader
   );
   const add = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: distribution,
@@ -66,7 +66,7 @@ async function existingProject(configPath: string) {
   const update = new UpdatePlugin(
     deps.manifestRepo,
     distribution,
-    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps(), registeredTools()),
+    new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
     registeredTools(),
     deps.installRuntimeConfigUseCase
   );

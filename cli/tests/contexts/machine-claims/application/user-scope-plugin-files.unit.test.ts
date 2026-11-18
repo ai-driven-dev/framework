@@ -6,7 +6,6 @@ import {
   withoutMissingFiles,
 } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
@@ -16,7 +15,7 @@ import { MachinePlugin } from "../testing/machine-plugin.js";
 const HOME = "/home/u";
 const BOUNDARY = join(HOME, ".cursor", "plugins", "local");
 const CONTENT = "owned bytes";
-const HASH = new HasherAdapter().hash(CONTENT).value;
+const HASH = FileHash.of(CONTENT).value;
 
 function plugin(files: Record<string, string>): MachinePlugin {
   return new MachinePlugin({ name: "aidd-test", files });

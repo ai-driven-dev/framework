@@ -29,7 +29,6 @@ export function hostBinaryAvailableIn(
 export function wireDoctor(base: Base, inst: Installation) {
   const {
     fs,
-    hasher,
     tokenProvider,
     currentVersionProvider,
     manifestRepo,
@@ -60,7 +59,7 @@ export function wireDoctor(base: Base, inst: Installation) {
     new LoadManifestForDoctor(loadManifest),
     {
       tracked: new CheckTrackedFiles(loadManifest, fs),
-      merge: new CheckMergeFiles(loadManifest, fs, hasher),
+      merge: new CheckMergeFiles(loadManifest, fs),
       references: new CheckFileReferences(loadManifest, fs),
       layout: new CheckProjectLayout(loadManifest, fs, tools),
       plugin: new CheckPluginDrift(loadManifest, detectPluginDriftUseCase),

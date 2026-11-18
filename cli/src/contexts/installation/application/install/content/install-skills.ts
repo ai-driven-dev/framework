@@ -1,5 +1,4 @@
 import type { InstallationFile } from "../../../../../shared/domain/file.js";
-import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type { SkillsSectionAnswers } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../domain/canon.js";
 import type { ContentSections } from "../../../ports/tool-sections.js";
@@ -17,11 +16,9 @@ interface InstallSkillsCommand {
 }
 
 export class InstallSkills {
-  private readonly inner: InstallContentSection<SkillsSectionAnswers>;
-
-  constructor(hasher: Hasher) {
-    this.inner = new InstallContentSection(hasher, skillsDescriptor);
-  }
+  private readonly inner: InstallContentSection<SkillsSectionAnswers> = new InstallContentSection(
+    skillsDescriptor
+  );
 
   execute(options: InstallSkillsCommand): InstallationFile[] {
     return this.inner.execute(options);

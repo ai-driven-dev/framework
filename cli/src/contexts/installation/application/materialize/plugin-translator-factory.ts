@@ -1,6 +1,5 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { PluginAnswers } from "../../../tools/contract/tool-profile.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { BuiltTreeMaterializationTranslator } from "./built-tree-materialization-translator.js";
@@ -9,7 +8,6 @@ import type { PluginTranslator } from "./plugin-translator.js";
 
 export interface TranslatorDeps {
   fs: FileWriter & FileReader;
-  hasher: Hasher;
   built: BuiltMaterializationDeps;
 }
 
@@ -21,7 +19,7 @@ export interface TranslatorDeps {
  */
 export function resolveTranslator(plugins: PluginAnswers, deps: TranslatorDeps): PluginTranslator {
   if (plugins.materializesFromBuiltTree()) {
-    return new BuiltTreeMaterializationTranslator(deps.fs, deps.hasher, deps.built);
+    return new BuiltTreeMaterializationTranslator(deps.fs, deps.built);
   }
   return new ModeAMarketplaceTranslator();
 }

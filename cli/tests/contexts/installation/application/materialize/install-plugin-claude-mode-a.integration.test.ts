@@ -4,7 +4,6 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -23,14 +22,12 @@ function syncWithProvenFreshHost(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository,
   registry: FakeMarketplaceRegistry,
-  hasher: HasherAdapter,
   activator: FakeHostActions
 ): SyncSettings {
   return marketplaceSync({
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
-    hasher,
     logger: new CapturingLogger(),
     activators: new Map([[TOOL.claude, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -80,7 +77,6 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("leaves the registration to claude and keeps only what it owns", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new HasherAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
@@ -103,7 +99,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       scope: "project",
     });
 
-    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
+    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, activator);
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const shared = JSON.parse(
@@ -127,7 +123,6 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("takes a registration left in the shared file by an older install out of it", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new HasherAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
@@ -150,7 +145,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       scope: "project",
     });
 
-    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
+    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, activator);
 
     // What a project installed before the split looks like: the registration sitting in
     // the committed file, naming a path that belongs to whoever ran the install.

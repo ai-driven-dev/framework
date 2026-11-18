@@ -30,11 +30,10 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 function makeAdapter(): PluginFetcherAdapter {
-  const fs = new InMemoryFileAdapter({}, new HasherAdapter());
+  const fs = new InMemoryFileAdapter({});
   return new PluginFetcherAdapter(fs);
 }
 

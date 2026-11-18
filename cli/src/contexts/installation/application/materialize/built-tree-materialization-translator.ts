@@ -1,12 +1,11 @@
 import { join, posix } from "node:path";
-import { InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
 import { posixRelative } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 /**
  * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
@@ -35,7 +34,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
 
   constructor(
     private readonly fs: FileWriter & FileReader,
-    private readonly hasher: Hasher,
     private readonly built: BuiltMaterializationDeps
   ) {
     this.projectHooks = new ProjectHooksMaterializer(fs);
@@ -85,7 +83,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         ? await this.readFlatFiles(builtDir, dist, tool, deliversHooksToProject)
         : await readBuiltUserPluginFiles(
             this.fs,
-            this.hasher,
             builtDir,
             dist.manifest.name,
             this.built.platform
@@ -141,7 +138,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     let written = 0;
     for (const f of files) {
       const outputPath = join(baseDir, f.relativePath);
-      if (await isPluginFileAtDesiredState(this.fs, this.hasher, outputPath, f.hash.value)) {
+      if (await isPluginFileAtDesiredState(this.fs, outputPath, f.hash.value)) {
         continue;
       }
       await this.fs.writeFile(outputPath, f.content);
@@ -171,9 +168,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       const rel = posixRelative(builtDir, abs, this.built.platform);
       if (!this.belongsToPlugin(rel, name, tool) && !hookPaths.has(rel)) continue;
       const content = await this.fs.readFile(abs);
-      files.push(
-        new InstallationFile({ relativePath: rel, content, hash: this.hasher.hash(content) })
-      );
+      files.push(new InstallationFile({ relativePath: rel, content, hash: FileHash.of(content) }));
     }
     return files;
   }
@@ -190,7 +185,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   private fallback(): ModeBFlatMaterializationTranslator {
     return new ModeBFlatMaterializationTranslator(
       this.fs,
-      this.hasher,
       this.built.homedir,
       this.built.translate
     );
@@ -199,7 +193,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
 
 export async function readBuiltUserPluginFiles(
   fs: FileReader,
-  hasher: Hasher,
   builtDir: string,
   name: string,
   platform: string
@@ -213,7 +206,7 @@ export async function readBuiltUserPluginFiles(
       return new InstallationFile({
         relativePath: posix.join(name, rel),
         content,
-        hash: hasher.hash(content),
+        hash: FileHash.of(content),
       });
     })
   );

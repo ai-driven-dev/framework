@@ -59,7 +59,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const pluginAdd = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(

@@ -4,7 +4,6 @@ import { InstallConfig } from "../../../../../src/contexts/installation/applicat
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { linuxPlatform, win32Platform } from "../../../../helpers/install-harness.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
@@ -25,9 +24,8 @@ function consumingSettings() {
 }
 
 function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter({}, hasher);
-  return { useCase: new InstallConfig(fs, hasher), fs };
+  const fs = new InMemoryFileAdapter({});
+  return { useCase: new InstallConfig(fs), fs };
 }
 
 function emptyDescriptor(): FrameworkDescriptor {

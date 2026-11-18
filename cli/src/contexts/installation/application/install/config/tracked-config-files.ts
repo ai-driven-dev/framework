@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { type FileHash, InstallationFile } from "../../../../../shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../shared/domain/file.js";
 import {
   extractMergeEntries,
   type MergeFileEntry,
@@ -7,7 +7,6 @@ import {
 } from "../../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../../shared/ports/logger.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import type { FileMerger } from "../../../ports/file-merger.js";
@@ -21,13 +20,12 @@ export type BeforeWriteGate = (relativePath: string) => Promise<"write" | "skip"
 export class TrackedConfigFiles {
   constructor(
     private readonly fs: FileReader & FileWriter & FileMerger,
-    private readonly hasher: Hasher,
     private readonly logger: Logger
   ) {}
 
   /** The hash the manifest records for `content`. */
   hashOf(content: string): FileHash {
-    return this.hasher.hash(content);
+    return FileHash.of(content);
   }
 
   /** A file whose hash is that of `content`. */
@@ -100,7 +98,7 @@ export class TrackedConfigFiles {
     const entries: MergeFileEntry[] = [];
     for (const file of files) {
       const diskContent = await this.fs.readFile(join(projectRoot, file.relativePath));
-      const hashes = extractMergeEntries(diskContent, null, this.hasher);
+      const hashes = extractMergeEntries(diskContent, null);
       entries.push({ relativePath: file.relativePath, sectionKey: null, entries: hashes });
     }
     return entries;

@@ -3,7 +3,6 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -39,7 +38,6 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
 export class ApplyPluginFiles {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly hasher: Hasher,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
     private readonly builtDeps: BuiltMaterializationDeps
@@ -67,7 +65,6 @@ export class ApplyPluginFiles {
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
     return resolvePluginTranslator(tool, {
       fs: this.fs,
-      hasher: this.hasher,
       built: this.builtDeps,
     });
   }
@@ -101,14 +98,13 @@ export class ApplyPluginFiles {
   ): Promise<number> {
     const { toolId, plugin, tool, projectRoot, manifest, fileFilter } = options;
     const files = hashOutputFiles(
-      this.builtDeps.translate.execute({ distribution: dist, tool }).files,
-      this.hasher
+      this.builtDeps.translate.execute({ distribution: dist, tool }).files
     );
     let restored = 0;
     for (const f of files) {
       if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;
       const outputPath = join(projectRoot, f.relativePath);
-      if (!(await isPluginFileAtDesiredState(this.fs, this.hasher, outputPath, f.hash.value))) {
+      if (!(await isPluginFileAtDesiredState(this.fs, outputPath, f.hash.value))) {
         await this.fs.writeFile(outputPath, f.content);
         restored++;
       }

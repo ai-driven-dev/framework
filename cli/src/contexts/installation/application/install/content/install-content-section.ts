@@ -1,6 +1,5 @@
-import { GITKEEP_FILE, InstallationFile } from "../../../../../shared/domain/file.js";
+import { FileHash, GITKEEP_FILE, InstallationFile } from "../../../../../shared/domain/file.js";
 import { parseFrontmatter } from "../../../../../shared/domain/markdown.js";
-import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type { ContentSection } from "../../../domain/canon.js";
 import type { ContentSections } from "../../../ports/tool-sections.js";
 
@@ -33,10 +32,7 @@ export interface InstallContentSectionCommand {
 }
 
 export class InstallContentSection<Cap extends ContentSectionCapability> {
-  constructor(
-    private readonly hasher: Hasher,
-    private readonly descriptor: ContentSectionDescriptor<Cap>
-  ) {}
+  constructor(private readonly descriptor: ContentSectionDescriptor<Cap>) {}
 
   execute(options: InstallContentSectionCommand): InstallationFile[] {
     const { toolConfig, section, contentFiles } = options;
@@ -70,7 +66,7 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
       return new InstallationFile({
         relativePath: outputPath,
         content: "",
-        hash: this.hasher.hash(""),
+        hash: FileHash.of(""),
         frameworkPath: filePath,
       });
     }
@@ -96,7 +92,7 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
     return new InstallationFile({
       relativePath: outputPath,
       content: outputContent,
-      hash: this.hasher.hash(outputContent),
+      hash: FileHash.of(outputContent),
       frameworkPath: filePath,
     });
   }

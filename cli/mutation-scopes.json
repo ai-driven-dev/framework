@@ -114,7 +114,6 @@
         "src/shared/infrastructure/atomic-write.ts",
         "src/shared/infrastructure/file-adapter.ts",
         "src/shared/infrastructure/user-config-dir.ts",
-        "src/shared/infrastructure/hasher-adapter.ts",
         "src/shared/infrastructure/asset-loader.ts",
         "src/contexts/installation/infrastructure/platform-adapter.ts",
         "src/contexts/telemetry/infrastructure/git/git-environment.ts",
@@ -129,7 +128,6 @@
         "!src/shared/infrastructure/atomic-write.ts",
         "!src/shared/infrastructure/home-dir.ts",
         "!src/shared/infrastructure/file-adapter.ts",
-        "!src/shared/infrastructure/hasher-adapter.ts",
         "!src/shared/infrastructure/asset-loader.ts",
         "!src/shared/infrastructure/user-config-dir.ts"
       ],

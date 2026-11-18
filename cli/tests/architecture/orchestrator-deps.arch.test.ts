@@ -27,7 +27,7 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // generator. It resolves by registering a generator per section type, not by dropping one.
   {
     path: "src/contexts/installation/application/restore/generate-tool-distribution.ts",
-    dependencies: 9,
+    dependencies: 8,
   },
 ];
 

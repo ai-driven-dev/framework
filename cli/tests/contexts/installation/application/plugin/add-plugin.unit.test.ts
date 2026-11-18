@@ -50,7 +50,7 @@ function buildAddUseCase(
   logger: Logger = deps.logger
 ): AddPlugin {
   return new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(
@@ -151,7 +151,7 @@ describe("AddPlugin", () => {
       });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new AddPlugin(
-        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(
@@ -193,7 +193,7 @@ describe("AddPlugin", () => {
         scope: "project",
       });
       const useCase = new AddPlugin(
-        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(
@@ -232,7 +232,7 @@ describe("AddPlugin", () => {
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new AddPlugin(
-        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(
@@ -288,7 +288,7 @@ describe("AddPlugin", () => {
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -329,7 +329,7 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -369,7 +369,7 @@ describe("AddPlugin", () => {
         // Cursor copies the per-target BUILT tree verbatim; seed it.
         deps.fs.setFile("/built/cursor/plugins/sample-plugin/skills/demo/SKILL.md", "# Demo skill");
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -535,7 +535,7 @@ describe("AddPlugin", () => {
         const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
         const registryB = await makeGithubRegistry("/B");
         await new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: logger },
+          { fs: deps.fs, logger: logger },
           { project: projectBRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -575,7 +575,7 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -610,7 +610,7 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -647,7 +647,7 @@ describe("AddPlugin", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -681,7 +681,7 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -718,7 +718,7 @@ describe("AddPlugin", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -768,7 +768,7 @@ describe("AddPlugin", () => {
         });
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
             distributionLoader: new PluginDistributionLoader(
@@ -819,7 +819,7 @@ describe("AddPlugin", () => {
         scope: "project",
       });
       const useCase = new AddPlugin(
-        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),

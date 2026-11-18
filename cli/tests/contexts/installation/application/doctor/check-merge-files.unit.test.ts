@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { CheckMergeFiles } from "../../../../../src/contexts/installation/application/doctor/check-merge-files.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -11,7 +11,6 @@ import { TOOL } from "../../../../shared/testing/registered-tools.js";
 const PROJECT_ROOT = "/project";
 const MERGE_PATH = ".vscode/settings.json";
 const KEY = "editor.formatOnSave";
-const hasher = new HasherAdapter();
 
 const MISSING_FILE = {
   severity: "error",
@@ -35,7 +34,7 @@ function manifestMerging(toolId: ToolId): Manifest {
     toolId,
     "1.0.0",
     [],
-    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: hasher.hash("true") } }]
+    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } }]
   );
   return manifest;
 }
@@ -46,11 +45,10 @@ async function issuesFor(
   toolId: ToolId = TOOL.vscode
 ) {
   const fs = new InMemoryFileAdapter(
-    onDisk === null ? {} : { [`${PROJECT_ROOT}/${MERGE_PATH}`]: onDisk },
-    hasher
+    onDisk === null ? {} : { [`${PROJECT_ROOT}/${MERGE_PATH}`]: onDisk }
   );
   const load = new LoadManifest(new InMemoryManifestRepository(manifestMerging(toolId)));
-  return new CheckMergeFiles(load, fs, hasher).execute({
+  return new CheckMergeFiles(load, fs).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds,
   });

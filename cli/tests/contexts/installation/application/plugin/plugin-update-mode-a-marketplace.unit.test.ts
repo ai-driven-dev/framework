@@ -49,7 +49,6 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
     new ReplacePluginFiles(
       deps.fs,
-      deps.hasher,
       {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
@@ -74,7 +73,7 @@ async function installStaleGithubPlugin(
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
 
   await new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(

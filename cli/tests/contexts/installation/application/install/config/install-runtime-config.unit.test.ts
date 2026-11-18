@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { InstallRuntimeConfig } from "../../../../../../src/contexts/installation/application/install/config/install-runtime-config.js";
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../../src/shared/domain/file.js";
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
 import {
   buildUnitDeps,
@@ -20,7 +20,7 @@ function buildUseCase(
   assets: AssetProvider = deps.assetProvider
 ) {
   return new InstallRuntimeConfig(
-    new TrackedConfigFiles(deps.fs, deps.hasher, deps.logger),
+    new TrackedConfigFiles(deps.fs, deps.logger),
     deps.fs,
     assets,
     deps.runPostInstallPipeline,
@@ -49,14 +49,14 @@ describe("InstallRuntimeConfig", () => {
       new InstallationFile({
         relativePath: ".claude/settings.json",
         content,
-        hash: deps.hasher.hash(content),
+        hash: FileHash.of(content),
       }),
     ]);
     expect(result.fileCount).toBe(1);
     expect(result.skipped).toBe(false);
     expect(result.warnings).toStrictEqual([]);
     expect(manifest.getToolFiles(TOOL.claude)).toStrictEqual([
-      { relativePath: ".claude/settings.json", hash: deps.hasher.hash(content) },
+      { relativePath: ".claude/settings.json", hash: FileHash.of(content) },
     ]);
   });
 
@@ -199,7 +199,7 @@ describe("InstallRuntimeConfig", () => {
     config.mcp = { context: { type: "local", command: "node", args: ["server.js"] } };
     const merged = JSON.stringify(config, null, 2);
     await deps.fs.writeFile(configPath, merged);
-    manifest.updateTrackedFileHash(toolId, path, deps.hasher.hash(merged));
+    manifest.updateTrackedFileHash(toolId, path, FileHash.of(merged));
 
     await buildUseCase(deps).execute({
       toolId,

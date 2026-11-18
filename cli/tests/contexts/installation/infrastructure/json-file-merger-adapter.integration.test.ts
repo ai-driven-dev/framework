@@ -4,12 +4,11 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { JsonFileMergerAdapter } from "../../../../src/contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 
 it("merges the incoming keys into the file on disk, the framework's value winning a conflict", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aidd-merger-"));
   try {
-    const fs = new JsonFileMergerAdapter(new FileAdapter(new HasherAdapter()));
+    const fs = new JsonFileMergerAdapter(new FileAdapter());
     const path = join(dir, "settings.json");
     await fs.writeFile(path, JSON.stringify({ kept: "user", shared: "user" }));
 

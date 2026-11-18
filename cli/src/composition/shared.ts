@@ -16,7 +16,6 @@ import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../shared/infrastructure/hasher-adapter.js";
 import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import { wireAuth } from "./auth.js";
@@ -32,9 +31,8 @@ export function wireBase(
   output: CLIOutput | undefined,
   tools: ToolCatalog
 ) {
-  const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
-  const fs = new JsonFileMergerAdapter(new FileAdapter(hasher, logger));
+  const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
     pluginManifestProbes(tools)
@@ -80,7 +78,7 @@ export function wireBase(
     listMarketplaces,
     refreshMarketplace,
     registerFrameworkMarketplace,
-  } = wireDistribution({ fs, hasher, http, tokenProvider, logger, projectRoot });
+  } = wireDistribution({ fs, http, tokenProvider, logger, projectRoot });
   const withdrawFromHost = new WithdrawFromHost(fs, logger, {
     activators: nativePluginActivators,
     pluginRegistries: hostPluginRegistries,
@@ -91,7 +89,6 @@ export function wireBase(
     tools,
     projectRoot,
     fs,
-    hasher,
     logger,
     http,
     environment,

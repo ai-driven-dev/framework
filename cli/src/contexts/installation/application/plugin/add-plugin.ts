@@ -13,7 +13,6 @@ import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
@@ -63,7 +62,6 @@ export interface PluginAdd {
 /** What the plugin writes through and reports with. */
 export interface AddPluginHost {
   fs: FileWriter & FileReader;
-  hasher: Hasher;
   logger: Logger;
 }
 
@@ -83,7 +81,6 @@ export interface AddPluginSources {
 
 export class AddPlugin implements PluginAdd {
   private readonly fs: FileWriter & FileReader;
-  private readonly hasher: Hasher;
   private readonly logger: Logger;
   private readonly manifestRepo: ManifestRepository;
   private readonly userManifestRepo: ManifestRepository & Lock;
@@ -99,7 +96,7 @@ export class AddPlugin implements PluginAdd {
     private readonly tools: ToolCatalog,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {
-    ({ fs: this.fs, hasher: this.hasher, logger: this.logger } = host);
+    ({ fs: this.fs, logger: this.logger } = host);
     this.manifestRepo = manifests.project;
     this.userManifestRepo = manifests.user;
     ({
@@ -470,7 +467,7 @@ export class AddPlugin implements PluginAdd {
       return { ...result, notices: [] };
     }
     const output = this.translate.execute({ distribution: dist, tool });
-    const translated = { ...output, files: hashOutputFiles(output.files, this.hasher) };
+    const translated = { ...output, files: hashOutputFiles(output.files) };
     return this.materializeNativePlugin(
       dist,
       tool,
@@ -546,7 +543,6 @@ export class AddPlugin implements PluginAdd {
   private resolveAdapter(tool: ToolProfile): PluginTranslator | null {
     return resolvePluginTranslator(tool, {
       fs: this.fs,
-      hasher: this.hasher,
       built: {
         homedir: nodeHomedir,
         ensureBuilt: this.ensureBuilt,

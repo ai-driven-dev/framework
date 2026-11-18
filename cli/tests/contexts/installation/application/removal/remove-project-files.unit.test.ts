@@ -4,7 +4,7 @@ import { RemoveProjectFiles } from "../../../../../src/contexts/installation/app
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -38,9 +38,7 @@ describe("RemoveProjectFiles.remove", () => {
     manifest.addTool(TOOL.claude, "1.0.0", []);
     manifest.addPlugin(
       TOOL.claude,
-      localPlugin("aidd-context").withFiles(
-        new Map([["skills/x.md", new HasherAdapter().hash("x").value]])
-      )
+      localPlugin("aidd-context").withFiles(new Map([["skills/x.md", FileHash.of("x").value]]))
     );
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, "skills", "x.md"), "x");
@@ -73,7 +71,7 @@ describe("RemoveProjectFiles.remove", () => {
       TOOL.cursor,
       InstalledPlugin.withProjectHooks(localPlugin("aidd-context"), {
         entries: [],
-        scripts: new Map([[script, new HasherAdapter().hash("// installed").value]]),
+        scripts: new Map([[script, FileHash.of("// installed").value]]),
       })
     );
     const fs = new InMemoryFileAdapter();

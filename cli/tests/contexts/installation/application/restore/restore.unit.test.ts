@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
 import {
@@ -36,7 +36,7 @@ async function installPlugin(
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const pluginReader = deps.pluginDistributionReader;
   await new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
@@ -623,7 +623,7 @@ describe("restore — the file selection", () => {
     const manifest = await loadedManifest(deps);
     const ghosts = [RUN, OTHER].map(
       (relativePath) =>
-        new InstallationFile({ relativePath, content: "", hash: deps.hasher.hash(relativePath) })
+        new InstallationFile({ relativePath, content: "", hash: FileHash.of(relativePath) })
     );
     manifest.addTool(TOOL.claude, "test", ghosts, [...manifest.getMergeFiles(TOOL.claude)]);
     return deps;

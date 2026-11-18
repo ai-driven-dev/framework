@@ -6,7 +6,6 @@ import { ResolveMarketplace } from "../../../../src/contexts/distribution/applic
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../../src/shared/domain/source.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
@@ -18,8 +17,7 @@ const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-
 const PROJECT_ROOT = "/test-project";
 
 async function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter({}, hasher);
+  const fs = new InMemoryFileAdapter({});
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const pluginFetcher = new FixturePluginFetcher({

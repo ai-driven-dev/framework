@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -67,7 +66,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, new HasherAdapter(), {
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -104,7 +103,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, new HasherAdapter(), {
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -139,7 +138,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
   ): Promise<{ skipped: readonly unknown[] }> {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, new HasherAdapter(), {
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -194,7 +193,6 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
 describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
   it("copies Kilo's namespaced flat files and the generated bridge", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new HasherAdapter();
     const configPath = `${PROJECT_ROOT}/.kilo/kilo.jsonc`;
     const baseConfig = '{\n  "$schema": "https://app.kilo.ai/config.json"\n}';
     fs.setFile(configPath, baseConfig);
@@ -209,10 +207,10 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
       new InstallationFile({
         relativePath: ".kilo/kilo.jsonc",
         content: baseConfig,
-        hash: hasher.hash(baseConfig),
+        hash: FileHash.of(baseConfig),
       }),
     ]);
-    const translator = new BuiltTreeMaterializationTranslator(fs, hasher, {
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -268,7 +266,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
         ?.mcpEntries.get("context")
     ).toBeTruthy();
     expect(manifest.getToolFiles(TOOL.kilo)[0]?.hash).toEqual(
-      hasher.hash(await fs.readFile(configPath))
+      FileHash.of(await fs.readFile(configPath))
     );
   });
 });

@@ -10,7 +10,7 @@ import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
 } from "../../../src/shared/domain/errors.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -77,8 +77,7 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
 }
 
 function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const fs = new RecordingFileAdapter({}, hasher);
+  const fs = new RecordingFileAdapter({});
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const useCase = projectMarketplaceRemover(
@@ -377,7 +376,7 @@ describe("which plugins a removal orphans", () => {
           {
             event: "preToolUse",
             command,
-            digest: new HasherAdapter().hash(JSON.stringify(entry)).value,
+            digest: FileHash.of(JSON.stringify(entry)).value,
           },
         ],
         scripts: {},
@@ -438,7 +437,7 @@ describe("which plugins a removal orphans", () => {
         strict: false,
         files: {},
         mcpEntries: {
-          mine: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
+          mine: FileHash.of(JSON.stringify({ type: "local" })).value,
         },
         scope: "project",
         marketplace: "awesome",
@@ -494,7 +493,7 @@ describe("which plugins a removal orphans", () => {
         strict: false,
         files: {},
         mcpEntries: {
-          mine: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
+          mine: FileHash.of(JSON.stringify({ type: "local" })).value,
         },
         scope: "project",
         marketplace: "awesome",
@@ -539,7 +538,7 @@ describe("which plugins a removal orphans", () => {
         strict: false,
         files: {},
         mcpEntries: {
-          mine: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
+          mine: FileHash.of(JSON.stringify({ type: "local" })).value,
         },
         scope: "project",
         marketplace: "awesome",
@@ -599,7 +598,7 @@ describe("which plugins a removal orphans", () => {
           strict: false,
           files: {},
           mcpEntries: {
-            [name]: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
+            [name]: FileHash.of(JSON.stringify({ type: "local" })).value,
           },
           scope: "project",
           marketplace: "awesome",

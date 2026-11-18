@@ -1,8 +1,8 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { FileHash } from "../../../shared/domain/file.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import { type PluginSource, serializePluginSource } from "../../../shared/domain/source.js";
-import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 
 const TRUST_STORE_FILENAME = "trusted-marketplaces.json";
@@ -14,8 +14,6 @@ interface TrustStoreFile {
 }
 
 export class MarketplaceTrustStoreAdapter implements MarketplaceTrustStore {
-  constructor(private readonly hasher: Hasher) {}
-
   async isTrusted(projectRoot: string, source: PluginSource): Promise<boolean> {
     const trusted = await this.read(projectRoot);
     return trusted.includes(this.key(source));
@@ -34,7 +32,7 @@ export class MarketplaceTrustStoreAdapter implements MarketplaceTrustStore {
     const serialized = serializePluginSource(source);
     const sortedKeys = Object.keys(serialized).sort();
     const canonical = JSON.stringify(serialized, sortedKeys);
-    return this.hasher.hash(canonical).value;
+    return FileHash.of(canonical).value;
   }
 
   private path(projectRoot: string): string {

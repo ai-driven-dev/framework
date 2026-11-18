@@ -11,7 +11,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -538,7 +538,7 @@ describe("Cursor targeted user marketplace removal", () => {
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
           strict: false,
-          files: { [path]: new HasherAdapter().hash("bytes").value },
+          files: { [path]: FileHash.of("bytes").value },
           scope: "user",
           marketplace: ALIAS,
           dependents: [...(options.dependents ?? [])],

@@ -7,10 +7,9 @@ import {
   ManifestUnavailableError,
   ToolNotInstalledError,
 } from "../../../../src/shared/domain/errors.js";
-import { InstallationFile } from "../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
@@ -21,11 +20,10 @@ const TRACKED = ".claude/rules/one.md";
 const CONTENT = "one\n";
 const MERGE_PATH = ".vscode/settings.json";
 const KEY = "editor.formatOnSave";
-const hasher = new HasherAdapter();
 
 function tracking(manifest: Manifest, toolId: ToolId, relativePath: string, content: string) {
   manifest.addTool(toolId, "test", [
-    new InstallationFile({ relativePath, content, hash: hasher.hash(content) }),
+    new InstallationFile({ relativePath, content, hash: FileHash.of(content) }),
   ]);
 }
 
@@ -34,7 +32,7 @@ function merging(manifest: Manifest) {
     TOOL.vscode,
     "test",
     [],
-    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: hasher.hash("true") } }]
+    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } }]
   );
 }
 
@@ -45,11 +43,10 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
       content,
     ])
   );
-  const fs = new InMemoryFileAdapter(files, hasher);
+  const fs = new InMemoryFileAdapter(files);
   return new ReportStatus(
     fs,
     new InMemoryManifestRepository(manifest, PROJECT_ROOT),
-    hasher,
     new DetectPluginDrift(fs, registeredTools()),
     registeredTools()
   );
@@ -302,7 +299,6 @@ describe("status", () => {
     const useCase = new ReportStatus(
       deps.fs,
       deps.manifestRepo,
-      deps.hasher,
       new DetectPluginDrift(deps.fs, registeredTools()),
       registeredTools()
     );
@@ -347,7 +343,6 @@ describe("status", () => {
     const report = await new ReportStatus(
       deps.fs,
       deps.manifestRepo,
-      deps.hasher,
       new DetectPluginDrift(deps.fs, registeredTools()),
       registeredTools()
     ).execute({ projectRoot: PROJECT_ROOT });

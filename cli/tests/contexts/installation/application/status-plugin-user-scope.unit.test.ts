@@ -7,7 +7,6 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import type { Hasher } from "../../../../src/shared/ports/hasher.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
@@ -55,10 +54,6 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   };
 }
 
-const noopHasher: Hasher = {
-  hash: () => new FileHash("00000000000000000000000000000000"),
-};
-
 describe("ReportStatus — cursor plugin drift (user-scope)", () => {
   describe("when cursor plugin file has drifted (base-relative key)", () => {
     it("resolves absolute path from homedir via userPluginsBaseDir before checking disk", async () => {
@@ -81,7 +76,6 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const useCase = new ReportStatus(
         fs,
         makeManifestRepo(manifest),
-        noopHasher,
         new DetectPluginDrift(fs, registeredTools()),
         registeredTools()
       );
@@ -97,7 +91,6 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const useCase = new ReportStatus(
         fs,
         makeManifestRepo(manifest),
-        noopHasher,
         new DetectPluginDrift(fs, registeredTools()),
         registeredTools()
       );
@@ -132,7 +125,6 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const useCase = new ReportStatus(
         fs,
         makeManifestRepo(manifest),
-        noopHasher,
         new DetectPluginDrift(fs, registeredTools()),
         registeredTools()
       );
@@ -154,7 +146,6 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const useCase = new ReportStatus(
         fs,
         makeManifestRepo(manifest),
-        noopHasher,
         new DetectPluginDrift(fs, registeredTools()),
         registeredTools()
       );

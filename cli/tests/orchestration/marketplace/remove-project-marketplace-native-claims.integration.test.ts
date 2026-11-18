@@ -7,7 +7,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import { errnoError, FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -151,13 +151,13 @@ describe("project marketplace removal against machine native claims", () => {
             {
               event: "preToolUse",
               command: "node ./.cursor/hooks/sample-plugin/pre.js",
-              digest: new HasherAdapter().hash(
+              digest: FileHash.of(
                 JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
               ).value,
             },
           ],
           scripts: {
-            ".cursor/hooks/sample-plugin/pre.js": new HasherAdapter().hash("A's hook").value,
+            ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
           },
         },
       })
@@ -307,13 +307,13 @@ describe("project marketplace removal against machine native claims", () => {
             {
               event: "preToolUse",
               command: "node ./.cursor/hooks/sample-plugin/pre.js",
-              digest: new HasherAdapter().hash(
+              digest: FileHash.of(
                 JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
               ).value,
             },
           ],
           scripts: {
-            ".cursor/hooks/sample-plugin/pre.js": new HasherAdapter().hash("A's hook").value,
+            ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
           },
         },
       })

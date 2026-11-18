@@ -1,9 +1,8 @@
 import { dirname, join, posix } from "node:path";
-import { InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 
@@ -19,7 +18,6 @@ export type ContainmentCheck = (resolvedCandidate: string, resolvedBoundary: str
  */
 export async function readGlobalPluginFiles(
   fs: FileReader,
-  hasher: Hasher,
   builtDir: string,
   tool: PluginPlacement,
   dist: PluginDistribution
@@ -41,7 +39,7 @@ export async function readGlobalPluginFiles(
     const relativePath = machine.map(builtPath, plugin);
     if (relativePath === null) continue;
     const content = await fs.readFile(abs);
-    files.push(new InstallationFile({ relativePath, content, hash: hasher.hash(content) }));
+    files.push(new InstallationFile({ relativePath, content, hash: FileHash.of(content) }));
   }
   return files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
 }

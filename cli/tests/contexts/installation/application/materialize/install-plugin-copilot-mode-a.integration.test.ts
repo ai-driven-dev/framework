@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -92,7 +91,6 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 describe("install copilot plugin via Mode A (integration)", () => {
   it("does not auto-install an unproven plugin or rewrite a foreign marketplace overlay", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new HasherAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     await seedCopilotPlugin(manifestRepo, registry);
@@ -107,7 +105,6 @@ describe("install copilot plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
     });
@@ -128,7 +125,6 @@ describe("install copilot plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.copilot, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -170,7 +166,6 @@ describe("install copilot plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.copilot, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -203,7 +198,6 @@ describe("install copilot plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.copilot, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -235,7 +229,6 @@ describe("install copilot plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger,
       activators: new Map([[TOOL.copilot, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -266,7 +259,6 @@ describe("install copilot plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger,
       activators: new Map([[TOOL.copilot, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

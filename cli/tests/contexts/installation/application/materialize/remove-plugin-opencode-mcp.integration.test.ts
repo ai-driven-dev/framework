@@ -4,7 +4,6 @@ import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -45,10 +44,8 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
   it("removes only plugin-contributed servers; preserves user-added servers", async () => {
     const existingJson = JSON.stringify({ mcp: { "user-server": USER_SERVER } }, null, 2);
     const fs = new InMemoryFileAdapter({ [OPENCODE_JSON]: existingJson });
-    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
-      hasher,
       () => STUB_HOME,
       translateDistribution
     );
@@ -83,10 +80,8 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("removes the plugin from the manifest after unmerge", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
-      hasher,
       () => STUB_HOME,
       translateDistribution
     );
@@ -118,10 +113,8 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
-      hasher,
       () => STUB_HOME,
       translateDistribution
     );
@@ -154,7 +147,6 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     const fs = new InMemoryFileAdapter();
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
-      new HasherAdapter(),
       () => STUB_HOME,
       translateDistribution
     );

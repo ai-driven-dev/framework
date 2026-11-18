@@ -42,7 +42,6 @@ export function userScopeSyncOf(sync: Pick<SyncSettings, "execute">): SyncMachin
 export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Plugin) {
   const {
     fs,
-    hasher,
     logger,
     currentVersionProvider,
     platform,
@@ -88,28 +87,16 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     userScopeSyncOf(syncSettingsUseCase),
     installGlobalPlugins
   );
-  const statusUseCase = new ReportStatus(
-    fs,
-    manifestRepo,
-    hasher,
-    detectPluginDriftUseCase,
-    base.tools
-  );
+  const statusUseCase = new ReportStatus(fs, manifestRepo, detectPluginDriftUseCase, base.tools);
   const restoreToolFiles = new RestoreToolFiles(
-    new GenerateToolDistribution(fs, hasher, platform, assetProvider),
+    new GenerateToolDistribution(fs, platform, assetProvider),
     new RestoreRegularFiles(fs, prompter),
-    new RestoreMergeFiles(fs, hasher, prompter),
+    new RestoreMergeFiles(fs, prompter),
     logger,
     base.tools
   );
   const restoreAllPlugins = new RestoreAllPlugins(
-    new ApplyPluginFiles(
-      fs,
-      hasher,
-      pluginFetcher,
-      pluginDistributionReader,
-      builtMaterializationDeps
-    ),
+    new ApplyPluginFiles(fs, pluginFetcher, pluginDistributionReader, builtMaterializationDeps),
     base.tools
   );
   const restoreUseCase = new Restore(

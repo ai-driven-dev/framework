@@ -7,7 +7,6 @@ import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
@@ -38,7 +37,6 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
 
   constructor(
     private readonly fs: FileWriter & FileReader,
-    private readonly hasher: Hasher,
     private readonly homedir: () => string,
     private readonly translate: PluginTranslation
   ) {
@@ -111,7 +109,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     }
     const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;
     const translated = this.translate.execute({ distribution: distForNative, tool });
-    const files = hashOutputFiles(translated.files, this.hasher);
+    const files = hashOutputFiles(translated.files);
     const { componentPaths, skipped } = translated;
     const scope = resolveScopeForInstall(tool);
     const baseDir = resolveBaseDirFromRecord(scope, tool, projectRoot, this.homedir);
@@ -134,8 +132,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     let written = 0;
     for (const file of files) {
       const outputPath = join(baseDir, file.relativePath);
-      if (await isPluginFileAtDesiredState(this.fs, this.hasher, outputPath, file.hash.value))
-        continue;
+      if (await isPluginFileAtDesiredState(this.fs, outputPath, file.hash.value)) continue;
       await this.fs.writeFile(outputPath, file.content);
       written++;
     }

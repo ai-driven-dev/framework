@@ -83,7 +83,6 @@ export function wireMarketplace(base: Base, inst: Installation) {
   const {
     tools,
     fs,
-    hasher,
     logger,
     environment,
     tokenProvider,
@@ -168,7 +167,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       userManifestRepo
     ),
     new SyncToolSettingsFiles(
-      new TrackedSettingsFile(fs, hasher, logger),
+      new TrackedSettingsFile(fs, logger),
       buildMarketplaceForTool,
       registrationRecordRules,
       tools
@@ -190,7 +189,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
       registrationRecordRules
     ),
-    new RecordActivation(fs, hasher, registrationRecordRules, tools, userManifestRepo),
+    new RecordActivation(fs, registrationRecordRules, tools, userManifestRepo),
     new SharedFrameworkSource(
       fs,
       logger,

@@ -7,7 +7,6 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../src/shared/domain/source.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { registeredAiProfile } from "../../contexts/tools/testing/catalog-of.js";
@@ -166,7 +165,6 @@ async function sync(setup: SyncSetup = {}) {
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
-    hasher: new HasherAdapter(),
     logger,
     activators: new Map([[TOOL.claude, activator]]),
     ensureBuilt: setup.ensureBuilt ?? {
@@ -414,7 +412,6 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([
         [TOOL.claude, claudeActivator],
@@ -461,7 +458,6 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([
         [TOOL.claude, claudeActivator],
@@ -587,7 +583,6 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

@@ -25,7 +25,6 @@ export interface MarketplaceSyncParts {
   fs: ConstructorParameters<typeof SharedFrameworkSource>[0];
   manifestRepo: Loader[0];
   marketplaceRegistry: Loader[1];
-  hasher: ConstructorParameters<typeof RecordActivation>[1];
   logger: ConstructorParameters<typeof SharedFrameworkSource>[1];
   ensureBuilt: ConstructorParameters<typeof BuildMarketplaceForTool>[0];
   userCacheRoot?: ActivationMarketplace["userCacheRoot"];
@@ -50,7 +49,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       parts.userManifestRepo
     ),
     new SyncToolSettingsFiles(
-      new TrackedSettingsFile(parts.fs, parts.hasher, parts.logger),
+      new TrackedSettingsFile(parts.fs, parts.logger),
       build,
       registrationRecordRules,
       registeredTools()
@@ -74,7 +73,6 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
     ),
     new RecordActivation(
       parts.fs,
-      parts.hasher,
       registrationRecordRules,
       registeredTools(),
       parts.userManifestRepo

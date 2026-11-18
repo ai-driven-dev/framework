@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InstallSkills } from "../../../../../../src/contexts/installation/application/install/content/install-skills.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
-import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash, GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -23,15 +22,14 @@ const skillsSectionWithEntry: ContentSection = {
 };
 
 function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const useCase = new InstallSkills(hasher);
-  return { hasher, useCase };
+  const useCase = new InstallSkills();
+  return { useCase };
 }
 
 describe("InstallSkills", () => {
   describe("execute — flat section (no entryFile)", () => {
     it("produces an InstallationFile with correct relativePath for a claude skill", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const rawContent = "---\nname: hello\ndescription: A simple skill\n---\n# Hello skill\n";
       const contentFiles = new Map([["skills/hello.claude.md", rawContent]]);
 
@@ -45,7 +43,7 @@ describe("InstallSkills", () => {
       const [file] = files;
       expect(file.relativePath).toBe(".claude/skills/hello.md");
       expect(file.frameworkPath).toBe("skills/hello.claude.md");
-      expect(file.hash).toEqual(hasher.hash(file.content));
+      expect(file.hash).toEqual(FileHash.of(file.content));
     });
 
     it("returns empty array when contentFiles map is empty", () => {
@@ -94,7 +92,7 @@ describe("InstallSkills", () => {
     });
 
     it("produces an empty-content InstallationFile for .gitkeep files", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const gitkeepPath = `skills/${GITKEEP_FILE}`;
       const contentFiles = new Map([[gitkeepPath, ""]]);
 
@@ -106,7 +104,7 @@ describe("InstallSkills", () => {
 
       expect(files).toHaveLength(1);
       expect(files[0].content).toBe("");
-      expect(files[0].hash).toEqual(hasher.hash(""));
+      expect(files[0].hash).toEqual(FileHash.of(""));
     });
 
     it("processes multiple skills in a single call", () => {

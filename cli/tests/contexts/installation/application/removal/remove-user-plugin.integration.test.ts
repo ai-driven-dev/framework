@@ -5,8 +5,8 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../../../src/contexts/installation/ports/native-host.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
 import { userPluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -338,7 +338,7 @@ describe("Cursor user plugin boundary", () => {
         version: "1.0.0",
         strict: false,
         files: {
-          "sample-plugin/plugin.json": new HasherAdapter().hash("owned bytes").value,
+          "sample-plugin/plugin.json": FileHash.of("owned bytes").value,
         },
         scope: "user",
         dependents: [],

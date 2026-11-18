@@ -51,7 +51,7 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
   const pluginAdd = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(

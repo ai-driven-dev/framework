@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InstallRules } from "../../../../../../src/contexts/installation/application/install/content/install-rules.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
-import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash, GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -23,15 +22,14 @@ const rulesSectionWithEntry: ContentSection = {
 };
 
 function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const useCase = new InstallRules(hasher);
-  return { hasher, useCase };
+  const useCase = new InstallRules();
+  return { useCase };
 }
 
 describe("InstallRules", () => {
   describe("execute", () => {
     it("produces an InstallationFile with correct relativePath for a claude rule", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const rawContent = "---\npaths:\n  - src/**/*.ts\n---\n# TypeScript rules\n";
       const contentFiles = new Map([["rules/01-standards/typescript.claude.md", rawContent]]);
 
@@ -45,7 +43,7 @@ describe("InstallRules", () => {
       const [file] = files;
       expect(file.relativePath).toBe(".claude/rules/01-standards/typescript.md");
       expect(file.frameworkPath).toBe("rules/01-standards/typescript.claude.md");
-      expect(file.hash).toEqual(hasher.hash(file.content));
+      expect(file.hash).toEqual(FileHash.of(file.content));
     });
 
     it("returns empty array when contentFiles map is empty", () => {
@@ -94,7 +92,7 @@ describe("InstallRules", () => {
     });
 
     it("produces an empty-content InstallationFile for .gitkeep files", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const gitkeepPath = `rules/01-standards/${GITKEEP_FILE}`;
       const contentFiles = new Map([[gitkeepPath, ""]]);
 
@@ -106,7 +104,7 @@ describe("InstallRules", () => {
 
       expect(files).toHaveLength(1);
       expect(files[0].content).toBe("");
-      expect(files[0].hash).toEqual(hasher.hash(""));
+      expect(files[0].hash).toEqual(FileHash.of(""));
     });
 
     it("converts paths frontmatter via the capability's convertFrontmatter", () => {

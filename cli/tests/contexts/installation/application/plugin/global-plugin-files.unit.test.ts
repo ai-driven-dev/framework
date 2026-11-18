@@ -6,9 +6,8 @@ import {
 } from "../../../../../src/contexts/installation/application/plugin/global-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
@@ -41,7 +40,6 @@ describe("readGlobalPluginFiles", () => {
   it("reads the plugin's skills and the agents its source ships, keyed under the user directory", async () => {
     const files = await readGlobalPluginFiles(
       tree,
-      new HasherAdapter(),
       BUILT,
       registeredTools().aiProfile(TOOL.opencode),
       distribution("aidd-dev", ["agents/reviewer.md", "agents/nested/ignored.md", "skills/x.md"])
@@ -56,7 +54,6 @@ describe("readGlobalPluginFiles", () => {
   it("reads nothing for a plugin whose source ships no agent and no skill in the tree", async () => {
     const files = await readGlobalPluginFiles(
       tree,
-      new HasherAdapter(),
       BUILT,
       registeredTools().aiProfile(TOOL.opencode),
       distribution("aidd-qa", [])
@@ -82,7 +79,6 @@ describe("readGlobalPluginFiles", () => {
   it("reads nothing for a tool that copies no global file", async () => {
     const files = await readGlobalPluginFiles(
       tree,
-      new HasherAdapter(),
       BUILT,
       registeredTools().aiProfile(TOOL.claude),
       distribution("aidd-dev", ["agents/reviewer.md"])
@@ -93,15 +89,14 @@ describe("readGlobalPluginFiles", () => {
 });
 
 describe("assertGlobalFilesWritable", () => {
-  const hasher = new HasherAdapter();
   const HOME = "/home/me";
   const DIR = join(HOME, ".config", "opencode");
   const under = (...parts: string[]) => join(DIR, ...parts);
   const file = (relativePath: string, content = "new") =>
-    new InstallationFile({ relativePath, content, hash: hasher.hash(content) });
+    new InstallationFile({ relativePath, content, hash: FileHash.of(content) });
 
   it("returns the user directory when every path stays inside it", async () => {
-    const fs = new InMemoryFileAdapter({}, hasher);
+    const fs = new InMemoryFileAdapter({});
 
     await expect(
       assertGlobalFilesWritable(
@@ -119,7 +114,7 @@ describe("assertGlobalFilesWritable", () => {
   it.each(["/etc/passwd", "agents/../../escape.md", "agents\\a.md"])(
     "refuses the path %s that is not a plain relative path",
     async (path) => {
-      const fs = new InMemoryFileAdapter({}, hasher);
+      const fs = new InMemoryFileAdapter({});
 
       await expect(
         assertGlobalFilesWritable(
@@ -136,7 +131,7 @@ describe("assertGlobalFilesWritable", () => {
   );
 
   it("refuses a parent that resolves outside the user directory", async () => {
-    const fs = new InMemoryFileAdapter({ [under("agents", "kept.md")]: "x" }, hasher);
+    const fs = new InMemoryFileAdapter({ [under("agents", "kept.md")]: "x" });
     fs.setSymlink(under("agents"), "/elsewhere");
 
     await expect(
@@ -153,7 +148,7 @@ describe("assertGlobalFilesWritable", () => {
   });
 
   it.each(["mine", "new"])("refuses an unowned file holding %s bytes", async (content) => {
-    const fs = new InMemoryFileAdapter({ [under("agents", "a.md")]: content }, hasher);
+    const fs = new InMemoryFileAdapter({ [under("agents", "a.md")]: content });
 
     await expect(
       assertGlobalFilesWritable(
@@ -171,7 +166,7 @@ describe("assertGlobalFilesWritable", () => {
   });
 
   it("allows rewriting a file the plugin owns", async () => {
-    const fs = new InMemoryFileAdapter({ [under("agents", "owned.md")]: "old" }, hasher);
+    const fs = new InMemoryFileAdapter({ [under("agents", "owned.md")]: "old" });
     const owned = InstalledPlugin.fromMetadata(
       "aidd-dev",
       "1.0.0",
@@ -195,13 +190,12 @@ describe("assertGlobalFilesWritable", () => {
 });
 
 describe("assertGlobalFilesWritable on a filesystem that rejects a missing path", () => {
-  const hasher = new HasherAdapter();
   const DIR = join("/home/me", ".config", "opencode");
   const file = (relativePath: string) =>
-    new InstallationFile({ relativePath, content: "new", hash: hasher.hash("new") });
+    new InstallationFile({ relativePath, content: "new", hash: FileHash.of("new") });
 
   it("allows a file whose parents are missing once the user directory resolves", async () => {
-    const fs = new InMemoryFileAdapter({}, hasher).rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter({}).rejectMissingRealpath();
 
     await expect(
       assertGlobalFilesWritable(
@@ -217,7 +211,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
   });
 
   it("refuses a missing file below a parent link resolving outside the user directory", async () => {
-    const fs = new InMemoryFileAdapter({ "/elsewhere/keep": "x" }, hasher).rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter({ "/elsewhere/keep": "x" }).rejectMissingRealpath();
     fs.setSymlink(join(DIR, "agents"), "/elsewhere");
 
     await expect(

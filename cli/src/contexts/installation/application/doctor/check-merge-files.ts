@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
 import type { CheckInstallationCommand } from "./check-installation-command.js";
 import type { LoadManifest } from "./load-manifest.js";
@@ -9,8 +8,7 @@ import type { LoadManifest } from "./load-manifest.js";
 export class CheckMergeFiles {
   constructor(
     private readonly loadManifest: LoadManifest,
-    private readonly fs: FileReader,
-    private readonly hasher: Hasher
+    private readonly fs: FileReader
   ) {}
 
   async execute(command: CheckInstallationCommand): Promise<DoctorIssue[]> {
@@ -45,7 +43,7 @@ export class CheckMergeFiles {
 
   private async compareKeys(mergeFile: MergeFileEntry, fullPath: string): Promise<DoctorIssue[]> {
     const content = await this.fs.readFile(fullPath);
-    const diskEntries = extractMergeEntries(content, mergeFile.sectionKey, this.hasher);
+    const diskEntries = extractMergeEntries(content, mergeFile.sectionKey);
     const issues: DoctorIssue[] = [];
     for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
       const diskHash = diskEntries[key];

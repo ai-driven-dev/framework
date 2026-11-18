@@ -1,11 +1,9 @@
 import { join, posix, resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
-import type { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
-import type { Hasher } from "../../../src/shared/ports/hasher.js";
 
 export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   async isDirectory(path: string): Promise<boolean> {
@@ -21,15 +19,13 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** Directories that exist: every ancestor of a file, plus what `createDirectory` made.
    * Deleting a file leaves them, as on a real filesystem. */
   private readonly directories = new Set<string>();
-  private readonly hasher: Hasher;
   /** Path → what it resolves to, for a test proving `realpath`-based containment
    * without a real filesystem — see `setSymlink`. */
   private readonly symlinks = new Map<string, string>();
   /** Off by default: see `rejectMissingRealpath`. */
   private missingRealpathRejects = false;
 
-  constructor(seed: Record<string, string> = {}, hasher?: Hasher) {
-    this.hasher = hasher ?? new HasherAdapter();
+  constructor(seed: Record<string, string> = {}) {
     for (const [path, content] of Object.entries(seed)) {
       this.setFile(path, content);
     }
@@ -90,7 +86,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
 
   async readFileHash(path: string): Promise<FileHash> {
     const content = await this.readFile(path);
-    return this.hasher.hash(content);
+    return FileHash.of(content);
   }
 
   /** Resolves through the longest matching registered symlink, like a real `fs.realpath`

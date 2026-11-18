@@ -24,13 +24,11 @@ import type { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
-import type { Hasher } from "../shared/ports/hasher.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter;
-  hasher: Hasher;
   http: HttpClient;
   tokenProvider: TokenProvider;
   logger: Logger;
@@ -54,7 +52,7 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
-  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(shared.hasher);
+  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter();
   const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
   const releaseResolver = new GitHubReleaseAdapter(shared.http, shared.tokenProvider);
   const rawCatalogFetcher = new GitHubRawFetcherAdapter(shared.http, shared.tokenProvider);

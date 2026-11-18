@@ -21,7 +21,6 @@ import type { AiToolId, IdeToolId } from "../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { CurrentVersionAdapter } from "../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../src/shared/infrastructure/hasher-adapter.js";
 import type { Prompter } from "../../src/shared/ports/prompter.js";
 import type { VersionReader } from "../../src/shared/ports/version-reader.js";
 import { registeredManifestProbes } from "../shared/testing/registered-manifest-probes.js";
@@ -201,8 +200,7 @@ export const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2");
 
 export function buildDeps(projectRoot: string) {
-  const hasher = new HasherAdapter();
-  const fs = new JsonFileMergerAdapter(new FileAdapter(hasher));
+  const fs = new JsonFileMergerAdapter(new FileAdapter());
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot, resolveRegisteredToolId);
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter(wireTools());
@@ -218,7 +216,7 @@ export function buildDeps(projectRoot: string) {
     updateGitignore,
     registeredTools()
   );
-  const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     trackedConfigFiles,
     fs,
@@ -234,7 +232,6 @@ export function buildDeps(projectRoot: string) {
   );
   const currentVersionProvider: VersionReader = new CurrentVersionAdapter();
   return {
-    hasher,
     fs,
     manifestRepo,
     logger,

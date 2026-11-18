@@ -24,7 +24,7 @@ describe("AddPlugin skip warnings", () => {
       const capturingLogger = new CapturingLogger();
       const registry = new FakeMarketplaceRegistry();
       const useCase = new AddPlugin(
-        { fs: deps.fs, hasher: deps.hasher, logger: capturingLogger },
+        { fs: deps.fs, logger: capturingLogger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(

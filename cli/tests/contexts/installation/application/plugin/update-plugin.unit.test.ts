@@ -48,7 +48,7 @@ async function setup(
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const reader = deps.pluginDistributionReader;
   const addUseCase = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
@@ -60,12 +60,7 @@ async function setup(
   const updateUseCase = new UpdatePlugin(
     deps.manifestRepo,
     new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
-    new ReplacePluginFiles(
-      deps.fs,
-      deps.hasher,
-      options.builtDeps ?? fakeBuiltDeps(),
-      registeredTools()
-    ),
+    new ReplacePluginFiles(deps.fs, options.builtDeps ?? fakeBuiltDeps(), registeredTools()),
     registeredTools()
   );
   return { addUseCase, updateUseCase };

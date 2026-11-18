@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveProjectRootForReferences } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 
 let root: string;
 
@@ -25,7 +24,7 @@ describe("resolveProjectRootForReferences against a real symlink", () => {
     const link = join(root, "link-project");
     await mkdir(real, { recursive: true });
     await symlink(real, link);
-    const fs = new FileAdapter(new HasherAdapter(), new CLIOutput(false));
+    const fs = new FileAdapter(new CLIOutput(false));
 
     const resolved = await resolveProjectRootForReferences(fs, link);
 
@@ -35,7 +34,7 @@ describe("resolveProjectRootForReferences against a real symlink", () => {
 
   it("falls back to the path as given for a project that no longer exists", async () => {
     const vanished = join(root, "gone");
-    const fs = new FileAdapter(new HasherAdapter(), new CLIOutput(false));
+    const fs = new FileAdapter(new CLIOutput(false));
 
     const resolved = await resolveProjectRootForReferences(fs, vanished);
 

@@ -8,7 +8,6 @@ import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
-import type { Hasher } from "../../../../../src/shared/ports/hasher.js";
 import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -27,10 +26,6 @@ const noopFs: FileReader & FileWriter = {
   createDirectory: async () => {},
   deleteEmptyDirectories: async () => {},
   deleteDirectory: async () => {},
-};
-
-const noopHasher: Hasher = {
-  hash: () => new FileHash("00000000000000000000000000000000"),
 };
 
 const stubFetcher: PluginFetcher = {
@@ -68,7 +63,6 @@ describe("RestoreAllPlugins — native-activation tools", () => {
     manifest.addPlugin(TOOL.claude, nativePlugin({}));
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
-      hasher: noopHasher,
       pluginFetcher: stubFetcher,
       pluginDistributionReader: emptyDistributionReader,
       builtDeps: fakeBuiltDeps(),
@@ -93,7 +87,6 @@ describe("RestoreAllPlugins — native-activation tools", () => {
     );
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
-      hasher: noopHasher,
       pluginFetcher: stubFetcher,
       pluginDistributionReader: emptyDistributionReader,
       builtDeps: fakeBuiltDeps(),
@@ -113,7 +106,6 @@ describe("RestoreAllPlugins — native-activation tools", () => {
     manifest.addTool(TOOL.claude, "1.0.0", []);
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
-      hasher: noopHasher,
       pluginFetcher: stubFetcher,
       pluginDistributionReader: emptyDistributionReader,
       builtDeps: fakeBuiltDeps(),
@@ -152,7 +144,6 @@ describe("RestoreAllPlugins — restricting to one plugin", () => {
   function useCase(): RestoreAllPlugins {
     return restoreAllPluginsOf({
       fs: noopFs,
-      hasher: noopHasher,
       pluginFetcher: stubFetcher,
       pluginDistributionReader: emptyDistributionReader,
       builtDeps: fakeBuiltDeps(),

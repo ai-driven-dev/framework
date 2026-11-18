@@ -7,7 +7,7 @@ import {
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { pluginRemover, userPluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -155,10 +155,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const relative = `${NAME}/commands/owned.md`;
     const content = "installed machine bytes";
     const machine = manifest();
-    machine.addPlugin(
-      cursor,
-      plugin({ files: { [relative]: new HasherAdapter().hash(content).value } })
-    );
+    machine.addPlugin(cursor, plugin({ files: { [relative]: FileHash.of(content).value } }));
     const fs = new InMemoryFileAdapter();
     const userPath = join(homedir(), ".cursor", "plugins", "local", relative);
     const projectPath = join(ROOT, relative);
@@ -184,7 +181,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
   it("refuses a partial user removal before deleting safe files when another tracked path escapes", async () => {
     const content = "installed bytes";
-    const hash = new HasherAdapter().hash(content).value;
+    const hash = FileHash.of(content).value;
     const relative = `${NAME}/owned.md`;
     const machine = manifest();
     machine.addPlugin(cursor, plugin({ files: { [relative]: hash, "../outside.md": hash } }));

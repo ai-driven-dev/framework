@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import {
   extractMergeEntries,
   hashJsonEntries,
   removeEntriesFromJson,
 } from "../../../src/shared/domain/merge.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
-import type { Hasher } from "../../../src/shared/ports/hasher.js";
-
-const hasher: Hasher = new HasherAdapter();
 
 describe("extractMergeEntries", () => {
   describe("with section key", () => {
@@ -18,25 +15,25 @@ describe("extractMergeEntries", () => {
           github: { command: "gh", args: ["mcp"] },
         },
       });
-      const entries = extractMergeEntries(json, "mcpServers", hasher);
+      const entries = extractMergeEntries(json, "mcpServers");
       expect(Object.keys(entries)).toEqual(["playwright", "github"]);
       expect(entries.playwright.value).toBe(
-        hasher.hash(JSON.stringify({ command: "npx", args: ["-y", "playwright-mcp"] })).value
+        FileHash.of(JSON.stringify({ command: "npx", args: ["-y", "playwright-mcp"] })).value
       );
       expect(entries.github.value).toBe(
-        hasher.hash(JSON.stringify({ command: "gh", args: ["mcp"] })).value
+        FileHash.of(JSON.stringify({ command: "gh", args: ["mcp"] })).value
       );
     });
 
     it("returns empty map when section key is missing", () => {
       const json = JSON.stringify({ other: {} });
-      const entries = extractMergeEntries(json, "mcpServers", hasher);
+      const entries = extractMergeEntries(json, "mcpServers");
       expect(entries).toEqual({});
     });
 
     it("returns empty map when section is not an object", () => {
       const json = JSON.stringify({ mcpServers: "not an object" });
-      const entries = extractMergeEntries(json, "mcpServers", hasher);
+      const entries = extractMergeEntries(json, "mcpServers");
       expect(entries).toEqual({});
     });
   });
@@ -47,37 +44,37 @@ describe("extractMergeEntries", () => {
         "editor.formatOnSave": true,
         "editor.tabSize": 2,
       });
-      const entries = extractMergeEntries(json, null, hasher);
+      const entries = extractMergeEntries(json, null);
       expect(Object.keys(entries)).toEqual(["editor.formatOnSave", "editor.tabSize"]);
-      expect(entries["editor.formatOnSave"].value).toBe(hasher.hash(JSON.stringify(true)).value);
+      expect(entries["editor.formatOnSave"].value).toBe(FileHash.of(JSON.stringify(true)).value);
     });
   });
 
   describe("edge cases", () => {
     it("returns empty map for empty JSON object", () => {
-      const entries = extractMergeEntries("{}", "mcpServers", hasher);
+      const entries = extractMergeEntries("{}", "mcpServers");
       expect(entries).toEqual({});
     });
 
     it("returns empty map for empty section", () => {
       const json = JSON.stringify({ mcpServers: {} });
-      const entries = extractMergeEntries(json, "mcpServers", hasher);
+      const entries = extractMergeEntries(json, "mcpServers");
       expect(entries).toEqual({});
     });
 
     it("returns empty map for empty top-level object without section key", () => {
-      const entries = extractMergeEntries("{}", null, hasher);
+      const entries = extractMergeEntries("{}", null);
       expect(entries).toEqual({});
     });
 
     it("returns empty map when section value is an array", () => {
       const json = JSON.stringify({ mcpServers: [1, 2, 3] });
-      const entries = extractMergeEntries(json, "mcpServers", hasher);
+      const entries = extractMergeEntries(json, "mcpServers");
       expect(entries).toEqual({});
     });
 
     it("returns empty map for malformed JSON", () => {
-      const entries = extractMergeEntries("not valid json {{{", "mcpServers", hasher);
+      const entries = extractMergeEntries("not valid json {{{", "mcpServers");
       expect(entries).toEqual({});
     });
 
@@ -89,7 +86,7 @@ describe("extractMergeEntries", () => {
           "playwright": { "command": "npx", "args": ["-y", "pkg"] },
         }
       }`;
-      const entries = extractMergeEntries(jsonc, "mcpServers", hasher);
+      const entries = extractMergeEntries(jsonc, "mcpServers");
       expect(Object.keys(entries)).toEqual(["playwright"]);
     });
 
@@ -100,7 +97,7 @@ describe("extractMergeEntries", () => {
           b: { command: "npx", args: ["-y", "pkg"] },
         },
       });
-      const entries = extractMergeEntries(json, "mcpServers", hasher);
+      const entries = extractMergeEntries(json, "mcpServers");
       expect(entries.a.value).toBe(entries.b.value);
     });
   });
@@ -146,15 +143,15 @@ describe("removeEntriesFromJson", () => {
 
 describe("hashJsonEntries", () => {
   it("hashes each top-level value, one entry per key", () => {
-    const entries = hashJsonEntries({ a: 1, b: "two" }, hasher);
-    expect(entries.a.value).toBe(hasher.hash(JSON.stringify(1)).value);
-    expect(entries.b.value).toBe(hasher.hash(JSON.stringify("two")).value);
+    const entries = hashJsonEntries({ a: 1, b: "two" });
+    expect(entries.a.value).toBe(FileHash.of(JSON.stringify(1)).value);
+    expect(entries.b.value).toBe(FileHash.of(JSON.stringify("two")).value);
   });
 
   it("backs extractMergeEntries with the same hashing logic", () => {
     const json = JSON.stringify({ env: { FOO: "bar" } });
-    const viaExtract = extractMergeEntries(json, "env", hasher);
-    const viaHash = hashJsonEntries({ FOO: "bar" }, hasher);
+    const viaExtract = extractMergeEntries(json, "env");
+    const viaHash = hashJsonEntries({ FOO: "bar" });
     expect(viaExtract.FOO.value).toBe(viaHash.FOO.value);
   });
 });

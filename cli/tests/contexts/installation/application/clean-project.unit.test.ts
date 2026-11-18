@@ -6,7 +6,7 @@ import { RemoveProjectFiles } from "../../../../src/contexts/installation/applic
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
@@ -43,7 +43,7 @@ function localPlugin(name: string, scope: "project" | "user" = "project"): Insta
 describe("CleanProject.assertRemovable", () => {
   it("refuses a hook script edited after install unless forced", async () => {
     const script = `${cursorHookScriptDir("aidd-context")}run.js`;
-    const installed = new HasherAdapter().hash("// installed").value;
+    const installed = FileHash.of("// installed").value;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     const plugin = InstalledPlugin.fromMetadata(

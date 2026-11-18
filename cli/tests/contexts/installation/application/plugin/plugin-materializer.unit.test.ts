@@ -5,8 +5,8 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
@@ -23,7 +23,6 @@ const { cursor } = TOOL;
 
 function fixture(installedVersion = "0.0.1") {
   const fs = new InMemoryFileAdapter();
-  const hasher = new HasherAdapter();
   const logger = new CapturingLogger();
   const content = "# Updated skill";
   const skill = { relativePath: "skills/demo/SKILL.md", content };
@@ -36,7 +35,6 @@ function fixture(installedVersion = "0.0.1") {
   const updater = new PluginMaterializer(
     fs,
     new PluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
-    hasher,
     userScopeFileGuard,
     { ...fakeBuiltDeps(), homedir }
   );
@@ -48,7 +46,7 @@ function fixture(installedVersion = "0.0.1") {
     "user"
   ).withDependents(["/A", "/B"]);
   const base = join(homedir(), ".cursor/plugins/local");
-  return { fs, hasher, logger, updater, plugin, base, content };
+  return { fs, logger, updater, plugin, base, content };
 }
 
 describe("PluginMaterializer public update contract", () => {
@@ -85,15 +83,13 @@ describe("PluginMaterializer public update contract", () => {
     expect(result?.dependents).toEqual(["/A", "/B"]);
     expect(await f.fs.readFile(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(f.content);
     expect(result?.files.get("sample-plugin/skills/demo/SKILL.md")).toBe(
-      f.hasher.hash(f.content).value
+      FileHash.of(f.content).value
     );
   });
 
   it("refuses unsafe recorded files with an actionable diagnostic before writes", async () => {
     const f = fixture();
-    const unsafe = f.plugin.withFiles(
-      new Map([["../foreign.txt", f.hasher.hash("foreign").value]])
-    );
+    const unsafe = f.plugin.withFiles(new Map([["../foreign.txt", FileHash.of("foreign").value]]));
     await f.fs.writeFile(join(f.base, "../foreign.txt"), "foreign");
     await expect(
       f.updater.update(unsafe, registeredTools().aiProfile(cursor), "/A", f.logger, insideUserScope)
@@ -107,7 +103,7 @@ describe("PluginMaterializer public update contract", () => {
   it("writes back a recorded file that was deleted", async () => {
     const f = fixture();
     const path = "sample-plugin/skills/demo/SKILL.md";
-    const owned = f.plugin.withFiles(new Map([[path, f.hasher.hash(f.content).value]]));
+    const owned = f.plugin.withFiles(new Map([[path, FileHash.of(f.content).value]]));
 
     const result = await f.updater.update(
       owned,

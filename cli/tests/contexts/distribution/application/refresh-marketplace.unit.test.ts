@@ -7,7 +7,6 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../../src/shared/domain/source.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceCache } from "../../../helpers/ports/in-memory-marketplace-cache.js";
@@ -19,8 +18,7 @@ const VERSIONED_FIXTURE = join(process.cwd(), "tests/fixtures/framework-real");
 const PROJECT_ROOT = "/test-project";
 
 async function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter({}, hasher);
+  const fs = new InMemoryFileAdapter({});
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   await seedFromDirectory(fs, VERSIONED_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
@@ -208,8 +206,7 @@ describe("RefreshMarketplace", () => {
 
   describe("stale cache detection", () => {
     it("emits info line when cache has relative plugin sources but plugin dirs are missing", async () => {
-      const hasher = new HasherAdapter();
-      const fs = new InMemoryFileAdapter({}, hasher);
+      const fs = new InMemoryFileAdapter({});
       await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
       const registry = new InMemoryMarketplaceRegistry();
       const pluginFetcher = new FixturePluginFetcher({
@@ -254,8 +251,7 @@ describe("RefreshMarketplace", () => {
     });
 
     it("does not emit stale notice when plugin dirs already exist on disk", async () => {
-      const hasher = new HasherAdapter();
-      const fs = new InMemoryFileAdapter({}, hasher);
+      const fs = new InMemoryFileAdapter({});
       await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
       const registry = new InMemoryMarketplaceRegistry();
       const pluginFetcher = new FixturePluginFetcher({

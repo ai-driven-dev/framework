@@ -5,9 +5,8 @@ import {
 } from "../../../../../src/contexts/installation/application/doctor/check-tracked-files.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -15,7 +14,6 @@ import { TOOL } from "../../../../shared/testing/registered-tools.js";
 const PROJECT_ROOT = "/project";
 const FILE = ".claude/rules/one.md";
 const CONTENT = "one\n";
-const hasher = new HasherAdapter();
 
 const MISSING = {
   severity: "error",
@@ -31,7 +29,7 @@ const MODIFIED = {
 function manifestTracking(toolId: ToolId): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(toolId, "1.0.0", [
-    new InstallationFile({ relativePath: FILE, content: CONTENT, hash: hasher.hash(CONTENT) }),
+    new InstallationFile({ relativePath: FILE, content: CONTENT, hash: FileHash.of(CONTENT) }),
   ]);
   return manifest;
 }
@@ -42,8 +40,7 @@ async function issuesFor(
   toolId: ToolId = TOOL.claude
 ) {
   const fs = new InMemoryFileAdapter(
-    onDisk === null ? {} : { [`${PROJECT_ROOT}/${FILE}`]: onDisk },
-    hasher
+    onDisk === null ? {} : { [`${PROJECT_ROOT}/${FILE}`]: onDisk }
   );
   const load = new LoadManifest(new InMemoryManifestRepository(manifestTracking(toolId)));
   return new CheckTrackedFiles(load, fs).execute({

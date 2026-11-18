@@ -15,7 +15,6 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
-import type { Hasher } from "../../../src/shared/ports/hasher.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { checkRegistrationOver } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -65,10 +64,6 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   };
 }
 
-const noopHasher: Hasher = {
-  hash: () => new FileHash("00000000000000000000000000000000"),
-};
-
 function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
   return new CheckPluginDrift(
     new LoadManifest(makeManifestRepo(manifest)),
@@ -82,7 +77,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
     new LoadManifestForDoctor(loadManifest),
     {
       tracked: new CheckTrackedFiles(loadManifest, fs),
-      merge: new CheckMergeFiles(loadManifest, fs, noopHasher),
+      merge: new CheckMergeFiles(loadManifest, fs),
       references: new CheckFileReferences(loadManifest, fs),
       layout: new CheckProjectLayout(loadManifest, fs, catalogOf()),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs, catalogOf())),

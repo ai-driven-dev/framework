@@ -4,7 +4,6 @@ import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/ap
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
@@ -56,8 +55,7 @@ class SpyRawCatalogFetcher implements RawCatalogFetcher {
 function makeSpyFileAdapter(
   seed: Record<string, string> = {}
 ): InMemoryFileAdapter & { deletedFiles: string[] } {
-  const hasher = new HasherAdapter();
-  const adapter = new InMemoryFileAdapter(seed, hasher);
+  const adapter = new InMemoryFileAdapter(seed);
   const deletedFiles: string[] = [];
   const origDelete = adapter.deleteFile.bind(adapter);
   adapter.deleteFile = async (path: string) => {

@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CheckProjectLayout } from "../../../../../src/contexts/installation/application/doctor/check-project-layout.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -11,7 +10,6 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 const PROJECT_ROOT = "/project";
 const CLAUDE_COMMAND = ".claude/commands/plan.md";
 const SIGNAL = "---\nname: aidd:01:plan\ndescription: Plan\n---\n";
-const hasher = new HasherAdapter();
 
 function manifestTrackingClaude(): Manifest {
   const manifest = Manifest.create();
@@ -19,7 +17,7 @@ function manifestTrackingClaude(): Manifest {
     new InstallationFile({
       relativePath: CLAUDE_COMMAND,
       content: SIGNAL,
-      hash: hasher.hash(SIGNAL),
+      hash: FileHash.of(SIGNAL),
     }),
   ]);
   return manifest;
@@ -33,11 +31,7 @@ async function issuesFor(onDisk: Record<string, string>) {
     ])
   );
   const load = new LoadManifest(new InMemoryManifestRepository(manifestTrackingClaude()));
-  return new CheckProjectLayout(
-    load,
-    new InMemoryFileAdapter(files, hasher),
-    registeredTools()
-  ).execute({
+  return new CheckProjectLayout(load, new InMemoryFileAdapter(files), registeredTools()).execute({
     projectRoot: PROJECT_ROOT,
   });
 }

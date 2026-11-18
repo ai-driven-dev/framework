@@ -1,15 +1,14 @@
 import { join, sep } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
-import type { Hasher } from "../../../src/shared/ports/hasher.js";
 
 /** What a contract run needs from one implementation of the file port. */
 export interface FileSubject {
   readonly files: FileReader & FileWriter;
   /** A directory this run owns, already resolved: every path a case builds hangs from it. */
   readonly root: string;
-  readonly hasher: Hasher;
   /** Makes `path` a symlink to the directory `target`. */
   link(target: string, path: string): Promise<void>;
   dispose(): Promise<void>;
@@ -117,12 +116,12 @@ export function describeFileContract(
       });
     });
 
-    contractCase("C6", "hashes a file as the hasher hashes its content", async () => {
+    contractCase("C6", "hashes a file as FileHash hashes its content", async () => {
       await subject.files.writeFile(path("f.txt"), "hashable content");
 
       const hash = await subject.files.readFileHash(path("f.txt"));
 
-      expect(hash.equals(subject.hasher.hash("hashable content"))).toBe(true);
+      expect(hash.equals(FileHash.of("hashable content"))).toBe(true);
     });
 
     contractCase(

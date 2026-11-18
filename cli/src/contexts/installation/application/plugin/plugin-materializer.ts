@@ -4,7 +4,6 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
@@ -78,7 +77,6 @@ export class PluginMaterializer {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly loader: PluginDistributionLoader,
-    private readonly hasher: Hasher,
     private readonly guard: UserScopeFileGuard,
     private readonly builtDeps: BuiltMaterializationDeps
   ) {}
@@ -224,12 +222,11 @@ export class PluginMaterializer {
         mode: tool.frameworkBuildMode(),
       });
       if (tool.plugins()?.globalFiles() != null) {
-        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, tool, dist);
+        const files = await readGlobalPluginFiles(this.fs, builtDir, tool, dist);
         return { files, componentPaths: new Map() };
       }
       const built = await readBuiltUserPluginFiles(
         this.fs,
-        this.hasher,
         builtDir,
         plugin.name,
         this.builtDeps.platform
@@ -250,7 +247,7 @@ export class PluginMaterializer {
       tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
     const translated = this.builtDeps.translate.execute({ distribution: forGlobalFiles, tool });
     return {
-      files: hashOutputFiles(translated.files, this.hasher),
+      files: hashOutputFiles(translated.files),
       componentPaths: translated.componentPaths,
     };
   }

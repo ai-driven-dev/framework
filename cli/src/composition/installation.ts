@@ -120,7 +120,6 @@ export function wireInstallation(base: Base) {
   const {
     tools,
     fs,
-    hasher,
     logger,
     currentVersionProvider,
     manifestRepo,
@@ -151,7 +150,7 @@ export function wireInstallation(base: Base) {
   const detectPluginDriftUseCase = new DetectPluginDrift(fs, tools);
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore, tools);
-  const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     trackedConfigFiles,
     fs,

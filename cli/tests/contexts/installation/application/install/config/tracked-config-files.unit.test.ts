@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import { FileHash } from "../../../../../../src/shared/domain/file.js";
 import { extractMergeEntries } from "../../../../../../src/shared/domain/merge.js";
-import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.js";
@@ -11,19 +11,18 @@ import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 const ROOT = "/project";
 
 function setup(seed: Record<string, string> = {}) {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter(seed, hasher);
+  const fs = new InMemoryFileAdapter(seed);
   const logger = new CapturingLogger();
-  return { hasher, fs, logger, files: new TrackedConfigFiles(fs, hasher, logger) };
+  return { fs, logger, files: new TrackedConfigFiles(fs, logger) };
 }
 
 describe("TrackedConfigFiles.fileOf", () => {
   it("hashes the content and defaults to no merge strategy", () => {
-    const { files, hasher } = setup();
+    const { files } = setup();
 
     const file = files.fileOf("a.json", "{}");
 
-    expect(file.hash).toStrictEqual(hasher.hash("{}"));
+    expect(file.hash).toStrictEqual(FileHash.of("{}"));
     expect(file.mergeStrategy).toBe("none");
   });
 
@@ -70,7 +69,7 @@ describe("TrackedConfigFiles.writeAndTrack", () => {
   });
 
   it("leaves a skipped file as it is and tracks it by the hash it holds on disk", async () => {
-    const { files, fs, hasher } = setup({ [join(ROOT, "a.txt")]: "edited" });
+    const { files, fs } = setup({ [join(ROOT, "a.txt")]: "edited" });
 
     const tracked = await files.writeAndTrack(
       [files.fileOf("a.txt", "alpha")],
@@ -80,7 +79,7 @@ describe("TrackedConfigFiles.writeAndTrack", () => {
 
     expect(await fs.readFile(join(ROOT, "a.txt"))).toBe("edited");
     expect(tracked.map((f) => [f.relativePath, f.content, f.hash])).toStrictEqual([
-      ["a.txt", "", hasher.hash("edited")],
+      ["a.txt", "", FileHash.of("edited")],
     ]);
   });
 
@@ -103,7 +102,7 @@ describe("TrackedConfigFiles.writeAndTrack", () => {
 
 describe("TrackedConfigFiles.mergeAndTrack", () => {
   it("merges into the file on disk and answers the entries the merged file holds", async () => {
-    const { files, fs, hasher } = setup({ [join(ROOT, "s.json")]: '{"user":1}' });
+    const { files, fs } = setup({ [join(ROOT, "s.json")]: '{"user":1}' });
 
     const entries = await files.mergeAndTrack(
       [files.fileOf("s.json", '{"framework":2}', "framework-prime")],
@@ -116,7 +115,7 @@ describe("TrackedConfigFiles.mergeAndTrack", () => {
       {
         relativePath: "s.json",
         sectionKey: null,
-        entries: extractMergeEntries(merged, null, hasher),
+        entries: extractMergeEntries(merged, null),
       },
     ]);
   });

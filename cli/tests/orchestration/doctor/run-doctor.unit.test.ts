@@ -26,7 +26,7 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
   const loadManifest = new LoadManifest(deps.manifestRepo);
   const checks = {
     tracked: new CheckTrackedFiles(loadManifest, deps.fs),
-    merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
+    merge: new CheckMergeFiles(loadManifest, deps.fs),
     references: new CheckFileReferences(loadManifest, deps.fs),
     layout: new CheckProjectLayout(loadManifest, deps.fs, catalogOf()),
     plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, catalogOf())),

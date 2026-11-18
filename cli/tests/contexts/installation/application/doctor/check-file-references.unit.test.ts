@@ -3,9 +3,8 @@ import { CheckFileReferences } from "../../../../../src/contexts/installation/ap
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -13,7 +12,6 @@ import { TOOL } from "../../../../shared/testing/registered-tools.js";
 const PROJECT_ROOT = "/project";
 const DOC = ".claude/rules/doc.md";
 const PLUGIN_DOC = ".claude/plugins/sample/agents/reviewer.md";
-const hasher = new HasherAdapter();
 
 function brokenIn(relativePath: string, ref: string) {
   return {
@@ -33,7 +31,7 @@ function manifestWithPluginDoc(content: string): Manifest {
       source: { kind: "local", path: "/some/path" },
       version: "1.0.0",
       strict: false,
-      files: { [PLUGIN_DOC]: hasher.hash(content).value },
+      files: { [PLUGIN_DOC]: FileHash.of(content).value },
       scope: "project",
     })
   );
@@ -57,11 +55,11 @@ async function issuesFor(
   const manifest = options.manifest ?? Manifest.create();
   for (const { relativePath, toolId } of options.trackedFiles ?? []) {
     manifest.addTool(toolId ?? TOOL.claude, "1.0.0", [
-      new InstallationFile({ relativePath, content: "", hash: hasher.hash("") }),
+      new InstallationFile({ relativePath, content: "", hash: FileHash.of("") }),
     ]);
   }
   const load = new LoadManifest(new InMemoryManifestRepository(manifest));
-  return new CheckFileReferences(load, new InMemoryFileAdapter(files, hasher)).execute({
+  return new CheckFileReferences(load, new InMemoryFileAdapter(files)).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds: options.allowedIds ?? null,
   });

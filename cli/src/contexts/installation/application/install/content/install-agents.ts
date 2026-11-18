@@ -1,5 +1,4 @@
 import type { InstallationFile } from "../../../../../shared/domain/file.js";
-import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type { MarkdownSectionAnswers } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../domain/canon.js";
 import type { ContentSections } from "../../../ports/tool-sections.js";
@@ -18,11 +17,9 @@ interface InstallAgentsCommand {
 }
 
 export class InstallAgents {
-  private readonly inner: InstallContentSection<MarkdownSectionAnswers>;
-
-  constructor(hasher: Hasher) {
-    this.inner = new InstallContentSection(hasher, agentsDescriptor);
-  }
+  private readonly inner: InstallContentSection<MarkdownSectionAnswers> = new InstallContentSection(
+    agentsDescriptor
+  );
 
   execute(options: InstallAgentsCommand): InstallationFile[] {
     return this.inner.execute(options);

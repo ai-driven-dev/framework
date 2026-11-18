@@ -4,10 +4,9 @@ import { describe, expect, it } from "vitest";
 import { RemoveToolFiles } from "../../../../../src/contexts/installation/application/removal/remove-tool-files.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -16,15 +15,14 @@ const ROOT = "/test-project";
 const AGENTS = "AGENTS.md";
 const SETTINGS = ".claude/settings.json";
 const MCP = ".mcp.json";
-const hasher = new HasherAdapter();
 
 function tracked(relativePath: string, content: string): InstallationFile {
-  return new InstallationFile({ relativePath, content: "", hash: hasher.hash(content) });
+  return new InstallationFile({ relativePath, content: "", hash: FileHash.of(content) });
 }
 
 function merging(relativePath: string, values: Record<string, unknown>): MergeFileEntry {
   const entries = Object.fromEntries(
-    Object.entries(values).map(([key, value]) => [key, hasher.hash(JSON.stringify(value))])
+    Object.entries(values).map(([key, value]) => [key, FileHash.of(JSON.stringify(value))])
   );
   return { relativePath, sectionKey: null, entries };
 }
@@ -33,7 +31,7 @@ function projectWith(seed: Record<string, string>) {
   const absolute = Object.fromEntries(
     Object.entries(seed).map(([relativePath, content]) => [join(ROOT, relativePath), content])
   );
-  return { fs: new InMemoryFileAdapter(absolute, hasher), manifest: Manifest.create() };
+  return { fs: new InMemoryFileAdapter(absolute), manifest: Manifest.create() };
 }
 
 function removal(
@@ -116,7 +114,7 @@ describe("RemoveToolFiles.remove", () => {
         version: "1.0.0",
         strict: false,
         scope: "project",
-        files: { [first]: hasher.hash("skill").value, [second]: hasher.hash("command").value },
+        files: { [first]: FileHash.of("skill").value, [second]: FileHash.of("command").value },
       })
     );
 
@@ -142,7 +140,7 @@ describe("RemoveToolFiles.remove", () => {
         version: "1.0.0",
         strict: false,
         scope: "user",
-        files: { [key]: hasher.hash("user copy").value },
+        files: { [key]: FileHash.of("user copy").value },
       })
     );
 

@@ -9,14 +9,13 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
-import { InstallationFile } from "../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
@@ -90,13 +89,12 @@ async function recovery(options: RecoveryOptions = {}) {
   const source = options.source ?? OLD;
   const scope = options.scope ?? "project";
   const manifest = Manifest.create();
-  const hasher = new HasherAdapter();
   const settings = options.settings ?? "{}";
   manifest.addTool(TOOL.claude, "1.0.0", [
     new InstallationFile({
       relativePath: ".claude/settings.json",
       content: settings,
-      hash: hasher.hash(settings),
+      hash: FileHash.of(settings),
     }),
   ]);
   manifest.addPlugin(
@@ -183,7 +181,6 @@ async function recovery(options: RecoveryOptions = {}) {
     fs,
     manifestRepo: repo,
     marketplaceRegistry: registry,
-    hasher,
     logger,
     activators: new Map([[TOOL.claude, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -422,7 +419,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(repo.saveCount).toBe(saveCount);
     expect(activator.addedMarketplaces).toEqual([BUILT]);
     expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
-      new HasherAdapter().hash(await fs.readFile(resolve(ROOT, ".claude/settings.json"))).value
+      FileHash.of(await fs.readFile(resolve(ROOT, ".claude/settings.json"))).value
     );
   });
 
@@ -432,9 +429,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       const { fs, manifest, result, logger } = await recovery({ settings });
       const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
       expect(JSON.parse(content)).toEqual({ enabledPlugins: { [`review@${ALIAS}`]: true } });
-      expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
-        new HasherAdapter().hash(content).value
-      );
+      expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(FileHash.of(content).value);
       expect(logger.warnMessages).toEqual([RECLAIM]);
       expect(result.errors).toEqual([]);
     }
@@ -453,9 +448,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       permissions: { allow: ["Read"] },
       enabledPlugins: { [`review@${ALIAS}`]: false, "personal@external": true },
     });
-    expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
-      new HasherAdapter().hash(content).value
-    );
+    expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(FileHash.of(content).value);
     expect(result.errors).toEqual([]);
   });
 });
@@ -474,7 +467,6 @@ async function ownedNativeSettings(
   const names = options.names ?? ["first"];
   const settings = options.settings ?? JSON.stringify({ permissions: { allow: ["Read"] } });
   const settingsPath = ".github/copilot/settings.json";
-  const hasher = new HasherAdapter();
   const project = Manifest.create();
   project.addTool(
     toolId,
@@ -484,7 +476,7 @@ async function ownedNativeSettings(
           new InstallationFile({
             relativePath: settingsPath,
             content: settings,
-            hash: hasher.hash(settings),
+            hash: FileHash.of(settings),
           }),
         ]
       : []
@@ -564,7 +556,6 @@ async function ownedNativeSettings(
     fs,
     manifestRepo: projectRepo,
     marketplaceRegistry: registry,
-    hasher,
     logger,
     activators: new Map([[toolId, activator]]),
     ensureBuilt: {
@@ -605,7 +596,6 @@ async function ownedNativeSettings(
     logger,
     projectRepo,
     machineRepo,
-    hasher,
     settingsPath,
     registrations,
     refs,
@@ -623,7 +613,7 @@ describe("proven native catalogues update declarative settings only when require
       enabledPlugins: { "review-first@first-catalog": true, "review-second@second-catalog": true },
     });
     expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
-      f.hasher.hash(content).value
+      FileHash.of(content).value
     );
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.copilot)).toEqual({
       binary: "copilot",
@@ -642,7 +632,7 @@ describe("proven native catalogues update declarative settings only when require
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(JSON.parse(content).enabledPlugins).toEqual({ "review-first@first-catalog": true });
     expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
-      f.hasher.hash(content).value
+      FileHash.of(content).value
     );
     expect(f.projectRepo.saveCount).toBe(1);
     expect(f.machineRepo.saveCount).toBe(0);
@@ -754,7 +744,6 @@ describe("shared framework references follow any successful native tool outcome"
         fs,
         manifestRepo: new InMemoryManifestRepository(project),
         marketplaceRegistry: registry,
-        hasher: new HasherAdapter(),
         logger: new CapturingLogger(),
         activators: new Map([
           [TOOL.claude, claude],

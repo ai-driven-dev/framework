@@ -1,10 +1,9 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash, type InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
@@ -63,13 +62,12 @@ export async function deletePluginFilesForTool(
  * write and, more importantly, not count it as restored. */
 export async function isPluginFileAtDesiredState(
   fs: FileReader,
-  hasher: Hasher,
   outputPath: string,
   expectedHashValue: string
 ): Promise<boolean> {
   if (!(await fs.fileExists(outputPath))) return false;
   const content = await fs.readFile(outputPath);
-  return hasher.hash(content).value === expectedHashValue;
+  return FileHash.of(content).value === expectedHashValue;
 }
 
 /**

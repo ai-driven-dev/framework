@@ -3,7 +3,6 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -32,7 +31,6 @@ export interface ReplacePluginFilesCommand {
 export class ReplacePluginFiles {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly hasher: Hasher,
     private readonly builtDeps: BuiltMaterializationDeps,
     private readonly tools: ToolCatalog
   ) {}
@@ -48,7 +46,7 @@ export class ReplacePluginFiles {
       return;
     }
     const translated = this.builtDeps.translate.execute({ distribution: dist, tool });
-    const newFiles = hashOutputFiles(translated.files, this.hasher);
+    const newFiles = hashOutputFiles(translated.files);
     await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       tool.toolId,
@@ -68,7 +66,6 @@ export class ReplacePluginFiles {
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
     return resolvePluginTranslator(tool, {
       fs: this.fs,
-      hasher: this.hasher,
       built: this.builtDeps,
     });
   }

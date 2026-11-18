@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
+import { FileHash } from "../../../../shared/domain/file.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Manifest } from "../../domain/manifest.js";
 
@@ -13,7 +13,6 @@ import type { Manifest } from "../../domain/manifest.js";
 export class TrackedSettingsFile {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly hasher: Hasher,
     private readonly logger: Logger
   ) {}
 
@@ -40,6 +39,6 @@ export class TrackedSettingsFile {
   ): Promise<void> {
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(resolve(projectRoot, settingsFile), content);
-    manifest.updateTrackedFileHash(toolId, settingsFile, this.hasher.hash(content));
+    manifest.updateTrackedFileHash(toolId, settingsFile, FileHash.of(content));
   }
 }

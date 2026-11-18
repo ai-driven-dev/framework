@@ -10,6 +10,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -67,7 +68,6 @@ function makeUpdateUseCase(
       new PluginMaterializer(
         deps.fs,
         new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-        deps.hasher,
         userScopeFileGuard,
         {
           ensureBuilt,
@@ -92,7 +92,7 @@ async function installStalePlugin(deps: Deps, registry: FakeMarketplaceRegistry)
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
   deps.fs.setFile(BUILT_SKILL, "# Demo skill");
   await new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(
@@ -669,13 +669,12 @@ describe("UpdatePlugin — built-tree materialization", () => {
     machine.updatePlugin(
       cursor,
       stale.withFiles(
-        new Map([...stale.files, [oldRelativePath, deps.hasher.hash("old owned bytes").value]])
+        new Map([...stale.files, [oldRelativePath, FileHash.of("old owned bytes").value]])
       )
     );
     const updater = new PluginMaterializer(
       deps.fs,
       new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-      deps.hasher,
       userScopeFileGuard,
       {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -757,7 +756,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
     machine.updatePlugin(
       cursor,
       stale
-        .withFiles(new Map([...stale.files, [oldPath, deps.hasher.hash("old owned bytes").value]]))
+        .withFiles(new Map([...stale.files, [oldPath, FileHash.of("old owned bytes").value]]))
         .withDependents([PROJECT_ROOT, "/B"])
     );
     expect(

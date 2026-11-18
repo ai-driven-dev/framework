@@ -52,7 +52,7 @@ async function installPlugin(
   pluginReader: PluginDistributionReaderAdapter
 ): Promise<void> {
   await new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
@@ -76,7 +76,6 @@ function makeRestoreAll(
   const statusUseCase = new ReportStatus(
     deps.fs,
     deps.manifestRepo,
-    deps.hasher,
     new DetectPluginDrift(deps.fs, registeredTools()),
     registeredTools()
   );
@@ -316,7 +315,7 @@ describe("RestoreAll — plugin materialization", () => {
     const { reader } = countingReader(deps.fs);
     await installPlugin(deps, TOOL.claude, reader);
     await new AddPlugin(
-      { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+      { fs: deps.fs, logger: deps.logger },
       { project: deps.manifestRepo, user: deps.userManifestRepo },
       {
         distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
@@ -371,7 +370,6 @@ describe("RestoreAll — consent to overwrite", () => {
     const statusUseCase = new ReportStatus(
       deps.fs,
       deps.manifestRepo,
-      deps.hasher,
       new DetectPluginDrift(deps.fs, registeredTools()),
       registeredTools()
     );
@@ -412,7 +410,6 @@ describe("RestoreAll — native-only tools", () => {
     const statusUseCase = new ReportStatus(
       deps.fs,
       deps.manifestRepo,
-      deps.hasher,
       new DetectPluginDrift(deps.fs, registeredTools()),
       registeredTools()
     );
@@ -462,7 +459,6 @@ function restoreAllDelegatingTo(
   const statusUseCase = new ReportStatus(
     deps.fs,
     deps.manifestRepo,
-    deps.hasher,
     new DetectPluginDrift(deps.fs, registeredTools()),
     registeredTools()
   );

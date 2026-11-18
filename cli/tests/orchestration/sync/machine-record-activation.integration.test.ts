@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -40,7 +39,6 @@ describe("the machine record is saved once any tool of the run changed it", () =
     const repo = new InMemoryManifestRepository(machine);
     const record = new RecordActivation(
       new InMemoryFileAdapter(),
-      new HasherAdapter(),
       registrationRecordRules,
       registeredCatalog(),
       repo

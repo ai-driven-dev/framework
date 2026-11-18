@@ -81,7 +81,6 @@ export function wirePlugin(base: Base, inst: Installation) {
   const {
     tools,
     fs,
-    hasher,
     logger,
     prompter,
     manifestRepo,
@@ -135,7 +134,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     )
   );
   const pluginAddUseCase = new AddPlugin(
-    { fs: fs, hasher: hasher, logger: logger },
+    { fs: fs, logger: logger },
     { project: manifestRepo, user: userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
@@ -169,7 +168,6 @@ export function wirePlugin(base: Base, inst: Installation) {
   const pluginMaterializer = new PluginMaterializer(
     fs,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, pluginCacheDir),
-    hasher,
     userScopeFileGuard,
     builtMaterializationDeps
   );
@@ -177,7 +175,7 @@ export function wirePlugin(base: Base, inst: Installation) {
   const pluginUpdateUseCase = new UpdatePlugin(
     manifestRepo,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    new ReplacePluginFiles(fs, hasher, builtMaterializationDeps, tools),
+    new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
     tools,
     installRuntimeConfigUseCase
   );

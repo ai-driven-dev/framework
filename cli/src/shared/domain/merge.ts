@@ -1,8 +1,7 @@
 import type { FileReader } from "../ports/file-reader.js";
 import type { FileWriter } from "../ports/file-writer.js";
-import type { Hasher } from "../ports/hasher.js";
 import { JsonParseError } from "./errors.js";
-import type { FileHash } from "./file.js";
+import { FileHash } from "./file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
 
 export type MergeStrategy = "none" | "framework-prime" | "user-prime";
@@ -15,8 +14,7 @@ export interface MergeFileEntry {
 
 export function extractMergeEntries(
   jsonContent: string,
-  sectionKey: string | null,
-  hasher: Hasher
+  sectionKey: string | null
 ): Record<string, FileHash> {
   let parsed: Record<string, unknown>;
   try {
@@ -26,16 +24,13 @@ export function extractMergeEntries(
   }
   const container = resolveContainer(parsed, sectionKey);
   if (container === null || typeof container !== "object" || Array.isArray(container)) return {};
-  return hashJsonEntries(container as Record<string, unknown>, hasher);
+  return hashJsonEntries(container as Record<string, unknown>);
 }
 
-export function hashJsonEntries(
-  entries: Record<string, unknown>,
-  hasher: Hasher
-): Record<string, FileHash> {
+export function hashJsonEntries(entries: Record<string, unknown>): Record<string, FileHash> {
   const result: Record<string, FileHash> = {};
   for (const [key, value] of Object.entries(entries)) {
-    result[key] = hasher.hash(JSON.stringify(value));
+    result[key] = FileHash.of(JSON.stringify(value));
   }
   return result;
 }

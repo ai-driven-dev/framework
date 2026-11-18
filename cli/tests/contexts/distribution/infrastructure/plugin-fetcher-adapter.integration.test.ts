@@ -8,7 +8,6 @@ import { describe, expect, it } from "vitest";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 
 const execFileAsync = promisify(execFile);
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
@@ -52,7 +51,7 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginFetcherAdapter(new FileAdapter());
 }
 
 describe("PluginFetcherAdapter", () => {

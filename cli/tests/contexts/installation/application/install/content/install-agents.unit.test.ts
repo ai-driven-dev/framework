@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InstallAgents } from "../../../../../../src/contexts/installation/application/install/content/install-agents.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
-import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash, GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -23,15 +22,14 @@ const agentsSectionWithEntry: ContentSection = {
 };
 
 function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const useCase = new InstallAgents(hasher);
-  return { hasher, useCase };
+  const useCase = new InstallAgents();
+  return { useCase };
 }
 
 describe("InstallAgents", () => {
   describe("execute", () => {
     it("produces an InstallationFile with correct relativePath for a claude agent", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const rawContent =
         "---\nname: code-reviewer\ndescription: Reviews code\n---\n# Review instructions\n";
       const contentFiles = new Map([["agents/code-reviewer.claude.md", rawContent]]);
@@ -46,7 +44,7 @@ describe("InstallAgents", () => {
       const [file] = files;
       expect(file.relativePath).toBe(".claude/agents/code-reviewer.md");
       expect(file.frameworkPath).toBe("agents/code-reviewer.claude.md");
-      expect(file.hash).toEqual(hasher.hash(file.content));
+      expect(file.hash).toEqual(FileHash.of(file.content));
     });
 
     it("returns empty array when contentFiles map is empty", () => {
@@ -95,7 +93,7 @@ describe("InstallAgents", () => {
     });
 
     it("produces an empty-content InstallationFile for .gitkeep files", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const gitkeepPath = `agents/${GITKEEP_FILE}`;
       const contentFiles = new Map([[gitkeepPath, ""]]);
 
@@ -107,7 +105,7 @@ describe("InstallAgents", () => {
 
       expect(files).toHaveLength(1);
       expect(files[0].content).toBe("");
-      expect(files[0].hash).toEqual(hasher.hash(""));
+      expect(files[0].hash).toEqual(FileHash.of(""));
     });
 
     it("serializes agent frontmatter and body in output content", () => {

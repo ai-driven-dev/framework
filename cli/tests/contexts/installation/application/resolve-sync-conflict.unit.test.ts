@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ResolveSyncConflict } from "../../../../src/contexts/installation/application/resolve-sync-conflict.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const DISK_PATH = "/project/target.md";
@@ -8,10 +8,9 @@ const CONTENT_A = "content A";
 const CONTENT_B = "content B";
 
 function buildDeps() {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter({}, hasher);
+  const fs = new InMemoryFileAdapter({});
   const resolver = new ResolveSyncConflict(fs);
-  return { hasher, fs, resolver };
+  return { fs, resolver };
 }
 
 describe("ResolveSyncConflict", () => {
@@ -34,9 +33,9 @@ describe("ResolveSyncConflict", () => {
     });
 
     it("returns conflict when target differs from manifest hash and force is false", async () => {
-      const { hasher, fs, resolver } = buildDeps();
+      const { fs, resolver } = buildDeps();
       await fs.writeFile(DISK_PATH, CONTENT_B);
-      const manifestHash = hasher.hash(CONTENT_A).value;
+      const manifestHash = FileHash.of(CONTENT_A).value;
       const targetManifestMap = new Map([["target.md", { value: manifestHash }]]);
 
       const result = await resolver.resolveWriteOutcome({
@@ -52,9 +51,9 @@ describe("ResolveSyncConflict", () => {
     });
 
     it("returns write with conflict=true when force overrides a detected conflict", async () => {
-      const { hasher, fs, resolver } = buildDeps();
+      const { fs, resolver } = buildDeps();
       await fs.writeFile(DISK_PATH, CONTENT_B);
-      const manifestHash = hasher.hash(CONTENT_A).value;
+      const manifestHash = FileHash.of(CONTENT_A).value;
       const targetManifestMap = new Map([["target.md", { value: manifestHash }]]);
 
       const result = await resolver.resolveWriteOutcome({

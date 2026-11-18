@@ -8,8 +8,8 @@ import {
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
@@ -63,7 +63,7 @@ async function installPlugin(
 ): Promise<void> {
   await seedFromDirectory(deps.fs, fixture, { useAbsolutePaths: true });
   const addUseCase = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(
@@ -258,7 +258,7 @@ describe("RemovePlugin", () => {
           }),
           {
             entries: [],
-            scripts: new Map([[script, new HasherAdapter().hash("// installed").value]]),
+            scripts: new Map([[script, FileHash.of("// installed").value]]),
           }
         )
       );
@@ -333,7 +333,7 @@ describe("RemovePlugin", () => {
       fs.setFile(ownedConfig, JSON.stringify({ mcp: { srv: server, mine: {} } }));
       const manifestRepo = manifestHolding(TOOL.opencode, {
         name: "aidd-context",
-        mcpEntries: { srv: new HasherAdapter().hash(JSON.stringify(server)).value },
+        mcpEntries: { srv: FileHash.of(JSON.stringify(server)).value },
       });
 
       await removeUseCaseOver(fs, manifestRepo).execute({

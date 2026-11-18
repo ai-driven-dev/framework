@@ -4,6 +4,7 @@ import { PropagateAiSettingsToIde } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { SettingsFileAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {
   buildUnitDeps,
@@ -125,7 +126,7 @@ describe("PropagateAiSettingsToIde", () => {
     const stale = {
       relativePath: ".vscode/settings.json",
       sectionKey: null,
-      entries: { stale: deps.hasher.hash("0") },
+      entries: { stale: FileHash.of("0") },
     };
     const manifest = await withCopilotRegistered(deps, [mcpEntry, stale]);
     const assets = new StubAssetProvider({ "copilot/vscode-settings.json": '{"a": 1}' });
@@ -136,7 +137,7 @@ describe("PropagateAiSettingsToIde", () => {
     expect(kept).toStrictEqual(mcpEntry);
     expect(replaced.relativePath).toBe(".vscode/settings.json");
     expect(replaced.entries).not.toHaveProperty("stale");
-    expect(replaced.entries).toHaveProperty("a", deps.hasher.hash("1"));
+    expect(replaced.entries).toHaveProperty("a", FileHash.of("1"));
   });
 
   it("merges nothing of an asset-backed capability when no asset provider was given", async () => {

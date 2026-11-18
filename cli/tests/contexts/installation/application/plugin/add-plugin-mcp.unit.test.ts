@@ -44,7 +44,7 @@ async function buildOpencodeProject(): Promise<{
   const logger = new CapturingLogger();
   const registry = new FakeMarketplaceRegistry();
   const useCase = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(

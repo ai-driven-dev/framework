@@ -3,8 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { RestoreToolFilesCommand } from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { restoreToolFilesOf } from "../../../../helpers/ports/build-restore.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -38,19 +37,14 @@ function contentFiles(extensions = EXTENSIONS_CONTENT): Map<string, string> {
 
 interface Installed {
   fs: InMemoryFileAdapter;
-  hasher: HasherAdapter;
   manifest: Manifest;
 }
 
 function installedVscode(extraTracked: string[] = []): Installed {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter(
-    {
-      [join(PROJECT_ROOT, KEYBINDINGS)]: KEYBINDINGS_CONTENT,
-      [join(PROJECT_ROOT, EXTENSIONS)]: EXTENSIONS_CONTENT,
-    },
-    hasher
-  );
+  const fs = new InMemoryFileAdapter({
+    [join(PROJECT_ROOT, KEYBINDINGS)]: KEYBINDINGS_CONTENT,
+    [join(PROJECT_ROOT, EXTENSIONS)]: EXTENSIONS_CONTENT,
+  });
   const manifest = Manifest.create();
   manifest.addTool(
     TOOL.vscode,
@@ -60,18 +54,18 @@ function installedVscode(extraTracked: string[] = []): Installed {
         new InstallationFile({
           relativePath,
           content: "",
-          hash: hasher.hash(relativePath === KEYBINDINGS ? KEYBINDINGS_CONTENT : relativePath),
+          hash: FileHash.of(relativePath === KEYBINDINGS ? KEYBINDINGS_CONTENT : relativePath),
         })
     ),
     [
       {
         relativePath: EXTENSIONS,
         sectionKey: null,
-        entries: { recommendations: hasher.hash(JSON.stringify(["a.ext"])) },
+        entries: { recommendations: FileHash.of(JSON.stringify(["a.ext"])) },
       },
     ]
   );
-  return { fs, hasher, manifest };
+  return { fs, manifest };
 }
 
 function restore(
@@ -82,7 +76,7 @@ function restore(
 ) {
   return restoreToolFilesOf({
     fs: installed.fs,
-    hasher: installed.hasher,
+
     logger,
     prompter,
   }).execute({
@@ -202,8 +196,8 @@ describe("RestoreToolFiles — what it records", () => {
         relativePath: EXTENSIONS,
         sectionKey: null,
         entries: {
-          recommendations: installed.hasher.hash(JSON.stringify(["a.ext"])),
-          unwantedRecommendations: installed.hasher.hash(JSON.stringify(["b.ext"])),
+          recommendations: FileHash.of(JSON.stringify(["a.ext"])),
+          unwantedRecommendations: FileHash.of(JSON.stringify(["b.ext"])),
         },
       },
     ]);

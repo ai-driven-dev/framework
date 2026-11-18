@@ -5,7 +5,7 @@ import { AddPlugin } from "../../../../../src/contexts/installation/application/
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -24,14 +24,14 @@ async function legacyProject() {
     new InstallationFile({
       relativePath: "opencode.json",
       content: USER_CONFIG,
-      hash: deps.hasher.hash(USER_CONFIG),
+      hash: FileHash.of(USER_CONFIG),
     }),
   ]);
   await deps.manifestRepo.save(manifest);
   await deps.fs.writeFile(join(ROOT, "opencode.json"), USER_CONFIG);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
   const add = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(
@@ -47,7 +47,7 @@ async function legacyProject() {
   const update = new UpdatePlugin(
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps(), registeredTools()),
+    new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
     registeredTools(),
     deps.installRuntimeConfigUseCase
   );
@@ -138,7 +138,7 @@ describe("plugin runtime files on an existing tool", () => {
     const { deps, addPlugin } = await legacyProject();
     await deps.fs.writeFile(join(ROOT, HELPER), "// user's edit");
     const manifest = deps.manifestRepo.getCurrent();
-    const originalHash = deps.hasher.hash("// original helper");
+    const originalHash = FileHash.of("// original helper");
     manifest?.updateTrackedFileHash(TOOL.opencode, HELPER, originalHash);
     await addPlugin();
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toBe("// user's edit");

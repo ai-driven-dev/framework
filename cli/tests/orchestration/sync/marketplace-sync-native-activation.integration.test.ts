@@ -7,11 +7,11 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FileHash } from "../../../src/shared/domain/file.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
@@ -116,17 +116,14 @@ function buildSync(activator: FakeHostActions, pluginMarketplace?: string) {
   const registry = new InMemoryMarketplaceRegistry();
   const fs = seededBuiltCatalog();
   const manifestRepo = manifestWithPlugin(pluginMarketplace);
-  const hasher = new HasherAdapter();
   return {
     registry,
     fs,
     manifestRepo,
-    hasher,
     useCase: marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -301,12 +298,10 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
       }),
     });
     const manifestRepo = manifestWithPlugin();
-    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -344,12 +339,10 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
-    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -371,14 +364,12 @@ describe("what native activation leaves behind is not reported as the user's dri
     const registry = new InMemoryMarketplaceRegistry();
     const fs = seededBuiltCatalog();
     const manifestRepo = manifestWithPlugin();
-    const hasher = new HasherAdapter();
     const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
     const activator = new ActivatorThatWritesSettings(fs, settingsAbsolutePath);
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -398,7 +389,7 @@ describe("what native activation leaves behind is not reported as the user's dri
     const entry = tracked.find((file) => file.relativePath === SETTINGS_PATH);
 
     expect(entry, "the settings file is tracked at all").toBeDefined();
-    expect(entry?.hash).toEqual(hasher.hash(onDisk));
+    expect(entry?.hash).toEqual(FileHash.of(onDisk));
   });
   // A tool whose CLI is not on the PATH wrote nothing, so a settings file differing from its
   // tracked hash differs because a person changed it — re-hashing would bless that as ours.
@@ -406,13 +397,11 @@ describe("what native activation leaves behind is not reported as the user's dri
     const registry = new InMemoryMarketplaceRegistry();
     const fs = new InMemoryFileAdapter();
     const manifestRepo = manifestWithPlugin();
-    const hasher = new HasherAdapter();
     const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: // Not available: the binary is not on the PATH, so nothing of the host's is written.
         new Map([[claude, new FakeHostActions({ available: false })]]),
@@ -433,7 +422,7 @@ describe("what native activation leaves behind is not reported as the user's dri
       .find((file) => file.relativePath === SETTINGS_PATH);
     expect(hashAfterSync, "the settings file is tracked at all").toBeDefined();
     expect(tracked?.hash).toEqual(hashAfterSync);
-    expect(tracked?.hash).not.toEqual(hasher.hash(edited));
+    expect(tracked?.hash).not.toEqual(FileHash.of(edited));
   });
 });
 
@@ -456,12 +445,10 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
       }),
     });
     const manifestRepo = manifestWithPlugin();
-    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -603,12 +590,10 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
       )
     );
     const manifestRepo = new InMemoryManifestRepository(manifest);
-    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -705,12 +690,10 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       )
     );
     const manifestRepo = new InMemoryManifestRepository(manifest);
-    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher,
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: ensureBuiltSharedCatalog(),
@@ -781,7 +764,6 @@ describe("what reclaiming a dead registration says", () => {
       fs,
       manifestRepo: manifestWithPlugin(),
       marketplaceRegistry: registry,
-      hasher: new HasherAdapter(),
       logger,
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -944,7 +926,6 @@ function buildSyncReadingHost(
     fs: seededBuiltCatalog(),
     manifestRepo,
     marketplaceRegistry: registry,
-    hasher: new HasherAdapter(),
     logger,
     activators: new Map([[claude, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),

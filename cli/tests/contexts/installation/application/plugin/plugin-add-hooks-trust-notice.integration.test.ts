@@ -22,7 +22,7 @@ async function installWithLogger(toolId: AiToolId) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const logger = new CapturingLogger();
   const useCase = new AddPlugin(
-    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(

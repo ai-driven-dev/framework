@@ -12,7 +12,6 @@ import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
@@ -79,7 +78,6 @@ function fixture(
             ? { read: async () => distribution }
             : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
         ),
-        new HasherAdapter(),
         userScopeFileGuard,
         fakeBuiltDeps()
       ),

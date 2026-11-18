@@ -1,7 +1,10 @@
-import { InstallationFile, removeRedundantGitkeeps } from "../../../../shared/domain/file.js";
+import {
+  FileHash,
+  InstallationFile,
+  removeRedundantGitkeeps,
+} from "../../../../shared/domain/file.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
 import type { Platform } from "../../ports/platform.js";
 import type { RestoredAiTool, RestoredIdeTool, RestoredTool } from "../../ports/tool-sections.js";
@@ -21,7 +24,6 @@ interface GenerateToolDistributionCommand {
 export class GenerateToolDistribution {
   constructor(
     private readonly fs: FileReader,
-    private readonly hasher: Hasher,
     private readonly platform: Platform,
     private readonly assetProvider?: AssetProvider
   ) {}
@@ -40,7 +42,7 @@ export class GenerateToolDistribution {
     contentFiles: Map<string, string>,
     projectRoot: string
   ): Promise<InstallationFile[]> {
-    const configFiles = await new InstallConfig(this.fs, this.hasher).execute({
+    const configFiles = await new InstallConfig(this.fs).execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
@@ -57,7 +59,7 @@ export class GenerateToolDistribution {
     projectRoot: string
   ): Promise<InstallationFile[]> {
     const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
-    const configFiles = await new InstallConfig(this.fs, this.hasher).execute({
+    const configFiles = await new InstallConfig(this.fs).execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
@@ -81,7 +83,7 @@ export class GenerateToolDistribution {
         new InstallationFile({
           relativePath: outputPath,
           content,
-          hash: this.hasher.hash(content),
+          hash: FileHash.of(content),
         })
       );
     }
@@ -108,13 +110,13 @@ export class GenerateToolDistribution {
     const options = { toolConfig: config, section, contentFiles };
     switch (section.name) {
       case "agents":
-        return new InstallAgents(this.hasher).execute(options);
+        return new InstallAgents().execute(options);
       case "commands":
-        return new InstallCommands(this.hasher).execute(options);
+        return new InstallCommands().execute(options);
       case "rules":
-        return new InstallRules(this.hasher).execute(options);
+        return new InstallRules().execute(options);
       case "skills":
-        return new InstallSkills(this.hasher).execute(options);
+        return new InstallSkills().execute(options);
       default:
         return [];
     }

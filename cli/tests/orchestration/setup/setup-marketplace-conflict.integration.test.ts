@@ -91,7 +91,7 @@ async function buildUseCaseWithConflict() {
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     marketplaceRegistry: deps.marketplaceRegistry,
-    hasher: deps.hasher,
+
     logger: deps.logger,
     activators: new Map([["claude", activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace((target) => `/built/${target}`),

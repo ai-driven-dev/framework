@@ -8,13 +8,12 @@ import {
   MalformedMarketplaceCatalogError,
 } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");
 
 function makeAdapter(): PluginCatalogRepositoryAdapter {
-  return new PluginCatalogRepositoryAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginCatalogRepositoryAdapter(new FileAdapter());
 }
 
 describe("PluginCatalogRepositoryAdapter", () => {

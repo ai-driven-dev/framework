@@ -14,10 +14,9 @@ import {
   ManifestUnavailableError,
   ToolNotInstalledError,
 } from "../../../../src/shared/domain/errors.js";
-import { type FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
@@ -48,13 +47,12 @@ function uninstaller(
   );
 }
 
-const hasher = new HasherAdapter();
 const SETTINGS = ".claude/settings.json";
 const AGENTS = "AGENTS.md";
 const MCP = ".mcp.json";
 
 function tracked(relativePath: string, content: string): InstallationFile {
-  return new InstallationFile({ relativePath, content: "", hash: hasher.hash(content) });
+  return new InstallationFile({ relativePath, content: "", hash: FileHash.of(content) });
 }
 
 function merging(
@@ -64,7 +62,7 @@ function merging(
 ): MergeFileEntry {
   const entries: Record<string, FileHash> = {};
   for (const [key, value] of Object.entries(values)) {
-    entries[key] = hasher.hash(JSON.stringify(value));
+    entries[key] = FileHash.of(JSON.stringify(value));
   }
   return { relativePath, sectionKey, entries };
 }
@@ -74,7 +72,7 @@ function project(seed: Record<string, string>): { fs: InMemoryFileAdapter; manif
   for (const [relativePath, content] of Object.entries(seed)) {
     absolute[join(PROJECT_ROOT, relativePath)] = content;
   }
-  return { fs: new InMemoryFileAdapter(absolute, hasher), manifest: Manifest.create() };
+  return { fs: new InMemoryFileAdapter(absolute), manifest: Manifest.create() };
 }
 
 function remove(

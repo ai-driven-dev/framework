@@ -6,7 +6,6 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { projectCleaner } from "../../helpers/project-cleaner.js";
@@ -23,7 +22,7 @@ afterEach(async () => {
 });
 
 function buildUseCase(logger: CapturingLogger): CleanProject {
-  const fs = new FileAdapter(new HasherAdapter(), logger);
+  const fs = new FileAdapter(logger);
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addTool(TOOL.vscode, "1.0.0", []);

@@ -4,7 +4,6 @@ import type { FileHash } from "../../../shared/domain/file.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
@@ -59,7 +58,6 @@ export class ReportStatus implements StatusQuery {
   constructor(
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
-    private readonly hasher: Hasher,
     private readonly detectPluginDrift: DetectPluginDrift,
     private readonly tools: ToolCatalog
   ) {}
@@ -173,7 +171,7 @@ export class ReportStatus implements StatusQuery {
       }));
     }
     const diskContent = await this.fs.readFile(fullPath);
-    const diskEntries = extractMergeEntries(diskContent, mergeFile.sectionKey, this.hasher);
+    const diskEntries = extractMergeEntries(diskContent, mergeFile.sectionKey);
     return this.compareMergeEntries(mergeFile, diskEntries);
   }
 

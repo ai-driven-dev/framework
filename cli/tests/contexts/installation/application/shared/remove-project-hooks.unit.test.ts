@@ -6,7 +6,7 @@ import {
   removeProjectHooks,
 } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -45,7 +45,7 @@ function plugin(options: { entry?: boolean; script?: string } = {}): InstalledPl
             {
               event: "preToolUse",
               command,
-              digest: new HasherAdapter().hash(JSON.stringify(entry(PLUGIN))).value,
+              digest: FileHash.of(JSON.stringify(entry(PLUGIN))).value,
             },
           ]
         : [],
@@ -53,7 +53,7 @@ function plugin(options: { entry?: boolean; script?: string } = {}): InstalledPl
         options.script === undefined
           ? {}
           : {
-              [`.cursor/hooks/${PLUGIN}/pre.js`]: new HasherAdapter().hash(options.script).value,
+              [`.cursor/hooks/${PLUGIN}/pre.js`]: FileHash.of(options.script).value,
             },
     },
   });
@@ -129,7 +129,7 @@ describe("removeProjectHooks", () => {
       ...installed,
       projectHooks: {
         entries: installed.projectHooks?.entries ?? [],
-        scripts: { [path]: new HasherAdapter().hash(script).value },
+        scripts: { [path]: FileHash.of(script).value },
       },
     });
 
@@ -154,7 +154,7 @@ describe("removeProjectHooks", () => {
         ...installed,
         projectHooks: {
           entries: installed.projectHooks?.entries ?? [],
-          scripts: { [path]: new HasherAdapter().hash(script).value },
+          scripts: { [path]: FileHash.of(script).value },
         },
       });
 
@@ -240,12 +240,12 @@ describe("removeProjectHooks", () => {
           {
             event: "preToolUse",
             command: first.command,
-            digest: new HasherAdapter().hash(JSON.stringify(first)).value,
+            digest: FileHash.of(JSON.stringify(first)).value,
           },
           {
             event: "postToolUse",
             command: second.command,
-            digest: new HasherAdapter().hash(JSON.stringify(second)).value,
+            digest: FileHash.of(JSON.stringify(second)).value,
           },
         ],
         scripts: {},

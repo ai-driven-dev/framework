@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InstallCommands } from "../../../../../../src/contexts/installation/application/install/content/install-commands.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
-import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
-import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
+import { FileHash, GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const antigravity = registeredTools().aiProfile(TOOL.antigravity);
@@ -18,9 +17,8 @@ const commandsSection: ContentSection = {
 };
 
 function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const useCase = new InstallCommands(hasher);
-  return { hasher, useCase };
+  const useCase = new InstallCommands();
+  return { useCase };
 }
 
 describe("InstallCommands", () => {
@@ -39,7 +37,7 @@ describe("InstallCommands", () => {
     });
 
     it("produces an InstallationFile with correct relativePath and content for a standard command", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const rawContent =
         "---\nname: implement\ndescription: Implement a feature\n---\n# Implementation\n";
       const contentFiles = new Map([["commands/04_code/implement.claude.md", rawContent]]);
@@ -54,7 +52,7 @@ describe("InstallCommands", () => {
       const [file] = files;
       expect(file.relativePath).toBe(".claude/commands/aidd/04/implement.claude.md");
       expect(file.frameworkPath).toBe("commands/04_code/implement.claude.md");
-      expect(file.hash).toEqual(hasher.hash(file.content));
+      expect(file.hash).toEqual(FileHash.of(file.content));
     });
 
     it("returns empty array when contentFiles map is empty", () => {
@@ -103,7 +101,7 @@ describe("InstallCommands", () => {
     });
 
     it("produces an empty-content InstallationFile for .gitkeep files", () => {
-      const { hasher, useCase } = buildUseCase();
+      const { useCase } = buildUseCase();
       const gitkeepPath = `commands/04_code/${GITKEEP_FILE}`;
       const contentFiles = new Map([[gitkeepPath, ""]]);
 
@@ -115,7 +113,7 @@ describe("InstallCommands", () => {
 
       expect(files).toHaveLength(1);
       expect(files[0].content).toBe("");
-      expect(files[0].hash).toEqual(hasher.hash(""));
+      expect(files[0].hash).toEqual(FileHash.of(""));
     });
 
     it("converts frontmatter via the capability's convertFrontmatter", () => {

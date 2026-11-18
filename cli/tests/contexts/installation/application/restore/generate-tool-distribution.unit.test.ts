@@ -3,10 +3,9 @@ import { wireTools } from "../../../../../src/composition/tools.js";
 import { GenerateToolDistribution } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -34,7 +33,6 @@ const contentFiles = new Map([
   ["config/vscode/settings.json", '{"editor.tabSize": 2}'],
 ]);
 
-const hasher = new HasherAdapter();
 const assets = new BundledAssetProviderAdapter(wireTools());
 
 function generate(
@@ -42,8 +40,7 @@ function generate(
   assetProvider?: BundledAssetProviderAdapter
 ): Promise<InstallationFile[]> {
   return new GenerateToolDistribution(
-    new InMemoryFileAdapter({}, hasher),
-    hasher,
+    new InMemoryFileAdapter({}),
     new FakePlatform("linux"),
     assetProvider
   ).execute({ config, descriptor, contentFiles, projectRoot: PROJECT_ROOT });
@@ -103,7 +100,7 @@ describe("GenerateToolDistribution — a tool's own config assets", () => {
       new InstallationFile({
         relativePath: ".claude/settings.json",
         content,
-        hash: hasher.hash(content),
+        hash: FileHash.of(content),
       })
     );
   });

@@ -6,11 +6,10 @@ import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InstallationFile } from "../../../src/shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
@@ -72,10 +71,9 @@ function buildPerMarketplace(failing: readonly string[]): BuiltMarketplaceEnsure
 }
 
 async function build(setup: Setup = {}) {
-  const hasher = new HasherAdapter();
   const names = setup.marketplaceNames ?? [MARKETPLACE];
   const toolIds = setup.toolIds ?? [TOOL.claude];
-  const fs = new InMemoryFileAdapter({}, hasher);
+  const fs = new InMemoryFileAdapter({});
   for (const name of names) {
     for (const toolId of toolIds) {
       fs.setFile(
@@ -88,14 +86,14 @@ async function build(setup: Setup = {}) {
   const manifest = Manifest.create();
   const tracked = (setup.otherTrackedFiles ?? []).map(
     (relativePath) =>
-      new InstallationFile({ relativePath, content: "# tracked", hash: hasher.hash("# tracked") })
+      new InstallationFile({ relativePath, content: "# tracked", hash: FileHash.of("# tracked") })
   );
   if (setup.trackedSettings !== undefined) {
     tracked.push(
       new InstallationFile({
         relativePath: SETTINGS_PATH,
         content: setup.trackedSettings,
-        hash: hasher.hash(setup.trackedSettings),
+        hash: FileHash.of(setup.trackedSettings),
       })
     );
   }
@@ -141,7 +139,6 @@ async function build(setup: Setup = {}) {
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
-    hasher,
     logger: new CapturingLogger(),
     activators: new Map(toolIds.map((toolId) => [toolId, activator])),
     ensureBuilt: buildPerMarketplace(setup.failingBuilds ?? []),
@@ -183,7 +180,7 @@ async function build(setup: Setup = {}) {
       ],
     ]),
   });
-  return { useCase, manifestRepo, manifest, fs, hasher, activator, machineRepo };
+  return { useCase, manifestRepo, manifest, fs, activator, machineRepo };
 }
 
 function recorded(manifest: Manifest | null | undefined): NativeRegistrations | undefined {
@@ -283,7 +280,7 @@ describe("how many times the manifest is written back", () => {
 
   it("once when only the tracked settings hash moved under the host's own write", async () => {
     const onDisk = JSON.stringify({ model: "opus" });
-    const { useCase, manifestRepo, manifest, hasher } = await build({
+    const { useCase, manifestRepo, manifest } = await build({
       trackedSettings: "{}",
       settingsOnDisk: onDisk,
       existingRegistrations: FRAMEWORK_ONLY,
@@ -292,7 +289,7 @@ describe("how many times the manifest is written back", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(1);
-    expect(trackedSettingsHash(manifest)).toBe(hasher.hash(onDisk).value);
+    expect(trackedSettingsHash(manifest)).toBe(FileHash.of(onDisk).value);
   });
 
   it("once when the marketplaces key is evicted from the shared settings file", async () => {
@@ -301,7 +298,7 @@ describe("how many times the manifest is written back", () => {
       extraKnownMarketplaces: { x: { source: "/p" } },
       model: "opus",
     });
-    const { useCase, manifestRepo, manifest, fs, hasher } = await build({
+    const { useCase, manifestRepo, manifest, fs } = await build({
       trackedSettings: onDisk,
       settingsOnDisk: onDisk,
       activator,
@@ -312,20 +309,20 @@ describe("how many times the manifest is written back", () => {
     const written = await fs.readFile(SETTINGS_ABSOLUTE);
     expect(manifestRepo.saves).toBe(1);
     expect(JSON.parse(written)).toStrictEqual({ model: "opus" });
-    expect(trackedSettingsHash(manifest)).toBe(hasher.hash(written).value);
+    expect(trackedSettingsHash(manifest)).toBe(FileHash.of(written).value);
   });
 });
 
 describe("what the tracked settings hash follows", () => {
   it("stays where it was when the tracked file is gone from disk", async () => {
-    const { useCase, manifest, hasher } = await build({ trackedSettings: "{}" });
+    const { useCase, manifest } = await build({ trackedSettings: "{}" });
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
     });
 
     expect(result.errors).toStrictEqual([]);
-    expect(trackedSettingsHash(manifest)).toBe(hasher.hash("{}").value);
+    expect(trackedSettingsHash(manifest)).toBe(FileHash.of("{}").value);
   });
 
   it("never starts tracking the settings file on behalf of another tracked file", async () => {

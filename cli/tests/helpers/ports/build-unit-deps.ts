@@ -25,7 +25,6 @@ import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
@@ -45,8 +44,7 @@ const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 /** Builds in-memory deps for use-case unit tests, the file adapter pre-seeded with the
  * framework fixture content under absolute paths. */
 export async function buildUnitDeps(_projectRoot: string) {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter({}, hasher);
+  const fs = new InMemoryFileAdapter({});
   const manifestRepo = new InMemoryManifestRepository();
   const userManifestRepo = new InMemoryManifestRepository();
   const logger = new CLIOutput(false);
@@ -64,7 +62,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     updateGitignore,
     registeredTools()
   );
-  const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     trackedConfigFiles,
     fs,
@@ -87,7 +85,6 @@ export async function buildUnitDeps(_projectRoot: string) {
     fs,
     manifestRepo,
     marketplaceRegistry,
-    hasher,
     logger,
     activators: nativePluginActivators,
     ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -96,7 +93,6 @@ export async function buildUnitDeps(_projectRoot: string) {
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
 
   return {
-    hasher,
     fs,
     manifestRepo,
     userManifestRepo,
@@ -184,7 +180,7 @@ export function buildDoctorUseCase(
     new LoadManifestForDoctor(loadManifest),
     {
       tracked: new CheckTrackedFiles(loadManifest, deps.fs),
-      merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
+      merge: new CheckMergeFiles(loadManifest, deps.fs),
       references: new CheckFileReferences(loadManifest, deps.fs),
       layout: new CheckProjectLayout(loadManifest, deps.fs, registeredTools()),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, registeredTools())),

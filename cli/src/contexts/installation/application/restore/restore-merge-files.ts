@@ -6,7 +6,6 @@ import {
   type MergeStrategy,
 } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
@@ -41,7 +40,6 @@ export class RestoreMergeFiles {
 
   constructor(
     private readonly fs: FileReader & FileMerger,
-    private readonly hasher: Hasher,
     prompter: Prompter
   ) {
     this.restoreDriftEntries = new RestoreDriftEntries(prompter);
@@ -104,7 +102,7 @@ export class RestoreMergeFiles {
     const diskPath = join(projectRoot, entry.relativePath);
     if (!(await this.fs.fileExists(diskPath))) return "deleted";
     const diskContent = await this.fs.readFile(diskPath);
-    const diskEntries = extractMergeEntries(diskContent, entry.sectionKey, this.hasher);
+    const diskEntries = extractMergeEntries(diskContent, entry.sectionKey);
     const hasDrift = Object.keys(entry.entries).some(
       (key) => diskEntries[key]?.value !== entry.entries[key].value
     );
@@ -133,7 +131,7 @@ export class RestoreMergeFiles {
     const fullPath = join(projectRoot, entry.relativePath);
     await this.fs.mergeJsonFile(fullPath, entry.content, entry.mergeStrategy);
     const mergedContent = await this.fs.readFile(fullPath);
-    const newEntries = extractMergeEntries(mergedContent, entry.sectionKey, this.hasher);
+    const newEntries = extractMergeEntries(mergedContent, entry.sectionKey);
     mergeMap.set(entry.relativePath, {
       relativePath: entry.relativePath,
       sectionKey: entry.sectionKey,

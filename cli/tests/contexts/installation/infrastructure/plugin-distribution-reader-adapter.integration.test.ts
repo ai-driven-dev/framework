@@ -12,7 +12,6 @@ import type {
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { MANIFEST_PROBES } from "../testing/manifest-probes.js";
@@ -22,7 +21,7 @@ const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 
 function makeAdapter(): PluginDistributionReaderAdapter {
-  return new PluginDistributionReaderAdapter(new FileAdapter(new HasherAdapter()), MANIFEST_PROBES);
+  return new PluginDistributionReaderAdapter(new FileAdapter(), MANIFEST_PROBES);
 }
 
 function readInMemory(

@@ -9,7 +9,6 @@ import { ListPluginSources } from "../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -21,8 +20,7 @@ const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-
 const PROJECT_ROOT = "/test-project";
 
 async function buildUseCase() {
-  const hasher = new HasherAdapter();
-  const fs = new InMemoryFileAdapter({}, hasher);
+  const fs = new InMemoryFileAdapter({});
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = new InMemoryManifestRepository();

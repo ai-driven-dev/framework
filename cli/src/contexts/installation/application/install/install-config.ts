@@ -1,9 +1,8 @@
 import { join } from "node:path";
-import { InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Platform } from "../../ports/platform.js";
@@ -19,10 +18,7 @@ interface InstallConfigCommand {
 }
 
 export class InstallConfig {
-  constructor(
-    private readonly fs: FileReader,
-    private readonly hasher: Hasher
-  ) {}
+  constructor(private readonly fs: FileReader) {}
 
   async execute(options: InstallConfigCommand): Promise<InstallationFile[]> {
     const { writes, configRefs, contentFiles, projectRoot, platform } = options;
@@ -57,7 +53,7 @@ export class InstallConfig {
     return new InstallationFile({
       relativePath: outputPath,
       content,
-      hash: this.hasher.hash(content),
+      hash: FileHash.of(content),
       mergeStrategy: write.capability.mergeStrategy(),
       frameworkPath: ref.path,
     });
@@ -77,7 +73,7 @@ export class InstallConfig {
     return new InstallationFile({
       relativePath: capability.outputPath(),
       content,
-      hash: this.hasher.hash(content),
+      hash: FileHash.of(content),
       mergeStrategy: capability.mergeStrategy(),
     });
   }

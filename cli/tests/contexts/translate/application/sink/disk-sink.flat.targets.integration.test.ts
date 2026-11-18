@@ -10,7 +10,6 @@ import {
 } from "../../../../../src/shared/domain/errors.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
@@ -39,7 +38,7 @@ async function buildFlat(
   const useCase = createFrameworkBuildUseCase(
     registeredTools(),
     {
-      fs: new FileAdapter(new HasherAdapter(), logger),
+      fs: new FileAdapter(logger),
       assetProvider: new BundledAssetProviderAdapter(registeredTools()),
       logger,
     },

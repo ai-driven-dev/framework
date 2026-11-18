@@ -9,7 +9,6 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 });
 
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 
 // What the file port contract cannot observe stays here: the rename step, the stop at a
@@ -20,7 +19,7 @@ describe("FileAdapter", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-fs-adapter-"));
-    fs = new FileAdapter(new HasherAdapter());
+    fs = new FileAdapter();
   });
 
   afterEach(async () => {
@@ -54,7 +53,7 @@ describe("FileAdapter, at the edges", () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-fs-edges-"));
     logger = new CapturingLogger();
-    fs = new FileAdapter(new HasherAdapter(), logger);
+    fs = new FileAdapter(logger);
   });
 
   afterEach(async () => {
@@ -76,7 +75,7 @@ describe("FileAdapter, at the edges", () => {
       await writeFile(join(tempDir, "real.txt"), "");
       await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
 
-      expect(await new FileAdapter(new HasherAdapter()).listFilesRecursive(tempDir)).toStrictEqual([
+      expect(await new FileAdapter().listFilesRecursive(tempDir)).toStrictEqual([
         join(tempDir, "real.txt"),
       ]);
     });

@@ -1,9 +1,9 @@
 import { resolve } from "node:path";
+import { FileHash } from "../../../../shared/domain/file.js";
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
@@ -16,7 +16,6 @@ import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../por
 export class RecordActivation {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly hasher: Hasher,
     private readonly records: RegistrationRecordRules,
     private readonly tools: ToolCatalog,
     private readonly userManifestRepo?: ManifestRepository & Lock
@@ -65,7 +64,7 @@ export class RecordActivation {
       if (tracked === undefined) continue;
       const content = await this.fs.readFile(resolve(projectRoot, settingsPath)).catch(() => null);
       if (content === null) continue;
-      const hash = this.hasher.hash(content);
+      const hash = FileHash.of(content);
       if (hash.value === tracked.hash.value) continue;
       manifest.updateTrackedFileHash(toolId, settingsPath, hash);
       changed = true;

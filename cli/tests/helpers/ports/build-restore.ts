@@ -14,7 +14,6 @@ import type { PluginDistributionReader } from "../../../src/contexts/installatio
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
-import type { Hasher } from "../../../src/shared/ports/hasher.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { registeredTools } from "../../shared/testing/registered-tools.js";
@@ -24,7 +23,6 @@ type Files = FileReader & FileWriter & FileMerger;
 
 interface RestoreToolFilesParts {
   fs: Files;
-  hasher: Hasher;
   logger: Logger;
   prompter: Prompter;
   platform?: Platform;
@@ -33,16 +31,15 @@ interface RestoreToolFilesParts {
 
 /** A restore of one tool's files, its three collaborators built from the same ports. */
 export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFiles {
-  const { fs, hasher, logger, prompter } = parts;
+  const { fs, logger, prompter } = parts;
   return new RestoreToolFiles(
     new GenerateToolDistribution(
       fs,
-      hasher,
       parts.platform ?? new FakePlatform("linux"),
       parts.assetProvider
     ),
     new RestoreRegularFiles(fs, prompter),
-    new RestoreMergeFiles(fs, hasher, prompter),
+    new RestoreMergeFiles(fs, prompter),
     logger,
     registeredTools()
   );
@@ -50,7 +47,6 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
 
 interface RestoreAllPluginsParts {
   fs: FileReader & FileWriter;
-  hasher: Hasher;
   pluginFetcher: PluginFetcher;
   pluginDistributionReader: PluginDistributionReader;
   builtDeps: BuiltMaterializationDeps;
@@ -58,9 +54,9 @@ interface RestoreAllPluginsParts {
 
 /** A restore of every installed plugin, with the registered tools. */
 export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPlugins {
-  const { fs, hasher, pluginFetcher, pluginDistributionReader, builtDeps } = parts;
+  const { fs, pluginFetcher, pluginDistributionReader, builtDeps } = parts;
   return new RestoreAllPlugins(
-    new ApplyPluginFiles(fs, hasher, pluginFetcher, pluginDistributionReader, builtDeps),
+    new ApplyPluginFiles(fs, pluginFetcher, pluginDistributionReader, builtDeps),
     registeredTools()
   );
 }
