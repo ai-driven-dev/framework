@@ -7,7 +7,7 @@
  * Two kinds of module owe no test of their own, and both are computed, never listed: a module left
  * with no runtime statement once its type declarations are stripped, and a module of a tool's
  * profiles that declares no function, arrow or class, which conformance and golden tests hold. Every other miss is in `MIRROR_BASELINE`.
- * Ambient declaration files (`.d.ts`) are no module: they hold no runtime to test.
+ * Ambient declaration files are no module: they hold no runtime to test.
  *
  * Limit: `declarationEnd` counts brackets inside string literals; a type alias whose string holds
  * an unbalanced bracket hides the code after it. No module does that today.

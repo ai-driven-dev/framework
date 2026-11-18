@@ -30,6 +30,7 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
     "shared/gone.ts",
     "application/shared/x.ts",
   ],
+  "cli/tests/architecture/test-mirror-path.arch.test.ts": ["src/contexts/x/domain/y.ts"],
   "scripts/__tests__/cli-type-honesty.test.js": [
     "cli/src/honest.ts",
     "cli/src/widened.ts",
