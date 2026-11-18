@@ -151,6 +151,29 @@ describe("the command line", () => {
   });
 });
 
+describe("the CLI rules and skills", () => {
+  it("catch a sentence a CLI rule shares with a scanned page", () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-doc-dup-"));
+
+    try {
+      fs.mkdirSync(path.join(cwd, "docs"), { recursive: true });
+      fs.mkdirSync(path.join(cwd, "cli/.claude/rules"), { recursive: true });
+      fs.mkdirSync(path.join(cwd, "cli/.claude/skills/tools/references"), { recursive: true });
+      fs.writeFileSync(path.join(cwd, "docs", "a.md"), `# A\n\n${TWELVE}\n`);
+      fs.writeFileSync(path.join(cwd, "cli/.claude/rules/r.md"), `# R\n\n${TWELVE}\n`);
+      fs.writeFileSync(path.join(cwd, "cli/.claude/skills/tools/references/s.md"), `# S\n\n${TWELVE}\n`);
+
+      const { duplicates } = require("../check-doc-duplication.js").scanRepository(cwd);
+
+      assert.deepEqual(duplicates.map((d) => d.files), [
+        ["docs/a.md", "cli/.claude/rules/r.md", "cli/.claude/skills/tools/references/s.md"],
+      ]);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("this repository", () => {
   it("carries no sentence twice outside BASELINE", () => {
     const { duplicates, stale, scannedFiles } = require("../check-doc-duplication.js").scanRepository(
