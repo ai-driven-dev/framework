@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { rewritePluginRootToken } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
 import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
@@ -9,10 +10,9 @@ import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copil
 import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { rewritePluginRootToken } from "../../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { hooksAcceptanceOf } from "../../testing/plugin-mode.js";
 import { translatePlugin } from "../../testing/translate-plugin.js";
 

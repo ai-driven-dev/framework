@@ -123,7 +123,6 @@ src/
 │   │   │   └── sink/
 │   │   ├── contract/    # the build targets other contexts name
 │   │   ├── domain/
-│   │   │   └── formats/
 │   │   ├── infrastructure/
 │   │   └── ports/    # the schema validator a build is handed
 │   └── update/    # replacing the installed CLI with its latest release, and the notice that one exists

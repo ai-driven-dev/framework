@@ -20,6 +20,7 @@ import type {
   SourceMarketplaceRef,
   ToolBuildContract,
 } from "../../../tools/contract/build-contract.js";
+import { rewritePluginRootToken } from "../../../tools/contract/plugin-root-token.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
@@ -28,7 +29,6 @@ import {
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
 } from "../../domain/canon-format.js";
 import { flatHooksBridgeFile } from "../../domain/flat-layout.js";
-import { rewritePluginRootToken } from "../../domain/formats/plugin-root-token-rewrite.js";
 import type { JsonSchemaValidator } from "../../ports/json-schema-validator.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";

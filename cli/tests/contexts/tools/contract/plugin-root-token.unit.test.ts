@@ -1,8 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
-import { rewritePluginRootToken } from "../../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
-import { buildContractOf } from "../../testing/registered-build-contracts.js";
+import {
+  rewritePluginRootToken,
+  SOURCE_PLUGIN_ROOT_TOKEN,
+} from "../../../../src/contexts/tools/contract/plugin-root-token.js";
+import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredAiProfile } from "../testing/catalog-of.js";
+
+/** The build contract a tool declares for a mode: refuses rather than answer null. */
+function buildContractOf(id: AiToolId, mode: FrameworkBuildMode) {
+  const contract = registeredAiProfile(id).buildContract(mode);
+  if (contract === null) throw new Error(`${id} declares no ${mode} build contract`);
+  return contract;
+}
 
 // Avoid biome noTemplateCurlyInString: split literals
 const CLAUDE_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";

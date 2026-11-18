@@ -12,6 +12,7 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../tools/contract/plugin-install-notice.js";
+import { rewritePluginRootToken } from "../../tools/contract/plugin-root-token.js";
 import type {
   AiToolProfile,
   FlatPluginAnswers,
@@ -22,7 +23,6 @@ import type {
   ToolProfile,
 } from "../../tools/contract/tool-profile.js";
 import { flatHooksBridgeFile } from "./flat-layout.js";
-import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
 import type { OutputFile } from "./output-file.js";
 
 interface TranslatedFile {
