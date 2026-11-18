@@ -19,7 +19,6 @@ const DOCS = [
   "README.md",
   "aidd_docs/memory/codebase-map.md",
   "aidd_docs/memory/project-brief.md",
-  "aidd_docs/GUIDELINES.md",
 ];
 
 /** The line itself says the command is gone. */

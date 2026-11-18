@@ -40,7 +40,6 @@ const INSTRUCTING_SOURCES: readonly string[] = [
   ".claude/rules",
   ".claude/skills",
   "aidd_docs/memory",
-  "aidd_docs/GUIDELINES.md",
   "ARCHITECTURE.md",
   "README.md",
   "vitest.config.ts",
