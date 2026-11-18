@@ -30,6 +30,22 @@ Plan before building.
         content: installed(claude, NAMED_AGENT),
       });
     });
+
+    it.each(["true", "false"])(
+      "preserves omitClaudeMd: %s through install and marketplace builds",
+      (value) => {
+        const source = NAMED_AGENT.replace("effort: high", `effort: high\nomitClaudeMd: ${value}`);
+        const expected = installed(claude, source);
+
+        expect(expected).toContain(`omitClaudeMd: ${value}`);
+        expect(inMarketplace(claude, source).content).toBe(expected);
+      }
+    );
+
+    it("leaves omitClaudeMd absent when the source does not set it", () => {
+      expect(installed(claude, NAMED_AGENT)).not.toContain("omitClaudeMd");
+      expect(inMarketplace(claude, NAMED_AGENT).content).not.toContain("omitClaudeMd");
+    });
   });
 
   describe("capabilities.agents.buildInstallPath()", () => {
