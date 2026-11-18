@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { NativeHostRegistrationGate } from "../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import type {
+  DependentClaim,
+  RegistrationRecord,
+} from "../../../../src/contexts/host-registration/domain/registration-record.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostActions } from "../testing/fake-host-actions.js";
 
 const { copilot, codex } = TOOL;
 
+/** The record the gate reads: the host data and the claims the manifest keeps beside it. */
+type ClaimedRecord = RegistrationRecord & { readonly pluginClaims: readonly DependentClaim[] };
+
 const REF = "test-plugin@real-catalog";
 const HOST = "real-catalog";
 const claim = { ref: REF, dependents: [] };
-const registrations: NativeRegistrations = {
+const registrations: ClaimedRecord = {
   binary: "copilot",
   marketplaces: [{ alias: "alias", hostName: HOST }],
   pluginRefs: [REF],
@@ -96,7 +102,7 @@ describe("native host registration gate", () => {
     ],
     pluginRefs: [REF],
     pluginClaims: [claim],
-  } satisfies NativeRegistrations;
+  } satisfies ClaimedRecord;
   const hostSource = (source: string): HostMarketplaceSources => ({
     read: async () => ({
       location: "codex plugin marketplace list --json",
