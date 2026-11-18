@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TranslatePluginDistribution } from "../../../../src/contexts/translate/application/translate-distribution.js";
+import { TranslatePluginDistribution } from "../../../../src/contexts/translate/application/translate-plugin-distribution.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { claudeManifestContent, makeDist } from "../testing/plugin-content-translator-kit.js";
 import { codex } from "../testing/registered-profiles.js";

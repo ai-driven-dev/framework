@@ -4,6 +4,8 @@ import {
   type FrameworkBuildContext,
 } from "../contexts/translate/application/build-native-tree.js";
 import { DiskSink } from "../contexts/translate/application/sink/disk-sink.js";
+import { TranslatePluginDistribution } from "../contexts/translate/application/translate-plugin-distribution.js";
+import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -38,4 +40,9 @@ export function createFrameworkBuildUseCase(
     mode: ctx.mode,
     force: ctx.force,
   });
+}
+
+/** The command that turns a plugin distribution into what one tool installs. */
+export function createPluginTranslation(tools: ToolCatalog): TranslatePluginDistribution {
+  return new TranslatePluginDistribution(pluginManifestProbes(tools));
 }
