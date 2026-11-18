@@ -5,7 +5,7 @@ import type {
   StatusQuery,
 } from "../../../src/contexts/installation/application/report-status.js";
 import { ReportAllStatus } from "../../../src/orchestration/global/report-all-status.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -39,7 +39,7 @@ describe("ReportAllStatus", () => {
   it("queries each category exactly once and never runs an unscoped pass", async () => {
     const { useCase, calls } = fakeStatus(() => report());
 
-    await new ReportAllStatus(useCase).execute(PROJECT_ROOT, catalogOf());
+    await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
 
     expect(calls).toHaveLength(2);
     expect(calls.map((c) => c.category)).toEqual(["ai", "ide"]);
@@ -51,7 +51,7 @@ describe("ReportAllStatus", () => {
       o.category === "ai" ? report({ pluginDrift: DRIFT, inSync: false }) : report()
     );
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT, catalogOf());
+    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
 
     expect(result.pluginDrift).toEqual(DRIFT);
   });
@@ -62,7 +62,7 @@ describe("ReportAllStatus", () => {
       return report();
     });
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT, catalogOf());
+    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       aiTools: { tools: [], pluginDrift: [], inSync: true },
@@ -77,7 +77,7 @@ describe("ReportAllStatus", () => {
     const ideReport = report({ tools: [{ toolId: TOOL.vscode, version: "1", drifted: [] }] });
     const { useCase } = fakeStatus((o) => (o.category === "ai" ? aiReport : ideReport));
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT, catalogOf());
+    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       aiTools: aiReport,
@@ -93,7 +93,7 @@ describe("ReportAllStatus", () => {
       return report();
     });
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT, catalogOf());
+    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       aiTools: report(),

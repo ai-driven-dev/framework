@@ -77,7 +77,8 @@ function makeRestoreAll(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
-    new DetectPluginDrift(deps.fs)
+    new DetectPluginDrift(deps.fs, catalogOf()),
+    catalogOf()
   );
   const restoreUseCase = restoreOf({
     ...deps,
@@ -139,12 +140,7 @@ describe("RestoreAll — the --force flag", () => {
   it("restores a modified tracked file when force is set", async () => {
     const { deps, reader, trackedPath } = await setupWithModifiedTrackedFile();
 
-    const result = await makeRestoreAll(deps, reader).execute(
-      PROJECT_ROOT,
-      true,
-      false,
-      catalogOf()
-    );
+    const result = await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, true, false);
 
     expect(deps.fs.getFile(trackedPath)).not.toBe("EDITED OUTSIDE THE CLI");
     expect(result.errors, "force must reach the decision, not raise InputRequired").toEqual([]);
@@ -155,12 +151,7 @@ describe("RestoreAll — the --force flag", () => {
   it("keeps a modified tracked file and reports why when force is not set", async () => {
     const { deps, reader, trackedPath } = await setupWithModifiedTrackedFile();
 
-    const result = await makeRestoreAll(deps, reader).execute(
-      PROJECT_ROOT,
-      false,
-      false,
-      catalogOf()
-    );
+    const result = await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, false, false);
 
     expect(deps.fs.getFile(trackedPath)).toBe("EDITED OUTSIDE THE CLI");
     expect(result.totalRestored).toBe(0);
@@ -183,7 +174,7 @@ describe("RestoreAll — an interactive run that ticks nothing", () => {
       deps,
       new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
       prompter
-    ).execute(PROJECT_ROOT, false, true, catalogOf());
+    ).execute(PROJECT_ROOT, false, true);
 
     expect(deps.fs.getFile(trackedPath)).toBe("EDITED OUTSIDE THE CLI");
     expect(result).toStrictEqual({
@@ -215,7 +206,7 @@ describe("RestoreAll — plugin materialization", () => {
     // Counting reader wired only from here — installPlugin's own read() must not count.
     const { reader, count } = countingReader(deps.fs);
     const useCase = makeRestoreAll(deps, reader);
-    await useCase.execute(PROJECT_ROOT, false, false, catalogOf());
+    await useCase.execute(PROJECT_ROOT, false, false);
 
     expect(deps.fs.getFile(pluginFile)).not.toBe("CORRUPTED CONTENT");
     expect(deps.fs.getFile(pluginFile)).toContain("Greet from sample-plugin.");
@@ -243,7 +234,7 @@ describe("RestoreAll — plugin materialization", () => {
 
     const { reader, count } = countingReader(deps.fs);
     const useCase = makeRestoreAll(deps, reader);
-    await useCase.execute(PROJECT_ROOT, false, false, catalogOf());
+    await useCase.execute(PROJECT_ROOT, false, false);
 
     expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
     expect(count()).toBe(0);
@@ -259,12 +250,7 @@ describe("RestoreAll — plugin materialization", () => {
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
-    const result = await makeRestoreAll(deps, reader).execute(
-      PROJECT_ROOT,
-      false,
-      false,
-      catalogOf()
-    );
+    const result = await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, false, false);
 
     expect(result.pluginNamesRestored).toEqual(["sample-plugin"]);
     expect(result.errors).toHaveLength(0);
@@ -283,12 +269,7 @@ describe("RestoreAll — plugin materialization", () => {
       ?.getPlugins(TOOL.claude)
       .find((p) => p.name === "sample-plugin");
 
-    const result = await makeRestoreAll(deps, reader).execute(
-      PROJECT_ROOT,
-      false,
-      false,
-      catalogOf()
-    );
+    const result = await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, false, false);
 
     expect(result.pluginNamesRestored).toEqual([]);
     expect(result.errors).toHaveLength(0);
@@ -322,7 +303,7 @@ describe("RestoreAll — plugin materialization", () => {
       ScriptedPrompter.answer.checkbox([".vscode/keybindings.json"]),
     ]);
     const useCase = makeRestoreAll(deps, reader, prompter);
-    await useCase.execute(PROJECT_ROOT, false, true, catalogOf());
+    await useCase.execute(PROJECT_ROOT, false, true);
 
     expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
   });
@@ -355,7 +336,7 @@ describe("RestoreAll — plugin materialization", () => {
     await deps.fs.writeFile(claudePluginFile, "CORRUPTED CLAUDE");
     await deps.fs.writeFile(codexPluginFile, "CORRUPTED CODEX");
 
-    await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, false, false, catalogOf());
+    await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, false, false);
 
     expect(deps.fs.getFile(claudePluginFile)).not.toBe("CORRUPTED CLAUDE");
     expect(deps.fs.getFile(codexPluginFile)).not.toBe("CORRUPTED CODEX");
@@ -391,7 +372,8 @@ describe("RestoreAll — consent to overwrite", () => {
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs)
+      new DetectPluginDrift(deps.fs, catalogOf()),
+      catalogOf()
     );
     const restoreUseCase = restoreOf({
       ...deps,
@@ -403,7 +385,7 @@ describe("RestoreAll — consent to overwrite", () => {
       prompter,
       statusUseCase,
       new RestoreGlobal(deps.manifestRepo, restoreUseCase)
-    ).execute(PROJECT_ROOT, interactive, force, catalogOf());
+    ).execute(PROJECT_ROOT, interactive, force);
     const asked = seen[0];
     expect(asked).toBeDefined();
     return asked as RestoreCommand;
@@ -431,7 +413,8 @@ describe("RestoreAll — native-only tools", () => {
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs)
+      new DetectPluginDrift(deps.fs, catalogOf()),
+      catalogOf()
     );
     const restoreUseCase = restoreOf({
       ...deps,
@@ -452,7 +435,7 @@ describe("RestoreAll — native-only tools", () => {
       prompter,
       statusUseCase,
       new RestoreGlobal(deps.manifestRepo, restoreUseCase)
-    ).execute(PROJECT_ROOT, true, false, catalogOf());
+    ).execute(PROJECT_ROOT, true, false);
 
     expect(result.nativeOnlyToolIds).toEqual(["claude"]);
   });
@@ -480,7 +463,8 @@ function restoreAllDelegatingTo(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
-    new DetectPluginDrift(deps.fs)
+    new DetectPluginDrift(deps.fs, catalogOf()),
+    catalogOf()
   );
   const restoreUseCase = restoreOf({
     ...deps,
@@ -518,9 +502,7 @@ describe("RestoreAll — before delegating", () => {
       recordingDelegate().delegate
     );
 
-    const failure = await useCase
-      .execute(PROJECT_ROOT, false, false, catalogOf())
-      .catch((e: unknown) => e);
+    const failure = await useCase.execute(PROJECT_ROOT, false, false).catch((e: unknown) => e);
 
     expect(failure).toBeInstanceOf(ManifestUnavailableError);
     expect(failure).toMatchObject({ code: "manifest-missing" });
@@ -543,7 +525,7 @@ describe("RestoreAll — before delegating", () => {
       deps,
       new CheckboxRecordingPrompter(),
       recordingDelegate().delegate
-    ).execute(PROJECT_ROOT, false, interactive, catalogOf());
+    ).execute(PROJECT_ROOT, false, interactive);
 
     expect(reads).toBe(1);
   });
@@ -556,8 +538,7 @@ describe("RestoreAll — before delegating", () => {
     await restoreAllDelegatingTo(deps, new OverwritePrompter(), delegate).execute(
       PROJECT_ROOT,
       false,
-      false,
-      catalogOf()
+      false
     );
 
     expect(asked.map((o) => o.version)).toStrictEqual(["test"]);
@@ -571,8 +552,7 @@ describe("RestoreAll — before delegating", () => {
     await restoreAllDelegatingTo(deps, new OverwritePrompter(), delegate).execute(
       PROJECT_ROOT,
       false,
-      false,
-      catalogOf()
+      false
     );
 
     expect(asked.map((o) => o.version)).toStrictEqual(["unknown"]);
@@ -585,7 +565,7 @@ describe("RestoreAll — before delegating", () => {
       throw new Error("disk on fire");
     });
 
-    const result = await useCase.execute(PROJECT_ROOT, false, false, catalogOf());
+    const result = await useCase.execute(PROJECT_ROOT, false, false);
 
     expect(result).toStrictEqual({
       totalRestored: 0,
@@ -619,8 +599,7 @@ describe("RestoreAll — the interactive file picker", () => {
     await restoreAllDelegatingTo(deps, prompter, recordingDelegate().delegate).execute(
       PROJECT_ROOT,
       false,
-      true,
-      catalogOf()
+      true
     );
 
     expect(prompter.asks).toStrictEqual([
@@ -645,7 +624,7 @@ describe("RestoreAll — the interactive file picker", () => {
       deps,
       new CheckboxRecordingPrompter([KEYBINDINGS]),
       delegate
-    ).execute(PROJECT_ROOT, false, true, catalogOf());
+    ).execute(PROJECT_ROOT, false, true);
 
     expect(asked.map((o) => o.files)).toStrictEqual([[KEYBINDINGS]]);
   });
@@ -658,8 +637,7 @@ describe("RestoreAll — the interactive file picker", () => {
     await restoreAllDelegatingTo(deps, new CheckboxRecordingPrompter([]), delegate).execute(
       PROJECT_ROOT,
       false,
-      true,
-      catalogOf()
+      true
     );
 
     expect(asked).toStrictEqual([]);
@@ -670,12 +648,7 @@ describe("RestoreAll — the interactive file picker", () => {
     const prompter = new CheckboxRecordingPrompter([KEYBINDINGS]);
     const { asked, delegate } = recordingDelegate();
 
-    await restoreAllDelegatingTo(deps, prompter, delegate).execute(
-      PROJECT_ROOT,
-      false,
-      true,
-      catalogOf()
-    );
+    await restoreAllDelegatingTo(deps, prompter, delegate).execute(PROJECT_ROOT, false, true);
 
     expect(prompter.asks).toStrictEqual([]);
     expect(asked.map((o) => o.files)).toStrictEqual([undefined]);

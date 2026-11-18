@@ -39,10 +39,9 @@ describe("DetectPluginDrift", () => {
       "aidd-one": { "aidd-one/a.md": HASH_OF_ONE },
       "aidd-two": { "aidd-two/a.md": HASH_OF_ONE },
     });
-    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}, HASHER));
+    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}, HASHER), catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: [TOOL.cursor],
@@ -62,10 +61,9 @@ describe("DetectPluginDrift", () => {
       { [join(USER_PLUGINS_DIR, "aidd-one", "changed.md")]: "two" },
       HASHER
     );
-    const useCase = new DetectPluginDrift(fs);
+    const useCase = new DetectPluginDrift(fs, catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: [TOOL.cursor],

@@ -1,11 +1,9 @@
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { PluginIssueEntry } from "../../contract/doctor-issue.js";
 import type { DetectPluginDrift } from "../shared/detect-plugin-drift.js";
 import type { CheckInstallationCommand } from "./check-installation-command.js";
 import type { LoadManifest } from "./load-manifest.js";
 
 export interface CheckPluginDriftCommand extends CheckInstallationCommand {
-  tools: ToolCatalog;
   pluginName?: string;
 }
 
@@ -16,7 +14,7 @@ export class CheckPluginDrift {
   ) {}
 
   async execute(command: CheckPluginDriftCommand): Promise<PluginIssueEntry[]> {
-    const { projectRoot, allowedIds, pluginName, tools } = command;
+    const { projectRoot, allowedIds, pluginName } = command;
     const manifest = await this.loadManifest.execute();
     const toolIds = manifest
       .getInstalledToolIds()
@@ -25,7 +23,6 @@ export class CheckPluginDrift {
       manifest,
       projectRoot,
       toolIds,
-      tools,
       pluginName,
     });
     return drifts.flatMap((drift): PluginIssueEntry[] => {

@@ -65,11 +65,11 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -89,11 +89,11 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -109,11 +109,11 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -130,11 +130,11 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
         pluginName: "other-plugin",
       });

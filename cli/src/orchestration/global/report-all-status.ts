@@ -2,7 +2,6 @@ import type {
   ReportStatusResult,
   StatusQuery,
 } from "../../contexts/installation/application/report-status.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 export interface ReportAllStatusResult {
   aiTools: ReportStatusResult;
@@ -15,12 +14,11 @@ export interface ReportAllStatusResult {
 export class ReportAllStatus {
   constructor(private readonly statusUseCase: StatusQuery) {}
 
-  async execute(projectRoot: string, tools: ToolCatalog): Promise<ReportAllStatusResult> {
+  async execute(projectRoot: string): Promise<ReportAllStatusResult> {
     const errors: GlobalExecutionError[] = [];
     const [aiTools, ideTools] = await this.collectCategoryReports(
       this.statusUseCase,
       projectRoot,
-      tools,
       errors
     );
     return {
@@ -34,16 +32,15 @@ export class ReportAllStatus {
   private async collectCategoryReports(
     useCase: StatusQuery,
     projectRoot: string,
-    tools: ToolCatalog,
     errors: GlobalExecutionError[]
   ): Promise<[ReportStatusResult | null, ReportStatusResult | null]> {
     const aiTools = await this.runScope(
-      () => useCase.execute({ projectRoot, category: "ai", tools }),
+      () => useCase.execute({ projectRoot, category: "ai" }),
       "ai",
       errors
     );
     const ideTools = await this.runScope(
-      () => useCase.execute({ projectRoot, category: "ide", tools }),
+      () => useCase.execute({ projectRoot, category: "ide" }),
       "ide",
       errors
     );

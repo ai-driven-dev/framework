@@ -105,10 +105,7 @@ describe("aidd doctor — every tool at once", () => {
       expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       undefined
     );
-    expect(statusAll).toHaveBeenCalledWith(
-      PROJECT_ROOT,
-      expect.objectContaining({ inHelpOrder: expect.any(Function) })
-    );
+    expect(statusAll).toHaveBeenCalledWith(PROJECT_ROOT);
   });
 
   it("names each equipped tool with its version and what it carries", async () => {
@@ -312,7 +309,6 @@ describe("aidd doctor --tool", () => {
       projectRoot: PROJECT_ROOT,
       filterToolId: "claude",
       pluginName: undefined,
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(doctorAll).not.toHaveBeenCalled();
   });

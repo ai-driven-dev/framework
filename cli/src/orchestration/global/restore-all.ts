@@ -3,7 +3,6 @@ import type {
   OpenRestore,
   RestoreGlobal,
 } from "../../contexts/installation/application/restore/project/restore-global.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
@@ -31,14 +30,13 @@ export class RestoreAll {
   async execute(
     projectRoot: string,
     force: boolean,
-    interactive: boolean,
-    tools: ToolCatalog
+    interactive: boolean
   ): Promise<RestoreAllResult> {
     const errors: GlobalExecutionError[] = [];
     const restore = await this.restoreGlobal.open();
 
     const files = interactive
-      ? await this.promptForFiles(projectRoot, tools, restore.manifest)
+      ? await this.promptForFiles(projectRoot, restore.manifest)
       : undefined;
     if (files !== undefined && files.length === 0) {
       return {
@@ -86,10 +84,9 @@ export class RestoreAll {
 
   private async promptForFiles(
     projectRoot: string,
-    tools: ToolCatalog,
     manifest: OpenRestore["manifest"]
   ): Promise<string[] | undefined> {
-    const report = await this.reportStatus.execute({ projectRoot, tools, manifest });
+    const report = await this.reportStatus.execute({ projectRoot, manifest });
     const driftedFiles = report.tools.flatMap((t) =>
       t.drifted
         .filter((d) => d.status === "modified" || d.status === "deleted")

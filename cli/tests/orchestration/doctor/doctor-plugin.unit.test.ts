@@ -71,7 +71,7 @@ const noopHasher: Hasher = {
 function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
   return new CheckPluginDrift(
     new LoadManifest(makeManifestRepo(manifest)),
-    new DetectPluginDrift(fs)
+    new DetectPluginDrift(fs, catalogOf())
   );
 }
 
@@ -84,7 +84,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       merge: new CheckMergeFiles(loadManifest, fs, noopHasher),
       references: new CheckFileReferences(loadManifest, fs),
       layout: new CheckProjectLayout(loadManifest, fs),
-      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs)),
+      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs, catalogOf())),
     },
     checkRegistrationOver(
       loadManifest,
@@ -107,8 +107,8 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
+        tools: catalogOf(),
       });
 
       expect(report.pluginIssues).toHaveLength(1);
@@ -126,8 +126,8 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
+        tools: catalogOf(),
       });
 
       expect(report.pluginIssues).toHaveLength(1);
@@ -143,8 +143,8 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
+        tools: catalogOf(),
       });
 
       expect(report.pluginIssues).toHaveLength(0);
@@ -158,8 +158,8 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
+        tools: catalogOf(),
         pluginName: "other-plugin",
       });
 
@@ -173,7 +173,6 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = pluginCheck(fs, makeManifest(EXPECTED_HASH));
 
       const issues = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
         allowedIds: new Set(["cursor"]),
       });
@@ -186,7 +185,6 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = pluginCheck(fs, makeManifest(EXPECTED_HASH));
 
       const issues = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
         allowedIds: new Set(["claude"]),
       });
@@ -216,7 +214,6 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = pluginCheck(fs, manifest);
 
       const issues = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
         allowedIds: null,
       });
@@ -262,7 +259,6 @@ describe("DoctorUseCase — plugin integrity", () => {
       const pluginUseCase = pluginCheck(fs, manifest);
 
       await pluginUseCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
         allowedIds: null,
       });

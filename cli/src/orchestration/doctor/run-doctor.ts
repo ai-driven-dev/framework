@@ -59,7 +59,6 @@ export class RunDoctor {
     const pluginIssues = await this.checks.plugin.execute({
       projectRoot,
       allowedIds,
-      tools,
       pluginName,
     });
     return {

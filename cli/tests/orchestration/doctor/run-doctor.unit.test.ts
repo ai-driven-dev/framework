@@ -28,7 +28,7 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
     merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
     references: new CheckFileReferences(loadManifest, deps.fs),
     layout: new CheckProjectLayout(loadManifest, deps.fs),
-    plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
+    plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, catalogOf())),
   };
   vi.spyOn(checks.tracked, "execute").mockResolvedValue([issue("tracked")]);
   vi.spyOn(checks.merge, "execute").mockResolvedValue([issue("merge")]);

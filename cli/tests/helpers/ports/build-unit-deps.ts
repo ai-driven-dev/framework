@@ -178,7 +178,7 @@ export function buildDoctorUseCase(
       merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
       references: new CheckFileReferences(loadManifest, deps.fs),
       layout: new CheckProjectLayout(loadManifest, deps.fs),
-      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
+      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, catalogOf())),
     },
     checkRegistrationOver(
       loadManifest,

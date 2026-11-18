@@ -82,9 +82,10 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
-      await useCase.execute({ tools: catalogOf(), projectRoot: "/proj" });
+      await useCase.execute({ projectRoot: "/proj" });
 
       expect(checkedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(true);
       expect(checkedPaths.every((p) => !p.includes(join("/proj", PLUGIN_KEY)))).toBe(true);
@@ -97,11 +98,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -132,11 +133,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -154,11 +155,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs)
+        new DetectPluginDrift(fs, catalogOf()),
+        catalogOf()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 

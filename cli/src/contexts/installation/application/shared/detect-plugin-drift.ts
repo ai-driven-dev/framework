@@ -31,7 +31,6 @@ export interface DetectPluginDriftCommand {
   manifest: Manifest;
   projectRoot: string;
   toolIds: Iterable<ToolId>;
-  tools: ToolCatalog;
   pluginName?: string;
 }
 
@@ -39,19 +38,22 @@ export interface DetectPluginDriftCommand {
  * Single source of truth for "which of a plugin's installed files no longer match the manifest".
  */
 export class DetectPluginDrift {
-  constructor(private readonly fs: FileReader) {}
+  constructor(
+    private readonly fs: FileReader,
+    private readonly tools: ToolCatalog
+  ) {}
 
   async execute(options: DetectPluginDriftCommand): Promise<PluginDrift[]> {
-    const { manifest, projectRoot, toolIds, pluginName, tools } = options;
+    const { manifest, projectRoot, toolIds, pluginName } = options;
     const drifts: PluginDrift[] = [];
     for (const toolId of toolIds) {
-      if (!tools.isAiTool(toolId)) continue;
+      if (!this.tools.isAiTool(toolId)) continue;
       const plugins = manifest.getPlugins(toolId);
       const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
       for (const plugin of targets) {
         const baseDir = resolveBaseDirFromRecord(
           plugin.scope,
-          tools.aiProfile(toolId),
+          this.tools.aiProfile(toolId),
           projectRoot,
           homedir
         );

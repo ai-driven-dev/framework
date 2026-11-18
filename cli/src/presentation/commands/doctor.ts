@@ -36,7 +36,7 @@ async function runFullDoctor(
   pluginName: string | undefined
 ): Promise<void> {
   const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, tools, pluginName);
-  const statusResult = await deps.statusAllUseCase.execute(projectRoot, tools);
+  const statusResult = await deps.statusAllUseCase.execute(projectRoot);
   printReportErrors(output, doctorResult.errors);
 
   printInventory(output, "AI", doctorResult.ai, statusResult.aiTools.tools);
@@ -85,7 +85,6 @@ async function runScopedDoctor(
     projectRoot,
     filterToolId: toolId,
     pluginName,
-    tools,
   });
 
   const scopedReport: DoctorReport = {

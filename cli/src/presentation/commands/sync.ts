@@ -102,12 +102,7 @@ async function runSyncAction(
     }
 
     const interactive = !cmdOptions.force && process.stdout.isTTY;
-    const result = await deps.restoreAllUseCase.execute(
-      projectRoot,
-      cmdOptions.force,
-      interactive,
-      tools
-    );
+    const result = await deps.restoreAllUseCase.execute(projectRoot, cmdOptions.force, interactive);
     printRestoreOutcome(output, result);
 
     // After restoration, never before: activation drives the host CLI that writes into the

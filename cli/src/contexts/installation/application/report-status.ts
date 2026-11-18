@@ -43,7 +43,6 @@ export interface ReportStatusCommand {
   filterToolId?: string;
   category?: ToolCategory;
   pluginName?: string;
-  tools: ToolCatalog;
   /** The project's manifest, when the caller already read it: the report reads none of its own. */
   manifest?: Manifest;
 }
@@ -61,22 +60,22 @@ export class ReportStatus implements StatusQuery {
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
-    private readonly detectPluginDrift: DetectPluginDrift
+    private readonly detectPluginDrift: DetectPluginDrift,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: ReportStatusCommand): Promise<ReportStatusResult> {
-    const { projectRoot, filterToolId, category, pluginName, tools: profiles } = options;
+    const { projectRoot, filterToolId, category, pluginName } = options;
     const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
-    const installedToolIds = this.resolveToolIds(filterToolId, category, manifest, profiles);
-    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot, profiles);
+    const installedToolIds = this.resolveToolIds(filterToolId, category, manifest);
+    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
     const pluginDrift = await this.checkAllPlugins(
       installedToolIds,
       manifest,
       projectRoot,
-      profiles,
       pluginName
     );
     const inSync = tools.every((t) => t.drifted.length === 0) && pluginDrift.length === 0;
@@ -86,12 +85,11 @@ export class ReportStatus implements StatusQuery {
   private resolveToolIds(
     filterToolId: string | undefined,
     category: ToolCategory | undefined,
-    manifest: Manifest,
-    profiles: ToolCatalog
+    manifest: Manifest
   ): ToolId[] {
     if (filterToolId) return manifest.getInstalledToolIds().filter((id) => id === filterToolId);
     if (category) {
-      const allowed: readonly string[] = profiles.idsInCanonicalOrder(category);
+      const allowed: readonly string[] = this.tools.idsInCanonicalOrder(category);
       return manifest.getInstalledToolIds().filter((id) => allowed.includes(id));
     }
     return manifest.getInstalledToolIds();
@@ -100,12 +98,11 @@ export class ReportStatus implements StatusQuery {
   private async checkAllTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    projectRoot: string,
-    profiles: ToolCatalog
+    projectRoot: string
   ): Promise<ToolStatus[]> {
     const tools: ToolStatus[] = [];
     for (const toolId of toolIds) {
-      tools.push(await this.checkOneTool(profiles.profile(toolId), manifest, projectRoot));
+      tools.push(await this.checkOneTool(this.tools.profile(toolId), manifest, projectRoot));
     }
     return tools;
   }
@@ -219,14 +216,12 @@ export class ReportStatus implements StatusQuery {
     toolIds: ToolId[],
     manifest: Manifest,
     projectRoot: string,
-    tools: ToolCatalog,
     pluginName?: string
   ): Promise<PluginDriftEntry[]> {
     const drifts = await this.detectPluginDrift.execute({
       manifest,
       projectRoot,
       toolIds,
-      tools,
       pluginName,
     });
     return drifts.map((drift) => ({

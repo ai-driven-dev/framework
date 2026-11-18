@@ -146,7 +146,7 @@ export function wireInstallation(base: Base) {
     resolveMarketplaceUseCase,
     cacheBuiltMarketplace
   );
-  const detectPluginDriftUseCase = new DetectPluginDrift(fs);
+  const detectPluginDriftUseCase = new DetectPluginDrift(fs, tools);
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(

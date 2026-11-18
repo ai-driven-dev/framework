@@ -50,7 +50,8 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
     fs,
     new InMemoryManifestRepository(manifest, PROJECT_ROOT),
     hasher,
-    new DetectPluginDrift(fs)
+    new DetectPluginDrift(fs, catalogOf()),
+    catalogOf()
   );
 }
 
@@ -62,7 +63,7 @@ describe("ReportStatus", () => {
   describe("which tools are reported", () => {
     it("fails when no manifest exists", async () => {
       const failure = await statusOver({}, null)
-        .execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
+        .execute({ projectRoot: PROJECT_ROOT })
         .catch((e: unknown) => e);
 
       expect(failure).toBeInstanceOf(ManifestUnavailableError);
@@ -74,7 +75,6 @@ describe("ReportStatus", () => {
       manifest.addTool(TOOL.claude, "test", []);
 
       const report = await statusOver({}, null).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         manifest,
       });
@@ -88,7 +88,6 @@ describe("ReportStatus", () => {
 
       await expect(
         statusOver({}, manifest).execute({
-          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           filterToolId: TOOL.cursor,
         })
@@ -101,7 +100,6 @@ describe("ReportStatus", () => {
       manifest.addTool(TOOL.vscode, "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         filterToolId: TOOL.claude,
       });
@@ -119,7 +117,6 @@ describe("ReportStatus", () => {
       manifest.addTool(TOOL.vscode, "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -136,7 +133,6 @@ describe("ReportStatus", () => {
       manifest.addTool(TOOL.claude, "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -157,7 +153,6 @@ describe("ReportStatus", () => {
 
     it("reports an untouched tracked file as in sync", async () => {
       const report = await statusOver({ [TRACKED]: CONTENT }, manifestTracking()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -170,7 +165,6 @@ describe("ReportStatus", () => {
 
     it("calls a tracked file whose content changed modified", async () => {
       const report = await statusOver({ [TRACKED]: "edited\n" }, manifestTracking()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -189,7 +183,6 @@ describe("ReportStatus", () => {
 
     it("calls a tracked file gone from disk deleted", async () => {
       const report = await statusOver({}, manifestTracking()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -206,7 +199,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [TRACKED]: CONTENT, ".claude/rules/two.md": "two\n" },
         manifestTracking()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([
         {
@@ -221,7 +214,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [TRACKED]: CONTENT, ".claude/rules/one.md.backup": "old\n" },
         manifestTracking()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([inSyncTool(TOOL.claude)]);
     });
@@ -240,7 +233,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [MERGE_PATH]: `{ "${KEY}": true }` },
         manifestMerging()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report).toStrictEqual({
         tools: [inSyncTool(TOOL.vscode)],
@@ -251,7 +244,6 @@ describe("ReportStatus", () => {
 
     it("calls every managed key of a missing merge file deleted", async () => {
       const report = await statusOver({}, manifestMerging()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -266,7 +258,6 @@ describe("ReportStatus", () => {
 
     it("calls a managed key missing from the merge file deleted", async () => {
       const report = await statusOver({ [MERGE_PATH]: "{}" }, manifestMerging()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -283,7 +274,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [MERGE_PATH]: `{ "${KEY}": false }` },
         manifestMerging()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([
         {
@@ -308,10 +299,10 @@ describe("status", () => {
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs)
+      new DetectPluginDrift(deps.fs, catalogOf()),
+      catalogOf()
     );
     const report = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -345,8 +336,9 @@ describe("status", () => {
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs)
-    ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      new DetectPluginDrift(deps.fs, catalogOf()),
+      catalogOf()
+    ).execute({ projectRoot: PROJECT_ROOT });
 
     const drifted = report.tools.flatMap((tool) => tool.drifted);
     expect(drifted).toEqual([]);

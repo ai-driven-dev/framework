@@ -95,7 +95,13 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     userScopeSyncOf(syncSettingsUseCase),
     installGlobalPlugins
   );
-  const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);
+  const statusUseCase = new ReportStatus(
+    fs,
+    manifestRepo,
+    hasher,
+    detectPluginDriftUseCase,
+    base.tools
+  );
   const restoreToolFiles = new RestoreToolFiles(
     new GenerateToolDistribution(fs, hasher, platform, assetProvider),
     new RestoreRegularFiles(fs, prompter),

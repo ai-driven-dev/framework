@@ -47,10 +47,9 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs);
+    const useCase = new DetectPluginDrift(fs, catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: [TOOL.cursor],
@@ -65,10 +64,9 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md"]));
-    const useCase = new DetectPluginDrift(fs);
+    const useCase = new DetectPluginDrift(fs, catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: [TOOL.cursor],
@@ -95,10 +93,9 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
       })
     );
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs);
+    const useCase = new DetectPluginDrift(fs, catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: [TOOL.claude],
@@ -140,10 +137,9 @@ describe("DetectPluginDrift — the manifest's recorded scope wins over the prof
       listDirectory: async () => [],
       listFilesRecursive: async () => [],
     };
-    const useCase = new DetectPluginDrift(fs);
+    const useCase = new DetectPluginDrift(fs, catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: [TOOL.cursor],
@@ -171,10 +167,9 @@ describe("DetectPluginDrift — the manifest's recorded scope wins over the prof
       })
     );
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs);
+    const useCase = new DetectPluginDrift(fs, catalogOf());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: [TOOL.cursor],
