@@ -8,14 +8,20 @@
  * The unit is the file that names `AiToolProfile`, `IdeToolProfile` or `ToolProfile`, by import,
  * re-export, namespace import, or the catalog's whole-profile methods typed by index. Importing
  * the module for a section answer (`PluginAnswers`, `ConfigWrite`) is already narrow and is not
- * a reader. The tools context owns the profile and `src/composition/` wires every context, so
- * neither is watched. The list below may only shrink.
+ * a reader. A file that never names the whole profile is still one when it asks the catalog for a
+ * profile and passes it into a parameter typed as the whole profile: `profile-flow.ts` reads that
+ * from the compiler, over the files that call a whole-profile catalog method, and leaves out a
+ * call whose callee is declared in a listed file, which already carries that debt. The tools
+ * context owns the profile and `src/composition/` wires every context, so neither is watched.
+ * The list below may only shrink.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, expectRatchet, read, sourceFiles } from "./helpers.js";
+import { wholeProfileFlows, wholeProfileFlowsInSources } from "./profile-flow.js";
 
 const OWNER_OR_WIRING = /^src\/(contexts\/tools\/|composition\/)/;
 
+const PROFILE_MODULE_FILE = "src/contexts/tools/contract/tool-profile.ts";
 const WHOLE_PROFILE = "(?:AiToolProfile|IdeToolProfile|ToolProfile)";
 const PROFILE_MODULE = String.raw`[^"']*tools/contract/tool-profile\.js`;
 /** A named import or re-export from the profile module, on one line or many, `type` or not. */
@@ -54,11 +60,19 @@ function namesWholeProfile(text: string): boolean {
   );
 }
 
+const CATALOG_PROFILE_CALL = new RegExp(String.raw`\.(?:${CATALOG_PROFILE_METHODS.join("|")})\(`);
+
 function wholeProfileReaders(): string[] {
-  return sourceFiles()
-    .filter((file) => !OWNER_OR_WIRING.test(file))
-    .filter((file) => namesWholeProfile(read(file)))
-    .sort();
+  const watched = sourceFiles().filter((file) => !OWNER_OR_WIRING.test(file));
+  const flowing = wholeProfileFlows(
+    CLI_ROOT,
+    PROFILE_MODULE_FILE,
+    watched.filter((file) => CATALOG_PROFILE_CALL.test(read(file))),
+    Object.keys(PROFILE_READERS_ALLOWED)
+  );
+  return [
+    ...new Set([...watched.filter((file) => namesWholeProfile(read(file))), ...flowing]),
+  ].sort();
 }
 
 const TRANSLATE_HANDOFF =
@@ -68,7 +82,7 @@ const PRESENTATION_FILTER =
 const OUTSIDE_WAVE =
   "reads the profile for translation in full; not a reader the installation and host-registration narrowing reaches";
 
-/** Shrink-only: a file that stops naming the whole profile leaves the list, and none joins it. */
+/** Shrink-only: a file that stops naming the whole profile leaves the list. */
 const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts":
     TRANSLATE_HANDOFF,
@@ -87,8 +101,17 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/presentation/commands/setup.ts": PRESENTATION_FILTER,
 };
 
+/**
+ * The flow reading starts a compiler process and checks the project: measured 0.3s alone, 0.7s in
+ * the architecture batch and up to 3.3s with other suites running, so the 5s default has little
+ * room under load.
+ */
+const FLOW_TIMEOUT_MS = 30_000;
+
 describe("a reader names the sections of a tool it reads", () => {
-  it("no file outside the tools context takes the whole profile but the ones listed", () => {
+  it("no file outside the tools context takes the whole profile but the ones listed", {
+    timeout: FLOW_TIMEOUT_MS,
+  }, () => {
     const { added, fixed } = expectRatchet(
       wholeProfileReaders(),
       Object.keys(PROFILE_READERS_ALLOWED)
@@ -130,5 +153,69 @@ describe("a reader names the sections of a tool it reads", () => {
       ),
     ].map((match) => match[1]);
     expect([...new Set(answering)].sort()).toEqual([...CATALOG_PROFILE_METHODS].sort());
+  });
+});
+
+describe("the flow guard itself", () => {
+  const MODULE = PROFILE_MODULE_FILE;
+  const LISTED_CALLEE = "src/contexts/b/listed.ts";
+  const project = (caller: string): Record<string, string> => ({
+    [MODULE]: [
+      "export interface AiToolProfile { kind: 'ai'; toolId: string; hostBinary(): string }",
+      "export interface IdeToolProfile { kind: 'ide'; toolId: string }",
+      "export type ToolProfile = AiToolProfile | IdeToolProfile;",
+    ].join("\n"),
+    "src/contexts/tools/contract/tool-catalog.ts": [
+      "import type { AiToolProfile } from './tool-profile.js';",
+      "export interface ToolCatalog { aiProfile(id: string): AiToolProfile }",
+    ].join("\n"),
+    "src/contexts/b/sinks.ts": [
+      "import type { AiToolProfile } from '../tools/contract/tool-profile.js';",
+      "export declare function whole(profile: AiToolProfile): void;",
+      "export declare function narrow(profile: { toolId: string }): void;",
+      "export declare function generic<T>(value: T): void;",
+      "export declare function options(o: { tool: AiToolProfile }): void;",
+      "export declare function narrowOptions(o: { tool: { toolId: string } }): void;",
+    ].join("\n"),
+    [LISTED_CALLEE]: [
+      "import type { AiToolProfile } from '../tools/contract/tool-profile.js';",
+      "export declare function handoff(profile: AiToolProfile): void;",
+    ].join("\n"),
+    "src/contexts/b/caller.ts": [
+      "import { handoff } from './listed.js';",
+      "import type { ToolCatalog } from '../tools/contract/tool-catalog.js';",
+      "import { generic, narrow, narrowOptions, options, whole } from './sinks.js';",
+      "declare const tools: ToolCatalog;",
+      caller,
+    ].join("\n"),
+  });
+  const flows = (caller: string, exempt: readonly string[] = []): string[] =>
+    wholeProfileFlowsInSources(project(caller), MODULE, ["src/contexts/b/caller.ts"], exempt);
+
+  it("flags a catalog profile passed directly into a whole-profile parameter", () => {
+    expect(flows("whole(tools.aiProfile('x'));")).toHaveLength(1);
+  });
+
+  it("flags a profile passed through a name into a whole-profile parameter", () => {
+    expect(flows("const p = tools.aiProfile('x');\nwhole(p);")).toHaveLength(1);
+  });
+
+  it("flags a profile inside an object literal argument whose property is the whole profile", () => {
+    expect(flows("options({ tool: tools.aiProfile('x') });")).toHaveLength(1);
+  });
+
+  it("clears a profile passed into a narrow parameter or a narrow property", () => {
+    expect(flows("narrow(tools.aiProfile('x'));")).toEqual([]);
+    expect(flows("narrowOptions({ tool: tools.aiProfile('x') });")).toEqual([]);
+  });
+
+  it("clears a profile passed to a generic call, whose parameter the compiler infers from it", () => {
+    expect(flows("generic(tools.aiProfile('x'));")).toEqual([]);
+  });
+
+  it("clears a profile passed to a callee declared in an exempt file, and flags it otherwise", () => {
+    const call = "handoff(tools.aiProfile('x'));";
+    expect(flows(call, [LISTED_CALLEE])).toEqual([]);
+    expect(flows(call)).toHaveLength(1);
   });
 });

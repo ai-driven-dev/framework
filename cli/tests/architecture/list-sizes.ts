@@ -19,7 +19,6 @@
  *
  * Not read: a name bound by a destructuring, and a class static property.
  */
-import { tmpdir } from "node:os";
 import {
   type ArrayLiteralExpression,
   type Expression,
@@ -39,13 +38,11 @@ import {
   type SourceFile,
   SyntaxKind,
 } from "typescript/unstable/ast";
-import { createVirtualFileSystem } from "typescript/unstable/fs";
-import { API } from "typescript/unstable/sync";
+import { walk, withVirtualProject } from "./ts-project.js";
 
 /** The entries of each list by id, `<file>#<name>`, or `null` where the list cannot be sized. */
 export type ListSizes = Map<string, number | null>;
 
-const VIRTUAL_ROOT = `${tmpdir().replaceAll("\\", "/")}/list-sizes`;
 const SINGLE_ENTRY = 1;
 const READONLY_TYPES = new Set(["Readonly", "ReadonlyArray"]);
 
@@ -61,13 +58,6 @@ export interface ListSizeOptions {
 interface FileScope {
   /** The names bound to a string literal, which a record value may point at. */
   readonly stringNames: ReadonlySet<string>;
-}
-
-function walk(node: Node, visit: (node: Node) => void): void {
-  visit(node);
-  node.forEachChild((child) => {
-    walk(child, visit);
-  });
 }
 
 function namesBoundToStrings(source: SourceFile): Set<string> {
@@ -173,28 +163,17 @@ export function listSizes(
   options: ListSizeOptions
 ): ListSizes {
   const sizes: ListSizes = new Map();
-  const paths = Object.keys(files);
-  const at = (path: string) => `${VIRTUAL_ROOT}/${path}`;
-  const config = JSON.stringify({
-    compilerOptions: { noLib: true, noResolve: true, types: [] },
-    files: paths.map(at),
-  });
-  const api = new API({
-    cwd: VIRTUAL_ROOT,
-    fs: createVirtualFileSystem({
-      [at("tsconfig.json")]: config,
-      ...Object.fromEntries(paths.map((path) => [at(path), files[path] as string])),
-    }),
-  });
-  try {
-    const [project] = api.updateSnapshot({ openProject: at("tsconfig.json") }).getProjects();
-    for (const path of paths) {
-      const source = project?.program.getSourceFile(at(path));
-      if (!source) throw new Error(`the compiler returned no source for ${path}`);
-      readFile(path, source, isTolerated, sizes, options);
+  withVirtualProject(
+    "list-sizes",
+    files,
+    { noLib: true, noResolve: true, types: [] },
+    (project, at) => {
+      for (const path of Object.keys(files)) {
+        const source = project.program.getSourceFile(at(path));
+        if (!source) throw new Error(`the compiler returned no source for ${path}`);
+        readFile(path, source, isTolerated, sizes, options);
+      }
     }
-  } finally {
-    api.close();
-  }
+  );
   return sizes;
 }
