@@ -20,5 +20,5 @@ The kind each review comment gets, and what its thread receives.
 | Reply in one or two lines, in the comment's language, never quoting it back | the thread stays readable |
 | Keep `Answer here.` and `To do.` verbatim, in English | a later run reads them to know which threads still wait |
 | Include every supported option; when none are known, ask an open question without inventing options | avoid imposing a false choice |
-| Check for a decision supplied in the conversation or thread before skipping a waiting `user-call` | a decision outside the thread also settles it |
-| Skip a thread ending `Answer here.` only if no decision was supplied; skip `To do.` only if no commit was pushed since | it still waits, whatever account posted it |
+| Skip a thread ending `Answer here.` only if neither the thread nor the conversation supplies a decision | a decision outside the thread also settles it |
+| Skip a thread ending `To do.` only if no commit was pushed since | it still waits, whatever account posted it |

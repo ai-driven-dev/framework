@@ -6,14 +6,14 @@ Done: {{n}}{{ (short shas), when there are any}}. Answered: {{n}}.
 
 ### FAQ: your call
 
-1. **{{question}}** ([thread]({{url}})){{options, if known}}
+1. {{question}} ({{thread link}}){{options, if known}}
 
 ### To do
 
-- {{change}} ([thread]({{url}}))
+- {{change}} ({{thread link}})
 
 ### Learnings to keep
 
-- {{lesson}} ([thread]({{url}}))
+- {{lesson}} ({{thread link}})
 
 <!-- Fill every {{...}}, one line per item. Drop a section left empty, and this comment. Keep it short enough to read on a phone. -->
