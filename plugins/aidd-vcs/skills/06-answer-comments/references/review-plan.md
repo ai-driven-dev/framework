@@ -10,4 +10,5 @@ node "$planner" --input "$review_json"
 | --- | --- |
 | `$planner` | The absolute path of `scripts/prepare-review.cjs`, next to the loaded `SKILL.md`. |
 | `$review_json` | A temporary file outside the project, following `review-input.schema.json`. |
-| stdout | JSON following `review-output.schema.json`. |
+
+It prints JSON following `review-output.schema.json`.
