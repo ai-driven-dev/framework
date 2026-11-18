@@ -38,7 +38,9 @@ export async function doctorAll(
     "ide",
     errors
   );
-  const healthy = errors.length === 0 && computeHealthy(ai, ide);
+  // A scope that errored is reported by `errors` and has a null report: "could not be checked",
+  // never "checked and fine", so it cannot count as healthy.
+  const healthy = ai?.healthy === true && ide?.healthy === true;
   return { ai, ide, pluginIssues: ai?.pluginIssues ?? [], healthy, errors };
 }
 
@@ -53,10 +55,4 @@ async function runScope<T>(
     errors.push({ scope, message: err instanceof Error ? err.message : String(err) });
     return null;
   }
-}
-
-// A scope that errored is reported by `errors`, never here: a null report means "could
-// not be checked", not "checked and fine", so healthy must never read the two the same way.
-function computeHealthy(ai: DoctorReport | null, ide: DoctorReport | null): boolean {
-  return (ai === null || ai.healthy) && (ide === null || ide.healthy);
 }

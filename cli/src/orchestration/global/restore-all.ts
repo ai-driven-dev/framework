@@ -46,7 +46,7 @@ export class RestoreAll {
         totalKept: 0,
         pluginNamesRestored: [],
         errors,
-        failed: errors.length > 0,
+        failed: false,
         unrestorable: [],
         nativeOnlyToolIds: [],
       };
@@ -64,7 +64,7 @@ export class RestoreAll {
         totalKept: result.totalKept,
         pluginNamesRestored: result.restoredPluginNames,
         errors,
-        failed: errors.length > 0,
+        failed: false,
         unrestorable: result.unrestorable,
         nativeOnlyToolIds: result.nativeOnlyToolIds,
       };
@@ -78,7 +78,7 @@ export class RestoreAll {
         totalKept: 0,
         pluginNamesRestored: [],
         errors,
-        failed: errors.length > 0,
+        failed: true,
         unrestorable: [],
         nativeOnlyToolIds: [],
       };
