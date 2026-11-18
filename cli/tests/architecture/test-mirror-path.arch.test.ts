@@ -106,7 +106,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/tools/domain/marketplace-entry.ts",
   "src/contexts/tools/domain/profile.ts",
   "src/contexts/tools/domain/sections/models-section.ts",
-  "src/contexts/translate/application/build-native-tree.ts",
   "src/contexts/translate/application/shared-plugin-helpers.ts",
   "src/contexts/translate/application/sink/disk-sink.ts",
   "src/contexts/translate/contract/build-targets.ts",
