@@ -35,9 +35,9 @@ export interface CheckRegistrationCommand {
 export class CheckRegistration {
   constructor(
     private readonly listPlugins: ListRegisteredPlugins,
-    private readonly builds: ResolveBuiltMarketplaces,
+    private readonly builds: Pick<ResolveBuiltMarketplaces, "execute">,
     private readonly declared: InspectDeclaredMarketplaces,
-    private readonly inspectHost: InspectHostRegistration
+    private readonly inspectHost: Pick<InspectHostRegistration, "execute">
   ) {}
 
   async execute(command: CheckRegistrationCommand): Promise<DoctorIssue[]> {
