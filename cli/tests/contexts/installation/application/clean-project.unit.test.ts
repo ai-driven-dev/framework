@@ -15,18 +15,17 @@ import { catalogOf, registeredProfile, TOOL } from "../../tools/testing/catalog-
 
 const ROOT = "/test-project";
 
-function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanProject {
-  return new CleanProject(
-    fs,
-    new InMemoryManifestRepository(manifest, ROOT),
-    new CapturingLogger(),
-    new UpdateGitignore(fs),
-    {
-      homeDir: () => "/home",
-      assertMcpRemovable: async () => undefined,
-      records: registrationRecordRules,
-    }
-  );
+function cleanOver(
+  manifest: Manifest | null,
+  fs: InMemoryFileAdapter,
+  repo = new InMemoryManifestRepository(manifest, ROOT),
+  gitignore = new UpdateGitignore(fs)
+): CleanProject {
+  return new CleanProject(fs, repo, new CapturingLogger(), gitignore, {
+    homeDir: () => "/home",
+    assertMcpRemovable: async () => undefined,
+    records: registrationRecordRules,
+  });
 }
 
 function localPlugin(name: string, scope: "project" | "user" = "project"): InstalledPlugin {
@@ -197,5 +196,23 @@ describe("CleanProject.plan registrations", () => {
     const plan = await cleanOver(manifest, new InMemoryFileAdapter()).plan(catalogOf());
 
     expect(plan?.withdrawals.map((w) => w.refScopes.size)).toEqual([0]);
+  });
+});
+
+describe("CleanProject.remove order", () => {
+  it("has removed AIDD's own state by the time it takes the gitignore lines back", async () => {
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    const fs = new InMemoryFileAdapter();
+    const repo = new InMemoryManifestRepository(manifest, ROOT);
+    const gitignore = new UpdateGitignore(fs);
+    const manifestWhenGitignoreIsTouched: Array<Manifest | null> = [];
+    gitignore.remove = async () => {
+      manifestWhenGitignoreIsTouched.push(await repo.load());
+    };
+
+    await cleanOver(manifest, fs, repo, gitignore).remove(catalogOf(), ROOT, true);
+
+    expect(manifestWhenGitignoreIsTouched).toEqual([null]);
   });
 });
