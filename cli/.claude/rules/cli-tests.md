@@ -1,5 +1,5 @@
 ---
-description: Apply when writing, changing or reviewing a test; levels, guard pointers, the discipline and the 8-item grid.
+description: Apply when writing, changing or reviewing a test; levels, guard pointers, the discipline and the review grid.
 paths:
   - "tests/**"
 ---
@@ -29,7 +29,7 @@ paths:
 
 - Write the test first and watch it fail for the reason its name gives; one green on its first run is dropped, a characterization test excepted.
 - One home per case: a behaviour is proven at one level, never repeated above it.
-- A guard ships with its plant: break the named behaviour and see this test red, no other (`biome-guards-bite.arch.test.ts`).
+- A guard ships with its plant: break the named behaviour and see this test red, no other (review rule, no guard; `biome-guards-bite.arch.test.ts` is an example).
 - Mutation floors and runs: `aidd_docs/memory/testing.md`.
 - A test double stubs answers; it never re-implements the production logic it replaces (review rule, no guard).
 

@@ -17,7 +17,7 @@ paths:
 
 ## Suppliers
 
-- `tools`: `tools/contract/` only; the `ToolCatalog`, and readers name the profile sections they read in `ports/tool-sections.ts`, except the readers of the `M-T4` row of the reference.
+- `tools`: `tools/contract/` only; the `ToolCatalog`, and readers name the profile sections they read in `ports/tool-sections.ts`, except the readers that hand the profile to `translate`, listed in the migration state of the reference.
 - `translate`, `host-registration`, `distribution`: none; each is handed in as a value satisfying this context's own `ports/` (`plugin/plugin-translation.ts`, `native-host.ts`).
 - `shared/`: errors, `Logger`, paths, the source value, file ports.
 

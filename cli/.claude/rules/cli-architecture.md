@@ -10,13 +10,14 @@ paths:
 
 Allowed edges are the rows of `ALLOWED` in `tests/architecture/helpers.ts`.
 1. A context reads another through its `contract/` only, and `application/` is for presentation and orchestration: `context-graph.arch.test.ts`, `biome.json`.
-2. A `contract/` file has an importer in another context, or it returns to `domain/`: `context-boundary.arch.test.ts`.
+2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `presentation/deps.ts` do not count: `context-boundary.arch.test.ts`.
 3. An edge absent from `ALLOWED` is an error: `context-graph.arch.test.ts`, `biome-context-parity.arch.test.ts`.
 4. No import cycle: Biome `noImportCycles`.
-5. A pure folder imports no adapter, no package and no Node module but `node:path` and `node:crypto`: `biome.json`, `biome-guards-bite.arch.test.ts`.
+5. Pure folders import no package and no Node builtin but `node:path` and `node:crypto`. Biome holds it for the `PURE_FOLDERS` of `biome-guards-bite.arch.test.ts`; in every other `domain/`, only `domain-does-no-io.arch.test.ts` holds it, for an inline `import("node:…")` and the file ports.
 6. Orchestration imports the `application/` and `contract/` of contexts only, reads no file and starts no process: `biome.json`.
-7. Only `composition/` imports `shared/infrastructure/`, and only `cli.ts` imports `composition/`: `biome.json`.
-8. A `shared/` file is earned by two importing contexts: `earned-sharing.arch.test.ts`.
+7. Only `composition/` and `cli.ts` import `shared/infrastructure/`, and only `cli.ts` imports `composition/` from outside it: `biome.json`, for every folder but `cli.ts`.
+8. A `shared/domain/` or `shared/ports/` file is earned by two importing contexts; a `shared/infrastructure/` file by implementing an earned shared port, being imported by an earned shared adapter, or two `composition/` importers: `earned-sharing.arch.test.ts`.
+9. A context reaches its own interior directly, never by climbing out and back in: `context-self-reentry.arch.test.ts`.
 
 ## Ports and wiring
 
@@ -25,17 +26,19 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/helpers.ts`.
 - A class takes its ports through the constructor, typed as the port, and `composition/` hands in the adapter.
 - `composition/` holds one module per context plus the root and the shared adapters: `composition-holds-one-module-per-context.arch.test.ts`.
 - A command receives its dependencies as the `DepsFactory` of `presentation/deps.ts`, built in `cli.ts`.
-- A port declares no method nobody calls: `ports-are-called.arch.test.ts`.
+- `createDeps` memoizes one graph per catalog, project root and token; a command keeps no second cache.
+- A port, a `contract/` port included, declares no method nobody calls: `ports-are-called.arch.test.ts`.
 - A tool id appears only in its profile and the registration list: `tool-addition-cost.arch.test.ts`.
 
 ## Commands, errors, size and names
 
 - A command is one file with one class of the same name, a public `execute`, no `UseCase` suffix: `command-shape.arch.test.ts`.
 - A command takes at most 5 constructor dependencies: `orchestrator-deps.arch.test.ts`.
-- Every error is a class of `shared/domain/errors.ts`, and each is thrown: `errors-that-are-thrown.arch.test.ts`.
+- An error is a class of `shared/domain/errors.ts`; each class there is thrown: `errors-that-are-thrown.arch.test.ts`.
 - A message naming a command names a real one: `errors-that-instruct.arch.test.ts`.
-- A catch never swallows: `catches-that-swallow.arch.test.ts`.
-- `process.exit` stays at the command edge: `biome-plugins/no-process-exit.grit`.
+- An empty catch is a listed best effort with its reason, or a failure: `catches-that-swallow.arch.test.ts`.
+- A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
+- `process.exit` stays at the command edge: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
 - A directory holds ten direct source files at most: `folder-size.arch.test.ts`.
 - A tolerated list only shrinks: `baseline-only-shrinks.arch.test.ts`.
 - Exports are named and nothing re-exports: `no-re-export.arch.test.ts`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.
@@ -50,10 +53,10 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/helpers.ts`.
 2. Scenario: code coordinating several contexts is orchestration and holds no business rule.
 3. Owner: one context calls each external system, behind a port.
 4. Port: declared where it is needed, its adapter in the owner's infrastructure.
-5. Sharing: a shared module has two real importers from different contexts.
+5. Sharing: a shared file is earned, import rule 8.
 6. Error: thrown once, catalogued, saying what to do.
 7. No context names a tool outside its profile.
 8. A command lets errors rise; a catch translates or recovers, never silences.
 9. Names: a command carries a verb, its `Command` and `Result` take the class name, a port a capability name.
 10. Domain: immutable value objects, one repository per aggregate, a `glossary.md` in the context.
-11. `contract/`: every published type is imported by another context.
+11. `contract/`: no file without a reader, import rule 2.

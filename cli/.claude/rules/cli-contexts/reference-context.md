@@ -10,7 +10,7 @@ paths:
 ## 1. Purpose and status
 
 - `HELD_BY_BIOME` (`tests/architecture/helpers.ts`) lists the contexts Biome closes to everything but the composition root; `distribution`, `installation` and `machine-claims` still publish through `PUBLIC_MODULES` (`context-boundary.arch.test.ts`).
-- A deviation is a row of section 9 or a change to this page, in the PR that needs it; an exception deviates from the target documents (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/target/`).
+- A deviation is a row of section 9 or a change to this page, in the PR that needs it; an exception deviates from the target architecture.
 
 ## 2. Folder layout
 
@@ -26,25 +26,22 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 - `contract/` imports no other folder of its context, `domain/` no `application/` or `infrastructure/`, `ports/` what `domain/` must not, `application/` no `infrastructure/`, `infrastructure/` no `shared/infrastructure/`.
 - No folder imports presentation, composition or a context `ALLOWED` does not admit; `biome.json` overrides hold it, computed by `biome-context-parity.arch.test.ts`.
-- A folder holds ten direct `.ts` files at most, `folder-size.arch.test.ts`.
 
 ## 3. Command template
 
 - One file, one class named by a verb and its intent, a public `execute` taking an `XCommand` or nothing and returning an `XResult` declared in the same file: `src/contexts/auth/application/log-out.ts`, and `log-in.ts` for one with input.
-- A command orchestrates, the aggregate decides, errors follow `cli-architecture.md`, the constructor takes at most 5 dependencies (`orchestrator-deps.arch.test.ts`).
+- A command orchestrates, the aggregate decides, errors and the constructor's dependencies follow `cli-architecture.md`.
 - A command takes no `process`: an environment value comes through `shared/ports/environment.ts`, `noRestrictedGlobals` in `biome.json`.
 
 ## 4. Domain template
 
 - The aggregate and its behaviour as functions beside it (`src/contexts/auth/domain/credential-record.ts`), value objects and order rules in their own file (`credential-sources.ts`).
 - The domain holds rules and order, never memoization, logging or a clock; those are `application/` (`cached-token-provider.ts`).
-- Pure folders (`domain/`, `ports/`, `contract/`, `shared/domain/`, `shared/ports/`) import no package and no Node builtin but `node:path` and `node:crypto`, and read no `process`: `biome-guards-bite.arch.test.ts`.
+- The pure folders (`domain/`, `ports/`, `contract/`, `shared/domain/`, `shared/ports/`) follow the pure-folder rule of `cli-architecture.md` and read no `process`.
 
 ## 5. Ports and contract
 
 - A port is declared by the side that needs it, named by capability, one interface per file named for the interface (`ports/identity-verifier.ts`).
-- A port method has a caller, a `contract/` port included: `ports-are-called.arch.test.ts`.
-- A `contract/` file has an importer outside its context and outside the composition root: `context-boundary.arch.test.ts`.
 - A type a non-context needs lives in `contract/` (`contract/credential.ts`), never reached through `domain/` or a re-export.
 - Only the composition root imports a held context's `domain/`, `ports/` or `infrastructure/`; presentation may also import `application/`, except of `tools`.
 - An implementation of a contract port that is not a command lives in `application/`; an adapter outside the context matches a port by shape and the composition root hands it in.
@@ -93,28 +90,28 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | Each hooks bridge keeps its own `runHook`, `stopReasonOf` and `answerOf` text, and opencode's exports `stopCallsFor` and `postToolUseCallsFor` unread (`kilo-hooks-bridge.ts`, `opencode-hooks-bridge.ts`) | the modules differ in bytes and behaviour (kilo reports a failed hook, opencode ignores it) and the golden freezes them | a PR changes the bridges on purpose and updates their golden |
 | Profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files, and `foreign-suffix-filter.ts` keeps `TOOL_FILE_SUFFIXES`, the suffix vocabulary of the AI tools | the merge into profile data lands with the move of profiles to `composition/tool-profiles/`, and the filter has no catalog to ask (`registeredSuffixesMatchVocabulary` holds it equal to the profiles) | the profiles move to composition and the filter takes its suffixes from them |
 | `telemetry` keeps `domain/legacy/legacy-locations.ts`, `repository-aliases.ts`, `ports/repository-alias-store.ts` and `infrastructure/legacy/repository-alias-store-adapter.ts` | `forget` erases what an earlier version stored, and attribution under an earlier repository id resolves only through `ledger/repository-ids.json`, never written | the next major release removes them, a maintainers' schedule |
-| `catalog-of.ts` keeps `TOOL` and `resolveRegisteredToolId` as aliases of the shared kit | the characterization test `host-registration-derivation.characterization.integration.test.ts` and four e2e files import them and stay frozen | those five files import `tests/shared/testing/registered-tools.ts` |
+| `catalog-of.ts` keeps `TOOL` and `resolveRegisteredToolId` as aliases of the shared kit | the characterization test `host-registration-derivation.characterization.integration.test.ts` and the e2e files that import them stay frozen | those files import `tests/shared/testing/registered-tools.ts` |
 | `rewritePluginRootToken` lives in `tools/contract/plugin-root-token.ts`, not in `tools/domain/formats/` | `translate` calls it from `domain/engine.ts` and `application/sink/disk-sink.ts` and reaches `tools` through `contract/` only | none, accepted placement |
 | The two whole-`src` scans of `ports-are-called.arch.test.ts` can be slow or flaky under load | each reads every `src` body with a regex per declared method | none, a written limit |
 | `profile-readers-name-their-sections.arch.test.ts` does not read an element-access alias of a profile (`tools["aiProfile"](id)`) | no `src` file writes one | none, a written limit |
 | `test-cross-context-imports.arch.test.ts` covers `tests/contexts`, `tests/helpers` and `tests/shared` only | orchestration, presentation, composition, e2e and golden tests compose contexts and may import any kit (`kit-isolation.arch.test.ts`) | none, deliberate |
 
 ### Migration state
-| # | Deviation | Closes when |
-| --- | --- | --- |
-| M5 | `composition/container.ts` imports the per-context composition modules, where the target has nobody import `composition/` | `container.ts` stops composing them by import, and `createContainer(options)` replaces `createDeps` (module-level `WeakMap`) and `createMenuDeps` |
-| M7 | `validate-recipes` is declared in `presentation/commands/tool-config.ts`, where the target gives each context its own command file | the recipes command leaves `tool-config.ts` without changing the order the help golden freezes |
-| M8 | `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin, because presentation reads the `Marketplace` aggregate from `domain/` (`display/marketplace-display.ts`, `prompts/plugin-pick-use-case.ts`) | presentation reads published types instead of the domain |
-| M9 | `MarketplaceRemover` is a `distribution` port implemented by the remove commands of `orchestration/marketplace`, handed in by `composition/orchestration/marketplace.ts` | the removal moves into `distribution`, or orchestration owns it by contract |
-| M-C1 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
-| M-T4 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation`, `translate/domain/engine.ts` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | `translate` declares its own profile input |
-| M-R5 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
-| M-R10 | the mutation scope and script keep the name `runtime` after the directory it named is gone | the next mutation-scopes cleanup |
-| M-SZ | the code-size rules (function 50 lines, complexity 15, 3 parameters, file 400 lines) are not in `biome.json` | branch `chore/code-size-rules` merges |
+| Deviation | Closes when |
+| --- | --- |
+| `composition/container.ts` imports the per-context composition modules, where the target has nobody import `composition/` | `container.ts` stops composing them by import, and `createContainer(options)` replaces `createDeps` (module-level `WeakMap`) and `createMenuDeps` |
+| `validate-recipes` is declared in `presentation/commands/tool-config.ts`, where the target gives each context its own command file | the recipes command leaves `tool-config.ts` without changing the order the help golden freezes |
+| `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin, because presentation reads the `Marketplace` aggregate from `domain/` (`display/marketplace-display.ts`, `prompts/plugin-pick-use-case.ts`) | presentation reads published types instead of the domain |
+| `MarketplaceRemover` is a `distribution` port implemented by the remove commands of `orchestration/marketplace`, handed in by `composition/orchestration/marketplace.ts` | the removal moves into `distribution`, or orchestration owns it by contract |
+| orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
+| readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation`, `translate/domain/engine.ts` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | `translate` declares its own profile input |
+| `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
+| the mutation scope and script keep the name `runtime` after the directory it named is gone | the next mutation-scopes cleanup |
+| the code-size rules (function 50 lines, complexity 15, 3 parameters, file 400 lines) are not in `biome.json` | branch `chore/code-size-rules` merges |
 
 ## 10. Checklist for a context's migration PR
 
 - Freeze behaviour with characterization tests, each seen red; move before rename, rename before logic change.
-- Update the files that name paths: `old-layout-count.arch.test.ts`, `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
-- Update `ALLOWED`, `BASELINE`, `HELD_BY_BIOME`, `PUBLIC_MODULES` (`tests/architecture/helpers.ts`) and the `biome.json` overrides.
+- Update the files that name paths: `old-layout-count.arch.test.ts`, `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, the repository root's `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
+- Update `ALLOWED`, `BASELINE`, `HELD_BY_BIOME`, `PUBLIC_MODULES` (`tests/architecture/helpers.ts`) and the `biome.json` overrides; `import-rules-bite.arch.test.ts` fails a pattern naming a vanished directory.
 - Move memory and rules with the code: a `cli-contexts/<ctx>.md` page, `aidd_docs/memory/internal/<ctx>.md`, the `glossary.md`.

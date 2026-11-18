@@ -19,7 +19,7 @@ paths:
 - Rendering lives in `presentation/display/`.
 - Deciding lives in the use case.
 - Exit `0` when it did what was asked.
-- Exit `1` on a thrown error, an unhealthy `doctor` or a guard needing a TTY.
+- Exit `1` on a thrown error, an invalid `--scope`, an unhealthy `doctor`, a guard needing a TTY, or no argument without a TTY (commander prints help to stderr).
 - `errorHandler.handle` alone turns a domain failure into a code.
 - A command may exit before the use case runs on a refusal: a missing flag or a non-interactive guard.
 - `process.exit` stays out of `shared/`, `contexts/`, `presentation/terminal/prompter-adapter.ts` and `presentation/project-root.ts`: `biome-plugins/no-process-exit.grit`.
