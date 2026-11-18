@@ -23,7 +23,7 @@ import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machin
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
+import type { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
 import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
@@ -35,7 +35,7 @@ import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.j
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
@@ -121,7 +121,7 @@ function makeRecordingUserSourceReferences(): UserSourceReferences & {
 }
 
 async function buildUseCase(
-  setupToolsPromptUseCase?: SetupToolsPromptUseCase,
+  setupToolsPromptUseCase?: Pick<SetupToolsPromptUseCase, "execute">,
   userSourceReferences?: UserSourceReferences,
   logger?: Logger,
   options?: {
@@ -230,7 +230,7 @@ describe("setup validates before any side effect", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, registeredTools())).rejects.toThrow(/--source/);
+    await expect(useCase.execute(flow)).rejects.toThrow(/--source/);
 
     expect(await deps.manifestRepo.load()).toBeNull();
     expect(deps.fs.has(join(PROJECT_ROOT, ".gitignore"))).toBe(false);
@@ -244,8 +244,7 @@ describe("setup without TTY", () => {
       remoteFlow({
         aiTools: [...registeredTools().idsInCanonicalOrder("ai")],
         ideTools: [...registeredTools().idsInCanonicalOrder("ide")],
-      }),
-      registeredTools()
+      })
     );
 
     expect(result.kind).toBe("initialized");
@@ -256,7 +255,7 @@ describe("setup without TTY", () => {
 
   it("fresh project without tool flags initializes docs only and installs no tools", async () => {
     const { useCase } = await buildUseCase();
-    const result = await useCase.execute(remoteFlow(), registeredTools());
+    const result = await useCase.execute(remoteFlow());
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -272,8 +271,7 @@ describe("setup without TTY", () => {
       remoteFlow({
         aiTools: [...registeredTools().idsInCanonicalOrder("ai")],
         ideTools: [...registeredTools().idsInCanonicalOrder("ide")],
-      }),
-      registeredTools()
+      })
     );
 
     expect(result.kind).toBe("initialized");
@@ -290,8 +288,7 @@ describe("setup without TTY", () => {
       remoteFlow({
         aiTools: [...registeredTools().idsInCanonicalOrder("ai")],
         ideTools: [...registeredTools().idsInCanonicalOrder("ide")],
-      }),
-      registeredTools()
+      })
     );
 
     expect(result.kind).toBe("up-to-date");
@@ -304,7 +301,7 @@ describe("setup without TTY", () => {
     const { useCase, deps } = await buildUseCase();
     await initProject(deps, PROJECT_ROOT);
 
-    const result = await useCase.execute(remoteFlow(), registeredTools());
+    const result = await useCase.execute(remoteFlow());
 
     expect(result.kind).toBe("up-to-date");
     if (result.kind === "up-to-date") {
@@ -316,7 +313,7 @@ describe("setup without TTY", () => {
     const { useCase, deps } = await buildUseCase();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
-    const result = await useCase.execute(remoteFlow(), registeredTools());
+    const result = await useCase.execute(remoteFlow());
 
     expect(result.kind).toBe("up-to-date");
   });
@@ -327,7 +324,7 @@ describe("setup without TTY", () => {
     });
     deps.fs.setFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");
 
-    const result = await useCase.execute(remoteFlow(), registeredTools());
+    const result = await useCase.execute(remoteFlow());
 
     expect(result.context).toStrictEqual(
       new ProjectContext({ stack: "typescript", isMonorepo: false, hasFramework: false })
@@ -353,7 +350,7 @@ describe("setup without TTY", () => {
     it("installs each named plugin on every tool once the framework marketplace is registered", async () => {
       const { useCase, pluginInstallFromMarketplace } = await buildUseCase();
 
-      await useCase.execute(namedFlow(true), registeredTools());
+      await useCase.execute(namedFlow(true));
 
       expect(pluginInstallFromMarketplace.execute).toHaveBeenCalledTimes(1);
       expect(pluginInstallFromMarketplace.execute).toHaveBeenCalledWith({
@@ -369,7 +366,7 @@ describe("setup without TTY", () => {
     it("installs no plugin when the default marketplace is opted out", async () => {
       const { useCase, pluginInstallFromMarketplace } = await buildUseCase();
 
-      await useCase.execute(namedFlow(false), registeredTools());
+      await useCase.execute(namedFlow(false));
 
       expect(pluginInstallFromMarketplace.execute).not.toHaveBeenCalled();
     });
@@ -378,7 +375,7 @@ describe("setup without TTY", () => {
   describe("default marketplace opt-out (#197)", () => {
     it("registers framework marketplace by default", async () => {
       const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
-      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }), registeredTools());
+      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
       expect(marketplaceRegisterFramework.execute).toHaveBeenCalledOnce();
       expect(marketplaceRefresh.execute).toHaveBeenCalledOnce();
     });
@@ -396,8 +393,7 @@ describe("setup without TTY", () => {
           pluginMode: "none",
           interactive: false,
           registerDefaultMarketplace: false,
-        }),
-        registeredTools()
+        })
       );
       expect(marketplaceRegisterFramework.execute).not.toHaveBeenCalled();
       expect(marketplaceRefresh.execute).not.toHaveBeenCalled();
@@ -416,8 +412,7 @@ describe("setup without TTY", () => {
           pluginMode: "none",
           interactive: false,
           registerDefaultMarketplace: false,
-        }),
-        registeredTools()
+        })
       );
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
@@ -432,7 +427,7 @@ describe("setup without TTY", () => {
       const userSourceReferences = makeRecordingUserSourceReferences();
       const { useCase, deps } = await buildUseCase(undefined, userSourceReferences);
 
-      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }), registeredTools());
+      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
 
       expect(userSourceReferences.added).toEqual([
         { version: deps.currentVersionProvider.get(), projectRoot: PROJECT_ROOT },
@@ -454,8 +449,7 @@ describe("setup without TTY", () => {
           pluginMode: "none",
           interactive: false,
           registerDefaultMarketplace: false,
-        }),
-        registeredTools()
+        })
       );
 
       expect(userSourceReferences.added).toEqual([]);
@@ -473,10 +467,7 @@ describe("setup without TTY", () => {
       );
       const { useCase } = await buildUseCase(undefined, userSourceReferences, logger);
 
-      const result = await useCase.execute(
-        remoteFlow({ aiTools: [TOOL.claude] }),
-        registeredTools()
-      );
+      const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
 
       expect(result.kind).toBe("initialized");
       expect(logger.warnMessages.some((m) => m.includes("references.json"))).toBe(true);
@@ -489,10 +480,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
 
-      const result = await useCase.execute(
-        remoteFlow({ aiTools: [TOOL.claude] }),
-        registeredTools()
-      );
+      const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
 
       expect(result.kind).toBe("initialized");
     });
@@ -502,10 +490,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
 
-      const result = await useCase.execute(
-        remoteFlow({ aiTools: [TOOL.opencode] }),
-        registeredTools()
-      );
+      const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.opencode] }));
 
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
@@ -520,7 +505,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
 
-      const result = await useCase.execute(remoteFlow(), registeredTools());
+      const result = await useCase.execute(remoteFlow());
 
       expect(result.kind).toBe("initialized");
     });
@@ -531,7 +516,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/README.md"), "my custom readme");
 
-      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }), registeredTools());
+      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
 
       const content = deps.fs.getFile(join(PROJECT_ROOT, "aidd_docs/README.md")) ?? "";
       expect(content).toBe("my custom readme");
@@ -540,7 +525,7 @@ describe("setup without TTY", () => {
 });
 
 describe("setup interactive tool selection", () => {
-  function interactiveFlow(
+  function _interactiveFlow(
     opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}
   ): SetupFlow {
     return new SetupFlow({
@@ -555,46 +540,32 @@ describe("setup interactive tool selection", () => {
     });
   }
 
-  it("interactive + empty tools → prompts and installs user-selected tools", async () => {
-    const prompter = new ScriptedPrompter([
-      ScriptedPrompter.answer.checkbox(["claude"]),
-      ScriptedPrompter.answer.checkbox([]),
-    ]);
-    const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
-    const { useCase } = await buildUseCase(setupToolsPromptUseCase);
-
-    const result = await useCase.execute(interactiveFlow(), registeredTools());
-
-    expect(result.kind).toBe("initialized");
-    if (result.kind === "initialized") {
-      const installed = result.install.results.map((r) => r.toolId);
-      expect(installed).toContain("claude");
-    }
-  });
-
-  it("interactive + tools provided via flow → no extra prompt, installs given tools", async () => {
-    const prompter = new ScriptedPrompter([]); // no tool prompts expected
-    const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
-    const { useCase } = await buildUseCase(setupToolsPromptUseCase);
+  it("hands the tools question the flow's whole request, and installs the answer", async () => {
+    const answer = vi.fn(async () => ({ aiTools: [TOOL.cursor], ideTools: [] }));
+    const { useCase, deps } = await buildUseCase({ execute: answer }, undefined, undefined, {
+      detectContext: true,
+    });
+    deps.fs.setFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");
 
     const result = await useCase.execute(
-      interactiveFlow({ aiTools: [TOOL.cursor] }),
-      registeredTools()
+      remoteFlow({ aiTools: [TOOL.claude, TOOL.cursor], ideTools: [TOOL.vscode] })
     );
 
-    expect(result.kind).toBe("initialized");
+    expect(answer).toHaveBeenCalledWith({
+      interactive: false,
+      aiTools: [TOOL.claude, TOOL.cursor],
+      ideTools: [TOOL.vscode],
+      context: new ProjectContext({ stack: "typescript", isMonorepo: false, hasFramework: false }),
+    });
     if (result.kind === "initialized") {
-      const installed = result.install.results.map((r) => r.toolId);
-      expect(installed).toContain("cursor");
+      expect(result.install.results.map((r) => r.toolId)).toEqual(["cursor"]);
     }
   });
 
   it("non-interactive + empty tools → no prompt, installs nothing", async () => {
-    const prompter = new ScriptedPrompter([]); // no prompts expected
-    const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
-    const { useCase } = await buildUseCase(setupToolsPromptUseCase);
+    const { useCase } = await buildUseCase();
 
-    const result = await useCase.execute(remoteFlow(), registeredTools());
+    const result = await useCase.execute(remoteFlow());
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -608,7 +579,7 @@ describe("setup --scope user", () => {
     const { useCase } = await buildUseCase();
 
     await expect(
-      useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools())
+      useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }))
     ).rejects.toThrow(UserScopeUnavailableError);
   });
 
@@ -616,10 +587,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    const result = await useCase.execute(
-      remoteFlow({ aiTools: [TOOL.claude], scope: "user" }),
-      registeredTools()
-    );
+    const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(result).toStrictEqual({
       kind: "initialized",
@@ -634,10 +602,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository(Manifest.create());
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    const result = await useCase.execute(
-      remoteFlow({ aiTools: [TOOL.claude], scope: "user" }),
-      registeredTools()
-    );
+    const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(result).toStrictEqual({
       kind: "up-to-date",
@@ -654,7 +619,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository(seed);
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toStrictEqual(["codex", "claude"]);
   });
@@ -663,7 +628,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository(Manifest.create());
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(userManifestRepo.getCurrent()?.getToolFiles(TOOL.claude)).toStrictEqual([]);
     expect(userManifestRepo.saveCount).toBe(1);
@@ -675,7 +640,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository(seed);
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(userManifestRepo.getCurrent()?.getToolVersion(TOOL.claude)).toBe("9.9.9");
     expect(userManifestRepo.saveCount).toBe(0);
@@ -687,7 +652,7 @@ describe("setup --scope user", () => {
       userManifestRepo,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(deps.fs.listUnder(PROJECT_ROOT)).toEqual([]);
   });
@@ -698,7 +663,7 @@ describe("setup --scope user", () => {
       userManifestRepo,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toContain("claude");
     expect(await deps.manifestRepo.load()).toBeNull();
@@ -717,7 +682,7 @@ describe("setup --scope user", () => {
       syncSettingsUseCase,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: [] })
@@ -728,10 +693,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    const result = await useCase.execute(
-      remoteFlow({ aiTools: [TOOL.claude], scope: "user" }),
-      registeredTools()
-    );
+    const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(result.install.results).toEqual([]);
   });
@@ -743,7 +705,7 @@ describe("setup --scope user", () => {
       userManifestRepo,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), registeredTools());
+    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
 
     expect(userSourceReferences.added).toEqual([]);
   });

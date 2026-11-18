@@ -11,7 +11,6 @@ export interface SetupToolsPromptOptions {
   interactive: boolean;
   aiTools: readonly AiToolId[];
   ideTools: readonly IdeToolId[];
-  tools: ToolCatalog;
   context?: ProjectContext;
 }
 
@@ -21,30 +20,30 @@ export interface SetupToolsPromptResult {
 }
 
 export class SetupToolsPromptUseCase {
-  constructor(private readonly prompter: Prompter) {}
+  constructor(
+    private readonly prompter: Prompter,
+    private readonly tools: ToolCatalog
+  ) {}
 
   async execute(options: SetupToolsPromptOptions): Promise<SetupToolsPromptResult> {
     if (!options.interactive || options.aiTools.length > 0 || options.ideTools.length > 0) {
       return { aiTools: options.aiTools, ideTools: options.ideTools };
     }
-    return this.promptTools(options.tools, options.context);
+    return this.promptTools(options.context);
   }
 
-  private async promptTools(
-    tools: ToolCatalog,
-    context?: ProjectContext
-  ): Promise<SetupToolsPromptResult> {
+  private async promptTools(context?: ProjectContext): Promise<SetupToolsPromptResult> {
     const aiRecs = recommendAiTools(context);
     const ideRecs = recommendIdeTools(context);
     const aiTools = await this.prompter.checkbox<AiToolId>("Select AI tools to install:", [
-      ...tools.idsInCanonicalOrder("ai").map((id) => ({
+      ...this.tools.idsInCanonicalOrder("ai").map((id) => ({
         name: aiRecs.includes(id) ? `${id} (recommended)` : id,
         value: id,
         checked: aiRecs.includes(id),
       })),
     ]);
     const ideTools = await this.prompter.checkbox<IdeToolId>("Select IDE tools to install:", [
-      ...tools.idsInCanonicalOrder("ide").map((id) => ({
+      ...this.tools.idsInCanonicalOrder("ide").map((id) => ({
         name: ideRecs.includes(id) ? `${id} (recommended)` : id,
         value: id,
         checked: ideRecs.includes(id),

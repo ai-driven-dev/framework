@@ -91,11 +91,11 @@ export function wireSetup(
     marketplaceRegistry,
     resolveMarketplaceUseCase
   );
-  const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
+  const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter, base.tools);
   const runSetup = new RunSetup(
     setupStepsOf(base, m, g),
     setupQuestionsOf(setupPluginsPromptUseCase, setupToolsPromptUseCase),
     new InitProject(fs, manifestRepo, inst.updateGitignore, base.tools)
   );
-  return { setupPluginsPromptUseCase, runSetup };
+  return { setupPluginsPromptUseCase, setupToolsPromptUseCase, runSetup };
 }

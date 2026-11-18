@@ -296,7 +296,7 @@ export function registerSetupCommand(
 
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        const result = await deps.runSetup.execute(flow, catalog);
+        const result = await deps.runSetup.execute(flow);
 
         if (interactive && result.context !== undefined) {
           printDetectedContext(output, result.context.describe());

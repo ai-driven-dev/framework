@@ -25,7 +25,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
-import { flowTools, registeredTools } from "../../shared/testing/registered-tools.js";
+import { flowTools } from "../../shared/testing/registered-tools.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
@@ -140,7 +140,7 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, registeredTools())).rejects.toThrow(CatalogFetchAuthError);
+    await expect(useCase.execute(flow)).rejects.toThrow(CatalogFetchAuthError);
   });
 
   it("proceeds when source is remote, no token, but repo is public", async () => {
@@ -154,7 +154,7 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, registeredTools())).resolves.toBeDefined();
+    await expect(useCase.execute(flow)).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is remote and a token is present", async () => {
@@ -168,7 +168,7 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, registeredTools())).resolves.toBeDefined();
+    await expect(useCase.execute(flow)).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is local (no token required)", async () => {
@@ -182,6 +182,6 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, registeredTools())).resolves.toBeDefined();
+    await expect(useCase.execute(flow)).resolves.toBeDefined();
   });
 });

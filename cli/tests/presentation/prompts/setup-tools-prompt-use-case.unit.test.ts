@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
-import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("SetupToolsPromptUseCase", () => {
   describe("non-interactive mode", () => {
     it("returns flow tools unchanged without prompting", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected
-      const useCase = new SetupToolsPromptUseCase(prompter);
+      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: false,
         aiTools: [],
         ideTools: [],
-        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual([]);
@@ -25,13 +23,12 @@ describe("SetupToolsPromptUseCase", () => {
   describe("interactive mode with tools already provided", () => {
     it("returns provided tools without prompting when flags given", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected
-      const useCase = new SetupToolsPromptUseCase(prompter);
+      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
         aiTools: [TOOL.claude],
         ideTools: [],
-        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual(["claude"]);
@@ -40,13 +37,12 @@ describe("SetupToolsPromptUseCase", () => {
 
     it("returns provided ide tools without prompting", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected
-      const useCase = new SetupToolsPromptUseCase(prompter);
+      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
         aiTools: [],
         ideTools: [TOOL.vscode],
-        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual([]);
@@ -60,13 +56,12 @@ describe("SetupToolsPromptUseCase", () => {
         ScriptedPrompter.answer.checkbox(["claude", "cursor"]),
         ScriptedPrompter.answer.checkbox(["vscode"]),
       ]);
-      const useCase = new SetupToolsPromptUseCase(prompter);
+      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
         aiTools: [],
         ideTools: [],
-        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual(["claude", "cursor"]);
@@ -78,13 +73,12 @@ describe("SetupToolsPromptUseCase", () => {
         ScriptedPrompter.answer.checkbox([]),
         ScriptedPrompter.answer.checkbox([]),
       ]);
-      const useCase = new SetupToolsPromptUseCase(prompter);
+      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
         aiTools: [],
         ideTools: [],
-        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual([]);

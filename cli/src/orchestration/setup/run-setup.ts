@@ -6,7 +6,6 @@ import type {
   InstallToolsResult,
 } from "../../contexts/installation/application/install/install-tools.js";
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeUnavailableError } from "../../shared/domain/errors.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
@@ -44,7 +43,6 @@ export interface SetupQuestions {
     readonly interactive: boolean;
     readonly aiTools: readonly AiToolId[];
     readonly ideTools: readonly IdeToolId[];
-    readonly tools: ToolCatalog;
     readonly context: ProjectContext | undefined;
   }) => Promise<{
     readonly aiTools: readonly AiToolId[];
@@ -60,7 +58,7 @@ export class RunSetup {
     private readonly initProject: Pick<InitProject, "initializeIfAbsent">
   ) {}
 
-  async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
+  async execute(flow: SetupFlow): Promise<SetupResult> {
     if (flow.scope === "user") return this.runMachineScope(flow);
     const context = await this.detectContext(flow);
     // Resolved before the manifest is initialized: a non-interactive run with no --source must
@@ -68,7 +66,7 @@ export class RunSetup {
     const source = await this.steps.registration.resolveSourceIfNeeded(flow);
     const isNew = await this.initProject.initializeIfAbsent({ projectRoot: flow.projectRoot });
     await this.steps.registration.registerIfPresent(flow, source);
-    const install = await this.installTools(flow, context, tools);
+    const install = await this.installTools(flow, context);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     const activation = await this.steps.syncSettings({ projectRoot: flow.projectRoot });
     return this.buildResult(isNew, install, activation, context);
@@ -86,10 +84,9 @@ export class RunSetup {
 
   private async installTools(
     flow: SetupFlow,
-    context: ProjectContext | undefined,
-    tools: ToolCatalog
+    context: ProjectContext | undefined
   ): Promise<InstallToolsResult> {
-    const { aiTools, ideTools } = await this.resolveTools(flow, context, tools);
+    const { aiTools, ideTools } = await this.resolveTools(flow, context);
     return this.steps.installTools.execute({
       projectRoot: flow.projectRoot,
       aiTools,
@@ -101,8 +98,7 @@ export class RunSetup {
 
   private async resolveTools(
     flow: SetupFlow,
-    context: ProjectContext | undefined,
-    tools: ToolCatalog
+    context: ProjectContext | undefined
   ): Promise<{ aiTools: readonly AiToolId[]; ideTools: readonly IdeToolId[] }> {
     const { aiTools, ideTools } = flow;
     if (this.questions.tools === undefined) return { aiTools, ideTools };
@@ -110,7 +106,6 @@ export class RunSetup {
       interactive: flow.interactive,
       aiTools,
       ideTools,
-      tools,
       context,
     });
   }

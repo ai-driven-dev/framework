@@ -21,7 +21,7 @@ import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { flowTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -138,7 +138,7 @@ describe("setup surfaces a marketplace source conflict instead of exiting clean"
   it("reports the conflict in its own activation result rather than discarding it", async () => {
     const { useCase, activator } = await buildUseCaseWithConflict();
 
-    const result = await useCase.execute(remoteFlow([TOOL.claude]), registeredTools());
+    const result = await useCase.execute(remoteFlow([TOOL.claude]));
 
     expect(activator.addedMarketplaces).toHaveLength(0);
     expect(result.activation.errors).toHaveLength(1);
