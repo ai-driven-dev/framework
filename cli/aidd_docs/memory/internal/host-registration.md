@@ -5,6 +5,7 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 ## Shape
 
 - `contract/` holds the types an outside caller reads. `ports/` holds the host ports, `domain/` the rules, the reading types (the source reading among them), the `RegistrationRecord` and the source comparison, `application/` the use cases that drive them.
+- `installation` asks for the record rules through `RegistrationRecordRules`, declared in its own `ports/native-host.ts`.
 - `infrastructure/` holds every reader, parser and the CLI adapter. Only the composition root imports it.
 - `src/composition/host-registration.ts` is the one reader of `tools`' declarations. It builds every reader from each tool's declared activation.
 
