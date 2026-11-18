@@ -55,7 +55,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/installation/application/plugin/plan-plugin-install.ts",
   "src/contexts/installation/application/plugin/update-user-plugin-files.ts",
   "src/contexts/installation/application/purge-user-scope-files.ts",
-  "src/contexts/installation/application/removal/remove-plugin.ts",
   "src/contexts/installation/application/removal/remove-project-plugin.ts",
   "src/contexts/installation/application/restore/apply-plugin-files.ts",
   "src/contexts/installation/application/restore/project/restore-global.ts",

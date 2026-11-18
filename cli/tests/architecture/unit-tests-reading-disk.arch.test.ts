@@ -16,7 +16,7 @@ const BASELINE: readonly string[] = [
   "tests/contexts/installation/application/plugin/add-plugin-mcp.unit.test.ts",
   "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts",
   "tests/orchestration/plugin/install-from-marketplace.unit.test.ts",
-  "tests/contexts/installation/application/plugin/plugin-remove-use-case.unit.test.ts",
+  "tests/contexts/installation/application/removal/remove-plugin.unit.test.ts",
   "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts",
   "tests/contexts/installation/application/plugin/plugin-update-mode-a-marketplace.unit.test.ts",
   "tests/contexts/installation/application/plugin/update-plugin.unit.test.ts",
