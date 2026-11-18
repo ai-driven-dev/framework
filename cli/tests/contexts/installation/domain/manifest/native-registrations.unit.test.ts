@@ -4,6 +4,7 @@ import {
   parseNativeRegistrations,
   serializeNativeRegistrations,
 } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import { InvalidManifestDataError } from "../../../../../src/shared/domain/errors.js";
 
 const claims = [{ ref: "plugin@declared", dependents: ["/project-a"] }];
 
@@ -19,8 +20,30 @@ describe("native registrations: what the manifest keeps of a tool's host registr
     expect(parseNativeRegistrations(serializeNativeRegistrations(stored))).toStrictEqual(stored);
   });
 
+  it("holds the host record opaque, whatever it carries", () => {
+    const stored = { somethingTheHostAdded: { nested: [1] }, binary: 7 };
+
+    expect(parseNativeRegistrations(stored)).toStrictEqual(stored);
+    expect(serializeNativeRegistrations(stored)).toStrictEqual(stored);
+  });
+
+  it("writes the host data first and the claims last", () => {
+    const written = serializeNativeRegistrations({ pluginClaims: claims, binary: "claude" });
+
+    expect(Object.keys(written)).toStrictEqual(["binary", "pluginClaims"]);
+  });
+
   it("keeps an absent registration absent", () => {
     expect(parseNativeRegistrations(undefined)).toBeUndefined();
+  });
+
+  it.each([
+    ["not an object", "claude"],
+    ["claims that are not a list", { pluginClaims: "plugin@declared" }],
+    ["a claim without a ref", { pluginClaims: [{ dependents: [] }] }],
+    ["a claim whose dependents are not paths", { pluginClaims: [{ ref: "a@b", dependents: [1] }] }],
+  ])("refuses %s", (_name, data) => {
+    expect(() => parseNativeRegistrations(data)).toThrow(InvalidManifestDataError);
   });
 
   it.each(["serialize", "parse"] as const)(
