@@ -1,24 +1,23 @@
-<!-- Fill placeholders, drop unused optional lines, then strip this comment. -->
+# <title>
 
-# <ADR title>
-
-- Date: <YYYY-MM-DD>
+- Date: <date>
 - Status: Accepted
-- Supersedes: <ADR path>
-- Superseded by: <ADR path>
+- Supersedes: <supersedes>
 
 ## Context
 
-<What forced a choice. The problem and the constraints behind it.>
+<context>
 
 ## Decision
 
-<What was chosen, in one or two sentences.>
+<decision>
 
 ## Alternatives
 
-<The options considered, and why each one lost.>
+<alternatives>
 
 ## Consequences
 
-<What this makes easier, what it makes harder, what it locks in.>
+<consequences>
+
+> Fill every `<...>` and delete this line. Omit the Supersedes line when nothing is replaced.
