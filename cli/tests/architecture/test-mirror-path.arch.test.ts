@@ -4,8 +4,8 @@
  * contract. A test of the same name in another folder does not count.
  *
  * Two kinds of module owe no test of their own, and both are computed, never listed: a module left
- * with no runtime statement once its type declarations are stripped, and a data file of a tool's
- * profiles, which conformance and golden tests hold. Every other miss is in `MIRROR_BASELINE`.
+ * with no runtime statement once its type declarations are stripped, and a module of a tool's
+ * profiles that declares no function, arrow or class, which conformance and golden tests hold. Every other miss is in `MIRROR_BASELINE`.
  * Ambient declaration files (`.d.ts`) are no module: they hold no runtime to test.
  *
  * Limit: `declarationEnd` counts brackets inside string literals; a type alias whose string holds
@@ -16,7 +16,8 @@ import { expectRatchet, read, sourceFiles, testFiles } from "./helpers.js";
 import { closingBracket, codeOnly, scanBrackets } from "./source-shapes.js";
 
 const CONTEXT_MODULE = /^src\/contexts\/.*(?<!\.d)\.ts$/;
-const PROFILE_DATA_FOLDER = "src/contexts/tools/domain/profiles/";
+const PROFILE_FOLDER = "src/contexts/tools/domain/profiles/";
+const BEHAVIOUR = /\bfunction\b|=>|\bclass\b/;
 const TEST_LEVELS = ["unit", "integration", "contract"] as const;
 const TYPE_DECLARATION = /^(?:export\s+(?:declare\s+)?)?(interface|type)\s|^import\s+type\s/m;
 
@@ -107,6 +108,15 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/tools/contract/tool-recommendations.ts",
   "src/contexts/tools/domain/marketplace-entry.ts",
   "src/contexts/tools/domain/profile.ts",
+  "src/contexts/tools/domain/profiles/claude/claude-agent.ts",
+  "src/contexts/tools/domain/profiles/codex/codex-paths.ts",
+  "src/contexts/tools/domain/profiles/copilot/copilot-agent.ts",
+  "src/contexts/tools/domain/profiles/cursor/cursor-agent.ts",
+  "src/contexts/tools/domain/profiles/kilo/kilo-agent.ts",
+  "src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts",
+  "src/contexts/tools/domain/profiles/kilo/kilo-paths.ts",
+  "src/contexts/tools/domain/profiles/opencode/opencode-agent.ts",
+  "src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts",
   "src/contexts/tools/domain/sections/models-section.ts",
   "src/contexts/translate/application/shared-plugin-helpers.ts",
   "src/contexts/translate/application/sink/disk-sink.ts",
@@ -134,8 +144,13 @@ function isTypeOnly(source: string): boolean {
   return withoutTypeDeclarations(codeOnly(source)).trim() === "";
 }
 
-function isProfileData(module: string): boolean {
-  return module.startsWith(PROFILE_DATA_FOLDER);
+function declaresBehaviour(source: string): boolean {
+  return BEHAVIOUR.test(withoutTypeDeclarations(codeOnly(source)));
+}
+
+/** A module of the profiles folder that declares no function, arrow or class: tables, not logic. */
+function isProfileData(module: string, source: string): boolean {
+  return module.startsWith(PROFILE_FOLDER) && !declaresBehaviour(source);
 }
 
 function mirrorTestsOf(module: string): string[] {
@@ -155,7 +170,7 @@ function missingMirrors(
 ): string[] {
   const present = new Set(tests);
   return modules
-    .filter((module) => !isProfileData(module) && !isTypeOnly(sourceOf(module)))
+    .filter((module) => !isTypeOnly(sourceOf(module)) && !isProfileData(module, sourceOf(module)))
     .filter((module) => !mirrorTestsOf(module).some((test) => present.has(test)))
     .sort();
 }
@@ -201,8 +216,22 @@ describe("a module has its test at the mirror path", () => {
     });
 
     it("excludes the data file of a tool's profile", () => {
-      const profileFile = `${PROFILE_DATA_FOLDER}claude/claude-paths.ts`;
+      const profileFile = `${PROFILE_FOLDER}claude/claude-paths.ts`;
       expect(missing([], runtime, profileFile)).toEqual([]);
+    });
+
+    it.each([
+      ["a function", "export function pathsOf() { return 1; }"],
+      ["an arrow", "export const pathsOf = () => 1;"],
+      ["a class", "export class Paths {}"],
+    ])("flags a profile module that declares %s", (_, source) => {
+      const profileFile = `${PROFILE_FOLDER}codex/codex-paths.ts`;
+      expect(missing([], source, profileFile)).toEqual([profileFile]);
+    });
+
+    it("excludes a profile module whose only arrow is in a type", () => {
+      const profileFile = `${PROFILE_FOLDER}codex/codex-paths.ts`;
+      expect(missing([], `${runtime}\nexport type Pick = () => void;`, profileFile)).toEqual([]);
     });
 
     it("keeps a tools module outside the profiles folder", () => {
