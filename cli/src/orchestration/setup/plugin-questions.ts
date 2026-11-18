@@ -15,9 +15,9 @@ export async function askWhichMatch(
   prompter: Prompter,
   question: WhichMatchQuestion
 ): Promise<PluginSourceMatch> {
-  const head = question.matches[0];
-  if (question.matches.length === 1 && head !== undefined) return head;
-  if (question.autoSelect && head !== undefined) return head;
+  const [head, ...others] = question.matches;
+  if (head !== undefined && others.length === 0) return head;
+  if (head !== undefined && question.autoSelect) return head;
   if (!question.interactive) {
     throw new AmbiguousPluginMatchError(
       question.pluginName,

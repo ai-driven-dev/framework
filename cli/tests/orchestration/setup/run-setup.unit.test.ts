@@ -168,7 +168,8 @@ async function buildUseCase(
       : new SetupMachineScope(
           new ConfigureMachineScope(options.userManifestRepo, deps.currentVersionProvider),
           setupMarketplaceRegistration,
-          (syncOptions) => syncSettingsUseCase.execute(syncOptions)
+          (syncOptions) => syncSettingsUseCase.execute(syncOptions),
+          { execute: async () => ({ plugins: [] }) }
         );
   const useCase = runSetupOf(
     deps.fs,

@@ -77,24 +77,20 @@ export class SetupFlow {
       params.ideToolIds,
       params.ideTools ?? []
     );
-    this.validatePluginMode(params.pluginMode ?? "none", params.pluginNames ?? []);
-    this.validateScope(
-      params.supportsUserScopeActivation,
-      params.scope ?? "project",
-      aiTools,
-      ideTools,
-      params.pluginMode ?? "none"
-    );
+    const pluginMode = params.pluginMode ?? "none";
+    const scope = params.scope ?? "project";
+    this.validatePluginMode(pluginMode, params.pluginNames ?? []);
+    this.validateScope(params.supportsUserScopeActivation, scope, aiTools, ideTools, pluginMode);
     this.projectRoot = params.projectRoot;
     this.source = params.source;
     this.aiTools = aiTools;
     this.ideTools = ideTools;
-    this.pluginMode = params.pluginMode ?? "none";
+    this.pluginMode = pluginMode;
     this.pluginNames = params.pluginNames ?? [];
     this.interactive = params.interactive ?? false;
     this.force = params.force ?? false;
     this.registerDefaultMarketplace = params.registerDefaultMarketplace ?? true;
-    this.scope = params.scope ?? "project";
+    this.scope = scope;
   }
 
   /** The ids of `candidates` the names spell, in the order written; a name no candidate bears is

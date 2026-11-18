@@ -37,7 +37,7 @@ export class SetupMachineScope {
       "resolveSourceIfNeeded" | "registerIfPresent"
     >,
     private readonly syncMachineScope: SyncMachineScope,
-    private readonly installPlugins?: Pick<InstallGlobalPlugins, "execute">
+    private readonly installPlugins: Pick<InstallGlobalPlugins, "execute">
   ) {}
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
@@ -71,7 +71,6 @@ export class SetupMachineScope {
     flow: SetupFlow,
     tools: ToolCatalog
   ): Promise<readonly string[]> {
-    if (this.installPlugins === undefined) return [];
     const { plugins } = await this.installPlugins.execute({
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
