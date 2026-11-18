@@ -7,7 +7,7 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
-import { resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const makeHash = (hex: string): FileHash => new FileHash(hex.padEnd(32, "0"));
 

@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { catalogOf, resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
+import {
+  registeredTools,
+  resolveRegisteredToolId,
+} from "../../../shared/testing/registered-tools.js";
 
 /** 32-char lowercase hex → valid MD5. fast-check v4 removed hexaString; use stringMatching. */
 const md5Arb = fc.stringMatching(/^[0-9a-f]{32}$/);
@@ -19,7 +22,7 @@ const installationFileArb = fc
       new InstallationFile({ relativePath, content: "x", hash: new FileHash(hash) })
   );
 
-const toolIdArb = fc.constantFrom(...catalogOf().idsInCanonicalOrder());
+const toolIdArb = fc.constantFrom(...registeredTools().idsInCanonicalOrder());
 
 const toolEntryArb = fc.record({
   toolId: toolIdArb,

@@ -4,7 +4,7 @@ import {
   InvalidManifestDataError,
   InvalidManifestToolIdError,
 } from "../../../../src/shared/domain/errors.js";
-import { resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.js";
 
 describe("parseManifestTools — the tools section of a manifest document", () => {
   it("reads no tool from a document without a tools section", () => {

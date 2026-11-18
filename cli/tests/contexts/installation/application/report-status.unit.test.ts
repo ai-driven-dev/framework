@@ -14,7 +14,7 @@ import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const TRACKED = ".claude/rules/one.md";
@@ -50,8 +50,8 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
     fs,
     new InMemoryManifestRepository(manifest, PROJECT_ROOT),
     hasher,
-    new DetectPluginDrift(fs, catalogOf()),
-    catalogOf()
+    new DetectPluginDrift(fs, registeredTools()),
+    registeredTools()
   );
 }
 
@@ -292,15 +292,15 @@ describe("status", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitProject(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
+      tools: registeredTools(),
     });
 
     const useCase = new ReportStatus(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs, catalogOf()),
-      catalogOf()
+      new DetectPluginDrift(deps.fs, registeredTools()),
+      registeredTools()
     );
     const report = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -314,7 +314,7 @@ describe("status", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitProject(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
+      tools: registeredTools(),
     });
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest missing");
@@ -323,21 +323,25 @@ describe("status", () => {
 
     // Written by the CLI on purpose and never tracked. Reading the exclusion off
     // `machineLocalFilesOf` is what keeps it matching the path the profile declares.
-    for (const relativePath of registeredAiConfig(TOOL.claude)
+    for (const relativePath of registeredTools()
+      .aiProfile(TOOL.claude)
       .marketplaceRegistration()
       ?.machineLocalFiles() ?? []) {
       await deps.fs.writeFile(`${PROJECT_ROOT}/${relativePath}`, "{}");
     }
     expect(
-      (registeredAiConfig(TOOL.claude).marketplaceRegistration()?.machineLocalFiles() ?? []).length
+      (
+        registeredTools().aiProfile(TOOL.claude).marketplaceRegistration()?.machineLocalFiles() ??
+        []
+      ).length
     ).toBeGreaterThan(0);
 
     const report = await new ReportStatus(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs, catalogOf()),
-      catalogOf()
+      new DetectPluginDrift(deps.fs, registeredTools()),
+      registeredTools()
     ).execute({ projectRoot: PROJECT_ROOT });
 
     const drifted = report.tools.flatMap((tool) => tool.drifted);

@@ -12,7 +12,7 @@ import {
   MalformedPluginScopeError,
 } from "../../../../../src/shared/domain/errors.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
   const data = makePluginData({

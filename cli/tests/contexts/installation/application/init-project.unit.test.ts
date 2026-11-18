@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InitProject } from "../../../../src/contexts/installation/application/init-project.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -21,7 +21,7 @@ describe("init", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const reads = countingLoads(deps.manifestRepo);
     const init = new InitProject(deps.fs, deps.manifestRepo);
-    const command = { projectRoot: PROJECT_ROOT, tools: catalogOf() };
+    const command = { projectRoot: PROJECT_ROOT, tools: registeredTools() };
 
     await init.execute(command);
     expect(reads()).toBe(1);
@@ -36,7 +36,7 @@ describe("init", () => {
 
     await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
+      tools: registeredTools(),
     });
 
     expect(reads()).toBe(1);
@@ -46,7 +46,7 @@ describe("init", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const result = await new InitProject(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
+      tools: registeredTools(),
     });
 
     expect(result.manifest).not.toBeNull();
@@ -63,7 +63,7 @@ describe("init", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitProject(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
+      tools: registeredTools(),
     });
 
     const docsFiles = deps.fs.listUnder(join(PROJECT_ROOT, "aidd_docs"));
@@ -77,7 +77,7 @@ describe("init", () => {
 
     await new InitProject(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
+      tools: registeredTools(),
     });
 
     expect(deps.fs.getFile(docFile)).toBe("custom content");
@@ -89,7 +89,7 @@ describe("init", () => {
 
       const created = await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
 
       expect(created).toBe(true);
@@ -103,7 +103,7 @@ describe("init", () => {
 
       const created = await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
 
       expect(created).toBe(false);
@@ -122,7 +122,7 @@ describe("init", () => {
       await expect(
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).rejects.toThrow("AIDD files detected but no manifest found");
     });
@@ -137,7 +137,7 @@ describe("init", () => {
       await expect(
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).resolves.toHaveProperty("manifest");
     });
@@ -146,12 +146,12 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitProject(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
       await expect(
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).rejects.toThrow(/Already initialized/);
     });
@@ -162,18 +162,18 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitProject(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
       await expect(
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).rejects.toThrow(/aidd clean --force/);
       await expect(
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).rejects.not.toThrow(/aidd init --force/);
     });
@@ -184,7 +184,7 @@ describe("init", () => {
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           force: true,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).rejects.toThrow("No AIDD manifest found");
     });
@@ -193,13 +193,13 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitProject(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
       await expect(
         new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           force: true,
-          tools: catalogOf(),
+          tools: registeredTools(),
         })
       ).resolves.toHaveProperty("manifest");
     });
@@ -214,7 +214,7 @@ describe("init", () => {
       const result = await new InitProject(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
       expect(result.manifest.toJSON()).toEqual(before);
       expect(deps.fs.getFile(join(PROJECT_ROOT, ".gitignore"))).toBe("# User-owned\n");
@@ -231,7 +231,7 @@ describe("init", () => {
       await new InitProject(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
-        tools: catalogOf(),
+        tools: registeredTools(),
       });
 
       const manifestAfter = await deps.manifestRepo.load();

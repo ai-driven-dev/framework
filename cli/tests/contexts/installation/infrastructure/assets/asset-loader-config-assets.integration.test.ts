@@ -3,9 +3,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { AssetNotFoundError } from "../../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const CONFIGS = fileURLToPath(new URL("../../../assets/configs/", import.meta.url));
 const catalog = wireTools();
@@ -18,10 +17,16 @@ function shippedBy(toolId: string): string[] {
   return readdirSync(dir).map((file) => file.replace(/\.txt$/, ""));
 }
 
-const EVERY_NAME = [...new Set(REGISTERED_PROFILES.flatMap((p) => shippedBy(p.toolId)))];
+const EVERY_NAME = [
+  ...new Set(
+    registeredTools()
+      .idsInCanonicalOrder()
+      .flatMap((id) => shippedBy(id))
+  ),
+];
 
 describe("config assets per tool", () => {
-  it.each(REGISTERED_PROFILES.map((profile) => profile.toolId))(
+  it.each(registeredTools().idsInCanonicalOrder())(
     "the provider yields what %s declares and refuses the rest",
     (toolId) => {
       const own = shippedBy(toolId);

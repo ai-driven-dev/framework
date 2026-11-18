@@ -7,7 +7,7 @@ import {
   ToolNotInManifestError,
 } from "../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
-import { resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const CLAUDE = TOOL.claude;
 const CURSOR = TOOL.cursor;

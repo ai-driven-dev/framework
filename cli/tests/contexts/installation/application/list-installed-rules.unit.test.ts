@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ListInstalledRules } from "../../../../src/contexts/installation/application/list-installed-rules.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const ROOT = "/project";
 
@@ -39,7 +39,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
         [at(".opencode/rules/1-naming.md")]: "---\n---\n",
       }),
       process.platform,
-      catalogOf()
+      registeredTools()
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT });
@@ -60,7 +60,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
     const useCase = new ListInstalledRules(
       readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" }),
       process.platform,
-      catalogOf()
+      registeredTools()
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT });
@@ -79,7 +79,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
     const useCase = new ListInstalledRules(
       readerOf({ [at(".claude/rules/deep/nested/1-naming.md")]: "---\n---\n" }),
       process.platform,
-      catalogOf()
+      registeredTools()
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT });
@@ -96,7 +96,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
         [at(".cursor/rules/README.md")]: "---\n---\n",
       }),
       process.platform,
-      catalogOf()
+      registeredTools()
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT });
@@ -105,7 +105,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
   });
 
   it("answers an empty list, never an error, for a project holding no rule at all", async () => {
-    const useCase = new ListInstalledRules(readerOf({}), process.platform, catalogOf());
+    const useCase = new ListInstalledRules(readerOf({}), process.platform, registeredTools());
 
     await expect(useCase.execute({ projectRoot: ROOT })).resolves.toEqual({
       rules: [],

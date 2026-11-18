@@ -7,7 +7,7 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
+import { MANIFEST_PROBES } from "../testing/manifest-probes.js";
 
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
@@ -15,7 +15,7 @@ const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 function readInMemory(manifestText: string): Promise<PluginDistribution> {
   return new PluginDistributionReaderAdapter(
     new InMemoryFileAdapter({ [`${IN_MEMORY_ROOT}/${IN_MEMORY_MANIFEST}`]: manifestText }),
-    registeredManifestProbes()
+    MANIFEST_PROBES
   ).read(IN_MEMORY_ROOT);
 }
 

@@ -7,12 +7,11 @@ import { RemoveProjectFiles } from "../../../../src/contexts/installation/applic
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import { CURSOR_HOOKS } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { cursorHookScriptDir } from "../testing/cursor-hook-scripts.js";
 
 const ROOT = "/test-project";
 
@@ -26,8 +25,14 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
       assertMcpRemovable: async () => undefined,
       records: registrationRecordRules,
     },
-    new RemoveProjectFiles(fs, repo, new CapturingLogger(), new UpdateGitignore(fs), catalogOf()),
-    catalogOf()
+    new RemoveProjectFiles(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new UpdateGitignore(fs),
+      registeredTools()
+    ),
+    registeredTools()
   );
 }
 
@@ -37,7 +42,7 @@ function localPlugin(name: string, scope: "project" | "user" = "project"): Insta
 
 describe("CleanProject.assertRemovable", () => {
   it("refuses a hook script edited after install unless forced", async () => {
-    const script = `${pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, "aidd-context")}run.js`;
+    const script = `${cursorHookScriptDir("aidd-context")}run.js`;
     const installed = createHash("md5").update("// installed").digest("hex");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);

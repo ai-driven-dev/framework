@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.js";
 
 describe("ManifestRepositoryAdapter", () => {
   let tempDir: string;

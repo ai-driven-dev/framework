@@ -7,7 +7,7 @@ import type { ManifestRepository } from "../../../../src/contexts/installation/p
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -65,8 +65,8 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs, catalogOf()),
-        catalogOf()
+        new DetectPluginDrift(fs, registeredTools()),
+        registeredTools()
       );
 
       const report = await useCase.execute({
@@ -89,8 +89,8 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs, catalogOf()),
-        catalogOf()
+        new DetectPluginDrift(fs, registeredTools()),
+        registeredTools()
       );
 
       const report = await useCase.execute({
@@ -109,8 +109,8 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs, catalogOf()),
-        catalogOf()
+        new DetectPluginDrift(fs, registeredTools()),
+        registeredTools()
       );
 
       const report = await useCase.execute({
@@ -130,8 +130,8 @@ describe("ReportStatus — plugin drift", () => {
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDrift(fs, catalogOf()),
-        catalogOf()
+        new DetectPluginDrift(fs, registeredTools()),
+        registeredTools()
       );
 
       const report = await useCase.execute({
