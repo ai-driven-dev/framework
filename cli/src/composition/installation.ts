@@ -163,7 +163,7 @@ export function wireInstallation(base: Base) {
     assetProvider,
     runPostInstallPipeline
   );
-  const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform);
+  const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
   const pluginListUseCase = new ListPlugins(manifestRepo);
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.

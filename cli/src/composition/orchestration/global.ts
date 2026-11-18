@@ -134,7 +134,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   );
   const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersionProvider);
   const updateToolsUseCase = new UpdateTools(
-    new ListInstalledTools(manifestRepo),
+    new ListInstalledTools(manifestRepo, base.tools),
     new UpdateTool(
       installRuntimeConfigUseCase,
       installIdeConfig,

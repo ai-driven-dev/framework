@@ -222,7 +222,6 @@ export function registerToolConfigCommand(
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { rules } = await deps.listInstalledRulesUseCase.execute({
           projectRoot,
-          tools: catalog,
         });
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);

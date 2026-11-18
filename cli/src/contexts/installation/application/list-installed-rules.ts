@@ -8,7 +8,6 @@ import { toInstalledRule } from "../domain/installed-rule.js";
 
 export interface ListInstalledRulesCommand {
   readonly projectRoot: string;
-  readonly tools: ToolCatalog;
 }
 
 export interface ListInstalledRulesResult {
@@ -29,13 +28,14 @@ function projectRelative(projectRoot: string, absolutePath: string, platform: st
 export class ListInstalledRules {
   constructor(
     private readonly files: FileReader,
-    private readonly platform: string
+    private readonly platform: string,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(input: ListInstalledRulesCommand): Promise<ListInstalledRulesResult> {
     const rules: InstalledRule[] = [];
-    for (const toolId of input.tools.idsInCanonicalOrder("ai")) {
-      const location = input.tools.aiProfile(toolId).installedRulesLocation();
+    for (const toolId of this.tools.idsInCanonicalOrder("ai")) {
+      const location = this.tools.aiProfile(toolId).installedRulesLocation();
       if (location === null) continue;
       rules.push(...(await this.rulesUnder(input.projectRoot, toolId, location)));
     }

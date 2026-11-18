@@ -4,17 +4,19 @@ import type { ManifestRepository } from "../ports/manifest-repository.js";
 
 export interface ListInstalledToolsCommand {
   category: ToolCategory;
-  tools: ToolCatalog;
 }
 
 /** The tools of one category the project has installed, in the catalog's manifest order. */
 export class ListInstalledTools {
-  constructor(private readonly manifestRepo: ManifestRepository) {}
+  constructor(
+    private readonly manifestRepo: ManifestRepository,
+    private readonly tools: ToolCatalog
+  ) {}
 
   async execute(command: ListInstalledToolsCommand): Promise<ToolId[]> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return [];
-    const targets: readonly ToolId[] = command.tools.idsInCanonicalOrder(command.category);
+    const targets: readonly ToolId[] = this.tools.idsInCanonicalOrder(command.category);
     return manifest.getInstalledToolIds().filter((installed) => targets.includes(installed));
   }
 }

@@ -35,11 +35,11 @@ export class UpdateTools {
   ) {}
 
   async execute(command: UpdateToolsCommand): Promise<UpdateToolsResult> {
-    const { toolArg, tools } = command;
+    const { toolArg } = command;
     if (toolArg !== undefined) return this.updateTools(command, [toolArg]);
     const perCategory: UpdateToolsResult[] = [];
     for (const category of CATEGORIES) {
-      const installed = await this.listInstalledTools.execute({ category, tools });
+      const installed = await this.listInstalledTools.execute({ category });
       perCategory.push(await this.updateTools(command, installed));
     }
     return {
