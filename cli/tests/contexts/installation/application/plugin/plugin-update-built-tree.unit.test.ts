@@ -10,7 +10,6 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
-import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -21,6 +20,7 @@ import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory
 import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */

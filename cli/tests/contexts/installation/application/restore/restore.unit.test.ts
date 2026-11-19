@@ -4,7 +4,6 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
@@ -25,6 +24,7 @@ import {
   OverwritePrompter,
   ScriptedPrompter,
 } from "../../../../shared/testing/scripted-prompter.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

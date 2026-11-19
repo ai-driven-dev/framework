@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import {
   buildUnitDeps,
   initAndInstall,
@@ -13,6 +12,7 @@ import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.j
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(

@@ -14,8 +14,8 @@ import {
   NoMarketplacesRegisteredError,
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { buildAddPlugin } from "../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";

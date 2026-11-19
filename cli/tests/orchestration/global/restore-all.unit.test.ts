@@ -11,7 +11,7 @@ import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
 import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { buildAddPlugin } from "../../helpers/ports/build-add-plugin.js";
+import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
 import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
