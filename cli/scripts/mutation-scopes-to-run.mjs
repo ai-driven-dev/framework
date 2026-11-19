@@ -18,22 +18,29 @@ export const HARNESS = [
   ".github/workflows/cli-ci.yml",
 ];
 
+/** The `cli/` directory a `mutate` glob names, and the directory of tests mirroring it. */
+function directoriesOf(glob) {
+  const source = `cli/${glob.replace(/^!/, "").slice(0, glob.replace(/^!/, "").indexOf("/**"))}/`;
+  return [source, source.replace("cli/src/", "cli/tests/")];
+}
+
 /** A scope runs when its source, its mirrored tests, a shared test helper or the harness
- * changed; with no usable diff, every scope runs. */
+ * changed; with no usable diff, every scope runs. A `!` glob that drops a whole subtree
+ * (`<dir>/**\/*.ts`) also drops that subtree's changes; one that drops a file pattern, as the
+ * canary's tests, does not, because those tests are what kill its mutants. */
 export function scopesToRun(changed, scopes, { all = false } = {}) {
   const everything =
     all || changed.some((file) => HARNESS.includes(file) || file.startsWith("cli/tests/helpers/"));
+  const under = (directories, file) => directories.some((dir) => file.startsWith(dir));
   return Object.entries(scopes)
-    .filter(([, { mutate }]) =>
-      [mutate].flat().some((glob) => {
-        if (glob.startsWith("!")) return false;
-        const source = `cli/${glob.slice(0, glob.indexOf("/**"))}/`;
-        const tests = source.replace("cli/src/", "cli/tests/");
-        return (
-          everything || changed.some((file) => file.startsWith(source) || file.startsWith(tests))
-        );
-      })
-    )
+    .filter(([, { mutate }]) => {
+      const globs = [mutate].flat();
+      const included = globs.filter((glob) => !glob.startsWith("!")).flatMap(directoriesOf);
+      const left = globs
+        .filter((glob) => glob.startsWith("!") && glob.endsWith("/**/*.ts"))
+        .flatMap(directoriesOf);
+      return everything || changed.some((file) => under(included, file) && !under(left, file));
+    })
     .map(([name]) => name);
 }
 

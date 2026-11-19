@@ -1,7 +1,7 @@
 /**
  * A file escaping mutation is silent: the score does not drop, because the mutants that would
- * have died were never generated. `mutation-scopes.json` declares the globs, the floor each
- * scope must hold, and what is left out, so a directory belonging to neither fails by name.
+ * have died were never generated. `mutation-scopes.json` declares the globs and the floor each
+ * scope must hold, so a domain file belonging to no scope fails by name.
  */
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -26,7 +26,6 @@ interface Scope {
 
 interface ScopeDeclaration {
   readonly scopes: Readonly<Record<string, Scope>>;
-  readonly excluded: Readonly<Record<string, string>>;
 }
 
 function declaration(): ScopeDeclaration {
@@ -41,11 +40,17 @@ function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
   );
 }
 
-function isCovered(path: string, { scopes, excluded }: ScopeDeclaration): boolean {
+/** What mutation covers: the kernel and every context's domain, bar the static tool profiles. */
+function isDomain(path: string): boolean {
   return (
-    Object.values(scopes).some((scope) => scopeMatches(scope.mutate, path)) ||
-    Object.keys(excluded).some((glob) => matchesGlob(glob, path))
+    (matchesGlob("src/kernel/**/*.ts", path) ||
+      matchesGlob("src/contexts/*/domain/**/*.ts", path)) &&
+    !matchesGlob("src/contexts/tools/domain/profiles/**/*.ts", path)
   );
+}
+
+function isCovered(path: string, { scopes }: ScopeDeclaration): boolean {
+  return Object.values(scopes).some((scope) => scopeMatches(scope.mutate, path));
 }
 
 function fixtureFiles(): string[] {
@@ -54,31 +59,23 @@ function fixtureFiles(): string[] {
     .map((entry) => `tests/fixtures/${entry.replaceAll("\\", "/")}`);
 }
 
-describe("mutation covers every source file", () => {
-  it("no file under src/ falls outside both the scopes and the exclusions", () => {
+describe("mutation covers every domain file", () => {
+  it("no domain file falls outside the scopes", () => {
     const declared = declaration();
-    const uncovered = sourceFiles().filter((file) => !isCovered(file, declared));
+    const uncovered = sourceFiles().filter((file) => isDomain(file) && !isCovered(file, declared));
 
     expect(
       uncovered,
-      "neither mutated nor excluded — add it to a scope in mutation-scopes.json, or exclude it with the reason"
+      "a domain file no scope mutates — add it to a scope in mutation-scopes.json"
     ).toEqual([]);
   });
 
-  it("every exclusion carries a reason, and every scope matches something", () => {
-    const { scopes, excluded } = declaration();
-    const files = sourceFiles();
+  it("every scope matches something", () => {
+    const files = [...sourceFiles(), ...fixtureFiles()];
 
-    for (const [glob, reason] of Object.entries(excluded)) {
-      expect(reason.length, `${glob} is excluded with no reason given`).toBeGreaterThan(40);
+    for (const [name, { mutate }] of Object.entries(declaration().scopes)) {
       expect(
-        files.some((file) => matchesGlob(glob, file)),
-        `${glob} excludes nothing — the directory it names is gone`
-      ).toBe(true);
-    }
-    for (const [name, { mutate }] of Object.entries(scopes)) {
-      expect(
-        [...files, ...fixtureFiles()].some((file) => scopeMatches(mutate, file)),
+        files.some((file) => scopeMatches(mutate, file)),
         `scope "${name}" (${mutate}) matches no file — it would score an empty set`
       ).toBe(true);
     }
@@ -90,6 +87,15 @@ describe("mutation covers every source file", () => {
       (file) => Object.values(scopes).filter((scope) => scopeMatches(scope.mutate, file)).length > 1
     );
     expect(twice, "narrow one scope with a ! glob").toEqual([]);
+  });
+
+  it("no source scope mutates outside the domain", () => {
+    const outside = Object.entries(declaration().scopes).flatMap(([name, scope]) =>
+      sourceFiles()
+        .filter((file) => scopeMatches(scope.mutate, file) && !isDomain(file))
+        .map((file) => `${name}: ${file}`)
+    );
+    expect(outside, "mutation covers the domain only, per the testing policy").toEqual([]);
   });
 
   it("every scope declares the floor its score must hold", () => {
@@ -167,15 +173,41 @@ describe("the guard itself", () => {
       "src/contexts/tools/**/*.ts,!src/contexts/tools/domain/profiles/**/*.ts"
     );
     expect(
-      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/profile.ts"], split).sort()
-    ).toEqual(["profiles", "tools"]);
+      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/profile.ts"], split)
+    ).toEqual(["profiles"]);
+    expect(scopesToRun(["cli/src/contexts/tools/domain/registry.ts"], split)).toEqual(["tools"]);
   });
 
-  it("reports a file no scope and no exclusion names, and clears one a scope covers", () => {
-    const declared = { scopes, excluded: { "src/cli.ts": "the entry point" } };
+  it("runs no scope for a change outside the domain, and the canary for its own tests", () => {
+    const declared = declaration().scopes;
+    expect(
+      scopesToRun(
+        [
+          "cli/src/contexts/tools/infrastructure/executable-on-path.ts",
+          "cli/src/contexts/framework/application/setup-use-case.ts",
+          "cli/tests/presentation/commands/auth-wiring.integration.test.ts",
+        ],
+        declared
+      )
+    ).toEqual([]);
+    expect(
+      scopesToRun(["cli/tests/fixtures/stryker-canary/settings.unit.test.ts"], declared)
+    ).toEqual(["canary"]);
+  });
+
+  it("reports a domain file no scope names, and clears one a scope covers", () => {
+    const declared = { scopes };
     expect(isCovered("src/kernel/paths.ts", declared)).toBe(true);
-    expect(isCovered("src/cli.ts", declared)).toBe(true);
     expect(isCovered("src/contexts/framework/domain/manifest.ts", declared)).toBe(false);
+  });
+
+  it("holds the kernel and each context's domain, never a tool profile or another layer", () => {
+    expect(isDomain("src/kernel/paths.ts")).toBe(true);
+    expect(isDomain("src/contexts/framework/domain/manifest.ts")).toBe(true);
+    expect(isDomain("src/contexts/tools/domain/registry.ts")).toBe(true);
+    expect(isDomain("src/contexts/tools/domain/profiles/claude/profile.ts")).toBe(false);
+    expect(isDomain("src/contexts/framework/application/setup-use-case.ts")).toBe(false);
+    expect(isDomain("src/cli.ts")).toBe(false);
   });
 
   it("gives each scope its own glob and incremental file, and refuses a scope nobody declared", () => {

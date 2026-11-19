@@ -29,8 +29,6 @@ describe("splitting a scope into shards", () => {
       "kernel",
       "telemetry",
       "tools",
-      "tools-codex",
-      "translate",
     ]);
     expect(scopes.canary?.shards).toBeUndefined();
   });

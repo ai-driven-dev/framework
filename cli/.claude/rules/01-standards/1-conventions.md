@@ -26,7 +26,7 @@ paths:
 
 ## Tests
 
-- The extension declares the tier: `*.unit.test.ts`, `*.integration.test.ts`, `*.e2e.test.ts`.
+- The extension declares the level: `*.unit.test.ts`, `*.integration.test.ts`, `*.e2e.test.ts`. What each holds: the Levels table in `aidd_docs/memory/testing.md`.
 - An `*.arch.test.ts` outside `tests/architecture/` runs nowhere.
 - `tests/` mirrors `src/`.
 

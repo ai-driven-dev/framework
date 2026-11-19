@@ -3,7 +3,7 @@ name: test
 description: >
   Holds the two testing disciplines this package learned by paying for them, and points at the
   rest. Use when writing or changing a test under tests/, touching a golden snapshot, or fixing a
-  user-reported bug. Do NOT use for tier conventions, the vitest projects, doubles, fixtures or
+  user-reported bug. Do NOT use for the test policy, the vitest projects, doubles, fixtures or
   how to run a suite — those live in `aidd_docs/memory/testing.md`. Do NOT use for writing
   production code — use the context skill that owns the concept (`tools`, `translate`,
   `distribution`, `framework`).
@@ -11,10 +11,11 @@ description: >
 
 # Test
 
-The tiers, the four vitest projects, the doubles, the fixtures and the run commands are in
-`aidd_docs/memory/testing.md`; read that first and do not restate it here. This skill exists for
-the two failure modes that cost this package a shipped bug each, and that a convention page
-states as a rule without saying how to satisfy it.
+What earns a test, the levels, when to write it and the thresholds are the Policy in
+`aidd_docs/memory/testing.md`; the vitest projects, doubles, fixtures and run commands are there
+too. Read it first and do not restate it here. This skill exists for the two failure modes that
+cost this package a shipped bug each, and that a convention page states as a rule without saying
+how to satisfy it.
 
 ## Read before you touch one
 
@@ -28,6 +29,5 @@ states as a rule without saying how to satisfy it.
 
 ## The order
 
-Write the failing test first and watch it fail for the reason its name gives — a bug fix starts
-there, never with the production edit. That discipline is stated for the whole repository in
-`aidd_docs/memory/coding-assertions.md`.
+A bug fix starts with the failing test, never with the production edit; the Policy's "When to
+write it" holds the rest.
