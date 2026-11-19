@@ -31,5 +31,6 @@ describe("Manifest round-trip: every fixture rewrites byte-identical", () => {
     expect(names).toContain("merge-files.json");
     expect(names).toContain("plugins.json");
     expect(names).toContain("full.json");
+    expect(names).toContain("native-registrations.json");
   });
 });
