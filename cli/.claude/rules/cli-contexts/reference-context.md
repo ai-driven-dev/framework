@@ -95,6 +95,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | The two whole-`src` scans of `ports-are-called.arch.test.ts` can be slow or flaky under load | each reads every `src` body with a regex per declared method | none, a written limit |
 | `profile-readers-name-their-sections.arch.test.ts` does not read an element-access alias of a profile (`tools["aiProfile"](id)`) | no `src` file writes one | none, a written limit |
 | `test-cross-context-imports.arch.test.ts` covers `tests/contexts`, `tests/helpers` and `tests/shared` only | orchestration, presentation, composition, e2e and golden tests compose contexts and may import any kit (`kit-isolation.arch.test.ts`) | none, deliberate |
+| `shared/domain/errors.ts` holds more than one class | the target keeps one central error catalogue | none, deliberate |
 
 ### Migration state
 | Deviation | Closes when |
@@ -107,7 +108,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation`, `translate/domain/engine.ts` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | `translate` declares its own profile input |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
 | the mutation scope and script keep the name `runtime` after the directory it named is gone | the next mutation-scopes cleanup |
-| the code-size rules (function 50 lines, complexity 15, 3 parameters, file 400 lines) are not in `biome.json` | branch `chore/code-size-rules` merges |
+| `shared/domain/errors.ts` exceeds the file-length cap | the messages that name a command move to the presentation error table |
 
 ## 10. Checklist for a context's migration PR
 
