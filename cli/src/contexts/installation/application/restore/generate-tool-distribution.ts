@@ -4,15 +4,18 @@ import {
   removeRedundantGitkeeps,
 } from "../../../../shared/domain/file.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
 import type { Platform } from "../../ports/platform.js";
 import type { RestoredAiTool, RestoredIdeTool, RestoredTool } from "../../ports/tool-sections.js";
-import { InstallAgents } from "../install/content/install-agents.js";
-import { InstallCommands } from "../install/content/install-commands.js";
-import { InstallRules } from "../install/content/install-rules.js";
-import { InstallSkills } from "../install/content/install-skills.js";
-import { InstallConfig } from "../install/install-config.js";
+import type { InstallContentSectionCommand } from "../install/content/install-content-section.js";
+import type { InstallConfig } from "../install/install-config.js";
+
+export interface ContentSectionInstaller {
+  execute(command: InstallContentSectionCommand): InstallationFile[];
+}
+
+/** The installer of each content section, by section name. A section with none yields no files. */
+export type ContentSectionInstallers = ReadonlyMap<string, ContentSectionInstaller>;
 
 interface GenerateToolDistributionCommand {
   config: RestoredTool;
@@ -23,7 +26,8 @@ interface GenerateToolDistributionCommand {
 
 export class GenerateToolDistribution {
   constructor(
-    private readonly fs: FileReader,
+    private readonly installConfig: Pick<InstallConfig, "execute">,
+    private readonly sectionInstallers: ContentSectionInstallers,
     private readonly platform: Platform,
     private readonly assetProvider?: AssetProvider
   ) {}
@@ -42,7 +46,7 @@ export class GenerateToolDistribution {
     contentFiles: Map<string, string>,
     projectRoot: string
   ): Promise<InstallationFile[]> {
-    const configFiles = await new InstallConfig(this.fs).execute({
+    const configFiles = await this.installConfig.execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
@@ -59,7 +63,7 @@ export class GenerateToolDistribution {
     projectRoot: string
   ): Promise<InstallationFile[]> {
     const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
-    const configFiles = await new InstallConfig(this.fs).execute({
+    const configFiles = await this.installConfig.execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
@@ -108,17 +112,6 @@ export class GenerateToolDistribution {
     contentFiles: Map<string, string>
   ): InstallationFile[] {
     const options = { toolConfig: config, section, contentFiles };
-    switch (section.name) {
-      case "agents":
-        return new InstallAgents().execute(options);
-      case "commands":
-        return new InstallCommands().execute(options);
-      case "rules":
-        return new InstallRules().execute(options);
-      case "skills":
-        return new InstallSkills().execute(options);
-      default:
-        return [];
-    }
+    return this.sectionInstallers.get(section.name)?.execute(options) ?? [];
   }
 }

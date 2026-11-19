@@ -22,14 +22,7 @@ const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
  * The list only shrinks, and a count is never raised: the exact counts make any growth of an
  * admitted orchestrator fail this test.
  */
-const BASELINE: readonly { readonly path: string; readonly dependencies: number }[] = [
-  // Five section generators reached inline through a switch on section name, plus the config
-  // generator. It resolves by registering a generator per section type, not by dropping one.
-  {
-    path: "src/contexts/installation/application/restore/generate-tool-distribution.ts",
-    dependencies: 8,
-  },
-];
+const BASELINE: readonly { readonly path: string; readonly dependencies: number }[] = [];
 
 const COMMAND_CLASSES = new Set(
   sourceFiles()

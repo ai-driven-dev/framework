@@ -21,11 +21,19 @@ import {
 import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.js";
 import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.js";
+import { InstallAgents } from "../contexts/installation/application/install/content/install-agents.js";
+import { InstallCommands } from "../contexts/installation/application/install/content/install-commands.js";
+import { InstallRules } from "../contexts/installation/application/install/content/install-rules.js";
+import { InstallSkills } from "../contexts/installation/application/install/content/install-skills.js";
 import { PropagateAiSettingsToIde } from "../contexts/installation/application/install/propagate-ai-settings-to-ide.js";
 import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
 import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import { CacheBuiltMarketplace } from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
+import type {
+  ContentSectionInstaller,
+  ContentSectionInstallers,
+} from "../contexts/installation/application/restore/generate-tool-distribution.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.js";
 import type {
   BuiltMarketplaceEnsurer,
@@ -107,6 +115,16 @@ export function frameworkBuildsOf(
 }
 
 /** A logger whose every level lands at debug, for work that runs behind almost every command. */
+/** The installer of each content section the tool distribution writes. */
+export function contentSectionInstallers(): ContentSectionInstallers {
+  return new Map<string, ContentSectionInstaller>([
+    ["agents", new InstallAgents()],
+    ["commands", new InstallCommands()],
+    ["rules", new InstallRules()],
+    ["skills", new InstallSkills()],
+  ]);
+}
+
 export function debugOnly(logger: Logger): Logger {
   return {
     debug: (message) => logger.debug(message),

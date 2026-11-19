@@ -1,3 +1,5 @@
+import { contentSectionInstallers } from "../../../src/composition/installation.js";
+import { InstallConfig } from "../../../src/contexts/installation/application/install/install-config.js";
 import { ApplyPluginFiles } from "../../../src/contexts/installation/application/restore/apply-plugin-files.js";
 import { GenerateToolDistribution } from "../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
 import { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
@@ -34,7 +36,8 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
   const { fs, logger, prompter } = parts;
   return new RestoreToolFiles(
     new GenerateToolDistribution(
-      fs,
+      new InstallConfig(fs),
+      contentSectionInstallers(),
       parts.platform ?? new FakePlatform("linux"),
       parts.assetProvider
     ),

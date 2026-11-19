@@ -2,6 +2,7 @@ import { ListFrameworkPlugins } from "../../contexts/distribution/application/pl
 import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.js";
 import { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
 import { InstallAiTool } from "../../contexts/installation/application/install/install-ai-tool.js";
+import { InstallConfig } from "../../contexts/installation/application/install/install-config.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.js";
 import { InstallTools } from "../../contexts/installation/application/install/install-tools.js";
 import { InstallUserPlugins } from "../../contexts/installation/application/install/install-user-plugins.js";
@@ -28,7 +29,7 @@ import {
   type SyncMachineScope,
 } from "../../orchestration/setup/setup-machine-scope.js";
 import type { SyncSettings } from "../../orchestration/sync/sync-settings.js";
-import type { Installation } from "../installation.js";
+import { contentSectionInstallers, type Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
@@ -89,7 +90,12 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, detectPluginDriftUseCase, base.tools);
   const restoreToolFiles = new RestoreToolFiles(
-    new GenerateToolDistribution(fs, platform, assetProvider),
+    new GenerateToolDistribution(
+      new InstallConfig(fs),
+      contentSectionInstallers(),
+      platform,
+      assetProvider
+    ),
     new RestoreRegularFiles(fs, prompter),
     new RestoreMergeFiles(fs, prompter),
     logger,

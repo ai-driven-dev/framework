@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { contentSectionInstallers } from "../../../../../src/composition/installation.js";
 import { wireTools } from "../../../../../src/composition/tools.js";
+import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.js";
 import { GenerateToolDistribution } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
@@ -40,7 +42,8 @@ function generate(
   assetProvider?: BundledAssetProviderAdapter
 ): Promise<InstallationFile[]> {
   return new GenerateToolDistribution(
-    new InMemoryFileAdapter({}),
+    new InstallConfig(new InMemoryFileAdapter({})),
+    contentSectionInstallers(),
     new FakePlatform("linux"),
     assetProvider
   ).execute({ config, descriptor, contentFiles, projectRoot: PROJECT_ROOT });
