@@ -82,7 +82,11 @@ describe("afterActivation", () => {
         marketplaces: [marketplace("local", "catalog", registry("/built"))],
         pluginRefs: ["a@catalog"],
       });
-      expect(afterActivation(recorded, fewer, "claude", false)).toBeDefined();
+      expect(afterActivation(recorded, fewer, "claude", false)).toEqual({
+        binary: "claude",
+        marketplaces: recorded.marketplaces,
+        pluginRefs: ["a@catalog"],
+      });
     });
 
     it.each([
@@ -93,12 +97,16 @@ describe("afterActivation", () => {
       ["a source it never had", [marketplace("local", "catalog")]],
     ])("tells %s apart", (_case, marketplaces) => {
       const current = outcome({ marketplaces, pluginRefs: ["a@catalog", "b@catalog"] });
-      expect(afterActivation(recorded, current, "claude", false)).toBeDefined();
+      expect(afterActivation(recorded, current, "claude", false)).toEqual({
+        binary: "claude",
+        marketplaces,
+        pluginRefs: ["a@catalog", "b@catalog"],
+      });
     });
 
     it("tells a source the record never had apart", () => {
       const legacy = { ...recorded, marketplaces: [marketplace("local", "catalog")] };
-      expect(afterActivation(legacy, sameOutcome(), "claude", false)).toBeDefined();
+      expect(afterActivation(legacy, sameOutcome(), "claude", false)).toEqual(recorded);
     });
   });
 
