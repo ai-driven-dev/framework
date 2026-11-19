@@ -7,7 +7,7 @@ import { createTestEnv, runCli } from "./helpers.js";
 
 const AIDD_DIR = ".aidd";
 
-describe.concurrent("E2E: aidd framework install --tool — individual tool install", () => {
+describe.concurrent("aidd framework install --tool: individual tool install", () => {
   it("framework install --tool claude writes settings.json and manifest from bundled assets", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("greenfield-claude");
     try {

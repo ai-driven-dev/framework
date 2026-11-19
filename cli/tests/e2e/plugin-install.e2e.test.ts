@@ -13,7 +13,7 @@ async function writeMarketplace(
   await writeFile(join(dir, ".claude-plugin", "marketplace.json"), JSON.stringify({ plugins }));
 }
 
-describe.concurrent("E2E: aidd plugin marketplace", () => {
+describe.concurrent("aidd plugin marketplace", () => {
   it("marketplace add → registers a project-scope marketplace and skips trust prompt with --yes", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-add");
     try {

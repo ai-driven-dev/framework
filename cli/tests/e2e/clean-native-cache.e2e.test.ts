@@ -33,7 +33,7 @@ async function seedManifestWithClaudeNativeRegistrations(projectDir: string): Pr
   );
 }
 
-describe.concurrent("E2E: aidd clean and a host's own plugin cache", () => {
+describe.concurrent("aidd clean and a host's own plugin cache", () => {
   it("leaves a seeded claude cache tree in place when the claude CLI is not on PATH", async () => {
     // This sandbox's own PATH never carries a real `claude`, so this proves the
     // binary-absent branch alone, never that the purge runs against a real one.

@@ -27,7 +27,7 @@ async function mainModel(home: string): Promise<unknown> {
   return (JSON.parse(await readFile(path, "utf8")) as { model?: unknown }).model;
 }
 
-describe("E2E: aidd setup --provider on a project", () => {
+describe("aidd setup --provider on a project", () => {
   it("installs the agents with the provider's models, and undoes it", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models");
     try {

@@ -49,7 +49,7 @@ async function writeKnownMarketplaces(
   );
 }
 
-describe("E2E: marketplace add surfaces the source-conflict guard's refusal instead of a false success", () => {
+describe("marketplace add surfaces the source-conflict guard's refusal instead of a false success", () => {
   it("exits non-zero and names both sources and the plugin difference when the host's registry already holds this name under a different catalog", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
       "marketplace-add-conflict"

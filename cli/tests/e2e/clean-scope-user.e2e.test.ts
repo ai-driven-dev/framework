@@ -18,7 +18,7 @@ const GIT_TEST_IDENTITY = ["-c", "user.email=t@t.com", "-c", "user.name=t"];
 const execFileAsync = promisify(execFile);
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 
-describe("E2E: clean --scope user purges the shared source", () => {
+describe("clean --scope user purges the shared source", () => {
   it("purges its own whitelist only, leaving auth.json, telemetry/ and an unrelated marketplace entry untouched, after setup --scope user", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("clean-scope-user");
     try {

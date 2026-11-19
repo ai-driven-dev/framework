@@ -7,7 +7,7 @@ const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-rea
 const PLUGIN_NAME = "aidd-vcs";
 const THEIR_OWN_ENABLE = `[plugins."${PLUGIN_NAME}@aidd-framework"]\nenabled = true\n`;
 
-describe("E2E: a codex plugin enabled before setup stays with the person who enabled it", () => {
+describe("a codex plugin enabled before setup stays with the person who enabled it", () => {
   it("setup never enables it again, and clean never removes it", async () => {
     const test = await createTestEnv("preexisting-codex-ref");
     try {

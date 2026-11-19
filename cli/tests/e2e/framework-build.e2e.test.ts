@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
 
-describe.concurrent("E2E: aidd translate", () => {
+describe.concurrent("aidd translate", () => {
   it("AC #10: invalid plugin.json halts the build with non-zero exit", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-build-invalid");
     try {
@@ -126,7 +126,7 @@ describe.concurrent("E2E: aidd translate", () => {
   });
 });
 
-describe.concurrent("E2E: aidd translate — marketplace mode never erases what it did not write", () => {
+describe.concurrent("aidd translate: marketplace mode never erases what it did not write", () => {
   it("refuses a non-empty --out without --force, and leaves the foreign file untouched", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-market-preserve");
     try {

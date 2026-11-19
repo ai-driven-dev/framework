@@ -23,7 +23,7 @@ async function whichUnderSandbox(binary: string, cwd: string, env: NodeJS.Proces
   }
 }
 
-describe("E2E: the sandbox a test spawns into", () => {
+describe("the sandbox a test spawns into", () => {
   it("keeps node executable when an AI tool is installed beside it", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("sandbox-shared-node-");
     try {

@@ -70,7 +70,7 @@ async function writeCodexWithEffectiveSource(
   }
 }
 
-describe("E2E: clean leaves a codex ref enabled while another project still shares it", () => {
+describe("clean leaves a codex ref enabled while another project still shares it", () => {
   it("keeps the plugin's ref enabled, names the other project, and never calls plugin remove", async () => {
     const first = await createTestEnv("clean-shared-ref-codex-first");
     const second = await createTestEnv("clean-shared-ref-codex-second");

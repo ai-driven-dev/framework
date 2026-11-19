@@ -13,7 +13,7 @@ const GIT_TEST_IDENTITY = ["-c", "user.email=t@t.com", "-c", "user.name=t"];
 const execFileAsync = promisify(execFile);
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 
-describe("E2E: setup --scope user writes nothing under the project", () => {
+describe("setup --scope user writes nothing under the project", () => {
   it("installs OpenCode's skills and agents for the machine, refreshes them, and cleans them", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-opencode");
     try {

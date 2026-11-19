@@ -23,7 +23,7 @@ async function modifyFirstTrackedFile(projectDir: string, toolId: string): Promi
 
 // Bare `aidd update` is self-update and touches no tracked file, so the project-wide sweep
 // under test is `framework update` without `--tool`.
-describe.concurrent("E2E: update conflict guard", () => {
+describe.concurrent("update conflict guard", () => {
   it("exits 1 when a tracked AI tool file is modified in non-TTY mode (no --force)", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("update-guard-ai-exit1");
     try {

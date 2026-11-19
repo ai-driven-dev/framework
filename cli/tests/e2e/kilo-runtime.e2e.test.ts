@@ -188,7 +188,7 @@ async function stopKilo(child: ReturnType<typeof spawn>): Promise<void> {
   if (child.pid !== undefined) expect(alive(child.pid)).toBe(false);
 }
 
-describeKiloRuntime("E2E: real Kilo runtime", () => {
+describeKiloRuntime("real Kilo runtime", () => {
   it("runs memory and declared hooks exactly once through a real local read-tool turn", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("kilo-runtime");
     let child: ReturnType<typeof spawn> | undefined;

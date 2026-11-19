@@ -102,7 +102,7 @@ async function runCli(
   }
 }
 
-describe("E2E: update-check piggyback", () => {
+describe("update-check piggyback", () => {
   it("hot path is read-only and offline: cold offline command makes no request and writes no cache", async () => {
     const t = await setupEnv("cold");
     try {

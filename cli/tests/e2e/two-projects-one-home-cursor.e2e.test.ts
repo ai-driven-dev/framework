@@ -9,7 +9,7 @@ import { createTestEnv, runCli } from "./helpers.js";
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 const PLUGIN = "aidd-context";
 
-describe("E2E: two projects on one HOME install the same cursor plugin", () => {
+describe("two projects on one HOME install the same cursor plugin", () => {
   it("gives each project its hooks, and lets the second remove and clean without taking the first's", async () => {
     const test = await createTestEnv("two-projects-one-home");
     try {

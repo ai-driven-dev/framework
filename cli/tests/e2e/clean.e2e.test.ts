@@ -15,7 +15,7 @@ async function seedManifest(projectDir: string): Promise<void> {
   );
 }
 
-describe.concurrent("E2E: aidd clean", () => {
+describe.concurrent("aidd clean", () => {
   it("shows 'Would remove' summary in non-interactive mode without --force", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("clean-dry-run");
     try {

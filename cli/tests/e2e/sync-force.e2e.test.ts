@@ -33,7 +33,7 @@ async function installAndModify(
   return { tracked, installed };
 }
 
-describe.concurrent("E2E: aidd sync --force", () => {
+describe.concurrent("aidd sync --force", () => {
   it("repairs a modified tracked file instead of reporting nothing to restore", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-force-modified");
     try {

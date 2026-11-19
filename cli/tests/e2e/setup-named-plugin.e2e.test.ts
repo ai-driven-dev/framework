@@ -6,7 +6,7 @@ import { createTestEnv, runCli } from "./helpers.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 
-describe.concurrent("E2E: setup with a named plugin from a local source", () => {
+describe.concurrent("setup with a named plugin from a local source", () => {
   it("installs aidd-context under claude", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("setup-named-plugin");
     try {

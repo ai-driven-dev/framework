@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { seedEmptyManifest } from "../helpers/project-state.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
-describe.concurrent("E2E: aidd framework update", () => {
+describe.concurrent("aidd framework update", () => {
   it("reports all tools up to date when no tools have drift", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("update-noop");
     try {
