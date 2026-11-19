@@ -129,10 +129,13 @@ async function readAssertionsBaseline() {
   }
 }
 
+const BASELINE_PATH = "type-assertions-baseline.json";
+
 /**
  * The baseline at the merge-base with `ARCH_BASE_REF`, else with `origin/` and the branch a pull
- * request targets, else with `origin/next`, as `baseline-only-shrinks` resolves it. A change that
- * adds the file meets a base without it and is not compared. A base git cannot give fails: a
+ * request targets, else with `origin/next`, as `baseline-only-shrinks` resolves it, and the files
+ * the change renamed, old cli path to new. Only the change that adds the baseline file may meet a
+ * base without it; any other base without it, or one git cannot give, fails: a
  * ratchet that skips is not one.
  */
 function readBaseBaseline(breaches) {
@@ -147,21 +150,53 @@ function readBaseBaseline(breaches) {
     );
     return null;
   }
+  const changes = git("diff", "-M", "--name-status", base, "--", "cli")
+    .split("\n")
+    .map((line) => line.split("\t"));
+  const renames = new Map(
+    changes
+      .filter(([status]) => status.startsWith("R"))
+      .map(([, from, to]) => [from.replace(/^cli\//, ""), to.replace(/^cli\//, "")])
+  );
   try {
-    return JSON.parse(git("show", `${base}:cli/type-assertions-baseline.json`));
+    return { base: JSON.parse(git("show", `${base}:cli/${BASELINE_PATH}`)), renames };
   } catch {
+    if (changes.some(([status, file]) => status === "A" && file === `cli/${BASELINE_PATH}`)) {
+      return null;
+    }
+    breaches.push(
+      `  the base has no cli/${BASELINE_PATH} and this change does not add it: the ratchet has nothing to compare with`
+    );
     return null;
   }
 }
 
-function baselineRises(baseline, base) {
-  return Object.keys(baseline)
+const sum = (counts) => Object.values(counts).reduce((total, count) => total + count, 0);
+
+/**
+ * The total may not rise, so a file split moves counts without growing them. A file the base
+ * already counts, under its new path when renamed, may not rise either. A path the base never
+ * counted is bound by the total alone.
+ */
+function baselineRises(baseline, { base, renames }) {
+  const followed = {};
+  for (const [cliPath, count] of Object.entries(base)) {
+    const path = renames.get(cliPath) ?? cliPath;
+    followed[path] = (followed[path] ?? 0) + count;
+  }
+  const breaches = Object.keys(baseline)
     .sort()
-    .filter((cliPath) => baseline[cliPath] > (base[cliPath] ?? 0))
+    .filter((cliPath) => cliPath in followed && baseline[cliPath] > followed[cliPath])
     .map(
       (cliPath) =>
-        `  cli/${cliPath} holds ${baseline[cliPath]} at the head and ${base[cliPath] ?? 0} at the base: a baseline only goes down`
+        `  cli/${cliPath} holds ${baseline[cliPath]} at the head and ${followed[cliPath]} at the base: a baseline only goes down`
     );
+  if (sum(baseline) > sum(base)) {
+    breaches.push(
+      `  cli/${BASELINE_PATH} totals ${sum(baseline)} at the head and ${sum(base)} at the base: the total only goes down`
+    );
+  }
+  return breaches;
 }
 
 function assertionBreaches(found, baseline) {
@@ -242,8 +277,8 @@ for (const cliPath of CASTS_ALLOWED.keys()) {
 }
 
 const assertionsBaseline = await readAssertionsBaseline();
-const baseBaseline = readBaseBaseline(breaches);
-if (baseBaseline !== null) breaches.push(...baselineRises(assertionsBaseline, baseBaseline));
+const fromBase = readBaseBaseline(breaches);
+if (fromBase !== null) breaches.push(...baselineRises(assertionsBaseline, fromBase));
 breaches.push(...assertionBreaches(await countTypeAssertions(), assertionsBaseline));
 
 if (breaches.length > 0) {

@@ -41,26 +41,33 @@ const git = (dir, ...args) =>
 
 /**
  * The tree is a git repository whose one commit is the base, holding `baseBaseline`
- * (`null`: the base has no baseline file); the files planted after it are the change.
+ * (`null`: the base has no baseline file); the files planted after it are the change, staged.
+ * `moved` is `{ from, to, source }`: `source` is in the base at `from`, and the change `git mv`s it to `to` (cli-relative paths).
  */
-function runOn(files, baseline = ALLOWED_CAST_BASELINE, baseBaseline = baseline) {
+function runOn(files, baseline = ALLOWED_CAST_BASELINE, baseBaseline = baseline, moved = null) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-type-honesty-"));
   try {
     git(dir, "init", "-q");
     plant(dir, {
       "cli/tsconfig.json": TSCONFIG,
+      ...(moved ? { [`cli/${moved.from}`]: moved.source } : {}),
       ...(baseBaseline === null
         ? { "cli/.keep": "" }
         : { "cli/type-assertions-baseline.json": JSON.stringify(baseBaseline) }),
     });
     git(dir, "add", "-A");
     git(dir, "commit", "-q", "-m", "base");
+    if (moved) {
+      fs.mkdirSync(path.dirname(path.join(dir, "cli", moved.to)), { recursive: true });
+      git(dir, "mv", `cli/${moved.from}`, `cli/${moved.to}`);
+    }
     plant(dir, {
       [ALLOWED_CAST_FILE]: A_CAST,
       "cli/tests/.keep.ts": "export const kept = 1;",
       "cli/type-assertions-baseline.json": JSON.stringify(baseline),
       ...files,
     });
+    git(dir, "add", "-A");
     const result = spawnSync(process.execPath, [GUARD], {
       cwd: dir,
       encoding: "utf8",
@@ -187,7 +194,7 @@ test("a cast and a raised baseline in one change fail against the base's baselin
   const breach = runOn({ "cli/src/honest.ts": "export const x = [] as string[];" }, raised, ALLOWED_CAST_BASELINE);
 
   assert.equal(breach.status, 1);
-  assert.match(breach.output, /src\/honest\.ts holds 1 at the head and 0 at the base: a baseline only goes down/);
+  assert.match(breach.output, /cli\/type-assertions-baseline\.json totals 3 at the head and 2 at the base/);
 });
 
 test("a baseline raised on a file the base already counts fails, and a lowered one passes", () => {
@@ -222,6 +229,57 @@ test("a base git cannot give fails, since a ratchet that skips is not one", () =
     const result = spawnSync(process.execPath, [GUARD], { cwd: dir, encoding: "utf8", env: withoutGitEnv() });
     assert.equal(result.status, 1);
     assert.match(result.stderr, /no merge-base with/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/** Fixture paths are built, so no comment-scanner mistakes one for a file this repository should hold. */
+const file = (name) => `cli/src/${name}.ts`;
+
+const SPLIT_BASE = { ...ALLOWED_CAST_BASELINE, "src/sink.ts": 5 };
+
+test("a split that moves counts to a new file passes while the total does not rise", () => {
+  const sunk = "export const x = [] as string[];\nexport const y = [] as string[];\nexport const z = [] as string[];";
+  const writer = "export const a = [] as string[];\nexport const b = [] as string[];";
+  const files = { [file("sink")]: sunk, [file("writer")]: writer };
+  const level = runOn(files, { ...ALLOWED_CAST_BASELINE, "src/sink.ts": 3, "src/writer.ts": 2 }, SPLIT_BASE);
+
+  assert.equal(level.status, 0, level.output);
+});
+
+test("a renamed file keeps the count it had, so a rise after the move fails by name", () => {
+  const moved = { from: "src/old.ts", to: "src/new.ts", source: "export const x = [] as string[];" };
+  const base = { ...ALLOWED_CAST_BASELINE, "src/old.ts": 1 };
+  const kept = runOn({ [file("new")]: "export const x = [] as string[];" }, { ...ALLOWED_CAST_BASELINE, "src/new.ts": 1 }, base, moved);
+  const raised = runOn(
+    { [file("new")]: "export const x = [] as string[];\nexport const y = [] as string[];", [file("other")]: "export const k = 1;" },
+    { ...ALLOWED_CAST_BASELINE, "src/new.ts": 2, "src/other.ts": 0 },
+    { ...base, "src/other.ts": 1 },
+    moved
+  );
+
+  assert.equal(kept.status, 0, kept.output);
+  assert.equal(raised.status, 1);
+  assert.match(raised.output, /cli\/src\/new\.ts holds 2 at the head and 1 at the base/);
+});
+
+test("a base without the baseline fails unless the change adds the file", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-type-honesty-"));
+  try {
+    git(dir, "init", "-q");
+    plant(dir, { "cli/tsconfig.json": TSCONFIG, "cli/.keep": "" });
+    git(dir, "add", "-A");
+    git(dir, "commit", "-q", "-m", "base");
+    plant(dir, { [ALLOWED_CAST_FILE]: A_CAST, "cli/tests/.keep.ts": "export const kept = 1;" });
+    git(dir, "add", "-A");
+    const result = spawnSync(process.execPath, [GUARD], {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...withoutGitEnv(), ARCH_BASE_REF: "HEAD" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /the base has no cli\/type-assertions-baseline\.json and this change does not add it/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
