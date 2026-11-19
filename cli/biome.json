@@ -49,6 +49,7 @@
       "!**/node_modules",
       "!**/example",
       "!**/temp",
+      "!**/tests/golden/snapshots",
       "!**/coverage",
       "!demo",
       "!.aidd",

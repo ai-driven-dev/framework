@@ -4,7 +4,11 @@
     "exitCode": 0,
     "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\nInstalled claude (1 files)\n",
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
-    "filesWritten": [".aidd/manifest.json", ".claude/settings.json", ".gitignore"],
+    "filesWritten": [
+      ".aidd/manifest.json",
+      ".claude/settings.json",
+      ".gitignore"
+    ],
     "manifest": {
       "version": 8,
       "tools": {
@@ -827,7 +831,10 @@
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": null,
-    "userConfigFiles": ["manifest.json", "marketplaces.json"],
+    "userConfigFiles": [
+      "manifest.json",
+      "marketplaces.json"
+    ],
     "userManifest": {
       "version": 8,
       "tools": {
@@ -847,7 +854,9 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": null,
-    "userConfigFiles": ["marketplaces.json"],
+    "userConfigFiles": [
+      "marketplaces.json"
+    ],
     "userManifest": null
   },
   {

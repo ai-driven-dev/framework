@@ -73,7 +73,9 @@ async function hashDirectory(dir: string): Promise<TargetSnapshot> {
       // skip directories
     }
   }
-  return result;
+  return Object.fromEntries(
+    Object.entries(result).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  );
 }
 
 async function captureTarget(
