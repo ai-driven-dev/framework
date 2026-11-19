@@ -101,7 +101,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | Deviation | Closes when |
 | --- | --- |
 | `composition/container.ts` imports the per-context composition modules, where the target has nobody import `composition/` | `container.ts` stops composing them by import, and `createContainer(options)` replaces `createDeps` (module-level `WeakMap`) and `createMenuDeps` |
-| `validate-recipes` is declared in `presentation/commands/tool-config.ts`, where the target gives each context its own command file | the recipes command leaves `tool-config.ts` without changing the order the help golden freezes |
 | `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin, because presentation reads the `Marketplace` aggregate from `domain/` (`display/marketplace-display.ts`, `prompts/plugin-pick-use-case.ts`) | presentation reads published types instead of the domain |
 | `MarketplaceRemover` is a `distribution` port implemented by the remove commands of `orchestration/marketplace`, handed in by `composition/orchestration/marketplace.ts` | the removal moves into `distribution`, or orchestration owns it by contract |
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
