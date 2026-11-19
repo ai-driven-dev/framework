@@ -1,7 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
 import { GitHubRawFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/github-raw-fetcher-adapter.js";
 import {
   AuthenticationError,
@@ -27,30 +24,17 @@ function makeHttp(override: Partial<{ get: Mock }> = {}) {
 }
 
 describe("GitHubRawFetcherAdapter", () => {
-  let tmpDir: string;
-
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), "aidd-raw-fetcher-"));
-  });
-
-  afterEach(async () => {
-    await rm(tmpDir, { recursive: true, force: true });
-  });
-
   describe("fetchCatalog", () => {
-    it("returns local cache dir and writes catalog file on HTTP 200", async () => {
+    it("returns the catalog body on HTTP 200", async () => {
       const http = makeHttp();
       const adapter = new GitHubRawFetcherAdapter(http);
 
       const result = await adapter.fetchCatalog(
         { kind: "github", repo: "owner/repo" },
-        CATALOG_PATH,
-        tmpDir
+        CATALOG_PATH
       );
 
-      expect(result).toBe(tmpDir);
-      const { existsSync } = await import("node:fs");
-      expect(existsSync(join(tmpDir, CATALOG_PATH))).toBe(true);
+      expect(result).toBe(SAMPLE_CATALOG);
     });
 
     it("calls GitHub Contents API with correct URL and auth header", async () => {
@@ -58,11 +42,7 @@ describe("GitHubRawFetcherAdapter", () => {
       const tokenProvider = { resolve: async () => "my-token" as string | null };
       const adapter = new GitHubRawFetcherAdapter(http, tokenProvider);
 
-      await adapter.fetchCatalog(
-        { kind: "github", repo: "owner/repo", ref: "main" },
-        CATALOG_PATH,
-        tmpDir
-      );
+      await adapter.fetchCatalog({ kind: "github", repo: "owner/repo", ref: "main" }, CATALOG_PATH);
 
       expect(http.get).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/contents/.claude-plugin/marketplace.json?ref=main",
@@ -74,7 +54,7 @@ describe("GitHubRawFetcherAdapter", () => {
       const http = makeHttp();
       const adapter = new GitHubRawFetcherAdapter(http);
 
-      await adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH, tmpDir);
+      await adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH);
 
       expect(http.get).toHaveBeenCalledWith(
         expect.stringContaining("?ref=HEAD"),
@@ -89,7 +69,7 @@ describe("GitHubRawFetcherAdapter", () => {
       const adapter = new GitHubRawFetcherAdapter(http);
 
       await expect(
-        adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH, tmpDir)
+        adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH)
       ).rejects.toThrow(CatalogFetchNotFoundError);
     });
 
@@ -100,7 +80,7 @@ describe("GitHubRawFetcherAdapter", () => {
       const adapter = new GitHubRawFetcherAdapter(http);
 
       await expect(
-        adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH, tmpDir)
+        adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH)
       ).rejects.toThrow(CatalogFetchAuthError);
     });
 
@@ -111,7 +91,7 @@ describe("GitHubRawFetcherAdapter", () => {
       const adapter = new GitHubRawFetcherAdapter(http);
 
       await expect(
-        adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH, tmpDir)
+        adapter.fetchCatalog({ kind: "github", repo: "owner/repo" }, CATALOG_PATH)
       ).rejects.toThrow(CatalogFetchError);
     });
   });

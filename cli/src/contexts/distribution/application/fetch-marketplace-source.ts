@@ -21,6 +21,14 @@ export interface FetchMarketplaceSourceCommand {
 }
 
 export class FetchMarketplaceSource {
+  constructor(pluginFetcher: PluginFetcher);
+  /** A raw catalog fetcher comes with the files its catalog is written to. */
+  constructor(
+    pluginFetcher: PluginFetcher,
+    rawCatalogFetcher: RawCatalogFetcher,
+    fs: FileReader & FileWriter,
+    logger?: Logger
+  );
   constructor(
     private readonly pluginFetcher: PluginFetcher,
     private readonly rawCatalogFetcher?: RawCatalogFetcher,
@@ -30,27 +38,32 @@ export class FetchMarketplaceSource {
 
   async execute(options: FetchMarketplaceSourceCommand): Promise<string> {
     const { marketplace, cacheDir, fetchOptions } = options;
-    if (marketplace.source.kind === "github" && this.rawCatalogFetcher !== undefined) {
-      await this.rawCatalogFetcher.fetchCatalog(
+    const { rawCatalogFetcher, fs } = this;
+    if (
+      marketplace.source.kind === "github" &&
+      rawCatalogFetcher !== undefined &&
+      fs !== undefined
+    ) {
+      const catalog = await rawCatalogFetcher.fetchCatalog(
         marketplace.source as PluginSourceGitHub,
-        CLAUDE_CATALOG_PATH,
-        cacheDir
+        CLAUDE_CATALOG_PATH
       );
-      return this.probeAndMaybeFallback(marketplace, cacheDir, fetchOptions);
+      await fs.writeFile(join(cacheDir, CLAUDE_CATALOG_PATH), catalog);
+      return this.probeAndMaybeFallback(fs, marketplace, cacheDir, fetchOptions);
     }
     return this.pluginFetcher.fetch(marketplace.source, cacheDir, fetchOptions);
   }
 
   private async probeAndMaybeFallback(
+    fs: FileReader & FileWriter,
     marketplace: FetchableMarketplace,
     cacheDir: string,
     fetchOptions?: PluginFetchOptions
   ): Promise<string> {
-    if (this.fs === undefined) return cacheDir;
     try {
-      const catalog = await this.loadRawCatalogSafely(this.fs, cacheDir);
+      const catalog = await this.loadRawCatalogSafely(fs, cacheDir);
       if (catalog === null || !hasRelativePluginSources(catalog)) return cacheDir;
-      return this.runFallback(this.fs, marketplace, cacheDir, fetchOptions);
+      return this.runFallback(fs, marketplace, cacheDir, fetchOptions);
     } catch (err) {
       this.logger?.warn(
         `Probe failed for ${marketplace.name}, falling back to cache: ${String(err)}`

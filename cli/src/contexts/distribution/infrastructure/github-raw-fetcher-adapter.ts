@@ -1,5 +1,3 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import {
   AuthenticationError,
   CatalogFetchAuthError,
@@ -21,21 +19,13 @@ export class GitHubRawFetcherAdapter implements RawCatalogFetcher {
     private readonly tokenProvider?: TokenProvider
   ) {}
 
-  async fetchCatalog(
-    source: PluginSourceGitHub,
-    catalogPath: string,
-    cacheDir: string
-  ): Promise<string> {
+  async fetchCatalog(source: PluginSourceGitHub, catalogPath: string): Promise<string> {
     const ref = source.ref ?? "HEAD";
     try {
-      const content = await this.fetchRaw(this.buildContentsUrl(source.repo, catalogPath, ref));
-      return this.writeToCache(cacheDir, catalogPath, content);
+      return await this.fetchRaw(this.buildContentsUrl(source.repo, catalogPath, ref));
     } catch (err) {
       if (ref === "HEAD" || !(err instanceof CatalogFetchNotFoundError)) throw err;
-      const headContent = await this.fetchRaw(
-        this.buildContentsUrl(source.repo, catalogPath, "HEAD")
-      );
-      return this.writeToCache(cacheDir, catalogPath, headContent);
+      return this.fetchRaw(this.buildContentsUrl(source.repo, catalogPath, "HEAD"));
     }
   }
 
@@ -63,16 +53,5 @@ export class GitHubRawFetcherAdapter implements RawCatalogFetcher {
     if (err instanceof AuthenticationError) throw new CatalogFetchAuthError(url);
     const detail = err instanceof Error ? err.message : String(err);
     throw new CatalogFetchError(url, detail);
-  }
-
-  private async writeToCache(
-    cacheDir: string,
-    catalogPath: string,
-    content: string
-  ): Promise<string> {
-    const filePath = join(cacheDir, catalogPath);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, content, "utf-8");
-    return cacheDir;
   }
 }
