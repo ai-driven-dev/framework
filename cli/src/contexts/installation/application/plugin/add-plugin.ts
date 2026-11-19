@@ -1,4 +1,4 @@
-import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
+import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
 import {
   DuplicatePluginError,
@@ -18,24 +18,19 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { BuiltMarketplaceEnsurer } from "../../contract/built-marketplace.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
-import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
 import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
-import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
-import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
+import type { ResolveAddedPluginSource } from "./add/resolve-plugin-source.js";
 import { writePluginFiles } from "./plugin-helpers.js";
 import {
   resolvePluginToolIds,
@@ -71,40 +66,22 @@ export interface AddPluginManifests {
   user: ManifestRepository & Lock;
 }
 
-/** Where a plugin's files come from. */
-export interface AddPluginSources {
-  distributionLoader: PluginDistributionLoader;
-  marketplaceRegistry: InstallationMarketplaceRegistry;
-  ensureBuilt: BuiltMarketplaceEnsurer;
-  translate: PluginTranslation;
-}
-
 export class AddPlugin implements PluginAdd {
   private readonly fs: FileWriter & FileReader;
   private readonly logger: Logger;
   private readonly manifestRepo: ManifestRepository;
   private readonly userManifestRepo: ManifestRepository & Lock;
-  private readonly distributionLoader: PluginDistributionLoader;
-  private readonly marketplaceRegistry: InstallationMarketplaceRegistry;
-  private readonly ensureBuilt: BuiltMarketplaceEnsurer;
-  private readonly translate: PluginTranslation;
 
   constructor(
     host: AddPluginHost,
     manifests: AddPluginManifests,
-    sources: AddPluginSources,
+    private readonly source: ResolveAddedPluginSource,
     private readonly tools: ToolCatalog,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {
     ({ fs: this.fs, logger: this.logger } = host);
     this.manifestRepo = manifests.project;
     this.userManifestRepo = manifests.user;
-    ({
-      distributionLoader: this.distributionLoader,
-      marketplaceRegistry: this.marketplaceRegistry,
-      ensureBuilt: this.ensureBuilt,
-      translate: this.translate,
-    } = sources);
   }
 
   async execute(options: PluginAddOptions): Promise<void> {
@@ -125,7 +102,10 @@ export class AddPlugin implements PluginAdd {
         : Manifest.fromJSON(existingMachine.toJSON(), resolveToolId);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
-    if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
+    if (
+      marketplace !== undefined &&
+      (await this.source.isGithubMarketplace(marketplace, projectRoot))
+    ) {
       await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, machine);
     } else {
       await this.addLocalPlugin(options, resolvedToolIds, manifest, source, projectRoot, machine);
@@ -139,12 +119,6 @@ export class AddPlugin implements PluginAdd {
     );
     if (claimed) await this.userManifestRepo.save(machine);
     await this.manifestRepo.save(manifest);
-  }
-
-  private async isGithubMarketplace(name: string, projectRoot: string): Promise<boolean> {
-    const all = await this.marketplaceRegistry.list(projectRoot);
-    const found = all.find((m) => m.name === name);
-    return found?.source.kind === "github";
   }
 
   private async addGithubMarketplacePlugin(
@@ -195,7 +169,11 @@ export class AddPlugin implements PluginAdd {
   ): Promise<void> {
     const { pluginMetadata, marketplace, source } = options;
     if (pluginMetadata === undefined || toolIds.length === 0) return;
-    const version = await this.resolveNativeVersion(options, pluginMetadata);
+    const version = await this.source.version(
+      options.source,
+      options.projectRoot,
+      pluginMetadata.version
+    );
     for (const toolId of toolIds) {
       manifest.addPlugin(
         toolId,
@@ -211,25 +189,6 @@ export class AddPlugin implements PluginAdd {
     }
   }
 
-  // Catalog versions are optional: when omitted, plugin.json is the authoritative
-  // source, so fetch the distribution to read its version (no files materialized).
-  private async resolveNativeVersion(
-    options: PluginAddOptions,
-    pluginMetadata: NonNullable<PluginAddOptions["pluginMetadata"]>
-  ): Promise<string> {
-    if (pluginMetadata.version) return pluginMetadata.version;
-    const dist = await this.readDistribution(options.source, options.projectRoot);
-    return dist.manifest.version;
-  }
-
-  private async readDistribution(
-    source: PluginSource,
-    projectRoot: string
-  ): Promise<PluginDistribution> {
-    const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    return this.distributionLoader.load(source, cacheDir);
-  }
-
   private async addLocalPlugin(
     options: PluginAddOptions,
     resolvedToolIds: AiToolId[],
@@ -239,7 +198,7 @@ export class AddPlugin implements PluginAdd {
     machine: Manifest
   ): Promise<void> {
     const { marketplace, requiredVersion, replace, pluginMetadata } = options;
-    const read = await this.readDistribution(source, projectRoot);
+    const read = await this.source.readDistribution(source, projectRoot);
     const dist = pluginMetadata === undefined ? read : read.withStrict(pluginMetadata.strict);
     const pluginName = dist.manifest.name;
     this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
@@ -469,7 +428,7 @@ export class AddPlugin implements PluginAdd {
       );
       return { ...result, notices: [] };
     }
-    const output = this.translate.execute({ distribution: dist, tool });
+    const output = this.source.translate({ distribution: dist, tool });
     const translated = { ...output, files: hashOutputFiles(output.files) };
     return this.materializeNativePlugin(
       dist,
@@ -544,16 +503,7 @@ export class AddPlugin implements PluginAdd {
   }
 
   private resolveAdapter(tool: ToolProfile): PluginTranslator | null {
-    return resolvePluginTranslator(tool, {
-      fs: this.fs,
-      built: {
-        homedir: nodeHomedir,
-        ensureBuilt: this.ensureBuilt,
-        marketplaceRegistry: this.marketplaceRegistry,
-        translate: this.translate,
-        platform: nodePlatform(),
-      },
-    });
+    return this.source.translatorFor(tool, this.fs);
   }
 }
 

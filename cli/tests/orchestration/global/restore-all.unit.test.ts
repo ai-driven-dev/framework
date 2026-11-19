@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ResolveAddedPluginSource } from "../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.js";
@@ -54,11 +55,11 @@ async function installPlugin(
   await new AddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    },
+    }),
     registeredTools()
   ).execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -317,11 +318,11 @@ describe("RestoreAll — plugin materialization", () => {
     await new AddPlugin(
       { fs: deps.fs, logger: deps.logger },
       { project: deps.manifestRepo, user: deps.userManifestRepo },
-      {
+      new ResolveAddedPluginSource({
         distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
         marketplaceRegistry: deps.marketplaceRegistry,
         ...fakeBuildSources(),
-      },
+      }),
       registeredTools()
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },

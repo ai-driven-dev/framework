@@ -5,6 +5,7 @@ import { TrustPluginSource } from "../../contexts/distribution/application/plugi
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
 import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.js";
+import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -137,12 +138,12 @@ export function wirePlugin(base: Base, inst: Installation) {
   const pluginAddUseCase = new AddPlugin(
     { fs: fs, logger: logger },
     { project: manifestRepo, user: userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
       marketplaceRegistry: marketplaceRegistry,
       ensureBuilt: ensureBuiltMarketplaceUseCase,
       translate: builtMaterializationDeps.translate,
-    },
+    }),
     tools,
     installRuntimeConfigUseCase
   );

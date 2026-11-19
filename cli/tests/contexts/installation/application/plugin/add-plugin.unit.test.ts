@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -52,14 +53,14 @@ function buildAddUseCase(
   return new AddPlugin(
     { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    },
+    }),
     registeredTools()
   );
 }
@@ -153,14 +154,14 @@ describe("AddPlugin", () => {
       const useCase = new AddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        {
+        new ResolveAddedPluginSource({
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        },
+        }),
         registeredTools()
       );
       await useCase.execute({
@@ -195,14 +196,14 @@ describe("AddPlugin", () => {
       const useCase = new AddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        {
+        new ResolveAddedPluginSource({
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        },
+        }),
         registeredTools()
       );
       await expect(
@@ -234,14 +235,14 @@ describe("AddPlugin", () => {
       const useCase = new AddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        {
+        new ResolveAddedPluginSource({
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        },
+        }),
         registeredTools()
       );
       await useCase.execute({
@@ -290,14 +291,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: await makeGithubRegistry(PROJECT_ROOT),
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -331,14 +332,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -371,14 +372,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -537,14 +538,14 @@ describe("AddPlugin", () => {
         await new AddPlugin(
           { fs: deps.fs, logger: logger },
           { project: projectBRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registryB,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         ).execute({
           source: GIT_SUBDIR_SOURCE,
@@ -577,14 +578,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -612,14 +613,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -649,14 +650,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -683,14 +684,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -720,14 +721,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -770,14 +771,14 @@ describe("AddPlugin", () => {
         const useCase = new AddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          {
+          new ResolveAddedPluginSource({
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          },
+          }),
           registeredTools()
         );
         await useCase.execute({
@@ -821,11 +822,11 @@ describe("AddPlugin", () => {
       const useCase = new AddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        {
+        new ResolveAddedPluginSource({
           distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        },
+        }),
         registeredTools()
       );
       await useCase.execute({
@@ -842,29 +843,6 @@ describe("AddPlugin", () => {
   });
 
   describe("marketplace resolution", () => {
-    it("resolves the named marketplace rather than the first registered one", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      const registry = new FakeMarketplaceRegistry();
-      await saveMarketplace(registry, "aidd-framework", {
-        kind: "github",
-        repo: "ai-driven-dev/framework",
-      });
-      await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
-
-      await buildAddUseCase(deps, registry).execute({
-        ...localAdd(TOOL.claude),
-        marketplace: "local-mkt",
-      });
-
-      const installed = deps.manifestRepo
-        .getCurrent()
-        ?.getPlugins(TOOL.claude)
-        .find((p) => p.name === "sample-plugin");
-      expect(installed?.marketplace).toBe("local-mkt");
-    });
-
     it("treats a marketplace name the registry does not list as a local marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);

@@ -5,6 +5,7 @@ import { ListMarketplaces } from "../../../src/contexts/distribution/application
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import { ResolveAddedPluginSource } from "../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
@@ -62,14 +63,14 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   const pluginAdd = new AddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    },
+    }),
     catalogOf()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);

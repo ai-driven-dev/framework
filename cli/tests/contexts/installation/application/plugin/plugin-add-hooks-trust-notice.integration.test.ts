@@ -1,7 +1,9 @@
 /** A hook a native tool delivers is not a skip but a component with a precondition: Codex
  * gates every hook behind a per-hook trust grant it can decline in silence. */
+
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -24,14 +26,14 @@ async function installWithLogger(toolId: AiToolId) {
   const useCase = new AddPlugin(
     { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: new FakeMarketplaceRegistry(),
       ...fakeBuildSources(),
-    },
+    }),
     registeredTools()
   );
   await useCase.execute({

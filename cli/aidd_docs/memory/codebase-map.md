@@ -45,6 +45,7 @@ src/
 │   │   │   ├── materialize/
 │   │   │   ├── ownership/
 │   │   │   ├── plugin/
+│   │   │   │   └── add/
 │   │   │   ├── removal/
 │   │   │   ├── restore/
 │   │   │   │   └── project/

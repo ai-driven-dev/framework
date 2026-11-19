@@ -1,3 +1,4 @@
+import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
@@ -25,14 +26,14 @@ async function installSamplePlugin() {
   const useCase = new AddPlugin(
     { fs: deps.fs, logger: capturingLogger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    },
+    }),
     registeredTools()
   );
   await useCase.execute({

@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
+import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
@@ -41,7 +42,6 @@ const GIT_SUBDIR_SOURCE = {
   url: "https://github.com/ai-driven-dev/framework.git",
   path: "plugins/sample-plugin",
 };
-
 const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };
 
 type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
@@ -94,14 +94,14 @@ async function installStalePlugin(deps: Deps, registry: FakeMarketplaceRegistry)
   await new AddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    {
+    new ResolveAddedPluginSource({
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    },
+    }),
     registeredTools()
   ).execute({
     source: GIT_SUBDIR_SOURCE,
