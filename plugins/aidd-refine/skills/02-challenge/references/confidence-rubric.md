@@ -1,6 +1,14 @@
 # Confidence rubric
 
-The challenge action emits a confidence percentage. Pick the tier whose conditions match the findings, then choose a value within that tier.
+The challenge action emits a confidence percentage. Answer each trust question, pick the tier whose conditions match the findings, then choose a value within that tier.
+
+## Trust questions
+
+- Am I proud of the work delivered?
+- Am I confident in every consequential choice that was made?
+- Will the user be satisfied with the real end-to-end outcome?
+
+## Tiers
 
 | Tier      | Condition                                                                                                 |
 | --------- | --------------------------------------------------------------------------------------------------------- |
