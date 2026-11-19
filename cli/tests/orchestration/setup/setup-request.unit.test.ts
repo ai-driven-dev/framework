@@ -4,6 +4,7 @@ import {
   isInteractiveRun,
   selectTools,
 } from "../../../src/orchestration/setup/setup-request.js";
+import { CategoryMismatchError } from "../../../src/shared/domain/errors.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 
 describe("agentModelsRequest", () => {
@@ -33,6 +34,17 @@ describe("selectTools", () => {
       aiTools: ["codex", "claude"],
       ideTools: ["vscode"],
     });
+  });
+});
+
+describe("selectTools refusal", () => {
+  it("refuses ids of another category, and an unknown one with them, naming the valid AI tools", () => {
+    const refuse = () => selectTools(["vscode", "nope"], [], registeredCatalog());
+
+    expect(refuse).toThrow(CategoryMismatchError);
+    expect(refuse).toThrow(
+      "vscode, nope are not AI tools. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity"
+    );
   });
 });
 
