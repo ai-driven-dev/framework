@@ -3,6 +3,7 @@ import { CursorProjectScopeUnsupportedError } from "../../../../shared/domain/er
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -11,7 +12,6 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
-  type PluginScope,
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
@@ -100,7 +100,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     componentPaths: ReadonlyMap<string, string>;
     skipped: ReadonlySkipList;
     baseDir: string;
-    scope: PluginScope;
+    scope: Scope;
   } | null {
     const pluginsCap = tool.plugins();
     if (pluginsCap === null) return null;
@@ -126,7 +126,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     componentPaths: ReadonlyMap<string, string>,
     marketplace: string | undefined,
     baseDir: string,
-    scope: PluginScope,
+    scope: Scope,
     manifest: Manifest
   ): Promise<number> {
     let written = 0;

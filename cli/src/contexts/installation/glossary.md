@@ -8,7 +8,7 @@ The language of the `installation` context. A name in the code means what this p
 | Tracked file | A file the manifest owns, with the hash it had when written | `TrackedFile` |
 | Tool entry | One tool's slice of the manifest: its files, merge files and plugins | `ToolEntry` |
 | Merge file | A file the framework shares with the user and merges into instead of overwriting | `MergeFileEntry`, `FileMerger` |
-| Install scope | Whether an installation is for one project or for every project of the machine | `InstallScope` |
+| Install scope | Whether an installation is for one project or for every project of the machine | `Scope` |
 | Init | Creating the manifest of a project that has none | `InitProject` |
 | Install | Writing a tool's agents, commands, rules, skills and config into a project and recording them | `InstallAgents`, `InstallCommands`, `InstallRules`, `InstallSkills`, `InstallConfig` |
 | Post-install pipeline | What runs after files are written: hooks, gitignore, the manifest save | `RunPostInstallPipeline` |

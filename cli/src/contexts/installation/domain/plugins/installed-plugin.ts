@@ -15,11 +15,6 @@ import {
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
-/** What a plugin's `files` keys are relative to: the project root, or the tool's user-scope plugins
- * directory. Recorded once, at install, and never re-derived from a tool's current profile, which
- * can disagree with what was true when the entry was written. */
-export type PluginScope = Scope;
-
 // Branding closes a hole the compiler could not see: three `ReadonlyMap<string, string>` fields
 // told apart only by name meant a value meant for one could be assigned to another. The brand is a
 // phantom property, so a plain map built anywhere else is still accepted at the factories below.
@@ -66,7 +61,7 @@ export interface PluginEntryData {
   files: Record<string, string>;
   /** What `files` is relative to. Mandatory: a default here would guess exactly what
    * this field exists to stop guessing. */
-  scope: PluginScope;
+  scope: Scope;
   componentPaths?: Record<string, string>;
   mcpEntries?: Record<string, string>;
   projectHooks?: ProjectHooksEntryData;
@@ -81,7 +76,10 @@ export class InstalledPlugin {
   readonly version: string;
   readonly strict: boolean;
   readonly files: PathHashMap;
-  readonly scope: PluginScope;
+  /** What `files` keys are relative to: the project root, or the tool's user-scope plugins
+   * directory. Recorded once, at install, and never re-derived from a tool's current profile,
+   * which can disagree with what was true when the entry was written. */
+  readonly scope: Scope;
   readonly componentPaths: ComponentPathMap;
   readonly mcpEntries: McpDigestMap;
   readonly projectHooks?: ProjectHooksProvenance;
@@ -94,7 +92,7 @@ export class InstalledPlugin {
     version: string;
     strict: boolean;
     files: PathHashMap;
-    scope: PluginScope;
+    scope: Scope;
     componentPaths: ComponentPathMap;
     mcpEntries: McpDigestMap;
     projectHooks?: ProjectHooksProvenance;
@@ -119,7 +117,7 @@ export class InstalledPlugin {
     version: string,
     source: PluginSource,
     strict: boolean,
-    scope: PluginScope,
+    scope: Scope,
     marketplace?: string
   ): InstalledPlugin {
     const data: PluginEntryData = {
@@ -176,7 +174,7 @@ export class InstalledPlugin {
     dist: PluginDistribution,
     source: PluginSource,
     files: InstallationFile[],
-    scope: PluginScope,
+    scope: Scope,
     componentPaths?: ReadonlyMap<string, string>,
     marketplace?: string
   ): InstalledPlugin {
@@ -206,7 +204,7 @@ export class InstalledPlugin {
     source: PluginSource,
     files: InstallationFile[],
     mcpEntries: ReadonlyMap<string, string>,
-    scope: PluginScope,
+    scope: Scope,
     componentPaths?: ReadonlyMap<string, string>,
     marketplace?: string
   ): InstalledPlugin {

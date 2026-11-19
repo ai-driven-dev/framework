@@ -1,9 +1,9 @@
 import { UnresolvableUserScopeError } from "../../../../shared/domain/errors.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { getToolSupportedScope } from "../../domain/install-scope.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { PluginScope } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 
 export function resolvePluginToolIds(
@@ -18,7 +18,7 @@ export function resolvePluginToolIds(
 /** The scope a fresh install writes to the manifest, read once from the tool's own profile.
  * Nothing else calls this: every later command reads the scope the manifest already recorded,
  * which the profile can disagree with. */
-export function resolveScopeForInstall(tool: PluginPlacement): PluginScope {
+export function resolveScopeForInstall(tool: PluginPlacement): Scope {
   return getToolSupportedScope(tool.plugins()?.requiresUserScope() === true);
 }
 
@@ -27,7 +27,7 @@ export function resolveScopeForInstall(tool: PluginPlacement): PluginScope {
  * for a `"user"` scope the profile no longer explains: a silent fallback would resolve a
  * suppression, a deletion or a drift check against the wrong directory. */
 export function resolveBaseDirFromRecord(
-  scope: PluginScope,
+  scope: Scope,
   tool: PluginPlacement,
   projectRoot: string,
   homedir: () => string

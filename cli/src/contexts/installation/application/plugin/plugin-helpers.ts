@@ -2,11 +2,12 @@ import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
 import { FileHash, type InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
@@ -40,7 +41,7 @@ export async function deleteOldFiles(
  */
 export async function deletePluginFilesForTool(
   files: ReadonlyMap<string, string>,
-  scope: PluginScope,
+  scope: Scope,
   tool: PluginPlacement,
   projectRoot: string,
   fs: FileWriter,
