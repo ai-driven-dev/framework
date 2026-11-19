@@ -13,8 +13,8 @@ import {
 } from "../display/plugin-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { spawnCliCommand } from "../terminal/child-command.js";
 import { parseGlobalOptions } from "./global-options.js";
-import { spawnCliCommand } from "./spawn-cli-command.js";
 
 /** What this command reads of the graph. */
 type PluginKeys =

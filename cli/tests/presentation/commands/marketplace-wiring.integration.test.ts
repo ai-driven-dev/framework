@@ -26,7 +26,7 @@ const createDeps = vi.fn(async () => ({
 }));
 const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
 
-vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
+vi.mock("../../../src/presentation/terminal/child-command.js", () => ({
   spawnCliCommand: spawn,
 }));
 

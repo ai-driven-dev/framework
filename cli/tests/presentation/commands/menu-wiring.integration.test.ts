@@ -15,7 +15,7 @@ const createMenuDeps = vi.fn(() => ({
   prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
 }));
 
-vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
+vi.mock("../../../src/presentation/terminal/child-command.js", () => ({
   spawnCliCommand: spawn,
 }));
 
