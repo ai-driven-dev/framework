@@ -1,4 +1,4 @@
-import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
+import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
@@ -260,14 +260,13 @@ export interface InteractiveMenuResult {
 
 export class InteractiveMenuUseCase {
   constructor(
-    private readonly manifestRepo: ManifestRepository,
+    private readonly projectSetup: ProjectSetupState,
     private readonly prompter: Prompter,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(_options?: InteractiveMenuOptions): Promise<InteractiveMenuResult> {
-    const manifest = await this.manifestRepo.load();
-    if (manifest === null) return this.handleFreshInstall();
+    if (!(await this.projectSetup.isSetUp())) return this.handleFreshInstall();
     const result = await this.showMenu(
       installedNodes(this.tools),
       "What would you like to do?",

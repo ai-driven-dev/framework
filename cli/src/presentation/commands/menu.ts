@@ -37,10 +37,10 @@ export async function runMenuLoop(
 ): Promise<never> {
   const output = new CLIOutput();
   printBanner(output);
-  const { manifestRepo, prompter } = createMenuDeps(resolveProjectRoot());
+  const { projectSetup, prompter } = createMenuDeps(resolveProjectRoot());
   for (;;) {
     try {
-      const result = await new InteractiveMenuUseCase(manifestRepo, prompter, tools).execute();
+      const result = await new InteractiveMenuUseCase(projectSetup, prompter, tools).execute();
       if (result.command[0] === "exit") exitWith(0);
       const exitCode = await spawnCliCommand(result.command);
       await waitForEnter();

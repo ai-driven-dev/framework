@@ -10,6 +10,7 @@ import { wireBase } from "../../src/composition/shared.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
@@ -527,18 +528,15 @@ describe("createDeps", () => {
     ).toHaveProperty("github.copilot.enable");
   });
 
-  it("hands the menu a manifest repository that resolves tool ids through the catalog", async () => {
-    const { manifestRepo } = createMenuDeps(root, catalogOf());
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    await manifestRepo.save(manifest);
-
-    expect((await manifestRepo.load())?.getInstalledToolIds()).toEqual([TOOL.claude]);
+  it("tells the menu a project is not set up before any manifest exists", async () => {
+    expect(await createMenuDeps(root, catalogOf()).projectSetup.isSetUp()).toBe(false);
   });
 
-  it("hands the menu a manifest repository rooted at the project", () => {
-    expect(createMenuDeps(root, catalogOf()).manifestRepo.path).toBe(
-      join(root, ".aidd", "manifest.json")
-    );
+  it("tells the menu a project is set up once the manifest at the project root lists a tool", async () => {
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    await new ManifestRepositoryAdapter(root, (raw) => catalogOf().toolId(raw)).save(manifest);
+
+    expect(await createMenuDeps(root, catalogOf()).projectSetup.isSetUp()).toBe(true);
   });
 });

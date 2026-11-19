@@ -7,7 +7,7 @@ import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
 } from "../presentation/terminal/prompter-adapter.js";
-import { wireInstallation } from "./installation.js";
+import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";
 import { wireDoctor } from "./orchestration/doctor.js";
 import { wireGlobal } from "./orchestration/global.js";
@@ -25,7 +25,9 @@ const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
 
 export function createMenuDeps(projectRoot: string, tools: ToolCatalog): MenuDeps {
   return {
-    manifestRepo: new ManifestRepositoryAdapter(projectRoot, (raw) => tools.toolId(raw)),
+    projectSetup: projectSetupOf(
+      new ManifestRepositoryAdapter(projectRoot, (raw) => tools.toolId(raw))
+    ),
     prompter: process.stdout.isTTY ? new InquirerPrompterAdapter() : new SilentPrompterAdapter(),
   };
 }

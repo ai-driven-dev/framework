@@ -32,8 +32,10 @@ import type {
   FrameworkBuilds,
 } from "../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
+import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
+import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../contexts/installation/ports/native-host.js";
 import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
@@ -47,6 +49,11 @@ import {
   createPluginTranslation,
   type FrameworkBuildDeps,
 } from "./translate.js";
+
+/** A project is set up once the installation has recorded a manifest for it. */
+export function projectSetupOf(manifestRepo: ManifestRepository): ProjectSetupState {
+  return { isSetUp: async () => (await manifestRepo.load()) !== null };
+}
 
 /** The rules over a recorded registration, answered by the host registration that owns its meaning. */
 export const registrationRecordRules: RegistrationRecordRules = {

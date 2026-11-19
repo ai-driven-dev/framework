@@ -50,6 +50,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/contract/doctor-issue.ts",
     "src/contexts/installation/contract/installed-tools-view.ts",
     "src/contexts/installation/contract/project-context.ts",
+    "src/contexts/installation/contract/project-setup-state.ts",
     // the installation record, which is what this context owns
     "src/contexts/installation/domain/manifest.ts",
     "src/contexts/installation/ports/manifest-repository.ts",

@@ -16,6 +16,7 @@ import type { UserPluginRemoveOptions } from "../contexts/installation/applicati
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
+import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
@@ -166,7 +167,7 @@ export interface Deps {
 
 /** What the menu and the interactive prompts of a command group need, before any graph exists. */
 export interface MenuDeps {
-  manifestRepo: ManifestRepository;
+  projectSetup: ProjectSetupState;
   prompter: Prompter;
 }
 

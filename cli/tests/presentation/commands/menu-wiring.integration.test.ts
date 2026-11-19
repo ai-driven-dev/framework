@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { manifestRepositoryLoading, prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const loadManifest = vi.fn();
 const promptSelect = vi.fn();
@@ -11,7 +11,7 @@ const question = vi.fn();
 const close = vi.fn();
 
 const createMenuDeps = vi.fn(() => ({
-  manifestRepo: manifestRepositoryLoading(loadManifest),
+  projectSetup: { isSetUp: async () => (await loadManifest()) !== null },
   prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
 }));
 
