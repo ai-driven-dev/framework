@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
@@ -76,7 +77,12 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(deps.fs)
   );
-  const useCase = new PluginPickUseCase(registry, resolveMarketplace, pluginAdd, prompter);
+  const useCase = new PluginPickUseCase(
+    new ListMarketplaces(registry),
+    resolveMarketplace,
+    pluginAdd,
+    prompter
+  );
   return { useCase, deps, registry, pluginAdd };
 }
 

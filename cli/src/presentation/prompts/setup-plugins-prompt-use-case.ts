@@ -1,6 +1,6 @@
+import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
 import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
-import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginInstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
 import type { PluginInstallMode } from "../../orchestration/setup/setup-flow.js";
 import type { PluginPick } from "./plugin-pick-use-case.js";
@@ -19,7 +19,7 @@ export class SetupPluginsPromptUseCase {
   constructor(
     private readonly pluginPickUseCase: PluginPick,
     private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace,
-    private readonly registry: MarketplaceRegistry,
+    private readonly listMarketplaces: Pick<ListMarketplaces, "execute">,
     private readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">
   ) {}
 
@@ -69,7 +69,7 @@ export class SetupPluginsPromptUseCase {
   }
 
   private async loadCatalogEntries(projectRoot: string): Promise<readonly PluginCatalogEntry[]> {
-    const marketplaces = await this.registry.list(projectRoot);
+    const { marketplaces } = await this.listMarketplaces.execute({ projectRoot });
     const entries: PluginCatalogEntry[] = [];
     for (const marketplace of marketplaces) {
       const { catalog } = await this.resolveMarketplaceUseCase.execute({

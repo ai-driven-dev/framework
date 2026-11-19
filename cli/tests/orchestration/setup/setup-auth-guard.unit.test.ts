@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
@@ -101,7 +102,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
     makeNoOpPluginPick(),
     makeNoOpPluginInstallFromMarketplace(),
-    new InMemoryMarketplaceRegistry(),
+    new ListMarketplaces(new InMemoryMarketplaceRegistry()),
     makeNoOpResolveMarketplace()
   );
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(

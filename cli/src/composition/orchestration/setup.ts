@@ -83,12 +83,12 @@ export function wireSetup(
   g: Global
 ) {
   const { fs, manifestRepo, prompter } = base;
-  const { marketplaceRegistry, resolveMarketplaceUseCase } = base;
+  const { resolveMarketplaceUseCase } = base;
   const { pluginInstallFromMarketplaceUseCase, pluginPickUseCase } = p;
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
     pluginPickUseCase,
     pluginInstallFromMarketplaceUseCase,
-    marketplaceRegistry,
+    base.listMarketplaces,
     resolveMarketplaceUseCase
   );
   const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter, base.tools);

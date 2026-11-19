@@ -92,6 +92,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     userSourceReferences,
     pluginFetcher,
     marketplaceRegistry,
+    listMarketplaces,
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
     withdrawFromHost,
@@ -153,7 +154,7 @@ export function wirePlugin(base: Base, inst: Installation) {
   );
   const searchPlugins = new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase);
   const pluginPickUseCase = new PluginPickUseCase(
-    marketplaceRegistry,
+    listMarketplaces,
     resolveMarketplaceUseCase,
     pluginAddUseCase,
     prompter

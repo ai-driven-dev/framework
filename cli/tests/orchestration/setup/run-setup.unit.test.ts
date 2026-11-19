@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
@@ -144,7 +145,7 @@ async function buildUseCase(
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
     makeNoOpPluginPick(),
     pluginInstallFromMarketplace,
-    new InMemoryMarketplaceRegistry(),
+    new ListMarketplaces(new InMemoryMarketplaceRegistry()),
     makeNoOpResolveMarketplace()
   );
   const marketplaceRegisterFramework = makeNoOpMarketplaceRegisterFramework();

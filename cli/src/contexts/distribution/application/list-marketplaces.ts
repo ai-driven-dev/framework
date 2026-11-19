@@ -1,6 +1,6 @@
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { PluginCatalog } from "../contract/catalog.js";
-import type { Marketplace } from "../domain/marketplace.js";
+import type { MarketplaceView } from "../contract/marketplace-view.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 import type { ResolveMarketplace } from "./resolve-marketplace.js";
 
@@ -10,7 +10,7 @@ export interface ListMarketplacesCommand {
 }
 
 export interface ListMarketplacesResult {
-  marketplaces: readonly Marketplace[];
+  marketplaces: readonly MarketplaceView[];
   catalogs?: Map<string, PluginCatalog>;
 }
 
@@ -29,7 +29,7 @@ export class ListMarketplaces {
   }
 
   private async fetchCatalogs(
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly MarketplaceView[],
     projectRoot: string
   ): Promise<Map<string, PluginCatalog>> {
     const catalogs = new Map<string, PluginCatalog>();
@@ -40,7 +40,7 @@ export class ListMarketplaces {
   }
 
   private async fetchOneCatalog(
-    marketplace: Marketplace,
+    marketplace: MarketplaceView,
     projectRoot: string,
     catalogs: Map<string, PluginCatalog>
   ): Promise<void> {

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import type {
   ResolveMarketplace,
   ResolveMarketplaceCommand,
@@ -86,7 +87,7 @@ async function build(
   const useCase = new SetupPluginsPromptUseCase(
     pick,
     installer,
-    registry,
+    new ListMarketplaces(registry),
     new SeededResolveMarketplace(catalogs)
   );
   return { useCase, pick, installer, registry };
@@ -179,7 +180,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     const useCase = new SetupPluginsPromptUseCase(
       new RecordingPluginPick([]),
       installer,
-      registry,
+      new ListMarketplaces(registry),
       new SeededResolveMarketplace(new Map([["local", [entry("aidd-dev", true)]]]))
     );
 
@@ -277,7 +278,7 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
     const useCase = new SetupPluginsPromptUseCase(
       new RecordingPluginPick([]),
       new RecordingInstaller(),
-      registry,
+      new ListMarketplaces(registry),
       resolve
     );
 

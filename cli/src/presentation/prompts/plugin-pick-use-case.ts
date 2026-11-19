@@ -1,10 +1,10 @@
+import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
 import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
 import type {
   PluginCatalog,
   PluginCatalogEntry,
 } from "../../contexts/distribution/contract/catalog.js";
-import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
+import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
 import {
   InteractiveOnlyError,
@@ -21,7 +21,7 @@ export interface PluginPickOptions {
 }
 
 export interface PluginPickResult {
-  marketplace: Marketplace;
+  marketplace: MarketplaceView;
   installed: readonly string[];
 }
 
@@ -32,7 +32,7 @@ export interface PluginPick {
 
 export class PluginPickUseCase implements PluginPick {
   constructor(
-    private readonly registry: MarketplaceRegistry,
+    private readonly listMarketplaces: Pick<ListMarketplaces, "execute">,
     private readonly resolveMarketplace: ResolveMarketplace,
     private readonly pluginAddUseCase: PluginAdd,
     private readonly prompter: Prompter
@@ -40,7 +40,9 @@ export class PluginPickUseCase implements PluginPick {
 
   async execute(options: PluginPickOptions): Promise<PluginPickResult> {
     if (!options.interactive) throw new InteractiveOnlyError("plugin install");
-    const marketplaces = await this.registry.list(options.projectRoot);
+    const { marketplaces } = await this.listMarketplaces.execute({
+      projectRoot: options.projectRoot,
+    });
     if (marketplaces.length === 0) throw new NoMarketplacesRegisteredError();
     const marketplace = await this.chooseMarketplace(marketplaces);
     const catalog = await this.loadCatalog(marketplace, options.projectRoot);
@@ -48,7 +50,9 @@ export class PluginPickUseCase implements PluginPick {
     return this.installSelected(marketplace, selected, options);
   }
 
-  private async chooseMarketplace(marketplaces: readonly Marketplace[]): Promise<Marketplace> {
+  private async chooseMarketplace(
+    marketplaces: readonly MarketplaceView[]
+  ): Promise<MarketplaceView> {
     const head = marketplaces[0];
     if (marketplaces.length === 1 && head !== undefined) return head;
     return this.prompter.select(
@@ -57,7 +61,10 @@ export class PluginPickUseCase implements PluginPick {
     );
   }
 
-  private async loadCatalog(marketplace: Marketplace, projectRoot: string): Promise<PluginCatalog> {
+  private async loadCatalog(
+    marketplace: MarketplaceView,
+    projectRoot: string
+  ): Promise<PluginCatalog> {
     const { catalog, localPath } = await this.resolveMarketplace.execute({
       marketplace,
       projectRoot,
@@ -83,7 +90,7 @@ export class PluginPickUseCase implements PluginPick {
   }
 
   private async installSelected(
-    marketplace: Marketplace,
+    marketplace: MarketplaceView,
     entries: readonly PluginCatalogEntry[],
     options: PluginPickOptions
   ): Promise<PluginPickResult> {

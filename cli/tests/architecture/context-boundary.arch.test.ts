@@ -12,7 +12,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // adapters are wired from `composition/` alone, so they stay internal.
   distribution: [
     // what a marketplace is, and where it can be read from
-    "src/contexts/distribution/domain/marketplace.ts",
+    "src/contexts/distribution/contract/marketplace-view.ts",
     "src/contexts/distribution/contract/marketplace.ts",
     "src/contexts/distribution/contract/catalog.ts",
     "src/contexts/distribution/contract/requested-version-policy.ts",

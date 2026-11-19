@@ -1,6 +1,6 @@
 import type { RefreshEntryResult } from "../../contexts/distribution/application/refresh-marketplace.js";
 import type { PluginCatalog } from "../../contexts/distribution/contract/catalog.js";
-import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
+import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import { describePluginSource } from "../../shared/domain/source.js";
 import type { CLIOutput } from "../output.js";
 
@@ -34,7 +34,7 @@ export function printCatalogEntries(
 
 export function printRegisteredMarketplaces(
   output: CLIOutput,
-  marketplaces: readonly Marketplace[],
+  marketplaces: readonly MarketplaceView[],
   catalogs: ReadonlyMap<string, PluginCatalog> | undefined
 ): void {
   if (marketplaces.length === 0) output.info("No marketplaces registered.");

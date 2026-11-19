@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
@@ -59,7 +60,7 @@ async function buildUseCaseWithConflict() {
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
     { execute: vi.fn() },
     makeNoOpPluginInstallFromMarketplace(),
-    new InMemoryMarketplaceRegistry(),
+    new ListMarketplaces(new InMemoryMarketplaceRegistry()),
     { execute: vi.fn() }
   );
 
