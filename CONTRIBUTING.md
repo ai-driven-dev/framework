@@ -78,7 +78,34 @@ Fork the repository, or branch from it if you have write access.
 | 6 | **Test in two tools.** Claude Code and one other, for example Codex. |
 | 7 | **Commit as `<type>(<scope>): description`.** One scope per commit: [convention](aidd_docs/memory/vcs.md#commits). |
 
+
 ## 4. Open a pull request
+
+If you do not have push access to `ai-driven-dev/framework`, fork the repository to your GitHub account first. Then clone your fork and connect the original repository as `upstream`:
+
+```bash
+git clone https://github.com/YOUR-USERNAME/framework.git
+cd framework
+git remote add upstream https://github.com/ai-driven-dev/framework.git
+git fetch upstream
+git switch -c docs/short-description upstream/next
+```
+
+Make your changes, then commit and push your branch to your fork:
+
+Stage only the files you changed. Repeat the `git add` command for each file you want to include.
+
+```bash
+git add path/to/changed-file
+git commit -m "docs(framework): describe your change"
+git push -u origin docs/short-description
+```
+
+Open the pull request against `next` of the original repository:
+
+```bash
+gh pr create --repo ai-driven-dev/framework --base next --head YOUR-USERNAME:docs/short-description
+```
 
 | Do | Where |
 | --- | --- |
