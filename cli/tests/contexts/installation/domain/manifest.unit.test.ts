@@ -142,6 +142,26 @@ describe("Manifest", () => {
     });
   });
 
+  describe("ownerOf()", () => {
+    const mergeFiles: MergeFileEntry[] = [
+      {
+        relativePath: ".mcp.json",
+        sectionKey: "mcpServers",
+        entries: { playwright: makeHash("aabb11"), github: makeHash("ccdd22") },
+      },
+    ];
+
+    it("answers from the entries it holds, naming the keys of a merge file", () => {
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles, mergeFiles);
+
+      expect(manifest.ownerOf(".mcp.json")).toStrictEqual({
+        owner: "co-owned",
+        keys: ["playwright", "github"],
+      });
+    });
+  });
+
   describe("mergeFiles", () => {
     const mergeFiles: MergeFileEntry[] = [
       {

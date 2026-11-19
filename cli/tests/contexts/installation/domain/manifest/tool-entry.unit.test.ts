@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   createToolEntry,
-  isFileTrackedInEntry,
   parseToolEntry,
   removePluginFromEntry,
   serializeToolEntry,
@@ -71,14 +70,6 @@ describe("a tool's manifest entry", () => {
       const entry = makeEntry([makePlugin("installed")]);
 
       expect(() => updatePluginInEntry(entry, makePlugin("ghost"))).toThrow(PluginNotFoundError);
-    });
-  });
-
-  describe("tracking a file", () => {
-    it("does not count a path as tracked because some merge file exists", () => {
-      const entry = makeEntry([]);
-
-      expect(isFileTrackedInEntry(entry, ".claude/settings.json")).toBe(false);
     });
   });
 

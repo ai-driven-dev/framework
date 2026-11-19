@@ -4,10 +4,10 @@ import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
+import { type Ownership, ownerOf } from "./manifest/ownership.js";
 import {
   addPluginToEntry,
   createToolEntry,
-  isFileTrackedInEntry,
   removePluginFromEntry,
   type ToolEntry,
   updatePluginInEntry,
@@ -164,11 +164,12 @@ export class Manifest {
     this._tools.set(toolId, { ...entry, nativeRegistrations: registrations });
   }
 
+  ownerOf(relativePath: string): Ownership {
+    return ownerOf([...this._tools.values()], relativePath);
+  }
+
   isFileTracked(relativePath: string): boolean {
-    for (const entry of this._tools.values()) {
-      if (isFileTrackedInEntry(entry, relativePath)) return true;
-    }
-    return false;
+    return this.ownerOf(relativePath).owner !== "user";
   }
 
   getToolVersion(toolId: string): string | undefined {

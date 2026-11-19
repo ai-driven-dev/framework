@@ -81,12 +81,6 @@ export function updatePluginInEntry(entry: ToolEntry, plugin: InstalledPlugin): 
   };
 }
 
-export function isFileTrackedInEntry(entry: ToolEntry, relativePath: string): boolean {
-  if (entry.files.some((f) => f.relativePath === relativePath)) return true;
-  if (entry.mergeFiles.some((m) => m.relativePath === relativePath)) return true;
-  return entry.plugins.some((p) => p.isFileTracked(relativePath));
-}
-
 export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
   return {
     toolId: entry.toolId,
