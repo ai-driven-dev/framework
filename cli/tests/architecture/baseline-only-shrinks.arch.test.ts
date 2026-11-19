@@ -46,7 +46,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { CLI_ROOT, REPO_ROOT } from "./helpers.js";
-import { type ListSizes, listSizes } from "./list-sizes.js";
+import { type ListSizes, listSizes, listWeights } from "./list-sizes.js";
 
 /** Shrink-only lists whose name does not say so. Register a list here by name, never by content. */
 const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
@@ -85,6 +85,10 @@ function isToleratedList(name: string): boolean {
 const listsOf = (files: Readonly<Record<string, string>>) =>
   listSizes(files, isToleratedList, { requireReadonly: true });
 
+/** The numbers the lists of `files` record. */
+const weighed = (files: Readonly<Record<string, string>>) =>
+  listWeights(files, isToleratedList, { requireReadonly: false });
+
 /** The lists of a base revision. */
 const listsOfBase = (files: Readonly<Record<string, string>>) =>
   listSizes(files, isToleratedList, { requireReadonly: false });
@@ -122,6 +126,26 @@ function staleRenames(
       ? [`${from} -> ${to} is stale: remove it from RENAMED_LISTS`]
       : []
   );
+}
+
+/** The list an entry id belongs to: `<file>#<list>`, the entry key following. */
+const listOfEntry = (id: string): string => id.split("#").slice(0, 2).join("#");
+
+/** The entries whose recorded number rose since the base, a rename carrying the old list's. */
+function numberVerdicts(
+  head: ReadonlyMap<string, number>,
+  base: ReadonlyMap<string, number>,
+  renamed: Renames = RENAMED_LISTS
+): string[] {
+  const predecessors = new Map(Object.entries(renamed).map(([from, to]) => [to, from]));
+  return [...head.keys()].sort().flatMap((id) => {
+    const list = listOfEntry(id);
+    const before = base.get(`${predecessors.get(list) ?? list}${id.slice(list.length)}`);
+    const now = head.get(id) ?? 0;
+    return before !== undefined && now > before
+      ? [`${id} recorded ${before} at the base and records ${now}: a recorded count only goes down`]
+      : [];
+  });
 }
 
 /** What to say about each list that grew or vanished since the base, in the order of the ids. */
@@ -187,8 +211,8 @@ function git(root: string, args: string[]): string {
   });
 }
 
-/** The lists the architecture files hold at `revision` of the repository at `root`. */
-function listsAtRevision(root: string, revision: string): ListSizes {
+/** The architecture sources at `revision` of the repository at `root`, by path under `cli`. */
+function filesAtRevision(root: string, revision: string): Record<string, string> {
   const paths = git(root, [
     "ls-tree",
     "-r",
@@ -198,27 +222,30 @@ function listsAtRevision(root: string, revision: string): ListSizes {
   ])
     .split("\n")
     .filter((path) => path.endsWith(".ts"));
-  return listsOfBase(
-    Object.fromEntries(
-      paths.map((path) => [
-        path.replace(`${CLI_DIRECTORY}/`, ""),
-        git(root, ["show", `${revision}:${path}`]),
-      ])
-    )
+  return Object.fromEntries(
+    paths.map((path) => [
+      path.replace(`${CLI_DIRECTORY}/`, ""),
+      git(root, ["show", `${revision}:${path}`]),
+    ])
+  );
+}
+
+/** The lists the architecture files hold at `revision` of the repository at `root`. */
+const listsAtRevision = (root: string, revision: string): ListSizes =>
+  listsOfBase(filesAtRevision(root, revision));
+
+/** The architecture sources in the working tree of the `cli` directory at `cliRoot`. */
+function filesOnDisk(cliRoot: string): Record<string, string> {
+  return Object.fromEntries(
+    readdirSync(join(cliRoot, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
+      .map((name) => `${ARCHITECTURE_DIRECTORY}/${name.replaceAll("\\", "/")}`)
+      .filter((path) => path.endsWith(".ts"))
+      .map((path) => [path, readFileSync(join(cliRoot, path), "utf8")])
   );
 }
 
 /** The lists the architecture files hold in the working tree of the `cli` directory at `cliRoot`. */
-function listsOnDisk(cliRoot: string): ListSizes {
-  return listsOf(
-    Object.fromEntries(
-      readdirSync(join(cliRoot, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
-        .map((name) => `${ARCHITECTURE_DIRECTORY}/${name.replaceAll("\\", "/")}`)
-        .filter((path) => path.endsWith(".ts"))
-        .map((path) => [path, readFileSync(join(cliRoot, path), "utf8")])
-    )
-  );
-}
+const listsOnDisk = (cliRoot: string): ListSizes => listsOf(filesOnDisk(cliRoot));
 
 function mergeBase(root: string, ref: string): string | null {
   try {
@@ -261,6 +288,18 @@ describe("tolerated lists only shrink", () => {
       ref
     );
     expect(problems).toEqual([]);
+  });
+
+  it("records no number that rose since the merge-base", () => {
+    const base = mergeBase(REPO_ROOT, baseRef());
+    if (base === null) throw new Error(`no merge-base with ${baseRef()}`);
+
+    expect(
+      numberVerdicts(
+        sized(weighed(filesOnDisk(CLI_ROOT))),
+        sized(weighed(filesAtRevision(REPO_ROOT, base)))
+      )
+    ).toEqual([]);
   });
 });
 
@@ -337,6 +376,64 @@ describe("the guard itself", () => {
       expect(compareWithBase(head, null, "origin/next")).toEqual([
         "no merge-base with origin/next: run `git fetch origin` or name another ref in ARCH_BASE_REF",
       ]);
+    });
+  });
+
+  describe("the numbers a list records", () => {
+    const weights = (body: string) => sized(weighed({ "a.ts": body }));
+    const LIST = "a.ts#A_BASELINE";
+
+    it("reads one number per entry, by its record key or its path, file or edge field", () => {
+      expect(
+        Object.fromEntries(
+          weights("const A_BASELINE: Readonly<Record<string, number>> = { x: 996, 'y.ts': 4 };")
+        )
+      ).toEqual({ [`${LIST}#x`]: 996, [`${LIST}#y.ts`]: 4 });
+      expect(
+        Object.fromEntries(
+          weights(
+            "const A_BASELINE: readonly unknown[] = [{ path: 'p', n: 2, m: 1 }, { file: 'f', n: 3 }, { edge: 'e', n: 4 }, { path: 'none' }];"
+          )
+        )
+      ).toEqual({ [`${LIST}#p`]: 3, [`${LIST}#f`]: 3, [`${LIST}#e`]: 4 });
+      expect(weights("const A_BASELINE: readonly string[] = ['a'];").size).toBe(0);
+    });
+
+    it("leaves a list unreadable when a numbered entry has no key", () => {
+      expect(
+        unsized(weighed({ "a.ts": "const A_BASELINE: readonly unknown[] = [{ n: 2 }];" }))
+      ).toEqual([LIST]);
+    });
+
+    const before = new Map([
+      [`${LIST}#a`, 850],
+      [`${LIST}#b`, 820],
+    ]);
+
+    it("fails an entry whose number rose while another fell, so a swap is not absorbed", () => {
+      const swapped = new Map([
+        [`${LIST}#a`, 900],
+        [`${LIST}#b`, 770],
+      ]);
+
+      expect(numberVerdicts(swapped, before, {})).toEqual([
+        `${LIST}#a recorded 850 at the base and records 900: a recorded count only goes down`,
+      ]);
+    });
+
+    it("keeps a fall, a left entry, a new entry and a list the base lacks quiet", () => {
+      expect(numberVerdicts(new Map([[`${LIST}#a`, 800]]), before, {})).toEqual([]);
+      expect(numberVerdicts(new Map([["b.ts#B_BASELINE#x", 9]]), before, {})).toEqual([]);
+      expect(numberVerdicts(new Map([[`${LIST}#c`, 1]]), before, {})).toEqual([]);
+    });
+
+    it("carries a renamed list's entries to its new name", () => {
+      const renamed = { [LIST]: "a.ts#NEW_BASELINE" };
+
+      expect(numberVerdicts(new Map([["a.ts#NEW_BASELINE#a", 851]]), before, renamed)).toHaveLength(
+        1
+      );
+      expect(numberVerdicts(new Map([["a.ts#NEW_BASELINE#a", 850]]), before, renamed)).toEqual([]);
     });
   });
 

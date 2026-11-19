@@ -18,6 +18,12 @@
  * value, nor a call that changes a nested collection.
  *
  * Not read: a name bound by a destructuring, and a class static property.
+ *
+ * `listWeights` reads the numbers a list records (a line count, a dependency count), one per
+ * entry that holds a numeric literal, summed inside the entry. The key of an entry is its record
+ * property name, or the string of its `path`, `file` or `edge` field. A numbered entry with no key
+ * leaves the list unreadable, `null`. Limit: a moved file reads as a new key, so a new key is not
+ * checked; swapping one fixed entry for a new one at equal count is left to review.
  */
 import {
   type ArrayLiteralExpression,
@@ -132,13 +138,79 @@ function isConstDeclaration(declaration: Node): boolean {
   return !!list && isVariableDeclarationList(list) && (list.flags & NodeFlags.Const) !== 0;
 }
 
-/** Every list `isTolerated` accepts in `source`, sized or `null`, by id. */
+/** Writes what the list `id` measures into `out`; `initializer` is absent where it is not held. */
+type Measure = (
+  out: ListSizes,
+  id: string,
+  initializer: Expression | undefined,
+  scope: FileScope
+) => void;
+
+const sizeMeasure: Measure = (out, id, initializer, scope) =>
+  out.set(id, initializer ? sizeOf(initializer, scope) : null);
+
+const ENTRY_KEY_FIELDS = new Set(["path", "file", "edge"]);
+
+function propertyKey(name: Node): string | null {
+  return isIdentifier(name) || isStringLiteral(name) ? name.text : null;
+}
+
+function numbersIn(node: Node): number {
+  let total = 0;
+  walk(node, (inner) => {
+    if (isNumericLiteral(inner)) total += Number(inner.text);
+  });
+  return total;
+}
+
+/** The key of an array entry: the string its `path`, `file` or `edge` field holds. */
+function entryKeyOf(element: Expression): string | null {
+  if (!isObjectLiteralExpression(element)) return null;
+  for (const property of element.properties) {
+    if (!isPropertyAssignment(property)) continue;
+    const key = propertyKey(property.name);
+    if (key !== null && ENTRY_KEY_FIELDS.has(key) && isStringLiteral(property.initializer)) {
+      return property.initializer.text;
+    }
+  }
+  return null;
+}
+
+/** An entry that records a number, by its key, or `null` when the number has no key to hold. */
+function numberedEntries(initializer: Expression): [string, number][] | null {
+  const entries: [string, number][] = [];
+  const elements: readonly Node[] = isArrayLiteralExpression(initializer)
+    ? initializer.elements
+    : isObjectLiteralExpression(initializer)
+      ? initializer.properties
+      : [];
+  for (const element of elements) {
+    const weight = numbersIn(element);
+    if (weight === 0) continue;
+    const key = isPropertyAssignment(element)
+      ? propertyKey(element.name)
+      : entryKeyOf(element as Expression);
+    if (key === null) return null;
+    entries.push([key, weight]);
+  }
+  return entries;
+}
+
+const weightMeasure: Measure = (out, id, initializer, scope) => {
+  const entries =
+    initializer && sizeOf(initializer, scope) !== null ? numberedEntries(initializer) : null;
+  if (entries === null) out.set(id, null);
+  else for (const [key, weight] of entries) out.set(`${id}#${key}`, weight);
+};
+
+/** Every list `isTolerated` accepts in `source`, measured or `null`, by id. */
 function readFile(
   file: string,
   source: SourceFile,
   isTolerated: (name: string) => boolean,
   sizes: ListSizes,
-  options: ListSizeOptions
+  options: ListSizeOptions,
+  measure: Measure
 ): void {
   const scope: FileScope = { stringNames: namesBoundToStrings(source) };
   walk(source, (node) => {
@@ -147,7 +219,7 @@ function readFile(
         const id = `${file}#${node.name.text}`;
         const held =
           !options.requireReadonly || (isConstDeclaration(node) && isReadonlyType(node.type));
-        sizes.set(id, !sizes.has(id) && held ? sizeOf(node.initializer, scope) : null);
+        measure(sizes, id, !sizes.has(id) && held ? node.initializer : undefined, scope);
       }
     }
   });
@@ -162,6 +234,27 @@ export function listSizes(
   isTolerated: (name: string) => boolean,
   options: ListSizeOptions
 ): ListSizes {
+  return measureLists(files, isTolerated, options, sizeMeasure);
+}
+
+/**
+ * The number each entry of a list records, by `<list id>#<entry key>`. A list that cannot be sized,
+ * or whose numbered entry has no key, is `null` under its own id.
+ */
+export function listWeights(
+  files: Readonly<Record<string, string>>,
+  isTolerated: (name: string) => boolean,
+  options: ListSizeOptions
+): ListSizes {
+  return measureLists(files, isTolerated, options, weightMeasure);
+}
+
+function measureLists(
+  files: Readonly<Record<string, string>>,
+  isTolerated: (name: string) => boolean,
+  options: ListSizeOptions,
+  measure: Measure
+): ListSizes {
   const sizes: ListSizes = new Map();
   withVirtualProject(
     "list-sizes",
@@ -171,7 +264,7 @@ export function listSizes(
       for (const path of Object.keys(files)) {
         const source = project.program.getSourceFile(at(path));
         if (!source) throw new Error(`the compiler returned no source for ${path}`);
-        readFile(path, source, isTolerated, sizes, options);
+        readFile(path, source, isTolerated, sizes, options, measure);
       }
     }
   );
