@@ -65,6 +65,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // (+14.2 KB on next alone); expected to shrink in the final size pass; 2.0% measured headroom.
 // 805 KB: 803.5 KB, host withdrawal and plugin add split into one command per use case; expected to shrink
 // in the final size pass; 0.2% measured headroom.
+// 805 KB: 804.4 KB, the translate sinks split, the presentation and composition moves, the trust
+// split, the installation commands, the withdrawal steps and the claims built by orchestration; expected to shrink in the final size
+// pass; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
