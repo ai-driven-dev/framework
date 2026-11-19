@@ -8,7 +8,7 @@ import {
   printToolDrift,
   printUserScopeTools,
 } from "../../../src/presentation/display/doctor-display.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("printPluginIssues", () => {

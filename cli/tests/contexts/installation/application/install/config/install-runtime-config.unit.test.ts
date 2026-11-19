@@ -10,8 +10,8 @@ import {
   initProject,
   installTool,
 } from "../../../../../helpers/ports/build-unit-deps.js";
-import { StubAssetProvider } from "../../../../../helpers/ports/stub-asset-provider.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.js";
 
 const PROJECT_ROOT = "/test-project";
 

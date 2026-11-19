@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bestEffortNativeCall } from "../../../../src/contexts/host-registration/application/best-effort-native-call.js";
 import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 
 describe("bestEffortNativeCall", () => {
   it("warns and reports a call the host's own CLI refused", () => {

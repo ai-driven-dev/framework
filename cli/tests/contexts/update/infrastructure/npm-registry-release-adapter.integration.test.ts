@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
 import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
 import type { HttpGet, HttpGetOptions } from "../../../../src/shared/ports/http-get.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 
 const NPM_URL = "https://registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags";
 // release-please tags this package `cli-v<semver>`, never a bare `v<semver>`.

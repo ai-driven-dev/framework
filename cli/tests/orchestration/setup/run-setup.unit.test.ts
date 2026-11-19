@@ -30,15 +30,15 @@ import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
+import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {

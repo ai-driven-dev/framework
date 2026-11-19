@@ -19,17 +19,17 @@ import {
   initProject,
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
-import { CheckboxRecordingPrompter } from "../../helpers/ports/checkbox-recording-prompter.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
   translateDistribution,
 } from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
-import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
+import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { OverwritePrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

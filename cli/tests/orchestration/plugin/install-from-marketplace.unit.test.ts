@@ -17,15 +17,15 @@ import {
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { ChoosingPrompter } from "../../helpers/ports/choosing-prompter.js";
 import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
-import type { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
+import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.js";
+import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(

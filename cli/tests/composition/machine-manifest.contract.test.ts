@@ -12,7 +12,7 @@ import { ToolNotInManifestError } from "../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../src/shared/domain/tool.js";
 import { InMemoryMachineManifest } from "../contexts/machine-claims/testing/in-memory-machine-manifest.js";
 import { MachinePlugin } from "../contexts/machine-claims/testing/machine-plugin.js";
-import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
 import { InMemoryRepository } from "../shared/testing/in-memory-repository.js";
 import { TOOL } from "../shared/testing/registered-tools.js";
 

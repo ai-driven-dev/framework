@@ -14,17 +14,17 @@ import {
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
-import {
-  KeepPrompter,
-  OverwritePrompter,
-  ScriptedPrompter,
-} from "../../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import {
   registeredTools,
   resolveRegisteredToolId,
   TOOL,
 } from "../../../../shared/testing/registered-tools.js";
+import {
+  KeepPrompter,
+  OverwritePrompter,
+  ScriptedPrompter,
+} from "../../../../shared/testing/scripted-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

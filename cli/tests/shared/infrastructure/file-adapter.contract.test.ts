@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
 import { describeFileContract, type FileSubject } from "../../helpers/ports/file-port-contract.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.js";
 
 const inMemorySubject = (rejectMissingRealpath: boolean) => async (): Promise<FileSubject> => {
   const files = new InMemoryFileAdapter({});

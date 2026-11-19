@@ -14,10 +14,10 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 

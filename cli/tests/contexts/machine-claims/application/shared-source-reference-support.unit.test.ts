@@ -7,8 +7,8 @@ import {
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
 } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
+import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
 
 const BASE = {
   ref: "aidd-dev@aidd-framework",

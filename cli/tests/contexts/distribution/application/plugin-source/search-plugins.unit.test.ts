@@ -6,8 +6,8 @@ import { ResolveMarketplace } from "../../../../../src/contexts/distribution/app
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 
 const PROJECT_ROOT = "/test-project";
 const MKT1_PATH = "/mkt1";

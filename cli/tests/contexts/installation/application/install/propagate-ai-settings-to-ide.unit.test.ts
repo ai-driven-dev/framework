@@ -11,8 +11,8 @@ import {
   initAndInstall,
   initProject,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";

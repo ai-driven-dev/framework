@@ -11,8 +11,8 @@ import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.j
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MainSessionLocator } from "../../../../../src/contexts/installation/application/agents/main-session-locator.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const HOME = "/home/me";

@@ -9,7 +9,7 @@ import {
   printRefreshResults,
   printRegisteredMarketplaces,
 } from "../../../src/presentation/display/marketplace-display.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 function marketplace(name: string, version?: string): Marketplace {

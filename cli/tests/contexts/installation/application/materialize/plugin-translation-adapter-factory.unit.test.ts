@@ -3,7 +3,7 @@ import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { resolveTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 function buildDeps(homedir = "/stub-home") {

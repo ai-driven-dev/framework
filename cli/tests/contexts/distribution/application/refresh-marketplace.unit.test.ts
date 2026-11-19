@@ -8,10 +8,10 @@ import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/contexts/distribution/
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../../src/shared/domain/source.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceCache } from "../../../helpers/ports/in-memory-marketplace-cache.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const VERSIONED_FIXTURE = join(process.cwd(), "tests/fixtures/framework-real");

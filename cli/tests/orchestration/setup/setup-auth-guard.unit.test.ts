@@ -20,12 +20,12 @@ import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/set
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
-import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
 import { flowTools } from "../../shared/testing/registered-tools.js";
+import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {

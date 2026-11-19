@@ -5,9 +5,9 @@ import { UpdateGitignore } from "../../../../../src/contexts/installation/applic
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
 

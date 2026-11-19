@@ -30,7 +30,7 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 
 function makeAdapter(): PluginFetcherAdapter {
   const fs = new InMemoryFileAdapter({});

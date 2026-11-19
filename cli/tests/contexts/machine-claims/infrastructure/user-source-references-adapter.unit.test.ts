@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/errors.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const REFERENCES_PATH = join(USER_CONFIG_DIR, "references.json");

@@ -7,8 +7,8 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const ROOT = "/test-project";

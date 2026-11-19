@@ -9,10 +9,10 @@ import {
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { pluginRemover, userPluginRemover } from "../../../../helpers/plugin-remover.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 

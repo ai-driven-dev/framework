@@ -44,7 +44,7 @@ import type { TokenProvider } from "../../../../src/contexts/auth/contract/token
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 
 const CACHE = "/tmp/cache";
 

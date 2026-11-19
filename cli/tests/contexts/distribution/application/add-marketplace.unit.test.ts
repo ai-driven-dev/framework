@@ -16,11 +16,11 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryMarketplaceTrustStore } from "../../../helpers/ports/in-memory-marketplace-trust-store.js";
-import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { KeepPrompter } from "../../../shared/testing/scripted-prompter.js";
 
 const MARKETPLACE_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";

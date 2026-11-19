@@ -13,12 +13,12 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
 import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.js";
 
 const ALIAS = "project-alias";

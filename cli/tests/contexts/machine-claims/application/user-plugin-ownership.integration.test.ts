@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { detachUserPlugin } from "../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import {
   InMemoryMachineManifest,

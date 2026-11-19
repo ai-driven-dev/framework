@@ -5,8 +5,8 @@ import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
 import { buildUnitDeps, initProject } from "../../../../../helpers/ports/build-unit-deps.js";
-import { StubAssetProvider } from "../../../../../helpers/ports/stub-asset-provider.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";

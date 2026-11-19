@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { aCachedTokenProvider } from "../testing/auth-builders.js";
 import { anExternalRecord, aStoredRecord } from "../testing/credential-records.js";
 import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.js";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ResolveRestoreDecision } from "../../../../../src/contexts/installation/application/restore/resolve-restore-decision.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
-import { ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
+import { ScriptedPrompter } from "../../../../shared/testing/scripted-prompter.js";
 
 const PATH = "a.md";
 

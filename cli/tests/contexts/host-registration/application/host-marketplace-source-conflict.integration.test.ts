@@ -4,8 +4,8 @@ import {
   isDriftFound,
 } from "../../../../src/contexts/host-registration/application/host-marketplace-source-conflict.js";
 import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
-import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 

@@ -10,7 +10,7 @@ import type {
   MainSessionSettings,
 } from "../../../../../src/contexts/installation/ports/main-session-settings.js";
 import type { AgentModelAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 
 const A = "/home/me/a.json";
 const B = "/home/me/b.json";

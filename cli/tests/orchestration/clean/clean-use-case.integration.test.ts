@@ -6,9 +6,9 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { projectCleaner } from "../../helpers/project-cleaner.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 let projectRoot: string;

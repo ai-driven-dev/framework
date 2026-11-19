@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { writeSkillTree } from "../../../../../src/contexts/translate/application/sink/write-skill-tree.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
+import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";
 import { CLAUDE_ROOT_TOKEN } from "../../testing/plugin-content-translator-kit.js";
 
 const PLUGIN = "aidd-test";

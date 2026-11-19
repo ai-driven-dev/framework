@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { JsonParseError } from "../../../src/shared/domain/errors.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.js";
 
 const root = join("/", "merge");
 

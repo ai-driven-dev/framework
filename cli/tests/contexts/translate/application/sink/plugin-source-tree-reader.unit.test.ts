@@ -4,8 +4,8 @@ import {
   listAgentFiles,
   listSkillNames,
 } from "../../../../../src/contexts/translate/application/sink/plugin-source-tree-reader.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
+import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";
 
 const PLUGIN_SRC = "/src/plugins/aidd-test";
 

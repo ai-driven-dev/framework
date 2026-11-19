@@ -5,10 +5,10 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribu
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 import { FakeUserSourceReferences } from "../../testing/fake-user-source-references.js";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ReleaseClaims } from "../../../../src/contexts/machine-claims/application/release-claims.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { RecordingSourceReferences } from "./recording-source-references.js";
 
 function claims(references?: RecordingSourceReferences) {

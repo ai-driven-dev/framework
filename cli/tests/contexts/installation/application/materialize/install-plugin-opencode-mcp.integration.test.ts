@@ -4,7 +4,7 @@ import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";

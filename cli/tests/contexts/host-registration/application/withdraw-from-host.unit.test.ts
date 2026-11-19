@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { UserRegistrationWithdrawal } from "../../../../src/contexts/host-registration/application/withdraw-from-host.js";
 import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { printTranslateResult } from "../../../src/presentation/display/translate-display.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 
 describe("printTranslateResult", () => {
   it("says what was built and where, for a marketplace layout", () => {

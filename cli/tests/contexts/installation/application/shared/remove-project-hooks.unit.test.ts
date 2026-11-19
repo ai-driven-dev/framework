@@ -10,8 +10,8 @@ import { FileHash } from "../../../../../src/shared/domain/file.js";
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+} from "../../../../shared/testing/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const { cursor } = TOOL;

@@ -14,11 +14,11 @@ import {
   FrameworkPlaceholderInPluginError,
 } from "../../../../../src/shared/domain/errors.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-edges-out");

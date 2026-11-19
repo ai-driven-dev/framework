@@ -9,7 +9,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 });
 
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { CapturingLogger } from "../testing/capturing-logger.js";
 
 // What the file port contract cannot observe stays here: the rename step, the stop at a
 // directory the filesystem refuses to remove, and what the adapter tells its logger.

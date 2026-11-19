@@ -4,8 +4,8 @@ import {
   marketplaceCatalogProbePath,
   readMarketplaceCatalogIdentity,
 } from "../../../../src/contexts/host-registration/application/read-marketplace-catalog-identity.js";
-import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const DIR = "/marketplace";

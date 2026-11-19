@@ -14,11 +14,11 @@ import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/project";

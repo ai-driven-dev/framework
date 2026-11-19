@@ -10,7 +10,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 

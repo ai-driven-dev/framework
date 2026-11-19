@@ -4,8 +4,8 @@ import { assertProjectPathWithinRoot } from "../../../../../src/contexts/install
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+} from "../../../../shared/testing/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 
 const ROOT = resolve("/project");
 

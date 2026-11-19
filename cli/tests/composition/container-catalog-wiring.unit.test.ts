@@ -6,8 +6,8 @@ import { wireMarketplace } from "../../src/composition/orchestration/marketplace
 import { wirePlugin } from "../../src/composition/orchestration/plugin.js";
 import { wireSetup } from "../../src/composition/orchestration/setup.js";
 import { wireBase } from "../../src/composition/shared.js";
-import { ScriptedPrompter } from "../helpers/ports/scripted-prompter.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
+import { ScriptedPrompter } from "../shared/testing/scripted-prompter.js";
 
 /** Building the graph reads nothing: the root names a project that is never opened. */
 const ROOT = "/aidd-catalog-wiring-unopened";

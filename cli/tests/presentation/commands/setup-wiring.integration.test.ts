@@ -10,8 +10,8 @@ import { InitProject } from "../../../src/contexts/installation/application/init
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const resolveSourceIfNeeded = vi.fn();

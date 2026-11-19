@@ -6,12 +6,12 @@ import { ResolveMarketplace } from "../../../../src/contexts/distribution/applic
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../../src/shared/domain/source.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceCache } from "../../../helpers/ports/in-memory-marketplace-cache.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";

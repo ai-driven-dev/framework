@@ -12,13 +12,13 @@ import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 

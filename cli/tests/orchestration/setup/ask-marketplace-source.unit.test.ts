@@ -9,7 +9,7 @@ import type { ReleaseLister } from "../../../src/contexts/distribution/ports/rel
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InputRequiredError } from "../../../src/shared/domain/errors.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
-import { ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeResolver(rootReleases: string[]): ReleaseLister & RepositoryVisibility {
   return {

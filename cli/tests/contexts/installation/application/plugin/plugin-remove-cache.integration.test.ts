@@ -9,10 +9,10 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 

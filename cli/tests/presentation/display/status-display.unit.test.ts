@@ -4,7 +4,7 @@ import {
   printPluginDrift,
   printScopeReport,
 } from "../../../src/presentation/display/status-display.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("printScopeReport", () => {

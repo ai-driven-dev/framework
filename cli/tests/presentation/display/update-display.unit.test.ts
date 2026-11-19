@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { printSelfUpdateResult } from "../../../src/presentation/display/update-display.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 
 describe("printSelfUpdateResult", () => {
   it("names the version already installed when nothing newer exists", () => {

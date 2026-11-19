@@ -18,9 +18,9 @@ import type { FileReader } from "../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../src/shared/ports/file-writer.js";
 import type { Lock } from "../../src/shared/ports/lock.js";
 import type { Logger } from "../../src/shared/ports/logger.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
 import { registeredTools } from "../shared/testing/registered-tools.js";
-import { CapturingLogger } from "./ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "./ports/in-memory-file-adapter.js";
 
 type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
 

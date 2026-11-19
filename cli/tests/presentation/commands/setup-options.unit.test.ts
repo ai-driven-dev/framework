@@ -8,7 +8,7 @@ import {
 } from "../../../src/presentation/commands/setup.js";
 import { ErrorHandler } from "../../../src/presentation/error-handler.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 
 function refuseByThrowing() {
   return vi.spyOn(process, "exit").mockImplementation(() => {

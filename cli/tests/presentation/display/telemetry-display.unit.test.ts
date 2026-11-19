@@ -8,7 +8,7 @@ import {
   printIngestResult,
   printTelemetryStatus,
 } from "../../../src/presentation/display/telemetry-display.js";
-import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 
 function shown(result: Parameters<typeof printIdentityResult>[1]): CapturingOutput {
   const output = new CapturingOutput(false);

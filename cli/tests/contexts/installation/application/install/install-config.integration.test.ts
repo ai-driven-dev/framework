@@ -5,9 +5,9 @@ import { FrameworkDescriptor } from "../../../../../src/contexts/installation/do
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { linuxPlatform, win32Platform } from "../../../../helpers/install-harness.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.js";
 
 const PROJECT_ROOT = "/test-project";
 

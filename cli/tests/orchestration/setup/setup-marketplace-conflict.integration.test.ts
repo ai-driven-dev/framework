@@ -15,13 +15,13 @@ import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
+import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";

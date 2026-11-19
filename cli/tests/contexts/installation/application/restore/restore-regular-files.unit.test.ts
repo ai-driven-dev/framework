@@ -8,7 +8,7 @@ import {
   KeepPrompter,
   OverwritePrompter,
   ScriptedPrompter,
-} from "../../../../helpers/ports/scripted-prompter.js";
+} from "../../../../shared/testing/scripted-prompter.js";
 
 const PROJECT_ROOT = "/test-project";
 

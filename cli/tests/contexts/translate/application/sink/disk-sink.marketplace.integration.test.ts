@@ -14,8 +14,8 @@ import {
   MarketplaceOutDirNotEmptyError,
 } from "../../../../../src/shared/domain/errors.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 
 const PLUGIN = "aidd-test";
 // resolve(): on Windows a leading "/" is drive-relative. Posix after: the adapter keys writes so.
