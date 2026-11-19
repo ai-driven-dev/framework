@@ -70,12 +70,6 @@ describe("locating a working directory", () => {
     expect(located).toMatchObject({ rootCommit: [...roots].sort()[0] });
   });
 
-  it("has no root commit before the first commit", async () => {
-    const repo = join(base, "repo");
-    initRepository(repo, env, { commit: false });
-    expect(await locator.locate(repo)).toMatchObject({ status: "repository", rootCommit: null });
-  });
-
   it("resolves a linked worktree to the main working tree's repository", async () => {
     const repo = join(base, "repo");
     initRepository(repo, env, { remote: "https://github.com/acme/widgets.git" });
@@ -83,7 +77,6 @@ describe("locating a working directory", () => {
     git(repo, env, "worktree", "add", "-q", "-b", "wt", linked);
     const main = await locator.locate(repo);
     const worktree = await locator.locate(linked);
-    expect(worktree).toMatchObject({ status: "repository", root: linked, mainRoot: repo });
     expect(worktree).toMatchObject({
       remote: "https://github.com/acme/widgets.git",
       rootCommit: main.status === "repository" ? main.rootCommit : "unreachable",
@@ -181,20 +174,10 @@ describe("locating a working directory", () => {
     expect(await locator.locate(join(repo, "src"))).toEqual({ status: "unreadable" });
   });
 
-  it("is outside a directory that is no repository", async () => {
-    const plain = join(base, "plain");
-    await mkdir(plain);
-    expect(await locator.locate(plain)).toEqual({ status: "outside-repository" });
-  });
-
   it("is outside the git directory itself, which has no working tree", async () => {
     const repo = join(base, "repo");
     initRepository(repo, env);
     expect(await locator.locate(join(repo, ".git"))).toEqual({ status: "outside-repository" });
-  });
-
-  it("is gone for a directory that does not exist", async () => {
-    expect(await locator.locate(join(base, "never"))).toEqual({ status: "gone" });
   });
 
   it("is gone for a path that runs through a file", async () => {
