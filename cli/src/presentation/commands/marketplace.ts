@@ -1,6 +1,6 @@
 import type { Command } from "commander";
-import { parseInstallScope } from "../../contexts/installation/domain/install-scope.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import { parseScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
@@ -139,7 +139,7 @@ export function registerMarketplaceCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
+        const scope = parseScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await (scope === "user"
           ? deps.userMarketplaceRemoveUseCase

@@ -5,20 +5,20 @@ import {
 } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { isScope, type Scope } from "../../../../shared/domain/scope.js";
 import { isSemver } from "../../../../shared/domain/semver.js";
 import {
   type PluginSource,
   parsePluginSource,
   serializePluginSource,
 } from "../../../../shared/domain/source.js";
-import { type InstallScope, isInstallScope } from "../install-scope.js";
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 /** What a plugin's `files` keys are relative to: the project root, or the tool's user-scope plugins
  * directory. Recorded once, at install, and never re-derived from a tool's current profile, which
  * can disagree with what was true when the entry was written. */
-export type PluginScope = InstallScope;
+export type PluginScope = Scope;
 
 // Branding closes a hole the compiler could not see: three `ReadonlyMap<string, string>` fields
 // told apart only by name meant a value meant for one could be assigned to another. The brand is a
@@ -228,7 +228,7 @@ export class InstalledPlugin {
     if (!isSemver(data.version)) {
       throw new InvalidPluginVersionError(data.version);
     }
-    if (!isInstallScope(data.scope)) {
+    if (!isScope(data.scope)) {
       throw new MalformedPluginScopeError(data.name, data.scope);
     }
     const source = parsePluginSource(data.source);

@@ -1,7 +1,7 @@
 import type { Command } from "commander";
-import { parseInstallScope } from "../../contexts/installation/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
+import { parseScope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
@@ -72,7 +72,7 @@ export function registerPluginCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const toolIds = parseToolOption(cmdOptions.tool, catalog);
-        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
+        const scope = parseScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         const removal = { pluginName: name, toolIds, projectRoot };
         await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(
@@ -129,7 +129,7 @@ export function registerPluginCommand(
         const errorHandler = new ErrorHandler(output);
         try {
           const toolIds = parseToolOption(cmdOptions.tool, catalog);
-          const scope = parseInstallScope(cmdOptions.scope);
+          const scope = parseScope(cmdOptions.scope);
           const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
@@ -186,7 +186,7 @@ export function registerPluginCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const toolIds = parseToolOption(cmdOptions.tool, catalog);
-        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
+        const scope = parseScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         const updated = await (scope === "user"
           ? deps.userPluginUpdateUseCase
