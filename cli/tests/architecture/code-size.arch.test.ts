@@ -60,7 +60,7 @@ const MAX_BASELINE: Readonly<Record<string, number>> = {
   "function length": 27,
   "cognitive complexity": 27,
   "one class per file": 8,
-  "file length": 5,
+  "file length": 4,
   "function parameters": 115,
 };
 

@@ -4852,7 +4852,6 @@
         "!src/contexts/host-registration/application/register-plugin-with-host.ts",
         "!src/contexts/host-registration/application/withdraw-from-host.ts",
         "!src/contexts/installation/application/plugin/add-plugin.ts",
-        "!src/contexts/translate/application/sink/disk-sink.ts",
         "!src/shared/domain/errors.ts"
       ],
       "linter": {
@@ -4969,7 +4968,7 @@
         "!src/contexts/tools/domain/profiles/copilot/build.ts",
         "!src/contexts/tools/domain/profiles/cursor/build.ts",
         "!src/contexts/tools/domain/sections/mcp-section.ts",
-        "!src/contexts/translate/application/sink/disk-sink.ts",
+        "!src/contexts/translate/application/sink/flat-writer.ts",
         "!src/contexts/translate/application/sink/write-skill-tree.ts",
         "!src/contexts/translate/domain/engine.ts",
         "!src/contexts/translate/domain/flat-layout.ts",

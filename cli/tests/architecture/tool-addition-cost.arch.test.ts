@@ -142,7 +142,6 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
     path: "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     named: 1,
   },
-  { path: "src/contexts/translate/application/sink/disk-sink.ts", named: 1 },
 ];
 
 describe("a tool identifier stays inside its own profile", () => {

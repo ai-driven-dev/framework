@@ -8,7 +8,7 @@ The language of the `translate` context. A name in the code means what this page
 | Distribution | One plugin, read from its source and held as its manifest, its files and its components by kind | `PluginDistribution` (shared), `TranslateDistributionCommand` |
 | Engine | The one place a plugin's content is rewritten for a tool, in memory: prose, plugin-root token, frontmatter, hook scripts and the skip list. It writes nothing | `translate`, `domain/engine.ts` |
 | Translation | The files the engine produces for one plugin and one tool, each a path and its content: the list is the result, no sink code. Hashing them is the caller's | `TranslateDistribution`, `OutputFile` (`domain/`) |
-| Sink | What writes a translation to disk for `aidd translate`: the marketplace tree, the flat tree, the merged mcp and hooks files and the bridge | `DiskSink`, `application/sink/` |
+| Sink | What writes a translation to disk for `aidd translate`: the marketplace tree, the flat tree, the merged mcp and hooks files and the bridge | `DiskSink`, `FlatWriter`, `application/sink/` |
 | Build mode | How a tool takes the built tree: as a marketplace or flat in the project. The tool's build contract declares each | `FrameworkBuildTargetMode`, `ToolBuildContract` (tools) |
 | Build target | A tool the build can produce a tree for | `FrameworkBuildTarget`, `supportedBuildTargets` |
 | Native tree | The tree a tool's own plugin CLI installs, built from the canon | `BuildNativeTree`, `FrameworkBuild` |
