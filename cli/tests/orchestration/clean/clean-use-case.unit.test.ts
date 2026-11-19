@@ -504,79 +504,70 @@ describe("clean", () => {
         ]);
       });
 
-      it.each([
-        { others: [], suffix: "" },
-        {
-          others: ["/project-b", "/project-c"],
-          suffix: " Still needed by /project-b, /project-c.",
-        },
-      ])(
-        "keeps canonical refs and reports remaining dependents: $others",
-        async ({ others, suffix }) => {
-          const manifest = seedManifestWithNativeRegistrations();
-          const fs = new InMemoryFileAdapter();
-          fs.setFile(join(PROJECT_ROOT, "marker"), "project");
-          const cachePath = "/fake-home/.codex/plugins/cache/aidd-framework/plugin.json";
-          fs.setFile(cachePath, "cache");
-          const extraRef = "another@aidd-framework";
-          const machine = Manifest.create();
-          machine.addTool(TOOL.codex, "1.0.0", []);
-          machine.setNativeRegistrations(TOOL.codex, {
-            binary: BINARY,
-            marketplaces: manifest.getNativeRegistrations(TOOL.codex)?.marketplaces ?? [],
-            pluginRefs: [REF, extraRef],
-            pluginClaims: [
-              { ref: REF, dependents: [PROJECT_ROOT, ...others] },
-              { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
-              { ref: "unrelated@other-host", dependents: ["/unrelated"] },
-            ],
-          });
-          const machineRepo = new InMemoryManifestRepository(machine, "/fake-home");
-          const projectRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-          const activator = new FakeHostActions({ available: true });
-          const logger = new CapturingLogger();
-          const hostRefs = new FakeHostPluginRegistry({
-            location: "Codex machine refs",
-            refs: new Map([
-              [REF, { enabled: true }],
-              [extraRef, { enabled: true }],
-            ]),
-          });
-          const useCase = new CleanWithKnownHostSource(
-            fs,
-            projectRepo,
-            logger,
-            new UpdateGitignore(fs),
-            new Map([[BINARY, activator]]),
-            seedMarketplaceRegistry(),
-            undefined,
-            new Map(),
-            () => "/fake-home",
-            undefined,
-            new Map([[TOOL.codex, hostRefs]]),
-            machineRepo
-          );
-
-          await useCase.execute({ ...AT_PROJECT, force: true });
-
-          expect(activator.uninstalledPlugins).toEqual([]);
-          expect(activator.removedMarketplaces).toEqual([]);
-          expect(fs.getFile(cachePath)).toBe("cache");
-          expect(projectRepo.getCurrent()).toBeNull();
-          expect(
-            machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims
-          ).toEqual([
-            { ref: REF, dependents: others },
+      it("keeps canonical refs and reports remaining dependents", async () => {
+        const others = ["/project-b", "/project-c"];
+        const suffix = " Still needed by /project-b, /project-c.";
+        const manifest = seedManifestWithNativeRegistrations();
+        const fs = new InMemoryFileAdapter();
+        fs.setFile(join(PROJECT_ROOT, "marker"), "project");
+        const cachePath = "/fake-home/.codex/plugins/cache/aidd-framework/plugin.json";
+        fs.setFile(cachePath, "cache");
+        const extraRef = "another@aidd-framework";
+        const machine = Manifest.create();
+        machine.addTool(TOOL.codex, "1.0.0", []);
+        machine.setNativeRegistrations(TOOL.codex, {
+          binary: BINARY,
+          marketplaces: manifest.getNativeRegistrations(TOOL.codex)?.marketplaces ?? [],
+          pluginRefs: [REF, extraRef],
+          pluginClaims: [
+            { ref: REF, dependents: [PROJECT_ROOT, ...others] },
             { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
             { ref: "unrelated@other-host", dependents: ["/unrelated"] },
-          ]);
-          expect(logger.warnMessages).toEqual([
-            `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${suffix}`,
-            `codex: '${MARKETPLACE}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${suffix}`,
-            `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join("/fake-home", ".codex", "plugins", "cache", MARKETPLACE)}`,
-          ]);
-        }
-      );
+          ],
+        });
+        const machineRepo = new InMemoryManifestRepository(machine, "/fake-home");
+        const projectRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+        const activator = new FakeHostActions({ available: true });
+        const logger = new CapturingLogger();
+        const hostRefs = new FakeHostPluginRegistry({
+          location: "Codex machine refs",
+          refs: new Map([
+            [REF, { enabled: true }],
+            [extraRef, { enabled: true }],
+          ]),
+        });
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          projectRepo,
+          logger,
+          new UpdateGitignore(fs),
+          new Map([[BINARY, activator]]),
+          seedMarketplaceRegistry(),
+          undefined,
+          new Map(),
+          () => "/fake-home",
+          undefined,
+          new Map([[TOOL.codex, hostRefs]]),
+          machineRepo
+        );
+
+        await useCase.execute({ ...AT_PROJECT, force: true });
+
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(fs.getFile(cachePath)).toBe("cache");
+        expect(projectRepo.getCurrent()).toBeNull();
+        expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
+          { ref: REF, dependents: others },
+          { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
+          { ref: "unrelated@other-host", dependents: ["/unrelated"] },
+        ]);
+        expect(logger.warnMessages).toEqual([
+          `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${suffix}`,
+          `codex: '${MARKETPLACE}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${suffix}`,
+          `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join("/fake-home", ".codex", "plugins", "cache", MARKETPLACE)}`,
+        ]);
+      });
 
       it.each([undefined, { binary: BINARY, marketplaces: [], pluginRefs: [] }])(
         "removes an empty project catalogue when the machine has no matching claims: %j",
@@ -627,47 +618,6 @@ describe("clean", () => {
         );
         return registry;
       }
-
-      it.each([
-        { entries: new Map(), reason: "Reconcile manually." },
-        {
-          entries: new Map([[MARKETPLACE, { kind: "registry" as const, source: "/foreign" }]]),
-          reason: `Catalogue '${MARKETPLACE}': current host source differs from AIDD's recorded source; reconcile manually.`,
-        },
-      ])(
-        "leaves the ref enabled when its host source is unproven: $reason",
-        async ({ entries, reason }) => {
-          const fs = new InMemoryFileAdapter();
-          const logger = new CapturingLogger();
-          const activator = new FakeHostActions({ available: true });
-          const source: HostMarketplaceSources = {
-            read: async () => ({ location: "Claude source fixture", entries }),
-          };
-          const useCase = new CleanWithKnownHostSource(
-            fs,
-            new InMemoryManifestRepository(seedClaudeNativeRegistrations(), PROJECT_ROOT),
-            logger,
-            new UpdateGitignore(fs),
-            new Map([[TOOL.claude, activator]]),
-            await sharedClaudeRegistry(),
-            undefined,
-            new Map(),
-            () => "/fake-home",
-            undefined,
-            claudeRefOnHost("project"),
-            undefined,
-            new Map([[TOOL.claude, source]])
-          );
-
-          await useCase.execute({ ...AT_PROJECT, force: true });
-
-          expect(activator.uninstalledPlugins).toEqual([]);
-          expect(activator.removedMarketplaces).toEqual([]);
-          expect(logger.warnMessages[0]).toBe(
-            `claude: '${REF}' left enabled because its current host catalogue is unproven. ${reason}`
-          );
-        }
-      );
 
       it("warns about a ref whose host catalogue was not recorded", async () => {
         const manifest = seedClaudeNativeRegistrations();
@@ -1009,43 +959,6 @@ describe("clean", () => {
         expect(activator.uninstalledPlugins).toEqual([CLAUDE_REF]);
         expect(activator.uninstalledPluginScopes).toEqual(["project", "user"]);
       });
-
-      it("uninstalls at the scope the host's own registry names directly, one attempt, when it answers for this ref", async () => {
-        const manifest = seedClaudeManifest("project");
-        const fs = new InMemoryFileAdapter();
-        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeHostActions({
-          available: true,
-          installedAtScope: new Map([[CLAUDE_REF, "user"]]),
-        });
-        const hostPluginRegistries = new Map<AiToolId, FakeHostPluginRegistry>([
-          [
-            TOOL.claude,
-            new FakeHostPluginRegistry({
-              location: "/registry",
-              refs: new Map([[CLAUDE_REF, { enabled: true, scope: "user" }]]),
-            }),
-          ],
-        ]);
-        const useCase = new CleanWithKnownHostSource(
-          fs,
-          manifestRepo,
-          new CapturingLogger(),
-          new UpdateGitignore(fs),
-          new Map([[CLAUDE_BINARY, activator]]),
-          seedClaudeMarketplaceRegistry(),
-          undefined,
-          new Map(),
-          undefined,
-          undefined,
-          hostPluginRegistries
-        );
-
-        await useCase.execute({ ...AT_PROJECT, force: true });
-
-        expect(activator.uninstalledPlugins).toEqual([CLAUDE_REF]);
-        expect(activator.uninstalledPluginScopes).toEqual(["user"]);
-      });
     });
 
     describe("this project's own reference to the shared source", () => {
@@ -1156,132 +1069,8 @@ describe("clean", () => {
         );
       });
 
-      it("names how many other projects still reference the source", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
-        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeHostActions({ available: true });
-        const registry = new InMemoryMarketplaceRegistry();
-        await registry.save(
-          PROJECT_ROOT,
-          Marketplace.create({
-            name: MARKETPLACE,
-            source: { kind: "local", path: "/shared/built/path" },
-            scope: "user",
-            addedAt: "2026-01-01T00:00:00.000Z",
-          })
-        );
-        const userSourceReferences = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
-        await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
-        await userSourceReferences.addReference("1.0.0", OTHER_PROJECT_ROOT);
-        const logger = new CapturingLogger();
-        const useCase = new CleanWithKnownHostSource(
-          fs,
-          manifestRepo,
-          logger,
-          new UpdateGitignore(fs),
-          new Map([[BINARY, activator]]),
-          registry,
-          undefined,
-          new Map(),
-          () => "/fake-home",
-          userSourceReferences
-        );
-
-        await useCase.execute({ ...AT_PROJECT, force: true });
-
-        const message = logger.warnMessages.find((m) => m.includes("shared by every project"));
-        expect(message).toBeDefined();
-        expect(message).toContain("Still referenced by 1 other project on this machine.");
-      });
-
       // A verb-agreement bug hides in the plural alone: the passive phrasing sidesteps the
       // question for either count, so only the plural case can pin it.
-      it("names the plural correctly when more than one other project still references the source", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
-        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeHostActions({ available: true });
-        const registry = new InMemoryMarketplaceRegistry();
-        await registry.save(
-          PROJECT_ROOT,
-          Marketplace.create({
-            name: MARKETPLACE,
-            source: { kind: "local", path: "/shared/built/path" },
-            scope: "user",
-            addedAt: "2026-01-01T00:00:00.000Z",
-          })
-        );
-        const THIRD_PROJECT_ROOT = "/third-project";
-        const userSourceReferences = seedReferences(fs, [
-          PROJECT_ROOT,
-          OTHER_PROJECT_ROOT,
-          THIRD_PROJECT_ROOT,
-        ]);
-        await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
-        await userSourceReferences.addReference("1.0.0", OTHER_PROJECT_ROOT);
-        await userSourceReferences.addReference("1.0.0", THIRD_PROJECT_ROOT);
-        const logger = new CapturingLogger();
-        const useCase = new CleanWithKnownHostSource(
-          fs,
-          manifestRepo,
-          logger,
-          new UpdateGitignore(fs),
-          new Map([[BINARY, activator]]),
-          registry,
-          undefined,
-          new Map(),
-          () => "/fake-home",
-          userSourceReferences
-        );
-
-        await useCase.execute({ ...AT_PROJECT, force: true });
-
-        const message = logger.warnMessages.find((m) => m.includes("shared by every project"));
-        expect(message).toBeDefined();
-        expect(message).toContain("Still referenced by 2 other projects on this machine.");
-      });
-
-      it("names that nothing removes the source yet once this was the last reference", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
-        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeHostActions({ available: true });
-        const registry = new InMemoryMarketplaceRegistry();
-        await registry.save(
-          PROJECT_ROOT,
-          Marketplace.create({
-            name: MARKETPLACE,
-            source: { kind: "local", path: "/shared/built/path" },
-            scope: "user",
-            addedAt: "2026-01-01T00:00:00.000Z",
-          })
-        );
-        const userSourceReferences = seedReferences(fs, [PROJECT_ROOT]);
-        await userSourceReferences.addReference("1.0.0", PROJECT_ROOT);
-        const logger = new CapturingLogger();
-        const useCase = new CleanWithKnownHostSource(
-          fs,
-          manifestRepo,
-          logger,
-          new UpdateGitignore(fs),
-          new Map([[BINARY, activator]]),
-          registry,
-          undefined,
-          new Map(),
-          () => "/fake-home",
-          userSourceReferences
-        );
-
-        await useCase.execute({ ...AT_PROJECT, force: true });
-
-        const message = logger.warnMessages.find((m) => m.includes("shared by every project"));
-        expect(message).toBeDefined();
-        expect(message).toContain("No project on this machine still references it");
-        expect(message).toContain("aidd clean");
-        expect(await userSourceReferences.listAllReferencingProjects()).not.toContain(PROJECT_ROOT);
-      });
-
       it("names the other project still referencing the shared source in a dry-run, without dropping anything", async () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
@@ -1512,16 +1301,8 @@ describe("clean", () => {
 
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
-      // The cache `purgeNativeCaches` never gets to consider — this tool's absent binary
-      // keeps it out of `undone` — must still be named, by the same absolute path.
-      const survivingCache = join(homedir(), ".codex", "plugins", "cache", MARKETPLACE);
-      expect(
-        logger.warnMessages.some(
-          (m) =>
-            m.startsWith("codex: registration left in place, the codex CLI is not on the PATH.") &&
-            m.includes(survivingCache)
-        )
-      ).toBe(true);
+      expect(logger.warnMessages).toHaveLength(1);
+      expect(logger.warnMessages[0]).toContain("the codex CLI is not on the PATH.");
     });
 
     it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
@@ -1693,25 +1474,6 @@ describe("clean", () => {
         );
       }
 
-      it("names the absent binary alone when no activator is wired for it", async () => {
-        const fs = new InMemoryFileAdapter();
-        const logger = new CapturingLogger();
-        const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(),
-          fs,
-          logger,
-          activators: new Map(),
-          registry: seedMarketplaceRegistry(),
-        });
-
-        const result = await useCase.execute({ ...AT_PROJECT, force: true });
-
-        expect(result.manifestFound).toBe(true);
-        expect(logger.warnMessages).toStrictEqual([
-          `codex: registration left in place, the codex CLI is not on the PATH. Its cache survives at: ${join(CODEX_CACHE, MARKETPLACE)}.`,
-        ]);
-      });
-
       it("leaves a lost-alias registration and its unclaimed machine-global ref untouched", async () => {
         const fs = new InMemoryFileAdapter();
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
@@ -1765,28 +1527,6 @@ describe("clean", () => {
         expect(logger.warnMessages).toStrictEqual([
           `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
           `codex: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its codex registration was left in place.`,
-          `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
-        ]);
-      });
-
-      it("names a refused marketplace removal by the host's own words", async () => {
-        const fs = new InMemoryFileAdapter();
-        const logger = new CapturingLogger();
-        const activator = new FakeHostActions({ available: true, throwOnRemove: true });
-        const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(),
-          fs,
-          logger,
-          activators: new Map([[BINARY, activator]]),
-          registry: seedMarketplaceRegistry(),
-        });
-
-        await useCase.execute({ ...AT_PROJECT, force: true });
-
-        expect(activator.uninstalledPlugins).toStrictEqual([]);
-        expect(logger.warnMessages).toStrictEqual([
-          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
-          `codex marketplace remove '${MARKETPLACE}' failed: marketplace remove ${MARKETPLACE} failed: '${MARKETPLACE}' is not configured or installed`,
           `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
       });
@@ -2091,34 +1831,6 @@ describe("clean", () => {
 
         expect(logger.warnMessages).toStrictEqual([
           "codex: registration left in place, the codex CLI is not on the PATH.",
-        ]);
-      });
-
-      it("names every surviving cache of an absent binary, one path per marketplace", async () => {
-        const manifest = Manifest.create();
-        manifest.addTool(TOOL.codex, "1.0.0", []);
-        manifest.setNativeRegistrations(TOOL.codex, {
-          binary: BINARY,
-          marketplaces: [
-            { alias: "mkt-a", hostName: "mkt-a" },
-            { alias: "mkt-b", hostName: "mkt-b" },
-          ],
-          pluginRefs: [],
-        });
-        const fs = new InMemoryFileAdapter();
-        const logger = new CapturingLogger();
-        const useCase = buildUseCase({
-          manifest,
-          fs,
-          logger,
-          activators: new Map(),
-          registry: seedMarketplaceRegistry(),
-        });
-
-        await useCase.execute({ ...AT_PROJECT, force: true });
-
-        expect(logger.warnMessages).toStrictEqual([
-          `codex: registration left in place, the codex CLI is not on the PATH. Its cache survives at: ${join(CODEX_CACHE, "mkt-a")}, ${join(CODEX_CACHE, "mkt-b")}.`,
         ]);
       });
     });

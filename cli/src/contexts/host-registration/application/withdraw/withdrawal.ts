@@ -1,0 +1,122 @@
+import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
+import type {
+  DependentClaim,
+  RegistrationRecord,
+  RegistrationRecordData,
+} from "../../domain/record/registration-record.js";
+import type { HostActions } from "../../ports/host-actions.js";
+import type { HostPorts } from "../../ports/host-ports.js";
+import type { NativeHostTool } from "../../ports/host-tool.js";
+
+/** The facts about machine-wide ownership a withdrawal depends on, none of which this context
+ * may read itself: the caller answers them from where claims live. */
+export interface WithdrawalClaims {
+  /** Whether a canonical machine claim owns `ref`. */
+  readonly isMachineOwned: (ref: string) => Promise<boolean>;
+  /** The warning that says why `ref` must stay enabled for another project, if it must. */
+  readonly guardMessage: (
+    binary: string,
+    ref: string,
+    alias: string
+  ) => Promise<string | undefined>;
+  /** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
+  readonly resolveCacheCandidate: (
+    cacheRoot: string,
+    relativeSegments: string,
+    label: string
+  ) => Promise<string | null>;
+}
+
+/** One installed plugin the host may have registered, by aidd's own marketplace alias. */
+export interface WithdrawnPlugin {
+  readonly name: string;
+  readonly marketplace: string;
+  readonly scope: MarketplaceScope;
+}
+
+export interface WithdrawFromHostCommand {
+  readonly tool: NativeHostTool;
+  readonly plugin: WithdrawnPlugin;
+  readonly projectRoot: string;
+  readonly registrations: RegistrationRecordData | undefined;
+  readonly claims: WithdrawalClaims;
+  /** Root of the host's own plugin cache; absent when the host keeps none. */
+  readonly pluginCacheRoot: string | undefined;
+}
+
+export type ProjectSourceCommand = Pick<
+  WithdrawFromHostCommand,
+  "tool" | "projectRoot" | "registrations"
+> & {
+  readonly plugin: WithdrawnPlugin;
+  readonly isMachineOwned: WithdrawalClaims["isMachineOwned"];
+};
+
+export interface ClaimedHostRef {
+  readonly tool: AiToolId;
+  readonly ref: string;
+}
+
+/** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
+export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
+
+/** A tool whose host holds registrations this project or machine made. */
+export interface RegisteredTool {
+  readonly tool: NativeHostTool;
+  readonly registrations: RegistrationRecordData;
+  /** Root of the host's own plugin cache; absent when the host keeps none. */
+  readonly cacheRoot: string | undefined;
+}
+
+export interface ProjectRegistrationWithdrawal extends RegisteredTool {
+  /** The scope this project's own manifest recorded for each plugin ref, by ref. */
+  readonly refScopes: ReadonlyMap<string, MarketplaceScope>;
+}
+
+export interface UserRegistrationWithdrawal extends RegisteredTool {
+  /** Every ref a canonical machine claim owns for this tool. */
+  readonly claimedRefs: readonly string[];
+}
+
+/** A tool a pass withdrew from, with its record as the host read it and the host names removed. */
+export interface RemovedFromHost {
+  readonly withdrawal: RegisteredTool;
+  readonly registrations: RegistrationRecord;
+  readonly removedHostNames: ReadonlySet<string>;
+}
+
+/** What a withdrawal reads and acts through: files, the log, and the host's ports. */
+export interface WithdrawalDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly logger: Logger;
+  readonly ports: HostPorts;
+}
+
+/** A host ref proven removable, held until every proof of the batch has passed. */
+export interface ProvenHostRef {
+  readonly activator: HostActions;
+  readonly ref: string;
+  readonly scope: MarketplaceScope;
+}
+
+/** What a project clean depends on that this context may not read itself. */
+export interface ProjectCleanFacts {
+  readonly projectRoot: string;
+  /** The scope each marketplace is registered at, by this project's own alias. */
+  readonly marketplaceScopes: ReadonlyMap<string, MarketplaceScope>;
+  /** The shared machine-scope source this project references, and who else does; absent when none. */
+  readonly sharedSource:
+    | { readonly alias: string; readonly otherProjects: readonly string[] }
+    | undefined;
+  /** The alias the framework's own marketplace is registered under. */
+  readonly frameworkAlias: string;
+  /** The machine-wide claims on `tool`'s refs; `undefined` when no machine record exists. */
+  readonly machineClaims: (tool: AiToolId) => Promise<readonly DependentClaim[] | undefined>;
+  /** Runs `action` holding the machine record's lock when there is one to lock. */
+  readonly exclusive: <T>(action: () => Promise<T>) => Promise<T>;
+  readonly resolveCacheCandidate: CacheCandidateResolver;
+}

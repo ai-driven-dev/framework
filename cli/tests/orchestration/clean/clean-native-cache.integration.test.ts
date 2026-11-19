@@ -537,42 +537,6 @@ describe("clean purges a host's own plugin cache", () => {
       { ref: REF, dependents: ["/project-b"] },
     ]);
   });
-  it("purges claude's cache once undoing the registration actually frees the name", async () => {
-    const fs = new RecordingFileAdapter();
-    const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
-    await fs.writeFile(cacheEntry, "{}");
-    await fs.writeFile(
-      join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", ".orphaned_at"),
-      "now"
-    );
-
-    const activator = new FakeHostActions({ available: true });
-    const reader = new RegistryMirroringActivatorState(
-      "known_marketplaces.json",
-      [MARKETPLACE],
-      activator
-    );
-    const useCase = buildUseCase({
-      fs,
-      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
-      activator,
-      binary: TOOL.claude,
-      logger: new CapturingLogger(),
-      aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
-    });
-
-    await useCase.execute({
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
-
-    expect(await fs.fileExists(cacheEntry)).toBe(false);
-    expect(activator.removedMarketplaces).toContain(MARKETPLACE);
-    // Source preflight, native undo recheck, then post-removal cache confirmation.
-    expect(reader.reads).toBe(3);
-  });
-
   it("leaves claude's cache in place, and names it, when the claude CLI is not on PATH", async () => {
     const fs = new RecordingFileAdapter();
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");

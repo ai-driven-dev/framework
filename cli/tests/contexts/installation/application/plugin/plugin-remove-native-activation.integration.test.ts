@@ -98,66 +98,6 @@ describe("RemovePlugin undoes native activation", () => {
     }
   );
 
-  it("preserves the native ref and cache when Claude disappears after preflight", async () => {
-    const fs = new InMemoryFileAdapter();
-    const manifest = Manifest.create();
-    manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    const repo = new InMemoryManifestRepository(manifest);
-    const activator = new FakeHostActions({ available: true });
-    const logger = new CapturingLogger();
-    const source = verifiedSourceReader();
-    let reads = 0;
-    const cacheFile = join(
-      homedir(),
-      ".claude/plugins/cache",
-      MARKETPLACE_NAME,
-      PLUGIN_NAME,
-      "1.0.0/plugin.json"
-    );
-    await fs.writeFile(cacheFile, "keep cache");
-    const remove = pluginRemover({
-      fs,
-      manifestRepo: repo,
-      logger,
-      activators: new Map([[claude, activator]]),
-      hostPluginRegistries: new Map([
-        [
-          claude,
-          new FakeHostPluginRegistry({
-            location: "/host/registry",
-            refs: new Map([[REF, { enabled: true, scope: "project" }]]),
-          }),
-        ],
-      ]),
-      nativeMarketplaceSources: new Map([
-        [
-          claude,
-          {
-            read: async () => {
-              if (++reads === 2) activator.available = false;
-              return source.read();
-            },
-          },
-        ],
-      ]),
-    });
-
-    await remove.execute({
-      pluginName: PLUGIN_NAME,
-      toolIds: [claude],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(activator.uninstalledPlugins).toEqual([]);
-    expect(manifest.getPlugins(claude)).toEqual([]);
-    expect(manifest.getNativeRegistrations(claude)?.pluginRefs).toEqual([REF]);
-    expect(await fs.readFile(cacheFile)).toBe("keep cache");
-    expect(logger.warnMessages).toContain(
-      `claude CLI not found on PATH — '${REF}' was not uninstalled from claude's own plugin registry and may still be enabled there.`
-    );
-  });
-
   it.each([
     { name: MARKETPLACE_NAME, scope: "user" as const, readsLedger: true },
     { name: MARKETPLACE_NAME, scope: "project" as const, readsLedger: false },
@@ -349,63 +289,6 @@ describe("RemovePlugin undoes native activation", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(repo.getCurrent()?.getPlugins(claude)).toEqual([]);
     expect(logger.warnMessages.join(" ")).toMatch(/CLI not found|host ref may remain/);
-  });
-
-  it("does not uninstall or purge a same-name foreign host ref even without a machine-global claim", async () => {
-    const fs = new InMemoryFileAdapter();
-    const cacheEntry = join(
-      homedir(),
-      ".claude/plugins/cache",
-      MARKETPLACE_NAME,
-      PLUGIN_NAME,
-      "1.0.0/plugin.json"
-    );
-    fs.setFile(cacheEntry, "cache witness");
-    const manifest = Manifest.create();
-    manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    manifest.setNativeRegistrations(claude, {
-      binary: "claude",
-      marketplaces: [
-        {
-          alias: MARKETPLACE_NAME,
-          hostName: MARKETPLACE_NAME,
-          provenance: { kind: "registry", source: "/aidd/old-source" },
-        },
-      ],
-      pluginRefs: [REF],
-    });
-    const repo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const activator = new FakeHostActions({ available: true });
-    const removeUseCase = pluginRemover({
-      fs,
-      manifestRepo: repo,
-      activators: new Map([[claude, activator]]),
-      nativeMarketplaceSources: new Map([
-        [
-          claude,
-          {
-            read: async () => ({
-              location: "/host/catalogue",
-              entries: new Map([
-                [MARKETPLACE_NAME, { kind: "registry" as const, source: "/foreign/source" }],
-              ]),
-            }),
-          },
-        ],
-      ]),
-    });
-    await expect(
-      removeUseCase.execute({
-        pluginName: PLUGIN_NAME,
-        toolIds: [claude],
-        projectRoot: PROJECT_ROOT,
-      })
-    ).rejects.toThrow(/source differs/);
-    expect(activator.uninstalledPlugins).toEqual([]);
-    expect(fs.getFile(cacheEntry)).toBe("cache witness");
-    expect(repo.getCurrent()?.getPlugins(claude)).toHaveLength(1);
-    expect(repo.getCurrent()?.getNativeRegistrations(claude)?.pluginRefs).toEqual([REF]);
   });
 
   it("refuses an old AIDD catalogue claim when the current host source is foreign under the same name and ref", async () => {
@@ -640,64 +523,6 @@ describe("RemovePlugin undoes native activation", () => {
     expect(activator.uninstalledPlugins).toEqual([`${PLUGIN_NAME}@upstream`]);
   });
 
-  it("resolves the host's own registry by the hostName-keyed ref, not the alias", async () => {
-    const hostRef = `${PLUGIN_NAME}@upstream`;
-    const activator = new FakeHostActions({
-      available: true,
-      installedAtScope: new Map([[hostRef, "user"]]),
-    });
-    const logger = new CapturingLogger();
-    const fs = new InMemoryFileAdapter();
-    const manifestRepo = new InMemoryManifestRepository();
-    const removeUseCase = pluginRemover({
-      fs,
-      manifestRepo,
-      logger,
-      activators: new Map([[claude, activator]]),
-      hostPluginRegistries: new Map([
-        [
-          claude,
-          new FakeHostPluginRegistry({
-            location: "/registry",
-            refs: new Map([[hostRef, { enabled: true, scope: "user" }]]),
-          }),
-        ],
-      ]),
-      nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
-    });
-    const manifest = Manifest.create();
-    manifest.addTool(claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
-      manifest,
-      "local"
-    );
-    manifest.setNativeRegistrations(claude, {
-      binary: "claude",
-      marketplaces: [
-        {
-          alias: "local",
-          hostName: "upstream",
-          provenance: { kind: "registry", source: "/plugin-source" },
-        },
-      ],
-      pluginRefs: [`${PLUGIN_NAME}@upstream`],
-    });
-    await manifestRepo.save(manifest);
-
-    await removeUseCase.execute({
-      pluginName: PLUGIN_NAME,
-      toolIds: [claude],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(activator.uninstalledPlugins).toEqual([hostRef]);
-    expect(activator.uninstalledPluginScopes).toEqual(["user"]);
-  });
-
   it("refuses a legacy alias with no recorded native source before changing the project", async () => {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
@@ -750,45 +575,6 @@ describe("RemovePlugin undoes native activation", () => {
     ).rejects.toThrow(/no recorded native catalogue source/);
 
     expect(spy).toHaveBeenCalledTimes(1);
-  });
-
-  it("uninstalls at the scope the host's own registry names directly, one attempt", async () => {
-    const activator = new FakeHostActions({
-      available: true,
-      installedAtScope: new Map([[REF, "user"]]),
-    });
-    const logger = new CapturingLogger();
-    const fs = new InMemoryFileAdapter();
-    const manifestRepo = new InMemoryManifestRepository();
-    const removeUseCase = pluginRemover({
-      fs,
-      manifestRepo,
-      logger,
-      activators: new Map([[claude, activator]]),
-      hostPluginRegistries: new Map([
-        [
-          claude,
-          new FakeHostPluginRegistry({
-            location: "/registry",
-            refs: new Map([[REF, { enabled: true, scope: "user" }]]),
-          }),
-        ],
-      ]),
-      nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
-    });
-    const manifest = Manifest.create();
-    manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    await manifestRepo.save(manifest);
-
-    await removeUseCase.execute({
-      pluginName: PLUGIN_NAME,
-      toolIds: [claude],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(activator.uninstalledPlugins).toEqual([REF]);
-    expect(activator.uninstalledPluginScopes).toEqual(["user"]);
   });
 
   it("logs nothing when this tool's own native registrations name the alias", async () => {

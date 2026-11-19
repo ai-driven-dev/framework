@@ -1,5 +1,5 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
-import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
+import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
 import { PurgeUserScopeFiles } from "../../src/contexts/installation/application/purge-user-scope-files.js";
 import type { MachineStateGuards } from "../../src/contexts/installation/application/removal/purge-machine-state.js";

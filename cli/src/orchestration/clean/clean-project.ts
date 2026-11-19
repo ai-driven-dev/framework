@@ -1,8 +1,6 @@
 import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
-import type {
-  ProjectCleanFacts,
-  WithdrawFromHost,
-} from "../../contexts/host-registration/application/withdraw-from-host.js";
+import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import type { ProjectCleanFacts } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import type {
   CleanNativeRegistrationPreview,
   CleanProject as CleanProjectFiles,

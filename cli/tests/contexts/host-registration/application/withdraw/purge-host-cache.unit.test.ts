@@ -30,7 +30,12 @@ async function purgeRemovedMarketplace(
     {
       fs,
       logger,
-      marketplaceRegistries: reader === undefined ? new Map() : new Map([[TOOL.claude, reader]]),
+      ports: {
+        activators: new Map(),
+        pluginRegistries: new Map(),
+        marketplaceRegistries: reader === undefined ? new Map() : new Map([[TOOL.claude, reader]]),
+        sources: new Map(),
+      },
     },
     [
       {
@@ -63,6 +68,24 @@ describe("purging a marketplace's cache once the host removed it", () => {
     expect(logger.warnMessages).toStrictEqual([
       `claude: cache for '${HOST_NAME}' left in place, ${LOCATION} still names it: ${CANDIDATE}`,
     ]);
+  });
+
+  it("purges only its tenant once a readable registry no longer names it", async () => {
+    const neighbor = join(CACHE_ROOT, "another-marketplace", "plugin.json");
+    const fs = new InMemoryFileAdapter({
+      [join(CANDIDATE, "plugin.json")]: "removed tenant",
+      [neighbor]: "other tenant",
+    });
+    const logger = new CapturingLogger();
+    const reader = new FakeHostMarketplaceRegistry({
+      location: LOCATION,
+      entries: new Map([["another-marketplace", "/other-project/marketplace"]]),
+    });
+
+    await purgeRemovedMarketplace(fs, logger, reader);
+
+    expect(fs.listAll()).toStrictEqual([neighbor.replaceAll("\\", "/")]);
+    expect(logger.infoMessages).toContain(`claude: cache for '${HOST_NAME}' purged: ${CANDIDATE}`);
   });
 
   it("looks at no cache for a host that keeps none", async () => {

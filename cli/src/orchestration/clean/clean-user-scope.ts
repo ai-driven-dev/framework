@@ -1,4 +1,4 @@
-import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw-from-host.js";
+import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import { describeFullRemovalInstruction } from "../../contexts/machine-claims/application/shared-source-reference-support.js";
 import type { ToolId } from "../../shared/domain/tool.js";

@@ -1,3 +1,4 @@
+import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
@@ -100,4 +101,17 @@ export async function assertNoForeignNativeRefs(
       `Catalogue '${hostName}' includes foreign host ref '${foreign}'; no host mutation made.`
     );
   return refs;
+}
+
+/** Refuses a catalogue whose host source the proof does not show owned, saying why when it can. */
+export function assertSourceOwned(
+  proof: NativeMarketplaceSourceInspection,
+  unproven: string
+): void {
+  const verdict = judgeRegistration({
+    intent: "withdraw-catalog",
+    source: proof,
+    unenabledClaim: undefined,
+  });
+  if (verdict.outcome === "refuse") throw new Error(verdict.reconcile ?? unproven);
 }

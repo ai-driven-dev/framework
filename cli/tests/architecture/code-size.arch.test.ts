@@ -57,11 +57,11 @@ const GUARDS: readonly Guard[] = [
  * violator is fixed, not listed.
  */
 const MAX_BASELINE: Readonly<Record<string, number>> = {
-  "function length": 27,
-  "cognitive complexity": 27,
+  "function length": 26,
+  "cognitive complexity": 26,
   "one class per file": 8,
-  "file length": 4,
-  "function parameters": 115,
+  "file length": 3,
+  "function parameters": 113,
 };
 
 interface Override {

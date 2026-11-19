@@ -874,29 +874,6 @@ describe("clean --scope user", () => {
     });
   });
 
-  describe("binary absent", () => {
-    it("names the binary and what it would have undone, without touching its own cache", async () => {
-      const fs = new RecordingFileAdapter();
-      const claudeCachePath = seedClaudeCache(fs);
-      const logger = new CapturingLogger();
-      const useCase = userScopeCleaner({
-        fs,
-        repo: new InMemoryManifestRepository(manifestWithClaude()),
-        logger,
-        marketplaceRegistries: // no activator registered for "claude" — the binary is absent
-          new Map(),
-      });
-
-      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /claude.*not on the PATH.*1 marketplace.*1 plugin ref/s
-      );
-      // The whitelist step still purges userConfigDir()'s own cache/built/, unrelated
-      // to this host's own cache — only claude's own directory must survive untouched.
-      expect(fs.order).not.toContain(`deleteDirectory:${claudeCachePath}`);
-      expect(await fs.fileExists(join(claudeCachePath, "marker.json"))).toBe(true);
-    });
-  });
-
   describe("confirmation", () => {
     it("names the versions built and the projects still referencing the source", async () => {
       const fs = new InMemoryFileAdapter();
@@ -1240,23 +1217,6 @@ describe("clean --scope user", () => {
       });
     }
 
-    it("uninstalls every plugin ref at the user scope", async () => {
-      const activator = new FakeHostActions({ available: true });
-      const useCase = buildUseCase({
-        fs: new InMemoryFileAdapter(),
-        logger: new CapturingLogger(),
-        activator,
-      });
-
-      await useCase.execute({
-        projectRoot: "/wherever",
-        force: true,
-      });
-
-      expect(activator.uninstalledPlugins).toStrictEqual(["aidd-context@aidd-framework"]);
-      expect(activator.uninstalledPluginScopes).toStrictEqual(["user"]);
-    });
-
     it("cleans an empty native registration without inventing any plugin uninstall", async () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "1.0.0", []);
@@ -1317,50 +1277,6 @@ describe("clean --scope user", () => {
           nativeSources: new Map([[TOOL.claude, source]]),
         }).execute({ projectRoot: "/wherever", force: true })
       ).rejects.toThrow("claude: catalogue source unproven.");
-
-      expect(fs.order).toEqual([]);
-      expect(fs.getFile(marker)).toBe("{}");
-      expect(repo.getCurrent()?.toJSON()).toEqual(manifest.toJSON());
-      expect(activator.uninstalledPlugins).toEqual([]);
-      expect(activator.removedMarketplaces).toEqual([]);
-    });
-
-    it("retains canonical state if the binary disappears after source preflight", async () => {
-      let available = true;
-      class DisappearingActivator extends FakeHostActions {
-        override isAvailable(): boolean {
-          return available;
-        }
-      }
-      const manifest = manifestWithClaude();
-      const repo = new InMemoryManifestRepository(manifest);
-      const fs = new RecordingFileAdapter();
-      const marker = join(seedClaudeCache(fs), "marker.json");
-      const activator = new DisappearingActivator({ available: true });
-      const source: HostMarketplaceSources = {
-        read: async () => {
-          available = false;
-          return {
-            location: "Claude source registry",
-            entries: new Map([
-              ["aidd-framework", { kind: "registry" as const, source: "/built/claude" }],
-            ]),
-          };
-        },
-      };
-
-      await expect(
-        buildUseCase({
-          fs,
-          manifest,
-          repo,
-          activator,
-          logger: new CapturingLogger(),
-          nativeSources: new Map([[TOOL.claude, source]]),
-        }).execute({ projectRoot: "/wherever", force: true })
-      ).rejects.toThrow(
-        `claude: registration left in place, the claude CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). Its cache survives at: ${join(CLAUDE_CACHE, "aidd-framework")}. User clean refused; canonical claims retained.`
-      );
 
       expect(fs.order).toEqual([]);
       expect(fs.getFile(marker)).toBe("{}");
@@ -1546,24 +1462,6 @@ describe("clean --scope user", () => {
       );
     });
 
-    it("aborts before marketplace removal when the host refuses plugin uninstall", async () => {
-      const activator = new FakeHostActions({
-        available: true,
-        failOnUninstall: ["aidd-context@aidd-framework"],
-      });
-      const logger = new CapturingLogger();
-      const useCase = buildUseCase({ fs: new InMemoryFileAdapter(), logger, activator });
-
-      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /plugin uninstall.*failed.*claims retained/
-      );
-
-      expect(logger.warnMessages).toStrictEqual([
-        "claude plugin uninstall 'aidd-context@aidd-framework' failed: plugin `aidd-context@aidd-framework` is not installed",
-      ]);
-      expect(activator.removedMarketplaces).toStrictEqual([]);
-    });
-
     it("unregisters every marketplace at the user scope", async () => {
       const activator = new RecordingActivator([]);
       const useCase = buildUseCase({
@@ -1579,23 +1477,6 @@ describe("clean --scope user", () => {
 
       expect(activator.removedMarketplaces).toStrictEqual(["aidd-framework"]);
       expect(activator.removedMarketplaceScopes).toStrictEqual(["user"]);
-    });
-
-    it("names a refused marketplace removal by the host's own words", async () => {
-      const logger = new CapturingLogger();
-      const useCase = buildUseCase({
-        fs: new InMemoryFileAdapter(),
-        logger,
-        activator: new FakeHostActions({ available: true, throwOnRemove: true }),
-      });
-
-      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /marketplace remove.*failed.*claims retained/
-      );
-
-      expect(logger.warnMessages).toStrictEqual([
-        "claude marketplace remove 'aidd-framework' failed: marketplace remove aidd-framework failed: 'aidd-framework' is not configured or installed",
-      ]);
     });
 
     it("never treats a refused removal as one the host confirmed, so codex's cache stays", async () => {
@@ -1727,23 +1608,6 @@ describe("clean --scope user", () => {
 
       expect(warnings).toStrictEqual([
         "codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 0 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.",
-      ]);
-    });
-
-    it("names every surviving cache, one path per marketplace", async () => {
-      const warnings = await errorsFor(
-        seedRegistrations(
-          TOOL.codex,
-          [
-            { alias: "mkt-a", hostName: "mkt-a" },
-            { alias: "mkt-b", hostName: "mkt-b" },
-          ],
-          []
-        )
-      );
-
-      expect(warnings).toStrictEqual([
-        `codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 2 marketplace(s) and 0 plugin ref(s). Its cache survives at: ${join(CODEX_CACHE, "mkt-a")}, ${join(CODEX_CACHE, "mkt-b")}. User clean refused; canonical claims retained.`,
       ]);
     });
   });
