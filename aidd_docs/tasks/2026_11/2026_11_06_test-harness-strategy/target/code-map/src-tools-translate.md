@@ -85,7 +85,7 @@
 | `src/contexts/translate/application/strategies/build-output-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts`; `src/contexts/translate/application/sinks/flat-writer.ts` | merge | disk sink replaces the strategies; flat writing split into flat-writer.ts for the size cap |
 | `src/contexts/translate/application/strategies/flat-build-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts`; `src/contexts/translate/application/sinks/flat-writer.ts` | merge | flat rules move into the engine; output guard and writing stay in the sink; flat writing split into flat-writer.ts for the size cap |
 | `src/contexts/translate/application/strategies/marketplace-build-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts` | merge | manifest, catalogue and schema check stay in the sink |
-| `src/contexts/translate/application/strategies/plugin-source-tree-reader.ts` | `src/contexts/translate/application/sinks/canon-tree-reader.ts` | rename | proposal: reads the canon from disk to feed the engine |
+| `src/contexts/translate/application/strategies/plugin-source-tree-reader.ts` | `src/contexts/translate/application/sinks/plugin-source-tree-reader.ts` | move | proposal: reads the canon from disk to feed the engine |
 | `src/contexts/translate/application/strategies/write-skill-tree.ts` | `src/contexts/translate/application/sinks/disk-sink.ts` | merge | proposal: skill writing folded into the disk sink |
 | `src/contexts/translate/infrastructure/schema-validator.ts` | `src/shared/infrastructure/schema-validator.ts` | move | Ajv adapter, 2 contexts use it |
 | - | `src/contexts/translate/application/translate-distribution.ts` | add | proposal: command exposing the engine to installation (list sink, no sink code) |

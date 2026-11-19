@@ -263,7 +263,7 @@ Overlap: the 4 `marketplace-build-strategy.*` tests (1519 lines) and the 2 `flat
 | `domain/formats/cursor-hooks.ts` | move | `tools/domain/formats/` |
 | `domain/formats/plugin-root-token-rewrite.ts` | merge | `tools/domain/formats/plugin-root-token.ts` |
 | `application/translate-source.ts` | rename | `application/build-native-tree.ts`, class `BuildNativeTree` (proposal: name per the command convention) |
-| `application/strategies/*` (5) | merge | `application/sinks/disk-sink.ts`; `plugin-source-tree-reader.ts` renamed `sinks/canon-tree-reader.ts` (proposal) |
+| `application/strategies/*` (5) | merge | `application/sinks/disk-sink.ts`; `plugin-source-tree-reader.ts` moved to `sinks/` |
 | none | add | `application/translate-distribution.ts` (command exposing the engine to installation) and `contract/output-file.ts` (proposal: exact fields to fix) |
 | `application/shared-plugin-helpers.ts` | keep | same |
 | `infrastructure/schema-validator.ts` | move | `shared/infrastructure` (2 contexts use it) |
