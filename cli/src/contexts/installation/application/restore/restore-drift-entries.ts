@@ -1,5 +1,5 @@
 import type { Prompter } from "../../../../shared/ports/prompter.js";
-import { ResolveRestoreDecision } from "./resolve-restore-decision.js";
+import { resolveRestoreDecision } from "./resolve-restore-decision.js";
 
 export interface DriftDescriptor {
   relativePath: string;
@@ -27,43 +27,35 @@ export interface RestoreDriftLeaf<TDrift extends DriftDescriptor, TResult> {
 
 /** The single place the keep/overwrite decision lives: both restore flows inject their own leaf
  * rather than duplicating the loop. */
-export class RestoreDriftEntries {
-  private readonly resolveDecision: ResolveRestoreDecision;
+export async function restoreDriftEntries<TDrift extends DriftDescriptor, TResult>(
+  prompter: Prompter,
+  leaf: RestoreDriftLeaf<TDrift, TResult>,
+  { force, interactive }: { force: boolean; interactive: boolean }
+): Promise<TResult | null> {
+  const { drift, unrestorable } = await leaf.collectDrift();
+  if (drift.length === 0 && unrestorable.length === 0) return null;
 
-  constructor(prompter: Prompter) {
-    this.resolveDecision = new ResolveRestoreDecision(prompter);
-  }
+  const restored: string[] = [];
+  const kept: string[] = [];
 
-  async execute<TDrift extends DriftDescriptor, TResult>(
-    leaf: RestoreDriftLeaf<TDrift, TResult>,
-    force: boolean,
-    interactive: boolean
-  ): Promise<TResult | null> {
-    const { drift, unrestorable } = await leaf.collectDrift();
-    if (drift.length === 0 && unrestorable.length === 0) return null;
-
-    const restored: string[] = [];
-    const kept: string[] = [];
-
-    for (const entry of drift) {
-      const skip = await this.resolveDecision.execute({
-        relativePath: entry.relativePath,
-        reason: entry.reason,
-        force,
-        interactive,
-      });
-      if (skip) {
-        kept.push(entry.relativePath);
-        continue;
-      }
-      await leaf.restore(entry);
-      restored.push(entry.relativePath);
+  for (const entry of drift) {
+    const skip = await resolveRestoreDecision(prompter, {
+      relativePath: entry.relativePath,
+      reason: entry.reason,
+      force,
+      interactive,
+    });
+    if (skip) {
+      kept.push(entry.relativePath);
+      continue;
     }
-
-    return leaf.buildResult(
-      restored,
-      kept,
-      unrestorable.map((entry) => entry.relativePath)
-    );
+    await leaf.restore(entry);
+    restored.push(entry.relativePath);
   }
+
+  return leaf.buildResult(
+    restored,
+    kept,
+    unrestorable.map((entry) => entry.relativePath)
+  );
 }

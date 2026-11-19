@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RestoreRegularFiles } from "../../../../../src/contexts/installation/application/restore/restore-regular-files.js";
+import { restoreRegularFiles } from "../../../../../src/contexts/installation/application/restore/restore-regular-files.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
@@ -16,13 +16,13 @@ async function buildDeps() {
   return buildUnitDeps(PROJECT_ROOT);
 }
 
-describe("RestoreRegularFiles", () => {
+describe("restoreRegularFiles", () => {
   it("returns null when no manifest file has drifted", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "current content");
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("current content") }],
       distMap: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -36,7 +36,7 @@ describe("RestoreRegularFiles", () => {
 
   it("restores a file deleted from disk, without prompting, even without force", async () => {
     const deps = await buildDeps();
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distMap = new Map([
       [
         "a.md",
@@ -48,7 +48,7 @@ describe("RestoreRegularFiles", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -68,7 +68,7 @@ describe("RestoreRegularFiles", () => {
   it("throws InputRequiredError for a modified file when force=false and interactive=false, without writing", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distMap = new Map([
       [
         "a.md",
@@ -81,7 +81,7 @@ describe("RestoreRegularFiles", () => {
     ]);
 
     await expect(
-      useCase.execute({
+      restoreRegularFiles(deps.fs, prompter, {
         manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
         distMap,
         projectRoot: PROJECT_ROOT,
@@ -97,7 +97,7 @@ describe("RestoreRegularFiles", () => {
   it("overwrites a modified file when force=true without prompting", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distMap = new Map([
       [
         "a.md",
@@ -109,7 +109,7 @@ describe("RestoreRegularFiles", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -125,7 +125,7 @@ describe("RestoreRegularFiles", () => {
   it("keeps a modified file when interactive=true and the prompter chooses keep", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
-    const useCase = new RestoreRegularFiles(deps.fs, new KeepPrompter());
+    const prompter = new KeepPrompter();
     const originalHash = FileHash.of("original content");
     const distMap = new Map([
       [
@@ -138,7 +138,7 @@ describe("RestoreRegularFiles", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: originalHash }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -157,7 +157,7 @@ describe("RestoreRegularFiles", () => {
   it("overwrites a modified file when interactive=true and the prompter chooses overwrite", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distMap = new Map([
       [
         "a.md",
@@ -169,7 +169,7 @@ describe("RestoreRegularFiles", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -185,7 +185,7 @@ describe("RestoreRegularFiles", () => {
   it("excludes files that fail the fileFilter predicate from drift collection entirely", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distMap = new Map([
       [
         "a.md",
@@ -205,7 +205,7 @@ describe("RestoreRegularFiles", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [
         { relativePath: "a.md", hash: FileHash.of("original a") },
         { relativePath: "b.md", hash: FileHash.of("original b") },
@@ -230,7 +230,7 @@ describe("RestoreRegularFiles", () => {
       ScriptedPrompter.answer.conflict("overwrite"),
       ScriptedPrompter.answer.conflict("keep"),
     ]);
-    const useCase = new RestoreRegularFiles(deps.fs, prompter);
+
     const distMap = new Map([
       [
         "a.md",
@@ -250,7 +250,7 @@ describe("RestoreRegularFiles", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [
         { relativePath: "a.md", hash: FileHash.of("original a") },
         { relativePath: "b.md", hash: FileHash.of("original b") },
@@ -270,9 +270,9 @@ describe("RestoreRegularFiles", () => {
 
   it("reports a deleted file with no corresponding dist entry as unrestorable, without touching disk", async () => {
     const deps = await buildDeps();
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -290,9 +290,9 @@ describe("RestoreRegularFiles", () => {
   it("reports a modified file with no corresponding dist entry as unrestorable, without touching disk", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -308,10 +308,10 @@ describe("RestoreRegularFiles", () => {
   });
 });
 
-describe("RestoreRegularFiles — the files it hands back", () => {
+describe("restoreRegularFiles — the files it hands back", () => {
   it("hands back a restored file under its new hash and with no content", async () => {
     const deps = await buildDeps();
-    const useCase = new RestoreRegularFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distMap = new Map([
       [
         "a.md",
@@ -323,7 +323,7 @@ describe("RestoreRegularFiles — the files it hands back", () => {
       ],
     ]);
 
-    const result = await useCase.execute({
+    const result = await restoreRegularFiles(deps.fs, prompter, {
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,

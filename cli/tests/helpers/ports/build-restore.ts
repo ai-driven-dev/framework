@@ -4,8 +4,6 @@ import { ApplyPluginFiles } from "../../../src/contexts/installation/application
 import { GenerateToolDistribution } from "../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
 import { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
 import { RestoreAllPlugins } from "../../../src/contexts/installation/application/restore/restore-all-plugins.js";
-import { RestoreMergeFiles } from "../../../src/contexts/installation/application/restore/restore-merge-files.js";
-import { RestoreRegularFiles } from "../../../src/contexts/installation/application/restore/restore-regular-files.js";
 import { RestoreToolFiles } from "../../../src/contexts/installation/application/restore/restore-tool-files.js";
 import type { BuiltMaterializationDeps } from "../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
@@ -31,7 +29,7 @@ interface RestoreToolFilesParts {
   assetProvider?: AssetProvider;
 }
 
-/** A restore of one tool's files, its three collaborators built from the same ports. */
+/** A restore of one tool's files, built from the same ports. */
 export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFiles {
   const { fs, logger, prompter } = parts;
   return new RestoreToolFiles(
@@ -41,8 +39,8 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
       parts.platform ?? new FakePlatform("linux"),
       parts.assetProvider
     ),
-    new RestoreRegularFiles(fs, prompter),
-    new RestoreMergeFiles(fs, prompter),
+    fs,
+    prompter,
     logger,
     registeredTools()
   );

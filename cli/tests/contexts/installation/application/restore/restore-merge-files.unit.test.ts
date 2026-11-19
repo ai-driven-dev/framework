@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RestoreMergeFiles } from "../../../../../src/contexts/installation/application/restore/restore-merge-files.js";
+import { restoreMergeFiles } from "../../../../../src/contexts/installation/application/restore/restore-merge-files.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
@@ -17,14 +17,14 @@ async function buildDeps() {
   return buildUnitDeps(PROJECT_ROOT);
 }
 
-describe("RestoreMergeFiles", () => {
+describe("restoreMergeFiles", () => {
   it("returns null when no merge file has drifted", async () => {
     const deps = await buildDeps();
     const settingsPath = join(PROJECT_ROOT, "settings.json");
     await deps.fs.writeFile(settingsPath, JSON.stringify({ a: "1" }));
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -54,10 +54,10 @@ describe("RestoreMergeFiles", () => {
 
   it("recreates a merge file deleted from disk, without prompting, even without force", async () => {
     const deps = await buildDeps();
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distContent = JSON.stringify({ a: "framework-a" });
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -92,11 +92,11 @@ describe("RestoreMergeFiles", () => {
     const deps = await buildDeps();
     const settingsPath = join(PROJECT_ROOT, "settings.json");
     await deps.fs.writeFile(settingsPath, JSON.stringify({ a: "disk-modified" }));
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distContent = JSON.stringify({ a: "framework-a" });
 
     await expect(
-      useCase.execute({
+      restoreMergeFiles(deps.fs, prompter, {
         mergeFiles: [
           {
             relativePath: "settings.json",
@@ -129,10 +129,10 @@ describe("RestoreMergeFiles", () => {
     const deps = await buildDeps();
     const settingsPath = join(PROJECT_ROOT, "settings.json");
     await deps.fs.writeFile(settingsPath, JSON.stringify({ a: "disk-modified" }));
-    const useCase = new RestoreMergeFiles(deps.fs, new KeepPrompter());
+    const prompter = new KeepPrompter();
     const distContent = JSON.stringify({ a: "framework-a" });
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -166,14 +166,14 @@ describe("RestoreMergeFiles", () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.json"), JSON.stringify({ x: "disk" }));
     await deps.fs.writeFile(join(PROJECT_ROOT, "b.json"), JSON.stringify({ x: "disk" }));
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     const distContent = JSON.stringify({ x: "framework" });
     const mergeFiles: MergeFileEntry[] = [
       { relativePath: "a.json", sectionKey: null, entries: { x: FileHash.of('"orig"') } },
       { relativePath: "b.json", sectionKey: null, entries: { x: FileHash.of('"orig"') } },
     ];
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles,
       distMap: new Map([
         [
@@ -208,9 +208,9 @@ describe("RestoreMergeFiles", () => {
   it("reports a drifted merge file as unrestorable when the distribution strategy is 'none'", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.json"), JSON.stringify({ x: "disk" }));
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         { relativePath: "a.json", sectionKey: null, entries: { x: FileHash.of('"orig"') } },
       ],
@@ -241,9 +241,9 @@ describe("RestoreMergeFiles", () => {
     const deps = await buildDeps();
     const distContent = JSON.stringify({ x: "framework" });
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.json"), distContent);
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         {
           relativePath: "a.json",
@@ -279,11 +279,11 @@ describe("RestoreMergeFiles", () => {
       ScriptedPrompter.answer.conflict("overwrite"),
       ScriptedPrompter.answer.conflict("keep"),
     ]);
-    const useCase = new RestoreMergeFiles(deps.fs, prompter);
+
     const distContentA = JSON.stringify({ x: "framework-a" });
     const distContentB = JSON.stringify({ x: "framework-b" });
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         { relativePath: "a.json", sectionKey: null, entries: { x: FileHash.of('"orig-a"') } },
         { relativePath: "b.json", sectionKey: null, entries: { x: FileHash.of('"orig-b"') } },
@@ -328,12 +328,12 @@ describe("RestoreMergeFiles", () => {
       configPath,
       JSON.stringify({ toolPath: "/usr/local/old-tool", timeout: 30, sideNote: "keep-me" })
     );
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
     // The framework distribution only ever manages toolPath and timeout — sideNote
     // never appears in it, proving a merge restore cannot behave as a whole-file replace.
     const distContent = JSON.stringify({ toolPath: "/usr/local/new-tool", timeout: 30 });
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         {
           relativePath: "config.json",
@@ -371,7 +371,7 @@ describe("RestoreMergeFiles", () => {
   });
 });
 
-describe("RestoreMergeFiles — the entries it hands back", () => {
+describe("restoreMergeFiles — the entries it hands back", () => {
   const distContent = JSON.stringify({ a: "framework-a" });
 
   function distMapFor() {
@@ -390,9 +390,9 @@ describe("RestoreMergeFiles — the entries it hands back", () => {
 
   it("re-reads the entries of a restored merge file from what landed on disk", async () => {
     const deps = await buildDeps();
-    const useCase = new RestoreMergeFiles(deps.fs, new OverwritePrompter());
+    const prompter = new OverwritePrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -424,9 +424,9 @@ describe("RestoreMergeFiles — the entries it hands back", () => {
       sectionKey: null,
       entries: { a: FileHash.of(JSON.stringify("original-a")) },
     };
-    const useCase = new RestoreMergeFiles(deps.fs, new KeepPrompter());
+    const prompter = new KeepPrompter();
 
-    const result = await useCase.execute({
+    const result = await restoreMergeFiles(deps.fs, prompter, {
       mergeFiles: [tracked],
       distMap: distMapFor(),
       projectRoot: PROJECT_ROOT,

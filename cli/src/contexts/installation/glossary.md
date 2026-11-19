@@ -12,7 +12,7 @@ The language of the `installation` context. A name in the code means what this p
 | Init | Creating the manifest of a project that has none | `InitProject` |
 | Install | Writing a tool's agents, commands, rules, skills and config into a project and recording them | `InstallAgents`, `InstallCommands`, `InstallRules`, `InstallSkills`, `InstallConfig` |
 | Post-install pipeline | What runs after files are written: hooks, gitignore, the manifest save | `RunPostInstallPipeline` |
-| Restore | Writing again what the manifest says is installed, from the source, after it was deleted or changed | `Restore`, `RestoreToolFiles`, `RestoreMergeFiles` |
+| Restore | Writing again what the manifest says is installed, from the source, after it was deleted or changed | `Restore`, `RestoreToolFiles` |
 | Config artifact | A file of the canonical source a profile consumes to build a tool's config, named by a `ConfigRef` | `ConfigRef`, `configRefsOf` |
 | Drift | A tracked file whose content no longer matches its recorded hash | `DetectPluginDrift` |
 | Materialization | Turning a plugin's canonical content into the files of a tool, in marketplace or flat mode | `PluginTranslator`, `resolvePluginTranslator` |

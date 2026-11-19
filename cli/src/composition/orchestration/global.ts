@@ -15,8 +15,6 @@ import { RestoreGlobal } from "../../contexts/installation/application/restore/p
 import { RestoreTool } from "../../contexts/installation/application/restore/project/restore-tool.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.js";
 import { RestoreAllPlugins } from "../../contexts/installation/application/restore/restore-all-plugins.js";
-import { RestoreMergeFiles } from "../../contexts/installation/application/restore/restore-merge-files.js";
-import { RestoreRegularFiles } from "../../contexts/installation/application/restore/restore-regular-files.js";
 import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
 import { ReportAllStatus } from "../../orchestration/global/report-all-status.js";
@@ -96,8 +94,8 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
       platform,
       assetProvider
     ),
-    new RestoreRegularFiles(fs, prompter),
-    new RestoreMergeFiles(fs, prompter),
+    fs,
+    prompter,
     logger,
     base.tools
   );
