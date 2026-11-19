@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ProjectContext } from "../../../src/contexts/installation/contract/project-context.js";
+import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
 import {
   recommendAiTools,
   recommendIdeTools,
-} from "../../../src/contexts/tools/contract/tool-recommendations.js";
+} from "../../../../src/contexts/tools/contract/tool-recommendations.js";
 
 function ctx(over: Partial<ConstructorParameters<typeof ProjectContext>[0]> = {}) {
   return new ProjectContext({
@@ -13,7 +13,7 @@ function ctx(over: Partial<ConstructorParameters<typeof ProjectContext>[0]> = {}
   });
 }
 
-describe("setup-tools-prompt smart recommendations", () => {
+describe("tool recommendations", () => {
   describe("recommendAiTools", () => {
     it("defaults to claude when no context", () => {
       expect(recommendAiTools(undefined)).toEqual(["claude"]);

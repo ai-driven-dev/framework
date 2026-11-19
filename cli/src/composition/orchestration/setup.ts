@@ -12,8 +12,8 @@ import {
   type SetupQuestions,
   type SetupSteps,
 } from "../../orchestration/setup/run-setup.js";
+import { ChooseTools } from "../../orchestration/setup/steps/choose-tools.js";
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
-import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import type { Global } from "./global.js";
@@ -41,7 +41,7 @@ export function setupStepsOf(
 /** What a setup asks a person, answered by the prompts that own the questions. */
 export function setupQuestionsOf(
   plugins: Pick<SetupPluginsPromptUseCase, "execute">,
-  tools: Pick<SetupToolsPromptUseCase, "execute">
+  tools: Pick<ChooseTools, "execute">
 ): SetupQuestions {
   return {
     plugins: (options) => plugins.execute(options),
@@ -91,11 +91,11 @@ export function wireSetup(
     base.listMarketplaces,
     resolveMarketplaceUseCase
   );
-  const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter, base.tools);
+  const chooseTools = new ChooseTools(prompter, base.tools);
   const runSetup = new RunSetup(
     setupStepsOf(base, m, g),
-    setupQuestionsOf(setupPluginsPromptUseCase, setupToolsPromptUseCase),
+    setupQuestionsOf(setupPluginsPromptUseCase, chooseTools),
     new InitProject(fs, manifestRepo, inst.updateGitignore, base.tools)
   );
-  return { setupPluginsPromptUseCase, setupToolsPromptUseCase, runSetup };
+  return { setupPluginsPromptUseCase, chooseTools, runSetup };
 }

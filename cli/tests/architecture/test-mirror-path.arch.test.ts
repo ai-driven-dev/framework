@@ -101,7 +101,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.ts",
   "src/contexts/tools/contract/config-refs.ts",
   "src/contexts/tools/contract/tool-profile.ts",
-  "src/contexts/tools/contract/tool-recommendations.ts",
   "src/contexts/tools/domain/marketplace-entry.ts",
   "src/contexts/tools/domain/profile.ts",
   "src/contexts/tools/domain/profiles/claude/claude-agent.ts",

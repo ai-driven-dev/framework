@@ -54,7 +54,7 @@ describe("the catalog the deps wire", () => {
     listedA.mockClear();
     listedB.mockClear();
 
-    await setupA.setupToolsPromptUseCase.execute({ interactive: true, aiTools: [], ideTools: [] });
+    await setupA.chooseTools.execute({ interactive: true, aiTools: [], ideTools: [] });
 
     expect(listedA).toHaveBeenCalled();
     expect(listedB).not.toHaveBeenCalled();

@@ -22,10 +22,10 @@ import type { PluginInstallFromMarketplace } from "../../../src/orchestration/pl
 import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/install-global-plugins.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.js";
+import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import type { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
 import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
@@ -123,7 +123,7 @@ function makeRecordingUserSourceReferences(): UserSourceReferences & {
 }
 
 async function buildUseCase(
-  setupToolsPromptUseCase?: Pick<SetupToolsPromptUseCase, "execute">,
+  chooseTools?: Pick<ChooseTools, "execute">,
   userSourceReferences?: UserSourceReferences,
   logger?: Logger,
   options?: {
@@ -189,9 +189,9 @@ async function buildUseCase(
     {
       plugins: (promptOptions) => setupPluginsPromptUseCase.execute(promptOptions),
       tools:
-        setupToolsPromptUseCase === undefined
+        chooseTools === undefined
           ? undefined
-          : (promptOptions) => setupToolsPromptUseCase.execute(promptOptions),
+          : (promptOptions) => chooseTools.execute(promptOptions),
     }
   );
   return {

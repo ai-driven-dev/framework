@@ -142,6 +142,7 @@ src/
 │   ├── menu/
 │   ├── plugin/
 │   ├── setup/
+│   │   └── steps/
 │   └── sync/
 ├── presentation/    # everything that talks to a human
 │   ├── commands/

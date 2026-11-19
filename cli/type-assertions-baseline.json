@@ -232,7 +232,6 @@
   "tests/orchestration/global/report-all-status.unit.test.ts": 1,
   "tests/orchestration/global/restore-all.unit.test.ts": 2,
   "tests/orchestration/menu/interactive-menu.unit.test.ts": 4,
-  "tests/orchestration/setup/run-setup.unit.test.ts": 1,
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1,
   "tests/orchestration/sync/marketplace-sync-settings.unit.test.ts": 1,
   "tests/presentation/commands/antigravity-hooks.integration.test.ts": 2,

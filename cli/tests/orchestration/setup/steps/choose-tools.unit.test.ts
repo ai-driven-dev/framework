@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
-import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
+import { ChooseTools } from "../../../../src/orchestration/setup/steps/choose-tools.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { ScriptedPrompter } from "../../../shared/testing/scripted-prompter.js";
 
-describe("SetupToolsPromptUseCase", () => {
+describe("ChooseTools", () => {
   describe("non-interactive mode", () => {
     it("returns flow tools unchanged without prompting", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected
-      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
+      const useCase = new ChooseTools(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: false,
@@ -23,21 +23,21 @@ describe("SetupToolsPromptUseCase", () => {
   describe("interactive mode with tools already provided", () => {
     it("returns provided tools without prompting when flags given", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected
-      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
+      const useCase = new ChooseTools(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
-        aiTools: [TOOL.claude],
+        aiTools: [TOOL.cursor],
         ideTools: [],
       });
 
-      expect(result.aiTools).toEqual(["claude"]);
+      expect(result.aiTools).toEqual(["cursor"]);
       expect(result.ideTools).toEqual([]);
     });
 
     it("returns provided ide tools without prompting", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected
-      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
+      const useCase = new ChooseTools(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
@@ -56,7 +56,7 @@ describe("SetupToolsPromptUseCase", () => {
         ScriptedPrompter.answer.checkbox(["claude", "cursor"]),
         ScriptedPrompter.answer.checkbox(["vscode"]),
       ]);
-      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
+      const useCase = new ChooseTools(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,
@@ -73,7 +73,7 @@ describe("SetupToolsPromptUseCase", () => {
         ScriptedPrompter.answer.checkbox([]),
         ScriptedPrompter.answer.checkbox([]),
       ]);
-      const useCase = new SetupToolsPromptUseCase(prompter, registeredTools());
+      const useCase = new ChooseTools(prompter, registeredTools());
 
       const result = await useCase.execute({
         interactive: true,

@@ -1,11 +1,11 @@
-import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { ProjectContext } from "../../../contexts/installation/contract/project-context.js";
+import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import {
   recommendAiTools,
   recommendIdeTools,
-} from "../../contexts/tools/contract/tool-recommendations.js";
-import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
+} from "../../../contexts/tools/contract/tool-recommendations.js";
+import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
+import type { Prompter } from "../../../shared/ports/prompter.js";
 
 export interface SetupToolsPromptOptions {
   interactive: boolean;
@@ -19,7 +19,7 @@ export interface SetupToolsPromptResult {
   ideTools: readonly IdeToolId[];
 }
 
-export class SetupToolsPromptUseCase {
+export class ChooseTools {
   constructor(
     private readonly prompter: Prompter,
     private readonly tools: ToolCatalog
