@@ -30,8 +30,7 @@
  *
  * The base is the merge-base of `HEAD` with `ARCH_BASE_REF`, else with `origin/` and the branch a
  * pull request targets (`GITHUB_BASE_REF`), else with `origin/next`. A stacked branch names its
- * parent branch. Where git cannot give it the check is skipped, except in CI, where a missing
- * base fails.
+ * parent branch. Where git cannot give it, the check fails: a ratchet that skips is not one.
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -149,19 +148,19 @@ function verdicts(
 }
 
 /**
- * The problems of `head` against the lists of the base, or `null` to skip the comparison, which
- * happens only when `base` is `null` outside CI. Any defined `ci` counts as CI, and under CI a
- * missing base fails. A base list that cannot be sized fails.
+ * The problems of `head` against the lists of the base. A missing base fails, in CI and outside
+ * it, and so does a base list that cannot be sized.
  */
 function compareWithBase(
   head: ListSizes,
   base: ListSizes | null,
-  ci: string | undefined,
   ref: string,
   renamed: Renames = RENAMED_LISTS
-): string[] | null {
+): string[] {
   if (base === null)
-    return ci === undefined ? null : [`no merge-base with ${ref}: fetch its history`];
+    return [
+      `no merge-base with ${ref}: run \`git fetch origin\` or name another ref in ARCH_BASE_REF`,
+    ];
   const unsizedAtBase = unsized(base).map(
     (id) => `${id} is held at the base and the guard cannot size it`
   );
@@ -253,17 +252,15 @@ describe("tolerated lists only shrink", () => {
     expect(unsized(head), "a list the guard cannot size is a list it cannot hold").toEqual([]);
   });
 
-  it("holds no list longer, or gone, since the merge-base with the branch this one merges into", (context) => {
+  it("holds no list longer, or gone, since the merge-base with the branch this one merges into", () => {
     const ref = baseRef();
     const base = mergeBase(REPO_ROOT, ref);
     const problems = compareWithBase(
       head,
       base === null ? null : listsAtRevision(REPO_ROOT, base),
-      process.env.CI,
       ref
     );
-    if (problems === null) context.skip();
-    else expect(problems).toEqual([]);
+    expect(problems).toEqual([]);
   });
 });
 
@@ -336,13 +333,9 @@ describe("the guard itself", () => {
   describe("a base git does not give", () => {
     const head: ListSizes = new Map([["a.ts#A_BASELINE", 1]]);
 
-    it("skips outside CI", () => {
-      expect(compareWithBase(head, null, undefined, "origin/next")).toBeNull();
-    });
-
-    it.each(["true", "1", ""])("fails when CI is %j", (ci) => {
-      expect(compareWithBase(head, null, ci, "origin/next")).toEqual([
-        "no merge-base with origin/next: fetch its history",
+    it("fails, in CI or not", () => {
+      expect(compareWithBase(head, null, "origin/next")).toEqual([
+        "no merge-base with origin/next: run `git fetch origin` or name another ref in ARCH_BASE_REF",
       ]);
     });
   });
@@ -354,7 +347,7 @@ describe("the guard itself", () => {
       ["b.ts#B_BASELINE", 1],
     ]);
 
-    expect(compareWithBase(head, base, undefined, "origin/next")).toEqual([
+    expect(compareWithBase(head, base, "origin/next")).toEqual([
       "a.ts#A_BASELINE is held at the base and the guard cannot size it",
     ]);
   });
@@ -369,7 +362,7 @@ describe("the guard itself", () => {
       ]);
       const base: ListSizes = new Map([["a.ts#OLD_BASELINE", 2]]);
 
-      expect(compareWithBase(head, base, undefined, "x", renamed)).toEqual([
+      expect(compareWithBase(head, base, "x", renamed)).toEqual([
         "a.ts#OLD_BASELINE -> a.ts#NEW_BASELINE is stale: remove it from RENAMED_LISTS",
       ]);
     });
@@ -378,7 +371,7 @@ describe("the guard itself", () => {
       const head: ListSizes = new Map([["a.ts#NEW_BASELINE", 3]]);
       const base: ListSizes = new Map([["a.ts#OLD_BASELINE", 2]]);
 
-      expect(compareWithBase(head, base, undefined, "x", renamed)).toEqual([
+      expect(compareWithBase(head, base, "x", renamed)).toEqual([
         "a.ts#NEW_BASELINE went from 2 to 3 entries since the base: a tolerated list only shrinks",
       ]);
     });
@@ -387,12 +380,10 @@ describe("the guard itself", () => {
   it("compares the sized lists of the head with the base", () => {
     const base: ListSizes = new Map([["a.ts#A_BASELINE", 1]]);
 
-    expect(compareWithBase(new Map([["a.ts#A_BASELINE", 2]]), base, undefined, "x", {})).toEqual([
+    expect(compareWithBase(new Map([["a.ts#A_BASELINE", 2]]), base, "x", {})).toEqual([
       "a.ts#A_BASELINE went from 1 to 2 entries since the base: a tolerated list only shrinks",
     ]);
-    expect(compareWithBase(new Map([["a.ts#A_BASELINE", 1]]), base, undefined, "x", {})).toEqual(
-      []
-    );
+    expect(compareWithBase(new Map([["a.ts#A_BASELINE", 1]]), base, "x", {})).toEqual([]);
   });
 
   it("hands git no GIT_* variable of the process it runs in", () => {
