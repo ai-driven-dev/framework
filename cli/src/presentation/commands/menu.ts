@@ -3,6 +3,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { MenuDepsFactory } from "../deps.js";
 import { printBanner } from "../display/menu-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { exitWith } from "../exit.js";
 import { CLIOutput } from "../output.js";
 import { resolveProjectRoot } from "../project-root.js";
 import { InteractiveMenuUseCase } from "../prompts/menu-use-case.js";
@@ -26,7 +27,7 @@ export function isUserAbort(error: unknown): boolean {
 }
 
 export function routeMenuError(error: unknown, errorHandler: ErrorHandler): never {
-  if (isUserAbort(error)) process.exit(0);
+  if (isUserAbort(error)) exitWith(0);
   return errorHandler.handle(error);
 }
 
@@ -41,10 +42,10 @@ export async function runMenuLoop(
   for (;;) {
     try {
       const result = await new InteractiveMenuUseCase(manifestRepo, prompter, tools).execute();
-      if (result.command[0] === "exit") process.exit(0);
+      if (result.command[0] === "exit") exitWith(0);
       const exitCode = await spawnCliCommand(result.command);
       await waitForEnter();
-      if (exitCode !== 0 && result.command[0] === "setup") process.exit(exitCode);
+      if (exitCode !== 0 && result.command[0] === "setup") exitWith(exitCode);
     } catch (error) {
       routeMenuError(error, errorHandler);
     }

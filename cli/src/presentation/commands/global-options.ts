@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import { exitWith } from "../exit.js";
 import { CLIOutput } from "../output.js";
 
 export interface GlobalOptions {
@@ -36,5 +37,5 @@ export function parseScopeFlag(
 ): MarketplaceScope | undefined {
   if (raw === undefined || raw === "project" || raw === "user") return raw;
   output.error(`Invalid --scope "${raw}" — expected "project" or "user".`);
-  process.exit(1);
+  exitWith(1);
 }

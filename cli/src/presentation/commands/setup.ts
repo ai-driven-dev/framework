@@ -20,6 +20,7 @@ import {
 } from "../display/setup-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 
@@ -125,7 +126,7 @@ export function parseSourceFlag(
   if (cmdOptions.source === "local") {
     if (!cmdOptions.path) {
       output.error("--source local requires --path <dir>");
-      process.exit(1);
+      exitWith(1);
     }
     return localFrameworkSource(resolve(cmdOptions.path));
   }

@@ -38,6 +38,7 @@ import {
   printTelemetryStatus,
 } from "../display/telemetry-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -196,7 +197,7 @@ export function registerTelemetryCommand(
               ? await deps.telemetry.readTranscriptRetention.execute({ root: result.root })
               : undefined;
           printOnResult(output, result, retention);
-          if (result.status === "refused") process.exit(1);
+          if (result.status === "refused") exitWith(1);
         }
       );
     });
@@ -209,7 +210,7 @@ export function registerTelemetryCommand(
       await run(async (deps) => {
         const result = await deps.telemetry.disableTelemetry.execute({ cwd: projectRoot });
         printOffResult(output, result);
-        if (result.status === "refused") process.exit(1);
+        if (result.status === "refused") exitWith(1);
       });
     });
 
@@ -270,7 +271,7 @@ export function registerTelemetryCommand(
               by: cmdOptions.by,
             });
             printDeclareResult(output, result);
-            if (result.status === "refused") process.exit(1);
+            if (result.status === "refused") exitWith(1);
           }
         );
       }
@@ -355,7 +356,7 @@ export function registerTelemetryCommand(
               result.status === "ambiguous"
             ) {
               printUsageReport(output, result);
-              process.exit(1);
+              exitWith(1);
             }
             if (!cmdOptions.json) return printUsageReport(output, result);
             output.print(
@@ -390,7 +391,7 @@ export function registerTelemetryCommand(
                 : { action: "set", typed: id }
           );
           printIdentityResult(output, result);
-          if (result.status === "refused") process.exit(1);
+          if (result.status === "refused") exitWith(1);
         }
       );
     });

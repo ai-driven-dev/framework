@@ -14,6 +14,7 @@ import {
   printUserScopeTools,
 } from "../display/doctor-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
@@ -60,7 +61,7 @@ async function runFullDoctor(
     output.success("\nInstallation is healthy");
     return;
   }
-  process.exit(1);
+  exitWith(1);
 }
 
 async function runScopedDoctor(
@@ -106,7 +107,7 @@ async function runScopedDoctor(
     output.success("\nInstallation is healthy");
     return;
   }
-  process.exit(1);
+  exitWith(1);
 }
 
 /** A user-scope install writes nothing under any project, so the only check left is
@@ -160,7 +161,7 @@ async function runUserScopeDoctor(
     output.success("\nUser-scope installation is healthy");
     return;
   }
-  process.exit(1);
+  exitWith(1);
 }
 
 interface DoctorCmdOptions {

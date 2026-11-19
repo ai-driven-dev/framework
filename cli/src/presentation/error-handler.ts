@@ -1,3 +1,4 @@
+import { exitWith } from "./exit.js";
 import type { CLIOutput } from "./output.js";
 
 export class ErrorHandler {
@@ -5,6 +6,6 @@ export class ErrorHandler {
 
   handle(error: unknown): never {
     this.output.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    exitWith(1);
   }
 }

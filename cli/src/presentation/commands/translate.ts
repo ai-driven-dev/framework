@@ -9,6 +9,7 @@ import {
 import type { DepsSliceFactory } from "../deps.js";
 import { printTranslateResult } from "../display/translate-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -43,7 +44,7 @@ async function runTranslateCore(params: TranslateExecutionParams): Promise<void>
       params.output.error(
         `Unsupported target/mode combination: ${params.target} (${params.mode}).`
       );
-      process.exit(1);
+      exitWith(1);
     }
     const result = await useCase.execute({
       sourceDir: params.sourceDir,
@@ -91,7 +92,7 @@ export function registerTranslateCommand(
         output.error(
           `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`
         );
-        process.exit(1);
+        exitWith(1);
       }
       if (
         cmdOptions.as !== undefined &&
@@ -99,7 +100,7 @@ export function registerTranslateCommand(
         cmdOptions.as !== "flat"
       ) {
         output.error(`Invalid --as '${cmdOptions.as}'. Expected 'marketplace' or 'flat'.`);
-        process.exit(1);
+        exitWith(1);
       }
       const mode: FrameworkBuildMode = cmdOptions.as === "flat" ? "flat" : "marketplace";
 

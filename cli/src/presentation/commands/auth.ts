@@ -6,6 +6,7 @@ import type { Prompter } from "../../shared/ports/prompter.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -20,7 +21,7 @@ interface LoginOptions {
 
 function refuse(output: CLIOutput, message: string): void {
   output.error(message);
-  process.exit(1);
+  exitWith(1);
 }
 
 function refuseInvalidOptions(options: LoginOptions, output: CLIOutput): void {
