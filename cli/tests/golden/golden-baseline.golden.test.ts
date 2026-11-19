@@ -2,11 +2,12 @@
  * repository, a rate limit or a TTY. `translate` and `--help` have goldens of their own. */
 
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { createTestEnv, runCli } from "../e2e/helpers.js";
+import { expectGolden } from "./expect-golden.js";
 import { twoCaptures } from "./two-captures.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
@@ -387,18 +388,6 @@ describe.concurrent("Golden baseline — command matrix", () => {
   it("snapshot matches stored baseline (behavior-preserving gate)", async () => {
     const captured = await captures.first();
 
-    if (process.env.UPDATE_GOLDEN === "1") {
-      await mkdir(join(ROOT, "tests/golden/snapshots/phase0"), { recursive: true });
-      await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-      console.log(`Golden snapshot updated: ${SNAPSHOT_FILE}`);
-      return;
-    }
-
-    const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as CommandEntry[];
-    const storedNormalized = normalizeSnapshot(stored);
-
-    expect(JSON.stringify(captured, null, 2)).toStrictEqual(
-      JSON.stringify(storedNormalized, null, 2)
-    );
+    await expectGolden(SNAPSHOT_FILE, captured);
   });
 });
