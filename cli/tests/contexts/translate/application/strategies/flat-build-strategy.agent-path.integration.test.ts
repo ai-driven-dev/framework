@@ -104,6 +104,7 @@ describe("a hook or MCP command naming an agent lands on the file the agents bui
       "copilot",
       "cursor",
       "kilo",
+      "kiro",
       "opencode",
     ]);
   });

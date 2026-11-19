@@ -8,6 +8,7 @@ import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kiro/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
@@ -41,7 +42,7 @@ const registeredAiTools: [string, AiTool<unknown>][] = [
   isAiTool(config) ? [[id as string, config] as [string, AiTool<unknown>]] : []
 );
 
-const TOOLS_WITHOUT_A_NATIVE_MARKETPLACE: ReadonlySet<string> = new Set(["antigravity"]);
+const TOOLS_WITHOUT_A_NATIVE_MARKETPLACE: ReadonlySet<string> = new Set(["antigravity", "kiro"]);
 
 describe("AiTool contract conformance", () => {
   it("the registry actually contains tools (guards against a no-op suite)", () => {
@@ -303,6 +304,7 @@ describe("every tool says where its own installed rules live", () => {
     copilot: { directory: ".github/instructions/", extension: ".instructions.md" },
     cursor: { directory: ".cursor/rules/", extension: ".mdc" },
     kilo: { directory: ".kilo/rules/", extension: ".md" },
+    kiro: null,
     opencode: { directory: ".opencode/rules/", extension: ".md" },
   };
 

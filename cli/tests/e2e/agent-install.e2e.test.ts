@@ -22,6 +22,12 @@ const HOSTS = [
   { host: "cursor", dir: ".cursor/agents", ext: ".md", extra: (id: string) => ({ name: id }) },
   { host: "opencode", dir: ".opencode/agents", ext: ".md", extra: () => ({ mode: "subagent" }) },
   { host: "kilo", dir: ".kilo/agents", ext: ".md", extra: () => ({ mode: "subagent" }) },
+  {
+    host: "kiro",
+    dir: ".kiro/agents",
+    ext: ".json",
+    extra: (id: string) => ({ name: id, tools: ["*"] }),
+  },
 ] as const;
 
 describe.concurrent("E2E: the shipped agents, installed into each host", () => {
@@ -53,12 +59,20 @@ describe.concurrent("E2E: the shipped agents, installed into each host", () => {
                   ...rest,
                   body: developer_instructions,
                 }))(parseToml(content) as Record<string, unknown>)
-              : { ...parseFrontmatter(content).frontmatter, body: parseFrontmatter(content).body };
+              : host === "kiro"
+                ? (({ prompt, ...rest }) => ({ ...rest, body: prompt }))(
+                    JSON.parse(content) as Record<string, unknown>
+                  )
+                : {
+                    ...parseFrontmatter(content).frontmatter,
+                    body: parseFrontmatter(content).body,
+                  };
           expect(frontmatter, `${host} ${file}`).toStrictEqual({
             description: source.frontmatter.description,
             ...extra(id),
           });
-          expect(body, `${host} ${file}`).toBe(source.body);
+          // Kiro's JSON profile keeps the instructions as a trimmed `prompt` string.
+          expect(body, `${host} ${file}`).toBe(host === "kiro" ? source.body.trim() : source.body);
         }
       } finally {
         await cleanup();
