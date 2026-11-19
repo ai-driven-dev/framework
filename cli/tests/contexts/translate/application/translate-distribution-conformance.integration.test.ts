@@ -9,7 +9,7 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { buildTree } from "../testing/build-tree.js";
-import { translator } from "../testing/plugin-content-translator-kit.js";
+import { translator } from "../testing/engine-kit.js";
 
 const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");
 const OUT = resolve("/tmp/aidd-conformance-out").replaceAll("\\", "/");

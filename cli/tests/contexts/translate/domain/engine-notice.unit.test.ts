@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { translator } from "../testing/plugin-content-translator-kit.js";
+import { translator } from "../testing/engine-kit.js";
 import { codex, cursor, opencode } from "../testing/registered-profiles.js";
 
 const HOOKS_CONTENT = JSON.stringify({
@@ -26,7 +26,7 @@ function buildDist(hasHooks: boolean, name = "test-plugin"): PluginDistribution 
   });
 }
 
-describe("PluginContentTranslator hook trust notice", () => {
+describe("the engine hook trust notice", () => {
   it("names what Codex still requires when the plugin actually delivers a hook", () => {
     const result = translator.translateWithComponentPaths(buildDist(true), codex);
 

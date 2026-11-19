@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { translator } from "../testing/plugin-content-translator-kit.js";
+import { translator } from "../testing/engine-kit.js";
 import { cursor, opencode } from "../testing/registered-profiles.js";
 
 const HOOKS_CONTENT = JSON.stringify({
@@ -50,7 +50,7 @@ function buildDistWithHooks(name = "test-plugin"): PluginDistribution {
   });
 }
 
-describe("PluginContentTranslator skip list", () => {
+describe("the engine skip list", () => {
   describe("flat mode (opencode)", () => {
     it("returns empty skipped list when plugin has no hooks or mcp", () => {
       const dist = buildDistWithNoHooksMcp();

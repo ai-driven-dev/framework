@@ -116,7 +116,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/translate/application/shared-plugin-helpers.ts",
   "src/contexts/translate/contract/build-targets.ts",
   "src/contexts/translate/domain/canon-format.ts",
-  "src/contexts/translate/domain/engine.ts",
   "src/contexts/translate/domain/flat-layout.ts",
 ];
 

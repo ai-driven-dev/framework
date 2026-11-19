@@ -13,7 +13,7 @@ import {
   ruleContent,
   skillContent,
   translator,
-} from "../testing/plugin-content-translator-kit.js";
+} from "../testing/engine-kit.js";
 import {
   antigravity,
   claude,
@@ -24,7 +24,7 @@ import {
   vscode,
 } from "../testing/registered-profiles.js";
 
-describe("PluginContentTranslator.translate()", () => {
+describe("the engine translate()", () => {
   it.each([
     [
       "claude",

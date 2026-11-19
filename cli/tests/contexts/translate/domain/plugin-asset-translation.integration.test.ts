@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { translator } from "../testing/plugin-content-translator-kit.js";
+import { translator } from "../testing/engine-kit.js";
 import { claude, codex, copilot, cursor, kilo, opencode } from "../testing/registered-profiles.js";
 
 /**

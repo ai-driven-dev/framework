@@ -3,7 +3,7 @@ import { writeSkillTree } from "../../../../../src/contexts/translate/applicatio
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";
-import { CLAUDE_ROOT_TOKEN } from "../../testing/plugin-content-translator-kit.js";
+import { CLAUDE_ROOT_TOKEN } from "../../testing/engine-kit.js";
 
 const PLUGIN = "aidd-test";
 const PLUGIN_SRC = "/src/plugins/aidd-test";

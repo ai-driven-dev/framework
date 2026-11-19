@@ -3,8 +3,6 @@ import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
-import { nativePluginsStub } from "../testing/native-plugins-stub.js";
 import {
   distOf,
   hooksDist,
@@ -14,7 +12,9 @@ import {
   skillDist,
   translator,
   treeOf,
-} from "../testing/plugin-content-translator-kit.js";
+} from "../testing/engine-kit.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
+import { nativePluginsStub } from "../testing/native-plugins-stub.js";
 import { claude, codex, cursor, opencode, vscode } from "../testing/registered-profiles.js";
 import { unsupportedPluginsStub } from "../testing/unsupported-plugins-stub.js";
 

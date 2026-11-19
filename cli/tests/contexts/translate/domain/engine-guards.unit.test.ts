@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
-import { markdownSectionInstalling } from "../testing/markdown-section-stub.js";
-import { nativePluginsStub } from "../testing/native-plugins-stub.js";
 import {
   distOf,
   hooksDist,
@@ -13,7 +10,10 @@ import {
   skillDist,
   translator,
   treeOf,
-} from "../testing/plugin-content-translator-kit.js";
+} from "../testing/engine-kit.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
+import { markdownSectionInstalling } from "../testing/markdown-section-stub.js";
+import { nativePluginsStub } from "../testing/native-plugins-stub.js";
 import { claude, opencode, vscode } from "../testing/registered-profiles.js";
 import { syntheticToolProfile } from "../testing/synthetic-tool-profile.js";
 
