@@ -5,6 +5,7 @@ import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import { driftOf } from "../domain/manifest/drift.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ToolFootprint } from "../ports/tool-sections.js";
@@ -181,10 +182,10 @@ export class ReportStatus implements StatusQuery {
   ): FileDrift[] {
     const drifted: FileDrift[] = [];
     for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
-      const diskHash = diskEntries[key];
-      if (!diskHash) {
+      const verdict = driftOf(manifestHash.value, diskEntries[key] ?? null);
+      if (verdict === "missing") {
         drifted.push({ relativePath: `${mergeFile.relativePath} > ${key}`, status: "deleted" });
-      } else if (!diskHash.equals(manifestHash)) {
+      } else if (verdict === "modified") {
         drifted.push({ relativePath: `${mergeFile.relativePath} > ${key}`, status: "modified" });
       }
     }
@@ -198,13 +199,14 @@ export class ReportStatus implements StatusQuery {
     const drifted: FileDrift[] = [];
     for (const file of files) {
       const fullPath = join(projectRoot, file.relativePath);
-      if (!(await this.fs.fileExists(fullPath))) {
+      const onDisk = (await this.fs.fileExists(fullPath))
+        ? await this.fs.readFileHash(fullPath)
+        : null;
+      const verdict = driftOf(file.hash.value, onDisk);
+      if (verdict === "missing") {
         drifted.push({ relativePath: file.relativePath, status: "deleted" });
-      } else {
-        const diskHash = await this.fs.readFileHash(fullPath);
-        if (!diskHash.equals(file.hash)) {
-          drifted.push({ relativePath: file.relativePath, status: "modified" });
-        }
+      } else if (verdict === "modified") {
+        drifted.push({ relativePath: file.relativePath, status: "modified" });
       }
     }
     return drifted;

@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { CheckInstallationCommand } from "./check-installation-command.js";
 import type { LoadManifest } from "./load-manifest.js";
 
@@ -46,14 +47,14 @@ export class CheckMergeFiles {
     const diskEntries = extractMergeEntries(content, mergeFile.sectionKey);
     const issues: DoctorIssue[] = [];
     for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
-      const diskHash = diskEntries[key];
-      if (!diskHash) {
+      const verdict = driftOf(manifestHash.value, diskEntries[key] ?? null);
+      if (verdict === "missing") {
         issues.push({
           severity: "error",
           message: `Missing key in ${mergeFile.relativePath} > ${key}`,
           fix: `Run \`aidd sync --force\` to restore managed keys.`,
         });
-      } else if (!diskHash.equals(manifestHash)) {
+      } else if (verdict === "modified") {
         issues.push({
           severity: "warning",
           message: `Modified key in ${mergeFile.relativePath} > ${key}`,

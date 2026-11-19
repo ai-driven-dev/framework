@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { CheckInstallationCommand } from "./check-installation-command.js";
 import type { LoadManifest } from "./load-manifest.js";
@@ -64,7 +65,7 @@ export class CheckTrackedFiles {
         const fullPath = join(projectRoot, file.relativePath);
         if (!(await this.fs.fileExists(fullPath))) continue;
         const diskHash = await this.fs.readFileHash(fullPath);
-        if (!diskHash.equals(file.hash)) {
+        if (driftOf(file.hash.value, diskHash) === "modified") {
           issues.push({
             severity: "warning",
             message: `Modified tracked file: ${file.relativePath}`,
