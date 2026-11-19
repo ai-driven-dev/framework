@@ -9,13 +9,15 @@
  *
  * Always whole-tree — the hook's glob decides only whether this runs, never what it reads —
  * because a path dies when the file it names is deleted, in a commit that touches no page.
- * `cli/` carries its own ratchet (cli/tests/architecture/referenced-paths.arch.test.ts).
+ * `cli/` is checked the same way, but its prose cites paths relative to the package, so it has
+ * its own anchors and resolution (see CLI_CITED_PATH).
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
+const CLI_ROOT = path.join(ROOT, "cli");
 
 /** Prose this repository owns and can keep true. */
 const SCANNED = ["docs", "aidd_docs/memory"];
@@ -35,6 +37,31 @@ function topLevelEntries() {
  * this repository tracks `.agents/` for its own skills only.
  */
 const READER_CREATED = new Set([".aidd/config.json", ".agents/hooks.json"]);
+
+/** Where `cli/` prose instructs a reader; a finished plan under `aidd_docs/tasks/` is a record,
+ * and holding it true would forbid ever moving a file. */
+const CLI_SCANNED = [
+  ".claude/rules",
+  ".claude/skills",
+  "aidd_docs/memory",
+  "ARCHITECTURE.md",
+  "README.md",
+  "vitest.config.ts",
+  "knip.json",
+  "tsup.config.ts",
+  "stryker.conf.json",
+];
+
+const FENCED_BLOCK = /```[\s\S]*?```/g;
+
+/**
+ * A `cli/` citation is rooted at the package (`src/…`, `tests/…`) or written relative to `src/`,
+ * naming a top-level area (`shared/…`, `contexts/…`). A bare `application/` or `domain/` is not
+ * matched: `application/json` is a media type. A name continuing a longer path
+ * (an `application/` prefix before `shared/`) or a hyphenated folder (`cli-contexts/`) is not an area.
+ */
+const CLI_CITED_PATH =
+  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|(?<!-)\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
 
 const BACKTICKED = /`([^`\n]+)`/gu;
 
@@ -81,6 +108,46 @@ function deadReferences(files) {
   return dead;
 }
 
+function cliCitations(content) {
+  const prose = content.replace(FENCED_BLOCK, "");
+  return [...new Set(prose.match(CLI_CITED_PATH) ?? [])]
+    .map((cited) => cited.replace(/[./]+$/, ""))
+    .filter((cited) => cited.includes("/"));
+}
+
+/** A `.js` specifier names a `.ts` file in ESM output. */
+function cliPathExists(cliRoot, relativePath) {
+  const exists = (candidate) => fs.existsSync(path.join(cliRoot, candidate));
+  return exists(relativePath) || (relativePath.endsWith(".js") && exists(relativePath.replace(/\.js$/, ".ts")));
+}
+
+function deadCliReferences(files, cliRoot = CLI_ROOT) {
+  const dead = [];
+
+  for (const file of files) {
+    const content = fs.readFileSync(file, "utf8");
+    for (const target of cliCitations(content)) {
+      const resolved = target.startsWith("src/") || target.startsWith("tests/") ? target : `src/${target}`;
+      if (!cliPathExists(cliRoot, resolved)) dead.push({ file, target });
+    }
+  }
+
+  return dead;
+}
+
+function cliFiles(cliRoot = CLI_ROOT, sources = CLI_SCANNED) {
+  return sources.flatMap((source) => {
+    const absolute = path.join(cliRoot, source);
+    if (fs.statSync(absolute).isDirectory()) {
+      return fs
+        .readdirSync(absolute, { withFileTypes: true, recursive: true })
+        .filter((entry) => entry.isFile())
+        .map((entry) => path.join(entry.parentPath ?? entry.path, entry.name));
+    }
+    return [absolute];
+  });
+}
+
 function markdownUnder(dir) {
   const absolute = path.resolve(ROOT, dir);
   if (!fs.existsSync(absolute)) return [];
@@ -102,7 +169,11 @@ function scannedFiles() {
 
 function scanRepository() {
   const files = scannedFiles();
-  return { scannedFiles: files.length, dead: deadReferences(files) };
+  const cli = cliFiles();
+  return {
+    scannedFiles: files.length + cli.length,
+    dead: [...deadReferences(files), ...deadCliReferences(cli)],
+  };
 }
 
 function run(logger = console.error, successLogger = console.log) {
@@ -115,12 +186,12 @@ function run(logger = console.error, successLogger = console.log) {
 
   logger(`❌ ${dead.length} referenced path(s) naming nothing on disk`);
   for (const { file, line, target } of dead) {
-    logger(`  ${path.relative(ROOT, file)}:${line}  ${target}`);
+    logger(`  ${path.relative(ROOT, file)}${line ? `:${line}` : ""}  ${target}`);
   }
   return 1;
 }
 
-module.exports = { deadReferences, referencedPaths, scanRepository, run };
+module.exports = { cliFiles, deadCliReferences, deadReferences, referencedPaths, scanRepository, run };
 
 if (require.main === module) {
   process.exit(run());

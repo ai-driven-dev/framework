@@ -4,6 +4,8 @@ const path = require("node:path");
 const test = require("node:test");
 
 const {
+  cliFiles,
+  deadCliReferences,
   deadReferences,
   referencedPaths,
 } = require("../check-referenced-paths.js");
@@ -71,6 +73,50 @@ test("deadReferences names the file, the line and the path", () => {
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test("deadCliReferences resolves a cli citation against the package and ignores a fenced example", () => {
+  const cliRoot = fs.mkdtempSync(path.join(root, "scripts/__tests__/.tmp-check-referenced-paths-cli-"));
+
+  try {
+    // Assembled, never written out: the comment guard reads every source file for a path.
+    const cite = (...parts) => parts.join("/");
+    const alive = cite("src", "alive.ts");
+    const deadRooted = cite("src", "gone.ts");
+    const deadRelative = cite("contexts", "gone.ts");
+    const deadShared = cite("shared", "gone.ts");
+    const longerPath = cite("application", "shared", "x.ts");
+    const hyphenated = cite(".claude", "rules", "cli-contexts", "gone.md");
+    fs.mkdirSync(path.join(cliRoot, "src"), { recursive: true });
+    fs.writeFileSync(path.join(cliRoot, alive), "");
+    const page = path.join(cliRoot, "rule.md");
+    fs.writeFileSync(
+      page,
+      [
+        `Alive, as ESM names it: \`${alive.replace(".ts", ".js")}\`.`,
+        `Dead: \`${deadRooted}\`.`,
+        `Dead, written relative to src: \`${deadRelative}\`.`,
+        `Dead, under shared: \`${deadShared}\`.`,
+        `A longer path holding shared: \`${longerPath}\`.`,
+        `A hyphenated folder holding contexts: \`${hyphenated}\`.`,
+        "```ts",
+        `// ${cite("src", "invented.ts")}`,
+        "```",
+        "",
+      ].join("\n")
+    );
+
+    assert.deepEqual(
+      deadCliReferences([page], cliRoot).map((d) => d.target),
+      [deadRooted, deadRelative, deadShared]
+    );
+  } finally {
+    fs.rmSync(cliRoot, { recursive: true, force: true });
+  }
+});
+
+test("cliFiles throws on a source that is not there instead of skipping it", () => {
+  assert.throws(() => cliFiles(root, ["a-source-this-repository-does-not-hold"]), { code: "ENOENT" });
 });
 
 test("the repository's own prose names no path that does not exist", () => {
