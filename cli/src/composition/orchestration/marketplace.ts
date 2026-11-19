@@ -26,6 +26,7 @@ import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/applic
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.js";
+import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove-registered-marketplace.js";
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user-marketplace.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
@@ -130,9 +131,11 @@ export function wireMarketplace(base: Base, inst: Installation) {
     resolveHomeDir()
   );
   const addMarketplace = new AddMarketplace(
-    listMarketplaces,
-    marketplaceRemoveUseCase,
-    userMarketplaceRemoveUseCase,
+    new RemoveRegisteredMarketplace(
+      listMarketplaces,
+      marketplaceRemoveUseCase,
+      userMarketplaceRemoveUseCase
+    ),
     wireAddMarketplace(
       { marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase },
       prompter
