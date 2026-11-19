@@ -1,12 +1,12 @@
 import readline from "node:readline";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { BuildMenu } from "../../orchestration/menu/build-menu.js";
 import type { MenuDepsFactory } from "../deps.js";
 import { printBanner } from "../display/menu-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import { CLIOutput } from "../output.js";
 import { resolveProjectRoot } from "../project-root.js";
-import { InteractiveMenuUseCase } from "../prompts/menu-use-case.js";
 import { spawnCliCommand } from "../terminal/child-command.js";
 
 async function waitForEnter(): Promise<void> {
@@ -40,7 +40,7 @@ export async function runMenuLoop(
   const { projectSetup, prompter } = createMenuDeps(resolveProjectRoot());
   for (;;) {
     try {
-      const result = await new InteractiveMenuUseCase(projectSetup, prompter, tools).execute();
+      const result = await new BuildMenu(projectSetup, prompter, tools).execute();
       if (result.command[0] === "exit") exitWith(0);
       const exitCode = await spawnCliCommand(result.command);
       await waitForEnter();

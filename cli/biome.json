@@ -4760,8 +4760,7 @@
         "!src/presentation/commands/marketplace.ts",
         "!src/presentation/commands/plugin.ts",
         "!src/presentation/commands/setup.ts",
-        "!src/presentation/commands/tool-config.ts",
-        "!src/presentation/prompts/menu-use-case.ts"
+        "!src/presentation/commands/tool-config.ts"
       ],
       "linter": {
         "rules": {

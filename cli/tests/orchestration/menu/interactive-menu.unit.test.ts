@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ProjectSetupState } from "../../../src/contexts/installation/contract/project-setup-state.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { InteractiveMenuUseCase } from "../../../src/presentation/prompts/menu-use-case.js";
+import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
@@ -57,11 +57,7 @@ describe("interactive menu", () => {
         checkbox: vi.fn(),
       };
 
-      const result = await new InteractiveMenuUseCase(
-        setUp(false),
-        prompter,
-        catalogOf()
-      ).execute();
+      const result = await new BuildMenu(setUp(false), prompter, catalogOf()).execute();
 
       expect(result.command).toEqual(["setup"]);
       expect(confirmMock).toHaveBeenCalledWith("AIDD not initialized. Run setup now?", true);
@@ -77,11 +73,7 @@ describe("interactive menu", () => {
         checkbox: vi.fn(),
       };
 
-      const result = await new InteractiveMenuUseCase(
-        setUp(false),
-        prompter,
-        catalogOf()
-      ).execute();
+      const result = await new BuildMenu(setUp(false), prompter, catalogOf()).execute();
 
       expect(result.command).toEqual(["exit"]);
     });
@@ -96,7 +88,7 @@ describe("interactive menu", () => {
         select: selectMock,
         checkbox: vi.fn(),
       };
-      await new InteractiveMenuUseCase(setUp(false), prompter, catalogOf()).execute();
+      await new BuildMenu(setUp(false), prompter, catalogOf()).execute();
       expect(selectMock).not.toHaveBeenCalled();
     });
   });
@@ -105,7 +97,7 @@ describe("interactive menu", () => {
     it("groups commands by usage area", async () => {
       const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
 
-      await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
       const values = (selectMock.mock.calls[0][1] as SelectChoice[]).map((c) => c.value);
       expect(values).toContain("inspect");
@@ -120,7 +112,7 @@ describe("interactive menu", () => {
     it("each group has a description to guide the user", async () => {
       const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
 
-      await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
       const choices = selectMock.mock.calls[0][1] as Array<{ value: string; description?: string }>;
       const groupsWithDescription = choices.filter((c) => c.value !== "exit" && c.description);
@@ -129,38 +121,38 @@ describe("interactive menu", () => {
 
     it("doctor is reachable from the inspect group", async () => {
       const { prompter } = makeQueuedPrompter(["inspect", "doctor"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["doctor"]);
     });
 
     it("framework install is reachable from the manage-tools group", async () => {
       const { prompter } = makeQueuedPrompter(["manage-tools", "framework-install"], ["claude"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["framework", "install", "--tool", "claude"]);
     });
 
     it("framework update (all) is reachable from the maintain group", async () => {
       const { prompter } = makeQueuedPrompter(["maintain", "framework-update-maintain"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["framework", "update"]);
     });
 
     it("CLI update is reachable from the system group", async () => {
       const { prompter } = makeQueuedPrompter(["system", "self-update"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["update"]);
     });
 
     it("exit is available directly from a group submenu", async () => {
       const { prompter, selectMock } = makeQueuedPrompter(["inspect", "exit"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["exit"]);
       expect(selectMock).toHaveBeenCalledTimes(2);
     });
 
     it("going back from a group returns to the main menu", async () => {
       const { prompter, selectMock } = makeQueuedPrompter(["inspect", "back", "exit"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["exit"]);
       expect(selectMock).toHaveBeenCalledTimes(3);
     });
@@ -180,14 +172,14 @@ describe("interactive menu", () => {
         select: selectMock,
         checkbox: vi.fn(),
       };
-      await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(allValues).not.toContain("adopt");
       expect(allValues).not.toContain("init");
     });
 
     it("always returns to root after a command (no breadcrumb saved)", async () => {
       const { prompter } = makeQueuedPrompter(["inspect", "doctor"]);
-      const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+      const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["doctor"]);
       expect("returnTo" in result).toBe(false);
     });
@@ -202,7 +194,7 @@ const BACK_AND_EXIT = [
 async function choicesAt(path: string[]): Promise<[string, unknown]> {
   const { prompter, selectMock } = makeQueuedPrompter([...path, "exit"]);
 
-  await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+  await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
   const call = selectMock.mock.calls[path.length];
   return [call[0] as string, call[1]];
@@ -425,7 +417,7 @@ describe("interactive menu — the command each pick hands over", () => {
   async function commandFor(path: string[], input?: string): Promise<string[]> {
     const { prompter } = makeQueuedPrompter(path, input === undefined ? [] : [input]);
 
-    const result = await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+    const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
     return result.command;
   }
@@ -525,7 +517,7 @@ describe("interactive menu — the command each pick hands over", () => {
   ])("asks %j for its argument by name: %s", async (path, question) => {
     const { prompter, inputMock } = makeQueuedPrompter(path, ["x"]);
 
-    await new InteractiveMenuUseCase(setUp(true), prompter, catalogOf()).execute();
+    await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
     expect(inputMock).toHaveBeenCalledWith(question);
   });

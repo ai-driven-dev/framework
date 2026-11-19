@@ -139,6 +139,7 @@ src/
 │   ├── doctor/
 │   ├── global/
 │   ├── marketplace/
+│   ├── menu/
 │   ├── plugin/
 │   ├── setup/
 │   └── sync/
