@@ -65,7 +65,7 @@ The main session and the agents run on the IDE's model unless you pick a provide
 ```bash
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
 aidd setup --ide opencode --provider none      # back to the IDE's model
-aidd setup --global --ide codex,opencode --plugins all --provider openai   # every project
+aidd setup --global --ide codex,opencode --plugins all --provider openai --agents-only   # preserve the main session
 ```
 
 | Tier | Runs | openai | anthropic | mistral |
@@ -76,10 +76,11 @@ aidd setup --global --ide codex,opencode --plugins all --provider openai   # eve
 
 Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused. The mapping lives in [`agent-models.json`](../cli/src/contexts/tools/domain/formats/models/agent-models.json).
 
+- `--agents-only` requires `--provider` and leaves main-session settings and their saved restore state untouched, including with `--provider none`.
 - The provider holds for the whole machine: other projects get it at their next install; to update the agents they already have, run `aidd setup --ide … --provider …` there, `none` included.
 - Nothing changes until the install has succeeded.
 - The main session's model is written in the IDE's own user settings, so it changes every project on the machine: Claude Code's `settings.json` (under `CLAUDE_CONFIG_DIR` when set) and OpenCode's `~/.config/opencode/opencode.jsonc`, or `opencode.json` when only that one is there. `--provider none` restores what it replaced and the file's comments stay. A `model` in a project's own settings still wins. Codex, Copilot, Cursor and Kilo keep the model picked in the IDE.
-- Effort: smart runs at `high`, the others at `medium`. Mistral Small takes no effort between `none` and `high`, so the light tier runs at `high`.
+- Effort: subagents run at `high`; the main session stays at `medium` when managed by AIDD.
 - The command ends with a report: per IDE, the model of the main session and of each agent, and the plugins it updated.
 
 ## 🚧 Limits

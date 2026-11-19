@@ -261,7 +261,7 @@ describe("native catalogue source provenance", () => {
       expect(f.activator.addedMarketplaces).toEqual([`/built/${toolId}`]);
       expect(f.activator.enabledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.activator.upgradeCount).toBe(1);
+      expect(f.activator.upgradeCount).toBe(toolId === "codex" ? 0 : 1);
       expect(f.fs.getFile("/foreign/cache/marker.json")).toBe("foreign bytes");
     }
   );

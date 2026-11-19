@@ -66,6 +66,25 @@ Fork the repository, or branch from it if you have write access.
 | `make check-hosts` | Tables what each installed tool really loads of the plugins |
 | `make check` | Runs the pre-commit checks |
 
+### Reload flow
+
+`make reload` builds the checkout's CLI, then runs from your home directory for each detected tool:
+
+```text
+setup --global --source local --path <checkout> --ide <tool> --plugins all --yes
+  Claude:           --provider anthropic --agents-only
+  Codex / OpenCode: --provider openai --agents-only
+→ Claude / Codex: refresh native plugin copies, repeat setup without --provider
+→ doctor --global --tool <tool>
+→ sync the managed Agents instruction section
+```
+
+The CLI owns installation and model generation. Explorer, executor and validator use Haiku/high on Claude and Luna/high on Codex and OpenCode. Reviewer keeps its smart/high profile; main-session settings stay untouched. Other detected tools retain their saved provider. A managed OpenCode installation uses its existing reload helper.
+
+Commands and model/plugin details appear as they run, followed by one result per tool: `OK`, `WARN` or `FAIL` (`DELEGATED` for managed OpenCode). Any warning or failure exits nonzero; fix the reported cause and rerun. `OK` covers the CLI installation and registration checks, not a live agent session; restart your tools to load the changes.
+
+Native copies are released only after setup succeeds. A later failure has no automatic rollback. Manually changed owned files remain protected and can block installation; reload reports the conflict instead of overwriting them.
+
 ## 3. The rules
 
 | # | Rule |

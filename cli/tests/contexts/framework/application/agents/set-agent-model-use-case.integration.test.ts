@@ -94,6 +94,51 @@ describe("SetAgentModelUseCase", () => {
     expect(result.reinstalled).toStrictEqual(["aidd-orchestrator"]);
   });
 
+  it("refreshes user-scope agents without changing main settings or their saved ownership record", async () => {
+    const userManifest = Manifest.create();
+    userManifest.addTool("opencode", "1.0.0", []);
+    userManifest.addPlugin("opencode", plugin("user"));
+    const { fs, useCase, userUpdates, activations } = setup(undefined, userManifest, undefined);
+    fs.setFile(OPENCODE_SETTINGS, '{\n  "model": "personal/model"\n}\n');
+
+    await useCase.execute({
+      projectRoot: PROJECT,
+      hosts: ["opencode"],
+      provider: "anthropic",
+      scope: "project",
+    });
+    const mainSettings = fs.getFile(OPENCODE_SETTINGS);
+    const ownershipRecord = fs.getFile(`${CONFIG}/main-model.json`);
+
+    const result = await useCase.execute({
+      projectRoot: PROJECT,
+      hosts: ["opencode"],
+      provider: "mistral",
+      scope: "user",
+      agentsOnly: true,
+    });
+
+    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(
+      `${JSON.stringify({ opencode: "mistral" }, null, 2)}\n`
+    );
+    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(mainSettings);
+    expect(fs.getFile(`${CONFIG}/main-model.json`)).toBe(ownershipRecord);
+    expect(userUpdates).toHaveLength(2);
+    expect(userUpdates.at(-1)).toStrictEqual({
+      toolIds: ["opencode"],
+      projectRoot: PROJECT,
+      scope: "user",
+      rebuild: true,
+    });
+    expect(activations).toContainEqual({
+      projectRoot: PROJECT,
+      toolIds: ["opencode"],
+      scope: "user",
+      manifestRepo: expect.anything(),
+    });
+    expect(result).toStrictEqual({ reinstalled: [], changed: [], skipped: [] });
+  });
+
   it("sets the main session on its tier's model, and restores what it replaced once unset", async () => {
     const { fs, useCase } = setup();
     fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "mine"\n}\n');

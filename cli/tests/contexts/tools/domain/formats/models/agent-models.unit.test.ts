@@ -30,7 +30,7 @@ describe("withAgentModels()", () => {
     ).toBe(`name = "aidd-orchestrator-explorer"
 description = "Reviews the work"
 model = "gpt-6-luna"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "high"
 developer_instructions = "Review.\\n"
 `);
   });
@@ -60,7 +60,7 @@ Review.
 name: 'aidd-orchestrator-validator'
 description: 'Reviews the work'
 model: 'claude-haiku-5.5'
-reasoningEffort: 'medium'
+reasoningEffort: 'high'
 include-custom-instructions: true
 ---
 Review.
@@ -81,7 +81,7 @@ Review.
     ).toBe(`---
 description: 'Reviews the work'
 model: 'anthropic/claude-haiku-5-5'
-variant: 'medium'
+variant: 'high'
 mode: 'subagent'
 ---
 Review.

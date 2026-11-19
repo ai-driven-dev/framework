@@ -615,7 +615,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       )
         continue;
       stillProven.push(registration);
-      if (!addedHostNames.has(registration.hostName))
+      const localUpgradeUnsupported =
+        nativeActivationOf(toolId)?.upgradeLocalMarketplaces === false &&
+        proof.source?.kind === "effective-list" &&
+        proof.source.sourceType === "local";
+      if (!addedHostNames.has(registration.hostName) && !localUpgradeUnsupported)
         this.bestEffort(
           () => activator.upgradeMarketplaces(registration.hostName),
           `upgrade marketplace '${registration.hostName}'`,

@@ -42,6 +42,7 @@ function reportAgentModels(
   output: CLIOutput,
   provider: AgentProvider | undefined,
   hosts: readonly AgentHost[],
+  agentsOnly: boolean,
   main: {
     readonly reinstalled: readonly string[];
     readonly changed: readonly { readonly host: AgentHost; readonly path: string }[];
@@ -53,18 +54,26 @@ function reportAgentModels(
   }
 ): void {
   if (provider === undefined) {
-    output.success(`${hosts.join(", ")}: the agents run on the IDE's model again.`);
-    for (const { host, path } of main.changed)
-      output.info(`  ${host} main session: restored in ${path}`);
+    output.success(
+      agentsOnly
+        ? "Agents use the IDE's model again; main session unchanged."
+        : `${hosts.join(", ")}: the agents run on the IDE's model again.`
+    );
+    if (!agentsOnly) {
+      for (const { host, path } of main.changed)
+        output.info(`  ${host} main session: restored in ${path}`);
+    }
   } else {
-    output.success(`Models on ${provider}, for every project on this machine:`);
+    output.success(
+      `Models on ${provider}, for every project on this machine${agentsOnly ? "; main session unchanged" : ""}:`
+    );
     for (const host of hosts) {
       const skipped = main.skipped.some((entry) => entry.host === host);
       const written = main.changed.findLast((entry) => entry.host === host);
       const { model, effort } = tierModel(host, provider, AGENT_MODELS.main);
       const effortShown =
         AGENT_MODELS.hosts[host].main?.effortKey === undefined ? "" : ` (${effort})`;
-      if (!skipped) {
+      if (!agentsOnly && !skipped) {
         output.info(
           written === undefined
             ? `  ${host} main session: not managed by aidd, still the IDE's choice`
@@ -76,8 +85,10 @@ function reportAgentModels(
       }
     }
   }
-  for (const { host, path, reason } of main.skipped) {
-    output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
+  if (!agentsOnly) {
+    for (const { host, path, reason } of main.skipped) {
+      output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
+    }
   }
   output.info(
     main.reinstalled.length > 0
@@ -85,7 +96,7 @@ function reportAgentModels(
       : "Agents installed later get these models too."
   );
   output.info(
-    `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${hosts.join(",")} --provider ${provider ?? "none"}\` there.`
+    `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${hosts.join(",")} --provider ${provider ?? "none"}${agentsOnly ? " --agents-only" : ""}\` there.`
   );
 }
 
@@ -101,6 +112,7 @@ interface SetupCmdOptions {
   scope?: string;
   global?: boolean;
   provider?: string;
+  agentsOnly?: boolean;
 }
 
 export function parseSourceFlag(
@@ -212,6 +224,10 @@ export function registerSetupCommand(program: Command): void {
       "--provider <provider>",
       `Run each tool's main session and agents on this provider's model for their role (${agentProviders().join(", ")}), or none for the IDE's model`
     )
+    .option(
+      "--agents-only",
+      "Update agent models without changing main-session settings (requires --provider)"
+    )
     .addHelpText("after", globalSetupHelp)
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -222,6 +238,11 @@ export function registerSetupCommand(program: Command): void {
       const toolIds = parseToolIds(cmdOptions, errorHandler);
       if (toolIds === null) return;
 
+      if (cmdOptions.agentsOnly && cmdOptions.provider === undefined) {
+        output.error("--agents-only requires an explicit --provider (or --provider none)");
+        process.exit(1);
+      }
+
       const hasScriptingFlags = !!(
         cmdOptions.source ||
         cmdOptions.release ||
@@ -230,7 +251,8 @@ export function registerSetupCommand(program: Command): void {
         cmdOptions.plugins ||
         cmdOptions.yes ||
         cmdOptions.global ||
-        cmdOptions.provider
+        cmdOptions.provider ||
+        cmdOptions.agentsOnly
       );
       const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
@@ -302,8 +324,9 @@ export function registerSetupCommand(program: Command): void {
             hosts: agentHosts,
             provider,
             scope: scope ?? "project",
+            agentsOnly: cmdOptions.agentsOnly,
           });
-          reportAgentModels(output, chosen, agentHosts, models);
+          reportAgentModels(output, chosen, agentHosts, cmdOptions.agentsOnly === true, models);
         }
         if (interactive) printNextSteps(output, result.install.results.length > 0);
         reportSyncActivation(output, result.activation);

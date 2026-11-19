@@ -125,6 +125,7 @@ export const codex: AiTool<
       nativeActivation: {
         binary: "codex",
         upgradeVerb: "upgrade",
+        upgradeLocalMarketplaces: false,
         enableVerb: "add",
         disableVerb: "remove",
         // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the

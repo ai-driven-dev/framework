@@ -6,7 +6,10 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type {
+  NativeMarketplaceSource,
+  NativeMarketplaceSourceReader,
+} from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -158,7 +161,15 @@ function makeSync(
   return { useCase, fs, projectRepo, machineRepo, registry, activator, logger, hostCatalogBytes };
 }
 
-function canonicallyOwned(toolId: "codex" | "copilot"): Manifest {
+function canonicallyOwned(
+  toolId: "codex" | "copilot",
+  provenance: NativeMarketplaceSource = {
+    kind: "effective-list",
+    root: `/built/${toolId}`,
+    sourceType: "local",
+    source: `/built/${toolId}`,
+  }
+): Manifest {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
   machine.setNativeRegistrations(toolId, {
@@ -167,12 +178,7 @@ function canonicallyOwned(toolId: "codex" | "copilot"): Manifest {
       {
         alias: CATALOG,
         hostName: CATALOG,
-        provenance: {
-          kind: "effective-list",
-          root: `/built/${toolId}`,
-          sourceType: "local",
-          source: `/built/${toolId}`,
-        },
+        provenance,
       },
     ],
     pluginRefs: [],
@@ -185,6 +191,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
   it.each([
     "recovered proof",
     "recovered proof with a shared host alias",
+    "recovered nonlocal proof",
     "foreign source",
     "missing source",
     "foreign ref",
@@ -192,11 +199,24 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
   ] as const)(
     "preserves existing projections after an initial source-read refusal followed by %s",
     async (change) => {
-      const recovered = change.startsWith("recovered proof");
+      const recovered = change.startsWith("recovered");
+      const nonlocal = change === "recovered nonlocal proof";
       const sharedAlias = change === "recovered proof with a shared host alias";
-      const machine = canonicallyOwned(toolId);
+      const machine = canonicallyOwned(
+        toolId,
+        nonlocal
+          ? {
+              kind: "effective-list",
+              root: "/fake-home/.codex/plugins/marketplaces/aidd-framework",
+              sourceType: "github",
+              source: "https://github.com/owner/catalog.git",
+            }
+          : undefined
+      );
       const target = machine.getNativeRegistrations(toolId)?.marketplaces[0];
       if (target === undefined) throw new Error("fixture lacks canonical catalogue");
+      const targetSource = target.provenance;
+      if (targetSource === undefined) throw new Error("fixture lacks canonical source");
       const otherRef = sharedAlias ? `sibling-plugin@${CATALOG}` : "aidd-dev@other-catalog";
       const staleRef = `obsolete-plugin@${CATALOG}`;
       const otherRoot = sharedAlias ? `/built/${toolId}` : "/other";
@@ -227,12 +247,18 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
             return { location: "host catalogue list", unreadable: "transient permissions error" };
           if (change === "missing source")
             return { location: "host catalogue list", entries: new Map() };
-          const root = change === "foreign source" ? "/foreign/catalogue" : `/built/${toolId}`;
+          const source =
+            change === "foreign source"
+              ? {
+                  kind: "effective-list" as const,
+                  root: "/foreign/catalogue",
+                  sourceType: "local",
+                  source: "/foreign/catalogue",
+                }
+              : targetSource;
           return {
             location: "host catalogue list",
-            entries: new Map([
-              [CATALOG, { kind: "effective-list", root, sourceType: "local", source: root }],
-            ]),
+            entries: new Map([[CATALOG, source]]),
           };
         },
       };
@@ -292,7 +318,9 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       expect(f.activator.addedMarketplaces).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(f.activator.enabledPlugins).toEqual([]);
-      expect(f.activator.refreshedCatalogs).toEqual(recovered ? [CATALOG] : []);
+      expect(f.activator.refreshedCatalogs).toEqual(
+        recovered && (toolId !== "codex" || nonlocal) ? [CATALOG] : []
+      );
       expect(f.projectRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
         binary: toolId,
         marketplaces: [other, target],
@@ -355,7 +383,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
 
     await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(fixture.activator.refreshedCatalogs).toEqual([CATALOG]);
+    expect(fixture.activator.refreshedCatalogs).toEqual(toolId === "codex" ? [] : [CATALOG]);
     expect(fixture.activator.enabledPlugins).toEqual([PLUGIN_REF]);
     expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
     expect(await fixture.fs.readFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
@@ -409,7 +437,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
     expect(fixture.activator.enabledPlugins).toStrictEqual([]);
     expect(fixture.activator.addedMarketplaces).toStrictEqual([]);
     expect(fixture.activator.removedMarketplaces).toStrictEqual([]);
-    expect(fixture.activator.refreshedCatalogs).toStrictEqual([CATALOG]);
+    expect(fixture.activator.refreshedCatalogs).toStrictEqual(toolId === "codex" ? [] : [CATALOG]);
     expect(
       fixture.projectRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs
     ).toStrictEqual([PLUGIN_REF]);

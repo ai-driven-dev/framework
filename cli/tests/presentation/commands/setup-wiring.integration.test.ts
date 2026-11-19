@@ -183,6 +183,7 @@ describe("aidd setup — the agents' provider", () => {
       hosts: ["opencode"],
       provider: "mistral",
       scope: "project",
+      agentsOnly: undefined,
     });
     expect(setAgentModel.mock.invocationCallOrder[0]).toBeGreaterThan(
       resolveSourceIfNeeded.mock.invocationCallOrder[0]
@@ -233,6 +234,20 @@ describe("aidd setup — the agents' provider", () => {
     expect(lines).toContain(OTHER_PROJECTS("opencode", "none"));
   });
 
+  it("updates agents only and says the main session is unchanged, including with none", async () => {
+    const lines = await run("--ide", "opencode", "--provider", "none", "--agents-only");
+
+    expect(setAgentModel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hosts: ["opencode"],
+        provider: undefined,
+        agentsOnly: true,
+      })
+    );
+    expect(lines).toContain("Agents use the IDE's model again; main session unchanged.");
+    expect(lines.some((line) => line.includes("main session:"))).toBe(false);
+  });
+
   it("does not claim a main session it could not write, even after restoring its old file", async () => {
     setAgentModel.mockResolvedValue({
       reinstalled: [],
@@ -261,6 +276,7 @@ describe("aidd setup — the agents' provider", () => {
     [["--global", "--ide", "claude,vscode", "--provider", "anthropic"], "vscode"],
     [["--ide", "vscode", "--provider", "bogus"], 'Unknown provider "bogus"'],
     [["--ide", "vscode", "--provider", "openai"], "--provider needs --ide with a tool"],
+    [["--ide", "opencode", "--agents-only"], "--agents-only requires an explicit --provider"],
   ])("refuses %j before building or writing anything", async (args, message) => {
     vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
@@ -508,6 +524,10 @@ describe("aidd setup — the help surface", () => {
       [
         "--provider <provider>",
         "Run each tool's main session and agents on this provider's model for their role (openai, anthropic, mistral), or none for the IDE's model",
+      ],
+      [
+        "--agents-only",
+        "Update agent models without changing main-session settings (requires --provider)",
       ],
     ]);
     expect(
