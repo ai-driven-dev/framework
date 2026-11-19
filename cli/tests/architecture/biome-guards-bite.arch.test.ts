@@ -376,6 +376,7 @@ describe("the guard itself", () => {
       ["src/contexts/tools/infrastructure/reaches-shared.ts", "../../../"],
       ["src/presentation/display/reaches-shared.ts", "../../"],
       ["src/composition/reaches-shared.ts", "../"],
+      ["src/cli.ts", "./"],
     ] as const) {
       writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
     }
@@ -457,6 +458,12 @@ describe("the guard itself", () => {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
     expect(findings).not.toContain(`src/composition/reaches-shared.ts:${rule}`);
+  });
+
+  it("flags the entry point reaching shared/infrastructure, which the composition root wires for it", () => {
+    const findings = biomeFindings(planted);
+
+    expect(findings, findings.join(", ")).toContain("src/cli.ts:lint/style/noRestrictedImports");
   });
 
   it("flags a context nothing admits reaching auth, and auth reaching a context, and not distribution reaching auth", () => {

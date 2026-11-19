@@ -23,6 +23,11 @@ import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
 import { wireMachineClaims } from "./machine-claims.js";
 
+/** The version of the running binary, for the entry point that may not import infrastructure. */
+export function currentVersion(): string {
+  return new CurrentVersionAdapter().get();
+}
+
 /** The adapters and context wirings every area reads: the file system, the manifests, auth, host
  * registration and distribution. Built once per graph. */
 export function wireBase(

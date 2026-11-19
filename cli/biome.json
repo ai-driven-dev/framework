@@ -439,6 +439,26 @@
       }
     },
     {
+      "includes": ["src/cli.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/shared/infrastructure/**"],
+                    "message": "the entry point reads what the composition root wires: take the version from composition/shared.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/presentation/**/*.ts"],
       "linter": {
         "rules": {

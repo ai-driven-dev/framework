@@ -1,6 +1,7 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { bindCatalog, createMenuDeps as createCatalogMenuDeps } from "./composition/container.js";
+import { currentVersion } from "./composition/shared.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
@@ -19,13 +20,10 @@ import type { DepsFactory, MenuDepsFactory } from "./presentation/deps.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
-import { CurrentVersionAdapter } from "./shared/infrastructure/current-version-adapter.js";
 
 function formatVersion(version: string): string {
   return `aidd/${version} node/${process.versions.node} ${platform()}-${process.arch}`;
 }
-
-const currentVersion = new CurrentVersionAdapter().get();
 
 const tools = wireTools();
 
@@ -40,7 +38,7 @@ const program = new Command();
 program
   .name("aidd")
   .description("Generate AI coding assistant configurations from the AIDD framework")
-  .version(formatVersion(currentVersion), "-V, --version", "Show version number")
+  .version(formatVersion(currentVersion()), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
 registerSetupCommand(program, tools, createDeps);
