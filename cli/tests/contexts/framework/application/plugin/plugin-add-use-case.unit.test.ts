@@ -324,6 +324,44 @@ describe("PluginAddUseCase", () => {
     });
 
     describe("opencode", () => {
+      it("installs project files even when the same plugin has a user-scope claim", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        const machine = Manifest.create();
+        machine.addTool("opencode", "1.0.0", []);
+        const userPlugin = InstalledPlugin.fromMetadata(
+          "sample-plugin",
+          "1.0.0",
+          GIT_SUBDIR_SOURCE,
+          false,
+          "user"
+        ).withFiles(new Map([["skills/sample-plugin/demo/SKILL.md", "existing-hash"]]));
+        machine.addPlugin("opencode", userPlugin);
+        await deps.userManifestRepo.save(machine);
+        const builtSkill = "/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md";
+        deps.fs.setFile(builtSkill, "# Demo skill");
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const registry = await makeGithubRegistry(PROJECT_ROOT);
+
+        await buildAddUseCase(deps, registry).execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["opencode"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+
+        expect(
+          deps.fs.getFile(join(PROJECT_ROOT, ".opencode/skills/sample-plugin/demo/SKILL.md"))
+        ).toBe("# Demo skill");
+        const projectPlugin = deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0];
+        expect(projectPlugin?.scope).toBe("project");
+        expect(projectPlugin?.files.size).toBeGreaterThan(0);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins("opencode")[0]).toEqual(userPlugin);
+      });
+
       it("fetches and materializes flat files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "opencode");
