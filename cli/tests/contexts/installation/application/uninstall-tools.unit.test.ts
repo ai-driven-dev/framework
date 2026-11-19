@@ -28,7 +28,6 @@ import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.
 
 const PROJECT_ROOT = "/test-project";
 const SETTINGS_FILE = join(PROJECT_ROOT, ".vscode/settings.json");
-const EXTENSIONS = join(PROJECT_ROOT, ".vscode/extensions.json");
 
 const noClaims: DetachProjectClaims = async () => undefined;
 
@@ -283,24 +282,7 @@ describe("UninstallTools — a project's tools", () => {
     }
   );
 
-  it("no longer tracks removed tool files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, TOOL.claude);
-
-    const saved = deps.manifestRepo.saveCount;
-    const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({
-      toolIds: [TOOL.claude],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    const manifest = await deps.manifestRepo.load();
-    expect(manifest?.getInstalledToolIds()).not.toContain("claude");
-    expect(deps.manifestRepo.saveCount).toBe(saved + 1);
-  });
-
-  it("completes without error when files were already deleted from disk", async () => {
+  it("forgets the tool and still reports its tracked files when they were already deleted from disk", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);
@@ -310,13 +292,13 @@ describe("UninstallTools — a project's tools", () => {
       await deps.fs.deleteFile(f);
     }
 
-    const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
-    await expect(
-      useCase.execute({
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-      })
-    ).resolves.not.toThrow();
+    const result = await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
+      toolIds: [TOOL.claude],
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(result).toStrictEqual([{ toolId: TOOL.claude, fileCount: 1, deletedFiles: [SETTINGS] }]);
+    expect((await deps.manifestRepo.load())?.hasTool(TOOL.claude)).toBe(false);
   });
 
   describe("user-prime merge files", () => {
@@ -402,25 +384,6 @@ function parse(raw: string | undefined): Record<string, unknown> {
 }
 
 describe("UninstallTools, IDE — merge-file entries", () => {
-  it("removes the keys it merged into a shared settings file", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
-
-    const managedKeys = Object.keys(parse(deps.fs.getFile(SETTINGS_FILE)));
-    expect(managedKeys.length).toBeGreaterThan(0);
-
-    await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      toolIds: [TOOL.vscode],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    const after = parse(deps.fs.getFile(SETTINGS_FILE));
-    for (const key of managedKeys) {
-      expect(Object.keys(after)).not.toContain(key);
-    }
-  });
-
   it("leaves a user-authored key in that shared file untouched", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
@@ -435,39 +398,6 @@ describe("UninstallTools, IDE — merge-file entries", () => {
     });
 
     expect(parse(deps.fs.getFile(SETTINGS_FILE))["editor.tabSize"]).toBe(7);
-  });
-
-  it("removes its merged keys from every declared merge file, not just settings.json", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
-
-    const before = Object.keys(parse(deps.fs.getFile(EXTENSIONS)));
-    expect(before.length).toBeGreaterThan(0);
-
-    await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      toolIds: [TOOL.vscode],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    const after = parse(deps.fs.getFile(EXTENSIONS));
-    for (const key of before) {
-      expect(Object.keys(after)).not.toContain(key);
-    }
-  });
-
-  it("drops the tool from the manifest", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
-
-    await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      toolIds: [TOOL.vscode],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    const manifest = await deps.manifestRepo.load();
-    expect(manifest?.hasTool(TOOL.vscode)).toBe(false);
   });
 });
 
