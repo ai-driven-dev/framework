@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { git } from "../../helpers/git-sandbox.js";
-import { useInProcessReportWorld } from "../../helpers/telemetry-report-in-process.js";
+import { useInProcessReportWorld } from "../../contexts/telemetry/testing/telemetry-report-in-process.js";
 import {
   AXES,
   CALLS,
@@ -10,7 +9,8 @@ import {
   rowsOf,
   S_BRANCH,
   WINDOW,
-} from "../../helpers/telemetry-report-seed.js";
+} from "../../contexts/telemetry/testing/telemetry-report-seed.js";
+import { git } from "../../helpers/git-sandbox.js";
 
 const world = useInProcessReportWorld();
 

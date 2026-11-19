@@ -1,7 +1,15 @@
 import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const FIXTURES = join(import.meta.dirname, "..", "fixtures", "claude-usage", "projects");
+const FIXTURES = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "..",
+  "fixtures",
+  "claude-usage",
+  "projects"
+);
 
 /** The fixture transcripts copied under `claudeConfig/projects`, their machine paths pointed at
  * the given repositories. `only` keeps the files whose path ends with one of the names. */

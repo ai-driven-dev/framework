@@ -1,10 +1,13 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { writeUsageTranscripts } from "../../contexts/telemetry/testing/claude-usage-transcripts.js";
+import {
+  createTelemetrySandbox,
+  type TelemetrySandbox,
+} from "../../contexts/telemetry/testing/telemetry-sandbox.js";
 import { backdateConsent } from "../../e2e/helpers.js";
-import { writeUsageTranscripts } from "../../helpers/claude-usage-transcripts.js";
 import { runInProcess } from "../../helpers/in-process-cli.js";
-import { createTelemetrySandbox, type TelemetrySandbox } from "../../helpers/telemetry-sandbox.js";
 
 let box: TelemetrySandbox;
 let userConfig: string;

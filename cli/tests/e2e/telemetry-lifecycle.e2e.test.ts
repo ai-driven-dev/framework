@@ -9,12 +9,12 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git } from "../helpers/git-sandbox.js";
 import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../helpers/telemetry-sandbox.js";
+} from "../contexts/telemetry/testing/telemetry-sandbox.js";
+import { git } from "../helpers/git-sandbox.js";
 import { runCli } from "./helpers.js";
 
 const DELEGATE = `#!/bin/sh

@@ -23,7 +23,7 @@ import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../../helpers/telemetry-sandbox.js";
+} from "./testing/telemetry-sandbox.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000bb";
 const BARE = '{"telemetry":{"enabled":true},"keep":{"me":1}}';

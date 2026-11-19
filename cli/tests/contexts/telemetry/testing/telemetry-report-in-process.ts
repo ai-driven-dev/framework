@@ -1,6 +1,6 @@
 import { rm } from "node:fs/promises";
 import { afterEach, beforeEach } from "vitest";
-import { runInProcess } from "./in-process-cli.js";
+import { runInProcess } from "../../../helpers/in-process-cli.js";
 import {
   type Aidd,
   addCall as addCallTo,

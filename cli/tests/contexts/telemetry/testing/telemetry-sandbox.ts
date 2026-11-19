@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, sep } from "node:path";
-import { initRepository, sandboxGitEnv } from "./git-sandbox.js";
+import { initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
 
 /** A throwaway machine: a home, a telemetry directory, a Claude profile and repositories, all
  * under the operating system's temporary directory. `forget` deletes, so every path it can be

@@ -23,8 +23,8 @@ function inProcessCliTests(): string[] {
   const isTest = (path: string): boolean => /\.(unit|integration)\.test\.ts$/.test(path);
   const drivers = ["in-process-cli"];
   for (const path of files) {
-    if (!isTest(path) && path.startsWith("helpers/") && imports(path, "in-process-cli")) {
-      drivers.push(path.replace(/^helpers\//, "").replace(/\.ts$/, ""));
+    if (!isTest(path) && imports(path, "in-process-cli")) {
+      drivers.push(path.replace(/^.*\//, "").replace(/\.ts$/, ""));
     }
   }
   return files

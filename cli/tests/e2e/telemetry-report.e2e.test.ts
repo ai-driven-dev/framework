@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { AXES, CALLS, type Call, COUNTERS } from "../helpers/telemetry-report-seed.js";
+import {
+  AXES,
+  CALLS,
+  type Call,
+  COUNTERS,
+} from "../contexts/telemetry/testing/telemetry-report-seed.js";
 import { aidd, declareBranch, held, json, useReportSandbox } from "./telemetry-report-sandbox.js";
 
 useReportSandbox();

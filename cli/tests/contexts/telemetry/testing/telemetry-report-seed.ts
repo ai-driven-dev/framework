@@ -1,7 +1,7 @@
 import { appendFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { backdateConsent } from "../e2e/helpers.js";
-import { git, initRepository, sandboxGitEnv } from "./git-sandbox.js";
+import { backdateConsent } from "../../../e2e/helpers.js";
+import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
 
 /* The world every `aidd telemetry report` test starts each test from: a repository with two
  * branches, Claude transcripts for the calls below, declarations and a carry, and consent

@@ -7,9 +7,9 @@ import {
   hostExecutableLookup,
   resolveExecutableOnPath,
 } from "../../src/contexts/host-registration/infrastructure/executable-on-path.js";
-import { git } from "./git-sandbox.js";
-import { runInProcess } from "./in-process-cli.js";
-import { createTelemetrySandbox } from "./telemetry-sandbox.js";
+import { createTelemetrySandbox } from "../contexts/telemetry/testing/telemetry-sandbox.js";
+import { git } from "../helpers/git-sandbox.js";
+import { runInProcess } from "../helpers/in-process-cli.js";
 
 const FRAMEWORK_REAL = join(import.meta.dirname, "..", "fixtures", "framework-real");
 const HOST_BINARIES = ["claude", "codex", "copilot", "cursor-agent", "opencode"];

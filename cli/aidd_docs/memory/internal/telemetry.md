@@ -10,7 +10,7 @@ A map to the code for contributors. Formats, rules and stores: [usage contract](
 | its transcript source, on the block reader | `src/contexts/telemetry/infrastructure/sources/transcript-files.ts` |
 | one reader in the ingest list | `src/composition/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `src/contexts/telemetry/contract/usage-record.ts` |
-| its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
+| its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/contexts/telemetry/testing/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 
 ## Data flow
 

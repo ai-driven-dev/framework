@@ -16,10 +16,7 @@ import { wireTelemetry } from "../../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../../src/presentation/deps.js";
 import { git, initRepository } from "../../../helpers/git-sandbox.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
-import {
-  createTelemetrySandbox,
-  type TelemetrySandbox,
-} from "../../../helpers/telemetry-sandbox.js";
+import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.js";
 
 /** One predicate, one table: a call is stored only if its directory was seen alive belonging to
  * clone X, X had an open consent interval at the call's time, and `AIDD_TELEMETRY=0` is not set.
