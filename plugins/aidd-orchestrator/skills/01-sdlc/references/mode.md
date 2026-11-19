@@ -9,7 +9,7 @@
 
 ## Auto
 
-- Operate autonomously from the request to a draft pull request: decide and act without confirmation.
+- Operate autonomously from the request through pull request follow-up within the repository contract and the user's authorization. A waiting turn is not a completed delivery.
 
 ## Interactive
 

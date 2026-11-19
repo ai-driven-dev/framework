@@ -163,6 +163,7 @@ jobs:
           plugins: |
             aidd-orchestrator@aidd-framework
             aidd-dev@aidd-framework
+            aidd-vcs@aidd-framework
           plugin_marketplaces: |
             https://x-access-token:${{ secrets.__MARKETPLACE_TOKEN_NAME__ }}@github.com/__MARKETPLACE_REPO__.git
           claude_args: --permission-mode bypassPermissions
@@ -258,6 +259,7 @@ jobs:
           plugins: |
             aidd-orchestrator@aidd-framework
             aidd-dev@aidd-framework
+            aidd-vcs@aidd-framework
           plugin_marketplaces: |
             https://x-access-token:${{ secrets.__MARKETPLACE_TOKEN_NAME__ }}@github.com/__MARKETPLACE_REPO__.git
           claude_args: --permission-mode bypassPermissions

@@ -28,7 +28,7 @@
     "app_id_secret": null,
     "app_private_key_secret": null
   },
-  "max_iterations": 3,
+  "max_iterations": 2,
   "audit": {
     "log_dir": "aidd_docs/async-runs",
     "github_check_run": true

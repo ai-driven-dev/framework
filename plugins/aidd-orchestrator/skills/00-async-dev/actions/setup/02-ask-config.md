@@ -39,7 +39,7 @@ Interactively collects the small set of runtime parameters from the user.
     "app_id_secret": null,
     "app_private_key_secret": null
   },
-  "max_iterations": 3
+  "max_iterations": 2
 }
 ```
 
@@ -70,7 +70,7 @@ Interactively collects the small set of runtime parameters from the user.
    - `pat` (default, recommended) -- a fine-grained Personal Access Token with `Contents: Read & Write`, `Pull requests: Read & Write`, `Issues: Read & Write`, `Workflows: Read & Write`, `Metadata: Read`. Commits are attributed to the PAT owner. Ask `secret_name` (default `AIDD_BOT_TOKEN`). The token itself is stored in action `08-configure-remote-secrets`.
    - `github_app` (**roadmap, not yet implemented in v1**) -- intended to authenticate via a custom GitHub App installed on the repo so commits are attributed to the App. The configuration shape (`app_id_secret`, `app_private_key_secret`) is reserved, but the workflow template does not yet emit the `actions/create-github-app-token@v1` step that would consume them. Pick `pat` for now; track the roadmap entry in the orchestrator README for when this lands.
    See `references/claude-action-auth.md` for the broader picture of which secret is for what.
-5. Ask `max_iterations` for the review-fix loop; default `3`.
+5. Ask `max_iterations` for review correction batches; default `2`. It may lower the repository's per-PR follow-up budget, never raise it or reset consumed batches on a new invocation. Without a repository limit, the follow-up default is two.
 6. Keep label names and mention strings at their defaults (the plugin documents these as fixed contracts to avoid drift).
 7. Emit the JSON above; do NOT persist yet.
 
