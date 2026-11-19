@@ -59,13 +59,14 @@ describe("judgeRegistration, register", () => {
   });
 });
 
-const REFRESHABLE: RefreshReadings = {
-  intent: "refresh",
+const PROVEN_REF: Pick<RefreshReadings, "refEnabled" | "source"> = {
   refEnabled: true,
   source: { status: "owned" },
 };
 
-describe("judgeRegistration, refresh", () => {
+describe.each(["refresh", "withdraw-ref"] as const)("judgeRegistration, %s", (intent) => {
+  const REFRESHABLE = { intent, ...PROVEN_REF };
+
   it("proceeds with the readings that proved it", () => {
     expect(judgeRegistration(REFRESHABLE)).toStrictEqual({
       outcome: "proceed",

@@ -15,12 +15,20 @@ export interface RegisterReadings {
   readonly foreignRef?: string;
 }
 
-/** A refresh needs the ref enabled and a canonical catalogue whose source is owned; `source` is
- * undefined when the ref has no canonical catalogue to read. */
-export interface RefreshReadings {
-  readonly intent: "refresh";
+/** The proofs a refresh and a ref withdrawal share: the ref enabled on the host and a canonical
+ * catalogue whose source is owned; `source` is undefined when the ref has no canonical catalogue
+ * to read. */
+interface RefProofReadings {
   readonly refEnabled: boolean;
   readonly source: SourceProof | undefined;
+}
+
+export interface RefreshReadings extends RefProofReadings {
+  readonly intent: "refresh";
+}
+
+export interface WithdrawRefReadings extends RefProofReadings {
+  readonly intent: "withdraw-ref";
 }
 
 /** A catalogue withdrawal needs an owned source and every claimed ref still enabled;
@@ -31,7 +39,11 @@ export interface WithdrawCatalogReadings {
   readonly unenabledClaim: string | undefined;
 }
 
-export type Readings = RegisterReadings | RefreshReadings | WithdrawCatalogReadings;
+export type Readings =
+  | RegisterReadings
+  | RefreshReadings
+  | WithdrawRefReadings
+  | WithdrawCatalogReadings;
 
 export type Refusal =
   | "not-canonical"
@@ -63,7 +75,8 @@ function firstRefusal(readings: Readings): Found {
     case "register":
       return registerRefusal(readings);
     case "refresh":
-      return refreshRefusal(readings);
+    case "withdraw-ref":
+      return refProofRefusal(readings);
     case "withdraw-catalog":
       return withdrawCatalogRefusal(readings);
   }
@@ -77,7 +90,7 @@ function registerRefusal(readings: RegisterReadings): Found {
   return foreignRef === undefined ? undefined : found("foreign-ref", foreignRef);
 }
 
-function refreshRefusal(readings: RefreshReadings): Found {
+function refProofRefusal(readings: RefProofReadings): Found {
   if (!readings.refEnabled) return found("ref-not-enabled", undefined);
   if (readings.source === undefined) return found("no-canonical-source", undefined);
   return readings.source.status === "owned"

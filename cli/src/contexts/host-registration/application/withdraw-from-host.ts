@@ -11,6 +11,7 @@ import {
   judgeRegistryClearance,
   type PurgeVerdict,
 } from "../domain/policy/cache-purge-policy.js";
+import { judgeRegistration, type SourceProof } from "../domain/policy/registration-policy.js";
 import type { HostPluginRegistryReading } from "../domain/reading/plugin-registry-reading.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import {
@@ -244,12 +245,10 @@ export class WithdrawFromHost {
       projectRoot,
       registration
     );
-    if (proof.status !== "owned") {
-      throw new Error(
-        proof.reason ??
-          `${toolId}: catalogue '${registration.hostName}' has unproven host source; reconcile manually.`
-      );
-    }
+    assertSourceOwned(
+      proof,
+      `${toolId}: catalogue '${registration.hostName}' has unproven host source; reconcile manually.`
+    );
     if (tool.pluginEnablementIsMachineGlobal() || registrations?.pluginRefs.includes(ref) !== true)
       return;
     const reader = this.ports.pluginRegistries.get(toolId);
@@ -266,7 +265,15 @@ export class WithdrawFromHost {
       );
     }
     const current = reading.refs?.get(ref);
-    if (current?.enabled !== true || (current.scope !== "project" && current.scope !== "user"))
+    const enabledWithExactScope =
+      current?.enabled === true && (current.scope === "project" || current.scope === "user");
+    // The source was proven owned above, so only the ref can still be refused.
+    const verdict = judgeRegistration({
+      intent: "withdraw-ref",
+      refEnabled: enabledWithExactScope,
+      source: proof,
+    });
+    if (verdict.outcome === "refuse")
       throw new Error(
         `${toolId}: '${ref}' is not provably enabled with an exact host scope (${reading.unreadable ?? reading.location}); uninstall refused.`
       );
@@ -288,27 +295,33 @@ export class WithdrawFromHost {
       );
     }
     const onHost = (await reader.read(projectRoot)).refs?.get(claim.ref);
-    if (onHost?.enabled !== true)
-      throw new Error(
-        `Cannot prove native ref '${claim.ref}' is still enabled on ${registrations.binary}; no host mutation made.`
-      );
     const catalogues = registrations.marketplaces.filter((registration) =>
       isRefOnHost(claim.ref, registration.hostName)
     );
-    if (catalogues.length !== 1) {
-      throw new Error(
-        `Native ref '${claim.ref}' has no exact canonical catalogue source proof; removal refused.`
-      );
+    const verdict = judgeRegistration({
+      intent: "withdraw-ref",
+      refEnabled: onHost?.enabled === true,
+      source:
+        catalogues.length === 1
+          ? await inspectNativeMarketplaceSource(
+              this.ports.sources.get(claim.tool),
+              projectRoot,
+              catalogues[0]
+            )
+          : undefined,
+    });
+    if (verdict.outcome === "refuse") {
+      if (verdict.reason === "ref-not-enabled")
+        throw new Error(
+          `Cannot prove native ref '${claim.ref}' is still enabled on ${registrations.binary}; no host mutation made.`
+        );
+      if (verdict.reason === "no-canonical-source")
+        throw new Error(
+          `Native ref '${claim.ref}' has no exact canonical catalogue source proof; removal refused.`
+        );
+      throw new Error(verdict.reconcile ?? `Native ref '${claim.ref}' has unproven host source.`);
     }
-    const proof = await inspectNativeMarketplaceSource(
-      this.ports.sources.get(claim.tool),
-      projectRoot,
-      catalogues[0]
-    );
-    if (proof.status !== "owned") {
-      throw new Error(proof.reason ?? `Native ref '${claim.ref}' has unproven host source.`);
-    }
-    return { activator, ref: claim.ref, scope: onHost.scope ?? "user" };
+    return { activator, ref: claim.ref, scope: onHost?.scope ?? "user" };
   }
 
   uninstallProven(proven: ProvenHostRef): void {
@@ -403,12 +416,10 @@ export class WithdrawFromHost {
           facts.projectRoot,
           registration
         );
-        if (proof.status !== "owned") {
-          throw new Error(
-            proof.reason ??
-              `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
-          );
-        }
+        assertSourceOwned(
+          proof,
+          `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
+        );
         await assertNoForeignNativeRefs(
           this.ports.pluginRegistries.get(toolId),
           registration.hostName,
@@ -694,8 +705,7 @@ export class WithdrawFromHost {
           projectRoot,
           registration
         );
-        if (proof.status !== "owned")
-          throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
+        assertSourceOwned(proof, `${toolId}: catalogue source unproven.`);
         const owned = new Set(
           [...claimRefs].filter((ref) => isRefOnHost(ref, registration.hostName))
         );
@@ -706,12 +716,13 @@ export class WithdrawFromHost {
           projectRoot,
           tool
         );
-        for (const ref of refsByHost.get(registration.hostName) ?? []) {
-          if (hostRefs.get(ref)?.enabled !== true)
-            throw new Error(
-              `${toolId}: owned host ref '${ref}' is not enabled; user clean refused.`
-            );
-        }
+        assertClaimsEnabled(
+          proof,
+          [...(refsByHost.get(registration.hostName) ?? [])].find(
+            (ref) => hostRefs.get(ref)?.enabled !== true
+          ),
+          toolId
+        );
       }
     }
   }
@@ -829,6 +840,30 @@ export class WithdrawFromHost {
     }
     await this.deleteWhenJudged(judgeEmptiness(label, candidate, entries.length), candidate, label);
   }
+}
+
+/** Refuses a catalogue whose host source the proof does not show owned, saying why when it can. */
+function assertSourceOwned(source: SourceProof, unproven: string): void {
+  const verdict = judgeRegistration({
+    intent: "withdraw-catalog",
+    source,
+    unenabledClaim: undefined,
+  });
+  if (verdict.outcome === "refuse") throw new Error(verdict.reconcile ?? unproven);
+}
+
+/** Refuses a catalogue whose claimed ref the host does not enable. Its source was proven owned
+ * just before, so `unenabledClaim` is the only proof left to fail. */
+function assertClaimsEnabled(
+  source: SourceProof,
+  unenabledClaim: string | undefined,
+  toolId: AiToolId
+): void {
+  const verdict = judgeRegistration({ intent: "withdraw-catalog", source, unenabledClaim });
+  if (verdict.outcome === "refuse")
+    throw new Error(
+      `${toolId}: owned host ref '${verdict.reconcile}' is not enabled; user clean refused.`
+    );
 }
 
 /** The host's own name for `alias`; `undefined` when `registrations` is absent or names no entry
