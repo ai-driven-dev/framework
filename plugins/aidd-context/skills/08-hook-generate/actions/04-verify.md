@@ -8,7 +8,9 @@ The paths written, with each host's verifier status.
 
 ## Process
 
-1. Offer a real trial on each installed host: the scenario, the expected block or message, and the files it touches.
+1. Offer a real trial on each installed host where its effect is observable: the scenario, the expected block or message, and the files it touches.
+   - Effect not observable, such as a tool the hook calls that is not installed: mark that host format verified, run not verified, with the reason, and ask nothing.
+   - Nothing to offer: go to step 3.
 2. End the turn and wait for the user's own answer.
    - Approved: run the trial, then report what each host did.
    - Declined: mark the hosts not run as format verified, run not verified.

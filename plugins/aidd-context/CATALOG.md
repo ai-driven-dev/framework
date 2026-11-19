@@ -191,20 +191,18 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-source.md](skills/10-learn/actions/01-source.md) | - |
-| `actions` | [02-gather.md](skills/10-learn/actions/02-gather.md) | - |
-| `actions` | [03-assess.md](skills/10-learn/actions/03-assess.md) | - |
-| `actions` | [04-write.md](skills/10-learn/actions/04-write.md) | - |
+| `actions` | [01-find.md](skills/10-learn/actions/01-find.md) | - |
+| `actions` | [02-propose.md](skills/10-learn/actions/02-propose.md) | - |
+| `actions` | [03-write.md](skills/10-learn/actions/03-write.md) | - |
 | `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | - |
-| `assets` | [learning-packet.md](skills/10-learn/assets/learning-packet.md) | - |
-| `assets` | [recommendation-table.md](skills/10-learn/assets/recommendation-table.md) | - |
-| `assets` | [write-report.md](skills/10-learn/assets/write-report.md) | - |
-| `references` | [assessment.md](skills/10-learn/references/assessment.md) | - |
+| `assets` | [learn-record.md](skills/10-learn/assets/learn-record.md) | - |
+| `assets` | [proposal-table.md](skills/10-learn/assets/proposal-table.md) | - |
+| `assets` | [report.md](skills/10-learn/assets/report.md) | - |
 | `references` | [destinations.md](skills/10-learn/references/destinations.md) | - |
-| `references` | [gather-protocol.md](skills/10-learn/references/gather-protocol.md) | - |
-| `references` | [review-protocol.md](skills/10-learn/references/review-protocol.md) | - |
-| `references` | [sources.md](skills/10-learn/references/sources.md) | - |
-| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings. Use when the user wants to remember, record, or formalize a decision, convention, lesson, pitfall, reusable workflow, or review finding. Not for preferences or temporary notes.` |
+| `references` | [signals.md](skills/10-learn/references/signals.md) | - |
+| `references` | [writer.md](skills/10-learn/references/writer.md) | - |
+| `scripts` | [write-decision.cjs](skills/10-learn/scripts/write-decision.cjs) | - |
+| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Captures durable project learnings as memory, decisions or generated rules, when the user wants to remember, record or formalize one.` |
 
 #### `skills/11-explore`
 
