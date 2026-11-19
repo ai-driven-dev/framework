@@ -1,55 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   agentModelsRequest,
-  expandAllKeyword,
-  parsePluginsFlag,
+  isInteractiveRun,
+  selectTools,
 } from "../../../src/orchestration/setup/setup-request.js";
-import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-
-describe("expandAllKeyword", () => {
-  it("selects nothing when the flag was not given", () => {
-    expect(expandAllKeyword(undefined, catalogOf().idsInCanonicalOrder("ai"))).toEqual([]);
-  });
-
-  it("expands 'all' into every id of that category, spacing and all", () => {
-    expect(expandAllKeyword("all", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
-      ...catalogOf().idsInCanonicalOrder("ide"),
-    ]);
-    expect(expandAllKeyword("  all  ", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
-      ...catalogOf().idsInCanonicalOrder("ide"),
-    ]);
-  });
-
-  it("splits a comma-separated list, dropping the spacing and the empty entries", () => {
-    expect(expandAllKeyword(" claude , , cursor ", catalogOf().idsInCanonicalOrder("ai"))).toEqual([
-      "claude",
-      "cursor",
-    ]);
-  });
-});
-
-describe("parsePluginsFlag", () => {
-  it("asks on a terminal when --plugins was not given", () => {
-    expect(parsePluginsFlag(undefined, true)).toEqual({ mode: "interactive", names: [] });
-  });
-
-  it("installs nothing off a terminal when --plugins was not given", () => {
-    expect(parsePluginsFlag(undefined, false)).toEqual({ mode: "none", names: [] });
-  });
-
-  it("reads each of the three keywords as its own mode, spacing and all", () => {
-    expect(parsePluginsFlag("  none  ", true)).toEqual({ mode: "none", names: [] });
-    expect(parsePluginsFlag("all", true)).toEqual({ mode: "all", names: [] });
-    expect(parsePluginsFlag("recommended", true)).toEqual({ mode: "recommended", names: [] });
-  });
-
-  it("reads anything else as the names to install", () => {
-    expect(parsePluginsFlag(" aidd-dev , aidd-pm ,", true)).toEqual({
-      mode: "named",
-      names: ["aidd-dev", "aidd-pm"],
-    });
-  });
-});
+import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 
 describe("agentModelsRequest", () => {
   it("names the tool that does not run the provider asked for", () => {
@@ -64,9 +19,33 @@ describe("agentModelsRequest", () => {
     );
   });
 
-  it("asks for an --ide tool that runs the agents when none was given", () => {
-    expect(() => agentModelsRequest("openai", ["vscode"], registeredCatalog())).toThrow(
-      "--provider needs --ide with a tool"
-    );
+  it("reports the tools that run the agents, whichever the run names", () => {
+    const request = agentModelsRequest("openai", ["vscode"], registeredCatalog());
+
+    expect(request.hosts).toEqual([]);
+    expect(request.runnable).toContain("claude");
+  });
+});
+
+describe("selectTools", () => {
+  it("files every id under the list its category decides, --ai ones first", () => {
+    expect(selectTools(["codex"], ["claude", "vscode"], registeredCatalog())).toStrictEqual({
+      aiTools: ["codex", "claude"],
+      ideTools: ["vscode"],
+    });
+  });
+});
+
+describe("isInteractiveRun", () => {
+  it("asks on a terminal when no scripting flag was given", () => {
+    expect(isInteractiveRun(true, [undefined, "", false])).toBe(true);
+  });
+
+  it("stays silent as soon as one scripting flag was given", () => {
+    expect(isInteractiveRun(true, [undefined, "claude"])).toBe(false);
+  });
+
+  it("stays silent off a terminal", () => {
+    expect(isInteractiveRun(false, [])).toBe(false);
   });
 });

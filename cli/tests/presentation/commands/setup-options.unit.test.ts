@@ -1,6 +1,12 @@
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parseSourceFlag, parseToolIds } from "../../../src/presentation/commands/setup.js";
+import {
+  expandAllKeyword,
+  parsePluginsFlag,
+  parseSourceFlag,
+  parseToolIds,
+  requireAgentHosts,
+} from "../../../src/presentation/commands/setup.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.js";
 
@@ -79,23 +85,70 @@ describe("parseToolIds", () => {
     ]);
   });
 
-  it("files every id --ide names under the list its category decides", () => {
-    expect(
-      parseToolIds(
-        { ide: "claude,vscode", ai: "codex" },
-        new CapturingOutput(false),
-        registeredCatalog()
-      )
-    ).toStrictEqual({
-      aiTools: ["codex", "claude"],
-      ideTools: ["vscode"],
-    });
-  });
-
   it("accepts 'all' without checking it against the category", () => {
     expect(parseToolIds({ ai: "all" }, new CapturingOutput(false), registeredCatalog())).toEqual({
       aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
       ideTools: [],
     });
+  });
+});
+
+describe("expandAllKeyword", () => {
+  it("selects nothing when the flag was not given", () => {
+    expect(expandAllKeyword(undefined, catalogOf().idsInCanonicalOrder("ai"))).toEqual([]);
+  });
+
+  it("expands 'all' into every id of that category, spacing and all", () => {
+    expect(expandAllKeyword("all", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
+      ...catalogOf().idsInCanonicalOrder("ide"),
+    ]);
+    expect(expandAllKeyword("  all  ", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
+      ...catalogOf().idsInCanonicalOrder("ide"),
+    ]);
+  });
+
+  it("splits a comma-separated list, dropping the spacing and the empty entries", () => {
+    expect(expandAllKeyword(" claude , , cursor ", catalogOf().idsInCanonicalOrder("ai"))).toEqual([
+      "claude",
+      "cursor",
+    ]);
+  });
+});
+
+describe("parsePluginsFlag", () => {
+  it("asks on a terminal when --plugins was not given", () => {
+    expect(parsePluginsFlag(undefined, true)).toEqual({ mode: "interactive", names: [] });
+  });
+
+  it("installs nothing off a terminal when --plugins was not given", () => {
+    expect(parsePluginsFlag(undefined, false)).toEqual({ mode: "none", names: [] });
+  });
+
+  it("reads each of the three keywords as its own mode, spacing and all", () => {
+    expect(parsePluginsFlag("  none  ", true)).toEqual({ mode: "none", names: [] });
+    expect(parsePluginsFlag("all", true)).toEqual({ mode: "all", names: [] });
+    expect(parsePluginsFlag("recommended", true)).toEqual({ mode: "recommended", names: [] });
+  });
+
+  it("reads anything else as the names to install", () => {
+    expect(parsePluginsFlag(" aidd-dev , aidd-pm ,", true)).toEqual({
+      mode: "named",
+      names: ["aidd-dev", "aidd-pm"],
+    });
+  });
+});
+
+describe("requireAgentHosts", () => {
+  it("asks for an --ide tool that runs the agents when none was given", () => {
+    expect(() => requireAgentHosts("openai", { hosts: [], runnable: ["claude", "codex"] })).toThrow(
+      "--provider needs --ide with a tool that runs the framework's agents: claude, codex."
+    );
+  });
+
+  it("lets a run with no provider, or a tool that runs the agents, through", () => {
+    expect(() => requireAgentHosts(undefined, { hosts: [], runnable: ["claude"] })).not.toThrow();
+    expect(() =>
+      requireAgentHosts("openai", { hosts: ["claude"], runnable: ["claude"] })
+    ).not.toThrow();
   });
 });

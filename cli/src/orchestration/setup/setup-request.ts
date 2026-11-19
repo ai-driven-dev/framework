@@ -1,16 +1,15 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { CategoryMismatchError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { PluginInstallMode } from "./setup-flow.js";
 
-/** The tools of this run that run the framework's agents, and the provider asked for, refused
- * before anything is built or written: one provider per run, so a tool that does not run it is
- * named. */
+/** The tools of this run that run the framework's agents, the provider asked for, and every tool
+ * that could run them. A provider no tool knows, or one a tool does not run, is refused before
+ * anything is built or written: one provider per run. */
 export function agentModelsRequest(
   raw: string | undefined,
   aiTools: readonly string[],
   catalog: ToolCatalog
-): { hosts: AiToolId[]; provider: string | undefined } {
+): { hosts: AiToolId[]; provider: string | undefined; runnable: AiToolId[] } {
   const runsAgents = (id: AiToolId) => catalog.aiProfile(id).agentModels() !== null;
   const hosts = aiTools.flatMap((raw) => {
     const id = catalog.aiToolId(raw);
@@ -21,46 +20,31 @@ export function agentModelsRequest(
   if (provider !== undefined && !known.includes(provider)) {
     throw new Error(`Unknown provider "${provider}". Use: ${known.join(", ")}, or none.`);
   }
-  if (raw !== undefined && hosts.length === 0) {
-    const all = catalog.idsInCanonicalOrder("ai").filter(runsAgents);
-    throw new Error(
-      `--provider needs --ide with a tool that runs the framework's agents: ${all.join(", ")}.`
-    );
-  }
   if (provider !== undefined) {
     for (const host of hosts) catalog.aiProfile(host).agentModels()?.supportedProvider(provider);
   }
-  return { hosts, provider };
+  return { hosts, provider, runnable: catalog.idsInCanonicalOrder("ai").filter(runsAgents) };
 }
 
-export function expandAllKeyword(raw: string | undefined, all: readonly string[]): string[] {
-  if (raw === undefined) return [];
-  if (raw.trim() === "all") return [...all];
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-export function assertAiToolIds(toolIds: readonly string[], tools: ToolCatalog): void {
-  const wrong = toolIds.filter((id) => !tools.isAiTool(id));
+/** The tools of this run, each filed under the list its category decides. `--ai` ids must be AI
+ * tools; `--ide` ids may be any. */
+export function selectTools(
+  aiIds: readonly string[],
+  ids: readonly string[],
+  tools: ToolCatalog
+): { aiTools: string[]; ideTools: string[] } {
+  const wrong = aiIds.filter((id) => !tools.isAiTool(id));
   if (wrong.length > 0) {
     throw new CategoryMismatchError(wrong, "ai", tools.idsInCanonicalOrder("ai"));
   }
+  const unique = [...new Set([...aiIds, ...ids])];
+  return {
+    aiTools: unique.filter((id) => !tools.isIdeTool(id)),
+    ideTools: unique.filter((id) => tools.isIdeTool(id)),
+  };
 }
 
-export function parsePluginsFlag(
-  raw: string | undefined,
-  interactive: boolean
-): { mode: PluginInstallMode; names: string[] } {
-  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
-  const value = raw.trim();
-  if (value === "none") return { mode: "none", names: [] };
-  if (value === "all") return { mode: "all", names: [] };
-  if (value === "recommended") return { mode: "recommended", names: [] };
-  const names = value
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return { mode: "named", names };
+/** Whether the run may ask questions: on a terminal, and with no flag that scripts it. */
+export function isInteractiveRun(isTty: boolean, scriptingFlags: readonly unknown[]): boolean {
+  return isTty && !scriptingFlags.some(Boolean);
 }

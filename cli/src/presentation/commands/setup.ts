@@ -8,12 +8,11 @@ import {
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
-import { SetupFlow } from "../../orchestration/setup/setup-flow.js";
+import { type PluginInstallMode, SetupFlow } from "../../orchestration/setup/setup-flow.js";
 import {
   agentModelsRequest,
-  assertAiToolIds,
-  expandAllKeyword,
-  parsePluginsFlag,
+  isInteractiveRun,
+  selectTools,
 } from "../../orchestration/setup/setup-request.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
@@ -108,6 +107,43 @@ export function parseSourceFlag(
   return remoteFrameworkSource(undefined, cmdOptions.release);
 }
 
+export function expandAllKeyword(raw: string | undefined, all: readonly string[]): string[] {
+  if (raw === undefined) return [];
+  if (raw.trim() === "all") return [...all];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function parsePluginsFlag(
+  raw: string | undefined,
+  interactive: boolean
+): { mode: PluginInstallMode; names: string[] } {
+  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
+  const value = raw.trim();
+  if (value === "none") return { mode: "none", names: [] };
+  if (value === "all") return { mode: "all", names: [] };
+  if (value === "recommended") return { mode: "recommended", names: [] };
+  const names = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return { mode: "named", names };
+}
+
+/** `--provider` names a tool that runs the agents, through `--ide`. */
+export function requireAgentHosts(
+  provider: string | undefined,
+  request: { hosts: readonly string[]; runnable: readonly string[] }
+): void {
+  if (provider !== undefined && request.hosts.length === 0) {
+    throw new Error(
+      `--provider needs --ide with a tool that runs the framework's agents: ${request.runnable.join(", ")}.`
+    );
+  }
+}
+
 /** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
@@ -118,16 +154,11 @@ export function parseToolIds(
   const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
   const ids = expandAllKeyword(cmdOptions.ide, tools.idsInCanonicalOrder());
   try {
-    if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all") assertAiToolIds(aiIds, tools);
+    return selectTools(aiIds, ids, tools);
   } catch (e) {
     failCommand(output, e);
     return null;
   }
-  const unique = [...new Set([...aiIds, ...ids])];
-  return {
-    aiTools: unique.filter((id) => !tools.isIdeTool(id)),
-    ideTools: unique.filter((id) => tools.isIdeTool(id)),
-  };
 }
 
 function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
@@ -195,17 +226,16 @@ export function registerSetupCommand(
       const toolIds = parseToolIds(cmdOptions, output, catalog);
       if (toolIds === null) return;
 
-      const hasScriptingFlags = !!(
-        cmdOptions.source ||
-        cmdOptions.release ||
-        cmdOptions.ai ||
-        cmdOptions.ide ||
-        cmdOptions.plugins ||
-        cmdOptions.yes ||
-        cmdOptions.global ||
-        cmdOptions.provider
-      );
-      const interactive = process.stdout.isTTY && !hasScriptingFlags;
+      const interactive = isInteractiveRun(process.stdout.isTTY, [
+        cmdOptions.source,
+        cmdOptions.release,
+        cmdOptions.ai,
+        cmdOptions.ide,
+        cmdOptions.plugins,
+        cmdOptions.yes,
+        cmdOptions.global,
+        cmdOptions.provider,
+      ]);
 
       const { mode: pluginMode, names: pluginNames } = parsePluginsFlag(
         cmdOptions.plugins,
@@ -231,7 +261,12 @@ export function registerSetupCommand(
           scope,
         });
 
-        const agents = agentModelsRequest(cmdOptions.provider, toolIds.aiTools, catalog);
+        const { runnable, ...agents } = agentModelsRequest(
+          cmdOptions.provider,
+          toolIds.aiTools,
+          catalog
+        );
+        requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
 
         if (interactive) printWelcomeBanner(output);
 
