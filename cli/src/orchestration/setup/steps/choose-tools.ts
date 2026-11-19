@@ -1,11 +1,8 @@
 import type { ProjectContext } from "../../../contexts/installation/contract/project-context.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import {
-  recommendAiTools,
-  recommendIdeTools,
-} from "../../../contexts/tools/contract/tool-recommendations.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { Prompter } from "../../../shared/ports/prompter.js";
+import { recommendAiTools, recommendIdeTools } from "../tool-recommendations.js";
 
 export interface ChooseToolsCommand {
   interactive: boolean;

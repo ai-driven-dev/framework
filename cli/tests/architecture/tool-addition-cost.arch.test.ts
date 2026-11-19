@@ -93,7 +93,7 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
  * wiring and words shown to a user.
  */
 const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
-  { path: "src/contexts/tools/contract/tool-recommendations.ts", named: 4 },
+  { path: "src/orchestration/setup/tool-recommendations.ts", named: 4 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
   // The foreign-file suffix vocabulary, held equal to the registered AI profiles by conformance.
   // It vanishes when the profiles move to composition and hand each section its own filter.
