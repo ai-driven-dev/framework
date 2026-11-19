@@ -33,29 +33,20 @@
  * parent branch. Where git cannot give it, the check fails: a ratchet that skips is not one.
  */
 import { execFileSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { CLI_ROOT, REPO_ROOT } from "./helpers.js";
-import { type ListSizes, listSizes, listWeights } from "./list-sizes.js";
-
-/** Shrink-only lists whose name does not say so. Register a list here by name, never by content. */
-const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
-  "TRANSITIONAL_PAIRS",
-  "STORED_ANSWERS_ALLOWED",
-  "PROFILE_READERS_ALLOWED",
-  "REGISTRATION_SITES",
-  "OWN_TOOL_FILES",
-]);
+import {
+  ARCHITECTURE_DIRECTORY,
+  filesOnDisk,
+  isToleratedList,
+  type ListSizes,
+  listSizes,
+  listWeights,
+  OTHER_TOLERATED_LISTS,
+} from "./list-sizes.js";
 
 /**
  * A list renamed since the base, by the id it had there, naming the id that carries its count on.
@@ -66,7 +57,6 @@ const RENAMED_LISTS: Readonly<Record<string, string>> = {
     "tests/architecture/ports-are-called.arch.test.ts#SECTION_BASELINE",
 };
 
-const ARCHITECTURE_DIRECTORY = "tests/architecture";
 const CLI_DIRECTORY = "cli";
 const ARCHITECTURE_DIRECTORY_IN_REPO = `${CLI_DIRECTORY}/${ARCHITECTURE_DIRECTORY}`;
 const DEFAULT_BASE_BRANCH = "next";
@@ -77,10 +67,6 @@ const FEWEST_LISTS_THE_TREE_HOLDS = 10;
 function baseRef(env: NodeJS.ProcessEnv = process.env): string {
   const { ARCH_BASE_REF, GITHUB_BASE_REF } = env;
   return ARCH_BASE_REF || `origin/${GITHUB_BASE_REF || DEFAULT_BASE_BRANCH}`;
-}
-
-function isToleratedList(name: string): boolean {
-  return name.includes("BASELINE") || OTHER_TOLERATED_LISTS.has(name);
 }
 
 /** The lists of `files`, each sized or `null` where the reading cannot size it. */
@@ -235,16 +221,6 @@ function filesAtRevision(root: string, revision: string): Record<string, string>
 /** The lists the architecture files hold at `revision` of the repository at `root`. */
 const listsAtRevision = (root: string, revision: string): ListSizes =>
   listsOfBase(filesAtRevision(root, revision));
-
-/** The architecture sources in the working tree of the `cli` directory at `cliRoot`. */
-function filesOnDisk(cliRoot: string): Record<string, string> {
-  return Object.fromEntries(
-    readdirSync(join(cliRoot, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
-      .map((name) => `${ARCHITECTURE_DIRECTORY}/${name.replaceAll("\\", "/")}`)
-      .filter((path) => path.endsWith(".ts"))
-      .map((path) => [path, readFileSync(join(cliRoot, path), "utf8")])
-  );
-}
 
 /** The lists the architecture files hold in the working tree of the `cli` directory at `cliRoot`. */
 const listsOnDisk = (cliRoot: string): ListSizes => listsOf(filesOnDisk(cliRoot));

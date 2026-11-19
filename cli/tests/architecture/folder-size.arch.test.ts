@@ -9,8 +9,8 @@ const MAX_FILES_PER_FOLDER = 10;
 
 /**
  * Directories over the limit, each with the count it carries and the reason it is still here.
- * The list may only shrink, and an entry leaves when the defect behind it is fixed, not when
- * files are shuffled. The test asserts the count, so a reason nobody measured fails here.
+ * The list may only shrink, and an entry leaves when its folder is grouped into subfolders of at
+ * most ten files each. The test asserts the count, so a reason nobody measured fails here.
  */
 const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
   // Thirteen files carry the command surface, plus one helper no other folder imports. That

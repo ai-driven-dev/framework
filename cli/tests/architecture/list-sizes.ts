@@ -25,6 +25,8 @@
  * leaves the list unreadable, `null`. Limit: a moved file reads as a new key, so a new key is not
  * checked; swapping one fixed entry for a new one at equal count is left to review.
  */
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   type ArrayLiteralExpression,
   type Expression,
@@ -45,6 +47,32 @@ import {
   SyntaxKind,
 } from "typescript/unstable/ast";
 import { walk, withVirtualProject } from "./ts-project.js";
+
+export const ARCHITECTURE_DIRECTORY = "tests/architecture";
+
+/** Shrink-only lists whose name does not say so. Register a list here by name, never by content. */
+export const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
+  "TRANSITIONAL_PAIRS",
+  "STORED_ANSWERS_ALLOWED",
+  "PROFILE_READERS_ALLOWED",
+  "REGISTRATION_SITES",
+  "OWN_TOOL_FILES",
+]);
+
+/** A tolerated list is any variable whose name holds `BASELINE`, plus `OTHER_TOLERATED_LISTS`. */
+export function isToleratedList(name: string): boolean {
+  return name.includes("BASELINE") || OTHER_TOLERATED_LISTS.has(name);
+}
+
+/** The architecture sources in the working tree of the `cli` directory at `cliRoot`. */
+export function filesOnDisk(cliRoot: string): Record<string, string> {
+  return Object.fromEntries(
+    readdirSync(join(cliRoot, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
+      .map((name) => `${ARCHITECTURE_DIRECTORY}/${name.replaceAll("\\", "/")}`)
+      .filter((path) => path.endsWith(".ts"))
+      .map((path) => [path, readFileSync(join(cliRoot, path), "utf8")])
+  );
+}
 
 /** The entries of each list by id, `<file>#<name>`, or `null` where the list cannot be sized. */
 export type ListSizes = Map<string, number | null>;
