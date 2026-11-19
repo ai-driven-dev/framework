@@ -101,8 +101,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | Deviation | Closes when |
 | --- | --- |
 | `composition/container.ts` imports the per-context composition modules, where the target has nobody import `composition/` | `container.ts` stops composing them by import, and `createContainer(options)` replaces `createDeps` (module-level `WeakMap`) and `createMenuDeps` |
-| `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin, because presentation reads the `Marketplace` aggregate from `domain/` (`display/marketplace-display.ts`, `prompts/plugin-pick-use-case.ts`) | presentation reads published types instead of the domain |
-| `MarketplaceRemover` is a `distribution` port implemented by the remove commands of `orchestration/marketplace`, handed in by `composition/orchestration/marketplace.ts` | the removal moves into `distribution`, or orchestration owns it by contract |
+| `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin | `distribution` joins `HELD_BY_BIOME` and its published types are the only thing outside reads |
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation`, `translate/domain/engine.ts` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | `translate` declares its own profile input |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
