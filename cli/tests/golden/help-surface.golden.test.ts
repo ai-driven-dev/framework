@@ -1,10 +1,8 @@
-// Capture the snapshot by running this file with `UPDATE_HELP_GOLDEN=1`.
-
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import { createTestEnv, runCli } from "../e2e/helpers.js";
+import { expectGolden } from "./expect-golden.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/help/surface.json");
@@ -72,18 +70,7 @@ describe("help surface", () => {
     try {
       const captured = await captureTree(projectDir, fakeHome);
 
-      if (process.env.UPDATE_HELP_GOLDEN === "1") {
-        await mkdir(dirname(SNAPSHOT_FILE), { recursive: true });
-        await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-        return;
-      }
-
-      const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as HelpEntry[];
-      expect(captured.map((e) => e.invocation)).toEqual(stored.map((e) => e.invocation));
-      for (const entry of captured) {
-        const match = stored.find((s) => s.invocation === entry.invocation);
-        expect(entry, `help changed for \`${entry.invocation}\``).toEqual(match);
-      }
+      await expectGolden(SNAPSHOT_FILE, captured);
     } finally {
       await cleanup();
     }
