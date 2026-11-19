@@ -1,13 +1,12 @@
-// Capture the snapshot by running this file with `UPDATE_TOOL_SUPPORT_GOLDEN=1`.
 // `docs/COMPATIBILITY.md` is rendered from the stored file by `scripts/sync-generated-docs.mjs`.
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../src/contexts/tools/contract/build-contract.js";
-import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
-import { catalogOf, registeredAiConfig } from "../testing/catalog-of.js";
-import { pluginModeOf } from "../testing/plugin-mode.js";
+import { join } from "node:path";
+import { describe, it } from "vitest";
+import type { ArtifactContract } from "../../src/contexts/tools/contract/build-contract.js";
+import { catalogOf, registeredAiConfig } from "../contexts/tools/testing/catalog-of.js";
+import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.js";
+import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { expectGolden } from "./expect-golden.js";
 
 const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-support/surface.json");
 
@@ -64,15 +63,6 @@ function capture(): ToolSupport[] {
 
 describe("tool support surface", () => {
   it("matches the stored record of what each tool is declared to support", async () => {
-    const captured = capture();
-
-    if (process.env.UPDATE_TOOL_SUPPORT_GOLDEN === "1") {
-      await mkdir(dirname(SNAPSHOT_FILE), { recursive: true });
-      await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-      return;
-    }
-
-    const stored: unknown = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8"));
-    expect(captured).toEqual(stored);
+    await expectGolden(SNAPSHOT_FILE, capture());
   });
 });
