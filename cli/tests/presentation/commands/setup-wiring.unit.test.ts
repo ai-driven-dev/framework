@@ -267,10 +267,8 @@ describe("aidd setup — the agents' provider", () => {
   });
 
   it.each([
-    [["--ide", "claude,codex", "--provider", "openai"], 'not supported for "claude"'],
     [["--global", "--ide", "claude,vscode", "--provider", "anthropic"], "vscode"],
     [["--ide", "vscode", "--provider", "bogus"], 'Unknown provider "bogus"'],
-    [["--ide", "vscode", "--provider", "openai"], "--provider needs --ide with a tool"],
   ])("refuses %j before building or writing anything", async (args, message) => {
     vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");

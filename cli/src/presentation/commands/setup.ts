@@ -9,7 +9,12 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
 import { SetupFlow } from "../../orchestration/setup/setup-flow.js";
-import { CategoryMismatchError } from "../../shared/domain/errors.js";
+import {
+  agentModelsRequest,
+  assertAiToolIds,
+  expandAllKeyword,
+  parsePluginsFlag,
+} from "../../orchestration/setup/setup-request.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
 import {
@@ -74,36 +79,6 @@ function reportAgentModels(
   );
 }
 
-/** The tools of this run that run the framework's agents, and the provider asked for, refused
- * before anything is built or written: one provider per run, so a tool that does not run it is
- * named. */
-function agentModelsRequest(
-  raw: string | undefined,
-  aiTools: readonly string[],
-  catalog: ToolCatalog
-): { hosts: AiToolId[]; provider: string | undefined } {
-  const runsAgents = (id: AiToolId) => catalog.aiProfile(id).agentModels() !== null;
-  const hosts = aiTools.flatMap((raw) => {
-    const id = catalog.aiToolId(raw);
-    return id !== null && runsAgents(id) ? [id] : [];
-  });
-  const provider = raw === "none" ? undefined : raw;
-  const known = catalog.agentProviders();
-  if (provider !== undefined && !known.includes(provider)) {
-    throw new Error(`Unknown provider "${provider}". Use: ${known.join(", ")}, or none.`);
-  }
-  if (raw !== undefined && hosts.length === 0) {
-    const all = catalog.idsInCanonicalOrder("ai").filter(runsAgents);
-    throw new Error(
-      `--provider needs --ide with a tool that runs the framework's agents: ${all.join(", ")}.`
-    );
-  }
-  if (provider !== undefined) {
-    for (const host of hosts) catalog.aiProfile(host).agentModels()?.supportedProvider(provider);
-  }
-  return { hosts, provider };
-}
-
 interface SetupCmdOptions {
   source?: "remote" | "local";
   path?: string;
@@ -133,15 +108,6 @@ export function parseSourceFlag(
   return remoteFrameworkSource(undefined, cmdOptions.release);
 }
 
-export function expandAllKeyword(raw: string | undefined, all: readonly string[]): string[] {
-  if (raw === undefined) return [];
-  if (raw.trim() === "all") return [...all];
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 /** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
@@ -162,31 +128,6 @@ export function parseToolIds(
     aiTools: unique.filter((id) => !tools.isIdeTool(id)),
     ideTools: unique.filter((id) => tools.isIdeTool(id)),
   };
-}
-
-function assertAiToolIds(toolIds: readonly string[], tools: ToolCatalog): void {
-  const wrong = toolIds.filter((id) => !tools.isAiTool(id));
-  if (wrong.length > 0) {
-    throw new CategoryMismatchError(wrong, "ai", tools.idsInCanonicalOrder("ai"));
-  }
-}
-
-type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
-
-export function parsePluginsFlag(
-  raw: string | undefined,
-  interactive: boolean
-): { mode: PluginsMode; names: string[] } {
-  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
-  const value = raw.trim();
-  if (value === "none") return { mode: "none", names: [] };
-  if (value === "all") return { mode: "all", names: [] };
-  if (value === "recommended") return { mode: "recommended", names: [] };
-  const names = value
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return { mode: "named", names };
 }
 
 function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
