@@ -1,7 +1,7 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 
 /** A component was delivered, not skipped, but runs only once a precondition outside the install
- * is met — unlike `PluginTranslationSkip`, which names a component never delivered at all. */
+ * is met: unlike `PluginTranslationSkip`, which names a component never delivered at all. */
 export interface PluginInstallNotice {
   readonly pluginName: string;
   readonly component: "hooks";

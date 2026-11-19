@@ -192,7 +192,7 @@ export default {
 };
 
 /** A plugin's raw hooks.json + its name -> the full text of its generated OpenCode bridge
- * module, or `null` when none of the three mapped events named anything replayable — a bridge
+ * module, or `null` when none of the three mapped events named anything replayable: a bridge
  * with nothing to spawn is not a file worth writing. */
 export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string): string | null {
   return generateBridge(OPENCODE_HOST, rawHooksJson, plugin);

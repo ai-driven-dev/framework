@@ -8,7 +8,7 @@ import type { CleanClaims } from "./clean-claims.js";
 
 export interface CleanUserScopeOptions {
   /** Threaded only to `MarketplaceRegistry.delete`, whose signature takes one for the
-   * project-scope caller it usually serves — discarded by the adapter for scope `"user"`, since
+   * project-scope caller it usually serves: discarded by the adapter for scope `"user"`, since
    * this operation has no one project of its own. */
   projectRoot: string;
   force: boolean;
@@ -18,7 +18,7 @@ export interface CleanUserScopeOptions {
 export interface CleanUserScopePreview {
   toolIds: readonly ToolId[];
   activePluginDependents: readonly string[];
-  /** Every version directory found under `userConfigDir()/cache/built/` — read structurally,
+  /** Every version directory found under `userConfigDir()/cache/built/`: read structurally,
    * never trusted from any one tool's own manifest entry. */
   builtVersions: readonly string[];
   /** Every project on this machine that `references.json` still names, existing paths only. Empty
@@ -38,7 +38,7 @@ export interface CleanUserScopeResult {
  *
  * A user manifest is optional: an absent one leaves the host-registration steps nothing to undo, and
  * the whitelist purge, reading nothing from the manifest, runs regardless. Order is a hard
- * constraint — every plugin ref uninstalled, then every marketplace unregistered, both through the
+ * constraint: every plugin ref uninstalled, then every marketplace unregistered, both through the
  * host's own CLI at scope `"user"`, before any cache is purged.
  */
 export class CleanUserScope {
@@ -83,7 +83,7 @@ export class CleanUserScope {
 
   /** What a manifest-less run states plainly, in the logged output and in a non-`--force` run's
    * confirmation: no host registration exists to undo, and, when `references.json` still lists
-   * other projects, that each must run its own `aidd clean` first — their hosts still resolve the
+   * other projects, that each must run its own `aidd clean` first: their hosts still resolve the
    * shared source this run is about to purge. */
   private describeNoUserRegistration(preview: CleanUserScopePreview): string {
     const base = "No host registration was undone: nothing was registered at user scope.";

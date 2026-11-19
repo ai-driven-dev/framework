@@ -322,7 +322,7 @@ export class WithdrawFromHost {
 
   /**
    * Tries every scope `resolveUninstallScopeOrder` names, in order, stopping at the first the
-   * host's own CLI accepts — a real `claude` binary refuses a mismatched-scope uninstall outright,
+   * host's own CLI accepts: a real `claude` binary refuses a mismatched-scope uninstall outright,
    * so a manifest whose recorded scope disagrees with what was registered gets a corrective
    * attempt rather than silently leaving the entry behind.
    */

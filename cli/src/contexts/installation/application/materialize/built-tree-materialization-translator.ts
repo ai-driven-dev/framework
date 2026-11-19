@@ -151,7 +151,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   // `<plugin>-<name>`; skills keep their subtree intact, since a skill's script can `require()` a
   // sibling by relative path, under `skills/<plugin>/` or, `single-level`, `skills/<plugin>-<skill>/`.
   // Hooks land under `flatHooksDir/<plugin>/`, except the loader's own runtime module, renamed to
-  // the plugin's name in the loader's directory — so hook paths are matched by path, not by name.
+  // the plugin's name in the loader's directory: so hook paths are matched by path, not by name.
   private async readFlatFiles(
     builtDir: string,
     dist: PluginDistribution,

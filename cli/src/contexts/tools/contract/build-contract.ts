@@ -17,7 +17,7 @@ export interface FlatHooksBridge {
   /** Output path for the generated bridge module, relative to the project root. */
   readonly path: (plugin: string) => string;
   /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
-   * already — generate nothing for it. */
+   * already: generate nothing for it. */
   readonly skipIfSourceHas: string;
 }
 
@@ -47,7 +47,7 @@ export type ArtifactContract =
         incomingPrefixed: Record<string, unknown>,
         force: boolean
       ) => { mergedContent: string; collisions: ReadonlyArray<string> };
-      /** servers-key of the mcp merge target — `servers` for copilot, `mcpServers` for claude.
+      /** servers-key of the mcp merge target: `servers` for copilot, `mcpServers` for claude.
        * Only meaningful alongside `merge`. */
       readonly mcpServersKey?: string;
       /** Absolute path to the shared merge target; only for merge contracts. */
@@ -71,7 +71,7 @@ export type ArtifactContract =
        * adapter replaces the one the plugin ships. Absent, every script is written as shipped. */
       readonly script?: (pluginPath: string, content: string) => string;
       /** Delivers everything under hooks/ except hooks.json, for a tool whose own side reads
-       * none — OpenCode today, whose scripts are still delivered and whose trigger is
+       * none: OpenCode today, whose scripts are still delivered and whose trigger is
        * `hooksBridge`. */
       readonly skipHooksJson?: boolean;
       /** A generated event bridge, for a tool with no hooks.json of its own and no other way
@@ -80,7 +80,7 @@ export type ArtifactContract =
     };
 
 export interface ToolBuildContract {
-  /** Rewrites the source `${CLAUDE_PLUGIN_ROOT}` placeholder in hooks and mcp content — e.g.
+  /** Rewrites the source `${CLAUDE_PLUGIN_ROOT}` placeholder in hooks and mcp content: e.g.
    * `${CURSOR_PLUGIN_ROOT}`, `${PLUGIN_ROOT}`. Absent for a flat-only contract, which
    * substitutes nothing. */
   readonly pluginRootToken?: string;

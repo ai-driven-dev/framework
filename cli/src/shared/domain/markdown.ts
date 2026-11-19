@@ -54,7 +54,7 @@ export function serializeFrontmatter(
       lines.push(`${key}:`);
       for (const item of value) {
         const s = String(item);
-        // Glob patterns (*, ?, {) are syntactically ambiguous in YAML — quote them to prevent misinterpretation.
+        // Glob patterns (*, ?, {) are syntactically ambiguous in YAML: quote them to prevent misinterpretation.
         lines.push(
           s.includes("*") || s.includes("?") || s.startsWith("{") ? `  - "${s}"` : `  - ${s}`
         );
@@ -82,7 +82,7 @@ export function serializeFrontmatter(
 }
 
 // `[^\n]` rather than `.` throughout: `.` excludes a carriage return, so a value pattern
-// silently misses any line carrying one — and splitting already removed the `\r` of a CRLF
+// silently misses any line carrying one: and splitting already removed the `\r` of a CRLF
 // ending, so what is left is content.
 function parseYamlLike(lines: string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};

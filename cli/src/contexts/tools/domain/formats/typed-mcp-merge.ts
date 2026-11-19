@@ -88,7 +88,7 @@ export function mergeTypedMcp(
 }
 
 /**
- * Builds the opencode.json the flat framework build emits — written even with zero MCP servers,
+ * Builds the opencode.json the flat framework build emits: written even with zero MCP servers,
  * so the archive always ships a config, matching every sibling flat target.
  *
  * The framework-owned keys come from `baseConfig`, the same bundled asset the install path

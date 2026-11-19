@@ -30,7 +30,7 @@ export function genericFlatSkillPath(
 
 /**
  * Nests the plugin's entire `skills/` subtree under one `<plugin>/` segment, so every name
- * below `skillsPrefix` survives — a script's `require()` is never rewritten, so a path
+ * below `skillsPrefix` survives: a script's `require()` is never rewritten, so a path
  * crossing a renamed name would stop resolving.
  */
 export function genericFlatSkillTreePath(

@@ -1,10 +1,10 @@
 import type { HostMarketplaceRegistryReading } from "../domain/marketplace-registry-reading.js";
 
 /**
- * What a catalog's own `marketplace.json` declares about itself — the fact that decides whether
+ * What a catalog's own `marketplace.json` declares about itself: the fact that decides whether
  * two directories are the same marketplace or two different ones that happen to share a
  * registered name. Read from the file itself, never from a path. `version` is deliberately
- * absent: identity is the declared name plus the plugin set — see {@link sameCatalog}.
+ * absent: identity is the declared name plus the plugin set: see {@link sameCatalog}.
  */
 export interface MarketplaceCatalogIdentity {
   readonly name: string;
@@ -13,7 +13,7 @@ export interface MarketplaceCatalogIdentity {
 
 /**
  * A marketplace name a host's own registry already holds, pointed at a *different catalog* than
- * the one this project is about to register — the case `claude plugin marketplace add`'s silent
+ * the one this project is about to register: the case `claude plugin marketplace add`'s silent
  * overwrite (exit 0, no prompt, `installLocation` simply replaced) actually breaks. A version
  * or migration drift is a separate question, decided from the path's own segments by a caller
  * that then never calls this at all.
@@ -32,12 +32,12 @@ export interface MarketplaceSourceConflict {
 
 /**
  * Whether registering `requestedSource` under `expectedName` would silently replace a
- * *different* catalog a host's registry already holds under that name — not merely a different
+ * *different* catalog a host's registry already holds under that name: not merely a different
  * directory. Pure: the caller reads both identities from each source's own `marketplace.json`
  * first.
  *
  * A registry that answers nothing, and a registered source whose own catalog cannot be read,
- * are both unknown rather than a conflict — a dead entry is what a re-add repairs. The same
+ * are both unknown rather than a conflict: a dead entry is what a re-add repairs. The same
  * identity reached by two resolved paths is one catalog reached twice, which is what two
  * projects building the same framework fixture measure; refusing it would refuse every second
  * `aidd sync` either of them runs.
@@ -81,7 +81,7 @@ function samePluginNames(a: readonly string[], b: readonly string[]): boolean {
 
 /** The plugin names a conflict message can point at: what `requested` carries that `registered`
  * does not, and the reverse. Two conflicting identities may differ in the declared name alone,
- * so an empty diff here is legitimate — the name difference is then the fact to report. */
+ * so an empty diff here is legitimate: the name difference is then the fact to report. */
 export function pluginSetDifference(
   registered: MarketplaceCatalogIdentity,
   requested: MarketplaceCatalogIdentity
@@ -95,7 +95,7 @@ export function pluginSetDifference(
 }
 
 /** Renders a {@link pluginSetDifference} result into the fragment doctor's and sync's own
- * conflict messages name the plugins by — one wording, not one written fresh in each caller. */
+ * conflict messages name the plugins by: one wording, not one written fresh in each caller. */
 export function describePluginDiff(diff: {
   readonly added: readonly string[];
   readonly removed: readonly string[];

@@ -39,7 +39,7 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
  * Asks a host's own marketplace registry whether registering `requestedSource` would silently
  * replace a different catalog, or repeat a version/migration drift this project's build
  * recognises. Always keyed by `requestedIdentity.name`, never a caller's own local alias, which
- * the host's registry was never asked about — folding both reads here is what keeps two callers
+ * the host's registry was never asked about: folding both reads here is what keeps two callers
  * from keying them differently.
  *
  * Reads the registry fresh on every call, so a caller iterating several marketplaces asks once per
@@ -54,7 +54,7 @@ export async function hostMarketplaceSourceConflict(
   requestedSource: string,
   requestedIdentity: MarketplaceCatalogIdentity,
   /** Present only for a caller that wants the version/migration drift decided before falling back
-   * to the catalog-identity check — computed for every `aidd-framework` entry regardless of its
+   * to the catalog-identity check: computed for every `aidd-framework` entry regardless of its
    * own `scope`, since an unmigrated project-scope registration is exactly what it decides. */
   driftContext?: MarketplaceSourceDriftContext
 ): Promise<HostMarketplaceSourceCheck> {

@@ -29,7 +29,7 @@ export interface CheckRegistrationCommand {
  * machine-local settings file is deliberately untracked (absolute paths), so nothing else would
  * notice it emptied, edited or deleted; a native-activation tool's own plugin registry answers
  * `registered`, `not-registered`, `registered-disabled` or `unanswerable`, and only the first two
- * are errors — `unanswerable` is the normal state on a machine that has never run that binary.
+ * are errors: `unanswerable` is the normal state on a machine that has never run that binary.
  */
 export class CheckRegistration {
   constructor(

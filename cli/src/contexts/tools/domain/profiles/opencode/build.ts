@@ -1,5 +1,5 @@
 /**
- * Opencode's build contract: flat only — opencode has no marketplace mode.
+ * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";

@@ -48,7 +48,7 @@ export class HostCliAdapter implements HostActions {
     return resolveExecutableOnPath(this.binary, hostExecutableLookup()) !== undefined;
   }
 
-  /** The binary as the OS will run it. A `.cmd`/`.bat` shim — what npm installs on Windows —
+  /** The binary as the OS will run it. A `.cmd`/`.bat` shim: what npm installs on Windows -
    * cannot be spawned directly, so it goes through the command interpreter with its arguments
    * quoted; anything else is spawned by its bare name. */
   private spawn(

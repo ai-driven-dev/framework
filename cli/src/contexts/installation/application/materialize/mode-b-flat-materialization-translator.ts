@@ -27,7 +27,7 @@ import type { PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
 
 /**
- * Mode B — flat materialization: writes a plugin's content directly into the tool's plugin
+ * Mode B: flat materialization: writes a plugin's content directly into the tool's plugin
  * directory, for a tool without native marketplace support. A translator adapter, not a hexagonal
  * port adapter.
  */

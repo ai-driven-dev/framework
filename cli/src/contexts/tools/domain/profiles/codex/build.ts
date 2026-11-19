@@ -109,7 +109,7 @@ function buildCodexManifest(
   const manifest: Record<string, unknown> = {};
   copyCodexManifestStringFields(source, manifest);
   // The agents field is omitted: the Codex plugin schema has no such key. `skills` must be a
-  // STRING directory — the array form makes `codex plugin add` fail with "missing or invalid
+  // STRING directory: the array form makes `codex plugin add` fail with "missing or invalid
   // plugin.json".
   if (presence.skillsList.length > 0) manifest.skills = "./skills";
   if (presence.hasHooksJson) manifest.hooks = "./hooks/hooks.json";

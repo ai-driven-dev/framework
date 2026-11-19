@@ -177,7 +177,7 @@ export class RegisterPluginWithHost {
       warnings: sink.warnings,
     };
     // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
-    // and installing a plugin from it are two acts. Measured against the real `claude` binary —
+    // and installing a plugin from it are two acts. Measured against the real `claude` binary -
     // a project with two registered marketplaces and no plugin was told about neither.
     const ownMarketplaces: RegisteredMarketplace[] = [];
     const preservedMarketplaces: RegisteredMarketplace[] = [];
@@ -499,7 +499,7 @@ export class RegisterPluginWithHost {
 
   /**
    * Refuses `addMarketplace` where it would silently replace a *different catalog* the host holds
-   * under this name — measured: claude derives the registered name from the source's own catalog
+   * under this name: measured: claude derives the registered name from the source's own catalog
    * and re-adds over it with no prompt and no error. A local alias differing from the catalog's
    * declared name is supported and never compared here, and the same catalog reached through a
    * differently resolved path is no conflict. A drift decides first: a host on a newer shared build
@@ -542,7 +542,7 @@ export class RegisterPluginWithHost {
   }
 
   /**
-   * A host already following a newer build is never written backward — warned, not thrown, so a
+   * A host already following a newer build is never written backward: warned, not thrown, so a
    * caller iterating several tools still proceeds. A host tracking *another* project's
    * pre-migration cache can proceed only through the separate host-source proof; discovering a
    * path here never creates a shared-source claim before registration succeeds.

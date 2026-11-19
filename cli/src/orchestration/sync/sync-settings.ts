@@ -11,7 +11,7 @@ export interface SyncSettingsOptions {
   /** Limits both the settings sync and the native activation to these tools; every
    * installed tool when absent. */
   toolIds?: readonly ToolId[];
-  /** Re-registers the framework marketplace when this run finds none at all — `sync` alone
+  /** Re-registers the framework marketplace when this run finds none at all: `sync` alone
    * sets it, so every other caller reads an empty registry as found rather than repopulating it. */
   recreateFrameworkIfMissing?: boolean;
   /**
@@ -27,7 +27,7 @@ export interface SyncSettingsOptions {
   marketplaceNames?: readonly string[];
   /**
    * Framework plugins a tool with native activation also enables at this run's scope, on top
-   * of the ones its manifest records — what `setup --global --plugins` asks for, since a
+   * of the ones its manifest records: what `setup --global --plugins` asks for, since a
    * machine-scope install records no plugin a host loads by itself.
    */
   enablePlugins?: readonly string[];
@@ -36,10 +36,10 @@ export interface SyncSettingsOptions {
 export interface SyncSettingsResult {
   /** Tools whose own CLI actually ran, whether or not every step inside it succeeded. */
   activated: readonly ToolId[];
-  /** Tools with a native activation whose binary was not on PATH — nothing of theirs
+  /** Tools with a native activation whose binary was not on PATH: nothing of theirs
    * ran, so the settings this pass wrote will not load until it has. */
   binaryMissing: readonly { toolId: ToolId; binary: string }[];
-  /** What a recoverable, best-effort step logged — the same text `logger.warn` received. */
+  /** What a recoverable, best-effort step logged: the same text `logger.warn` received. */
   warnings: readonly string[];
   /** A hard failure that is not the recoverable `NativePluginCliError` family: a bug in an
    * activator, or the source-conflict guard's deliberate refusal. Returned rather than thrown,

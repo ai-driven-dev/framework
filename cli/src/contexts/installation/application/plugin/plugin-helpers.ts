@@ -21,7 +21,7 @@ export async function writePluginFiles(
 }
 
 /** Deletes exactly the paths a plugin's own manifest entry lists, joined to its base dir.
- * Never enumerates the directory or deletes by pattern — only manifest-tracked keys. */
+ * Never enumerates the directory or deletes by pattern: only manifest-tracked keys. */
 export async function deleteOldFiles(
   files: ReadonlyMap<string, string>,
   baseDir: string,
@@ -33,7 +33,7 @@ export async function deleteOldFiles(
 }
 
 /**
- * Deletes a plugin's tracked files from the base directory its manifest entry actually recorded —
+ * Deletes a plugin's tracked files from the base directory its manifest entry actually recorded -
  * `projectRoot` for a project-scope entry, the resolved user-scope plugins dir otherwise. Every
  * plugin-file removal path must resolve the base dir this way, or a user-scope tool's files are
  * never removed and a path under `projectRoot` that was never written is asked to delete nothing.
@@ -75,7 +75,7 @@ export async function isPluginFileAtDesiredState(
  * manifest entry and lets the translator re-add it, so update and restore both end with the same
  * single entry an install would have produced.
  *
- * Returns how many files the translator actually (re)wrote — not the plugin's total file count — so
+ * Returns how many files the translator actually (re)wrote: not the plugin's total file count: so
  * a no-op restore reports zero. `written` is undefined for a translator that writes no files, and
  * is reported as 0 rather than guessed.
  */

@@ -56,7 +56,7 @@ export class ResolveBuiltMarketplaces {
 
   /**
    * `undefined` when nothing resolves at the computed path, which means either it was never built
-   * or it no longer exists — neither a fact a check may turn into a conflict.
+   * or it no longer exists: neither a fact a check may turn into a conflict.
    *
    * The reserved framework name always resolves to the shared, machine-scope path, even where the
    * registry still records `scope: "project"`: honouring that record would compute the

@@ -8,7 +8,7 @@ export interface DistributionProbe {
 }
 
 /**
- * Probes ordered most specific first — deepest path wins, ties broken by the order the tools
+ * Probes ordered most specific first: deepest path wins, ties broken by the order the tools
  * were registered. The order is behaviour, not presentation: the reader takes the first probe
  * that resolves, and copilot declares a bare `plugin.json` at the root that any directory can
  * satisfy. Takes the catalog explicitly so the rule can be probed with synthetic tools.

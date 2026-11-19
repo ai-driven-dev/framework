@@ -92,7 +92,7 @@ export const opencode = defineAiTool({
       }),
     },
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
-    // only npm package names — no source or version a marketplace entry could express.
+    // only npm package names: no source or version a marketplace entry could express.
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({
       namespacePrefix: "aidd-",

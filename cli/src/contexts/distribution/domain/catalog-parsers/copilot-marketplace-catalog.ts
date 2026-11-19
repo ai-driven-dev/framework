@@ -1,5 +1,5 @@
 /**
- * Copilot-native multi-plugin marketplace catalog parser — pure, no I/O. An entry's `source` is
+ * Copilot-native multi-plugin marketplace catalog parser: pure, no I/O. An entry's `source` is
  * a bare subdirectory name, combined with `metadata.pluginRoot` into a relative local source so
  * the adapter's own `resolveLocalPaths` lifts it to an absolute path.
  */

@@ -10,6 +10,6 @@ export const OPENCODE_DIRECTORY = ".opencode/";
  * project: its global config directory. */
 export const opencodeGlobalFilePath = flatGlobalFilePath(OPENCODE_DIRECTORY);
 
-/** The one hook filename that is, by convention, a plugin's own OpenCode plugin module — the
- * runtime the loader is meant to import — rather than a script an external bridge must run. */
+/** The one hook filename that is, by convention, a plugin's own OpenCode plugin module: the
+ * runtime the loader is meant to import: rather than a script an external bridge must run. */
 export const OPENCODE_PLUGIN_ENTRY_BASENAME = "opencode-plugin.js";

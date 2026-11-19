@@ -7,8 +7,8 @@ import {
   parseUserBuiltMarketplaceDir,
 } from "./built-marketplace-location.js";
 
-/** Every path a caller hands `marketplaceSourceDrift` — `userCacheRoot`, `projectRoot` and the two
- * sources compared against them — is expected already `realpath`'d: this decides a migration story
+/** Every path a caller hands `marketplaceSourceDrift`: `userCacheRoot`, `projectRoot` and the two
+ * sources compared against them: is expected already `realpath`'d: this decides a migration story
  * about aidd's own version, not a filesystem question. */
 export interface MarketplaceSourceDriftContext {
   readonly userCacheRoot: string;
@@ -21,8 +21,8 @@ export interface MarketplaceSourceDriftContext {
 }
 
 /**
- * Whether a host's registered source names a path this project recognises as its own — one CLI
- * version behind the shared source, or still the pre-migration per-project cache — decided purely
+ * Whether a host's registered source names a path this project recognises as its own: one CLI
+ * version behind the shared source, or still the pre-migration per-project cache: decided purely
  * from each path's own segments, never from a catalog's declared name or plugin set. `undefined`
  * when the registered path is neither shape: `marketplaceSourceConflict` decides that case by
  * reading each side's own `marketplace.json`.

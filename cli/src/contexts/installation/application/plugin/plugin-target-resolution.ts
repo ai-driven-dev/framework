@@ -23,7 +23,7 @@ export function resolveScopeForInstall(tool: PluginPlacement): PluginScope {
 }
 
 /** The base directory a plugin's `files` are relative to, from the manifest's own recorded
- * `scope` — never from the tool's current profile. Throws rather than falling back to `projectRoot`
+ * `scope`: never from the tool's current profile. Throws rather than falling back to `projectRoot`
  * for a `"user"` scope the profile no longer explains: a silent fallback would resolve a
  * suppression, a deletion or a drift check against the wrong directory. */
 export function resolveBaseDirFromRecord(

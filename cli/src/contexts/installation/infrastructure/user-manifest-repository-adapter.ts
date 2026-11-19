@@ -9,7 +9,7 @@ import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { readManifestFile } from "./manifest-file-io.js";
 
 /**
- * The user-scope counterpart of `ManifestRepositoryAdapter` — same schema, same version and refusal
+ * The user-scope counterpart of `ManifestRepositoryAdapter`: same schema, same version and refusal
  * rule, same file I/O. Only the path differs, and what a version-refusal message names to fix it.
  *
  * `delete()` removes only `manifest.json` itself, never its parent directory: `userConfigDir()`

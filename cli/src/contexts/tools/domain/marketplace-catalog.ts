@@ -25,7 +25,7 @@ export interface SynthesizeSharedManifestOpts {
   /**
    * When true, point `hooks` at `./hooks/hooks.json` if the plugin ships one. Declared per tool
    * because Claude Code loads that path by its own convention and rejects a plugin whose
-   * manifest names it too — "Duplicate hooks file detected", while the hooks fired anyway, so
+   * manifest names it too: "Duplicate hooks file detected", while the hooks fired anyway, so
    * the plugin read as failed while working. Codex and the others still need the pointer.
    */
   readonly hooksField: boolean;
@@ -128,7 +128,7 @@ export async function resolveDescription(
   );
 }
 
-/** Resolve version and description, then shape the catalog entry — the marketplace-entry
+/** Resolve version and description, then shape the catalog entry: the marketplace-entry
  * builder claude and cursor both hand to `ToolBuildContract.buildMarketplaceEntry`. */
 export async function buildSharedEntry(
   name: string,

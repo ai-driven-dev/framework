@@ -112,9 +112,9 @@ export const codex = defineAiTool({
         enableVerb: "add",
         disableVerb: "remove",
         // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
-        // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared —
+        // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
         // codex refuses a re-add from a different source itself, so there is no registry to
-        // reread — which is why `clean` proves this leftover safe to remove by its own
+        // reread: which is why `clean` proves this leftover safe to remove by its own
         // emptiness instead.
         pluginCacheDir: (h) => join(h, ".codex", "plugins", "cache"),
         // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
@@ -132,8 +132,8 @@ export const codex = defineAiTool({
             "Codex marketplace list --json unavailable; inspect the host CLI and retry",
           unverifiedMessage: "Codex marketplace list --json output shape is not verified",
         },
-        // `$CODEX_HOME/config.toml` when set — a real codex binary reads there whatever `HOME`
-        // says — else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
+        // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
+        // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
         userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
       },
     }),

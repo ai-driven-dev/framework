@@ -1,10 +1,10 @@
 /**
  * The registry of projects that reference the one shared, machine-scope source a CLI version
- * builds — `userConfigDir()/references.json`, `{ "<version>": ["<projectRoot>", …] }`.
+ * builds: `userConfigDir()/references.json`, `{ "<version>": ["<projectRoot>", …] }`.
  *
  * A help, not an authority, in two ways: an entry whose `projectRoot` no longer exists is ignored
  * rather than counted as still live, and a file this CLI cannot make sense of must never block
- * `setup`, `sync` or `clean`, none of which it gates — every caller reaches it through
+ * `setup`, `sync` or `clean`, none of which it gates: every caller reaches it through
  * `shared-source-reference-support.ts`'s guard, never a bare call.
  */
 export interface UserSourceReferences {
@@ -15,7 +15,7 @@ export interface UserSourceReferences {
 
   /** Drops `projectRoot`'s own reference wherever it is recorded, never asking which version: the
    * running CLI's own version is not necessarily the one this project registered under. A no-op
-   * when it held none — callers read who else references the source from
+   * when it held none: callers read who else references the source from
    * `listAllReferencingProjects()`, never from this method's return. */
   removeReference(projectRoot: string): Promise<void>;
 

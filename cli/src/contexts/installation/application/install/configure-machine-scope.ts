@@ -27,8 +27,8 @@ export class ConfigureMachineScope {
     return true;
   }
 
-  /** Every requested AI tool gets a manifest entry with no files at all — the honest record of
-   * "registered at user scope, nothing installed under any project" — so tool selection has
+  /** Every requested AI tool gets a manifest entry with no files at all: the honest record of
+   * "registered at user scope, nothing installed under any project": so tool selection has
    * something to iterate. A tool already present is left alone rather than reset. */
   async registerTools(toolIds: readonly AiToolId[]): Promise<void> {
     const manifest = await this.userManifestRepo.load();

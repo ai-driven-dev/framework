@@ -45,7 +45,7 @@ interface PluginDriftLine {
   toolId: string;
   driftedFiles: string[];
   /** Every tracked file missing because it lives in a user-scope directory this machine never
-   * populated — reported as one line, not one per file. */
+   * populated: reported as one line, not one per file. */
   notInstalledOnMachine: boolean;
 }
 

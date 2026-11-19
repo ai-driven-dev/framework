@@ -28,7 +28,7 @@ function failedRead(location: string, error: unknown): HostPluginRegistryReading
 /**
  * A host registry kept as a JSON document whose `plugins` object is keyed by the same
  * `<plugin>@<marketplace>` ref `enabledPlugins` uses, each key holding one entry per scope the
- * ref was installed at. Presence is not the whole answer — an entry installed at a project
+ * ref was installed at. Presence is not the whole answer: an entry installed at a project
  * scope also carries `projectPath`, which is what tells one project's ref from a machine-wide
  * one.
  */
@@ -72,8 +72,8 @@ export class PluginEntriesByScopeReader implements HostPluginRegistry {
 export class TomlPluginTablesReader implements HostPluginRegistry {
   constructor(private readonly path: string) {}
 
-  // `projectRoot` is unused: these plugin tables carry `enabled` and nothing else — no path,
-  // no scope — so its registry answers for the machine and cannot answer for one project.
+  // `projectRoot` is unused: these plugin tables carry `enabled` and nothing else: no path,
+  // no scope: so its registry answers for the machine and cannot answer for one project.
   async read(_projectRoot: string): Promise<HostPluginRegistryReading> {
     let content: string;
     try {
@@ -147,7 +147,7 @@ function scanTomlPluginTables(content: string): ReadonlyMap<string, HostPluginRe
  * The same lines, with every one inside a multi-line string replaced by `null`. Positions are
  * preserved rather than filtered out, so a table's body still begins at the line after its
  * header; a delimiter can open and close on one line, so an odd count on a line is what flips
- * the state, and the line carrying the opening delimiter is itself outside — it is the
+ * the state, and the line carrying the opening delimiter is itself outside: it is the
  * assignment, not the content.
  */
 function outsideMultilineStrings(lines: readonly string[]): readonly (string | null)[] {

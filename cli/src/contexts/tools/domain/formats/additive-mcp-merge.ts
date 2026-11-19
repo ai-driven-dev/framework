@@ -5,7 +5,7 @@
  * No manifest and no strip step, unlike the OpenCode merge: flat mode is fire-and-forget, so
  * there is no inverse. A colliding key is recorded and skipped unless `force` overwrites it,
  * and a user-owned server is always preserved. `serversKey` names the property holding the
- * map — `servers` for VS Code, `mcpServers` for Claude and Cursor.
+ * map: `servers` for VS Code, `mcpServers` for Claude and Cursor.
  */
 export function mergeAdditiveMcp(
   existing: string | null,

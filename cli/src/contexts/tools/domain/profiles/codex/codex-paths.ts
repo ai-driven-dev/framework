@@ -15,7 +15,7 @@ export const CODEX_PLUGIN_ROOT_TOKEN = PLUGIN_ROOT_TOKEN;
 export const OUTPUT_CODEX_MANIFEST_RELATIVE = ".codex-plugin/plugin.json";
 
 /**
- * Relative path for the Codex-native marketplace catalog in the codex output tree — the official
+ * Relative path for the Codex-native marketplace catalog in the codex output tree: the official
  * repo-scoped path `codex plugin marketplace add owner/repo` discovers. The legacy
  * `.claude-plugin/marketplace.json` fallback is intentionally not emitted.
  */

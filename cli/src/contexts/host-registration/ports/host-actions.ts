@@ -27,7 +27,7 @@ export interface HostActions {
    * Installs and enables a plugin referenced as `<plugin>@<marketplace>`. Idempotent.
    *
    * `scope` is not where the marketplace registration lives but at what scope *this* plugin is
-   * enabled — `"project"` by default, mapping to claude's own `--scope local`. Omitting the
+   * enabled: `"project"` by default, mapping to claude's own `--scope local`. Omitting the
    * argument entirely makes a real `claude` binary choose its own `"user"` default,
    * machine-wide, whatever scope `aidd` ran at. A tool declaring no `scopeArgs` (codex,
    * copilot) ignores it.
@@ -37,7 +37,7 @@ export interface HostActions {
   /**
    * Uninstalls a plugin referenced as `<plugin>@<marketplace>`, the counterpart of
    * {@link enablePlugin}. May throw when the plugin is already absent from the tool's own
-   * registry; callers wrap it best-effort. `scope` must match the scope it was enabled at — a
+   * registry; callers wrap it best-effort. `scope` must match the scope it was enabled at: a
    * real `claude` binary refuses a mismatched-scope uninstall outright.
    */
   uninstallPlugin(pluginRef: string, scope?: MarketplaceScope): void;

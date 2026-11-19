@@ -16,7 +16,7 @@ export type SyncMachineScope = (options: {
 /**
  * `--scope user`: registers the shared framework source, installs the requested plugins in each
  * tool's user configuration directory and drives native activation machine-wide, writing nothing
- * under `flow.projectRoot` at all — no project tool content, no plugin prompt, no project-context
+ * under `flow.projectRoot` at all: no project tool content, no plugin prompt, no project-context
  * detection.
  *
  * Records no shared-source reference: `references.json` tracks which *project* still claims the

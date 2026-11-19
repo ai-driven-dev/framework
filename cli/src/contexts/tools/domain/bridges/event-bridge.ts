@@ -23,9 +23,9 @@ export interface BridgeHookTable {
   readonly postToolUse: readonly BridgeHookCall[];
 }
 
-/** A plugin's raw hooks.json — still carrying `${CLAUDE_PLUGIN_ROOT}`, since a generated
+/** A plugin's raw hooks.json: still carrying `${CLAUDE_PLUGIN_ROOT}`, since a generated
  * bridge resolves its scripts from its own `import.meta.url` and the outDir-relative rewrite
- * every other flat target needs buys it nothing — reduced to the three mapped events. */
+ * every other flat target needs buys it nothing: reduced to the three mapped events. */
 export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
   const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
@@ -129,7 +129,7 @@ export interface BridgeParts {
 }
 
 /** A plugin's raw hooks.json for one host, or `null` when no mapped event names anything
- * replayable — a bridge with nothing to spawn is not a file worth writing. */
+ * replayable: a bridge with nothing to spawn is not a file worth writing. */
 export function generateBridge<R>(
   host: { readonly identifierSuffix: string; render(parts: BridgeParts): R },
   rawHooksJson: string,

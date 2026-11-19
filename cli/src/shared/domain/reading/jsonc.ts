@@ -1,4 +1,4 @@
-// No inverse: stripJsonComments is lossy — stripped comments are not recoverable.
+// No inverse: stripJsonComments is lossy: stripped comments are not recoverable.
 export function stripJsonComments(content: string): string {
   let result = "";
   let i = 0;

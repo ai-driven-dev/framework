@@ -481,7 +481,7 @@ export class AddPlugin implements PluginAdd {
   }
 
   // `notices` survives every branch below, including the marketplace one that discards its
-  // own `translated.skipped` in favor of the adapter's — a delivered hook's trust notice is
+  // own `translated.skipped` in favor of the adapter's: a delivered hook's trust notice is
   // a fact about the tool, not about which materialization route happened to run.
   private async materializeNativePlugin(
     dist: PluginDistribution,

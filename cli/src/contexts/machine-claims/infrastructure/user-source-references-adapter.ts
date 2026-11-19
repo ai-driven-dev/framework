@@ -8,7 +8,7 @@ import type { UserSourceReferences } from "../ports/user-source-references.js";
 
 type ReferencesFile = Record<string, readonly string[]>;
 
-/** The version key `projectRoot` is recorded under, and that key's full roots list — `undefined`
+/** The version key `projectRoot` is recorded under, and that key's full roots list: `undefined`
  * when it is recorded nowhere. Path equality goes through `samePathSegment`, never `===`, so a
  * case-insensitive platform still matches a root a real `realpath` returns with different casing. */
 function findVersionFor(
@@ -93,7 +93,7 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
   }
 
   /** Every write is the one place a `projectRoot` that has stopped existing is purged from the file
-   * entirely, not merely ignored at read time — until this the file only ever grew, and every read
+   * entirely, not merely ignored at read time: until this the file only ever grew, and every read
    * kept `stat`-ing dead paths. `protectedRoot` is never pruned regardless of its own existence, so
    * a write can never drop the very claim it exists to record. */
   private async write(references: ReferencesFile, protectedRoot?: string): Promise<void> {

@@ -19,7 +19,7 @@ export function frameworkSourceIsShared(
 
 /**
  * Whether uninstalling `ref` here would take away a plugin another project on this machine still
- * needs — applied before driving a host's own CLI to uninstall, never after.
+ * needs: applied before driving a host's own CLI to uninstall, never after.
  *
  * `ref` is matched against `sharedSourceHostName`, never the project's own local alias, which a
  * host never learns. Any one condition failing means uninstalling `ref` here cannot break another
@@ -50,7 +50,7 @@ export function describeFullRemovalInstruction(): string {
 
 /**
  * The message both `clean` and `plugin remove` warn with instead of ever uninstalling `ref`, once
- * `refAnotherProjectStillNeeds` says it is guarded — the two callers differ only in how they
+ * `refAnotherProjectStillNeeds` says it is guarded: the two callers differ only in how they
  * resolve the inputs, never in the sentence itself.
  */
 export function describeGuardedPluginRefMessage(input: {
@@ -69,7 +69,7 @@ export function describeGuardedPluginRefMessage(input: {
 }
 
 /**
- * Every project this file still names as referencing the shared source, minus `ownRoot` — the one
+ * Every project this file still names as referencing the shared source, minus `ownRoot`: the one
  * denominator every caller reads, so a project that never had a claim of its own to drop reads the
  * same "other projects" fact as one that just dropped one. `ownRoot` must already be resolved
  * through `resolveProjectRootForReferences`; this does not resolve it itself.
@@ -86,7 +86,7 @@ export async function otherProjectsReferencing(
 
 /**
  * Resolves `projectRoot` through every symlink, the same real location `clean` insists on before
- * deleting a user-scope file — a reference recorded under a syntactic path a symlink later moved
+ * deleting a user-scope file: a reference recorded under a syntactic path a symlink later moved
  * would never match what a later `clean` resolves for the same project. Falls back to the path as
  * given only on `ENOENT`, so `clean` can still drop a reference to a project since removed.
  */

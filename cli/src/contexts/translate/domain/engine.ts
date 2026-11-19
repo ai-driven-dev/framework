@@ -180,7 +180,7 @@ export class PluginContentEngine {
       }
       // Everything under `hooks/` but its own manifest is a script the host runs. It goes beside
       // the manifest, and where the manifest sits at the plugin root it keeps its own directory
-      // — a script at the root would leave the command naming `hooks/` pointing at nothing.
+      //: a script at the root would leave the command naming `hooks/` pointing at nothing.
       const manifestDir = parentDirOf(cap.hooksFilePath()) || PLUGIN_HOOKS_DIR;
       return {
         relativePath: `${manifestDir}/${pathBelowHooks(file.relativePath)}`,
@@ -230,7 +230,7 @@ export class PluginContentEngine {
 
   // hooks/hooks.json is a manifest a merge reads, never a runtime module a loader scans for, so
   // it is never delivered here. Everything else under hooks/ is carried verbatim, namespaced per
-  // plugin — unless it is that loader's own plugin module, delivered flat and renamed instead.
+  // plugin: unless it is that loader's own plugin module, delivered flat and renamed instead.
   private flatHooksFiles(dist: PluginDistribution, plugins: FlatPluginAnswers): OutputFile[] {
     const { hooksBridge: flatHooksBridge } = plugins.flatLayout();
     const scripts = dist.components.hooks

@@ -12,7 +12,7 @@ export interface ResolveUpdateDecisionOptions {
 /**
  * Returns true when the file should be overwritten, false when it should be kept; throws
  * `InputRequiredError` for a non-interactive run without `--force`. Consulted only for a modified
- * file — the caller handles an unmodified one.
+ * file: the caller handles an unmodified one.
  */
 export class ResolveUpdateDecision {
   constructor(private readonly prompter: Prompter) {}

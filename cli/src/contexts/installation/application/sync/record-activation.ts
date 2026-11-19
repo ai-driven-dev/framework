@@ -46,7 +46,7 @@ export class RecordActivation {
 
   /**
    * A host's own CLI writes its registration into the very file `syncTool` had just hashed, so
-   * the hash is re-read from disk after activation rather than re-derived — what is stored is
+   * the hash is re-read from disk after activation rather than re-derived: what is stored is
    * then the observation, not a guess at what the host would have written.
    */
   async recordWhatActivationWrote(

@@ -190,7 +190,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
 }
 
 // Truncation to 64 chars avoids filesystem path-length limits.
-// URLs that differ only beyond position 64 will collide — acceptable for typical plugin URLs.
+// URLs that differ only beyond position 64 will collide: acceptable for typical plugin URLs.
 function encodeKey(url: string): string {
   return url.replace(/[^a-zA-Z0-9-]/g, "_").slice(0, 64);
 }

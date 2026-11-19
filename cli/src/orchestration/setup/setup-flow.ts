@@ -50,7 +50,7 @@ export interface SetupFlowParams {
   registerDefaultMarketplace?: boolean;
   /** `"project"` (the default) installs into this project alone. `"user"` registers
    * the shared framework source and native activation machine-wide instead, writing
-   * nothing under `projectRoot` — see `architecture.md`'s user-scope section. */
+   * nothing under `projectRoot`: see `architecture.md`'s user-scope section. */
   scope?: SetupScope;
 }
 

@@ -16,7 +16,7 @@ export interface RestoreAllResult {
   failed: boolean;
   unrestorable: string[];
   /** AI tools this run could not restore any plugin file for because their
-   * registration is native — the tool's own CLI owns it, not a file tree. */
+   * registration is native: the tool's own CLI owns it, not a file tree. */
   nativeOnlyToolIds: AiToolId[];
 }
 

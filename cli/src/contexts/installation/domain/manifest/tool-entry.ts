@@ -28,7 +28,7 @@ export interface ToolEntry {
   readonly mergeFiles: readonly MergeFileEntry[];
   readonly plugins: readonly InstalledPlugin[];
   /** What this tool's own CLI was asked to register, or `undefined` for a tool with
-   * no `nativeActivation` — see {@link NativeRegistrations}. */
+   * no `nativeActivation`: see {@link NativeRegistrations}. */
   readonly nativeRegistrations?: NativeRegistrations;
 }
 

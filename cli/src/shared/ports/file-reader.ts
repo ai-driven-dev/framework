@@ -13,7 +13,7 @@ export interface FileReader {
   /** Every file below `dirPath`; empty for a missing directory. */
   listFilesRecursive(dirPath: string): Promise<string[]>;
 
-  /** Whether whoever is running this can execute the file — `access(X_OK)`, never a
+  /** Whether whoever is running this can execute the file: `access(X_OK)`, never a
    * permission bit. Windows records no execute bit at all: every readable file reports
    * `0o666` and runs through `sh` regardless, so `mode & 0o111` reports a hook git would
    * happily run as one it would refuse. */

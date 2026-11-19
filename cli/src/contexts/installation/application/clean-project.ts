@@ -37,7 +37,7 @@ export type CleanNativeRegistrationPreview = RegistrationPreview & { readonly to
 export interface ProjectCleanPlan {
   tools: Array<{ toolId: ToolId; fileCount: number }>;
   totalFileCount: number;
-  /** What a `--force` run will ask each tool's own CLI to undo — that step drives an external
+  /** What a `--force` run will ask each tool's own CLI to undo: that step drives an external
    * binary, the one part of `clean` a file count cannot express. */
   nativeRegistrations: CleanNativeRegistrationPreview[];
   /** The AI tools whose host holds registrations this project made. A non-AI tool never does;

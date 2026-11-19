@@ -51,7 +51,7 @@ export class NpmRegistryReleaseAdapter implements CliReleaseSource {
   private async resolveLatestVersion(): Promise<string> {
     const url = `${this.npmRegistryBase}/-/package/${CLI_PACKAGE}/dist-tags`;
     try {
-      // npm returns 406 for the client's default GitHub Accept — request plain JSON.
+      // npm returns 406 for the client's default GitHub Accept: request plain JSON.
       const response = await this.http.get(url, { accept: "application/json" });
       const latest = readString(response.body, "latest");
       if (latest === null) {
@@ -68,7 +68,7 @@ export class NpmRegistryReleaseAdapter implements CliReleaseSource {
   }
 
   // Changelog is best-effort: the GitHub release body enriches the update notice
-  // but is optional. A private repo without a token 404s here — swallow it.
+  // but is optional. A private repo without a token 404s here: swallow it.
   private async fetchChangelog(version: string): Promise<string | null> {
     const url = `${this.githubApiBase}/repos/${CLI_REPO}/releases/tags/${CLI_TAG_PREFIX}${version}`;
     const token = (await this.tokenProvider?.resolve()) ?? undefined;

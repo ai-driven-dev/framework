@@ -5,7 +5,7 @@ import type {
 } from "../domain/plugin-registry-reading.js";
 
 /**
- * Either the refs a registry actually produced, or the reason nothing did — one value, so no
+ * Either the refs a registry actually produced, or the reason nothing did: one value, so no
  * branch can reach a lookup against a registry that never opened.
  *
  * Three reasons, not one, because they send a person somewhere different: a tool that drives its

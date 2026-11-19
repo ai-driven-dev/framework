@@ -15,7 +15,7 @@ export class PurgeDeclaredCache {
 
   /**
    * Returns `<cacheRoot>/<relativeSegments>` once its real, `realpath`-resolved location is proven
-   * to sit strictly inside `cacheRoot` — never on the manifest's word alone, since
+   * to sit strictly inside `cacheRoot`: never on the manifest's word alone, since
    * `relativeSegments` is data a corrupted entry could carry a `..` segment in, or a path a
    * symlink could have escaped through after install. `null` for a root or candidate that does
    * not exist (silent), a `realpath` that failed for any other reason (named and kept), or one

@@ -222,7 +222,7 @@ export class Manifest {
       );
     }
     // A v6 document is the one case admitting a remedy richer than deletion: 5.2.2's own manifest
-    // reader accepts exactly version 6 — measured against that published version — so its
+    // reader accepts exactly version 6: measured against that published version: so its
     // `clean --force` can still run against this project before the manifest naming what it
     // registered is gone. 5.2.2 refuses a v7 document too, so naming it there would be a false
     // remedy. A v6 document is one the project repository ever produced, never the user-scope one.

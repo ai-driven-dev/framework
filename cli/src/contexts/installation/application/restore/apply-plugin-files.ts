@@ -60,7 +60,7 @@ export class ApplyPluginFiles {
 
   // Materializing tools (cursor/opencode) must re-materialize from the BUILT tree so
   // restored content + hashes match what install wrote, and Mode A marketplace tools
-  // (claude/codex/copilot) must re-register without writing files — not the raw source
+  // (claude/codex/copilot) must re-register without writing files: not the raw source
   // transform in either case.
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
     return resolvePluginTranslator(tool, {
@@ -76,8 +76,8 @@ export class ApplyPluginFiles {
   ): Promise<number> {
     const { tool, plugin, projectRoot, manifest, force = false } = options;
     // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
-    // before that was true. Scoped to the manifest's own keys under the plugin's base dir — never a
-    // directory scan — so it cannot touch files the plugin never wrote.
+    // before that was true. Scoped to the manifest's own keys under the plugin's base dir: never a
+    // directory scan: so it cannot touch files the plugin never wrote.
     if (translator.mode === "marketplace") {
       const baseDir = resolveBaseDirFromRecord(
         plugin.scope,

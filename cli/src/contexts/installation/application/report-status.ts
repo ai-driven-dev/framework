@@ -128,7 +128,7 @@ export class ReportStatus implements StatusQuery {
     directory: string,
     trackedSet: Set<string>,
     projectRoot: string,
-    // Written by this CLI on purpose and never tracked — reporting one as something the user added
+    // Written by this CLI on purpose and never tracked: reporting one as something the user added
     // would be a lie. The `.backup` skip below is not the same thing: nothing here writes such a
     // file, so it only spares one an older version left behind.
     machineLocal: readonly string[]

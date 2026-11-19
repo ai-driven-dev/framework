@@ -53,7 +53,7 @@ async function runFullDoctor(
 
   // Drift is informational and never gates the exit code; only structural health issues do.
   // `--plugin` narrows that gate to one plugin's issues, so a warning this view never prints
-  // cannot flip the exit code — the silent-exit-1 shape the narrowing exists to prevent.
+  // cannot flip the exit code: the silent-exit-1 shape the narrowing exists to prevent.
   const healthy =
     pluginName !== undefined ? doctorResult.pluginIssues.length === 0 : doctorResult.healthy;
   if (healthy) {
@@ -93,13 +93,13 @@ async function runScopedDoctor(
 
   printToolDrift(output, statusReport);
 
-  // Unconditional, before the health gate — see the unscoped path above.
+  // Unconditional, before the health gate: see the unscoped path above.
   if (pluginName === undefined) {
     printScopeIssues(output, toolId, doctorReport);
   }
   printPluginIssues(output, doctorReport.pluginIssues);
 
-  // Same plugin-scoped gate as the unscoped path above — see the comment there.
+  // Same plugin-scoped gate as the unscoped path above: see the comment there.
   const healthy =
     pluginName !== undefined ? doctorReport.pluginIssues.length === 0 : doctorReport.healthy;
   if (healthy) {
@@ -119,8 +119,8 @@ async function runUserScopeDoctor(
   projectRoot: string,
   cmdOptions: DoctorCmdOptions
 ): Promise<void> {
-  // At user scope doctor checks registrations, not plugin files — there is nothing `--plugin`
-  // could narrow — so it is refused rather than silently read and discarded.
+  // At user scope doctor checks registrations, not plugin files: there is nothing `--plugin`
+  // could narrow: so it is refused rather than silently read and discarded.
   if (cmdOptions.plugin !== undefined) {
     throw new UserScopeFilterUnsupportedError("--plugin", "doctor --plugin <name>");
   }

@@ -1,7 +1,7 @@
 export type MarketplaceSourceDrift =
   | {
       /** The host already follows a newer build of aidd's own shared source than
-       * this run would request — refusing to overwrite it is the rollback refusal:
+       * this run would request: refusing to overwrite it is the rollback refusal:
        * a lower version must never make the host follow it backward. */
       readonly kind: "version-behind";
       readonly registeredVersion: string;
@@ -21,7 +21,7 @@ export type MarketplaceSourceDrift =
     };
 
 /**
- * A version or migration drift decided from the path's own segments — never a different-catalog
+ * A version or migration drift decided from the path's own segments: never a different-catalog
  * conflict, so it carries no identity at all.
  */
 export interface MarketplaceSourceDriftFound {

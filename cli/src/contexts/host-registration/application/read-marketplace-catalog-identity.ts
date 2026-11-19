@@ -4,8 +4,8 @@ import type { MarketplaceCatalogIdentity } from "../domain/marketplace-source-co
 import type { CatalogProbeTool } from "../ports/host-tool.js";
 
 /**
- * What a directory's own catalog declares about itself — `name` and its plugin names, never
- * `version` — read from the same relative file a tool's own `distributionPaths("marketplace")` names,
+ * What a directory's own catalog declares about itself: `name` and its plugin names, never
+ * `version`: read from the same relative file a tool's own `distributionPaths("marketplace")` names,
  * so this agrees with whatever that tool would actually read there. `undefined` when the directory
  * carries no readable catalog at that path, or the JSON found there names nothing: silence, not a
  * fact to invent, which is what lets a dead registry entry or an unbuilt tree answer "no fact"

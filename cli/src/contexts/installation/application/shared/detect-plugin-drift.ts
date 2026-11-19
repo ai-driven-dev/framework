@@ -21,7 +21,7 @@ export interface PluginDrift {
    * True when every one of this plugin's tracked files is missing and the tool installs to a
    * user-scope directory rather than the project: a committed manifest describes that directory as
    * it stood on the machine that wrote it, and on any other it is unpopulated until `aidd sync`
-   * runs — not the same fact as a project-scope file someone deleted. `files` stays empty, since
+   * runs: not the same fact as a project-scope file someone deleted. `files` stays empty, since
    * there is nothing to enumerate file by file.
    */
   notInstalledOnMachine: boolean;

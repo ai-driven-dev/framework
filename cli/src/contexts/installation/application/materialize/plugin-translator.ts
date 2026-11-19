@@ -12,7 +12,7 @@ export interface PluginTranslator {
   readonly mode: PluginTranslationMode;
 
   /**
-   * Returns a skip list — non-empty when the plugin carries components the tool cannot consume —
+   * Returns a skip list: non-empty when the plugin carries components the tool cannot consume -
    * and, for strategies that track it, how many files were actually (re)written to disk.
    *
    * `previousMcpEntries` carries the plugin's previous entries when replacing an existing install,

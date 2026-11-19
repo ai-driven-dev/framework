@@ -44,7 +44,7 @@ export interface NativeActivationSpec {
   binary: string;
   /** One mapping serves add and remove: a remove omitting the scope the add used drops
    * Claude's declaration from every scope at once. A project-scoped marketplace maps to
-   * Claude's *local* scope — the registration names an absolute path, wrong for everyone
+   * Claude's *local* scope: the registration names an absolute path, wrong for everyone
    * else in the shared project settings. Omit where the registry has no scopes. */
   scopeArgs?: Readonly<Record<"project" | "user", readonly string[]>>;
   /** Scope arguments `plugin marketplace remove` takes at user scope instead of
@@ -114,7 +114,7 @@ export interface MarketplaceSettings {
   /**
    * Where the tool keeps its registered marketplaces, for `doctor`, which checks the tool
    * actually wrote one. A path names a file of its own, which this CLI neither commits nor
-   * hashes since its entries name built trees by absolute path; `null` means nowhere — the tool
+   * hashes since its entries name built trees by absolute path; `null` means nowhere: the tool
    * offers no machine-local project file, and its shared one is for recommending plugins to
    * teammates, where a path belonging to whoever ran the install is worse than nothing.
    */

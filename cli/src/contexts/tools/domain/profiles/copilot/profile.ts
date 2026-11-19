@@ -176,8 +176,8 @@ function rewriteCopilotContent(content: string): string {
           return `[${DOCS_DIR}/${path}](../../${DOCS_DIR}/${path})`;
         }
       )
-      // {{TOOLS}}/ (without @) replaces directory prefix only — used for path references in frontmatter or prose.
-      // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath — used for @-include syntax.
+      // {{TOOLS}}/ (without @) replaces directory prefix only: used for path references in frontmatter or prose.
+      // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath: used for @-include syntax.
       .replaceAll("{{TOOLS}}/agents/", `${DIRECTORY}agents/`)
       .replace(/\{\{TOOLS\}\}\/commands\/([^\s\n`'">,]+)/g, (_match, path: string) => {
         const flat = flattenFileName(path, EXT_PROMPT);
@@ -277,7 +277,7 @@ export const copilot = defineAiTool({
       // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
       // must therefore never receive a declarative true entry before native source proof.
       // Its registry is global to the user and keyed by name, so a name held by a project that
-      // no longer exists breaks every other project's installs — measured; `update` exits 1 on a
+      // no longer exists breaks every other project's installs: measured; `update` exits 1 on a
       // local path that is gone and 0 otherwise, which is what lets a dead name be reclaimed with
       // `--force` without ever taking one that still resolves.
       nativeActivation: {

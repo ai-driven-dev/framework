@@ -4,7 +4,7 @@ interface ParsedSemver {
   readonly minor: number;
   readonly patch: number;
   /** Empty for a release version. A non-empty list always orders below the same
-   * release with none — semver.org's own precedence rule. */
+   * release with none: semver.org's own precedence rule. */
   readonly prerelease: readonly string[];
 }
 

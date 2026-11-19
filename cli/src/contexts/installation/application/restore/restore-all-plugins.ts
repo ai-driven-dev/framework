@@ -23,7 +23,7 @@ export interface RestoreAllPluginsResult {
   pluginNames: string[];
   /** AI tools with an installed plugin this pass could not restore anything for,
    * because that tool's own CLI owns the registration and this CLI tracks zero
-   * files for it — not a failure, a fact about who owns the file tree. */
+   * files for it: not a failure, a fact about who owns the file tree. */
   nativeOnlyToolIds: AiToolId[];
 }
 

@@ -85,7 +85,7 @@ export class LoadSyncContext {
    * Only ever called when `recreateFrameworkIfMissing` is set: every other caller reaching an
    * empty registry is reading a deliberate choice to have no marketplace at all. A project-scope
    * `aidd-framework` entry is retired to the machine-scope one here, carrying forward its own
-   * `pluginSource` — the register use case's default would silently replace a project installed
+   * `pluginSource`: the register use case's default would silently replace a project installed
    * from GitHub or a custom path with `{ kind: "local", path: "." }`.
    */
   private async ensureFrameworkRegistered(

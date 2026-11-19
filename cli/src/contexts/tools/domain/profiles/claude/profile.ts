@@ -92,7 +92,7 @@ export const claude = defineAiTool({
       pluginsDir: ".claude/plugins/",
       // Claude registers its own marketplaces and enables its own plugins, both driven here.
       // At project scope the command rewrites `.claude/settings.json` after this CLI hashed
-      // it — two writers, one recorder, and `status` reporting drift forever. `--scope local`
+      // it: two writers, one recorder, and `status` reporting drift forever. `--scope local`
       // writes `.claude/settings.local.json` instead, a file this CLI neither writes nor
       // tracks, which is what makes the verbs below safe to declare.
       nativeActivation: {
@@ -120,7 +120,7 @@ export const claude = defineAiTool({
           layout: "plugin-entries-by-scope",
         },
         // Root of claude's own plugin cache. `clean` composes `<root>/<hostName>` and purges
-        // only once a fresh read of `marketplaceRegistry` above no longer names it — claude
+        // only once a fresh read of `marketplaceRegistry` above no longer names it: claude
         // marks an orphaned tree `.orphaned_at` but never deletes it itself.
         pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
         // Where a `--scope user` install or marketplace add lands, measured against the real

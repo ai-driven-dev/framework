@@ -7,7 +7,7 @@ import type { Logger } from "../../../shared/ports/logger.js";
  * told apart from one it actually forgot, so a later cache purge never trusts a removal that never
  * happened.
  *
- * Only `NativePluginCliError` is swallowed — every throw a real activator produces is that class,
+ * Only `NativePluginCliError` is swallowed: every throw a real activator produces is that class,
  * so anything else is a bug in the activator and must propagate.
  */
 export function bestEffortNativeCall(logger: Logger, action: () => void, label: string): boolean {

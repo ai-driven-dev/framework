@@ -25,7 +25,7 @@ export class RulesSection {
 
   /** Where an installed rule of this tool lives, and what it is called at the end, asked of the
    * installer rather than restated beside it: a reader scanning a project needs the *installed*
-   * shape, and only `buildInstallPath` — a closure written per tool — knows it. `null` when the tool
+   * shape, and only `buildInstallPath`: a closure written per tool: knows it. `null` when the tool
    * installs nothing for the name asked about, or answers a path whose stem it rewrote past
    * recognition; neither is a guess. */
   installedLocation(): { readonly directory: string; readonly extension: string } | null {

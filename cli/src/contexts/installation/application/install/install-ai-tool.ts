@@ -34,7 +34,7 @@ export interface InstallAiToolResult {
   runtimeResult: InstallRuntimeConfigResult;
   propagatedPlugins: string[];
   propagationWarnings: string[];
-  /** What native activation did while re-registering the plugins this run propagated —
+  /** What native activation did while re-registering the plugins this run propagated -
    * `undefined` when nothing was propagated, so activation never ran. */
   activation?: NativeActivationReport;
 }
