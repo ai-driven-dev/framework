@@ -14,7 +14,6 @@ import { PurgeMarketplacePlugins } from "../../contexts/installation/application
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
-import { ActivateNativeTools } from "../../contexts/installation/application/sync/activate-native-tools.js";
 import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
@@ -36,6 +35,7 @@ import {
   type RegisterFrameworkSource,
   SetupMarketplaceRegistration,
 } from "../../orchestration/setup/setup-marketplace-registration.js";
+import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.js";
 import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";

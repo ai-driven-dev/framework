@@ -1,5 +1,8 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
-import { underMachineHome } from "../../src/composition/orchestration/plugin.js";
+import {
+  projectHostWithdrawal,
+  underMachineHome,
+} from "../../src/composition/orchestration/plugin.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import { ProjectPluginWithdrawal } from "../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
@@ -50,23 +53,24 @@ function withdrawing(parts: Omit<PluginRemoverParts, "manifestRepo">, fs: FileRe
 export function pluginRemover(parts: PluginRemoverParts) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
+  const removalClaims = pluginRemovalClaims({
+    repo: parts.userManifestRepo,
+    fs,
+    logger,
+    home: resolveHomeDir(),
+    platform: process.platform,
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    userSourceReferences: parts.userSourceReferences,
+    marketplaceRegistry: parts.marketplaceRegistry,
+    resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
+      new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
+  });
   return new RemovePlugin(
     fs,
     parts.manifestRepo,
     new ProjectPluginWithdrawal(
-      withdrawing({ ...parts, logger }, fs),
-      pluginRemovalClaims({
-        repo: parts.userManifestRepo,
-        fs,
-        logger,
-        home: resolveHomeDir(),
-        platform: process.platform,
-        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-        userSourceReferences: parts.userSourceReferences,
-        marketplaceRegistry: parts.marketplaceRegistry,
-        resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-          new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
-      })
+      projectHostWithdrawal(withdrawing({ ...parts, logger }, fs), removalClaims),
+      removalClaims
     ),
     parts.records ?? registrationRecordRules,
     registeredTools()

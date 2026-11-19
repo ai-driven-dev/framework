@@ -75,6 +75,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/marketplace/list-plugin-sources.ts",
     // the disk half of the built marketplace cache, which the orchestration wraps
     "src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
+    // what the native-host activation builds per tool
+    "src/contexts/installation/application/sync/build-marketplace-for-tool.ts",
     "src/contexts/installation/contract/plugin-sources.ts",
     "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/init-project.ts",
@@ -98,7 +100,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/purge-user-scope-files.ts",
     "src/contexts/installation/application/report-status.ts",
     // the sync run's steps, which the sync scenario chains
-    "src/contexts/installation/application/sync/activate-native-tools.ts",
     "src/contexts/installation/application/sync/load-sync-context.ts",
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
@@ -115,6 +116,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/machine-claims/application/record-source-reference.ts",
     "src/contexts/machine-claims/application/purge-declared-cache.ts",
     "src/contexts/machine-claims/application/release-claims.ts",
+    // what a project removal asks the machine scope, narrowed per tool by the orchestration
+    "src/contexts/machine-claims/application/plugin-removal-claims.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
     "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts",
     "src/contexts/machine-claims/ports/user-source-references.ts",

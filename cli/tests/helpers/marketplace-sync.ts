@@ -1,10 +1,6 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
-import {
-  ActivateNativeTools,
-  type ActivationMarketplace,
-} from "../../src/contexts/installation/application/sync/activate-native-tools.js";
 import { BuildMarketplaceForTool } from "../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
 import { LoadSyncContext } from "../../src/contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../src/contexts/installation/application/sync/record-activation.js";
@@ -13,6 +9,10 @@ import { TrackedSettingsFile } from "../../src/contexts/installation/application
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordSourceReference } from "../../src/contexts/machine-claims/application/record-source-reference.js";
 import { SharedFrameworkSource } from "../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
+import {
+  ActivateNativeTools,
+  type ActivationMarketplace,
+} from "../../src/orchestration/sync/activate-native-tools.js";
 import { SyncSettings } from "../../src/orchestration/sync/sync-settings.js";
 import { FakeCurrentVersion } from "../shared/testing/fake-current-version.js";
 import { registeredTools } from "../shared/testing/registered-tools.js";

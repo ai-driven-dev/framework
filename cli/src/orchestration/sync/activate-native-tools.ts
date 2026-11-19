@@ -1,15 +1,34 @@
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
-import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 import type {
   HostRegistrationOutcome,
-  NativeHostRegistration,
-  RegistrationRecordRules,
-} from "../../ports/native-host.js";
-import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
-import type { SyncContext } from "./load-sync-context.js";
+  RegisterPluginWithHost,
+} from "../../contexts/host-registration/application/register-plugin-with-host.js";
+import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";
+import type { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.js";
+import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
+import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { ToolId } from "../../shared/domain/tool.js";
+import type { Logger } from "../../shared/ports/logger.js";
+
+type SyncedManifest = SyncContext["manifest"];
+type SyncedMarketplaces = SyncContext["marketplaces"];
+
+/** What the record rules answer about refs: the host name a ref sits under, and which recorded
+ * refs sit on which host. */
+interface RefRules {
+  readonly refOnHostName: (plugin: string, hostName: string) => string;
+  readonly refsOnHosts: (
+    record: NonNullable<ReturnType<SyncedManifest["getNativeRegistrations"]>>,
+    hostNames: Iterable<string>
+  ) => string[];
+}
+
+interface PluginRefsRun {
+  toolId: ToolId;
+  manifest: SyncedManifest;
+  marketplaces: SyncedMarketplaces;
+  hostNameByAlias: ReadonlyMap<string, string>;
+  scope: MarketplaceScope;
+}
 
 export interface ActivationRun {
   outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
@@ -21,6 +40,8 @@ export interface ActivationRun {
 export interface ActivateNativeToolsRequest {
   projectRoot: string;
   context: SyncContext;
+  /** What a host registration is checked against for one tool. */
+  claims: (toolId: ToolId) => ClaimsView;
   scope: MarketplaceScope;
   enablePlugins: readonly string[];
 }
@@ -36,17 +57,17 @@ export interface ActivationMarketplace {
 
 export class ActivateNativeTools {
   constructor(
-    private readonly registerPluginWithHost: NativeHostRegistration,
+    private readonly registerPluginWithHost: Pick<RegisterPluginWithHost, "execute">,
     private readonly buildMarketplace: BuildMarketplaceForTool,
     private readonly logger: Logger,
     private readonly marketplace: ActivationMarketplace,
-    private readonly records: RegistrationRecordRules
+    private readonly records: RefRules
   ) {}
 
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
    * anything, so a settings file that differs for it differs because a person changed it. */
   async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
-    const { projectRoot, context, scope, enablePlugins } = request;
+    const { projectRoot, context, claims, scope, enablePlugins } = request;
     const { manifest, marketplaces } = context;
     const outcomes = new Map<ToolId, HostRegistrationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -59,17 +80,17 @@ export class ActivateNativeTools {
           projectRoot,
           scope,
           marketplaces,
-          claims: context.claimsOf(toolId),
+          claims: claims(toolId),
           build: (marketplace) => this.buildMarketplace.forTool(toolId, marketplace, projectRoot),
           refsToEnable: (hostNameByAlias) =>
-            this.refsToEnableOn(
+            this.refsToEnableOn({
               toolId,
               manifest,
               marketplaces,
               hostNameByAlias,
               scope,
-              enablePlugins
-            ),
+              enablePlugins,
+            }),
           userCacheRoot: this.marketplace.userCacheRoot,
           sink: { logger: this.logger, warnings },
         });
@@ -82,7 +103,10 @@ export class ActivateNativeTools {
           binaryMissing.push({ toolId, binary: result.binary });
         } else if (result.status === "activated") outcomes.set(toolId, result.outcome);
       } catch (error) {
-        errors.push({ scope: toolId, message: (error as Error).message });
+        errors.push({
+          scope: toolId,
+          message: (error as Error).message,
+        });
       }
     }
     return { outcomes, binaryMissing, warnings, errors };
@@ -90,37 +114,21 @@ export class ActivateNativeTools {
 
   /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked
    * for, which only the framework marketplace can resolve. */
-  private refsToEnableOn(
-    toolId: ToolId,
-    manifest: Manifest,
-    marketplaces: readonly DeclaredMarketplace[],
-    hostNameByAlias: ReadonlyMap<string, string>,
-    scope: MarketplaceScope,
-    enablePlugins: readonly string[]
-  ): string[] {
+  private refsToEnableOn(run: PluginRefsRun & { enablePlugins: readonly string[] }): string[] {
+    const { hostNameByAlias, enablePlugins } = run;
     const frameworkHost = hostNameByAlias.get(this.marketplace.name);
     const requested =
       frameworkHost === undefined
         ? []
         : enablePlugins.map((name) => this.records.refOnHostName(name, frameworkHost));
-    return [
-      ...new Set([
-        ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
-        ...requested,
-      ]),
-    ];
+    return [...new Set([...this.pluginRefsToEnable(run), ...requested])];
   }
 
   /** Keyed by `hostName`, not `plugin.marketplace` (aidd's own alias): the host resolves the
    * marketplace half of a ref against its own registry, which knows this catalog only by the
    * name it declares itself. */
-  private pluginRefsToEnable(
-    toolId: ToolId,
-    manifest: Manifest,
-    marketplaces: readonly DeclaredMarketplace[],
-    hostNameByAlias: ReadonlyMap<string, string>,
-    scope: MarketplaceScope
-  ): string[] {
+  private pluginRefsToEnable(run: PluginRefsRun): string[] {
+    const { toolId, manifest, marketplaces, hostNameByAlias, scope } = run;
     const byName = new Map(marketplaces.map((m) => [m.name, m]));
     const refs: string[] = [];
     for (const plugin of manifest.getPlugins(toolId)) {

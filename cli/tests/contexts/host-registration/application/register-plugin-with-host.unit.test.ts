@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { RegistrationClaims } from "../../../../src/contexts/host-registration/application/register-plugin-with-host.js";
 import { RegisterPluginWithHost } from "../../../../src/contexts/host-registration/application/register-plugin-with-host.js";
+import type { ClaimsView } from "../../../../src/contexts/host-registration/contract/claims-view.js";
 import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
@@ -17,7 +17,7 @@ import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.js"
 const PLATFORM = "linux";
 const DIR = "/built/aidd";
 const CATALOG = join(DIR, ".claude-plugin", "marketplace.json");
-const NONE: RegistrationClaims = {
+const NONE: ClaimsView = {
   recorded: undefined,
   machine: async () => undefined,
   machineKept: false,
@@ -31,7 +31,7 @@ function setup(
     sources?: Map<string, NativeMarketplaceSource | null> | "absent";
     registry?: HostMarketplaceRegistryReading;
     plugins?: HostPluginRegistryReading;
-    claims?: Partial<RegistrationClaims>;
+    claims?: Partial<ClaimsView>;
     refs?: string[];
     build?: null;
   } = {}

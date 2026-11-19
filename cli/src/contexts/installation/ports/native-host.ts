@@ -1,5 +1,5 @@
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
-import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
 import type {
   NativePluginClaim,
   NativeRegistrations,
@@ -100,13 +100,6 @@ export interface RegistrationRecordRules {
   ) => MergedClaims;
 }
 
-/** What installation asks of a host to register marketplaces and enable refs. */
-export interface NativeHostRegistration {
-  readonly execute: <M extends RegistrationSubject>(
-    command: RegisterPluginWithHostCommand<M>
-  ) => Promise<RegisterPluginWithHostResult>;
-}
-
 /**
  * What installation asks of a host to remove a plugin. `Proof` is the host's own proof that a ref
  * is removable: installation only hands back what `proveClaimedRef` gave it, never reads it.
@@ -144,23 +137,6 @@ export interface MarketplaceRemovalPlanner {
   }>;
 }
 
-/** Answers the removal asks of whoever keeps the machine-wide claims. */
-interface WithdrawalClaims {
-  readonly isMachineOwned: (ref: string) => Promise<boolean>;
-  /** Why `ref` must stay enabled for another project, when it must. */
-  readonly guardMessage: (
-    binary: string,
-    ref: string,
-    alias: string
-  ) => Promise<string | undefined>;
-  /** The path under `cacheRoot` when it stays inside it, else `null`. */
-  readonly resolveCacheCandidate: (
-    cacheRoot: string,
-    relativeSegments: string,
-    label: string
-  ) => Promise<string | null>;
-}
-
 /** An installed plugin to withdraw, by this project's marketplace alias. */
 interface WithdrawnPlugin {
   readonly name: string;
@@ -173,7 +149,6 @@ export interface WithdrawFromHostCommand {
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
   readonly registrations: NativeRegistrations | undefined;
-  readonly claims: WithdrawalClaims;
   /** Absent when the host keeps no plugin cache. */
   readonly pluginCacheRoot: string | undefined;
 }
@@ -183,7 +158,7 @@ export type ProjectSourceCommand = Pick<
   "tool" | "projectRoot" | "registrations"
 > & {
   readonly plugin: WithdrawnPlugin;
-  readonly isMachineOwned: WithdrawalClaims["isMachineOwned"];
+  readonly isMachineOwned: (ref: string) => Promise<boolean>;
 };
 
 export interface ClaimedHostRef {
@@ -191,7 +166,12 @@ export interface ClaimedHostRef {
   readonly ref: string;
 }
 
-export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
+/** The path under `cacheRoot` when it stays inside it, else `null`. */
+export type CacheCandidateResolver = (
+  cacheRoot: string,
+  relativeSegments: string,
+  label: string
+) => Promise<string | null>;
 
 interface RegisteredTool {
   readonly tool: NativeHostTool;
@@ -209,18 +189,6 @@ export interface UserRegistrationWithdrawal extends RegisteredTool {
   readonly claimedRefs: readonly string[];
 }
 
-interface RegistrationLogger {
-  readonly debug: (message: string) => void;
-  readonly info: (message: string) => void;
-  readonly warn: (message: string) => void;
-}
-
-/** What a registration needs of each marketplace it is given. */
-export interface RegistrationSubject {
-  readonly name: string;
-  readonly scope: MarketplaceScope;
-}
-
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
 export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
   readonly alias: string;
@@ -236,34 +204,3 @@ export type HostRegistrationOutcome = {
   /** True when a build failed, so the host keeps its earlier registration for it. */
   readonly buildFailed: boolean;
 };
-
-type MachineRegistrations = NativeRegistrations & {
-  readonly pluginClaims?: readonly { readonly ref: string }[];
-};
-
-/** The records the caller holds, read only when the registration needs them. */
-export interface RegistrationClaims {
-  readonly recorded: NativeRegistrations | undefined;
-  readonly machine: () => Promise<MachineRegistrations | undefined>;
-  readonly machineKept: boolean;
-  readonly persistedProject: () => Promise<NativeRegistrations | undefined>;
-}
-
-export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
-  readonly toolId: ToolId;
-  readonly projectRoot: string;
-  readonly scope: MarketplaceScope;
-  readonly marketplaces: readonly M[];
-  readonly claims: RegistrationClaims;
-  /** The tree to register a marketplace from; null when it cannot be built. */
-  readonly build: (marketplace: M) => Promise<string | null>;
-  readonly refsToEnable: (hostNameByAlias: ReadonlyMap<string, string>) => string[];
-  readonly userCacheRoot: () => string;
-  /** Warnings go to the logger and are kept in order for the caller. */
-  readonly sink: { readonly logger: RegistrationLogger; readonly warnings: string[] };
-}
-
-export type RegisterPluginWithHostResult =
-  | { readonly status: "unconfigured" }
-  | { readonly status: "binary-missing"; readonly binary: string }
-  | { readonly status: "activated"; readonly outcome: HostRegistrationOutcome };

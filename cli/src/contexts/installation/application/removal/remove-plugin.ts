@@ -88,13 +88,7 @@ export class RemovePlugin<Proof> {
         projectRoot: projectRoot,
         homedir: nodeHomedir,
       });
-      const confirmed = await this.withdrawal.withdraw(
-        toolId,
-        tool,
-        plugin,
-        projectRoot,
-        registrations
-      );
+      const confirmed = await this.withdrawal.withdraw(tool, plugin, projectRoot, registrations);
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);

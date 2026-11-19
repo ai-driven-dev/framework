@@ -23,7 +23,10 @@ export interface UserPluginRemoveOptions {
 export class RemoveUserPlugin<Proof> {
   constructor(
     private readonly userRepo: ManifestRepository & Lock,
-    private readonly withdrawFromHost: HostWithdrawal<Proof>,
+    private readonly withdrawFromHost: Pick<
+      HostWithdrawal<Proof>,
+      "proveClaimedRef" | "uninstallProven"
+    >,
     private readonly records: RegistrationRecordRules,
     private readonly userScopePluginFiles: UserScopePluginFiles,
     private readonly tools: ToolCatalog

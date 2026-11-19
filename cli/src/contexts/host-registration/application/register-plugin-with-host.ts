@@ -9,6 +9,7 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { BuiltCatalogs, ClaimsView } from "../contract/claims-view.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
 import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
@@ -16,11 +17,7 @@ import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
 } from "../domain/record/native-marketplace-source.js";
-import {
-  pluginRefsOf,
-  type RegistrationRecordData,
-  recordedMarketplaces,
-} from "../domain/record/registration-record.js";
+import { pluginRefsOf, recordedMarketplaces } from "../domain/record/registration-record.js";
 import {
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
@@ -71,31 +68,13 @@ export interface HostRegistrationOutcome {
   readonly buildFailed: boolean;
 }
 
-/** What the machine-wide record holds for a tool. Read when needed, never ahead of it. */
-export type MachineRegistrations = RegistrationRecordData & {
-  readonly pluginClaims?: readonly { readonly ref: string }[];
-};
-
-/** What other records say about a tool's registrations, handed over by the caller that owns them. */
-export interface RegistrationClaims {
-  /** The registrations this run's own record already holds for the tool. */
-  readonly recorded: RegistrationRecordData | undefined;
-  /** The machine-wide record, absent when it is empty or not kept. */
-  readonly machine: () => Promise<MachineRegistrations | undefined>;
-  /** Whether a machine-wide record is kept at all. */
-  readonly machineKept: boolean;
-  /** The project record as last saved. */
-  readonly persistedProject: () => Promise<RegistrationRecordData | undefined>;
-}
-
 export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
   readonly toolId: ToolId;
   readonly projectRoot: string;
   readonly scope: MarketplaceScope;
   readonly marketplaces: readonly M[];
-  readonly claims: RegistrationClaims;
-  /** Builds the tree one marketplace is registered from; null when it cannot be built. */
-  readonly build: (marketplace: M) => Promise<string | null>;
+  readonly claims: ClaimsView;
+  readonly build: BuiltCatalogs<M>;
   /** The refs this run enables, given the host name each proven marketplace answers to. */
   readonly refsToEnable: (hostNameByAlias: ReadonlyMap<string, string>) => string[];
   readonly userCacheRoot: () => string;
@@ -130,7 +109,7 @@ interface Run {
   readonly profile: NativeHostTool & CatalogProbeTool;
   readonly activator: HostActions;
   readonly projectRoot: string;
-  readonly claims: RegistrationClaims;
+  readonly claims: ClaimsView;
   readonly userCacheRoot: () => string;
   readonly platform: string;
   readonly logger: Logger;

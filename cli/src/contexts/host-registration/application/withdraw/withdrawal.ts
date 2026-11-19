@@ -3,6 +3,7 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import type { WithdrawalClaimsView } from "../../contract/claims-view.js";
 import type {
   DependentClaim,
   RegistrationRecord,
@@ -11,25 +12,6 @@ import type {
 import type { HostActions } from "../../ports/host-actions.js";
 import type { HostPorts } from "../../ports/host-ports.js";
 import type { NativeHostTool } from "../../ports/host-tool.js";
-
-/** The facts about machine-wide ownership a withdrawal depends on, none of which this context
- * may read itself: the caller answers them from where claims live. */
-export interface WithdrawalClaims {
-  /** Whether a canonical machine claim owns `ref`. */
-  readonly isMachineOwned: (ref: string) => Promise<boolean>;
-  /** The warning that says why `ref` must stay enabled for another project, if it must. */
-  readonly guardMessage: (
-    binary: string,
-    ref: string,
-    alias: string
-  ) => Promise<string | undefined>;
-  /** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
-  readonly resolveCacheCandidate: (
-    cacheRoot: string,
-    relativeSegments: string,
-    label: string
-  ) => Promise<string | null>;
-}
 
 /** One installed plugin the host may have registered, by aidd's own marketplace alias. */
 export interface WithdrawnPlugin {
@@ -43,7 +25,7 @@ export interface WithdrawFromHostCommand {
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
   readonly registrations: RegistrationRecordData | undefined;
-  readonly claims: WithdrawalClaims;
+  readonly claims: WithdrawalClaimsView;
   /** Root of the host's own plugin cache; absent when the host keeps none. */
   readonly pluginCacheRoot: string | undefined;
 }
@@ -53,7 +35,7 @@ export type ProjectSourceCommand = Pick<
   "tool" | "projectRoot" | "registrations"
 > & {
   readonly plugin: WithdrawnPlugin;
-  readonly isMachineOwned: WithdrawalClaims["isMachineOwned"];
+  readonly isMachineOwned: WithdrawalClaimsView["isMachineOwned"];
 };
 
 export interface ClaimedHostRef {
@@ -62,7 +44,7 @@ export interface ClaimedHostRef {
 }
 
 /** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
-export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
+export type CacheCandidateResolver = WithdrawalClaimsView["resolveCacheCandidate"];
 
 /** A tool whose host holds registrations this project or machine made. */
 export interface RegisteredTool {

@@ -4,6 +4,8 @@ import { SearchPlugins } from "../../contexts/distribution/application/plugin-so
 import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
+import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import type { ProvenHostRef } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.js";
 import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.js";
 import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
@@ -24,6 +26,7 @@ import {
   type UserPluginRemoveOptions,
 } from "../../contexts/installation/application/removal/remove-user-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
+import type { HostWithdrawal } from "../../contexts/installation/ports/native-host.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import {
@@ -37,6 +40,7 @@ import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
 import { PickPlugins } from "../../orchestration/plugin/pick-plugins.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.js";
+import { withdrawalClaimsOf } from "../../orchestration/plugin/withdrawal-claims.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Installation } from "../installation.js";
@@ -71,6 +75,29 @@ export const userScopeFileGuard: UserScopeFileGuard = {
   assertWriteBoundary: assertUserScopeWriteBoundary,
 };
 
+/** The host withdrawal a project removal calls: the host's own, checked against the machine's
+ * claims for the tool and project at hand. */
+export function projectHostWithdrawal(
+  withdrawFromHost: WithdrawFromHost,
+  removalClaims: Parameters<typeof withdrawalClaimsOf>[0]
+): HostWithdrawal<ProvenHostRef> {
+  return {
+    assertProjectSource: (command) => withdrawFromHost.assertProjectSource(command),
+    proveClaimedRef: (registrations, claim, projectRoot) =>
+      withdrawFromHost.proveClaimedRef(registrations, claim, projectRoot),
+    uninstallProven: (proof) => withdrawFromHost.uninstallProven(proof),
+    execute: (command) =>
+      withdrawFromHost.execute({
+        ...command,
+        claims: withdrawalClaimsOf(removalClaims, {
+          toolId: command.tool.toolId,
+          tool: command.tool,
+          projectRoot: command.projectRoot,
+        }),
+      }),
+  };
+}
+
 /** A user-scope removal under the machine's home directory, which the command line does not know. */
 export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execute">) {
   return {
@@ -101,22 +128,23 @@ export function wirePlugin(base: Base, inst: Installation) {
     withdrawFromHost,
   } = base;
   const { installRuntimeConfigUseCase, builtMaterializationDeps, registrationRecordRules } = inst;
+  const removalClaims = pluginRemovalClaims({
+    repo: userManifestRepo,
+    fs,
+    logger,
+    home: resolveHomeDir(),
+    platform: process.platform,
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    userSourceReferences,
+    marketplaceRegistry,
+    resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
+  });
   const pluginRemoveUseCase = new RemovePlugin(
     fs,
     manifestRepo,
     new ProjectPluginWithdrawal(
-      withdrawFromHost,
-      pluginRemovalClaims({
-        repo: userManifestRepo,
-        fs,
-        logger,
-        home: resolveHomeDir(),
-        platform: process.platform,
-        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-        userSourceReferences,
-        marketplaceRegistry,
-        resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
-      })
+      projectHostWithdrawal(withdrawFromHost, removalClaims),
+      removalClaims
     ),
     registrationRecordRules,
     tools

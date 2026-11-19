@@ -8,7 +8,6 @@ import type {
   FrameworkMarketplaceRegistrar,
   InstallationMarketplaceRegistry,
 } from "../../ports/marketplace-sources.js";
-import type { RegistrationClaims } from "../../ports/native-host.js";
 
 export interface SyncContextRequest {
   projectRoot: string;
@@ -26,9 +25,12 @@ export interface SyncContext {
   marketplaces: readonly DeclaredMarketplace[];
   toolIds: readonly ToolId[];
   save(): Promise<void>;
-  /** What a host registration is checked against for one tool: the manifest's own record, the
-   * machine's, and the one persisted for this project. */
-  claimsOf(toolId: ToolId): RegistrationClaims;
+  /** The machine-wide manifest, absent when it is empty or not kept. */
+  machineManifest(): Promise<Manifest | undefined>;
+  /** Whether a machine-wide manifest is kept at all. */
+  readonly machineKept: boolean;
+  /** The manifest as last saved, not the one this run is changing. */
+  persistedProject(): Promise<Manifest | undefined>;
 }
 
 export class LoadSyncContext {
@@ -77,7 +79,9 @@ export class LoadSyncContext {
       marketplaces,
       toolIds: this.selectToolIds(manifest, request.toolIds),
       save: () => manifestRepo.save(manifest),
-      claimsOf: (toolId) => this.claimsOf(toolId, manifest),
+      machineManifest: async () => (await this.userManifestRepo?.load()) ?? undefined,
+      machineKept: this.userManifestRepo !== undefined,
+      persistedProject: async () => (await this.manifestRepo.load()) ?? undefined,
     };
   }
 
@@ -100,16 +104,6 @@ export class LoadSyncContext {
       pluginSource: framework?.source,
     });
     return this.marketplaceRegistry.list(projectRoot);
-  }
-
-  private claimsOf(toolId: ToolId, manifest: Manifest): RegistrationClaims {
-    return {
-      recorded: manifest.getNativeRegistrations(toolId),
-      machine: async () => (await this.userManifestRepo?.load())?.getNativeRegistrations(toolId),
-      machineKept: this.userManifestRepo !== undefined,
-      persistedProject: async () =>
-        (await this.manifestRepo.load())?.getNativeRegistrations(toolId),
-    };
   }
 
   private selectToolIds(

@@ -53,7 +53,6 @@ export class ProjectPluginWithdrawal<Proof> {
 
   /** `undefined` when the plugin carries no marketplace, else whether the host confirmed. */
   async withdraw(
-    toolId: AiToolId,
     tool: NativeHostTool,
     plugin: InstalledPlugin,
     projectRoot: string,
@@ -65,13 +64,6 @@ export class ProjectPluginWithdrawal<Proof> {
       plugin: { name: plugin.name, marketplace: plugin.marketplace, scope: plugin.scope },
       projectRoot,
       registrations,
-      claims: {
-        isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
-        guardMessage: (binary, ref, alias) =>
-          this.claims.guardMessage(binary, tool, ref, alias, projectRoot),
-        resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-          this.claims.resolveCacheCandidate(cacheRoot, relativeSegments, label),
-      },
       pluginCacheRoot: tool.nativeActivation()?.pluginCacheRoot(this.claims.home),
     });
   }

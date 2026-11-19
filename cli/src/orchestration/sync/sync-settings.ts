@@ -1,10 +1,11 @@
-import type { ActivateNativeTools } from "../../contexts/installation/application/sync/activate-native-tools.js";
 import type { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
+import type { ActivateNativeTools } from "./activate-native-tools.js";
+import { claimsViewOf } from "./claims-view-of.js";
 
 export interface SyncSettingsOptions {
   projectRoot: string;
@@ -100,6 +101,7 @@ export class SyncSettings {
     const activation = await this.activateNativeTools.execute({
       projectRoot,
       context,
+      claims: (toolId) => claimsViewOf(context, toolId),
       scope,
       enablePlugins: options.enablePlugins ?? [],
     });
