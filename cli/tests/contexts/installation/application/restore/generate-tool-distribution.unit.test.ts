@@ -76,11 +76,9 @@ describe("GenerateToolDistribution — content sections", () => {
 
     const paths = (await generate(withoutRules)).map((f) => f.relativePath).sort();
 
-    expect(paths).toStrictEqual([
-      ".claude/agents/reviewer.md",
-      ".claude/commands/greet.md",
-      ".claude/skills/hello/SKILL.md",
-    ]);
+    expect(paths).toStrictEqual(
+      (await pathsFor(TOOL.claude)).filter((path) => !path.startsWith(".claude/rules/"))
+    );
   });
 });
 
