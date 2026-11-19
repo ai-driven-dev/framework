@@ -582,22 +582,37 @@ describe("every error in the catalog", () => {
 });
 
 describe("error names and messages a caller matches on", () => {
-  it.each([
-    new errors.ActiveMachineDependentsError("x", ["a"]),
-    new errors.DuplicateToolIdError("t"),
-    new errors.InvalidHooksDescriptorError("t", "unknown-event", "d"),
-    new errors.InvalidToolProfileError("t", "unknown-section", "d"),
-    new errors.KiloDualConfigError(),
-    new errors.InvalidAgentFrontmatterError("a", "d"),
-    new errors.InvalidReportPeriodError("m"),
-    new errors.TaskDeclaredNoneWithNameError(),
-    new errors.TaskNameMissingError(),
-    new errors.ConflictingIdentityFlagsError(),
-    new errors.IdentityOffWithIdentifierError(),
-    new errors.InvalidIdentityError(),
-  ])("names itself after its class: $constructor.name", (error) => {
-    expect(error.name).toBe(error.constructor.name);
-  });
+  const named: ReadonlyArray<readonly [{ readonly name: string }, () => Error]> = [
+    [
+      errors.ActiveMachineDependentsError,
+      () => new errors.ActiveMachineDependentsError("x", ["a"]),
+    ],
+    [errors.DuplicateToolIdError, () => new errors.DuplicateToolIdError("t")],
+    [
+      errors.InvalidHooksDescriptorError,
+      () => new errors.InvalidHooksDescriptorError("t", "unknown-event", "d"),
+    ],
+    [
+      errors.InvalidToolProfileError,
+      () => new errors.InvalidToolProfileError("t", "unknown-section", "d"),
+    ],
+    [errors.KiloDualConfigError, () => new errors.KiloDualConfigError()],
+    [errors.InvalidAgentFrontmatterError, () => new errors.InvalidAgentFrontmatterError("a", "d")],
+    [errors.InvalidReportPeriodError, () => new errors.InvalidReportPeriodError("m")],
+    [errors.TaskDeclaredNoneWithNameError, () => new errors.TaskDeclaredNoneWithNameError()],
+    [errors.TaskNameMissingError, () => new errors.TaskNameMissingError()],
+    [errors.ConflictingIdentityFlagsError, () => new errors.ConflictingIdentityFlagsError()],
+    [errors.IdentityOffWithIdentifierError, () => new errors.IdentityOffWithIdentifierError()],
+    [errors.InvalidIdentityError, () => new errors.InvalidIdentityError()],
+  ];
+
+  it.each(named.map(([Class, build]) => ({ name: Class.name, build })))(
+    "names itself after its class: $name",
+    ({ build }) => {
+      const error = build();
+      expect(error.name).toBe(error.constructor.name);
+    }
+  );
 
   it("lists every dependent project, comma separated", () => {
     expect(new errors.ActiveMachineDependentsError("x", ["a", "b"]).message).toBe(
@@ -634,16 +649,18 @@ describe("every catalogue error", () => {
     }
   }
 
-  const instances = Object.entries(errors)
-    .filter(([name, value]) => typeof value === "function" && name !== "AiddError")
-    .map(([name, value]) => ({
-      name,
-      error: construct(name, value as new (...args: unknown[]) => CodedError),
-    }));
+  const instances = () =>
+    Object.entries(errors)
+      .filter(([name, value]) => typeof value === "function" && name !== "AiddError")
+      .map(([name, value]) => ({
+        name,
+        error: construct(name, value as new (...args: unknown[]) => CodedError),
+      }));
 
   it("is an Error carrying a kebab-case code", () => {
-    expect(instances.length).toBeGreaterThan(0);
-    for (const { name, error } of instances) {
+    const all = instances();
+    expect(all.length).toBeGreaterThan(0);
+    for (const { name, error } of all) {
       expect(error, name).toBeInstanceOf(Error);
       expect(error.code, `${name} must carry a code`).toMatch(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/);
     }
@@ -651,7 +668,7 @@ describe("every catalogue error", () => {
 
   it("carries a code no other error carries", () => {
     const corrupted = new errors.ManifestUnavailableError("manifest-corrupted");
-    const codes = [...instances.map(({ error }) => error.code), corrupted.code];
+    const codes = [...instances().map(({ error }) => error.code), corrupted.code];
     const duplicated = codes.filter((code, index) => codes.indexOf(code) !== index);
     expect(duplicated).toEqual([]);
   });
