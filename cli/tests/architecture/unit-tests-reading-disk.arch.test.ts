@@ -24,7 +24,7 @@ const BASELINE: readonly string[] = [
   "tests/contexts/installation/application/restore/restore.unit.test.ts",
   "tests/contexts/installation/application/restore/apply-plugin-files-built-tree.unit.test.ts",
   "tests/contexts/installation/application/restore/apply-plugin-files-mode-a-marketplace.unit.test.ts",
-  "tests/presentation/prompts/plugin-pick-use-case.unit.test.ts",
+  "tests/orchestration/plugin/pick-plugins.unit.test.ts",
 ];
 
 const SEEDER = /["'][^"']*\/seed-from-directory\.js["']/;

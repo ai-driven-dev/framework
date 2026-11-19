@@ -17,7 +17,7 @@ export interface ChoosePluginsResult {
 
 export class ChoosePlugins {
   constructor(
-    private readonly pluginPickUseCase: PluginPick,
+    private readonly pickPlugins: PluginPick,
     private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace,
     private readonly listMarketplaces: Pick<ListMarketplaces, "execute">,
     private readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">
@@ -31,7 +31,7 @@ export class ChoosePlugins {
 
   private async runInteractive(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
     if (!options.interactive) return { installed: [] };
-    const result = await this.pluginPickUseCase.execute({
+    const result = await this.pickPlugins.execute({
       toolIds: "all",
       projectRoot: options.projectRoot,
       interactive: true,

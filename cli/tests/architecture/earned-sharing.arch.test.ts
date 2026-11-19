@@ -33,7 +33,6 @@ function areaOf(file: string): string {
   const scenario = /^src\/orchestration\/([^/]+)\//.exec(file);
   if (scenario) return `scenario:${scenario[1]}`;
   if (file.startsWith("src/presentation/commands/")) return "commands";
-  if (file.startsWith("src/presentation/prompts/")) return "prompts";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/shared/")) return "shared";
   return "other";

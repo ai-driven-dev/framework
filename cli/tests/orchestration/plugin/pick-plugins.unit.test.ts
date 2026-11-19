@@ -8,7 +8,7 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distributi
 import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { PluginPickUseCase } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
+import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.js";
 import {
   InteractiveOnlyError,
   InvalidPluginManifestError,
@@ -77,7 +77,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(deps.fs)
   );
-  const useCase = new PluginPickUseCase(
+  const useCase = new PickPlugins(
     new ListMarketplaces(registry),
     resolveMarketplace,
     pluginAdd,
@@ -86,16 +86,16 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   return { useCase, deps, registry, pluginAdd };
 }
 
-describe("PluginPickUseCase", () => {
-  it("throws InteractiveOnlyError when not interactive", async () => {
+describe("PickPlugins", () => {
+  it("refuses a non-interactive run with InteractiveOnlyError, naming the command to rerun", async () => {
     const { useCase } = await buildUseCase();
-    await expect(
-      useCase.execute({
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      })
-    ).rejects.toThrow(InteractiveOnlyError);
+    const run = useCase.execute({
+      toolIds: [TOOL.claude],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    await expect(run).rejects.toThrow(InteractiveOnlyError);
+    await expect(run).rejects.toThrow(/plugin install/u);
   });
 
   it("throws NoMarketplacesRegisteredError when registry is empty", async () => {
@@ -173,20 +173,6 @@ describe("PluginPickUseCase", () => {
     ).rejects.toThrow(new InvalidPluginManifestError(`marketplace.json not found at "${MKT_DIR}"`));
   });
 
-  it("returns no installed plugins and skips the selection prompt when the catalog is empty", async () => {
-    const { useCase, deps, registry } = await buildUseCase();
-    seedMarketplaceFile(deps.fs, MKT_DIR, []);
-    await registerMarketplace(registry, "local", MKT_DIR);
-
-    const result = await useCase.execute({
-      toolIds: [TOOL.claude],
-      projectRoot: PROJECT_ROOT,
-      interactive: true,
-    });
-
-    expect(result.installed).toEqual([]);
-  });
-
   it("installs an entry that carries a description and an explicit strict flag on the catalog", async () => {
     const { useCase, deps, registry } = await buildUseCase();
     seedMarketplaceFile(deps.fs, MKT_DIR, [
@@ -211,19 +197,7 @@ describe("PluginPickUseCase", () => {
   });
 });
 
-describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
-  it("names the command a non-interactive run refused, so the message says what to rerun", async () => {
-    const { useCase } = await buildUseCase();
-
-    await expect(
-      useCase.execute({
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      })
-    ).rejects.toThrow(/plugin install/u);
-  });
-
+describe("PickPlugins — what it asks, and when it asks nothing", () => {
   it("asks nothing about a marketplace when only one is registered", async () => {
     const prompter = new KeepPrompter();
     const select = vi.spyOn(prompter, "select");
@@ -240,76 +214,25 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
     expect(select).not.toHaveBeenCalled();
   });
 
-  it("offers each marketplace by name and scope when there is a choice to make", async () => {
-    const prompter = new KeepPrompter();
-    const select = vi.spyOn(prompter, "select");
-    const { useCase, deps, registry } = await buildUseCase(prompter);
-    seedMarketplaceFile(deps.fs, MKT_DIR, []);
-    seedMarketplaceFile(deps.fs, MKT_DIR_2, []);
-    await registerMarketplace(registry, "first", MKT_DIR);
-    await registerMarketplace(registry, "second", MKT_DIR_2);
-
-    await useCase.execute({
-      toolIds: [TOOL.claude],
-      projectRoot: PROJECT_ROOT,
-      interactive: true,
-    });
-
-    expect(select).toHaveBeenCalledWith("Select a marketplace:", [
-      expect.objectContaining({ name: "first [project]" }),
-      expect.objectContaining({ name: "second [project]" }),
-    ]);
-  });
-
-  it("asks nothing about plugins when the catalog holds none", async () => {
+  it("installs nothing and asks nothing about plugins when the catalog holds none", async () => {
     const prompter = new KeepPrompter();
     const checkbox = vi.spyOn(prompter, "checkbox");
     const { useCase, deps, registry } = await buildUseCase(prompter);
     seedMarketplaceFile(deps.fs, MKT_DIR, []);
     await registerMarketplace(registry, "local", MKT_DIR);
 
-    await useCase.execute({
+    const result = await useCase.execute({
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
 
+    expect(result.installed).toEqual([]);
     expect(checkbox).not.toHaveBeenCalled();
-  });
-
-  it("offers a described plugin with its description, and a bare one by name alone", async () => {
-    const prompter = new KeepPrompter();
-    const checkbox = vi.spyOn(prompter, "checkbox");
-    const { useCase, deps, registry } = await buildUseCase(prompter);
-    seedMarketplaceFile(deps.fs, MKT_DIR, [
-      {
-        name: "sample-plugin",
-        source: { kind: "local", path: PLUGIN_FIXTURE },
-        version: "1.0.0",
-        description: "A sample plugin used in tests",
-        metadata: { recommended: true },
-      },
-      { name: "bare-plugin", source: { kind: "local", path: PLUGIN_FIXTURE }, version: "1.0.0" },
-    ]);
-    await registerMarketplace(registry, "local", MKT_DIR);
-
-    await useCase.execute({
-      toolIds: [TOOL.claude],
-      projectRoot: PROJECT_ROOT,
-      interactive: true,
-    });
-
-    expect(checkbox).toHaveBeenCalledWith("Select plugins to install:", [
-      expect.objectContaining({
-        name: "sample-plugin — A sample plugin used in tests",
-        checked: true,
-      }),
-      expect.objectContaining({ name: "bare-plugin", checked: false }),
-    ]);
   });
 });
 
-describe("PluginPickUseCase — what it hands the installer", () => {
+describe("PickPlugins — what it hands the installer", () => {
   it("passes the entry's own source, metadata and marketplace, replacing what is there", async () => {
     const prompter = new KeepPrompter();
     const { useCase, deps, registry, pluginAdd } = await buildUseCase(prompter);

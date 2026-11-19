@@ -56,7 +56,7 @@ function makeUseCases(overrides?: {
   const pickExecute = overrides?.pickExecute ?? vi.fn();
   const addExecute = overrides?.addExecute ?? vi.fn();
   const marketplaceExecute = overrides?.marketplaceExecute ?? vi.fn();
-  const pluginPickUseCase: PluginPick = { execute: pickExecute };
+  const pickPlugins: PluginPick = { execute: pickExecute };
   const pluginAddUseCase: PluginAdd = { execute: addExecute };
   const pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace = {
     execute: marketplaceExecute,
@@ -65,7 +65,7 @@ function makeUseCases(overrides?: {
   const trustStore = overrides?.trustStore ?? makeAlwaysTrustStore();
   const prompter = overrides?.prompter ?? makeSilentPrompter();
   return {
-    pluginPickUseCase,
+    pickPlugins,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
     manifestRepo,
@@ -79,7 +79,7 @@ function makeUseCases(overrides?: {
 
 function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlugin {
   const {
-    pluginPickUseCase,
+    pickPlugins,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
     manifestRepo,
@@ -88,7 +88,7 @@ function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlu
   } = makeUseCases(overrides);
   return new InstallPlugin(
     new PlanPluginInstall(manifestRepo, registeredTools()),
-    pluginPickUseCase,
+    pickPlugins,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
     new TrustPluginSource(trustStore, prompter)
@@ -97,7 +97,7 @@ function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlu
 
 describe("InstallPlugin", () => {
   describe("no-arg routing", () => {
-    it("delegates to PluginPickUseCase when no arg and interactive", async () => {
+    it("delegates to PickPlugins when no arg and interactive", async () => {
       const pickExecute = vi
         .fn()
         .mockResolvedValue({ marketplace: { name: "m" }, installed: ["p1"] });

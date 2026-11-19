@@ -151,7 +151,6 @@ src/
 │   │   └── telemetry/
 │   ├── errors/
 │   ├── hooks/
-│   ├── prompts/
 │   └── terminal/
 └── shared/    # what two or more contexts need
     ├── domain/    # the vocabulary

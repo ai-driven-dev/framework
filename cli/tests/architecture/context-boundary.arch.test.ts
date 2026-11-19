@@ -43,6 +43,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/plugin-source/resolve-plugin-source.ts",
     "src/contexts/distribution/application/plugin-source/trust-plugin-source.ts",
     "src/contexts/distribution/application/plugin-source/list-framework-plugins.ts",
+    "src/contexts/distribution/application/plugin-source/plugin-choices.ts",
     "src/contexts/distribution/contract/plugin-source-match.ts",
   ],
   installation: [

@@ -32,8 +32,8 @@ import {
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
+import { PickPlugins } from "../../orchestration/plugin/pick-plugins.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.js";
-import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Installation } from "../installation.js";
@@ -153,7 +153,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     logger
   );
   const searchPlugins = new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase);
-  const pluginPickUseCase = new PluginPickUseCase(
+  const pickPlugins = new PickPlugins(
     listMarketplaces,
     resolveMarketplaceUseCase,
     pluginAddUseCase,
@@ -161,7 +161,7 @@ export function wirePlugin(base: Base, inst: Installation) {
   );
   const pluginInstallUseCase = new InstallPlugin(
     new PlanPluginInstall(manifestRepo, tools),
-    pluginPickUseCase,
+    pickPlugins,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
     new TrustPluginSource(marketplaceTrustStore, prompter)
@@ -199,7 +199,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     pluginInstallUseCase,
     searchPlugins,
     pluginInstallFromMarketplaceUseCase,
-    pluginPickUseCase,
+    pickPlugins,
     userPluginFileUpdater,
   };
 }
