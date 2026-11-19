@@ -228,7 +228,7 @@ describe("the guard itself", () => {
       tools: { mutate: "src/contexts/tools/**/*.ts", tests: ["tests/contexts/tools/**"] },
     };
     expect(scopesToRun(["cli/src/shared/domain/paths.ts"], mixed)).toEqual(["shared"]);
-    expect(scopesToRun(["cli/src/contexts/tools/domain/registry.ts"], mixed)).toEqual([]);
+    expect(scopesToRun(["cli/src/contexts/tools/domain/marketplace-entry.ts"], mixed)).toEqual([]);
     expect(
       scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], mixed)
     ).toEqual([]);

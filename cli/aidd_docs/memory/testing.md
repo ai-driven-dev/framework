@@ -22,7 +22,7 @@ How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../..
 
 ## Mutation
 
-- Scopes and floors: `mutation-scopes.json`; scope selection per change: `scripts/mutation-scopes-to-run.mjs`.
+- Scopes and floors: `mutation-scopes.json`. A scope with a floor (`telemetry`, `shared`) runs per pull request when its source or its declared tests changed, and the canary runs only with the full set; a change to `stryker.conf.json`, `vitest.mutation.config.ts` or the scopes file runs all. Scopes without a floor run in the weekly schedule and by `workflow_dispatch`, and never fail. Selection: `scripts/mutation-scopes-to-run.mjs`.
 - Run: `pnpm test:mutation:<scope>`, or `node scripts/run-mutation.mjs --changed [<base>]` before a push.
 - A floor is raised to the measured score after a run, never lowered without the reason in that file.
 

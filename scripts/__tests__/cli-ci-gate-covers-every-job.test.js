@@ -145,6 +145,23 @@ test("only a proven next snapshot tree skips the promotion or main mutation matr
   }
 });
 
+// Only a scope with a floor may fail a run: the others report their score. The workflow says
+// so by letting a leg without `blocking` fail without failing the job, and the weekly run is
+// also a manual one.
+test("a mutation leg without a floor cannot fail the run, and the weekly run can be started by hand", () => {
+  const workflow = cliCiWorkflow();
+
+  assert.ok("workflow_dispatch" in workflow.on);
+  assert.ok("schedule" in workflow.on);
+  for (const job of ["cli-mutation", "cli-mutation-score"]) {
+    assert.equal(workflow.jobs[job]["continue-on-error"], "${{ !matrix.blocking }}", job);
+  }
+  assert.match(
+    JSON.stringify(workflow.jobs["cli-mutation"].steps),
+    /github\.event_name != 'pull_request' && github\.event_name != 'push' && '--force'/
+  );
+});
+
 // The Windows and macOS jobs are the only runs of the plugin suite off Linux, and a plugin's
 // bundled script or hook is what handles paths and line endings there. Runs the filter's own
 // `case` under bash, so the assertion is what the workflow decides, not a reading of its text.

@@ -11,9 +11,12 @@ on:
   push:
     branches: [main, next]
   pull_request:
+  # A manual run is the weekly run, on demand.
+  workflow_dispatch:
   schedule:
     # Weekly, every mutant of every scope from scratch: the incremental files PRs restore
-    # only replay what a change touched, so drift through a dependency is caught here.
+    # only replay what a change touched, so drift through a dependency is caught here. Only
+    # telemetry and shared can fail it; every other scope reports its score.
     - cron: "0 3 * * 1"
 
 concurrency:
@@ -621,6 +624,8 @@ jobs:
     name: cli / Mutation (${{ matrix.scope }}${{ matrix.of > 1 && format(' {0}/{1}', matrix.shard, matrix.of) || '' }})
     needs: [changes]
     if: needs.changes.outputs.mutation_legs != '[]'
+    # A scope with no floor in mutation-scopes.json reports its score and never fails the run.
+    continue-on-error: ${{ !matrix.blocking }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
@@ -653,7 +658,7 @@ jobs:
           path: ${{ env.LEG_DIR }}/incremental.json
           key: mutation--${{ env.LEG }}--${{ github.run_id }}
           restore-keys: mutation--${{ env.LEG }}--
-      - run: cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name == 'schedule' && '--force' || '' }}
+      - run: cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name != 'pull_request' && github.event_name != 'push' && '--force' || '' }}
       - name: Save this leg's incremental file
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -676,11 +681,12 @@ jobs:
     needs: [changes, cli-mutation]
     # Always, so a crashed or cancelled shard is scored as missing instead of skipped.
     if: always() && needs.changes.outputs.mutation_sharded != '[]' && needs.changes.outputs.mutation_sharded != ''
+    continue-on-error: ${{ !matrix.blocking }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        scope: ${{ fromJSON(needs.changes.outputs.mutation_sharded) }}
+        include: ${{ fromJSON(needs.changes.outputs.mutation_sharded) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install pnpm
