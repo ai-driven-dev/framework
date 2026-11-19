@@ -15,6 +15,6 @@ The language of the `distribution` context. A name in the code means what this p
 | Staleness | A marketplace fetched longer ago than the allowed days | `STALE_MAX_DAYS_DEFAULT` |
 | Resolution | Turning a marketplace into its local path and its catalog, fetching only when needed | `ResolveMarketplace` |
 | Refresh | Fetching every registered marketplace again and recording the version it now carries | `RefreshMarketplace` |
-| Release | A tag of the framework repository that names a published version, root tags only | `ReleaseLister` |
+| Release | A tag of the framework repository that names a published version, root tags only | `rootReleaseTags` |
 | Repository visibility | Whether a repository answers without a credential | `RepositoryVisibility` |
 | Remover | What takes a registered marketplace away, which this context asks of its caller | `MarketplaceRemover` |

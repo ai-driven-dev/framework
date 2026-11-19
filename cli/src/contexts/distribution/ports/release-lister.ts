@@ -1,5 +1,5 @@
 export interface ReleaseLister {
-  /** Bare `v<semver>` tags only, newest first: release-please's per-component tags are not
-   * install units, since the marketplace manifest lives at the repository root. */
+  /** Every release tag of `repo`, newest first. The root release rule is distribution's
+   * (`rootReleaseTags`). */
   listRootReleases(repo: string): Promise<string[]>;
 }

@@ -11,9 +11,6 @@ import type { RepositoryVisibility } from "../ports/repository-visibility.js";
 
 const GITHUB_API_BASE = "https://api.github.com";
 
-/** Root release tag: `v` followed by a digit (`v4.0.0`, `v3.7.3-pm.1`). */
-const ROOT_RELEASE_TAG_REGEX = /^v\d/;
-
 export class GitHubReleaseAdapter implements ReleaseLister, RepositoryVisibility {
   constructor(
     private readonly http: HttpGet,
@@ -31,7 +28,7 @@ export class GitHubReleaseAdapter implements ReleaseLister, RepositoryVisibility
       if (!Array.isArray(body)) return [];
       return body
         .map((r) => (r as Record<string, unknown>).tag_name)
-        .filter((t): t is string => typeof t === "string" && ROOT_RELEASE_TAG_REGEX.test(t));
+        .filter((t): t is string => typeof t === "string");
     } catch (err) {
       this.handleError(err, url);
       return [];

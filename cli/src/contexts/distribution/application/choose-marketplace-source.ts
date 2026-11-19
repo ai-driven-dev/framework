@@ -5,6 +5,7 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../contract/framework-source.js";
+import { rootReleaseTags } from "../domain/root-release.js";
 import type { ReleaseLister } from "../ports/release-lister.js";
 
 /** What setup needs to settle where the framework marketplace comes from, without asking anyone:
@@ -24,8 +25,8 @@ export class ChooseMarketplaceSource {
   }
 
   /** The root releases of `repo`, newest first. */
-  releases(repo: string): Promise<readonly string[]> {
-    return this.releaseResolver.listRootReleases(repo);
+  async releases(repo: string): Promise<readonly string[]> {
+    return rootReleaseTags(await this.releaseResolver.listRootReleases(repo));
   }
 
   /** A repository source naming no release takes the newest one, or its tip when none exists. Any

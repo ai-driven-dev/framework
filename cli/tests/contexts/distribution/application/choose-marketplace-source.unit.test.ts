@@ -55,6 +55,17 @@ describe("ChooseMarketplaceSource", () => {
     });
   });
 
+  describe("releases", () => {
+    it("lists the root releases of a repository, newest first, without component tags", async () => {
+      const lister = releasesOf(["aidd-refine-v1.0.0", "v2.3.4", "aidd-context-v9.0.0", "v2.3.3"]);
+
+      expect(await new ChooseMarketplaceSource(lister).releases("acme/fw")).toEqual([
+        "v2.3.4",
+        "v2.3.3",
+      ]);
+    });
+  });
+
   describe("sources", () => {
     it("names the framework's own repository when none is given", () => {
       expect(new ChooseMarketplaceSource(releasesOf([])).remote().repo).toBe(

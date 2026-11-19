@@ -24,7 +24,7 @@ function makeHttpThrowing(err: Error) {
 
 describe("GitHubReleaseAdapter", () => {
   describe("listRootReleases", () => {
-    it("keeps only root tags and drops release-please per-component tags", async () => {
+    it("lists every tag, component tags included, and leaves the root rule to the domain", async () => {
       const http = makeHttp([
         { tag_name: "aidd-refine-v1.0.0" },
         { tag_name: "aidd-context-v1.0.0" },
@@ -34,14 +34,13 @@ describe("GitHubReleaseAdapter", () => {
       ]);
       const adapter = new GitHubReleaseAdapter(http);
       const result = await adapter.listRootReleases(REPO);
-      expect(result).toEqual(["v4.0.0", "v3.9.1", "v3.7.3-pm.1"]);
-    });
-
-    it("preserves GitHub order (newest first) for root tags", async () => {
-      const http = makeHttp([{ tag_name: "v4.0.0" }, { tag_name: "v3.9.1" }]);
-      const adapter = new GitHubReleaseAdapter(http);
-      const result = await adapter.listRootReleases(REPO);
-      expect(result[0]).toBe("v4.0.0");
+      expect(result).toEqual([
+        "aidd-refine-v1.0.0",
+        "aidd-context-v1.0.0",
+        "v4.0.0",
+        "v3.9.1",
+        "v3.7.3-pm.1",
+      ]);
     });
 
     it("requests per_page=100 so root tags are not buried", async () => {
