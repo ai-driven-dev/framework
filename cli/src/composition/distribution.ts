@@ -1,5 +1,4 @@
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
-import { AddMarketplace } from "../contexts/distribution/application/add-marketplace.js";
 import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.js";
 import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
@@ -24,7 +23,6 @@ import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
-import type { Prompter } from "../shared/ports/prompter.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter;
@@ -46,7 +44,6 @@ export interface DistributionDeps {
   registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
 
-/** `addMarketplace` is built by `wireAddMarketplace`. */
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
@@ -90,19 +87,4 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
     refreshMarketplace,
     registerFrameworkMarketplace,
   };
-}
-
-export function wireAddMarketplace(
-  deps: Pick<
-    DistributionDeps,
-    "marketplaceRegistry" | "marketplaceTrustStore" | "resolveMarketplaceUseCase"
-  >,
-  prompter: Prompter
-): AddMarketplace {
-  return new AddMarketplace(
-    deps.marketplaceRegistry,
-    deps.marketplaceTrustStore,
-    deps.resolveMarketplaceUseCase,
-    prompter
-  );
 }

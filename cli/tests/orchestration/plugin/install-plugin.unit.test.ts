@@ -5,6 +5,7 @@ import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/p
 import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
@@ -91,7 +92,7 @@ function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlu
     pickPlugins,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
-    new TrustPluginSource(trustStore, prompter)
+    new ConfirmPluginSourceTrust(new TrustPluginSource(trustStore), prompter)
   );
 }
 
@@ -266,7 +267,6 @@ describe("InstallPlugin", () => {
       });
 
       expect(addExecute).toHaveBeenCalledOnce();
-      expect(grantingTrustStore.trust).toHaveBeenCalledOnce();
       expect(result.kind).toBe("local");
     });
 

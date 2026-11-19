@@ -30,7 +30,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/distribution/application/check-marketplaces.ts",
   "src/contexts/distribution/application/ensure-framework-marketplace.ts",
   "src/contexts/distribution/application/plugin-source/resolve-plugin-source.ts",
-  "src/contexts/distribution/application/plugin-source/trust-plugin-source.ts",
   "src/contexts/distribution/application/remove/remove-marketplace.ts",
   "src/contexts/distribution/application/resolve-built-marketplaces.ts",
   "src/contexts/distribution/contract/marketplace.ts",

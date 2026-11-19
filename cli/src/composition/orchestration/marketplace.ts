@@ -1,3 +1,5 @@
+import { PrepareMarketplace } from "../../contexts/distribution/application/add/prepare-marketplace.js";
+import { RecordMarketplace } from "../../contexts/distribution/application/add/record-marketplace.js";
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
 import { ChooseMarketplaceSource } from "../../contexts/distribution/application/choose-marketplace-source.js";
 import { EnsureFrameworkMarketplace } from "../../contexts/distribution/application/ensure-framework-marketplace.js";
@@ -38,7 +40,6 @@ import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activ
 import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import { wireAddMarketplace } from "../distribution.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 
@@ -136,10 +137,9 @@ export function wireMarketplace(base: Base, inst: Installation) {
       marketplaceRemoveUseCase,
       userMarketplaceRemoveUseCase
     ),
-    wireAddMarketplace(
-      { marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase },
-      prompter
-    )
+    new PrepareMarketplace(marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase),
+    new RecordMarketplace(marketplaceRegistry, marketplaceTrustStore),
+    prompter
   );
   const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
     new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),

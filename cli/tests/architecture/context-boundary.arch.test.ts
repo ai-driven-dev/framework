@@ -39,7 +39,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/register-framework-marketplace.ts",
     "src/contexts/distribution/application/list-marketplaces.ts",
     // adding a marketplace, which the add scenario runs once any overwrite removal is done
-    "src/contexts/distribution/application/add-marketplace.ts",
+    "src/contexts/distribution/application/add/prepare-marketplace.ts",
+    "src/contexts/distribution/application/add/record-marketplace.ts",
     "src/contexts/distribution/application/plugin-source/resolve-plugin-source.ts",
     "src/contexts/distribution/application/plugin-source/trust-plugin-source.ts",
     "src/contexts/distribution/application/plugin-source/list-framework-plugins.ts",

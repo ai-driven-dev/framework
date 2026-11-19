@@ -1,6 +1,4 @@
-import { TrustDeniedError } from "../../../../shared/domain/errors.js";
-import { describePluginSource, type PluginSource } from "../../../../shared/domain/source.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
+import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { MarketplaceTrustStore } from "../../ports/marketplace-trust-store.js";
 
 export interface TrustPluginSourceCommand {
@@ -10,21 +8,18 @@ export interface TrustPluginSourceCommand {
   readonly yes?: boolean;
 }
 
-/** Records a plugin source as trusted for a project, asking the person unless told to skip it. */
-export class TrustPluginSource {
-  constructor(
-    private readonly trustStore: MarketplaceTrustStore,
-    private readonly prompter: Prompter
-  ) {}
+export type PluginSourceTrust = "trusted" | "needs-confirmation";
 
-  async execute(command: TrustPluginSourceCommand): Promise<void> {
+/** Trusts a plugin source for a project when it is already, or when told to skip the question;
+ * otherwise reports that a person must confirm it. */
+export class TrustPluginSource {
+  constructor(private readonly trustStore: MarketplaceTrustStore) {}
+
+  async execute(command: TrustPluginSourceCommand): Promise<PluginSourceTrust> {
     const { projectRoot, source } = command;
-    if (await this.trustStore.isTrusted(projectRoot, source)) return;
-    if (!command.yes) {
-      const label = describePluginSource(source);
-      const confirmed = await this.prompter.confirm(`Trust plugin source '${label}'?`);
-      if (!confirmed) throw new TrustDeniedError(label);
-    }
+    if (await this.trustStore.isTrusted(projectRoot, source)) return "trusted";
+    if (!command.yes) return "needs-confirmation";
     await this.trustStore.trust(projectRoot, source);
+    return "trusted";
   }
 }

@@ -4284,6 +4284,10 @@
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/ports/prompter.js"],
+                    "message": "distribution asks no question: it returns a result and orchestration asks (target 05:64)"
                   }
                 ]
               }
@@ -4326,6 +4330,10 @@
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/ports/prompter.js"],
+                    "message": "distribution asks no question: it returns a result and orchestration asks (target 05:64)"
                   }
                 ]
               }

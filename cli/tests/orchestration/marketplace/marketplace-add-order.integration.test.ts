@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { AddMarketplace as AddMarketplaceToRegistry } from "../../../src/contexts/distribution/application/add-marketplace.js";
+import { PrepareMarketplace } from "../../../src/contexts/distribution/application/add/prepare-marketplace.js";
+import { RecordMarketplace } from "../../../src/contexts/distribution/application/add/record-marketplace.js";
 import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
@@ -99,7 +100,9 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   };
   const add = new AddMarketplace(
     new RemoveRegisteredMarketplace(new ListMarketplaces(registry), removeProject, removeUser),
-    new AddMarketplaceToRegistry(registry, trustStore, resolveMarketplace, prompter)
+    new PrepareMarketplace(registry, trustStore, resolveMarketplace),
+    new RecordMarketplace(registry, trustStore),
+    prompter
   );
   const command = {
     name: NAME,
@@ -205,6 +208,17 @@ describe("marketplace add, the order it takes its steps in", () => {
     );
 
     await add.execute({ ...command, autoTrust: true });
+
+    expect(events).toEqual(["resolve", "save"]);
+  });
+
+  it("asks for no trust when the source is already trusted", async () => {
+    const { add, command, events, trustStore } = await marketplaceAdd(
+      (recorded) => new AnsweringPrompter(recorded, false)
+    );
+    await trustStore.trust(PROJECT_ROOT, SOURCE);
+
+    await add.execute({ ...command, autoTrust: false });
 
     expect(events).toEqual(["resolve", "save"]);
   });

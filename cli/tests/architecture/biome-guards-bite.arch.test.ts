@@ -130,6 +130,8 @@ const distributionReaches = (): string[] =>
   DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
     layers.map((layer) => `src/contexts/distribution/${layer}/reaches-${target}.ts`)
   );
+/** Where distribution asks a question it must return as a result. */
+const DISTRIBUTION_ASKS_IN = ["application", "infrastructure"] as const;
 describe("the guard itself", () => {
   let planted: string;
   const readsEnvSource = "export const home = (): string | undefined => process.env.HOME;\n";
@@ -358,6 +360,12 @@ describe("the guard itself", () => {
         `import type { X } from "../../../${target}/x.js";\nexport type Z = X;\n`
       );
     }
+    for (const layer of DISTRIBUTION_ASKS_IN) {
+      writeFileSync(
+        join(planted, `src/contexts/distribution/${layer}/plant-prompter.ts`),
+        'import type { Prompter } from "../../../shared/ports/prompter.js";\nexport type Z = Prompter;\n'
+      );
+    }
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
     const reachesComposition = (up: string): string =>
       `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
@@ -545,6 +553,15 @@ describe("the guard itself", () => {
     const findings = biomeFindings(planted);
     for (const file of distributionReaches()) {
       expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
+    }
+  });
+
+  it("flags distribution importing the prompter in its application and its infrastructure", () => {
+    const findings = biomeFindings(planted);
+    for (const layer of DISTRIBUTION_ASKS_IN) {
+      expect(findings, findings.join(", ")).toContain(
+        `src/contexts/distribution/${layer}/plant-prompter.ts:lint/style/noRestrictedImports`
+      );
     }
   });
 

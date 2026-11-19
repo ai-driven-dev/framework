@@ -32,6 +32,7 @@ import {
   withoutMissingFiles,
 } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
+import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
 import { PickPlugins } from "../../orchestration/plugin/pick-plugins.js";
@@ -167,7 +168,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     pickPlugins,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
-    new TrustPluginSource(marketplaceTrustStore, prompter)
+    new ConfirmPluginSourceTrust(new TrustPluginSource(marketplaceTrustStore), prompter)
   );
   const pluginMaterializer = new PluginMaterializer(
     fs,

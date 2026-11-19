@@ -1,5 +1,4 @@
 import { isAbsolute } from "node:path";
-import type { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
 import type {
   PlanPluginInstall,
@@ -9,6 +8,7 @@ import { parsePluginSpec } from "../../contexts/installation/contract/plugin-spe
 import { InteractiveOnlyError } from "../../shared/domain/errors.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
+import type { ConfirmPluginSourceTrust } from "./confirm-plugin-source-trust.js";
 import type { PluginInstallFromMarketplace } from "./install-from-marketplace.js";
 
 export interface PluginInstallOptions {
@@ -42,7 +42,7 @@ export class InstallPlugin {
     private readonly pickPlugin: PickPlugin,
     private readonly addPlugin: PluginAdd,
     private readonly installFromMarketplace: PluginInstallFromMarketplace,
-    private readonly trustPluginSource: Pick<TrustPluginSource, "execute">
+    private readonly trustPluginSource: Pick<ConfirmPluginSourceTrust, "execute">
   ) {}
 
   async execute(options: PluginInstallOptions): Promise<PluginInstallResult> {

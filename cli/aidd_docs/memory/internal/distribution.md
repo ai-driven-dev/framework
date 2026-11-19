@@ -6,4 +6,4 @@
 
 ## Gotchas
 
-- `marketplace add --overwrite` removes the old entry before it fetches the new one, so a failed fetch leaves the previous entry gone, as `tests/contexts/distribution/application/add-marketplace.unit.test.ts` pins.
+- `marketplace add --overwrite` removes the old entry before it fetches the new one, so a failed fetch leaves the previous entry gone, as `tests/orchestration/marketplace/marketplace-add-order.integration.test.ts` pins.

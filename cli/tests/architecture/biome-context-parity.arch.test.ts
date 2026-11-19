@@ -64,7 +64,8 @@ function tokenOf(pattern: string): string {
  */
 const NON_GRAPH_EXTRA: Readonly<Record<string, readonly string[]>> = {
   "distribution/domain": ["**/manifest.js"],
-  "distribution/application": ["**/manifest.js"],
+  "distribution/application": ["**/manifest.js", "**/shared/ports/prompter.js"],
+  "distribution/infrastructure": ["**/shared/ports/prompter.js"],
 };
 
 /** The layer-intrinsic direction: what any file at this layer must not import, whatever its

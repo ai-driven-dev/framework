@@ -116,7 +116,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin | `distribution` joins `HELD_BY_BIOME` and its published types are the only thing outside reads |
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED` in `profile-readers-name-their-sections.arch.test.ts`) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
-| `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
+| `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |
 | `shared/domain/errors.ts` exceeds the file-length cap | the messages that name a command move to the presentation error table |
 | `host-registration/application/withdraw/withdraw-from-host.ts` keeps thin delegating methods to its steps | the project and user flows are called as steps by their orchestrators and the class stops delegating (HR-13) |
 
