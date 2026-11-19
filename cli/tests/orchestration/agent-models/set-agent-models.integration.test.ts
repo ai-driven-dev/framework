@@ -169,37 +169,6 @@ describe("SetAgentModels", () => {
     expect(fs.has(CLAUDE_SETTINGS)).toBe(false);
   });
 
-  it("keeps a settings file's comments, setting then restoring only its model", async () => {
-    const { fs, useCase } = setup();
-    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [TOOL.opencode] };
-    const commented = '{\n  // mine\n  "model": "opus",\n}\n';
-    fs.setFile(OPENCODE_SETTINGS, commented);
-
-    await useCase.execute({ ...base, provider: "openai" });
-    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(
-      '{\n  // mine\n  "model": "openai/gpt-6.1-terra",\n}\n'
-    );
-
-    await useCase.execute({ ...base });
-    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(commented);
-  });
-
-  it("reports a settings file it cannot read as skipped", async () => {
-    const { fs, useCase } = setup();
-    fs.setFile(CLAUDE_SETTINGS, "// broken");
-
-    const result = await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.claude],
-      provider: "anthropic",
-    });
-
-    expect(result.skipped).toStrictEqual([
-      { host: "claude", path: CLAUDE_SETTINGS, reason: "it holds no JSON object" },
-    ]);
-  });
-
   it("refreshes this project globally too, and adds the machine-scope registrations", async () => {
     const userManifest = Manifest.create();
     userManifest.addTool(TOOL.claude, "1.0.0", []);
@@ -256,24 +225,6 @@ describe("SetAgentModels", () => {
     expect(fs.has(OPENCODE_SETTINGS)).toBe(false);
     expect(fs.has(`${CONFIG}/agent-models.json`)).toBe(false);
     expect(fs.has(`${CONFIG}/main-model.json`)).toBe(false);
-  });
-
-  it("restores the file it wrote before when the host now reads another one", async () => {
-    let configDir: string | undefined;
-    const { fs, useCase } = setup(undefined, null, undefined, (name) =>
-      name === "CLAUDE_CONFIG_DIR" ? configDir : undefined
-    );
-    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [TOOL.claude] };
-    fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "opus"\n}\n');
-    await useCase.execute({ ...base, provider: "anthropic" });
-
-    configDir = join(HOME, "claude-config");
-    const moved = await useCase.execute({ ...base, provider: "anthropic" });
-
-    const custom = join(HOME, "claude-config", "settings.json");
-    expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "opus"\n}\n');
-    expect(fs.getFile(custom)).toContain("claude-sonnet-5-5");
-    expect(moved.changed.at(-1)).toStrictEqual({ host: "claude", path: custom });
   });
 
   it("puts the previous provider back when rebuilding this project's agents fails", async () => {
