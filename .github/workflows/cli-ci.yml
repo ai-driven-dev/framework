@@ -522,17 +522,23 @@ jobs:
     # Runs under bash (Git Bash, bundled on windows-latest) so every command is the one the
     # Linux jobs run, not a PowerShell rewrite of it. No pnpm store cache: the store path in
     # the Linux jobs' cache key is POSIX, not where a native Windows pnpm resolves its store.
-    name: cli / Windows
+    # One leg per part, in parallel, so no part sets the wall clock of the pull request. The
+    # architecture suite is not run here: it is static source analysis, the same on any OS,
+    # and the Linux job runs it.
+    name: cli / Windows (${{ matrix.part }})
     needs: [changes]
     if: needs.changes.outputs.relevant == 'true'
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [plugins, hooks, unit-contract, integration, install-e2e]
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # the architecture suite reads each tolerated list at the merge-base with the target branch (see target doc 08, 2.3)
           fetch-depth: 0
       - name: Install pnpm
         run: corepack enable
@@ -540,16 +546,19 @@ jobs:
         with:
           node-version: "22"
 
-      # Wrapped: a suite writing into this repository's own .git/hooks passes every assertion
-      # and destroys an install nothing can restore. The suite reads YAML through the root
-      # devDependencies, so the install has to precede it.
+      # The plugin suite reads YAML through the root devDependencies, so the install has to
+      # precede it.
       - run: pnpm install --frozen-lockfile
       - run: cd cli && pnpm install --frozen-lockfile
+      # Wrapped: a suite writing into this repository's own .git/hooks passes every assertion
+      # and destroys an install nothing can restore.
       - name: Plugin suite
+        if: matrix.part == 'plugins'
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
       # The same commit hooks on Windows; dedicated jobs cover the three CLI checks.
       - name: Hooks - a commit's hooks pass on Windows
+        if: matrix.part == 'hooks'
         run: |
           echo "# lefthook subject" > "$RUNNER_TEMP/msg"
           status=0
@@ -563,6 +572,16 @@ jobs:
           fi
           exit $status
 
+      - name: cli unit
+        if: matrix.part == 'unit-contract'
+        run: cd cli && pnpm test:unit
+      - name: cli contract
+        if: matrix.part == 'unit-contract'
+        run: cd cli && pnpm test:contract
+      - name: cli integration
+        if: matrix.part == 'integration'
+        run: cd cli && pnpm test:integration
+
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
       # resolves on this platform's PATH. The recipe hook builds it first; this step
       # rebuilds and packages it for the global install.
@@ -571,6 +590,7 @@ jobs:
       # pnpm's configured shell, `cmd.exe` on Windows, where that script's `$(node -p ...)`
       # is not valid syntax. This block is bash by the job's `defaults.run.shell`.
       - name: Install the built CLI globally, the way a person actually would
+        if: matrix.part == 'install-e2e'
         run: |
           cd cli
           pnpm build
@@ -578,13 +598,11 @@ jobs:
           npm install -g ./dist/ai-driven-dev-cli-*.tgz --force
       # Failing `aidd --version` means the CLI could not be resolved on the PATH.
       - name: Chain - the installed CLI resolves
+        if: matrix.part == 'install-e2e'
         run: aidd --version
-      - run: cd cli && pnpm test:unit
-      - run: cd cli && pnpm test:integration
-      - run: cd cli && pnpm test:contract
-      - run: cd cli && pnpm test:arch
       # Every e2e and golden but the one named below.
       - name: cli e2e and golden
+        if: matrix.part == 'install-e2e'
         # `--max-workers=2`, and only here. Vitest transforms modules on its own main thread
         # while every worker calls back into it, and that call has a fixed 60 s timeout no
         # configuration exposes: on this runner the default pool queued it past 60 s and
@@ -598,7 +616,7 @@ jobs:
 
   macos:
     # The plugin suite on macOS: scripts and bundled hooks touch paths, line endings and shells,
-    # and only Linux and Windows ran it. The Windows job covers the rest of that platform.
+    # and only Linux and Windows ran it. The Windows jobs cover the rest of that platform.
     name: cli / macOS
     needs: [changes]
     if: needs.changes.outputs.relevant == 'true'

@@ -162,6 +162,42 @@ test("a mutation leg without a floor cannot fail the run, and the weekly run can
   );
 });
 
+// The Windows checks run as parallel parts so none sets the wall clock of a pull request. Each
+// part must own at least one step, every check that ran serially must still run, and the
+// architecture suite stays on Linux: it is static source analysis, the same on any OS.
+test("Windows runs every check in parallel parts, none of them the architecture suite", () => {
+  const windows = cliCiWorkflow().jobs.windows;
+  const parts = windows.strategy.matrix.part;
+  const steps = windows.steps.filter((step) => step.if !== undefined);
+
+  assert.ok(parts.length > 1);
+  for (const part of parts) {
+    assert.ok(
+      steps.some((step) => step.if === `matrix.part == '${part}'`),
+      `no step runs for the ${part} part`
+    );
+  }
+  for (const step of steps) {
+    assert.ok(
+      parts.some((part) => step.if === `matrix.part == '${part}'`),
+      `${step.name} is guarded by an unknown part`
+    );
+  }
+  const commands = steps.map((step) => step.run).join("\n");
+  for (const check of [
+    "node --test",
+    "lefthook run pre-commit",
+    "pnpm test:unit",
+    "pnpm test:contract",
+    "pnpm test:integration",
+    "aidd --version",
+    "--project=e2e --project=golden",
+  ]) {
+    assert.ok(commands.includes(check), `no Windows step runs ${check}`);
+  }
+  assert.ok(!/test:arch|--project=architecture/.test(commands), "the architecture suite runs on Windows");
+});
+
 // The Windows and macOS jobs are the only runs of the plugin suite off Linux, and a plugin's
 // bundled script or hook is what handles paths and line endings there. Runs the filter's own
 // `case` under bash, so the assertion is what the workflow decides, not a reading of its text.

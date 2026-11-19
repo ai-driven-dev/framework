@@ -19,7 +19,7 @@
       ],
       "tests": ["tests/contexts/telemetry/**", "tests/presentation/display/telemetry/**"],
       "break": 96,
-      "shards": 3
+      "shards": 4
     },
     "installation": {
       "mutate": "src/contexts/installation/**/*.ts",
