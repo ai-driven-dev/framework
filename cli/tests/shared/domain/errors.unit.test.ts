@@ -615,3 +615,44 @@ describe("error names and messages a caller matches on", () => {
     );
   });
 });
+
+describe("every catalogue error", () => {
+  const CONSTRUCTED_WITH: Record<string, readonly unknown[]> = {
+    ManifestUnavailableError: ["manifest-missing"],
+  };
+
+  type CodedError = Error & { code?: unknown };
+
+  /** A constructor takes text or a list of text, whatever its arity: try the text first. */
+  function construct(name: string, Class: new (...args: unknown[]) => CodedError): CodedError {
+    const given = CONSTRUCTED_WITH[name];
+    if (given) return new Class(...given);
+    try {
+      return new Class(...Array.from({ length: Class.length }, () => "x"));
+    } catch {
+      return new Class(...Array.from({ length: Class.length }, () => ["x"]));
+    }
+  }
+
+  const instances = Object.entries(errors)
+    .filter(([name, value]) => typeof value === "function" && name !== "AiddError")
+    .map(([name, value]) => ({
+      name,
+      error: construct(name, value as new (...args: unknown[]) => CodedError),
+    }));
+
+  it("is an Error carrying a kebab-case code", () => {
+    expect(instances.length).toBeGreaterThan(0);
+    for (const { name, error } of instances) {
+      expect(error, name).toBeInstanceOf(Error);
+      expect(error.code, `${name} must carry a code`).toMatch(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/);
+    }
+  });
+
+  it("carries a code no other error carries", () => {
+    const corrupted = new errors.ManifestUnavailableError("manifest-corrupted");
+    const codes = [...instances.map(({ error }) => error.code), corrupted.code];
+    const duplicated = codes.filter((code, index) => codes.indexOf(code) !== index);
+    expect(duplicated).toEqual([]);
+  });
+});
