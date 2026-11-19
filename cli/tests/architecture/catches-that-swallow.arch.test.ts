@@ -22,7 +22,7 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     count: 1,
     reason: "a refusal to delete something present must not fail an uninstall midway",
   },
-  "tests/golden/framework-build-golden.golden.test.ts": {
+  "tests/golden/framework-build.golden.test.ts": {
     count: 1,
     reason: "hashing a tree skips directories and vanished entries",
   },

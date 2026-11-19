@@ -32,4 +32,4 @@ paths:
 ## Tests
 
 - `tests/contexts/translate/` follows the source folders; `testing/` holds the kit (`plugin-content-translator-kit.ts`, `declared-tool-catalog.ts`, `synthetic-tool-profile.ts`); a rewrite is proven on a fixture that carries the marker it rewrites.
-- `tests/golden/framework-build-golden.golden.test.ts` freezes a full build per target; its machine-independence rules are in the `test` skill.
+- `tests/golden/framework-build.golden.test.ts` freezes a full build per target; its machine-independence rules are in the `test` skill.
