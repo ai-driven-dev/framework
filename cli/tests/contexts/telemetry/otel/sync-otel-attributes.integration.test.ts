@@ -1,0 +1,427 @@
+import { expect, test } from "vitest";
+import { selectTransfers } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync.js";
+
+const attribute = (key: string, value: unknown) => ({ key, value });
+const text = (key: string, value: string) => attribute(key, { stringValue: value });
+const options = {
+  config: "codex" as const,
+  session: "session",
+  tenant: "tenant",
+  endpoint: "http://127.0.0.1:1",
+  token: "test",
+  home: "/tmp",
+  follow: false,
+};
+type Attributes = ReturnType<typeof attribute>[];
+
+function capture(
+  record: Attributes,
+  resource: Attributes = [],
+  scope: Attributes = [],
+  body?: unknown
+): string {
+  return JSON.stringify({
+    signal: "logs",
+    payload: {
+      resourceLogs: [
+        {
+          resource: { attributes: resource },
+          scopeLogs: [
+            {
+              scope: { attributes: scope },
+              logRecords: [
+                {
+                  ...(body === undefined ? {} : { body }),
+                  attributes: [
+                    text("conversation.id", "session"),
+                    ...(body === undefined ? [text("event.name", "codex.sse_event")] : []),
+                    text("event.kind", "response.completed"),
+                    text("event.timestamp", "2026-11-05T00:00:00Z"),
+                    ...record,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  });
+}
+
+test.each([
+  { stringValue: ["codex.sse_event"], intValue: "9" },
+  { stringValue: ["codex.sse_event"] },
+  { stringValue: "" },
+  { intValue: "9" },
+  {},
+  null,
+])("rejects invalid fallback event bodies without coercion", (body) => {
+  expect(() => select(capture([], [], [], body))).toThrow("Invalid OTLP attribute value.");
+});
+
+test("keeps a valid string log body as the event-name fallback", () => {
+  expect(select(capture([], [], [], { stringValue: "codex.sse_event" }))).toHaveLength(1);
+  expect(
+    selectTransfers(
+      capture([text("session.id", "session")], [], [], { stringValue: "tool_result" }),
+      { ...options, config: "claude" }
+    )
+  ).toHaveLength(1);
+});
+
+function select(line: string) {
+  return selectTransfers(line, options);
+}
+
+test("forwards each Codex effort only on the event that reported it", () => {
+  const start = capture([
+    text("model", "gpt-test"),
+    text("reasoning_effort", "high"),
+    text("model_reasoning_effort", "private-wrong-event"),
+  ]).replace("codex.sse_event", "codex.conversation_starts");
+  const response = capture([
+    text("model", "gpt-test"),
+    text("reasoning_effort", "private-wrong-event"),
+    text("model_reasoning_effort", "xhigh"),
+  ]);
+  const [first] = select(start);
+  const [second] = select(response);
+  const startPayload = JSON.stringify(first.payload);
+  const responsePayload = JSON.stringify(second.payload);
+  expect(startPayload).toContain('"key":"reasoning_effort","value":{"stringValue":"high"}');
+  expect(responsePayload).toContain(
+    '"key":"model_reasoning_effort","value":{"stringValue":"xhigh"}'
+  );
+  for (const payload of [startPayload, responsePayload]) {
+    expect(payload).toContain('"key":"model","value":{"stringValue":"gpt-test"}');
+    expect(payload).toContain('"key":"event.timestamp"');
+    expect(payload).not.toContain("private-wrong-event");
+  }
+});
+
+test("leaves the original usage transfer unchanged apart from the observed effort", () => {
+  const common = [text("model", "gpt-test"), text("input_token_count", "42")];
+  const [without] = select(capture(common));
+  const [withEffort] = select(capture([...common, text("model_reasoning_effort", "high")]));
+  const expected = JSON.stringify(without.payload);
+  const actual = JSON.stringify(withEffort.payload).replace(
+    ',{"key":"model_reasoning_effort","value":{"stringValue":"high"}}',
+    ""
+  );
+  expect(actual).toBe(expected);
+});
+
+test("does not infer effort from a resource, another event, or a missing value", () => {
+  const resource = [text("reasoning_effort", "high"), text("model_reasoning_effort", "high")];
+  const [transfer] = select(capture([text("model", "gpt-test")], resource));
+  expect(JSON.stringify(transfer.payload)).not.toContain("reasoning_effort");
+  const [tool] = select(
+    capture([text("model_reasoning_effort", "high")]).replace(
+      "codex.sse_event",
+      "codex.tool_result"
+    )
+  );
+  expect(JSON.stringify(tool.payload)).not.toContain("reasoning_effort");
+  for (const resourceModel of [[], [text("model", "gpt-test")]]) {
+    const [missing] = select(capture([text("model_reasoning_effort", "high")], resourceModel));
+    expect(JSON.stringify(missing.payload)).not.toContain("model_reasoning_effort");
+  }
+});
+
+test("preserves bounded custom effort identifiers and omits free text", () => {
+  const [custom] = select(
+    capture([text("model", "gpt-test"), text("model_reasoning_effort", "model_defined-2")])
+  );
+  expect(JSON.stringify(custom.payload)).toContain('"stringValue":"model_defined-2"');
+  for (const invalid of ["", "high with spaces", "x".repeat(33), "high\nsecret"]) {
+    const [transfer] = select(
+      capture([text("model", "gpt-test"), text("model_reasoning_effort", invalid)])
+    );
+    expect(JSON.stringify(transfer.payload)).not.toContain("model_reasoning_effort");
+    expect(JSON.stringify(transfer.payload)).not.toContain(invalid || '"stringValue":""');
+  }
+});
+
+test("rejects contradictory effort values and omits non-text values", () => {
+  expect(() =>
+    select(capture([text("model_reasoning_effort", "high"), text("model_reasoning_effort", "low")]))
+  ).toThrow("Conflicting duplicate OTLP attributes.");
+  const [nonText] = select(
+    capture([text("model", "gpt-test"), attribute("model_reasoning_effort", { intValue: "1" })])
+  );
+  expect(JSON.stringify(nonText.payload)).not.toContain("model_reasoning_effort");
+});
+
+function metricCapture(
+  point: Attributes,
+  resource: Attributes = [],
+  scope: Attributes = []
+): string {
+  return JSON.stringify({
+    signal: "metrics",
+    payload: {
+      resourceMetrics: [
+        {
+          resource: { attributes: resource },
+          scopeMetrics: [
+            {
+              scope: { attributes: scope },
+              metrics: [
+                {
+                  name: "claude_code.token.usage",
+                  sum: {
+                    aggregationTemporality: 1,
+                    dataPoints: [
+                      {
+                        startTimeUnixNano: "1793836800000000000",
+                        timeUnixNano: "1793836801000000000",
+                        asInt: "5",
+                        attributes: [text("session.id", "session"), ...point],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  });
+}
+
+test("does not forward Codex effort fields on Claude metrics", () => {
+  const [transfer] = selectTransfers(
+    metricCapture([text("type", "input"), text("reasoning_effort", "high")]),
+    { ...options, config: "claude" }
+  );
+  expect(JSON.stringify(transfer.payload)).not.toContain("reasoning_effort");
+});
+
+test("forwards Claude effort only when the token point explicitly reports it", () => {
+  const claude = { ...options, config: "claude" as const };
+  const point = [text("type", "input"), text("model", "claude-test")];
+  const [reported] = selectTransfers(metricCapture([...point, text("effort", "medium")]), claude);
+  expect(JSON.stringify(reported.payload)).toContain(
+    '"key":"effort","value":{"stringValue":"medium"}'
+  );
+  for (const invalid of [
+    metricCapture(point, [text("effort", "medium")]),
+    metricCapture([...point, text("effort", "private text")]),
+    metricCapture([...point, attribute("effort", { intValue: 3 })]),
+    metricCapture([text("type", "input"), text("effort", "medium")]),
+    metricCapture([...point, text("effort", "medium")]).replace(
+      "claude_code.token.usage",
+      "claude_code.cost.usage"
+    ),
+  ]) {
+    const [transfer] = selectTransfers(invalid, claude);
+    expect(JSON.stringify(transfer.payload)).not.toContain('"key":"effort"');
+  }
+});
+
+test.each(["point", "resource", "scope"])("rejects contradictory Claude %s attributes", (level) => {
+  const conflict = [text("type", "input"), text("type", "output")];
+  expect(() =>
+    selectTransfers(
+      metricCapture(
+        level === "point" ? conflict : [],
+        level === "resource" ? conflict : [],
+        level === "scope" ? conflict : []
+      ),
+      { ...options, config: "claude" }
+    )
+  ).toThrow("Conflicting duplicate OTLP attributes.");
+});
+
+test("rejects contradictory Claude resource and point identities", () => {
+  expect(() =>
+    selectTransfers(
+      metricCapture([text("user.email", "private-b")], [text("user.email", "private-a")]),
+      { ...options, config: "claude" }
+    )
+  ).toThrow("Conflicting OTLP identity attributes.");
+});
+
+test.each(["input_token_count", "user.email", "private.unforwarded.attribute"])(
+  "rejects conflicting duplicate attributes without exposing their contents: %s",
+  (key) => {
+    expect(() => select(capture([text(key, "private-a"), text(key, "private-b")]))).toThrow(
+      "Conflicting duplicate OTLP attributes."
+    );
+  }
+);
+
+test("does not equate differently typed OTLP values that stringify identically", () => {
+  expect(() =>
+    select(
+      capture([attribute("input_token_count", { intValue: 1 }), text("input_token_count", "1")])
+    )
+  ).toThrow("Conflicting duplicate OTLP attributes.");
+});
+
+test.each([
+  { stringValue: ["5"], intValue: "900" },
+  { stringValue: ["5"] },
+  { stringValue: 5 },
+  { intValue: Number.MAX_SAFE_INTEGER + 1 },
+  { intValue: 1.5 },
+  { intValue: "9223372036854775808" },
+  { doubleValue: "5" },
+  { boolValue: "true" },
+  [],
+  null,
+  {},
+  { arrayValue: { values: [{ stringValue: "5" }] } },
+  { kvlistValue: { values: [] } },
+  { bytesValue: "NQ==" },
+])("refuses malformed or non-scalar critical AnyValue without coercion", (value) => {
+  expect(() => select(capture([attribute("input_token_count", value)]))).toThrow(
+    "Invalid OTLP attribute value."
+  );
+});
+
+test("does not coerce an identity from a malformed stringValue", () => {
+  expect(() =>
+    select(capture([attribute("user.email", { stringValue: ["person@example.test"] })]))
+  ).toThrow("Invalid OTLP attribute value.");
+});
+
+test.each([
+  "user.email",
+  "user.account_id",
+  "organization.id",
+  "model",
+  "event.name",
+  "event.kind",
+  "session.id",
+])("refuses non-text values for textual telemetry fields: %s", (key) => {
+  expect(() => select(capture([attribute(key, { intValue: "5" })]))).toThrow();
+});
+
+test.each(["event.name", "event.kind", "session.id", "conversation.id"])(
+  "refuses an explicitly empty mandatory context value: %s",
+  (key) => {
+    const original = key === "session.id" ? metricCapture([]) : capture([]);
+    const initial = {
+      "event.name": "codex.sse_event",
+      "event.kind": "response.completed",
+      "session.id": "session",
+      "conversation.id": "session",
+    }[key];
+    const body = original.replace(
+      JSON.stringify(text(key, initial ?? "")),
+      JSON.stringify(text(key, ""))
+    );
+    expect(() =>
+      selectTransfers(body, { ...options, config: key === "session.id" ? "claude" : "codex" })
+    ).toThrow();
+  }
+);
+
+test("keeps supported scalar AnyValue types exact", () => {
+  const [transfer] = select(
+    capture([
+      attribute("input_token_count", { intValue: "9007199254740993" }),
+      attribute("success", { boolValue: false }),
+      attribute("duration_ms", { doubleValue: 1.5 }),
+    ])
+  );
+  const payload = JSON.stringify(transfer.payload);
+  for (const value of ["9007199254740993", "false", "1.5"])
+    expect(payload).toContain(`"stringValue":"${value}"`);
+});
+
+test("ignores valid empty and structured noncritical values", () => {
+  expect(
+    select(
+      capture([
+        attribute("unused.empty", {}),
+        attribute("unused.array", { arrayValue: { values: [{ stringValue: "private" }] } }),
+        attribute("unused.list", {
+          kvlistValue: { values: [{ key: "item", value: { boolValue: true } }] },
+        }),
+        attribute("unused.bytes", { bytesValue: "NQ==" }),
+      ])
+    )
+  ).toHaveLength(1);
+});
+
+test("accepts identical duplicate attributes", () => {
+  const [transfer] = select(
+    capture([text("input_token_count", "5"), text("input_token_count", "5")])
+  );
+  expect(JSON.stringify(transfer.payload)).toContain(
+    '"key":"input_token_count","value":{"stringValue":"5"}'
+  );
+});
+
+test.each(["resource", "scope"])("rejects conflicting duplicates in %s attributes", (level) => {
+  const conflict = [text("user.email", "private-a"), text("user.email", "private-b")];
+  expect(() =>
+    select(capture([], level === "resource" ? conflict : [], level === "scope" ? conflict : []))
+  ).toThrow("Conflicting duplicate OTLP attributes.");
+});
+
+test("preserves non-identity attribute overrides between resource and record", () => {
+  const [transfer] = select(
+    capture([text("model", "record-model")], [text("model", "resource-model")])
+  );
+  expect(JSON.stringify(transfer.payload)).toContain("record-model");
+  expect(JSON.stringify(transfer.payload)).not.toContain("resource-model");
+});
+
+test.each(["user.email", "user.account_id", "organization.id"])(
+  "does not choose between contradictory resource and record identities: %s",
+  (key) => {
+    expect(() => select(capture([text(key, "private-b")], [text(key, "private-a")]))).toThrow(
+      "Conflicting OTLP identity attributes."
+    );
+  }
+);
+
+test("keeps identical identity values across resource and record", () => {
+  expect(
+    select(capture([text("user.email", "a@example.test")], [text("user.email", "a@example.test")]))
+  ).toHaveLength(1);
+});
+
+test.each(["user.email", "user.account_id", "organization.id"])(
+  "does not assume case-insensitive identity semantics: %s",
+  (key) => {
+    expect(() => select(capture([text(key, "ABC")], [text(key, "abc")]))).toThrow(
+      "Conflicting OTLP identity attributes."
+    );
+  }
+);
+
+test.each([
+  {
+    values: [text("input_token_count", "100"), text("input_token_count", "5")],
+    error: "Conflicting duplicate OTLP attributes.",
+    body: undefined,
+  },
+  {
+    values: [attribute("input_token_count", { stringValue: ["5"], intValue: "900" })],
+    error: "Invalid OTLP attribute value.",
+    body: undefined,
+  },
+  {
+    values: [attribute("input_token_count", { intValue: Number.MAX_SAFE_INTEGER + 1 })],
+    error: "Invalid OTLP attribute value.",
+    body: undefined,
+  },
+  {
+    values: [attribute("user.email", { stringValue: ["person@example.test"] })],
+    error: "Invalid OTLP attribute value.",
+    body: undefined,
+  },
+  {
+    values: [],
+    error: "Invalid OTLP attribute value.",
+    body: { stringValue: ["codex.sse_event"], intValue: "9" },
+  },
+])("rejects malformed attributes before transfer selection", ({ values, error, body }) => {
+  expect(() => selectTransfers(capture(values, [], [], body), options)).toThrow(error);
+});

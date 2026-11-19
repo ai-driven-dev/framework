@@ -24,6 +24,7 @@ import {
 } from "../../contexts/tools/domain/registry.js";
 import type { ToolId } from "../../kernel/tool.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../kernel/tool.js";
+import { finishInstallationId } from "../../runtime/filesystem/installation-identity.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printDetectedContext,
@@ -276,6 +277,7 @@ export function registerSetupCommand(program: Command): void {
         if (interactive) printWelcomeBanner(output);
 
         const deps = await createDeps(projectRoot, { verbose }, output);
+        await deps.checkInstallationId();
 
         const result = await new SetupUseCase(
           deps.fs,
@@ -307,6 +309,7 @@ export function registerSetupCommand(program: Command): void {
         }
         if (interactive) printNextSteps(output, result.install.results.length > 0);
         reportSyncActivation(output, result.activation);
+        await finishInstallationId(deps.ensureInstallationId, "Setup completed");
       } catch (error) {
         errorHandler.handle(error);
       }

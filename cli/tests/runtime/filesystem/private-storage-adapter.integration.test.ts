@@ -141,6 +141,14 @@ describe("replacing a file", () => {
     await expect(storage.replace(path, "x")).rejects.toThrow();
     expect(await readdir(dir)).toEqual([]);
   });
+
+  it("removes the temporary file when the completed write cannot replace a directory", async () => {
+    const path = join(dir, "target");
+    await mkdir(path);
+    await expect(storage.replace(path, "x")).rejects.toThrow();
+    expect(await readdir(dir)).toEqual(["target"]);
+    expect((await stat(path)).isDirectory()).toBe(true);
+  });
 });
 
 describe("appending to a file", () => {

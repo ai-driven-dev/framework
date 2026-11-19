@@ -137,7 +137,7 @@
   {
     "invocation": "aidd telemetry",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code and Codex sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  on [options]             Measure this clone, and remove what the previous\n                           version left in it\n  off                      Stop measuring this clone; what was measured stays\n  forget [options]         Show everything measurement keeps on this machine, or\n                           remove it with --yes\n  ingest [options]         Read new transcripts into the local ledger, for\n                           clones that opted in\n  task [options] [name]    Declare the task the current work belongs to\n  status                   Show if this clone is measured, since when, and its\n                           task\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
+    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code and Codex sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  otel                     Configure native OpenTelemetry exporters\n  on [options]             Measure this clone, and remove what the previous\n                           version left in it\n  off                      Stop measuring this clone; what was measured stays\n  forget [options]         Show everything measurement keeps on this machine, or\n                           remove it with --yes\n  ingest [options]         Read new transcripts into the local ledger, for\n                           clones that opted in\n  task [options] [name]    Declare the task the current work belongs to\n  status                   Show if this clone is measured, since when, and its\n                           task\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
   },
   {
     "invocation": "aidd telemetry forget",
@@ -163,6 +163,31 @@
     "invocation": "aidd telemetry on",
     "exitCode": 0,
     "help": "Usage: aidd telemetry on [options]\n\nMeasure this clone, and remove what the previous version left in it\n\nOptions:\n  --yes        Do not ask first (default: false)\n  --as <id>    Name you by this identifier on your own measurement\n  --anonymous  Name nobody on your own measurement (default: false)\n  -h, --help   display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel [options] [command]\n\nConfigure native OpenTelemetry exporters\n\nOptions:\n  -h, --help              display help for command\n\nCommands:\n  init [options]          Enable detailed local OTLP export in one tool's user\n                          configuration\n  verify [options]        Check native OTLP configuration and existing local\n                          capture without changing files\n  collect [options]       Capture authenticated OTLP on a local loopback port\n  run [options] <prompt>  Run one fresh provider session and send its allowed\n                          OTLP observations\n  help [command]          display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel collect",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel collect [options]\n\nCapture authenticated OTLP on a local loopback port\n\nOptions:\n  --port <port>  Loopback TCP port; 0 selects a free port (default: \"14318\")\n  -h, --help     display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel init",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel init [options]\n\nEnable detailed local OTLP export in one tool's user configuration\n\nOptions:\n  --config <tool>           User configuration to merge (choices: \"claude\",\n                            \"codex\", \"opencode\")\n  --endpoint <environment>  Collector destination (choices: \"dev\", \"prod\")\n  -h, --help                display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel run",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel run [options] <prompt>\n\nRun one fresh provider session and send its allowed OTLP observations\n\nOptions:\n  --config <tool>            Tool to run (choices: \"claude\", \"codex\",\n                             \"opencode\")\n  --tenant <slug>            Gouvernail tenant slug\n  --endpoint <origin>        Loopback HTTP origin\n  --yes                      Consent to capture and send telemetry from this\n                             execution\n  --model <model>            Provider model to use\n  --follow-up <prompt>       Send a second prompt in the same session (Claude\n                             and Codex retain local history)\n  --include-repository       Include repository metadata for Claude Code\n  --include-installation-id  Send the AIDD installation ID (not a user identity)\n  --keep-capture             Retain the private local OTLP capture\n  -h, --help                 display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel verify",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel verify [options]\n\nCheck native OTLP configuration and existing local capture without changing\nfiles\n\nOptions:\n  --config <tool>           User configuration to verify (choices: \"claude\",\n                            \"codex\", \"opencode\")\n  --endpoint <environment>  Collector destination (choices: \"dev\", \"prod\")\n  -h, --help                display help for command"
   },
   {
     "invocation": "aidd telemetry report",

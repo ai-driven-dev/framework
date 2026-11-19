@@ -92,6 +92,8 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   },
   // Claude Code's own settings files, read to say how long it keeps a transcript.
   { path: "src/contexts/telemetry/infrastructure/switch/claude-settings-adapter.ts", named: 1 },
+  // OTLP is an explicit, separate support surface: three observed native exporters.
+  { path: "src/contexts/telemetry/infrastructure/otel/settings.ts", named: 3 },
 ];
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;

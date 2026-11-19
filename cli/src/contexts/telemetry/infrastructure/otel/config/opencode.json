@@ -1,0 +1,8 @@
+{
+  "env": {
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "{collector}/opencode",
+    "OTEL_EXPORTER_OTLP_HEADERS": "Authorization=Bearer {token}",
+    "AIDD_OPENCODE_OTEL_LOGS_ENDPOINT": "{collector}/opencode/v1/logs",
+    "AIDD_OPENCODE_OTEL_HEADERS": "Authorization=Bearer {token}"
+  }
+}
