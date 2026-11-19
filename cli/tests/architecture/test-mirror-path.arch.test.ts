@@ -37,7 +37,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/distribution/contract/requested-version-policy.ts",
   "src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.ts",
   "src/contexts/host-registration/application/inspect/inspect-host-registration.ts",
-  "src/contexts/host-registration/domain/cache-purge-policy.ts",
   "src/contexts/host-registration/infrastructure/marketplace-list-parsers.ts",
   "src/contexts/installation/application/agents/agent-plugin-hosts.ts",
   "src/contexts/installation/application/agents/agent-providers.ts",

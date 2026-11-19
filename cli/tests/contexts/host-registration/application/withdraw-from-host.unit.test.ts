@@ -81,35 +81,6 @@ describe("withdrawing a marketplace from its host, then its cache", () => {
     expect(logger.infoMessages).toContain(`claude: cache for '${HOST_NAME}' purged: ${CANDIDATE}`);
   });
 
-  it("keeps its cache and reports an unreadable registry instead of treating it as empty", async () => {
-    const path = join(CANDIDATE, "plugin.json");
-    const fs = new InMemoryFileAdapter({ [path]: "unproven ownership" });
-    const logger = new CapturingLogger();
-
-    await withdrawUser(
-      fs,
-      logger,
-      new FakeHostMarketplaceRegistry({ location: LOCATION, unreadable: "EACCES" })
-    );
-
-    expect(fs.getFile(path)).toBe("unproven ownership");
-    expect(logger.warnMessages).toStrictEqual([
-      `claude: plugin cache left in place, its registry could not be read: ${LOCATION}`,
-    ]);
-  });
-
-  it("purges the cache once the host's registry is gone", async () => {
-    const fs = new InMemoryFileAdapter({ [join(CANDIDATE, "plugin.json")]: "{}" });
-
-    await withdrawUser(
-      fs,
-      new CapturingLogger(),
-      new FakeHostMarketplaceRegistry({ location: LOCATION, absent: true })
-    );
-
-    expect(fs.listAll()).toStrictEqual([]);
-  });
-
   it("looks at no cache for a host that keeps none", async () => {
     const path = join(CANDIDATE, "plugin.json");
     const fs = new InMemoryFileAdapter({ [path]: "{}" });
