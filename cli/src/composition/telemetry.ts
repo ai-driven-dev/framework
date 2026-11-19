@@ -9,16 +9,19 @@ import { DirectoryResolver } from "../contexts/telemetry/application/directory-r
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
 import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
 import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.js";
+import { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
 import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
 import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
 import { ReadUsage } from "../contexts/telemetry/application/read-usage.js";
+import { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
 import { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
 import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
+import { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.js";
 import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
@@ -56,13 +59,15 @@ import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../presentation/deps.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
+import type { Prompter } from "../shared/ports/prompter.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 export function wireTelemetryRequests(): TelemetryRequests {
   return {
     resolveTaskRequest: new ResolveTaskRequest(),
     resolveReportRequest: new ResolveReportRequest(() => new Date()),
-    checkIdentity: new CheckIdentity(),
+    checkOnRequest: new CheckOnRequest(new CheckIdentity()),
+    checkFilterValue: new CheckFilterValue(),
   };
 }
 
@@ -94,7 +99,7 @@ export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
   return platform === "darwin" || platform === "win32";
 }
 
-export function wireTelemetry(homedir: () => string): TelemetryDeps {
+export function wireTelemetry(homedir: () => string, prompter: Prompter): TelemetryDeps {
   const root = telemetryDir();
   const ledgerDir = join(root, "ledger");
   const storage = new PrivateStorageAdapter();
@@ -156,6 +161,8 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     snapshotBindings,
     { environment: processEnvironment }
   );
+  const manageIdentity = new ManageIdentity(identity);
+  const proposeIdentity = new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment);
   const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
@@ -171,8 +178,14 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
         processEnvironment
       )
     ),
-    manageIdentity: new ManageIdentity(identity),
-    proposeIdentity: new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment),
+    manageIdentity,
+    proposeIdentity,
+    chooseIdentity: new ChooseIdentity(
+      manageIdentity,
+      proposeIdentity,
+      new CheckIdentity(),
+      prompter
+    ),
     readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
     enableTelemetry: new EnableTelemetry(
       consentSwitch,

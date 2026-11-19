@@ -13,11 +13,11 @@ import {
   RETENTION_WANTED_DAYS,
 } from "../../../contexts/telemetry/contract/claude-retention.js";
 import type { ErasureKind } from "../../../contexts/telemetry/contract/measurement-erasure.js";
+import { IDENTITY_RULE } from "../../../shared/domain/errors.js";
 import type { CLIOutput } from "../../output.js";
-import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
+import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON } from "../telemetry-display.js";
 
-/** What `telemetry on` says of an identifier that cannot name a person. */
-export const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
+const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
 
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",

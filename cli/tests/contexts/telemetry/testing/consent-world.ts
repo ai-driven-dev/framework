@@ -15,6 +15,7 @@ import { expect, vi } from "vitest";
 import { wireTelemetry } from "../../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../../src/presentation/deps.js";
 import { git, initRepository } from "../../../helpers/git-sandbox.js";
+import { prompterAnswering } from "../../../helpers/ports/index.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.js";
 
@@ -67,7 +68,7 @@ export class World {
 
   /** Wires the commands again, as a second process would. */
   rewire(): void {
-    deps = wireTelemetry(() => this.sandbox.home);
+    deps = wireTelemetry(() => this.sandbox.home, prompterAnswering({}));
   }
 
   at(seconds: number): void {
@@ -218,7 +219,7 @@ export interface Row {
 export function startWorld(): void {
   box = createTelemetrySandbox();
   for (const [name, value] of Object.entries(box.env())) vi.stubEnv(name, value);
-  deps = wireTelemetry(() => box.home);
+  deps = wireTelemetry(() => box.home, prompterAnswering({}));
   base = Date.now();
   calls = 0;
   vi.useFakeTimers({ toFake: ["Date"] });

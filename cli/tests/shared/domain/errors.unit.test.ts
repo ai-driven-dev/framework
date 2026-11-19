@@ -594,7 +594,7 @@ describe("error names and messages a caller matches on", () => {
     new errors.TaskNameMissingError(),
     new errors.ConflictingIdentityFlagsError(),
     new errors.IdentityOffWithIdentifierError(),
-    new errors.InvalidIdentityError("m"),
+    new errors.InvalidIdentityError(),
   ])("names itself after its class: $constructor.name", (error) => {
     expect(error.name).toBe(error.constructor.name);
   });

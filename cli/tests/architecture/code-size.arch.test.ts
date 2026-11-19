@@ -57,7 +57,7 @@ const GUARDS: readonly Guard[] = [
  * violator is fixed, not listed.
  */
 const MAX_BASELINE: Readonly<Record<string, number>> = {
-  "function length": 29,
+  "function length": 28,
   "cognitive complexity": 27,
   "one class per file": 8,
   "file length": 5,

@@ -163,7 +163,7 @@ export async function createDeps(
     listInstalledRulesUseCase,
     printUpdateNotice: update.printUpdateNotice,
     refreshUpdateCheck: update.refreshUpdateCheck,
-    telemetry: wireTelemetry(homedir),
+    telemetry: wireTelemetry(homedir, prompter),
     frameworkBuild: (ctx) => createFrameworkBuildUseCase(tools, { fs, assetProvider, logger }, ctx),
   };
   graphs.set(cacheKey, deps);

@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.js";
+import { ChooseIdentity } from "../../../src/contexts/telemetry/application/identity/choose-identity.js";
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.js";
 import type { ReportFilters } from "../../../src/contexts/telemetry/contract/report-filter.js";
 import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
@@ -21,8 +23,11 @@ const select = vi.fn();
 const input = vi.fn();
 const propose = vi.fn();
 
+const prompter = prompterAnswering({ confirm, select, input });
+const proposeIdentity = { execute: propose };
+
 const createDeps = vi.fn(async () => ({
-  prompter: prompterAnswering({ confirm, select, input }),
+  prompter,
   telemetry: {
     readTranscriptRetention: { execute: retention },
     enableTelemetry: { execute: turnOn },
@@ -33,7 +38,8 @@ const createDeps = vi.fn(async () => ({
     readTelemetryStatus: { execute: show },
     requestReport: new RequestReport({ execute: report }),
     manageIdentity: identity,
-    proposeIdentity: { execute: propose },
+    proposeIdentity,
+    chooseIdentity: new ChooseIdentity(identity, proposeIdentity, new CheckIdentity(), prompter),
   },
 }));
 
@@ -207,13 +213,13 @@ describe("aidd telemetry report, narrowed", () => {
     }
   }
 
-  it("passes every flag it is given, trimmed as a declaration is", async () => {
+  it("passes every flag it is given", async () => {
     report.mockResolvedValue(reported);
     await run(
       "report",
-      ...["--task", "  auth refactor ", "--ticket", "PROJ-1", "--person", "p-1"],
-      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"],
-      ...["--tool", " codex "]
+      ...["--task", "auth refactor", "--ticket", "PROJ-1", "--person", "p-1"],
+      ...["--model", "m-1", "--agent", "subagent", "--session", "a1b2", "--repository", "r-1"],
+      ...["--tool", "codex"]
     );
     expect(asked()).toEqual({
       ...NO_FILTERS,
@@ -227,13 +233,13 @@ describe("aidd telemetry report, narrowed", () => {
       tool: "codex",
     });
     vi.clearAllMocks();
-    await run("report", "--absent", " person ");
+    await run("report", "--absent", "person");
     expect(asked()).toEqual({ ...NO_FILTERS, absent: "person" });
   });
 
   it("asks for the repository the command runs in for `.`", async () => {
     report.mockResolvedValue(reported);
-    await run("report", "--repository", " . ");
+    await run("report", "--repository", ".");
     expect(asked()).toEqual({ ...NO_FILTERS, here: process.cwd() });
   });
 
@@ -247,16 +253,12 @@ describe("aidd telemetry report, narrowed", () => {
   });
 
   const twice = (flag: string) => `error: ${flag} is given twice: give it once.\n`;
-  const empty = (flags: string, value: string) =>
-    `error: option '${flags}' argument '${value}' is invalid. It is empty.\n`;
   const notAllowed = (flags: string, value: string, allowed: string) =>
     `error: option '${flags}' argument '${value}' is invalid. Allowed choices are ${allowed}.\n`;
   it.each([
     ["an open flag given twice", ["--task", "a", "--task", "b"], twice("--task")],
     ["a closed flag given twice", ["--agent", "main", "--agent", "main"], twice("--agent")],
     ["a bare flag given twice", ["--unattributed", "--unattributed"], twice("--unattributed")],
-    ["a value empty once trimmed", ["--ticket", "   "], empty("--ticket <ref>", "   ")],
-    ["a model empty once trimmed", ["--model", "   "], empty("--model <id>", "   ")],
     [
       "an agent no call can have",
       ["--agent", "robot"],
@@ -455,7 +457,6 @@ const ON = {
 
 describe("aidd telemetry on", () => {
   const ANONYMOUS = { status: "unset" };
-  const NAMED = { status: "set", personId: "Ada Example" };
   beforeEach(() => {
     identity.execute.mockResolvedValue(ANONYMOUS);
     turnOn.mockResolvedValue(ON);
@@ -481,56 +482,6 @@ describe("aidd telemetry on", () => {
     expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: { set: "Ada Example" } });
   });
 
-  it("keeps the identity already set when --yes is given no choice, and asks nothing", async () => {
-    identity.execute.mockResolvedValue(NAMED);
-    expect(await run("on", "--yes")).toBeNull();
-    expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: "keep" });
-    expect(select).not.toHaveBeenCalled();
-    expect(propose).not.toHaveBeenCalled();
-  });
-
-  it("refuses --yes with no identity set and no choice, before anything is written", async () => {
-    expect(await run("on", "--yes")).toBe(1);
-    expect(turnOn).not.toHaveBeenCalled();
-    expect(propose).not.toHaveBeenCalled();
-    expect(stderr()).toBe(
-      "Error: No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody.\n"
-    );
-  });
-
-  it("refuses --as with --anonymous, before asking anything", async () => {
-    expect(await run("on", "--yes", "--as", "Ada Example", "--anonymous")).toBe(1);
-    expect(stderr()).toBe(
-      "Error: --as names you and --anonymous names nobody: give one of them.\n"
-    );
-    expect(identity.execute).not.toHaveBeenCalled();
-    expect(turnOn).not.toHaveBeenCalled();
-  });
-
-  it("refuses an identifier the identity rules refuse, before asking anything", async () => {
-    expect(await run("on", "--as", "a".repeat(129))).toBe(1);
-    expect(confirm).not.toHaveBeenCalled();
-    expect(turnOn).not.toHaveBeenCalled();
-    expect(stderr()).toBe(
-      "Error: An identity is one non-empty line of at most 128 characters. Nothing was changed.\n"
-    );
-  });
-
-  it("refuses to guess an answer where nobody can be asked", async () => {
-    const original = process.stdout.isTTY;
-    process.stdout.isTTY = false;
-    try {
-      expect(await run("on")).toBe(1);
-    } finally {
-      process.stdout.isTTY = original;
-    }
-    expect(turnOn).not.toHaveBeenCalled();
-    expect(confirm).not.toHaveBeenCalled();
-    expect(stderr()).toBe(
-      "Error: Nothing to ask in a non-interactive run: pass --yes to turn measurement on.\n"
-    );
-  });
-
   describe("where a person can be asked", () => {
     const original = process.stdout.isTTY;
     beforeEach(() => {
@@ -541,9 +492,6 @@ describe("aidd telemetry on", () => {
     afterEach(() => {
       process.stdout.isTTY = original;
     });
-
-    const choices = () => select.mock.calls[0]?.[1] as { name: string; value: unknown }[];
-    const offered = () => choices().map((c) => c.value);
 
     it("turns on after a yes, defaulting the question to no", async () => {
       select.mockResolvedValue("none");
@@ -558,69 +506,6 @@ describe("aidd telemetry on", () => {
       expect(turnOn).not.toHaveBeenCalled();
       expect(propose).not.toHaveBeenCalled();
       expect(stdout()).toContain("Nothing changed.");
-    });
-
-    it("offers the proposal, another identifier, or anonymity, and names the one chosen", async () => {
-      select.mockImplementation(
-        async (_message, choices: { value: unknown }[]) => choices[0]?.value
-      );
-      expect(await run("on")).toBeNull();
-      expect(propose).toHaveBeenCalledWith({ cwd: process.cwd() });
-      expect(offered()).toEqual([{ set: "Ada Example" }, "another", "none"]);
-      expect(choices()[0]?.name).toContain("Ada Example");
-      expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: { set: "Ada Example" } });
-    });
-
-    it("offers no proposal when there is none", async () => {
-      propose.mockResolvedValue(null);
-      select.mockResolvedValue("none");
-      await run("on");
-      expect(offered()).toEqual(["another", "none"]);
-    });
-
-    it("takes another identifier, typed", async () => {
-      select.mockResolvedValue("another");
-      input.mockResolvedValue("Ada at Work");
-      expect(await run("on")).toBeNull();
-      expect(input.mock.calls[0]?.[0]).toBe(
-        "Identifier (one non-empty line, at most 128 characters):"
-      );
-      expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: { set: "Ada at Work" } });
-    });
-
-    it("asks again until the identifier typed is one it can keep", async () => {
-      select.mockResolvedValue("another");
-      input
-        .mockResolvedValueOnce("   ")
-        .mockResolvedValueOnce("a".repeat(129))
-        .mockResolvedValueOnce("Ada at Work");
-      expect(await run("on")).toBeNull();
-      expect(input).toHaveBeenCalledTimes(3);
-      expect(stderr().split("one non-empty line of at most 128 characters.")).toHaveLength(3);
-      expect(stderr()).not.toContain("Nothing was changed.");
-      expect(turnOn).toHaveBeenCalledTimes(1);
-      expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: { set: "Ada at Work" } });
-    });
-
-    it("stays anonymous when chosen", async () => {
-      select.mockResolvedValue("none");
-      await run("on");
-      expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: "none" });
-    });
-
-    it("asks nothing about the person when an identity is set", async () => {
-      identity.execute.mockResolvedValue(NAMED);
-      expect(await run("on")).toBeNull();
-      expect(select).not.toHaveBeenCalled();
-      expect(propose).not.toHaveBeenCalled();
-      expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: "keep" });
-    });
-
-    it("asks nothing about the person when a flag answered", async () => {
-      expect(await run("on", "--anonymous")).toBeNull();
-      expect(confirm).toHaveBeenCalled();
-      expect(select).not.toHaveBeenCalled();
-      expect(turnOn).toHaveBeenCalledWith({ cwd: process.cwd(), choice: "none" });
     });
   });
 

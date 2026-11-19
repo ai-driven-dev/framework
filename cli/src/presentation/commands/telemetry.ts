@@ -3,7 +3,6 @@ import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../contexts/telemetry/application/report/report-envelope.js";
-import type { IdentityChoice } from "../../contexts/telemetry/application/switch/enable-telemetry.js";
 import {
   ABSENT_AXES,
   type ReportFilters,
@@ -15,16 +14,9 @@ import {
 } from "../../contexts/telemetry/contract/task-declaration.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/contract/usage-record.js";
 import { REPORT_AXES, type ReportAxis } from "../../contexts/telemetry/contract/usage-report.js";
+import { IdentityOffWithIdentifierError } from "../../shared/domain/errors.js";
+import type { Deps, DepsSliceFactory, TelemetryRequests } from "../deps.js";
 import {
-  ConflictingIdentityFlagsError,
-  IdentityOffWithIdentifierError,
-  InputRequiredError,
-  InvalidIdentityError,
-} from "../../shared/domain/errors.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
-import type { Deps, DepsSliceFactory, TelemetryDeps, TelemetryRequests } from "../deps.js";
-import {
-  INVALID_IDENTITY_REFUSAL,
   printForgetResult,
   printIdentityRule,
   printOffResult,
@@ -39,11 +31,18 @@ import {
 } from "../display/telemetry-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
 type TelemetryCommandKeys = "prompter" | "telemetry";
+
+/** What every subcommand registrar needs to register itself on the `telemetry` command. */
+interface TelemetrySurface {
+  readonly telemetry: Command;
+  readonly program: Command;
+  readonly createDeps: DepsSliceFactory<TelemetryCommandKeys>;
+  readonly requests: TelemetryRequests;
+}
 
 /** A command's output and directory, and how it runs: `run` wires the dependencies for some
  * work, `runChecked` first checks what the request alone can answer, before any are wired. Both
@@ -77,74 +76,7 @@ interface OnOptions {
   readonly anonymous: boolean;
 }
 
-/** Who the clone is measured as: a flag's answer, the identity already set, or the person's
- * answer. `null` when none of them can be had. */
-async function identityChoice(
-  telemetry: TelemetryDeps,
-  checkIdentity: TelemetryRequests["checkIdentity"],
-  prompter: Prompter,
-  output: CLIOutput,
-  cwd: string,
-  options: OnOptions
-): Promise<IdentityChoice | null> {
-  if (options.as !== undefined) return { set: options.as };
-  if (options.anonymous) return "none";
-  if ((await telemetry.manageIdentity.execute({ action: "show" })).status === "set") return "keep";
-  if (options.yes) return null;
-  const proposal = await telemetry.proposeIdentity.execute({ cwd });
-  const answer = await prompter.select<IdentityChoice | "another">(
-    "How should your own measurement name you? The identity stays on this machine.",
-    [
-      ...(proposal === null
-        ? []
-        : [{ name: `As "${proposal}", your git name`, value: { set: proposal } }]),
-      { name: "As another identifier, typed next", value: "another" },
-      { name: "Anonymously", value: "none" },
-    ]
-  );
-  if (answer !== "another") return answer;
-  for (;;) {
-    const typed = await prompter.input("Identifier (one non-empty line, at most 128 characters):");
-    if (checkIdentity.execute({ typed }).status === "valid") return { set: typed };
-    printIdentityRule(output);
-  }
-}
-
-/** One value per flag, trimmed, and one of `choices` when it has them. Commander keeps the last
- * of a repeated flag silently, and its own `choices` replaces any parser, so both are checked
- * here. A repeat is refused by the flag's name: a bare flag's value is its preset, not what was
- * typed. Its help says what it keeps: "Only the " then `kept`. */
-function filterOption(
-  command: Command,
-  flags: string,
-  kept: string,
-  choices?: readonly string[]
-): Option {
-  const option = new Option(flags, `Only the ${kept}`);
-  return (choices === undefined ? option : option.choices(choices)).argParser(
-    (value: string, previous: string | undefined): string => {
-      if (previous !== undefined) {
-        command.error(`error: ${option.long} is given twice: give it once.`);
-      }
-      const text = value.trim();
-      if (text === "") throw new InvalidArgumentError("It is empty.");
-      if (choices !== undefined && !choices.includes(text)) {
-        throw new InvalidArgumentError(`Allowed choices are ${choices.join(", ")}.`);
-      }
-      return text;
-    }
-  );
-}
-
-export function registerTelemetryCommand(
-  program: Command,
-  createDeps: DepsSliceFactory<TelemetryCommandKeys>,
-  requests: TelemetryRequests
-): void {
-  const telemetry = program
-    .command("telemetry")
-    .description("Measure what Claude Code and Codex sessions consume, locally");
-
+function registerOn({ telemetry, program, createDeps, requests }: TelemetrySurface): void {
   telemetry
     .command("on")
     .description("Measure this clone")
@@ -154,22 +86,11 @@ export function registerTelemetryCommand(
     .action(async (cmdOptions: OnOptions) => {
       const { output, projectRoot, runChecked } = commandOf(program, createDeps);
       await runChecked(
-        () => {
-          if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
-            throw new ConflictingIdentityFlagsError();
-          }
-          if (
-            cmdOptions.as !== undefined &&
-            requests.checkIdentity.execute({ typed: cmdOptions.as }).status === "refused"
-          ) {
-            throw new InvalidIdentityError(INVALID_IDENTITY_REFUSAL);
-          }
-          if (!cmdOptions.yes && !process.stdout.isTTY) {
-            throw new InputRequiredError(
-              "Nothing to ask in a non-interactive run: pass --yes to turn measurement on."
-            );
-          }
-        },
+        () =>
+          requests.checkOnRequest.execute({
+            ...cmdOptions,
+            interactive: process.stdout.isTTY === true,
+          }),
         async (deps) => {
           const confirmed =
             cmdOptions.yes ||
@@ -178,19 +99,11 @@ export function registerTelemetryCommand(
             output.info("Nothing changed.");
             return;
           }
-          const choice = await identityChoice(
-            deps.telemetry,
-            requests.checkIdentity,
-            deps.prompter,
-            output,
-            projectRoot,
-            cmdOptions
-          );
-          if (choice === null) {
-            throw new InputRequiredError(
-              "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."
-            );
-          }
+          const choice = await deps.telemetry.chooseIdentity.execute({
+            ...cmdOptions,
+            cwd: projectRoot,
+            onRefused: () => printIdentityRule(output),
+          });
           const result = await deps.telemetry.enableTelemetry.execute({ cwd: projectRoot, choice });
           const retention =
             result.status === "on"
@@ -201,7 +114,9 @@ export function registerTelemetryCommand(
         }
       );
     });
+}
 
+function registerOff({ telemetry, program, createDeps }: TelemetrySurface): void {
   telemetry
     .command("off")
     .description("Stop measuring this clone; what was measured stays")
@@ -213,7 +128,9 @@ export function registerTelemetryCommand(
         if (result.status === "refused") exitWith(1);
       });
     });
+}
 
+function registerForget({ telemetry, program, createDeps }: TelemetrySurface): void {
   telemetry
     .command("forget")
     .description("Show everything measurement keeps on this machine, or remove it with --yes")
@@ -227,7 +144,9 @@ export function registerTelemetryCommand(
         );
       });
     });
+}
 
+function registerIngest({ telemetry, program, createDeps }: TelemetrySurface): void {
   telemetry
     .command("ingest")
     .description("Read new transcripts into the local ledger, for clones that opted in")
@@ -239,7 +158,9 @@ export function registerTelemetryCommand(
         if (!cmdOptions.quiet) printIngestResult(output, result);
       });
     });
+}
 
+function registerTask({ telemetry, program, createDeps, requests }: TelemetrySurface): void {
   telemetry
     .command("task [name]")
     .description("Declare the task the current work belongs to")
@@ -276,7 +197,9 @@ export function registerTelemetryCommand(
         );
       }
     );
+}
 
+function registerStatus({ telemetry, program, createDeps }: TelemetrySurface): void {
   telemetry
     .command("status")
     .description("Show if this clone is measured, since when, and its task")
@@ -289,9 +212,39 @@ export function registerTelemetryCommand(
         );
       });
     });
+}
 
-  const report = telemetry.command("report");
-  report
+type ReportCommandOptions = {
+  from?: string;
+  to?: string;
+  days?: string;
+  axis: ReportAxis;
+  json: boolean;
+} & Partial<ReportFilters>;
+
+/** One value per flag, checked by the request. Commander keeps the last of a repeated flag
+ * silently, and its own `choices` replaces any parser, so both are checked here. A repeat is
+ * refused by the flag's name: a bare flag's value is its preset, not what was typed. Its help
+ * says what it keeps: "Only the " then `kept`. */
+function filterOptionOf(command: Command, requests: TelemetryRequests) {
+  return (flags: string, kept: string, choices?: readonly string[]): Option => {
+    const option = new Option(flags, `Only the ${kept}`);
+    return (choices === undefined ? option : option.choices(choices)).argParser(
+      (value: string, previous: string | undefined): string => {
+        if (previous !== undefined) {
+          command.error(`error: ${option.long} is given twice: give it once.`);
+        }
+        const checked = requests.checkFilterValue.execute({ value, choices });
+        if (checked.status === "refused") throw new InvalidArgumentError(checked.reason);
+        return checked.text;
+      }
+    );
+  };
+}
+
+function declareReportOptions(report: Command, requests: TelemetryRequests): Command {
+  const filter = filterOptionOf(report, requests);
+  return report
     .description("Show what the work consumed, split along one axis, after reading new transcripts")
     .option("--from <date>", "First day to include, as YYYY-MM-DD (UTC)")
     .option("--to <date>", "Last day to include, as YYYY-MM-DD (UTC)")
@@ -299,78 +252,69 @@ export function registerTelemetryCommand(
     .addOption(
       new Option("--axis <axis>", "What to split by").choices(REPORT_AXES).default("total")
     )
-    .addOption(filterOption(report, "--task <name>", "calls of this task"))
-    .addOption(filterOption(report, "--ticket <ref>", "calls of this ticket, as declared"))
-    .addOption(filterOption(report, "--person <id>", "calls of this identity"))
-    .addOption(filterOption(report, "--model <id>", "calls of this model"))
-    .addOption(filterOption(report, "--agent <agent>", "calls of this agent", USAGE_AGENTS))
+    .addOption(filter("--task <name>", "calls of this task"))
+    .addOption(filter("--ticket <ref>", "calls of this ticket, as declared"))
+    .addOption(filter("--person <id>", "calls of this identity"))
+    .addOption(filter("--model <id>", "calls of this model"))
+    .addOption(filter("--agent <agent>", "calls of this agent", USAGE_AGENTS))
+    .addOption(filter("--session <id>", "calls of this session, or a start of its id"))
     .addOption(
-      filterOption(report, "--session <id>", "calls of this session, or a start of its id")
-    )
-    .addOption(
-      filterOption(
-        report,
+      filter(
         "--repository <id>",
         "calls of this repository, a start of its id, or . for the one here"
       )
     )
-    .addOption(filterOption(report, "--tool <tool>", "calls of this tool", USAGE_TOOLS))
+    .addOption(filter("--tool <tool>", "calls of this tool", USAGE_TOOLS))
+    .addOption(filter("--absent <axis>", "calls with no value on this axis", ABSENT_AXES))
     .addOption(
-      filterOption(report, "--absent <axis>", "calls with no value on this axis", ABSENT_AXES)
-    )
-    .addOption(
-      filterOption(
-        report,
+      filter(
         "--unattributed [reason]",
         "work with no task, for this reason",
         UNATTRIBUTED_SELECTORS
       ).preset("any")
     )
-    .option("--json", "Print a versioned JSON envelope instead of text", false)
-    .action(
-      async (
-        cmdOptions: {
-          from?: string;
-          to?: string;
-          days?: string;
-          axis: ReportAxis;
-          json: boolean;
-        } & Partial<ReportFilters>
-      ) => {
-        const { output, projectRoot, runChecked } = commandOf(program, createDeps);
-        await runChecked(
-          () =>
-            requests.resolveReportRequest.execute({
-              axis: cmdOptions.axis,
-              from: cmdOptions.from,
-              to: cmdOptions.to,
-              days: cmdOptions.days,
-              filters: cmdOptions,
-              cwd: projectRoot,
-            }),
-          async (deps, { request }) => {
-            const result = await deps.telemetry.requestReport.execute(request);
-            if (
-              result.status === "conflicting" ||
-              result.status === "not-a-repository" ||
-              result.status === "ambiguous"
-            ) {
-              printUsageReport(output, result);
-              exitWith(1);
-            }
-            if (!cmdOptions.json) return printUsageReport(output, result);
-            output.print(
-              JSON.stringify(
-                result.status === "refused" ? REFUSED_ENVELOPE : reportEnvelopeOf(result),
-                null,
-                2
-              )
-            );
-          }
-        );
-      }
-    );
+    .option("--json", "Print a versioned JSON envelope instead of text", false);
+}
 
+function registerReport({ telemetry, program, createDeps, requests }: TelemetrySurface): void {
+  declareReportOptions(telemetry.command("report"), requests).action(
+    async (cmdOptions: ReportCommandOptions) => {
+      const { output, projectRoot, runChecked } = commandOf(program, createDeps);
+      await runChecked(
+        () =>
+          requests.resolveReportRequest.execute({
+            axis: cmdOptions.axis,
+            from: cmdOptions.from,
+            to: cmdOptions.to,
+            days: cmdOptions.days,
+            filters: cmdOptions,
+            cwd: projectRoot,
+          }),
+        async (deps, { request }) => {
+          const result = await deps.telemetry.requestReport.execute(request);
+          if (
+            result.status === "conflicting" ||
+            result.status === "not-a-repository" ||
+            result.status === "ambiguous"
+          ) {
+            printUsageReport(output, result);
+            exitWith(1);
+          }
+          if (!cmdOptions.json) return printUsageReport(output, result);
+          output.print(
+            JSON.stringify(
+              result.status === "refused" ? REFUSED_ENVELOPE : reportEnvelopeOf(result),
+              null,
+              2
+            )
+          );
+        }
+      );
+    }
+  );
+}
+
+function registerIdentity({ telemetry, program, createDeps }: TelemetrySurface): void {
   telemetry
     .command("identity [id]")
     .description("Choose to be named on your own measurement, or show or remove that choice")
@@ -395,4 +339,27 @@ export function registerTelemetryCommand(
         }
       );
     });
+}
+
+export function registerTelemetryCommand(
+  program: Command,
+  createDeps: DepsSliceFactory<TelemetryCommandKeys>,
+  requests: TelemetryRequests
+): void {
+  const surface = {
+    telemetry: program
+      .command("telemetry")
+      .description("Measure what Claude Code and Codex sessions consume, locally"),
+    program,
+    createDeps,
+    requests,
+  };
+  registerOn(surface);
+  registerOff(surface);
+  registerForget(surface);
+  registerIngest(surface);
+  registerTask(surface);
+  registerStatus(surface);
+  registerReport(surface);
+  registerIdentity(surface);
 }

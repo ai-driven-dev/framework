@@ -23,13 +23,15 @@ import type { ValidateRecipes } from "../contexts/recipes/application/validate-r
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
 import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
-import type { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.js";
+import type { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.js";
 import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
 import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
+import type { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.js";
 import type { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
 import type { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
+import type { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.js";
 import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
 import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
@@ -81,6 +83,7 @@ export interface TelemetryDeps {
   requestReport: Pick<RequestReport, "execute">;
   manageIdentity: Pick<ManageIdentity, "execute">;
   proposeIdentity: Pick<ProposeIdentity, "execute">;
+  chooseIdentity: Pick<ChooseIdentity, "execute">;
   readTranscriptRetention: Pick<ReadTranscriptRetention, "execute">;
   enableTelemetry: Pick<EnableTelemetry, "execute">;
   disableTelemetry: Pick<DisableTelemetry, "execute">;
@@ -92,7 +95,8 @@ export interface TelemetryDeps {
 export interface TelemetryRequests {
   resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
   resolveReportRequest: Pick<ResolveReportRequest, "execute">;
-  checkIdentity: Pick<CheckIdentity, "execute">;
+  checkOnRequest: Pick<CheckOnRequest, "execute">;
+  checkFilterValue: Pick<CheckFilterValue, "execute">;
 }
 
 export interface Deps {

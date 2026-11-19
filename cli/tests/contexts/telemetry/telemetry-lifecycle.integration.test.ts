@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTelemetry } from "../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../src/presentation/deps.js";
 import { git } from "../../helpers/git-sandbox.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
@@ -56,7 +57,7 @@ let deps: TelemetryDeps;
 
 function useSandbox(): void {
   for (const [name, value] of Object.entries(box.env())) vi.stubEnv(name, value);
-  deps = wireTelemetry(() => box.home);
+  deps = wireTelemetry(() => box.home, prompterAnswering({}));
 }
 
 beforeEach(() => {
@@ -243,7 +244,7 @@ describe("the identifier offered at on", () => {
   it("is not read from git under AIDD_TELEMETRY=0", async () => {
     git(repo, box.gitEnv, "config", "--local", "user.name", "Ada Example");
     vi.stubEnv("AIDD_TELEMETRY", "0");
-    deps = wireTelemetry(() => box.home);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
     expect(await deps.proposeIdentity.execute({ cwd: repo })).toBeNull();
   });
 });
@@ -257,7 +258,7 @@ describe("the wiring of a declaration", () => {
 
   it("refuses a declaration, a status and a report under AIDD_TELEMETRY=0", async () => {
     vi.stubEnv("AIDD_TELEMETRY", "0");
-    deps = wireTelemetry(() => box.home);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
     const refused = { status: "refused", reason: "environment" };
 
     expect(await deps.declareTask.execute({ ...declare, cwd: repo })).toEqual(refused);
@@ -269,7 +270,7 @@ describe("the wiring of a declaration", () => {
 
   it("binds the session it was declared in, from the moment it is declared", async () => {
     vi.stubEnv("CLAUDE_CODE_SESSION_ID", SESSION);
-    deps = wireTelemetry(() => box.home);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
     await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     await deps.declareTask.execute({ ...declare, cwd: repo });
 

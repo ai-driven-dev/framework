@@ -4760,7 +4760,6 @@
         "!src/presentation/commands/marketplace.ts",
         "!src/presentation/commands/plugin.ts",
         "!src/presentation/commands/setup.ts",
-        "!src/presentation/commands/telemetry.ts",
         "!src/presentation/commands/tool-config.ts",
         "!src/presentation/prompts/menu-use-case.ts"
       ],
@@ -4982,7 +4981,6 @@
         "!src/presentation/commands/plugin.ts",
         "!src/presentation/commands/setup.ts",
         "!src/presentation/commands/sync.ts",
-        "!src/presentation/commands/telemetry.ts",
         "!src/presentation/commands/tool-config.ts",
         "!src/presentation/display/doctor-display.ts",
         "!src/presentation/display/tool-config-display.ts",
