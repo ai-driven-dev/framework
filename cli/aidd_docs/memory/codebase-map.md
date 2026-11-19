@@ -24,7 +24,8 @@ src/
 │   │   └── ports/
 │   ├── host-registration/    # what a host's registry says, and driving its CLI
 │   │   ├── application/
-│   │   │   └── inspect/
+│   │   │   ├── inspect/
+│   │   │   └── withdraw/
 │   │   ├── contract/
 │   │   ├── domain/
 │   │   │   ├── policy/
