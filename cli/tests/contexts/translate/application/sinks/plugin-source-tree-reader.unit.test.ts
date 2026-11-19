@@ -3,7 +3,7 @@ import {
   detectPluginPresenceFlags,
   listAgentFiles,
   listSkillNames,
-} from "../../../../../src/contexts/translate/application/sink/plugin-source-tree-reader.js";
+} from "../../../../../src/contexts/translate/application/sinks/plugin-source-tree-reader.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";
 

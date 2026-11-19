@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.js";
-import type { DiskSink } from "../../../../src/contexts/translate/application/sink/disk-sink.js";
+import type { DiskSink } from "../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,

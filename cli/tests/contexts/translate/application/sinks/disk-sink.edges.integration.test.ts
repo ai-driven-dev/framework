@@ -7,7 +7,7 @@ import type {
 import {
   DiskSink,
   type DiskTarget,
-} from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
+} from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatMergeTargetNotJsonError,

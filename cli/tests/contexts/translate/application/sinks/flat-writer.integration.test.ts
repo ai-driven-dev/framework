@@ -6,7 +6,7 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.js";
-import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
+import { DiskSink } from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatTargetExistsError,

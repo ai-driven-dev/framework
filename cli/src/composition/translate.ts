@@ -3,7 +3,7 @@ import {
   BuildNativeTree,
   type FrameworkBuildContext,
 } from "../contexts/translate/application/build-native-tree.js";
-import { DiskSink } from "../contexts/translate/application/sink/disk-sink.js";
+import { DiskSink } from "../contexts/translate/application/sinks/disk-sink.js";
 import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";

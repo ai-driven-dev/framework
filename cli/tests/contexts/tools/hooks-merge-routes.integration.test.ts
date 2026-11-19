@@ -6,7 +6,7 @@ import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/prof
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { DiskSink } from "../../../src/contexts/translate/application/sink/disk-sink.js";
+import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import {
   type PluginComponentFile,
   PluginDistribution,

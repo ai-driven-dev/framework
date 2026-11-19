@@ -124,7 +124,7 @@ src/
 │   │       └── sections/
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
-│   │   │   └── sink/
+│   │   │   └── sinks/
 │   │   ├── contract/
 │   │   ├── domain/
 │   │   ├── infrastructure/

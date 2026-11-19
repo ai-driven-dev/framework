@@ -21,7 +21,7 @@ import {
   OUT_OF_SCOPE_PLUGIN_SECTIONS,
   SOURCE_MARKETPLACE_RELATIVE,
 } from "../domain/canon-format.js";
-import type { DiskLayout, DiskSink, DiskTarget } from "./sink/disk-sink.js";
+import type { DiskLayout, DiskSink, DiskTarget } from "./sinks/disk-sink.js";
 
 /** What a build for a target and mode asks of its caller. */
 export interface FrameworkBuildContext {

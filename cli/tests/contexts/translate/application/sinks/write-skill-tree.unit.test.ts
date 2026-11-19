@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { writeSkillTree } from "../../../../../src/contexts/translate/application/sink/write-skill-tree.js";
+import { writeSkillTree } from "../../../../../src/contexts/translate/application/sinks/write-skill-tree.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";

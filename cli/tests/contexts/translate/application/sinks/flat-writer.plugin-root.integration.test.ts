@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
-import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
+import { DiskSink } from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
