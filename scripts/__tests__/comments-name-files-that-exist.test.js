@@ -22,14 +22,6 @@ const NAMED_AS_HISTORY = Object.freeze({
 
 /** Named inside a fixture or a runtime path a test builds, never a file of this repository. */
 const NOT_A_REPOSITORY_FILE = Object.freeze({
-  // Illustrations inside a rule's own probe: each names a file deliberately absent, which is
-  // what the probe is for — a guard that only ever sees real paths never proves it can see a
-  // dead one.
-  "cli/tests/architecture/referenced-paths.arch.test.ts": [
-    "contexts/gone.ts",
-    "shared/gone.ts",
-    "application/shared/x.ts",
-  ],
   "cli/tests/architecture/test-mirror-path.arch.test.ts": ["src/contexts/x/domain/y.ts"],
   "scripts/__tests__/cli-type-honesty.test.js": [
     "cli/src/honest.ts",

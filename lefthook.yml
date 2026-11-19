@@ -103,7 +103,7 @@ pre-commit:
         fi
         node scripts/check-context-reference-form.js
     referenced-paths:
-      glob: "{*.md,docs/**,aidd_docs/memory/**,cli/.claude/**,cli/aidd_docs/memory/**,cli/*.md,cli/*.ts,cli/*.json}"
+      glob: "{*.md,docs/**,aidd_docs/memory/**,cli/.claude/**,cli/aidd_docs/memory/**,cli/*.md,cli/*.ts,cli/*.json,cli/src/**,cli/tests/**}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping referenced-paths'

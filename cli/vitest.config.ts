@@ -111,7 +111,7 @@ export default defineConfig({
       // Three of these globs still named their pre-refactor locations, under the layer
       // directories the contexts replaced. They excluded nothing, so the files this comment
       // argues must not be counted were counted, and the thresholds below sat about a point
-      // from failing for a reason nobody intended. `referenced-paths.arch.test.ts` now reads
+      // from failing for a reason nobody intended. `scripts/check-referenced-paths.js` now reads
       // this file, so a glob cannot outlive the directory it points at again.
       exclude: [
         "src/cli.ts",
