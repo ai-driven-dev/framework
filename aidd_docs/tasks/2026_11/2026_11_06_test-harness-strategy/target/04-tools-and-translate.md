@@ -129,7 +129,7 @@ A test must provide: a reference distribution with the six artefacts, two plugin
 | `domain/formats/` (10 files) | keep | `domain/formats/` (`cursor-hooks-project-merge.ts` stays, the only tolerated tool name, outside the baseline) |
 | `domain/marketplace-catalog.ts`, `marketplace-entry.ts` | keep | `domain/`: build-contract helper shared by the claude and cursor profiles (decision 4) |
 | `domain/marketplace-settings.ts` | move | `host-registration/domain/marketplace-settings.ts`: settings section type defined by its reading context |
-| `domain/marketplace-source-conflict.ts`, `host-plugin-registration.ts` | move | `host-registration/domain/source-conflict.ts`, `registration-answer.ts` |
+| `domain/marketplace-source-conflict.ts`, `host-plugin-registration.ts` | move | `host-registration/domain/source/marketplace-source-conflict.ts`, `registration-answer.ts` |
 | `domain/mcp-launch-command.ts` | move | `domain/formats/mcp-launch-command.ts`: a Windows MCP config transform (content format), not a registration |
 | `domain/ports/file-merger.ts`, `schema-validator.ts` | move | `shared/ports` |
 | `domain/ports/{host-marketplace-registry-reader,host-plugin-registry-reader,native-marketplace-source-reader,native-plugin-activator}.ts` | move | `host-registration/ports/` (`host-marketplace-registry.ts`, `host-plugin-registry.ts`, `host-marketplace-sources.ts`, `host-actions.ts`) |

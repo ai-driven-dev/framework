@@ -23,7 +23,7 @@
 | `src/contexts/tools/domain/marketplace-catalog.ts` | `src/contexts/tools/domain/marketplace-catalog.ts` | keep | build-contract helper shared by claude and cursor; 02 decides tools over the open question in 04 |
 | `src/contexts/tools/domain/marketplace-entry.ts` | `src/contexts/tools/domain/marketplace-entry.ts` | keep | proposal: companion of marketplace-catalog, same build-contract role |
 | `src/contexts/tools/domain/marketplace-settings.ts` | `src/contexts/host-registration/domain/marketplace-settings.ts` | move | settings section type defined by host-registration |
-| `src/contexts/tools/domain/marketplace-source-conflict.ts` | `src/contexts/host-registration/domain/source-conflict.ts` | move |  |
+| `src/contexts/tools/domain/marketplace-source-conflict.ts` | `src/contexts/host-registration/domain/source/marketplace-source-conflict.ts` | move |  |
 | `src/contexts/tools/domain/host-plugin-registration.ts` | `src/contexts/host-registration/domain/registration-answer.ts` | move |  |
 | `src/contexts/tools/domain/mcp-launch-command.ts` | `src/contexts/tools/domain/formats/mcp-launch-command.ts` | move | proposal: 04 says host-registration but the file is a win32 MCP config transform (content format), not a registration |
 | `src/contexts/tools/domain/ports/file-merger.ts` | `src/shared/ports/file-merger.ts` | move | used by several contexts |

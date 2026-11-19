@@ -47,7 +47,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/runtime/self-update/self-updater.ts` | `src/contexts/update/ports/cli-release-source.ts; src/contexts/update/ports/cli-installer.ts` | split | one port per responsibility |
 | `src/runtime/self-update/self-updater-adapter.ts` | `src/contexts/update/infrastructure/npm-registry-release-adapter.ts; src/contexts/update/infrastructure/package-manager-installer-adapter.ts` | split | |
 | `src/runtime/self-update/current-version-adapter.ts` | `src/shared/infrastructure/current-version-adapter.ts` | move | `VersionReader` consumed by installation and update |
-| `src/runtime/self-update/latest-release-resolver.ts` | `src/shared/ports/release-lister.ts; src/shared/ports/repository-reader.ts` | split | `listRootReleases` and `isRepoPublic` go to forge ports; `resolveLatest` deleted |
+| `src/runtime/self-update/latest-release-resolver.ts` | `src/shared/ports/release-lister.ts; src/shared/ports/repository-reader.ts` | split | `listRootReleases`, now `listReleaseTags` and `isRepoPublic` go to forge ports; `resolveLatest` deleted |
 | `src/runtime/self-update/github-release-resolver-adapter.ts` | `src/shared/infrastructure/github-adapter.ts` | merge | the `ReleaseLister` part of the single GitHub adapter |
 | - | `src/shared/infrastructure/github-adapter.ts` | add | one adapter for `RepositoryReader`, `ReleaseLister`, `IdentityVerifier`; sole owner of the API URL |
 | - | `src/contexts/auth/ports/identity-verifier.ts` | add | done (auth pilot): token check; the shared GitHub adapter satisfies it by shape, wired in `composition` |
@@ -84,7 +84,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/presentation/commands/menu.ts` | `src/presentation/commands/menu.ts; src/orchestration/menu/menu-loop.ts` | split | proposal: loop logic to orchestration, terminal part stays; error routed through the common translator |
 | `src/presentation/commands/plugin.ts` | `src/presentation/commands/plugin.ts` | keep | thin |
 | `src/presentation/commands/setup.ts` | `src/presentation/commands/setup.ts` | keep | no `new`, scenario received |
-| `src/presentation/commands/spawn-cli-command.ts` | `src/orchestration/menu/spawn-cli-command.ts` | move | |
+| `src/presentation/commands/spawn-cli-command.ts` | `src/presentation/terminal/child-command.ts` | move | orchestration runs no process (Biome `noRestrictedImports` on `node:child_process`); the terminal part lives under presentation, per 03 §9.2 |
 | `src/presentation/commands/sync-native-activation.ts` | `src/presentation/display/framework-display.ts` | move | it reports scoped sync failures beside `printScopedFailures` and throws `SyncFailedError`, so it is display, and orchestration may not import presentation |
 | `src/presentation/commands/sync.ts` | `src/presentation/commands/sync.ts` | keep | thin |
 | `src/presentation/commands/telemetry.ts` | `src/presentation/commands/telemetry.ts; src/contexts/telemetry/application/*` | split | proposal: parse and display stay, validation and identity choice move down |

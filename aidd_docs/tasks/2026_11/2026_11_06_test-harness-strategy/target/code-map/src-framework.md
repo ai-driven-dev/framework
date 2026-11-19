@@ -10,7 +10,7 @@ Every file of the current `framework` context, mapped one row each. Paths are re
 | `src/contexts/framework/domain/manifest/merge-files.ts` | `src/contexts/installation/domain/manifest/merge-files.ts` | move | |
 | `src/contexts/framework/domain/manifest/tool-entry.ts` | `src/contexts/installation/domain/manifest/tool-entry.ts` | move | |
 | `src/contexts/framework/domain/manifest/tracked-files.ts` | `src/contexts/installation/domain/manifest/tracked-files.ts` | move | |
-| `src/contexts/framework/domain/manifest/native-registrations.ts` | `src/contexts/host-registration/domain/registration-record.ts`; `src/contexts/machine-claims/domain/plugin-claim.ts` | split | `RegistrationRecord` to host-registration; `NativePluginClaim` to claims; installation no longer imports it |
+| `src/contexts/framework/domain/manifest/native-registrations.ts` | `src/contexts/host-registration/domain/record/registration-record.ts`; `src/contexts/machine-claims/domain/plugin-claim.ts` | split | `RegistrationRecord` to host-registration; `NativePluginClaim` to claims; installation no longer imports it |
 | `src/contexts/framework/domain/plugins/installed-plugin.ts` | `src/contexts/installation/domain/installed-plugin.ts`; `src/contexts/installation/domain/file-provenance.ts`; `src/contexts/machine-claims/domain/plugin-claim.ts` | split | 11 fields reduced to 6; `dependents` leaves for claims; proposal: provenance file name |
 | `src/contexts/framework/domain/plugins/user-scope-containment.ts` | `src/contexts/machine-claims/domain/user-scope-containment.ts` | move | |
 | `src/contexts/framework/domain/plugins/plugin-source-resolver.ts` | `src/contexts/distribution/domain/plugin-source-resolver.ts` | move | |
@@ -19,7 +19,7 @@ Every file of the current `framework` context, mapped one row each. Paths are re
 | `src/contexts/framework/domain/installed-rule.ts` | `src/contexts/installation/domain/installed-rule.ts` | move | |
 | `src/contexts/framework/domain/config-capability.ts` | `src/contexts/tools/domain/sections/config.ts` | move | proposal: folder `sections/` from the tools document, file name chosen here |
 | `src/contexts/framework/domain/formats/markdown-references.ts` | `src/orchestration/doctor/markdown-references.ts` | move | used only by the references check |
-| `src/contexts/framework/domain/marketplace-source-drift.ts` | `src/contexts/host-registration/domain/source-drift.ts` | move | |
+| `src/contexts/framework/domain/marketplace-source-drift.ts` | `src/contexts/host-registration/domain/source/marketplace-source-drift.ts` | move | |
 | `src/contexts/framework/domain/doctor.ts` | `src/orchestration/doctor/doctor-report.ts` | rename | proposal: file name; report types of the doctor scenario |
 | `src/contexts/framework/domain/project-context.ts` | `src/orchestration/setup/project-context.ts` | move | |
 | `src/contexts/framework/domain/setup-flow.ts` | `src/orchestration/setup/setup-flow.ts` | move | |
@@ -79,8 +79,8 @@ Every file of the current `framework` context, mapped one row each. Paths are re
 | `src/contexts/framework/application/shared/best-effort-native-call.ts` | `src/contexts/host-registration/application/confirmation.ts` | merge | |
 | `src/contexts/framework/application/shared/host-marketplace-source-conflict.ts` | `src/contexts/host-registration/application/source-check.ts` | move | |
 | `src/contexts/framework/application/shared/read-marketplace-catalog-identity.ts` | `src/contexts/host-registration/infrastructure/catalog-identity-reader.ts` | move | |
-| `src/contexts/framework/application/shared/purge-native-marketplace-cache.ts` | `src/contexts/host-registration/domain/cache-purge-policy.ts`; `src/contexts/host-registration/application/withdraw-from-host.ts` | split | policy in domain, private step of the command |
-| `src/contexts/framework/application/shared/purge-declared-cache.ts` | `src/contexts/host-registration/domain/cache-purge-policy.ts`; `src/shared/domain/path-containment.ts` | split | containment moves to shared only if installation also imports it (computed rule); proposal: shared file name |
+| `src/contexts/framework/application/shared/purge-native-marketplace-cache.ts` | `src/contexts/host-registration/domain/policy/cache-purge-policy.ts`; `src/contexts/host-registration/application/withdraw-from-host.ts` | split | policy in domain, private step of the command |
+| `src/contexts/framework/application/shared/purge-declared-cache.ts` | `src/contexts/host-registration/domain/policy/cache-purge-policy.ts`; `src/shared/domain/path-containment.ts` | split | containment moves to shared only if installation also imports it (computed rule); proposal: shared file name |
 | `src/contexts/framework/application/shared/resolve-uninstall-scope.ts` | `src/contexts/host-registration/domain/uninstall-scope-order.ts` | move | conflict: installation document says `orchestration/clean`; host-registration document wins as the file reads a host registry |
 | `src/contexts/framework/application/shared/setup-marketplace-registration-use-case.ts` | `src/orchestration/marketplace/register-marketplace.ts` | rename | calls `RegisterPluginWithHost`; proposal: verb-first name |
 | `src/contexts/framework/application/shared/ensure-built-marketplace-use-case.ts` | `src/orchestration/marketplace/ensure-built-marketplace.ts` | rename | proposal: documents say distribution or translate, but it calls both and the context map has no edge between them, so the scenario layer owns it |

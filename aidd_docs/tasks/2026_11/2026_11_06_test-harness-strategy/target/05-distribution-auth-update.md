@@ -51,7 +51,7 @@ Settled: `MarketplaceSourceMode` is gone. The framework source is `PluginSourceG
 - New: `MarketplaceAccess` (is access readable without credentials?), which absorbs the guard that lives today in `framework` (`setup-marketplace-registration-use-case.ts:66-80`, token absent then `isRepoPublic`). It is a distribution rule housed by a neighbour.
 
 ### Commands owned (application)
-`FetchMarketplaceSource`, `ResolveMarketplace`, `AddMarketplace` (ex `MarketplaceAdd`), `ListMarketplaces` (ex `MarketplaceList`), `RefreshMarketplace` (ex `MarketplaceRefresh`), `RegisterFrameworkMarketplace` (ex `MarketplaceRegisterFramework`), plus `ListMarketplaceReleases` (from `framework`, via `listRootReleases`) and `AssertMarketplaceReadable` (new, see above).
+`FetchMarketplaceSource`, `ResolveMarketplace`, `AddMarketplace` (ex `MarketplaceAdd`), `ListMarketplaces` (ex `MarketplaceList`), `RefreshMarketplace` (ex `MarketplaceRefresh`), `RegisterFrameworkMarketplace` (ex `MarketplaceRegisterFramework`), plus `ListMarketplaceReleases` (from `framework`, via `listReleaseTags`) and `AssertMarketplaceReadable` (new, see above).
 
 ### Ports (owner, consumers)
 | Port | Owner | Consumers |
@@ -63,7 +63,7 @@ Settled: `MarketplaceSourceMode` is gone. The framework source is `PluginSourceG
 | `FileReader`, `FileWriter`, `Hasher`, `Logger` | `shared/ports` | imported by `distribution` (computed: 4 contexts import `FileReader`, `FileWriter` and `Hasher`) |
 | `Prompter` | `orchestration` (the prompt port belongs to what asks) | not `distribution`: it does not import the prompt port; a command that needs an answer returns a result (for example "authentication required") and `orchestration` asks the user |
 
-`MarketplaceReleaseSource` (`listRootReleases`, `isRepoPublic`) and `MarketplaceRemover` no longer exist as distribution ports. The first is replaced by the forge ports (`ReleaseLister` for `listRootReleases`; the placement of `isRepoPublic` on `RepositoryReader` is to confirm). The second disappears with the cycle (decision 3).
+`MarketplaceReleaseSource` (`listRootReleases`, now `listReleaseTags`, `isRepoPublic`) and `MarketplaceRemover` no longer exist as distribution ports. The first is replaced by the forge ports (`ReleaseLister` for `listReleaseTags`; the placement of `isRepoPublic` on `RepositoryReader` is to confirm). The second disappears with the cycle (decision 3).
 
 ### Adapters and external systems
 | External system | Adapter | Remark |
@@ -122,7 +122,7 @@ Floor 77: no Stryker report is available (the temporary folder is empty) and the
 | `infrastructure/marketplace-trust-store-adapter.ts` | keep, writes through the shared private-storage port (decision 4) | same |
 | `infrastructure/marketplace-cache-adapter.ts`, `plugin-catalog-repository-adapter.ts` | keep | same |
 | `runtime/git/inject-token.ts` | move | `contexts/distribution/infrastructure/inject-token.ts` |
-| `runtime/self-update/latest-release-resolver.ts` | split: `listRootReleases` and `isRepoPublic` go to the forge ports, `resolveLatest` delete | `shared/ports/` (`ReleaseLister`, `RepositoryReader`) |
+| `runtime/self-update/latest-release-resolver.ts` | split: `listRootReleases`, now `listReleaseTags` and `isRepoPublic` go to the forge ports, `resolveLatest` delete | `shared/ports/` (`ReleaseLister`, `RepositoryReader`) |
 | `runtime/self-update/github-release-resolver-adapter.ts` | merge | `shared/infrastructure/github-adapter.ts` (the `ReleaseLister` part) |
 | `runtime/filesystem/atomic-write.ts` | move to `shared/infrastructure` (two contexts: distribution, and the user manifest adapter of `framework`) | `shared/infrastructure/atomic-write.ts`, type `AtomicWrite` in `shared/ports` |
 | Tests `tests/contexts/distribution/**` (22 files) | keep, titles in English; imports of `TokenProvider` (now `auth/contract`) and forge ports change | same |
@@ -313,7 +313,7 @@ A test must provide: a local server (model already in the e2e), a controlled `PA
 | `self-updater.ts` | split | `contexts/update/ports/{cli-release-source,cli-installer}.ts` |
 | `self-updater-adapter.ts` | split | `contexts/update/infrastructure/{npm-registry-release-adapter,package-manager-installer-adapter}.ts` |
 | `current-version-adapter.ts` | move | `shared/infrastructure/current-version-adapter.ts` (`framework` and `update` import the port); `cli.ts` no longer imports it |
-| `latest-release-resolver.ts`, `github-release-resolver-adapter.ts` | split (resolver: `listRootReleases` and `isRepoPublic` to the forge ports, `resolveLatest` deleted) and merge (adapter into the shared GitHub adapter) | see section 1 |
+| `latest-release-resolver.ts`, `github-release-resolver-adapter.ts` | split (resolver: `listRootReleases`, now `listReleaseTags` and `isRepoPublic` to the forge ports, `resolveLatest` deleted) and merge (adapter into the shared GitHub adapter) | see section 1 |
 | Tests `tests/runtime/self-update/*`: `check-update*` (3), `self-update-use-case`, `self-updater-adapter*` (2), `current-version-adapter` | move | `tests/contexts/update/{domain,application,infrastructure}/` |
 | `tests/e2e/update-check.e2e.test.ts`, `tests/helpers/ports/fake-current-version.ts` | keep | same |
 
@@ -357,7 +357,7 @@ Tests: `tests/runtime/{assets,filesystem,http}` follow their module to `tests/sh
 2. `auth` stays a context, separate from `update`, and publishes `TokenProvider` in its `contract/`. `distribution` and `update` import it as customers (context map: `distribution -> auth`, `update -> auth`). It is no longer in `shared/ports`. The three computed importer contexts keep the file imported by other contexts, as rule 2 requires.
 3. The cycle disappears with `framework`: `orchestration` sits above `distribution`, and `distribution` has no edge to `installation`. `MarketplaceRemover` is no longer a distribution port; the `--overwrite` removal is coordinated by `orchestration/marketplace`, which must remove only after the fetch succeeded. The current order (removal before fetch) is a potential defect, unexecuted, to be pinned by a characterization test first.
 4. Private storage: one shared technical port in `shared/ports` and one adapter in `shared/infrastructure`, replacing the three implementations (telemetry, auth storage, trust store). Cost: changing files of `auth` and `distribution` under a write test that checks the file mode.
-5. `update`: delete `resolveLatest` (no caller), move `listRootReleases` and `isRepoPublic` behind the forge ports used by `distribution`, and have the hooks of `cli.ts` build a minimal graph instead of `createDeps`.
+5. `update`: delete `resolveLatest` (no caller), move `listReleaseTags` and `isRepoPublic` behind the forge ports used by `distribution`, and have the hooks of `cli.ts` build a minimal graph instead of `createDeps`.
 
 ## Assumptions about neighbours and limits
 
