@@ -16,7 +16,10 @@ The output of [prepare](01-prepare.md).
    - Give the user the page. Ask them to paste the copied feedback here.
    - Wait for the feedback.
      - Read a comment against the state it names.
-     - Where ratings tie, prefer the one with fewer states to maintain.
+     - Keep: a candidate as it is. Discard: out.
+     - Revise: a lead. Its comment says what to change.
+     - Several kept: keep the one with fewer states.
+     - Only revise: revise per the comments, then compare again.
    - Keep the chosen variant per [engine](../references/engine.md).
 4. For each element new, extracted, or reached by a change:
    - Skip one already kept above.

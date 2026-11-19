@@ -14,7 +14,10 @@ The output of [prepare](01-prepare.md).
    - Give the user the page. Ask them to paste the copied feedback here.
    - Wait for the feedback.
      - Read a comment against the tokens it names.
-     - Where ratings tie, compare the axes: keep the one nearer the brand.
+     - Keep: a candidate as it is. Discard: out.
+     - Revise: a lead. Its comment says what to change.
+     - Several kept: keep the one nearer the brand.
+     - Only revise: revise per the comments, then compare again.
    - Keep the chosen variant per [engine](../references/engine.md).
 3. If no `system.md` exists, write `aidd_docs/ui/system.md` from the [system](../assets/system-template.md) template.
    - Code: answer from step 1's reading.
