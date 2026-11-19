@@ -1,4 +1,4 @@
-# Fixtures a test compares byte for byte (manifest-round-trip.unit.test.ts reads each one
+# Fixtures a test compares byte for byte (manifest-round-trip.integration.test.ts reads each one
 # and asserts `Manifest.toJSON()` reproduces it exactly) must check out with the same line
 # ending on every platform. Without this, a Windows checkout's default `core.autocrlf`
 # rewrites the committed LF to CRLF, and the comparison — which always rewrites LF,

@@ -565,6 +565,25 @@
       "plugins": ["./biome-plugins/no-process-exit.grit"]
     },
     {
+      "includes": ["tests/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/**", "tests/**", "!**/*.d.ts"],
       "linter": {
         "rules": {

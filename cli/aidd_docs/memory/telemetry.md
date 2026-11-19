@@ -72,7 +72,7 @@ flowchart LR
 
 ## The plugin side
 
-`plugins/aidd-telemetry/hooks/` is plain Node and imports nothing from here. It tells Claude Code's payload from Codex's (`hooks/lib/tool.cjs`) and asks for a task. It answers a typed declaration by running `aidd telemetry task`, and records which session a Claude Code process is on. Its reading of the stores is pinned against `scripts/__tests__/fixtures/telemetry-bindings/`, read by `tests/contexts/telemetry/telemetry-bindings-fixture.unit.test.ts` and by the hook tests.
+`plugins/aidd-telemetry/hooks/` is plain Node and imports nothing from here. It tells Claude Code's payload from Codex's (`hooks/lib/tool.cjs`) and asks for a task. It answers a typed declaration by running `aidd telemetry task`, and records which session a Claude Code process is on. Its reading of the stores is pinned against `scripts/__tests__/fixtures/telemetry-bindings/`, read by `tests/contexts/telemetry/telemetry-bindings-fixture.integration.test.ts` and by the hook tests.
 
 ## Tests
 

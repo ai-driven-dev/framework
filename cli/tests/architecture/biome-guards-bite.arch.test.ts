@@ -75,6 +75,24 @@ describe("biome carries the exit and default-export rules", () => {
       "no override denies the process global to a context's domain and application"
     ).toEqual(["src/contexts/*/domain/**/*.ts", "src/contexts/*/application/**/*.ts"]);
   });
+
+  it("bans the filesystem and child processes in a unit test, and in nothing else", () => {
+    const config = JSON.parse(read("biome.json")) as {
+      overrides?: {
+        includes?: string[];
+        linter?: {
+          rules?: { style?: { noRestrictedImports?: { options?: { paths?: unknown } } } };
+        };
+      }[];
+    };
+    const carrier = (config.overrides ?? []).find(
+      (o) => o.linter?.rules?.style?.noRestrictedImports?.options?.paths !== undefined
+    );
+
+    expect(carrier?.includes, "no override denies fs and child_process to a unit test").toEqual([
+      "tests/**/*.unit.test.ts",
+    ]);
+  });
 });
 
 describe("the guard itself", () => {
@@ -111,6 +129,22 @@ describe("the guard itself", () => {
       "const value = 1;\nexport default value;\n"
     );
     writeFileSync(join(planted, "src/kernel/clean.ts"), "export const one = 1;\n");
+    writeFileSync(
+      join(planted, "tests/kernel/reads.unit.test.ts"),
+      'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
+    );
+    writeFileSync(
+      join(planted, "tests/kernel/awaits.unit.test.ts"),
+      'import { readFile } from "node:fs/promises";\nexport const read = readFile;\n'
+    );
+    writeFileSync(
+      join(planted, "tests/kernel/spawns.unit.test.ts"),
+      'export const load = () => import("node:child_process");\n'
+    );
+    writeFileSync(
+      join(planted, "tests/kernel/reads.integration.test.ts"),
+      'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
+    );
     const readsEnv = "export const home = (): string | undefined => process.env.HOME;\n";
     for (const file of [
       "src/contexts/framework/domain/env.ts",
@@ -153,6 +187,16 @@ describe("the guard itself", () => {
     expect(() => biomeFindings(planted, join(planted, "missing-biome"))).toThrow(
       /biome did not run/
     );
+  });
+
+  it("flags the filesystem and child processes in a unit test, and not in an integration test", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    expect(findings, findings.join(", ")).toContain(`tests/kernel/reads.unit.test.ts:${rule}`);
+    expect(findings, findings.join(", ")).toContain(`tests/kernel/awaits.unit.test.ts:${rule}`);
+    expect(findings, findings.join(", ")).toContain(`tests/kernel/spawns.unit.test.ts:${rule}`);
+    expect(findings).not.toContain(`tests/kernel/reads.integration.test.ts:${rule}`);
   });
 
   it("flags a default export under src/ and tests/ alike, and a clean module not at all", () => {

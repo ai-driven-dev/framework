@@ -11,7 +11,7 @@ description: >
 
 # Test
 
-The tiers, the four vitest projects, the doubles, the fixtures and the run commands are in
+The tiers, the five vitest projects, the doubles, the fixtures and the run commands are in
 `aidd_docs/memory/testing.md`; read that first and do not restate it here. This skill exists for
 the two failure modes that cost this package a shipped bug each, and that a convention page
 states as a rule without saying how to satisfy it.

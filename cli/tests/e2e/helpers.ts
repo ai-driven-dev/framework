@@ -39,8 +39,9 @@ function resolveCliPath(): string {
   const cliPath = inject("cliPath");
   if (!cliPath) {
     throw new Error(
-      "cliPath is unset: tests/e2e/global-setup.ts did not run. Run e2e tests through " +
-        "the e2e vitest project (`pnpm test:e2e` or `vitest run --project e2e`)."
+      "cliPath is unset: tests/e2e/global-setup.ts did not run. Run these tests through " +
+        "the e2e or golden vitest project (`pnpm test:e2e`, `pnpm test:golden`, or " +
+        "`vitest run --project e2e --project golden`)."
     );
   }
   return cliPath;
