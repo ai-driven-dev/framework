@@ -148,7 +148,7 @@ export function survivorsOf(report) {
 /** Below the declared floor is a failure the run itself raises; stryker's own `thresholds`
  * would need a config file per scope to say the same thing. */
 export function breakVerdict(score, declared) {
-  if (score < declared.break) {
+  if (declared.break !== undefined && score < declared.break) {
     return `mutation score ${score.toFixed(1)} is below the ${declared.break} declared in mutation-scopes.json`;
   }
   return null;
@@ -287,7 +287,7 @@ async function mainAggregate(scope, scopes, from) {
   const merged = mergeReports(shards.map((shard) => shard.report));
   const score = scoreOf(merged);
   console.log(
-    `\nReport: ${scope} over ${shards.length} shards (score ${score.toFixed(1)}, floor ${declared.break})`
+    `\nReport: ${scope} over ${shards.length} shards (score ${score.toFixed(1)}, floor ${declared.break ?? "none"})`
   );
   for (const survivor of survivorsOf(merged)) console.log(`  survived: ${survivor}`);
   const verdict = breakVerdict(score, declared);
@@ -332,7 +332,7 @@ async function main() {
     breakVerdict(score, scopes[scope]) ??
     (scope === "canary" ? canarySelectionVerdict(report) : null);
   console.log(
-    `\nReport: reports/mutation/${scope}/ (score ${score.toFixed(1)}, floor ${scopes[scope].break})`
+    `\nReport: reports/mutation/${scope}/ (score ${score.toFixed(1)}, floor ${scopes[scope].break ?? "none"})`
   );
   if (verdict !== null) {
     console.error(verdict);

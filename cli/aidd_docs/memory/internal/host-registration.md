@@ -32,4 +32,4 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 
 - Each port has one contract suite in `tests/contexts/host-registration/testing/`, run on its fake and its real adapter from `tests/contexts/host-registration/ports/`.
 - The real `HostActions` and `HostMarketplaceSources` arms run a `#!/bin/sh` script on a narrowed `PATH`, so Windows skips them; the disabled case is skipped where the host records none (`recordsDisabled: false`).
-- Mutation scopes `host-registration-application`, `-domain` and `-adapters` cover their folders; `contract/` and `ports/` have none.
+- Mutation: one `host-registration` scope; `contract/` and `ports/` excluded.

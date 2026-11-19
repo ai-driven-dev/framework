@@ -21,7 +21,9 @@ import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./helpers.js";
 
 interface Scope {
   readonly mutate: string | readonly string[];
-  readonly break: number;
+  readonly break?: number;
+  readonly tests?: readonly string[];
+  readonly harnessOnly?: boolean;
 }
 
 interface ScopeDeclaration {
@@ -92,11 +94,16 @@ describe("mutation covers every source file", () => {
     expect(twice, "narrow one scope with a ! glob").toEqual([]);
   });
 
-  it("every scope declares the floor its score must hold", () => {
-    for (const [name, scope] of Object.entries(declaration().scopes)) {
+  it("only telemetry, shared and the canary hold a blocking floor", () => {
+    const floored = Object.entries(declaration().scopes)
+      .filter(([, scope]) => scope.break !== undefined)
+      .map(([name]) => name);
+    expect(floored.sort()).toEqual(["canary", "shared", "telemetry"]);
+    for (const name of floored) {
+      const floor = declaration().scopes[name]?.break;
       expect(
-        Number.isInteger(scope.break) && scope.break > 0 && scope.break <= 100,
-        `scope "${name}" declares no break floor — a run cannot fail`
+        Number.isInteger(floor) && (floor ?? 0) > 0 && (floor ?? 0) <= 100,
+        `scope "${name}" declares an invalid floor`
       ).toBe(true);
     }
   });
@@ -211,23 +218,98 @@ describe("the guard itself", () => {
     expect(scoreOf({ files: {} })).toBe(0);
   });
 
-  it("runs the scopes a change touches, through source or mirrored tests, and all of them for the harness or a helper", () => {
-    expect(scopesToRun(["cli/src/shared/domain/paths.ts"], scopes)).toEqual(["shared"]);
+  it("runs per change only the gated scopes whose source changed, and every scope for a harness file or a full run", () => {
+    const mixed = {
+      shared: {
+        mutate: "src/shared/**/*.ts",
+        break: 70,
+        tests: ["tests/shared/domain/**", "tests/shared/testing/**"],
+      },
+      tools: { mutate: "src/contexts/tools/**/*.ts", tests: ["tests/contexts/tools/**"] },
+    };
+    expect(scopesToRun(["cli/src/shared/domain/paths.ts"], mixed)).toEqual(["shared"]);
+    expect(scopesToRun(["cli/src/contexts/tools/domain/registry.ts"], mixed)).toEqual([]);
     expect(
-      scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
-    ).toEqual(["tools"]);
-    expect(scopesToRun(["README.md"], scopes)).toEqual([]);
-    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([
+      scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], mixed)
+    ).toEqual([]);
+    expect(scopesToRun(["README.md"], mixed)).toEqual([]);
+    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], mixed)).toEqual([]);
+    expect(scopesToRun(["cli/tests/shared/domain/paths.unit.test.ts"], mixed)).toEqual(["shared"]);
+    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.ts"], mixed)).toEqual([
       "shared",
-      "tools",
     ]);
-    expect(scopesToRun([HARNESS[0]], scopes)).toEqual(["shared", "tools"]);
-    expect(scopesToRun([], scopes, { all: true })).toEqual(["shared", "tools"]);
+    expect(
+      scopesToRun(["cli/tests/shared/infrastructure/asset-loader.unit.test.ts"], mixed)
+    ).toEqual([]);
+    expect(scopesToRun(["cli/pnpm-lock.yaml", ".github/workflows/cli-ci.yml"], mixed)).toEqual([]);
+    for (const file of HARNESS) expect(scopesToRun([file], mixed)).toEqual(["shared", "tools"]);
+    expect(scopesToRun([], mixed, { all: true })).toEqual(["shared", "tools"]);
   });
 
-  it("runs a scope that names a single file when that file, or its mirrored test, changed", () => {
+  it("runs a gated scope when its tests or kit change, never a scope with no floor", () => {
+    const scopes = declaration().scopes;
+    expect(scopesToRun(["cli/tests/contexts/telemetry/testing/fake-locator.ts"], scopes)).toEqual([
+      "telemetry",
+    ]);
+    expect(
+      scopesToRun(
+        ["cli/tests/presentation/display/telemetry/telemetry-report-display.unit.test.ts"],
+        scopes
+      )
+    ).toEqual(["telemetry"]);
+    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.ts"], scopes)).toEqual([
+      "shared",
+    ]);
+    expect(
+      scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
+    ).toEqual([]);
+    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([]);
+    for (const [name, scope] of Object.entries(scopes)) {
+      for (const glob of scope.tests ?? []) {
+        expect(
+          existsSync(join(REPO_ROOT, "cli", glob.replace(/\/\*\*.*$/, ""))),
+          `${name}: tests glob ${glob} names nothing`
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("runs the canary alone for a lockfile change, so a Stryker or Vitest bump cannot skip it", () => {
+    const withCanary = {
+      shared: { mutate: "src/shared/**/*.ts", break: 70 },
+      canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100, harnessOnly: true },
+    };
+    expect(scopesToRun(["cli/pnpm-lock.yaml"], withCanary)).toEqual(["canary"]);
+    expect(
+      scopesToRun(["cli/pnpm-lock.yaml", "cli/src/shared/domain/paths.ts"], withCanary)
+    ).toEqual(["shared", "canary"]);
+  });
+
+  it("runs the canary only for a harness file, a lockfile or a full run, never for a change to its fixture", () => {
+    const withCanary = {
+      shared: { mutate: "src/shared/**/*.ts", break: 70 },
+      canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100, harnessOnly: true },
+    };
+    expect(scopesToRun(["cli/tests/fixtures/stryker-canary/settings.ts"], withCanary)).toEqual([]);
+    expect(scopesToRun(["cli/vitest.mutation.config.ts"], withCanary)).toEqual([
+      "shared",
+      "canary",
+    ]);
+    expect(scopesToRun([], withCanary, { all: true })).toEqual(["shared", "canary"]);
+    expect(declaration().scopes.canary?.harnessOnly).toBe(true);
+  });
+
+  it("names a harness of exactly the three files that reshape every scope", () => {
+    expect([...HARNESS].sort()).toEqual([
+      "cli/mutation-scopes.json",
+      "cli/stryker.conf.json",
+      "cli/vitest.mutation.config.ts",
+    ]);
+  });
+
+  it("runs a scope that names a single file when that file changed", () => {
     const single = {
-      runtime: {
+      adapter: {
         mutate: ["src/contexts/telemetry/infrastructure/git/git-environment.ts"],
         break: 1,
       },
@@ -235,13 +317,7 @@ describe("the guard itself", () => {
     };
     expect(
       scopesToRun(["cli/src/contexts/telemetry/infrastructure/git/git-environment.ts"], single)
-    ).toEqual(["runtime"]);
-    expect(
-      scopesToRun(
-        ["cli/tests/contexts/telemetry/infrastructure/git/git-environment.unit.test.ts"],
-        single
-      )
-    ).toEqual(["runtime"]);
+    ).toEqual(["adapter"]);
     expect(
       scopesToRun(["cli/src/contexts/telemetry/infrastructure/git/git-environment.tsx"], single)
     ).toEqual([]);
@@ -317,6 +393,10 @@ describe("the guard itself", () => {
       "src/a.ts:7 StringLiteral (Survived)",
       "src/a.ts:9 BlockStatement (NoCoverage)",
     ]);
+  });
+
+  it("passes any score for a scope that declares no floor", () => {
+    expect(breakVerdict(0, { mutate: "x" })).toBeNull();
   });
 
   it("fails a score under the floor and passes one on it", () => {

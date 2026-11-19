@@ -62,7 +62,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 - A port file is its interface and an adapter is `*Adapter` in `infrastructure/`; other names follow `cli-architecture.md` and tests follow `cli-tests.md`.
 - A migration PR delivers the test challenge pass, `.claude/skills/test/references/test-challenge-pass.md`, and a planted tree for each new rule, absent case included.
-- A context has its own scope and floor in `mutation-scopes.json` and a `test:mutation:<scope>` script, `mutation-covers-source.arch.test.ts`; floors and runs are in `aidd_docs/memory/testing.md`.
+- A context has its own scope; a floor only for `telemetry` and `shared`. Each scope has a `test:mutation:<scope>` script, `mutation-covers-source.arch.test.ts`; floors and runs are in `aidd_docs/memory/testing.md`.
 
 ## 9. Rules in force, exceptions, migration state
 
@@ -105,7 +105,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation`, `translate/domain/engine.ts` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | `translate` declares its own profile input |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
-| the mutation scope and script keep the name `runtime` after the directory it named is gone | the next mutation-scopes cleanup |
 | `shared/domain/errors.ts` exceeds the file-length cap | the messages that name a command move to the presentation error table |
 
 ## 10. Checklist for a context's migration PR

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { legsOf } from "../../scripts/mutation-scopes-to-run.mjs";
+import { legsOf, shardedOf } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
   aggregateVerdict,
   cutScope,
@@ -19,7 +19,7 @@ const scopes = (JSON.parse(read("mutation-scopes.json")) as { scopes: Record<str
 
 interface Scope {
   readonly mutate: string | readonly string[];
-  readonly break: number;
+  readonly break?: number;
   readonly shards?: number;
 }
 
@@ -29,7 +29,7 @@ describe("splitting a scope into shards", () => {
   it("declares shards only where a scope is worth splitting, never on the canary", () => {
     expect(sharded.map(([name]) => name).sort()).toEqual([
       "installation",
-      "kernel",
+      "shared",
       "telemetry",
       "tools",
       "tools-codex",
@@ -104,12 +104,24 @@ describe("splitting a scope into shards", () => {
 describe("running the CI legs", () => {
   it("gives a sharded scope one leg per shard, and any other scope one leg", () => {
     const declared = { a: { mutate: "x", break: 1 }, b: { mutate: "y", break: 1, shards: 3 } };
-    expect(legsOf(["a", "b"], declared)).toEqual([
+    expect(
+      legsOf(["a", "b"], declared).map(({ scope, shard, of }) => ({ scope, shard, of }))
+    ).toEqual([
       { scope: "a", shard: 1, of: 1 },
       { scope: "b", shard: 1, of: 3 },
       { scope: "b", shard: 2, of: 3 },
       { scope: "b", shard: 3, of: 3 },
     ]);
+  });
+
+  it("marks a leg blocking only when its scope declares a floor, and scores only the sharded scopes", () => {
+    const declared = { a: { mutate: "x", break: 1 }, b: { mutate: "y", shards: 2 } };
+    expect(legsOf(["a", "b"], declared).map(({ scope, blocking }) => [scope, blocking])).toEqual([
+      ["a", true],
+      ["b", false],
+      ["b", false],
+    ]);
+    expect(shardedOf(["a", "b"], declared)).toEqual([{ scope: "b", blocking: false }]);
   });
 });
 
