@@ -12,7 +12,7 @@ import { twoCaptures } from "./two-captures.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const FRAMEWORK_FIXTURE = join(ROOT, "tests/fixtures/framework");
-const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/phase0/snapshot.json");
+const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/cli-baseline/snapshot.json");
 
 interface CommandEntry {
   command: string;
