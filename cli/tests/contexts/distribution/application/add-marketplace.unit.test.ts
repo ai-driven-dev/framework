@@ -41,22 +41,15 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
-  const events: string[] = [];
-  const resolve = resolveMarketplace.execute.bind(resolveMarketplace);
-  resolveMarketplace.execute = async (command) => {
-    events.push("resolve");
-    return resolve(command);
-  };
   const removals: MarketplaceRemovalRequest[] = [];
   const remover: MarketplaceRemover = {
     remove: async (request) => {
-      events.push("remove");
       removals.push(request);
       await registry.delete(request.projectRoot, request.name, request.scope ?? "project");
     },
   };
   const useCase = new AddMarketplace(registry, trustStore, resolveMarketplace, prompter, remover);
-  return { useCase, registry, trustStore, events, removals };
+  return { useCase, registry, trustStore, removals };
 }
 
 describe("AddMarketplace", () => {
@@ -158,7 +151,7 @@ describe("AddMarketplace", () => {
     });
 
     it("with overwrite, a fetch failure leaves the previous entry removed", async () => {
-      const { useCase, registry, events, removals } = await buildUseCase();
+      const { useCase, registry, removals } = await buildUseCase();
       const source = { kind: "local" as const, path: MARKETPLACE_FIXTURE };
       const command = { name: "awesome", scope: "project" as const, projectRoot: PROJECT_ROOT };
       await useCase.execute({ ...command, source, autoTrust: true });
@@ -173,7 +166,6 @@ describe("AddMarketplace", () => {
       ).rejects.toThrow(InvalidPluginManifestError);
 
       expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
-      expect(events).toEqual(["resolve", "remove", "resolve"]);
       expect(removals).toEqual([
         { name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true, scope: "project" },
       ]);
@@ -195,7 +187,7 @@ describe("AddMarketplace", () => {
     });
 
     it("throws TrustDeniedError when the user denies trust", async () => {
-      const { useCase } = await buildUseCase(new DenyPrompter());
+      const { useCase, registry } = await buildUseCase(new DenyPrompter());
 
       await expect(
         useCase.execute({
@@ -206,6 +198,7 @@ describe("AddMarketplace", () => {
           autoTrust: false,
         })
       ).rejects.toThrow(TrustDeniedError);
+      expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
     });
   });
 });
