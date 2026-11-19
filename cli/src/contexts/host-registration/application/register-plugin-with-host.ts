@@ -27,9 +27,11 @@ import {
 } from "../domain/source/built-marketplace-location.js";
 import {
   describePluginDiff,
+  judgeConflict,
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../domain/source/marketplace-source-conflict.js";
+import { judgeDrift } from "../domain/source/marketplace-source-drift.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
@@ -516,13 +518,15 @@ export class RegisterPluginWithHost {
         platform: run.platform,
       }
     );
-    if (check === undefined) return undefined;
-    if (isDriftFound(check)) return this.decideOnDrift(run, check);
-    const diff = pluginSetDifference(check.registeredIdentity, check.requestedIdentity);
+    if (check !== undefined && isDriftFound(check)) return this.decideOnDrift(run, check);
+    const verdict = judgeConflict(check);
+    if (verdict.outcome === "proceed") return undefined;
+    const { conflict } = verdict;
+    const diff = pluginSetDifference(conflict.registeredIdentity, conflict.requestedIdentity);
     throw new MarketplaceSourceConflictError(
-      `Marketplace '${check.name}' is already registered from a different catalog: ` +
-        `${check.registeredSource} differs from the one requested, ${check.requestedSource} ` +
-        `— plugins ${describePluginDiff(diff)}, per ${check.location}. ` +
+      `Marketplace '${conflict.name}' is already registered from a different catalog: ` +
+        `${conflict.registeredSource} differs from the one requested, ${conflict.requestedSource} ` +
+        `— plugins ${describePluginDiff(diff)}, per ${conflict.location}. ` +
         `Do not remove a catalogue another user or project may depend on. ` +
         `Reconcile the host source manually before retrying \`aidd sync\`.`
     );
@@ -535,8 +539,9 @@ export class RegisterPluginWithHost {
    * path here never creates a shared-source claim before registration succeeds.
    */
   private decideOnDrift(run: Run, found: MarketplaceSourceDriftFound): "skip" | undefined {
-    if (found.drift.kind !== "version-behind") return undefined;
-    const { registeredVersion, requestedVersion } = found.drift;
+    const verdict = judgeDrift(found.drift);
+    if (verdict.outcome !== "skip") return undefined;
+    const { registeredVersion, requestedVersion } = verdict.reason;
     this.warn(
       run,
       `${run.toolId}'s marketplace registry (${found.location}) already carries a newer ` +

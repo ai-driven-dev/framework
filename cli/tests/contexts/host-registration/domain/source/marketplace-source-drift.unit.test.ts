@@ -1,6 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { marketplaceSourceDrift } from "../../../../../src/contexts/host-registration/domain/source/marketplace-source-drift.js";
+import {
+  judgeDrift,
+  marketplaceSourceDrift,
+} from "../../../../../src/contexts/host-registration/domain/source/marketplace-source-drift.js";
 import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 
 const DRIFT_CONTEXT = {
@@ -134,5 +137,27 @@ describe("marketplaceSourceDrift — deciding purely from the path's own segment
     );
 
     expect(marketplaceSourceDrift(registered, sharedPath("1.0.0"), DRIFT_CONTEXT)).toBeUndefined();
+  });
+});
+
+describe("judgeDrift", () => {
+  it("skips a host already following a newer build, carrying both versions", () => {
+    expect(
+      judgeDrift({
+        kind: "version-behind",
+        registeredVersion: "2.0.0",
+        requestedVersion: "1.0.0",
+      })
+    ).toStrictEqual({
+      outcome: "skip",
+      reason: { registeredVersion: "2.0.0", requestedVersion: "1.0.0" },
+    });
+  });
+
+  it.each([
+    { kind: "unmigrated-project-source" },
+    { kind: "unmigrated-foreign-project-source", projectRoot: "/other" },
+  ] as const)("proceeds on a pre-migration source, $kind", (drift) => {
+    expect(judgeDrift(drift)).toStrictEqual({ outcome: "proceed", evidence: drift });
   });
 });

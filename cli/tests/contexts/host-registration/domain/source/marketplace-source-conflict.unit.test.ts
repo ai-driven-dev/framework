@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   describePluginDiff,
+  judgeConflict,
   marketplaceSourceConflict,
   pluginSetDifference,
 } from "../../../../../src/contexts/host-registration/domain/source/marketplace-source-conflict.js";
@@ -156,5 +157,28 @@ describe("describePluginDiff, with several names on each side", () => {
     expect(describePluginDiff({ added: ["a", "b"], removed: ["c", "d"] })).toBe(
       "differ (+a, b, -c, d)"
     );
+  });
+});
+
+describe("judgeConflict", () => {
+  it("proceeds when no different catalog holds the name", () => {
+    expect(judgeConflict(undefined)).toStrictEqual({ outcome: "proceed" });
+  });
+
+  it("refuses a different catalog, carrying the conflict as its evidence", () => {
+    const conflict = {
+      name: "probe-mkt",
+      registeredSource: "/src/A",
+      requestedSource: "/src/B",
+      registeredIdentity: IDENTITY_A,
+      requestedIdentity: IDENTITY_B,
+      location: LOCATION,
+    };
+
+    expect(judgeConflict(conflict)).toStrictEqual({
+      outcome: "refuse",
+      reason: "different-catalog",
+      conflict,
+    });
   });
 });

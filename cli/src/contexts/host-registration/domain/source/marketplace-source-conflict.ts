@@ -64,6 +64,22 @@ export function marketplaceSourceConflict(
   };
 }
 
+/** Whether a registration may go on: proceed, or refuse with the conflict that stops it. */
+export type ConflictVerdict =
+  | { readonly outcome: "proceed" }
+  | {
+      readonly outcome: "refuse";
+      readonly reason: "different-catalog";
+      readonly conflict: MarketplaceSourceConflict;
+    };
+
+/** A different catalog under the registered name is refused, whatever its plugins. */
+export function judgeConflict(conflict: MarketplaceSourceConflict | undefined): ConflictVerdict {
+  return conflict === undefined
+    ? { outcome: "proceed" }
+    : { outcome: "refuse", reason: "different-catalog", conflict };
+}
+
 /** A catalog's identity is its declared name plus its plugin set: a version bump under the same
  * name and the same plugins is the host repointing to a newer build of the marketplace it
  * already knows, so the version is deliberately left out of this comparison. */

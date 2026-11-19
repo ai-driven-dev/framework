@@ -97,3 +97,23 @@ export function marketplaceSourceDrift(
   }
   return undefined;
 }
+
+/** The versions a skipped registration names: the host already follows `registeredVersion`, newer
+ * than the `requestedVersion` this run would write. */
+export interface NewerBuildFollowed {
+  readonly registeredVersion: string;
+  readonly requestedVersion: string;
+}
+
+/** Whether a registration may go on: proceed, or skip because the host follows a newer build. */
+export type DriftVerdict =
+  | { readonly outcome: "proceed"; readonly evidence: MarketplaceSourceDrift }
+  | { readonly outcome: "skip"; readonly reason: NewerBuildFollowed };
+
+/** A host already following a newer build is never written backward, so the registration is
+ * skipped; a pre-migration source is moved forward, so it proceeds. */
+export function judgeDrift(drift: MarketplaceSourceDrift): DriftVerdict {
+  if (drift.kind !== "version-behind") return { outcome: "proceed", evidence: drift };
+  const { registeredVersion, requestedVersion } = drift;
+  return { outcome: "skip", reason: { registeredVersion, requestedVersion } };
+}
