@@ -8,6 +8,9 @@ import type { ToolCatalog } from "../../src/contexts/tools/contract/tool-catalog
 import type { DepsFactory, MenuDepsFactory } from "../../src/presentation/deps.js";
 import { sandboxedEnv } from "../e2e/helpers.js";
 
+/** The subcommands under test never open the menu, so its terminal does nothing. */
+const NO_TERMINAL = { runner: { run: async () => 0 }, pause: { untilEnter: async () => {} } };
+
 /**
  * Drives the real Commander tree and the real `createDeps` inside the test process, under a
  * substituted environment (HOME, PATH, cwd) and nothing else. It never calls `process.chdir`,
@@ -189,7 +192,7 @@ export async function runInProcess(
     const depsFactory: DepsFactory = bindCatalog(tools);
     for (const load of REGISTRATIONS)
       (await load())(program, tools, depsFactory, (projectRoot) =>
-        createMenuDeps(projectRoot, tools)
+        createMenuDeps(projectRoot, tools, NO_TERMINAL)
       );
 
     try {

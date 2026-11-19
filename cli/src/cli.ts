@@ -17,6 +17,8 @@ import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
 import type { DepsFactory, MenuDepsFactory } from "./presentation/deps.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
+import { spawnCliCommand } from "./presentation/terminal/child-command.js";
+import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
 import { CurrentVersionAdapter } from "./shared/infrastructure/current-version-adapter.js";
 
 function formatVersion(version: string): string {
@@ -29,7 +31,9 @@ const tools = wireTools();
 
 // The composition edge: commands receive these factories and never import the wiring.
 const createDeps: DepsFactory = bindCatalog(tools);
-const createMenuDeps: MenuDepsFactory = (projectRoot) => createCatalogMenuDeps(projectRoot, tools);
+const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
+const createMenuDeps: MenuDepsFactory = (projectRoot) =>
+  createCatalogMenuDeps(projectRoot, tools, terminal);
 
 const program = new Command();
 
@@ -62,7 +66,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop(tools, createMenuDeps);
+  runMenuLoop(createMenuDeps);
 } else {
   program.parse(process.argv);
 }

@@ -528,15 +528,42 @@ describe("createDeps", () => {
     ).toHaveProperty("github.copilot.enable");
   });
 
-  it("tells the menu a project is not set up before any manifest exists", async () => {
-    expect(await createMenuDeps(root, catalogOf()).projectSetup.isSetUp()).toBe(false);
+  it("sends the menu to setup when no manifest exists", async () => {
+    const ran: string[][] = [];
+    const runner = {
+      run: async (argv: string[]) => {
+        ran.push(argv);
+        return 1;
+      },
+    };
+
+    const { menuLoop } = createMenuDeps(root, catalogOf(), {
+      runner,
+      pause: { untilEnter: async () => {} },
+    });
+
+    expect(await menuLoop.execute()).toBe(1);
+    expect(ran).toEqual([["setup"]]);
   });
 
-  it("tells the menu a project is set up once the manifest at the project root lists a tool", async () => {
+  it("offers the menu, not setup, once the manifest at the project root lists a tool", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await new ManifestRepositoryAdapter(root, (raw) => catalogOf().toolId(raw)).save(manifest);
+    const ran: string[][] = [];
+    const runner = {
+      run: async (argv: string[]) => {
+        ran.push(argv);
+        throw new Error("stop");
+      },
+    };
 
-    expect(await createMenuDeps(root, catalogOf()).projectSetup.isSetUp()).toBe(true);
+    const { menuLoop } = createMenuDeps(root, catalogOf(), {
+      runner,
+      pause: { untilEnter: async () => {} },
+    });
+
+    await expect(menuLoop.execute()).rejects.toThrow("stop");
+    expect(ran[0]).not.toEqual(["setup"]);
   });
 });

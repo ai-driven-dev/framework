@@ -46,7 +46,7 @@ function makeQueuedPrompter(
 
 describe("interactive menu", () => {
   describe("project without AIDD installed", () => {
-    it("prompts to run setup when no manifest exists and user confirms", async () => {
+    it("prompts to run setup when the project is not set up and the user confirms", async () => {
       const confirmMock = vi.fn().mockResolvedValue(true);
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
@@ -63,7 +63,7 @@ describe("interactive menu", () => {
       expect(confirmMock).toHaveBeenCalledWith("AIDD not initialized. Run setup now?", true);
     });
 
-    it("exits when no manifest exists and user declines setup", async () => {
+    it("exits when the project is not set up and the user declines setup", async () => {
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
         resolveConflictBulk: vi.fn(),

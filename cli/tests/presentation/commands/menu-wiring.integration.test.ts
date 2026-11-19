@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
+import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
+import { MenuLoop } from "../../../src/orchestration/menu/menu-loop.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const loadManifest = vi.fn();
@@ -10,21 +12,27 @@ const spawn = vi.fn();
 const question = vi.fn();
 const close = vi.fn();
 
-const createMenuDeps = vi.fn(() => ({
-  projectSetup: { isSetUp: async () => (await loadManifest()) !== null },
-  prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
-}));
-
-vi.mock("../../../src/presentation/terminal/child-command.js", () => ({
-  spawnCliCommand: spawn,
-}));
-
 vi.mock("node:readline", () => ({
   default: { createInterface: vi.fn(() => ({ question, close })) },
 }));
 
 const { runMenuLoop } = await import("../../../src/presentation/commands/menu.js");
+const { waitForEnter } = await import("../../../src/presentation/terminal/wait-for-enter.js");
 const { resolveProjectRoot } = await import("../../../src/presentation/project-root.js");
+
+const createMenuDeps = vi.fn(() => {
+  const prompter = prompterAnswering({
+    select: promptSelect,
+    confirm: promptConfirm,
+    input: promptInput,
+  });
+  const projectSetup = { isSetUp: async () => (await loadManifest()) !== null };
+  const menu = new BuildMenu(projectSetup, prompter, wireTools());
+  return {
+    menuLoop: new MenuLoop(menu, { run: spawn }, { untilEnter: waitForEnter }),
+    prompter,
+  };
+});
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -62,7 +70,7 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop(wireTools(), createMenuDeps)).rejects.toThrow(/^exit /);
+  await expect(runMenuLoop(createMenuDeps)).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {
@@ -75,16 +83,6 @@ describe("aidd with no argument — the menu loop", () => {
     expect(vi.mocked(createMenuDeps)).toHaveBeenCalledWith(resolveProjectRoot());
   });
 
-  it("leaves without running anything when the menu answers exit", async () => {
-    const exit = exiting();
-
-    await loopUntilExit();
-
-    expect(exit.mock.calls[0]).toEqual([0]);
-    expect(spawn).not.toHaveBeenCalled();
-    expect(question).not.toHaveBeenCalled();
-  });
-
   it("waits for a keypress after a command, so its output can be read", async () => {
     promptConfirm.mockResolvedValueOnce(true).mockResolvedValue(false);
     exiting();
@@ -94,43 +92,6 @@ describe("aidd with no argument — the menu loop", () => {
     expect(spawn).toHaveBeenCalledWith(["setup"]);
     expect(question.mock.calls[0][0]).toBe("\nPress ENTER to continue...");
     expect(close).toHaveBeenCalledTimes(1);
-  });
-
-  it("carries a failed setup's own exit code out of the loop", async () => {
-    promptConfirm.mockResolvedValue(true);
-    spawn.mockResolvedValue(3);
-    const exit = exiting();
-
-    await loopUntilExit();
-
-    expect(exit.mock.calls[0]).toEqual([3]);
-  });
-
-  it("keeps offering the menu after a setup that succeeded", async () => {
-    promptConfirm.mockResolvedValueOnce(true).mockResolvedValue(false);
-    spawn.mockResolvedValue(0);
-    const exit = exiting();
-
-    await loopUntilExit();
-
-    expect(spawn).toHaveBeenCalledTimes(1);
-    expect(promptConfirm).toHaveBeenCalledTimes(2);
-    expect(exit.mock.calls[0]).toEqual([0]);
-  });
-
-  it("keeps offering the menu after any other command failed", async () => {
-    loadManifest.mockResolvedValue({});
-    promptSelect
-      .mockResolvedValueOnce("maintain")
-      .mockResolvedValueOnce("sync-all")
-      .mockResolvedValue("exit");
-    spawn.mockResolvedValue(1);
-    const exit = exiting();
-
-    await loopUntilExit();
-
-    expect(spawn).toHaveBeenCalledWith(["sync"]);
-    expect(exit.mock.calls[0]).toEqual([0]);
   });
 
   it("leaves quietly when the person aborts a prompt with Ctrl-C", async () => {

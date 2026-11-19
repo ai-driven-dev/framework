@@ -1,6 +1,9 @@
 import { homedir } from "node:os";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import { BuildMenu } from "../orchestration/menu/build-menu.js";
+import { MenuLoop } from "../orchestration/menu/menu-loop.js";
+import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
 import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";
 import type { CLIOutput } from "../presentation/output.js";
 import {
@@ -23,13 +26,20 @@ import { wireUpdate } from "./update.js";
 /** One graph per catalog, then per project root and token: two catalogs never share a graph. */
 const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
 
-export function createMenuDeps(projectRoot: string, tools: ToolCatalog): MenuDeps {
-  return {
-    projectSetup: projectSetupOf(
-      new ManifestRepositoryAdapter(projectRoot, (raw) => tools.toolId(raw))
-    ),
-    prompter: process.stdout.isTTY ? new InquirerPrompterAdapter() : new SilentPrompterAdapter(),
-  };
+/** The menu loop and the prompter of a project, given the terminal the loop runs commands on. */
+export function createMenuDeps(
+  projectRoot: string,
+  tools: ToolCatalog,
+  terminal: { runner: CommandRunner; pause: Pause }
+): MenuDeps {
+  const prompter = process.stdout.isTTY
+    ? new InquirerPrompterAdapter()
+    : new SilentPrompterAdapter();
+  const projectSetup = projectSetupOf(
+    new ManifestRepositoryAdapter(projectRoot, (raw) => tools.toolId(raw))
+  );
+  const menu = new BuildMenu(projectSetup, prompter, tools);
+  return { menuLoop: new MenuLoop(menu, terminal.runner, terminal.pause), prompter };
 }
 
 /** The factory the commands receive: it binds the catalog the commands were registered with. */

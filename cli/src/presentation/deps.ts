@@ -16,7 +16,6 @@ import type { UserPluginRemoveOptions } from "../contexts/installation/applicati
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
-import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
@@ -55,6 +54,7 @@ import type { UpdateTools } from "../orchestration/global/update-tools.js";
 import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check-marketplace-upstream.js";
 import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remove-project-marketplace.js";
 import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user-marketplace.js";
+import type { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
@@ -167,7 +167,7 @@ export interface Deps {
 
 /** What the menu and the interactive prompts of a command group need, before any graph exists. */
 export interface MenuDeps {
-  projectSetup: ProjectSetupState;
+  menuLoop: Pick<MenuLoop, "execute">;
   prompter: Prompter;
 }
 
