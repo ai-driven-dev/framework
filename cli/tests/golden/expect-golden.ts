@@ -3,11 +3,19 @@ import { dirname } from "node:path";
 import { expect } from "vitest";
 
 /** Compare `actual` to the JSON stored at `file`, or rewrite the file when `UPDATE_GOLDEN=1`.
+ * `compare` runs against the stored value in place of the default equality.
  * Regeneration is refused in CI: a golden changes by a reviewed commit, never silently. */
-export async function expectGolden(
+export async function expectGolden<T = unknown>(
   file: string,
-  actual: unknown,
-  env: Record<string, string | undefined> = process.env
+  actual: T,
+  {
+    env = process.env,
+    compare = (stored) => expect(actual).toEqual(stored),
+  }: {
+    env?: Record<string, string | undefined>;
+    /** Replaces the whole-value comparison, for a golden whose failure needs a shorter report. */
+    compare?: (stored: T) => void;
+  } = {}
 ): Promise<void> {
   if (env.UPDATE_GOLDEN === "1") {
     if (env.CI) throw new Error(`UPDATE_GOLDEN is set in CI: refusing to rewrite ${file}`);
@@ -16,5 +24,5 @@ export async function expectGolden(
     return;
   }
 
-  expect(actual).toEqual(JSON.parse(await readFile(file, "utf-8")));
+  compare(JSON.parse(await readFile(file, "utf-8")) as T);
 }

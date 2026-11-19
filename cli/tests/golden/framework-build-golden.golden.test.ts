@@ -1,16 +1,17 @@
 /**
  * Keyed `<target>` or `<target>:flat` → { relative-path → SHA-256 }, so it holds on any
- * machine. Recapture with UPDATE_FRAMEWORK_GOLDEN=1; re-baselining a cell is deliberate.
+ * machine. Re-baselining a cell is deliberate.
  */
 
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { runCli } from "../e2e/helpers.js";
+import { expectGolden } from "./expect-golden.js";
 import { twoCaptures } from "./two-captures.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
@@ -133,33 +134,28 @@ describe.concurrent(`Framework build golden — ${CELL_COUNT}-cell matrix`, () =
   it(`every one of the ${CELL_COUNT} cells is byte-identical to its stored baseline`, async () => {
     const captured = await captures.first();
 
-    if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {
-      await mkdir(join(ROOT, "tests/golden/snapshots/framework-build"), { recursive: true });
-      await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-      console.log(`Framework build golden snapshot updated: ${SNAPSHOT_FILE}`);
-      return;
-    }
+    await expectGolden(SNAPSHOT_FILE, captured, {
+      compare: (stored) => {
+        const expectedCells = [...MARKETPLACE_TARGETS, ...FLAT_TARGETS.map((t) => `${t}:flat`)];
+        for (const key of expectedCells) {
+          expect(stored[key], `stored snapshot missing cell: ${key}`).toBeDefined();
+          expect(Object.keys(stored[key]).length, `cell ${key} must have files`).toBeGreaterThan(0);
+        }
 
-    const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
-
-    const expectedCells = [...MARKETPLACE_TARGETS, ...FLAT_TARGETS.map((t) => `${t}:flat`)];
-    for (const key of expectedCells) {
-      expect(stored[key], `stored snapshot missing cell: ${key}`).toBeDefined();
-      expect(Object.keys(stored[key]).length, `cell ${key} must have files`).toBeGreaterThan(0);
-    }
-
-    // Every mismatching cell at once, compared as sorted entries: key order follows the
-    // platform's directory listing, the fact under test is which files exist and hash to what.
-    const drifted = [...FROZEN_CELLS].filter(
-      (key) => canonical(captured[key] ?? {}) !== canonical(stored[key] ?? {})
-    );
-    const detail = drifted
-      .map((key) => `${key}: ${describeDrift(stored[key] ?? {}, captured[key] ?? {})}`)
-      .join("\n");
-    expect(drifted, `cells differing from their stored baseline\n${detail}`).toEqual([]);
-    for (const key of FROZEN_CELLS) {
-      expect(captured[key], `cell ${key}`).toStrictEqual(stored[key]);
-    }
+        // Every mismatching cell at once, compared as sorted entries: key order follows the
+        // platform's directory listing, the fact under test is which files exist and hash to what.
+        const drifted = [...FROZEN_CELLS].filter(
+          (key) => canonical(captured[key] ?? {}) !== canonical(stored[key] ?? {})
+        );
+        const detail = drifted
+          .map((key) => `${key}: ${describeDrift(stored[key] ?? {}, captured[key] ?? {})}`)
+          .join("\n");
+        expect(drifted, `cells differing from their stored baseline\n${detail}`).toEqual([]);
+        for (const key of FROZEN_CELLS) {
+          expect(captured[key], `cell ${key}`).toStrictEqual(stored[key]);
+        }
+      },
+    });
   }, 120_000);
 
   it("the stored baseline holds a cell for every tool the CLI builds for, and nothing else", () => {
