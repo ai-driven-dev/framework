@@ -77,11 +77,9 @@ function wholeProfileReaders(): string[] {
 }
 
 const TRANSLATE_HANDOFF =
-  "hands the profile to the plugin translation pipeline, which translate's engine reads in full; it narrows when translate declares its own profile input";
+  "hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input";
 const PRESENTATION_FILTER =
   "filters the catalog's whole profiles to the AI tools that activate at user scope with a type guard, then reads five members; presentation has no ports/ to name a section in";
-const OUTSIDE_WAVE =
-  "reads the profile for translation in full; not a reader the installation and host-registration narrowing reaches";
 
 /** Shrink-only: a file that stops naming the whole profile leaves the list. */
 const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
@@ -97,8 +95,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/restore-all-plugins.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/ports/plugin/plugin-translation.ts": TRANSLATE_HANDOFF,
-  "src/contexts/translate/application/translate-distribution.ts": OUTSIDE_WAVE,
-  "src/contexts/translate/domain/engine.ts": OUTSIDE_WAVE,
   "src/presentation/commands/setup.ts": PRESENTATION_FILTER,
 };
 

@@ -14,14 +14,13 @@ import type {
 } from "../../tools/contract/plugin-install-notice.js";
 import { rewritePluginRootToken } from "../../tools/contract/plugin-root-token.js";
 import type {
-  AiToolProfile,
   FlatPluginAnswers,
   MarkdownSectionAnswers,
   NativePluginAnswers,
   PluginAnswers,
   SkillsSectionAnswers,
-  ToolProfile,
 } from "../../tools/contract/tool-profile.js";
+import type { TranslatedAiTool, TranslateProfile } from "../ports/translate-profile.js";
 import { flatHooksBridgeFile } from "./flat-layout.js";
 import type { OutputFile } from "./output-file.js";
 
@@ -51,7 +50,7 @@ function pathBelowHooks(path: string): string {
  * the registered profiles. */
 export function translate(
   dist: PluginDistribution,
-  toolConfig: ToolProfile,
+  toolConfig: TranslateProfile,
   manifestPaths: readonly string[]
 ): OutputFile[] {
   return translateWithComponentPaths(dist, toolConfig, manifestPaths).files;
@@ -59,7 +58,7 @@ export function translate(
 
 export function translateWithComponentPaths(
   dist: PluginDistribution,
-  toolConfig: ToolProfile,
+  toolConfig: TranslateProfile,
   manifestPaths: readonly string[]
 ): {
   files: OutputFile[];
@@ -83,7 +82,7 @@ export function translateWithComponentPaths(
  * none for a tool that is not flat. */
 export function flatHookPaths(
   dist: PluginDistribution,
-  toolConfig: ToolProfile
+  toolConfig: TranslateProfile
 ): ReadonlySet<string> {
   const delivery = asPluginTool(toolConfig);
   if (delivery === null || delivery.plugins.kind !== "flat") return new Set();
@@ -92,7 +91,7 @@ export function flatHookPaths(
 
 function translateNativeWithPaths(
   dist: PluginDistribution,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   plugins: NativePluginAnswers,
   manifestPaths: readonly string[]
 ): {
@@ -110,7 +109,7 @@ function translateNativeWithPaths(
 
 function buildNativeFiles(
   dist: PluginDistribution,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   plugins: NativePluginAnswers,
   pluginRoot: string
 ): { files: OutputFile[]; componentPaths: ReadonlyMap<string, string> } {
@@ -156,7 +155,7 @@ function appendManifestFile(
 // before it runs, and only applies when this plugin actually ships one.
 function collectHooksTrustNotices(
   dist: PluginDistribution,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   plugins: NativePluginAnswers
 ): ReadonlyNoticeList {
   if (dist.components.hooks.length === 0) return [];
@@ -173,7 +172,7 @@ function collectHooksTrustNotices(
 
 function translateFile(
   file: PluginComponentFile,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   cap: NativePluginAnswers
 ): TranslatedFile | null {
   if (file.relativePath === ".mcp.json") {
@@ -198,7 +197,10 @@ function translateFile(
   return translateComponent(file, tool);
 }
 
-function translateComponent(file: PluginComponentFile, tool: AiToolProfile): TranslatedFile | null {
+function translateComponent(
+  file: PluginComponentFile,
+  tool: TranslatedAiTool
+): TranslatedFile | null {
   const top = file.relativePath.split("/")[0];
   if (top === "commands" || top === "agents" || top === "rules") {
     const cap = tool.markdownSection(top);
@@ -213,7 +215,7 @@ function translateComponent(file: PluginComponentFile, tool: AiToolProfile): Tra
 
 function translateFlat(
   dist: PluginDistribution,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   plugins: FlatPluginAnswers
 ): { files: OutputFile[]; skipped: ReadonlySkipList } {
   const { namespacePrefix: flatNamespacePrefix } = plugins.flatLayout();
@@ -270,7 +272,7 @@ function installedHooksBridge(
 
 function collectHooksSkips(
   dist: PluginDistribution,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   plugins: PluginAnswers
 ): ReadonlySkipList {
   if (dist.components.hooks.length === 0) return [];
@@ -288,7 +290,7 @@ function collectHooksSkips(
 function flatCommandFile(
   file: PluginComponentFile,
   pluginName: string,
-  tool: AiToolProfile,
+  tool: TranslatedAiTool,
   prefix: string
 ): OutputFile {
   const filename = basename(file.relativePath);
@@ -301,7 +303,7 @@ function flatSectionFile(
   file: PluginComponentFile,
   section: "agents" | "rules" | "skills",
   pluginName: string,
-  tool: AiToolProfile
+  tool: TranslatedAiTool
 ): OutputFile | null {
   const sectionDir = `${section}/`;
   const fileName = file.relativePath.slice(sectionDir.length);
@@ -335,14 +337,14 @@ function makeFile(relativePath: string, content: string): OutputFile {
 }
 
 function asPluginTool(
-  profile: ToolProfile
-): { tool: AiToolProfile; plugins: PluginAnswers } | null {
+  profile: TranslateProfile
+): { tool: TranslatedAiTool; plugins: PluginAnswers } | null {
   if (profile.kind !== "ai") return null;
   const plugins = profile.plugins();
   return plugins === null ? null : { tool: profile, plugins };
 }
 
-function sectionDeclared(tool: AiToolProfile, section: "agents" | "rules" | "skills"): boolean {
+function sectionDeclared(tool: TranslatedAiTool, section: "agents" | "rules" | "skills"): boolean {
   return section === "skills"
     ? tool.skillsSection() !== null
     : tool.markdownSection(section) !== null;

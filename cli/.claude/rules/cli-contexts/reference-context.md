@@ -103,7 +103,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `composition/container.ts` imports the per-context composition modules, where the target has nobody import `composition/` | `container.ts` stops composing them by import, and `createContainer(options)` replaces `createDeps` (module-level `WeakMap`) and `createMenuDeps` |
 | `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin | `distribution` joins `HELD_BY_BIOME` and its published types are the only thing outside reads |
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
-| readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation`, `translate/domain/engine.ts` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | `translate` declares its own profile input |
+| readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED`) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and `distribution` and the installation restore stop calling `Prompter` |
 | `shared/domain/errors.ts` exceeds the file-length cap | the messages that name a command move to the presentation error table |
 

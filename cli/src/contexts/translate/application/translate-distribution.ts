@@ -1,14 +1,14 @@
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import { flatHookPaths, translateWithComponentPaths } from "../domain/engine.js";
 import type { OutputFile } from "../domain/output-file.js";
 import type { DistributionProbe } from "../domain/plugin-format.js";
+import type { TranslateProfile } from "../ports/translate-profile.js";
 
 export interface TranslateDistributionCommand {
   readonly distribution: PluginDistribution;
-  readonly tool: ToolProfile;
+  readonly tool: TranslateProfile;
 }
 
 export interface TranslateDistributionResult {
