@@ -38,7 +38,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/helpers.ts`.
 - A message naming a command names a real one: `errors-that-instruct.arch.test.ts`.
 - An empty catch is a listed best effort with its reason, or a failure: `catches-that-swallow.arch.test.ts`.
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
-- `process.exit` stays at the command edge: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
+- `process.exit` stays in `presentation/exit.ts`: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
 - A directory holds ten direct source files at most: `folder-size.arch.test.ts`.
 - File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `code-size.arch.test.ts`.
 - A tolerated list only shrinks: `baseline-only-shrinks.arch.test.ts`.

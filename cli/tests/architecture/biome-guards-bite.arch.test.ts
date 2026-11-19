@@ -1,5 +1,5 @@
 /**
- * Three rules live in biome rather than here: `process.exit` below the command edge through the
+ * Three rules live in biome rather than here: `process.exit` outside the exit function through the
  * GritQL plugin, `export default` under src/ and tests/, and the `process` global in a context's
  * domain and application. A rule biome silently stops applying is invisible, so each is planted.
  */
@@ -36,8 +36,8 @@ describe("biome carries the exit and default-export rules", () => {
     expect(carrier?.includes, `no override applies ${PLUGIN}`).toEqual([
       "src/shared/**",
       "src/contexts/**",
-      "src/presentation/terminal/prompter-adapter.ts",
-      "src/presentation/project-root.ts",
+      "src/presentation/**",
+      "!src/presentation/exit.ts",
     ]);
   });
 
@@ -146,6 +146,7 @@ describe("the guard itself", () => {
       "src/contexts/installation/application",
       "src/contexts/installation/infrastructure",
       "src/contexts/tools/infrastructure",
+      "src/presentation/commands",
       "src/presentation/display",
       "src/presentation/terminal",
       "src/shared/ports",
@@ -202,6 +203,7 @@ describe("the guard itself", () => {
       "export const stop = (): never => process.exit(1);\n"
     );
     for (const file of [
+      "src/presentation/commands/exit.ts",
       "src/presentation/project-root.ts",
       "src/presentation/terminal/prompter-adapter.ts",
     ]) {
@@ -405,12 +407,13 @@ describe("the guard itself", () => {
     rmSync(planted, { recursive: true, force: true });
   });
 
-  it("flags process.exit under shared/, contexts/ and the two moved presentation files, and leaves the command edge alone", () => {
+  it("flags process.exit under shared/, contexts/ and presentation/, and leaves presentation's exit function alone", () => {
     const findings = biomeFindings(planted);
     expect(findings, findings.join(", ")).toContain("src/shared/domain/exit.ts:plugin");
     expect(
       findings.filter((f) => f.startsWith("src/presentation/") && f.endsWith(":plugin")).sort()
     ).toEqual([
+      "src/presentation/commands/exit.ts:plugin",
       "src/presentation/project-root.ts:plugin",
       "src/presentation/terminal/prompter-adapter.ts:plugin",
     ]);

@@ -4707,8 +4707,8 @@
       "includes": [
         "src/shared/**",
         "src/contexts/**",
-        "src/presentation/terminal/prompter-adapter.ts",
-        "src/presentation/project-root.ts"
+        "src/presentation/**",
+        "!src/presentation/exit.ts"
       ],
       "plugins": ["./biome-plugins/no-process-exit.grit"]
     },
