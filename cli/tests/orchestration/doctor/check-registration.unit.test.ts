@@ -364,3 +364,36 @@ describe("the tools whose built marketplaces are resolved", () => {
     expect(resolved).toStrictEqual([[TOOL.claude]]);
   });
 });
+
+describe("the hosts handed to the registry inspection", () => {
+  it("carry no marketplaces for a tool with no built marketplace", async () => {
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.claude, "test", []);
+    const inspected: unknown[] = [];
+    const check = new CheckRegistration(
+      new ListRegisteredPlugins(
+        new LoadManifest(new InMemoryManifestRepository(manifest)),
+        registrationRecordRules
+      ),
+      {
+        execute: async () => ({
+          registeredNames: [],
+          userCacheRoot: "/user-cache",
+          built: new Map(),
+        }),
+      },
+      new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false, catalogOf()),
+      {
+        execute: async ({ hosts }) => {
+          inspected.push(...hosts);
+          return { findings: [] };
+        },
+      },
+      catalogOf()
+    );
+
+    await check.execute({ projectRoot: PROJECT_ROOT, allowedIds: null, globalInstall: true });
+
+    expect(inspected).toStrictEqual([{ tool: TOOL.claude, expectedPlugins: [], marketplaces: [] }]);
+  });
+});
