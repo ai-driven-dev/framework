@@ -16,6 +16,7 @@
         "noReExportAll": "error"
       },
       "suspicious": {
+        "noExplicitAny": "error",
         "noImportCycles": "error",
         "noTsIgnore": "error"
       },

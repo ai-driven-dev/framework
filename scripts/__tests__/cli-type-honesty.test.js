@@ -23,11 +23,49 @@ function plant(dir, files) {
   }
 }
 
-function runOn(files) {
+const TSCONFIG = JSON.stringify({ include: ["src/**/*", "tests/**/*"] });
+
+/** Every fixture counts its one tolerated cast (`as unknown as` is two assertions), so a case only moves the counts it plants. */
+const ALLOWED_CAST_BASELINE = { "src/contexts/translate/application/build-native-tree.ts": 2 };
+
+/** A hook runs with GIT_DIR and GIT_INDEX_FILE set: left in, a fixture's git would act on the repository being committed. */
+const withoutGitEnv = () =>
+  Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
+
+const git = (dir, ...args) =>
+  spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], {
+    cwd: dir,
+    encoding: "utf8",
+    env: withoutGitEnv(),
+  });
+
+/**
+ * The tree is a git repository whose one commit is the base, holding `baseBaseline`
+ * (`null`: the base has no baseline file); the files planted after it are the change.
+ */
+function runOn(files, baseline = ALLOWED_CAST_BASELINE, baseBaseline = baseline) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-type-honesty-"));
   try {
-    plant(dir, { [ALLOWED_CAST_FILE]: A_CAST, "cli/tests/.keep.ts": "export const kept = 1;", ...files });
-    const result = spawnSync(process.execPath, [GUARD], { cwd: dir, encoding: "utf8" });
+    git(dir, "init", "-q");
+    plant(dir, {
+      "cli/tsconfig.json": TSCONFIG,
+      ...(baseBaseline === null
+        ? { "cli/.keep": "" }
+        : { "cli/type-assertions-baseline.json": JSON.stringify(baseBaseline) }),
+    });
+    git(dir, "add", "-A");
+    git(dir, "commit", "-q", "-m", "base");
+    plant(dir, {
+      [ALLOWED_CAST_FILE]: A_CAST,
+      "cli/tests/.keep.ts": "export const kept = 1;",
+      "cli/type-assertions-baseline.json": JSON.stringify(baseline),
+      ...files,
+    });
+    const result = spawnSync(process.execPath, [GUARD], {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...withoutGitEnv(), ARCH_BASE_REF: "HEAD" },
+    });
     return { status: result.status, output: `${result.stdout}${result.stderr}` };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -87,11 +125,14 @@ test("every spelling that turns text into a tool id is named, in src and in test
 });
 
 test("the profile definition and the catalog's own declarations may name a tool id", () => {
-  const legal = runOn({
-    "cli/src/contexts/tools/domain/profile/define-tool.ts": "const id = raw as AiToolId;",
-    "cli/src/contexts/tools/contract/tool-catalog.ts": "isAiTool(id: ToolId): id is AiToolId;",
-    "cli/src/contexts/tools/application/registered-tool-catalog.ts": "isIdeTool(id: ToolId): id is IdeToolId;",
-  });
+  const legal = runOn(
+    {
+      "cli/src/contexts/tools/domain/profile/define-tool.ts": "const id = raw as AiToolId;",
+      "cli/src/contexts/tools/contract/tool-catalog.ts": "isAiTool(id: ToolId): id is AiToolId;",
+      "cli/src/contexts/tools/application/registered-tool-catalog.ts": "isIdeTool(id: ToolId): id is IdeToolId;",
+    },
+    { ...ALLOWED_CAST_BASELINE, "src/contexts/tools/domain/profile/define-tool.ts": 1 }
+  );
   assert.equal(legal.status, 0, legal.output);
 });
 
@@ -105,4 +146,83 @@ test("a renaming import or export is no cast, and a real cast after one still is
   assert.equal(renamed.status, 0, renamed.output);
   assert.equal(castAfter.status, 1);
   assert.match(castAfter.output, /cli\/src\/widened\.ts casts text/);
+});
+
+test("a type assertion above its file's baseline is named by file and line, in src and in tests", () => {
+  const breach = runOn({
+    "cli/src/widened.ts": "export const a = 1;\nexport const x = [] as string[];",
+    "cli/tests/silenced.ts": "export const y = <string[]>[];",
+  });
+
+  assert.equal(breach.status, 1);
+  assert.match(breach.output, /cli\/src\/widened\.ts has 1 type assertions, baseline 0: cli\/src\/widened\.ts:2/);
+  assert.match(breach.output, /cli\/tests\/silenced\.ts:1/);
+});
+
+test("a file that keeps its baseline passes, and one that shrinks below it is asked to lower it", () => {
+  const held = runOn({ "cli/src/honest.ts": "export const x = [] as string[];" }, {
+    ...ALLOWED_CAST_BASELINE,
+    "src/honest.ts": 1,
+  });
+  const shrunk = runOn({ "cli/src/honest.ts": "export const x: string[] = [];" }, {
+    ...ALLOWED_CAST_BASELINE,
+    "src/honest.ts": 1,
+  });
+
+  assert.equal(held.status, 0, held.output);
+  assert.equal(shrunk.status, 1);
+  assert.match(shrunk.output, /cli\/src\/honest\.ts has 0 type assertions, baseline 1: lower it in cli\/type-assertions-baseline\.json/);
+});
+
+test("as const and satisfies assert nothing and are not counted", () => {
+  const clean = runOn({
+    "cli/src/honest.ts": 'export const a = ["x"] as const;\nexport const b = { k: 1 } satisfies Record<string, number>;',
+  });
+
+  assert.equal(clean.status, 0, clean.output);
+});
+
+test("a cast and a raised baseline in one change fail against the base's baseline", () => {
+  const raised = { ...ALLOWED_CAST_BASELINE, "src/honest.ts": 1 };
+  const breach = runOn({ "cli/src/honest.ts": "export const x = [] as string[];" }, raised, ALLOWED_CAST_BASELINE);
+
+  assert.equal(breach.status, 1);
+  assert.match(breach.output, /src\/honest\.ts holds 1 at the head and 0 at the base: a baseline only goes down/);
+});
+
+test("a baseline raised on a file the base already counts fails, and a lowered one passes", () => {
+  const atBase = { ...ALLOWED_CAST_BASELINE, "src/honest.ts": 2 };
+  const raised = runOn(
+    { "cli/src/honest.ts": "export const x = [[]] as string[][] as string[][];" },
+    { ...ALLOWED_CAST_BASELINE, "src/honest.ts": 3 },
+    atBase
+  );
+  const lowered = runOn({ "cli/src/honest.ts": "export const x = [] as string[];" }, { ...ALLOWED_CAST_BASELINE, "src/honest.ts": 1 }, atBase);
+
+  assert.equal(raised.status, 1);
+  assert.match(raised.output, /src\/honest\.ts holds 3 at the head and 2 at the base/);
+  assert.equal(lowered.status, 0, lowered.output);
+});
+
+test("a change that adds the baseline file is not compared with a base that lacks it", () => {
+  const added = runOn({}, ALLOWED_CAST_BASELINE, null);
+
+  assert.equal(added.status, 0, added.output);
+});
+
+test("a base git cannot give fails, since a ratchet that skips is not one", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-type-honesty-"));
+  try {
+    plant(dir, {
+      "cli/tsconfig.json": TSCONFIG,
+      [ALLOWED_CAST_FILE]: A_CAST,
+      "cli/tests/.keep.ts": "export const kept = 1;",
+      "cli/type-assertions-baseline.json": "{}",
+    });
+    const result = spawnSync(process.execPath, [GUARD], { cwd: dir, encoding: "utf8", env: withoutGitEnv() });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /no merge-base with/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

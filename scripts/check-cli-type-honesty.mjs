@@ -4,12 +4,16 @@
 // Dependency direction belongs to biome, whose per-layer `noRestrictedImports` overrides
 // match the resolved path — a hand-picked prefix here goes stale the moment a layer moves.
 
+import { execFileSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const CLI = path.join(process.cwd(), "cli");
 const SRC = path.join(CLI, "src");
 const TESTS = path.join(CLI, "tests");
+const ASSERTIONS_BASELINE = path.join(CLI, "type-assertions-baseline.json");
 
 /**
  * `\bas` keeps prose out - "was never" has no word boundary before its "as". `any` needs the
@@ -76,6 +80,110 @@ const CASTS_ALLOWED = new Map([
   ],
 ]);
 
+/**
+ * Type assertions (`x as T`, `<T>x`) are counted per file against a baseline that only shrinks:
+ * `satisfies` checks instead of asserting, and `as const` asserts nothing wider than the value.
+ * The parser is the TypeScript compiler's own, reached through the cli's installed package.
+ */
+const cliRequire = createRequire(new URL("../cli/package.json", import.meta.url));
+const importFromCli = (specifier) => import(pathToFileURL(cliRequire.resolve(specifier)).href);
+
+async function countTypeAssertions() {
+  const { API } = await importFromCli("typescript/unstable/sync");
+  const { isAsExpression, isTypeAssertion, isTypeReferenceNode, isIdentifier } =
+    await importFromCli("typescript/unstable/ast/is");
+  const isConst = (type) =>
+    isTypeReferenceNode(type) && isIdentifier(type.typeName) && type.typeName.text === "const";
+  const api = new API({ cwd: CLI });
+  try {
+    const project = api
+      .updateSnapshot({ openProject: path.join(CLI, "tsconfig.json") })
+      .getProjects()[0];
+    const found = new Map();
+    for (const name of project.program.getSourceFileNames()) {
+      const cliPath = relative(CLI, name);
+      if (!/^(?:src|tests)\/.+\.ts$/.test(cliPath)) continue;
+      const sourceFile = project.program.getSourceFile(name);
+      const lines = [];
+      const visit = (node) => {
+        if ((isAsExpression(node) || isTypeAssertion(node)) && !isConst(node.type)) {
+          lines.push(sourceFile.text.slice(0, node.type.pos).split("\n").length);
+        }
+        node.forEachChild(visit);
+      };
+      sourceFile.forEachChild(visit);
+      if (lines.length > 0) found.set(cliPath, lines);
+    }
+    return found;
+  } finally {
+    api.close();
+  }
+}
+
+async function readAssertionsBaseline() {
+  try {
+    return JSON.parse(await readFile(ASSERTIONS_BASELINE, "utf-8"));
+  } catch (err) {
+    if (err.code === "ENOENT") return {};
+    throw err;
+  }
+}
+
+/**
+ * The baseline at the merge-base with `ARCH_BASE_REF`, else with `origin/` and the branch a pull
+ * request targets, else with `origin/next`, as `baseline-only-shrinks` resolves it. A change that
+ * adds the file meets a base without it and is not compared. A base git cannot give fails: a
+ * ratchet that skips is not one.
+ */
+function readBaseBaseline(breaches) {
+  const ref = process.env.ARCH_BASE_REF || `origin/${process.env.GITHUB_BASE_REF || "next"}`;
+  const git = (...args) => execFileSync("git", args, { encoding: "utf-8", stdio: "pipe" }).trim();
+  let base;
+  try {
+    base = git("merge-base", "HEAD", ref);
+  } catch {
+    breaches.push(
+      `  no merge-base with ${ref}: run \`git fetch origin\` or name another ref in ARCH_BASE_REF`
+    );
+    return null;
+  }
+  try {
+    return JSON.parse(git("show", `${base}:cli/type-assertions-baseline.json`));
+  } catch {
+    return null;
+  }
+}
+
+function baselineRises(baseline, base) {
+  return Object.keys(baseline)
+    .sort()
+    .filter((cliPath) => baseline[cliPath] > (base[cliPath] ?? 0))
+    .map(
+      (cliPath) =>
+        `  cli/${cliPath} holds ${baseline[cliPath]} at the head and ${base[cliPath] ?? 0} at the base: a baseline only goes down`
+    );
+}
+
+function assertionBreaches(found, baseline) {
+  const breaches = [];
+  for (const cliPath of [...new Set([...found.keys(), ...Object.keys(baseline)])].sort()) {
+    const lines = found.get(cliPath) ?? [];
+    const allowed = baseline[cliPath] ?? 0;
+    if (lines.length > allowed) {
+      breaches.push(
+        `  cli/${cliPath} has ${lines.length} type assertions, baseline ${allowed}: ` +
+          `${lines.map((line) => `cli/${cliPath}:${line}`).join(", ")} - parse, narrow or build the value instead`
+      );
+    } else if (lines.length < allowed) {
+      breaches.push(
+        `  cli/${cliPath} has ${lines.length} type assertions, baseline ${allowed}: ` +
+          "lower it in cli/type-assertions-baseline.json"
+      );
+    }
+  }
+  return breaches;
+}
+
 async function typescriptFilesUnder(dir) {
   const found = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -133,6 +241,11 @@ for (const cliPath of CASTS_ALLOWED.keys()) {
   }
 }
 
+const assertionsBaseline = await readAssertionsBaseline();
+const baseBaseline = readBaseBaseline(breaches);
+if (baseBaseline !== null) breaches.push(...baselineRises(assertionsBaseline, baseBaseline));
+breaches.push(...assertionBreaches(await countTypeAssertions(), assertionsBaseline));
+
 if (breaches.length > 0) {
   console.error(`cli type-honesty breaches:\n${breaches.join("\n")}`);
   console.error("Contract: cli/.claude/rules/01-standards/1-type-honesty.md");
@@ -140,5 +253,5 @@ if (breaches.length > 0) {
 }
 
 console.log(
-  "No type is widened through unknown, any or never, and no directive silences the compiler outside a test proving something does not compile."
+  "No type is widened through unknown, any or never, no directive silences the compiler outside a test proving something does not compile, and no file holds more type assertions than its baseline."
 );

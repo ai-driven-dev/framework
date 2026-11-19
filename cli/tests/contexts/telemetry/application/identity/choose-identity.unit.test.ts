@@ -60,8 +60,12 @@ describe("ChooseIdentity", () => {
     select.mockImplementation(async (_message, choices: { value: unknown }[]) => choices[0]?.value);
     expect(await choose.execute(ASK)).toEqual({ set: "Ada Example" });
     expect(propose).toHaveBeenCalledWith({ cwd: "/repo" });
-    const choices = select.mock.calls[0]?.[1] as { name: string; value: unknown }[];
-    expect(choices.map((c) => c.value)).toEqual([{ set: "Ada Example" }, "another", "none"]);
+    const choices = select.mock.calls[0]?.[1];
+    expect(choices.map((c: { value: unknown }) => c.value)).toEqual([
+      { set: "Ada Example" },
+      "another",
+      "none",
+    ]);
     expect(choices[0]?.name).toContain("Ada Example");
   });
 
@@ -69,8 +73,8 @@ describe("ChooseIdentity", () => {
     const { choose, select } = chooser(UNSET, null);
     select.mockResolvedValue("none");
     expect(await choose.execute(ASK)).toBe("none");
-    const choices = select.mock.calls[0]?.[1] as { value: unknown }[];
-    expect(choices.map((c) => c.value)).toEqual(["another", "none"]);
+    const choices = select.mock.calls[0]?.[1];
+    expect(choices.map((c: { value: unknown }) => c.value)).toEqual(["another", "none"]);
   });
 
   it("asks again, saying so each time, until the identifier typed can be kept", async () => {

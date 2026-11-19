@@ -179,7 +179,7 @@ pre-commit:
     cli-type-honesty:
       # Type honesty only; dependency direction between layers belongs to biome
       # (cli/biome.json's noRestrictedImports overrides), not here.
-      glob: "{cli/src/**,cli/tests/**}"
+      glob: "{cli/src/**,cli/tests/**,cli/type-assertions-baseline.json}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping cli-type-honesty'
