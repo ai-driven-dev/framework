@@ -43,7 +43,7 @@ export interface GithubAddedPluginSource extends ToolsByTranslation {
   readonly version: string | undefined;
 }
 
-export type AddedPluginSource = LocalAddedPluginSource | GithubAddedPluginSource;
+export type ResolveAddedPluginSourceResult = LocalAddedPluginSource | GithubAddedPluginSource;
 
 /** Answers where an added plugin comes from: its marketplace, which tools take its files flat,
  * and, when the add needs them, its distribution and version. */
@@ -55,7 +55,7 @@ export class ResolveAddedPluginSource {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(command: ResolveAddedPluginSourceCommand): Promise<AddedPluginSource> {
+  async execute(command: ResolveAddedPluginSourceCommand): Promise<ResolveAddedPluginSourceResult> {
     const { source, projectRoot, toolIds, githubMarketplace, catalog } = command;
     if (!githubMarketplace) {
       return { isGithubMarketplace: false, distribution: await this.read(source, projectRoot) };

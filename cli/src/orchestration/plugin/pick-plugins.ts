@@ -18,20 +18,20 @@ import {
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
-export interface PluginPickOptions {
+export interface PickPluginsCommand {
   toolIds: AiToolId[] | "all";
   projectRoot: string;
   interactive: boolean;
 }
 
-export interface PluginPickResult {
+export interface PickPluginsResult {
   marketplace: MarketplaceView;
   installed: readonly string[];
 }
 
 /** Picking a plugin interactively, as its callers need it: ask, get a choice back. */
 export interface PluginPick {
-  execute(options: PluginPickOptions): Promise<PluginPickResult>;
+  execute(options: PickPluginsCommand): Promise<PickPluginsResult>;
 }
 
 export class PickPlugins implements PluginPick {
@@ -42,7 +42,7 @@ export class PickPlugins implements PluginPick {
     private readonly prompter: Prompter
   ) {}
 
-  async execute(options: PluginPickOptions): Promise<PluginPickResult> {
+  async execute(options: PickPluginsCommand): Promise<PickPluginsResult> {
     if (!options.interactive) throw new InteractiveOnlyError("plugin install");
     const { marketplaces } = await this.listMarketplaces.execute({
       projectRoot: options.projectRoot,
@@ -86,8 +86,8 @@ export class PickPlugins implements PluginPick {
   private async installSelected(
     marketplace: MarketplaceView,
     entries: readonly PluginCatalogEntry[],
-    options: PluginPickOptions
-  ): Promise<PluginPickResult> {
+    options: PickPluginsCommand
+  ): Promise<PickPluginsResult> {
     const installed: string[] = [];
     for (const entry of entries) {
       await this.pluginAddUseCase.execute({

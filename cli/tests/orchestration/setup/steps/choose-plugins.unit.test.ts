@@ -13,9 +13,9 @@ import type {
   PluginInstallFromMarketplaceResult,
 } from "../../../../src/orchestration/plugin/install-from-marketplace.js";
 import type {
+  PickPluginsCommand,
+  PickPluginsResult,
   PluginPick,
-  PluginPickOptions,
-  PluginPickResult,
 } from "../../../../src/orchestration/plugin/pick-plugins.js";
 import { ChoosePlugins } from "../../../../src/orchestration/setup/steps/choose-plugins.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -42,11 +42,11 @@ function entry(name: string, recommended: boolean): PluginCatalogEntry {
 }
 
 class RecordingPluginPick implements PluginPick {
-  readonly calls: PluginPickOptions[] = [];
+  readonly calls: PickPluginsCommand[] = [];
 
   constructor(private readonly installed: readonly string[]) {}
 
-  async execute(options: PluginPickOptions): Promise<PluginPickResult> {
+  async execute(options: PickPluginsCommand): Promise<PickPluginsResult> {
     this.calls.push(options);
     return { marketplace: marketplace("local"), installed: this.installed };
   }

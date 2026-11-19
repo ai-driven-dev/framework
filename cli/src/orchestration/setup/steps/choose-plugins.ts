@@ -4,7 +4,7 @@ import type { PluginCatalogEntry } from "../../../contexts/distribution/contract
 import type { PluginInstallFromMarketplace } from "../../plugin/install-from-marketplace.js";
 import type { PluginPick } from "../../plugin/pick-plugins.js";
 import type { PluginInstallMode } from "../setup-flow.js";
-export interface ChoosePluginsOptions {
+export interface ChoosePluginsCommand {
   projectRoot: string;
   mode: PluginInstallMode;
   pluginNames: readonly string[];
@@ -23,13 +23,13 @@ export class ChoosePlugins {
     private readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">
   ) {}
 
-  async execute(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
+  async execute(options: ChoosePluginsCommand): Promise<ChoosePluginsResult> {
     if (options.mode === "none") return { installed: [] };
     if (options.mode === "interactive") return this.runInteractive(options);
     return this.runScripted(options);
   }
 
-  private async runInteractive(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
+  private async runInteractive(options: ChoosePluginsCommand): Promise<ChoosePluginsResult> {
     if (!options.interactive) return { installed: [] };
     const result = await this.pickPlugins.execute({
       toolIds: "all",
@@ -39,7 +39,7 @@ export class ChoosePlugins {
     return { installed: result.installed };
   }
 
-  private async runScripted(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
+  private async runScripted(options: ChoosePluginsCommand): Promise<ChoosePluginsResult> {
     const names = await this.resolveScriptedNames(options);
     const installed: string[] = [];
     for (const name of names) {
@@ -56,7 +56,7 @@ export class ChoosePlugins {
     return { installed };
   }
 
-  private async resolveScriptedNames(options: ChoosePluginsOptions): Promise<readonly string[]> {
+  private async resolveScriptedNames(options: ChoosePluginsCommand): Promise<readonly string[]> {
     if (options.mode === "named") return options.pluginNames;
     const entries = await this.loadCatalogEntries(options.projectRoot);
     if (options.mode === "recommended")

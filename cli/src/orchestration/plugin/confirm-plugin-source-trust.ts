@@ -6,6 +6,8 @@ import { TrustDeniedError } from "../../shared/domain/errors.js";
 import { describePluginSource } from "../../shared/domain/source.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
+export type ConfirmPluginSourceTrustCommand = TrustPluginSourceCommand;
+
 /** Trusts a plugin source for a project, asking the person when distribution cannot tell. */
 export class ConfirmPluginSourceTrust {
   constructor(
@@ -13,7 +15,7 @@ export class ConfirmPluginSourceTrust {
     private readonly prompter: Prompter
   ) {}
 
-  async execute(command: TrustPluginSourceCommand): Promise<void> {
+  async execute(command: ConfirmPluginSourceTrustCommand): Promise<void> {
     if ((await this.check.execute(command)) === "trusted") return;
     const label = describePluginSource(command.source);
     const confirmed = await this.prompter.confirm(`Trust plugin source '${label}'?`);
