@@ -24,7 +24,7 @@ import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
 import type { NativeHostTool } from "../ports/host-tool.js";
-import { bestEffortNativeCall } from "./best-effort-native-call.js";
+import { bestEffortNativeCall } from "./confirmation.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
@@ -615,13 +615,20 @@ export class WithdrawFromHost {
           return false;
         }
       }
-      return bestEffortNativeCall(
-        this.logger,
+      return this.callHost(
         () => activator.removeMarketplace(hostName, scope),
         `${binary} marketplace remove '${hostName}'`
       );
     };
     return facts.exclusive(remove);
+  }
+
+  private callHost(action: () => void, label: string): boolean {
+    return bestEffortNativeCall(
+      action,
+      (reason) => `${label} failed: ${reason}`,
+      (warning) => this.logger.warn(warning)
+    ).confirmed;
   }
 
   /** Refuses, before any change, a user clean whose host CLI cannot be reached: nothing is
@@ -725,8 +732,7 @@ export class WithdrawFromHost {
       const activator = this.reachableUserActivator(withdrawal, registrations);
       const { binary, marketplaces } = registrations;
       for (const ref of withdrawal.claimedRefs) {
-        const uninstalled = bestEffortNativeCall(
-          this.logger,
+        const uninstalled = this.callHost(
           () => activator.uninstallPlugin(ref, "user"),
           `${binary} plugin uninstall '${ref}'`
         );
@@ -737,8 +743,7 @@ export class WithdrawFromHost {
       }
       const removedHostNames = new Set<string>();
       for (const { hostName } of marketplaces) {
-        const unregistered = bestEffortNativeCall(
-          this.logger,
+        const unregistered = this.callHost(
           () => activator.removeMarketplace(hostName, "user"),
           `${binary} marketplace remove '${hostName}'`
         );

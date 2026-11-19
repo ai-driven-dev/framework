@@ -34,6 +34,7 @@ import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { ActivatedTool, CatalogProbeTool, NativeHostTool } from "../ports/host-tool.js";
+import { bestEffortNativeCall } from "./confirmation.js";
 import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
 import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
 import {
@@ -140,6 +141,9 @@ interface HostRegistries {
   readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
 }
 
+const skipped = (label: string) => (reason: string) =>
+  `Native plugin activation — ${label} skipped: ${reason}`;
+
 export class RegisterPluginWithHost {
   constructor(
     private readonly fs: FileReader,
@@ -226,6 +230,7 @@ export class RegisterPluginWithHost {
           buildFailed,
         },
       };
+    const warn = (message: string): void => this.warn(run, message);
     const stillProven: RegisteredMarketplace[] = [];
     for (const registration of ownMarketplaces) {
       const fresh = catalogClaims.find((claim) => claim.hostName === registration.hostName);
@@ -239,10 +244,10 @@ export class RegisterPluginWithHost {
         continue;
       stillProven.push(registration);
       if (!addedHostNames.has(registration.hostName))
-        this.bestEffort(
-          run,
+        bestEffortNativeCall(
           () => activator.upgradeMarketplaces(registration.hostName),
-          `upgrade marketplace '${registration.hostName}'`
+          skipped(`upgrade marketplace '${registration.hostName}'`),
+          warn
         );
     }
     const hostNameByAlias = new Map(stillProven.map((m) => [m.alias, m.hostName]));
@@ -253,7 +258,11 @@ export class RegisterPluginWithHost {
     const enabledRefs = [...alreadyOwnedRefs];
     for (const ref of refsToEnable) {
       if (
-        this.bestEffort(run, () => activator.enablePlugin(ref, scope), `enable plugin '${ref}'`)
+        bestEffortNativeCall(
+          () => activator.enablePlugin(ref, scope),
+          skipped(`enable plugin '${ref}'`),
+          warn
+        ).confirmed
       ) {
         enabledRefs.push(ref);
       }
@@ -268,19 +277,6 @@ export class RegisterPluginWithHost {
         buildFailed,
       },
     };
-  }
-
-  private bestEffort(run: Run, action: () => void, label: string): boolean {
-    try {
-      action();
-      return true;
-    } catch (error) {
-      if (!(error instanceof NativePluginCliError)) throw error;
-      const message = `Native plugin activation — ${label} skipped: ${error.message}`;
-      run.logger.warn(message);
-      run.warnings.push(message);
-      return false;
-    }
   }
 
   private warn(run: Run, message: string): void {
@@ -571,6 +567,7 @@ export class RegisterPluginWithHost {
     addError: NativePluginCliError
   ): Promise<boolean> {
     const { toolId, activator, projectRoot } = run;
+    const warn = (message: string): void => this.warn(run, message);
     const proof = await this.nativeCatalogProof(run, hostName);
     if (
       !proof.canonical ||
@@ -635,17 +632,17 @@ export class RegisterPluginWithHost {
       `Marketplace '${hostName}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`
     );
     if (
-      !this.bestEffort(
-        run,
+      !bestEffortNativeCall(
         () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
-        `unregister stale marketplace '${hostName}'`
-      )
+        skipped(`unregister stale marketplace '${hostName}'`),
+        warn
+      ).confirmed
     )
       return false;
-    return this.bestEffort(
-      run,
+    return bestEffortNativeCall(
       () => activator.addMarketplace(builtDir, marketplace.scope),
-      `register marketplace '${hostName}'`
-    );
+      skipped(`register marketplace '${hostName}'`),
+      warn
+    ).confirmed;
   }
 }
