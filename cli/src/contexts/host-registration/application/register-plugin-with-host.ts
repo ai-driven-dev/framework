@@ -10,6 +10,7 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
@@ -365,7 +366,7 @@ export class RegisterPluginWithHost {
     ]);
     const foreignRef = [...reading.refs].find(
       ([ref, entry]) =>
-        profile.hostRefInUse(entry.enabled) && ref.endsWith(`@${hostName}`) && !claimed.has(ref)
+        profile.hostRefInUse(entry.enabled) && isRefOnHost(ref, hostName) && !claimed.has(ref)
     )?.[0];
     return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
   }

@@ -1,5 +1,9 @@
 import { homedir } from "node:os";
 import {
+  refOnAnyHost,
+  refOnHostName,
+} from "../contexts/host-registration/domain/record/host-ref.js";
+import {
   afterActivation,
   claimsOnMarketplace,
   isQualifiedRef,
@@ -7,8 +11,6 @@ import {
   mergeCatalogueClaims,
   pluginRefsOf,
   refOf,
-  refOnAnyHost,
-  refOnHostName,
   refSelectedBy,
   refsOnHosts,
   registrationPreview,

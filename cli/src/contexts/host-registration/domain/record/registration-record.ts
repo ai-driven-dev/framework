@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { CATALOGUE_SEPARATOR, isRefOnHost, refOnAnyHost, refOnHostName } from "./host-ref.js";
 import {
   type NativeMarketplaceRegistration,
   readMarketplaceRegistration,
@@ -65,16 +66,6 @@ interface MergedClaims {
     readonly pluginClaims: readonly DependentClaim[];
   };
   readonly changed: boolean;
-}
-
-const CATALOGUE_SEPARATOR = "@";
-
-const refOnHost = (ref: string, hostName: string): boolean =>
-  ref.endsWith(`${CATALOGUE_SEPARATOR}${hostName}`);
-
-/** Whether a ref sits on one of the host names. */
-export function refOnAnyHost(ref: string, hostNames: Iterable<string>): boolean {
-  return [...hostNames].some((hostName) => refOnHost(ref, hostName));
 }
 
 /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
@@ -159,12 +150,8 @@ export function claimsOnMarketplace<Claim extends RecordedClaim>(
 ): readonly Claim[] {
   const hostName = hostNameOf(record, alias);
   if (hostName === undefined) return [];
-  return (record.pluginClaims ?? []).filter((claim) => refOnHost(claim.ref, hostName));
+  return (record.pluginClaims ?? []).filter((claim) => isRefOnHost(claim.ref, hostName));
 }
-
-/** The ref a plugin has on a host catalogue, which the host knows by its own name. */
-export const refOnHostName = (plugin: string, hostName: string): string =>
-  `${plugin}${CATALOGUE_SEPARATOR}${hostName}`;
 
 /**
  * The ref a plugin has on the host, `undefined` when nothing was recorded for the alias.
@@ -201,7 +188,7 @@ export function withoutMarketplace<R extends ClaimedRegistrationRecord>(
   alias: string
 ): WithClaims<R> {
   const hostName = hostNameOf(record, alias);
-  const offHost = (ref: string): boolean => hostName === undefined || !refOnHost(ref, hostName);
+  const offHost = (ref: string): boolean => hostName === undefined || !isRefOnHost(ref, hostName);
   return {
     ...record,
     marketplaces: recordedMarketplaces(record).filter((entry) => entry.alias !== alias),

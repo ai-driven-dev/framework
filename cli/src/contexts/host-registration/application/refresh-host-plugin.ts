@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
 import {
   type RegistrationRecordData,
   readRegistrationRecord,
@@ -51,7 +52,7 @@ export class RefreshHostPlugin {
       );
     }
     const registration = readRegistrationRecord(registrations)?.marketplaces.find((marketplace) =>
-      ref.endsWith(`@${marketplace.hostName}`)
+      isRefOnHost(ref, marketplace.hostName)
     );
     if (registration === undefined)
       throw new Error(

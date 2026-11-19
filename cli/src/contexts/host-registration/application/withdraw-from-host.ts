@@ -12,6 +12,7 @@ import {
   type PurgeVerdict,
 } from "../domain/policy/cache-purge-policy.js";
 import type { HostPluginRegistryReading } from "../domain/reading/plugin-registry-reading.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
 import {
   type DependentClaim,
   type RegistrationRecord,
@@ -298,7 +299,7 @@ export class WithdrawFromHost {
         `Cannot prove native ref '${claim.ref}' is still enabled on ${registrations.binary}; no host mutation made.`
       );
     const catalogues = registrations.marketplaces.filter((registration) =>
-      claim.ref.endsWith(`@${registration.hostName}`)
+      isRefOnHost(claim.ref, registration.hostName)
     );
     if (catalogues.length !== 1) {
       throw new Error(
@@ -513,7 +514,7 @@ export class WithdrawFromHost {
         (registration) => registration.alias === facts.sharedSource?.alias
       )?.hostName;
       const otherProjects =
-        sharedHostName !== undefined && ref.endsWith(`@${sharedHostName}`)
+        sharedHostName !== undefined && isRefOnHost(ref, sharedHostName)
           ? (facts.sharedSource?.otherProjects ?? [])
           : [];
       this.logger.warn(
@@ -522,7 +523,7 @@ export class WithdrawFromHost {
       return;
     }
     const sourceRegistration = registrations.marketplaces.find((registration) =>
-      ref.endsWith(`@${registration.hostName}`)
+      isRefOnHost(ref, registration.hostName)
     );
     if (sourceRegistration === undefined) {
       this.logger.warn(`${binary}: '${ref}' has no recorded host catalogue — left enabled.`);
@@ -605,7 +606,7 @@ export class WithdrawFromHost {
           );
           return false;
         }
-        const claims = (machine ?? []).filter((claim) => claim.ref.endsWith(`@${hostName}`));
+        const claims = (machine ?? []).filter((claim) => isRefOnHost(claim.ref, hostName));
         if (claims.length > 0) {
           const others = [
             ...new Set(
@@ -679,7 +680,7 @@ export class WithdrawFromHost {
         [...hostNames].map((hostName) => [hostName, new Set<string>()])
       );
       for (const ref of new Set([...registrations.pluginRefs, ...claimRefs])) {
-        const matches = [...hostNames].filter((hostName) => ref.endsWith(`@${hostName}`));
+        const matches = [...hostNames].filter((hostName) => isRefOnHost(ref, hostName));
         if (matches.length !== 1)
           throw new Error(
             `${toolId}: native ref '${ref}' lacks exactly one canonical catalogue; user clean refused.`
@@ -695,7 +696,7 @@ export class WithdrawFromHost {
         if (proof.status !== "owned")
           throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
         const owned = new Set(
-          [...claimRefs].filter((ref) => ref.endsWith(`@${registration.hostName}`))
+          [...claimRefs].filter((ref) => isRefOnHost(ref, registration.hostName))
         );
         const hostRefs = await assertNoForeignNativeRefs(
           this.ports.pluginRegistries.get(toolId),

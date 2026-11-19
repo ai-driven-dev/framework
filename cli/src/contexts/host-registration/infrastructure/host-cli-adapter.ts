@@ -2,6 +2,7 @@ import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { homedir } from "node:os";
 import { NativePluginCliError } from "../../../shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { HostActions } from "../ports/host-actions.js";
 import {
   hostExecutableLookup,
@@ -107,7 +108,10 @@ export class HostCliAdapter implements HostActions {
     if (result.error !== undefined || result.status !== 0) return true;
     try {
       const plugins = JSON.parse(result.stdout) as { id?: string; scope?: string }[];
-      return plugins.some((plugin) => plugin.id?.endsWith(`@${name}`) && plugin.scope !== "user");
+      return plugins.some(
+        (plugin) =>
+          plugin.id !== undefined && isRefOnHost(plugin.id, name) && plugin.scope !== "user"
+      );
     } catch {
       return true;
     }

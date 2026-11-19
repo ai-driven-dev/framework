@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
   type RegistrationRecordData,
@@ -57,7 +58,7 @@ export class NativeHostRegistrationGate {
       tool
     );
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
-      claim.ref.endsWith(`@${registration.hostName}`)
+      isRefOnHost(claim.ref, registration.hostName)
     );
     for (const claim of refs) {
       if (hostRefs.get(claim.ref)?.enabled !== true)

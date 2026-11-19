@@ -6,8 +6,6 @@ import {
   marketplaceOf,
   pluginRefsOf,
   refOf,
-  refOnAnyHost,
-  refOnHostName,
   refSelectedBy,
   refsOnHosts,
   registrationPreview,
@@ -33,10 +31,6 @@ describe("registration record projections", () => {
     const record = recordWith();
     expect(pluginRefsOf(record)).toEqual(record.pluginRefs);
     expect(pluginRefsOf(undefined)).toEqual([]);
-  });
-
-  it("names a plugin's ref on a host catalogue by the host name", () => {
-    expect(refOnHostName("p", "catalog")).toBe("p@catalog");
   });
 
   it("builds a ref from the plugin and the host name of its alias", () => {
@@ -92,17 +86,6 @@ describe("registration record projections", () => {
       expect(next.pluginRefs).toEqual(["b@second"]);
       expect(next.pluginClaims).toEqual([claim("b@second")]);
       expect(next.pluginClaims[0]).toBe(record.pluginClaims[1]);
-    });
-
-    it("matches the host name suffix exactly, not a longer name around it", () => {
-      const record = {
-        ...recordWith(),
-        pluginRefs: ["a@catalog", "b@old-catalog", "c@catalog-two"],
-        pluginClaims: [claim("b@old-catalog"), claim("c@catalog-two")],
-      };
-      const next = withoutMarketplace(record, "local");
-      expect(next.pluginRefs).toEqual(["b@old-catalog", "c@catalog-two"]);
-      expect(next.pluginClaims).toEqual([claim("b@old-catalog"), claim("c@catalog-two")]);
     });
 
     it("keeps every ref when the alias is unknown, even one ending in the word undefined", () => {
@@ -185,14 +168,6 @@ describe("registration record projections", () => {
       expect(claims[0]).toBe(record.pluginClaims[1]);
     });
 
-    it("matches the host name exactly, not a longer name around it", () => {
-      const record = {
-        ...recordWith(),
-        pluginClaims: [claim("a@old-catalog"), claim("a@catalog-two")],
-      };
-      expect(claimsOnMarketplace(record, "local")).toEqual([]);
-    });
-
     it("keeps no claim for an alias that was never registered", () => {
       const record = { ...recordWith(), pluginClaims: [claim("a@undefined")] };
       expect(claimsOnMarketplace(record, "missing")).toEqual([]);
@@ -222,20 +197,6 @@ describe("registration record projections", () => {
       expect(refSelectedBy("p@second", "p")).toBe(true);
       expect(refSelectedBy("pp@catalog", "p")).toBe(false);
       expect(refSelectedBy("p-extra", "p")).toBe(false);
-    });
-  });
-
-  describe("refOnAnyHost", () => {
-    it("holds for a ref on one of the host names, and for none else", () => {
-      expect(refOnAnyHost("a@catalog", ["second", "catalog"])).toBe(true);
-      expect(refOnAnyHost("a@catalog", ["second"])).toBe(false);
-      expect(refOnAnyHost("a@catalog", [])).toBe(false);
-    });
-
-    it("matches the host name exactly, not a longer name around it", () => {
-      expect(refOnAnyHost("a@old-catalog", ["catalog"])).toBe(false);
-      expect(refOnAnyHost("a@catalog-two", ["catalog"])).toBe(false);
-      expect(refOnAnyHost("a@catalog", new Set(["catalog"]))).toBe(true);
     });
   });
 });

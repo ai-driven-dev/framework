@@ -2,6 +2,7 @@ import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
 } from "../domain/reading/plugin-registry-reading.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
   type NativeMarketplaceSource,
@@ -91,7 +92,7 @@ export async function assertNoForeignNativeRefs(
   const foreign = [...refs].find(
     ([ref, entry]) =>
       (tool?.hostRefInUse(entry.enabled) ?? true) &&
-      ref.endsWith(`@${hostName}`) &&
+      isRefOnHost(ref, hostName) &&
       !ownedRefs.has(ref)
   )?.[0];
   if (foreign !== undefined)
