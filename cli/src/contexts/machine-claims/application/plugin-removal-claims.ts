@@ -55,7 +55,6 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
     tool: PluginEnablementReach,
     ref: string,
     marketplaceAlias: string,
-    hostName: string,
     projectRoot: string
   ): Promise<string | undefined> => {
     if (userSourceReferences === undefined) return undefined;
@@ -76,8 +75,6 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
       }
     );
     const guarded = refAnotherProjectStillNeeds({
-      ref,
-      sharedSourceHostName: hostName,
       enablementIsMachineGlobal: tool.pluginEnablementIsMachineGlobal(),
       otherProjects,
     });

@@ -40,8 +40,7 @@ export interface WithdrawalClaims {
   readonly guardMessage: (
     binary: string,
     ref: string,
-    alias: string,
-    hostName: string
+    alias: string
   ) => Promise<string | undefined>;
   /** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
   readonly resolveCacheCandidate: (
@@ -200,12 +199,7 @@ export class WithdrawFromHost {
       this.logger.warn(`${toolId}: '${ref}' is not a ref this project enabled — left enabled.`);
       return undefined;
     }
-    const guardMessage = await claims.guardMessage(
-      nativeActivation.hostBinary(),
-      ref,
-      alias,
-      hostName
-    );
+    const guardMessage = await claims.guardMessage(nativeActivation.hostBinary(), ref, alias);
     if (guardMessage !== undefined) {
       this.logger.warn(guardMessage);
       return undefined;

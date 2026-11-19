@@ -21,19 +21,15 @@ export function frameworkSourceIsShared(
  * Whether uninstalling `ref` here would take away a plugin another project on this machine still
  * needs: applied before driving a host's own CLI to uninstall, never after.
  *
- * `ref` is matched against `sharedSourceHostName`, never the project's own local alias, which a
- * host never learns. Any one condition failing means uninstalling `ref` here cannot break another
- * project, so it proceeds.
+ * Any one condition failing means uninstalling `ref` here cannot break another project, so it
+ * proceeds. The caller builds `ref` from the host's own name for the source, never the
+ * project's own local alias, which a host never learns.
  */
 export function refAnotherProjectStillNeeds(input: {
-  ref: string;
-  sharedSourceHostName: string | undefined;
   enablementIsMachineGlobal: boolean;
   otherProjects: readonly string[];
 }): boolean {
-  const { ref, sharedSourceHostName, enablementIsMachineGlobal, otherProjects } = input;
-  if (sharedSourceHostName === undefined) return false;
-  if (!ref.endsWith(`@${sharedSourceHostName}`)) return false;
+  const { enablementIsMachineGlobal, otherProjects } = input;
   if (!enablementIsMachineGlobal) return false;
   return otherProjects.length > 0;
 }

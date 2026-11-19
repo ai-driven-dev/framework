@@ -151,8 +151,7 @@ interface WithdrawalClaims {
   readonly guardMessage: (
     binary: string,
     ref: string,
-    alias: string,
-    hostName: string
+    alias: string
   ) => Promise<string | undefined>;
   /** The path under `cacheRoot` when it stays inside it, else `null`. */
   readonly resolveCacheCandidate: (

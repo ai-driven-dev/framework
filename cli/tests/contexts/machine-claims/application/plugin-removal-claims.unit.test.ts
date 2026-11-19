@@ -31,7 +31,6 @@ function guard(options: {
     registeredTools().aiProfile(TOOL.codex),
     REF,
     "aidd-framework",
-    "aidd-framework",
     "/project"
   );
 }

@@ -11,8 +11,6 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
 
 const BASE = {
-  ref: "aidd-dev@aidd-framework",
-  sharedSourceHostName: "aidd-framework",
   enablementIsMachineGlobal: true,
   otherProjects: ["/other-project"],
 } as const;
@@ -28,26 +26,6 @@ describe("refAnotherProjectStillNeeds", () => {
 
   it("is false when this host's own enablement is not machine-global (claude)", () => {
     expect(refAnotherProjectStillNeeds({ ...BASE, enablementIsMachineGlobal: false })).toBe(false);
-  });
-
-  it("is false when the ref does not come from the shared source's own hostName", () => {
-    expect(
-      refAnotherProjectStillNeeds({ ...BASE, ref: "some-plugin@a-different-marketplace" })
-    ).toBe(false);
-  });
-
-  it("is false when this run never resolved the shared source's own hostName for this tool", () => {
-    expect(refAnotherProjectStillNeeds({ ...BASE, sharedSourceHostName: undefined })).toBe(false);
-  });
-
-  it("never matches a ref against the literal text 'undefined' when no hostName was resolved", () => {
-    expect(
-      refAnotherProjectStillNeeds({
-        ...BASE,
-        ref: "aidd-dev@undefined",
-        sharedSourceHostName: undefined,
-      })
-    ).toBe(false);
   });
 });
 

@@ -16,7 +16,6 @@ export interface PluginRemovalClaims extends RemovalClaims {
     tool: PluginEnablementReach,
     ref: string,
     marketplaceAlias: string,
-    hostName: string,
     projectRoot: string
   ) => Promise<string | undefined>;
   readonly resolveCacheCandidate: (
@@ -68,8 +67,8 @@ export class ProjectPluginWithdrawal<Proof> {
       registrations,
       claims: {
         isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
-        guardMessage: (binary, ref, alias, hostName) =>
-          this.claims.guardMessage(binary, tool, ref, alias, hostName, projectRoot),
+        guardMessage: (binary, ref, alias) =>
+          this.claims.guardMessage(binary, tool, ref, alias, projectRoot),
         resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
           this.claims.resolveCacheCandidate(cacheRoot, relativeSegments, label),
       },
