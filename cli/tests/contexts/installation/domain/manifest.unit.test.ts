@@ -481,6 +481,34 @@ describe("Manifest", () => {
     });
   });
 
+  describe("re-adding a tool", () => {
+    it("keeps its plugins and drops its native registrations", () => {
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
+      manifest.addPlugin(
+        TOOL.claude,
+        InstalledPlugin.fromJSON({
+          name: "aidd-context",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "project",
+        })
+      );
+      manifest.setNativeRegistrations(TOOL.claude, {
+        binary: "claude",
+        marketplaces: [],
+        pluginRefs: ["aidd-context@ai-driven-dev"],
+      });
+
+      manifest.addTool(TOOL.claude, "3.1.0", claudeFiles);
+
+      expect(manifest.getPlugins(TOOL.claude)).toHaveLength(1);
+      expect(manifest.getNativeRegistrations(TOOL.claude)).toBeUndefined();
+    });
+  });
+
   describe("getTrackedPathsInDirectory()", () => {
     it("lists the tracked, merged and plugin files under the directory, across tools, and no other", () => {
       const manifest = Manifest.create();
