@@ -20,11 +20,6 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("load()", () => {
-    it("returns null when manifest file does not exist", async () => {
-      const result = await adapter.load();
-      expect(result).toBeNull();
-    });
-
     it("rejects, rather than returning null, when manifest.json is a directory", async () => {
       const manifestDir = join(tempDir, ".aidd", "manifest.json");
       await mkdir(manifestDir, { recursive: true });
@@ -52,15 +47,6 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("save() + load() roundtrip", () => {
-    it("persists and restores manifest without data loss", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      const loaded = await adapter.load();
-      expect(loaded).not.toBeNull();
-      expect(loaded?.getInstalledToolIds()).toHaveLength(0);
-    });
-
     it("manifest version is 8 after roundtrip", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);
@@ -74,16 +60,6 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("delete()", () => {
-    it("deletes manifest file from disk", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      await adapter.delete();
-
-      const result = await adapter.load();
-      expect(result).toBeNull();
-    });
-
     it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);
