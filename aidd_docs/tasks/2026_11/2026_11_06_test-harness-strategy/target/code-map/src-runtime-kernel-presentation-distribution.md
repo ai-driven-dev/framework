@@ -84,7 +84,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/presentation/commands/menu.ts` | `src/presentation/commands/menu.ts; src/orchestration/menu/menu-loop.ts` | split | proposal: loop logic to orchestration, terminal part stays; error routed through the common translator |
 | `src/presentation/commands/plugin.ts` | `src/presentation/commands/plugin.ts` | keep | thin |
 | `src/presentation/commands/setup.ts` | `src/presentation/commands/setup.ts` | keep | no `new`, scenario received |
-| `src/presentation/commands/spawn-cli-command.ts` | `src/presentation/terminal/child-command.ts` | move | orchestration runs no process (Biome `noRestrictedImports` on `node:child_process`); the terminal part lives under presentation, per 03 §9.2 |
+| `src/presentation/commands/spawn-cli-command.ts` | `src/presentation/terminal/child-command.ts` | move | adapter of orchestration/menu CommandRunner port; orchestration runs no process |
 | `src/presentation/commands/sync-native-activation.ts` | `src/presentation/display/framework-display.ts` | move | it reports scoped sync failures beside `printScopedFailures` and throws `SyncFailedError`, so it is display, and orchestration may not import presentation |
 | `src/presentation/commands/sync.ts` | `src/presentation/commands/sync.ts` | keep | thin |
 | `src/presentation/commands/telemetry.ts` | `src/presentation/commands/telemetry.ts; src/contexts/telemetry/application/*` | split | proposal: parse and display stay, validation and identity choice move down |
