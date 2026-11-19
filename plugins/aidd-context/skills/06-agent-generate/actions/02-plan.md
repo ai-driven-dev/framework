@@ -17,7 +17,7 @@ The draft, name and targets.
 6. Present the plan.
    - The draft.
    - Each planned path with its operation.
-   - Each dropped field.
+   - Each dropped field or tool grant.
 7. End the turn and wait for the user's own answer.
    - Revision: apply it, then repeat from step 2.
    - Cancel: stop, cancelled.

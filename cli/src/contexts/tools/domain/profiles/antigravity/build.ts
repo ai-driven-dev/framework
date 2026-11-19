@@ -6,6 +6,7 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { ToolBuildContract } from "../../build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
+import { antigravityAgentTools } from "./agent-tools.js";
 import { mergeAntigravityHooks } from "./antigravity-hooks.js";
 import { ANTIGRAVITY_AGENTS_DIR, ANTIGRAVITY_SKILLS_DIR } from "./antigravity-paths.js";
 import { ANTIGRAVITY_HOOKS } from "./hooks.js";
@@ -35,10 +36,10 @@ function transformAntigravityAgent(content: string, plugin: string, outName: str
     currentFilePluginRelative: antigravityFlatAgentPath(plugin, rel),
     resolveTargetPath: (target) => resolveTarget(plugin, target),
   });
-  return serializeFrontmatter(
-    portableAgentFrontmatter(frontmatter, agentName(plugin, rel)),
-    rewrittenBody
-  );
+  const { tools, ...portable } = portableAgentFrontmatter(frontmatter, agentName(plugin, rel));
+  // Inline, so a list that maps to nothing stays `[]` rather than YAML null.
+  const agyTools = JSON.stringify(antigravityAgentTools(tools ?? null));
+  return serializeFrontmatter({ ...portable, tools: agyTools }, rewrittenBody);
 }
 
 export function buildAntigravityFlatContract(): ToolBuildContract {

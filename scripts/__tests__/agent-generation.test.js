@@ -49,8 +49,30 @@ test("renders each host's native file from the CLI mapping", (t) => {
   assert.equal(read(".opencode/agents/code-reviewer.md"), `---\ndescription: ${desc}\nmodel: "sonnet#high"\nmode: subagent\n---\n\n${body}`);
   assert.equal(read(".kilo/agents/code-reviewer.md"), `---\ndescription: ${desc}\nmodel: sonnet\nvariant: high\nmode: subagent\n---\n\n${body}`);
   assert.equal(read(".github/agents/code-reviewer.agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: sonnet\nreasoningEffort: high\ninclude-custom-instructions: true\n---\n\n${body}`);
-  assert.equal(read(".agents/agents/code-reviewer/agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: inherit\ntools:\n  - Read\n  - Grep\n---\n\n${body}`);
+  assert.equal(read(".agents/agents/code-reviewer/agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: inherit\ntools:\n  - read_file\n---\n\n${body}`);
   assert.equal(read(".codex/agents/code-reviewer.toml"), `name = "code-reviewer"\ndescription = "${desc}"\nmodel = "sonnet"\nmodel_reasoning_effort = "high"\ndeveloper_instructions = '''\n${body}'''\n`);
+});
+
+test("writes agy's tools for an Antigravity agent", async (t) => {
+  const { run, read } = fixture(t);
+  const agyTools = (tools) => {
+    const r = run({ name: "scout", description: "Finds files. Use to locate code.", tools, body: "x\n" }, "antigravity", ["--force"]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    return read(".agents/agents/scout/agent.md").match(/^tools:(.*(?:\n  - .*)*)/m)?.[1];
+  };
+  await t.test("every agy tool when the agent declares none", () => {
+    assert.equal(agyTools(undefined), "\n  - read_file\n  - edit_file\n  - write_file\n  - run_command\n  - manage_task\n  - search_web");
+  });
+  await t.test("each grant mapped once, in agy's order, one with no equivalent dropped", () => {
+    assert.equal(agyTools("Task, Bash, Grep, Read"), "\n  - read_file\n  - run_command\n  - manage_task");
+  });
+  await t.test("each Claude grant to its agy tools", () => {
+    const expected = { Read: "read_file", Glob: "read_file", Grep: "read_file", Edit: "edit_file", MultiEdit: "edit_file", Write: "write_file", Bash: "run_command\n  - manage_task", WebSearch: "search_web", WebFetch: "search_web" };
+    for (const [claude, agy] of Object.entries(expected)) assert.equal(agyTools([claude]), `\n  - ${agy}`, claude);
+  });
+  await t.test("an empty list, never the full one, when no grant has an equivalent", () => {
+    assert.equal(agyTools("Task, TodoWrite"), " []");
+  });
 });
 
 test("reports every field a host drops", (t) => {
@@ -61,6 +83,16 @@ test("reports every field a host drops", (t) => {
     { tool: "antigravity", field: "model" },
     { tool: "antigravity", field: "effort" },
     { tool: "antigravity", field: "color" },
+  ]);
+});
+
+test("reports each grant Antigravity drops", (t) => {
+  const { run } = fixture(t);
+  const r = run({ name: "scout", description: "Finds files. Use to locate code.", tools: "Read, Task, TodoWrite", body: "x\n" }, "claude,antigravity");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(json(r).dropped, [
+    { tool: "antigravity", field: "tools", value: "Task" },
+    { tool: "antigravity", field: "tools", value: "TodoWrite" },
   ]);
 });
 
