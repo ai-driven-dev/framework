@@ -1,8 +1,8 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { BuiltMarketplaceEnsurer } from "../../contract/built-marketplace.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 
 export class BuildMarketplaceForTool {
   constructor(

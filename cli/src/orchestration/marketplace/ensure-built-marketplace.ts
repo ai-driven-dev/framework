@@ -4,7 +4,7 @@ import type {
   BuiltMarketplaceEnsurer,
   EnsureBuiltMarketplaceCommand,
   EnsureBuiltMarketplaceResult,
-} from "../../contexts/installation/application/shared/ensure-built-marketplace.js";
+} from "../../contexts/installation/contract/built-marketplace.js";
 
 /** Resolves the marketplace's source, then has the installation cache its build. */
 export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {

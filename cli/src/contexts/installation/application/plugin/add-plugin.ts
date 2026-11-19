@@ -18,6 +18,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { BuiltMarketplaceEnsurer } from "../../contract/built-marketplace.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
@@ -31,7 +32,6 @@ import type { InstallRuntimeConfig } from "../install/config/install-runtime-con
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
-import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";

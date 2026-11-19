@@ -4935,7 +4935,6 @@
         "!src/contexts/installation/application/restore/restore-regular-files.ts",
         "!src/contexts/installation/application/restore/restore-tool-files.ts",
         "!src/contexts/installation/application/restore/restore.ts",
-        "!src/contexts/installation/application/shared/ensure-built-marketplace.ts",
         "!src/contexts/installation/application/shared/remove-project-hooks.ts",
         "!src/contexts/installation/application/sync/activate-native-tools.ts",
         "!src/contexts/installation/application/sync/record-activation.ts",

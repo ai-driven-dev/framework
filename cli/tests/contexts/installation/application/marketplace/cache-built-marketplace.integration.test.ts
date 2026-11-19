@@ -6,11 +6,11 @@ import type {
   ResolveMarketplace,
   ResolveMarketplaceCommand,
 } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import { CacheBuiltMarketplace } from "../../../../../src/contexts/installation/application/marketplace/cache-built-marketplace.js";
-import type {
-  FrameworkBuild,
-  FrameworkBuilds,
-} from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import {
+  CacheBuiltMarketplace,
+  type FrameworkBuild,
+  type FrameworkBuilds,
+} from "../../../../../src/contexts/installation/application/marketplace/cache-built-marketplace.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import { EnsureBuiltMarketplace } from "../../../../../src/orchestration/marketplace/ensure-built-marketplace.js";
 import {

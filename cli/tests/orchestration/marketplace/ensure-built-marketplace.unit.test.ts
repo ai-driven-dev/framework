@@ -10,7 +10,7 @@ import type {
   EnsureBuiltMarketplaceCommand,
   EnsureBuiltMarketplaceResult,
   ResolvedMarketplace,
-} from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+} from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { EnsureBuiltMarketplace } from "../../../src/orchestration/marketplace/ensure-built-marketplace.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 

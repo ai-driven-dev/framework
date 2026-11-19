@@ -28,18 +28,18 @@ import { InstallSkills } from "../contexts/installation/application/install/cont
 import { PropagateAiSettingsToIde } from "../contexts/installation/application/install/propagate-ai-settings-to-ide.js";
 import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
 import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
-import { CacheBuiltMarketplace } from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
+import {
+  CacheBuiltMarketplace,
+  type FrameworkBuilds,
+} from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import type {
   ContentSectionInstaller,
   ContentSectionInstallers,
 } from "../contexts/installation/application/restore/generate-tool-distribution.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.js";
-import type {
-  BuiltMarketplaceEnsurer,
-  FrameworkBuilds,
-} from "../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
+import type { BuiltMarketplaceEnsurer } from "../contexts/installation/contract/built-marketplace.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";

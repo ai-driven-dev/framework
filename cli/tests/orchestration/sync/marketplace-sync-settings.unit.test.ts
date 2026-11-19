@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { ModeAMarketplaceTranslator } from "../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
-import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
