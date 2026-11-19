@@ -7,6 +7,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
@@ -65,7 +66,7 @@ export class RecordActivation {
       const content = await this.fs.readFile(resolve(projectRoot, settingsPath)).catch(() => null);
       if (content === null) continue;
       const hash = FileHash.of(content);
-      if (hash.value === tracked.hash.value) continue;
+      if (driftOf(tracked.hash.value, hash) === "ok") continue;
       manifest.updateTrackedFileHash(toolId, settingsPath, hash);
       changed = true;
     }

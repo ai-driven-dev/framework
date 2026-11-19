@@ -1,4 +1,5 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
+import { driftOf } from "../domain/manifest/drift.js";
 
 /** Decides a conflict, never prompts: recording one is the caller's. */
 export class ResolveSyncConflict {
@@ -27,7 +28,10 @@ export class ResolveSyncConflict {
     if (!diskTargetExists) return false;
     const diskTargetHash = await this.fs.readFileHash(diskTargetPath);
     const targetManifestHash = targetManifestMap.get(targetRelativePath);
-    return targetManifestHash !== undefined && diskTargetHash.value !== targetManifestHash.value;
+    return (
+      targetManifestHash !== undefined &&
+      driftOf(targetManifestHash.value, diskTargetHash) === "modified"
+    );
   }
 
   /** `conflict` is true even for a `"write"`, when `force` overrode a detected conflict. */
