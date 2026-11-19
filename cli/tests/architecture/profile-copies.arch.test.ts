@@ -23,6 +23,19 @@ const MERGE_LOOP = (name: string): string =>
     "",
   ].join("\n");
 
+const declaration = (tool: string): string =>
+  [
+    `import adapter from "../../assets/host-${tool}.cjs";`,
+    'import { declareHooks } from "../declaration.js";',
+    `import { ${tool.toUpperCase()}_DIRECTORY, ${tool.toUpperCase()}_TOKEN } from "./${tool}-paths.js";`,
+    "",
+    `export const ${tool.toUpperCase()}_HOOKS = declareHooks(`,
+    `  { toolId: "${tool}", directory: ${tool.toUpperCase()}_DIRECTORY, adapter },`,
+    `  { notice: "${tool}", token: ${tool.toUpperCase()}_TOKEN }`,
+    ");",
+    "",
+  ].join("\n");
+
 describe("the profile copy check is wired before push", () => {
   it("is a package script the pre-push runs", () => {
     const scripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> })
@@ -53,6 +66,9 @@ describe("the guard itself", () => {
       join(planted, "beta/hooks-format.ts"),
       MERGE_LOOP("mergeBetaHooks").replaceAll("parsed", "current").replaceAll("kept", "others")
     );
+    for (const tool of ["alpha", "beta"]) {
+      writeFileSync(join(planted, `${tool}/hooks.ts`), declaration(tool));
+    }
     writeFileSync(join(planted, "alpha/build.ts"), MERGE_LOOP("buildAlpha"));
     writeFileSync(join(planted, "beta/profile.ts"), MERGE_LOOP("profileBeta"));
   });
@@ -61,7 +77,7 @@ describe("the guard itself", () => {
     rmSync(planted, { recursive: true, force: true });
   });
 
-  it("names a block copied between two profiles, renamed, and not their build or profile", () => {
+  it("names a block copied between two profiles, renamed, and not their build, profile or import header and declare call", () => {
     expect(copiesBetweenProfiles(scan(planted))).toEqual([
       "alpha/hooks-format.ts <> beta/hooks-format.ts (1)",
     ]);
