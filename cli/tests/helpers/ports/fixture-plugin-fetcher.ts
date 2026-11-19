@@ -2,6 +2,7 @@ import type {
   PluginFetcher,
   PluginFetchOptions,
 } from "../../../src/contexts/distribution/ports/plugin-fetcher.js";
+import { PluginFetchError } from "../../../src/shared/domain/errors.js";
 import type { PluginSource } from "../../../src/shared/domain/source.js";
 import { serializePluginSource } from "../../../src/shared/domain/source.js";
 
@@ -28,7 +29,7 @@ export class FixturePluginFetcher implements PluginFetcher {
       return source.path;
     }
 
-    throw new Error(`FixturePluginFetcher: no fixture registered for source ${key}`);
+    throw new PluginFetchError(`no fixture registered for source ${key}`);
   }
 
   register(source: PluginSource, localPath: string): void {
