@@ -1,6 +1,6 @@
 # Testing
 
-How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../../.claude/rules/cli-tests.md).
+How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../../.claude/rules/cli-tests.md). Where a context's tests and kit sit: [`reference-context.md`](../../.claude/rules/cli-contexts/reference-context.md).
 
 ## Projects
 
