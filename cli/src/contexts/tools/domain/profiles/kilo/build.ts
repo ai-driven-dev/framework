@@ -5,9 +5,13 @@ import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/ma
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
+  genericFlatRulePath,
   genericFlatSkillTreePath,
 } from "../../../../../kernel/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
+import {
+  relocateRelativeLinks,
+  rewriteRelativeLinks,
+} from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
@@ -30,10 +34,19 @@ function kiloFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(`${KILO_DIRECTORY}skills/`, plugin, rel.replace(/^skills\//, ""));
 }
 
-function kiloFlatResolveTarget(plugin: string, rel: string): string {
+function kiloFlatRulePath(plugin: string, rel: string): string {
+  return genericFlatRulePath(`${KILO_DIRECTORY}rules/`, plugin, rel);
+}
+
+function kiloFlatEmittedTarget(plugin: string, rel: string): string | null {
   if (rel.startsWith("agents/")) return kiloFlatAgentPath(plugin, rel);
   if (rel.startsWith("skills/")) return kiloFlatSkillPath(plugin, rel);
-  return rel;
+  if (rel.startsWith("rules/") && rel.endsWith(".md")) return kiloFlatRulePath(plugin, rel);
+  return null;
+}
+
+function kiloFlatResolveTarget(plugin: string, rel: string): string {
+  return kiloFlatEmittedTarget(plugin, rel) ?? rel;
 }
 
 function transformKiloFlatAgent(content: string, plugin: string, outName: string): string {
@@ -44,6 +57,20 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
     resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
   });
   return serializeFrontmatter(kiloAgentFrontmatter(frontmatter), rewrittenBody);
+}
+
+// Kilo loads `instructions` for every session: a `paths` scope would silently widen to all files.
+function kiloRulePathScope(content: string): unknown {
+  return parseFrontmatter(content).frontmatter.paths;
+}
+
+function transformKiloFlatRule(content: string, plugin: string, ruleRel: string): string {
+  const sourceRel = `rules/${ruleRel}`;
+  return relocateRelativeLinks(content, {
+    sourceFilePluginRelative: sourceRel,
+    materializedFileRelative: kiloFlatRulePath(plugin, sourceRel),
+    resolveTargetPath: (rel) => kiloFlatEmittedTarget(plugin, rel),
+  });
 }
 
 function collectKiloMcp(
@@ -84,7 +111,13 @@ export function buildKiloFlatContract(): ToolBuildContract {
       },
       mcp: { supported: false },
       hooks: flatHooksArtifact(KILO_HOOKS, { bridge: generateKiloHooksBridge }),
-      rules: { supported: false },
+      rules: {
+        supported: true,
+        source: { kind: "filteredTree", srcDir: "rules", inputExt: ".md" },
+        path: kiloFlatRulePath,
+        inexpressibleScope: kiloRulePathScope,
+        transform: transformKiloFlatRule,
+      },
       commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
@@ -93,12 +126,23 @@ export function buildKiloFlatContract(): ToolBuildContract {
       reads: () => KILO_CONFIG_CANDIDATES,
       probes: () => [],
       assets: { tool: "kilo", names: ["kilo.json"] },
-      emit: ({ builtPlugins, pluginMcp, existing, assets }) => {
+      emit: ({ builtPlugins, pluginMcp, rules, existing, assets }) => {
         const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
         const incoming = collectKiloMcp(builtPlugins, pluginMcp);
         const asset = assets.get("kilo.json");
-        const base = typeof asset === "string" ? asset : JSON.stringify(asset);
-        const config = buildOpencodeFlatConfig(base, existing.get(configPath) ?? null, incoming);
+        const assetJson = typeof asset === "string" ? asset : JSON.stringify(asset);
+        // Generated Rule paths follow the user's own `instructions`, never duplicated on rebuild.
+        const base =
+          rules.length > 0
+            ? JSON.stringify({ ...JSON.parse(assetJson), instructions: rules })
+            : assetJson;
+        const mergedKeys = rules.length > 0 ? ["instructions"] : [];
+        const config = buildOpencodeFlatConfig(
+          base,
+          existing.get(configPath) ?? null,
+          incoming,
+          mergedKeys
+        );
         return [{ path: configPath, content: config }];
       },
     },

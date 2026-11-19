@@ -21,12 +21,14 @@ function configArtifactOf(): ConfigArtifact {
 function emit(input: {
   builtPlugins?: readonly string[];
   pluginMcp?: ReadonlyMap<string, string>;
+  rules?: readonly string[];
   existing?: Readonly<Record<string, string>>;
   asset?: string | Record<string, unknown>;
 }): readonly ConfigArtifactFile[] {
   return configArtifactOf().emit({
     builtPlugins: input.builtPlugins ?? [],
     pluginMcp: input.pluginMcp ?? new Map(),
+    rules: input.rules ?? [],
     existing: new Map(Object.entries(input.existing ?? {})),
     present: new Set(),
     assets: new Map([["kilo.json", input.asset ?? { $schema: "https://app.kilo.ai/config.json" }]]),
@@ -156,5 +158,64 @@ describe("buildKiloFlatContract", () => {
     ["kilo.json", "kilo.jsonc"],
   ])("rejects ambiguous Kilo config files %s and %s", (json, jsonc) => {
     expect(() => emit({ existing: { [json]: "{}", [jsonc]: "{}" } })).toThrow(KiloDualConfigError);
+  });
+});
+
+describe("Kilo flat Rules", () => {
+  const rules = () => supported(buildKiloFlatContract().artifacts.rules);
+
+  it("emits each all-files Rule as one plugin-prefixed file under .kilo/rules", () => {
+    expect(rules().path("aidd-test", "rules/01-standards/naming.md")).toBe(
+      ".kilo/rules/aidd-test-01-standards-naming.md"
+    );
+  });
+
+  it("keeps an all-files Rule's content and repoints its relative links", () => {
+    const content =
+      "---\ndescription: naming\n---\nSee [errors](./errors.md) and @./errors.md first\n";
+    expect(rules().transform?.(content, "aidd-test", "01-standards/naming.md")).toBe(
+      "---\ndescription: naming\n---\nSee [errors](./aidd-test-01-standards-errors.md) and " +
+        "[errors.md](./aidd-test-01-standards-errors.md) first\n"
+    );
+  });
+
+  it("reports a path-scoped Rule's scope as one Kilo cannot express, and none for an all-files Rule", () => {
+    const scoped = '---\npaths:\n  - "src/**/*.ts"\n---\nTyped code only.\n';
+    expect(rules().inexpressibleScope?.(scoped)).toEqual(["src/**/*.ts"]);
+    expect(rules().inexpressibleScope?.("---\ndescription: x\n---\nAll.\n")).toBeUndefined();
+  });
+
+  it("appends the written Rules after the user's JSONC instructions, unchanged on rebuild", () => {
+    const rules = [
+      ".kilo/rules/aidd-dev-style.md",
+      ".kilo/rules/aidd-test-01-a-one.md",
+      ".kilo/rules/aidd-test-02-b-two.md",
+    ];
+    const [once] = emit({
+      rules,
+      existing: { ".kilo/kilo.jsonc": '{\n  // mine\n  "instructions": ["z.md", "a.md"],\n}' },
+    });
+    const [again] = emit({ rules, existing: { ".kilo/kilo.jsonc": once?.content ?? "" } });
+
+    expect(once?.path).toBe(".kilo/kilo.jsonc");
+    expect(JSON.parse(once?.content ?? "null").instructions).toEqual(["z.md", "a.md", ...rules]);
+    expect(again?.content).toBe(once?.content);
+  });
+
+  it("merges the written Rules into an existing .kilo/kilo.json", () => {
+    const [file] = emit({
+      rules: [".kilo/rules/aidd-test-style.md"],
+      existing: { ".kilo/kilo.json": JSON.stringify({ instructions: ["mine.md"] }) },
+    });
+    expect(file?.path).toBe(".kilo/kilo.json");
+    expect(JSON.parse(file?.content ?? "null").instructions).toEqual([
+      "mine.md",
+      ".kilo/rules/aidd-test-style.md",
+    ]);
+  });
+
+  it("adds no instructions key when the build wrote no Rule", () => {
+    const [file] = emit({});
+    expect(JSON.parse(file?.content ?? "null").instructions).toBeUndefined();
   });
 });

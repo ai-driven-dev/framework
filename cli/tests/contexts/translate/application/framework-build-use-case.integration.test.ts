@@ -552,6 +552,7 @@ const countingStrategy: BuildOutputStrategy = {
   writePluginManifest: () => Promise.resolve(1),
   writeAgents: () => Promise.resolve(2),
   writeSkills: () => Promise.resolve(4),
+  writeRules: () => Promise.resolve(0),
   writeHooks: () => Promise.resolve(8),
   writeMcp: () => Promise.resolve(16),
   postBuild: () => Promise.resolve(32),
@@ -573,6 +574,24 @@ describe("what a build reports having written", () => {
       totalFiles: 63,
       plugins: [{ name: "aidd-test", filesWritten: 31, skippedSections: ["commands", "rules"] }],
     });
+  });
+
+  it("reports rules/ as emitted, not skipped, once the layout wrote any Rule", async () => {
+    const fs = await makeSeededFs();
+    const logger = new CapturingLogger();
+    const strategy = { ...countingStrategy, writeRules: () => Promise.resolve(64) };
+    const uc = new FrameworkBuildUseCase(
+      fs,
+      makeValidator(),
+      makeAssetProvider(),
+      logger,
+      strategy
+    );
+    const result = await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "kilo" });
+    expect(result.plugins).toEqual([
+      { name: "aidd-test", filesWritten: 95, skippedSections: ["commands"] },
+    ]);
+    expect(logger.warnMessages.some((m) => m.includes("rules/"))).toBe(false);
   });
 
   it("reports no skipped section for a plugin shipping neither commands nor rules", async () => {

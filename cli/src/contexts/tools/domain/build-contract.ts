@@ -19,6 +19,8 @@ export type ArtifactContract =
       readonly path: (plugin: string, relPath: string) => string;
       /** Defaults to identity, a byte-copy. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
+      /** The scope a file declares that this target cannot express, or `undefined` when it has none. */
+      readonly inexpressibleScope?: (content: string) => unknown;
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
       readonly rewriteSkillName?: boolean;
@@ -138,6 +140,8 @@ export interface ConfigArtifactInput {
   readonly builtPlugins: readonly string[];
   /** Each built plugin's own `.mcp.json`, by plugin; a plugin shipping none is absent. */
   readonly pluginMcp: ReadonlyMap<string, string>;
+  /** Each Rule this build wrote, by its path under the output root, sorted. */
+  readonly rules: readonly string[];
   /** Each file `reads` named that exists, by its path under the output root. */
   readonly existing: ReadonlyMap<string, string>;
   /** Each file `probes` named that exists, by its path under the output root. */

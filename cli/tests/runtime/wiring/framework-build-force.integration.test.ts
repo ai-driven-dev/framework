@@ -2,7 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FlatTargetExistsError } from "../../../src/kernel/errors.js";
+import {
+  FlatTargetExistsError,
+  PathScopedRuleUnsupportedError,
+} from "../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import {
   createFrameworkBuildUseCase,
@@ -72,5 +75,52 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
     const written = fs.getFile(`${outDir}/${COLLIDING_RELATIVE_PATH}`);
     expect(written).not.toBe(STALE_CONTENT);
     expect(written).toContain("aidd-test-code-reviewer");
+  });
+});
+
+describe("createFrameworkBuildUseCase threads the caller's policy for a Rule Kilo cannot scope", () => {
+  let outDir: string;
+  let fs: InMemoryFileAdapter;
+
+  beforeEach(async () => {
+    outDir = await mkdtemp(join(tmpdir(), "aidd-rule-policy-wiring-"));
+    fs = new InMemoryFileAdapter();
+    await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
+    fs.setFile(`${outDir}/.keep`, "");
+  });
+
+  afterEach(async () => {
+    await rm(outDir, { recursive: true, force: true });
+  });
+
+  it("fails on the fixture's path-scoped Rule when the caller names no policy", async () => {
+    const useCase = createFrameworkBuildUseCase(makeDeps(fs), {
+      target: "kilo",
+      mode: "flat",
+      outDir,
+      force: true,
+    });
+    if (useCase === undefined) throw new Error("kilo:flat must be wired in the registry");
+    await expect(
+      useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "kilo" })
+    ).rejects.toBeInstanceOf(PathScopedRuleUnsupportedError);
+  });
+
+  it("skips that Rule with a warning, and builds the rest, when the caller asks to skip", async () => {
+    const warnings = new CapturingLogger();
+    const useCase = createFrameworkBuildUseCase(makeDeps(fs), {
+      target: "kilo",
+      mode: "flat",
+      outDir,
+      force: true,
+      inexpressibleRules: { kind: "skip", warn: warnings },
+    });
+    if (useCase === undefined) throw new Error("kilo:flat must be wired in the registry");
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "kilo" });
+    expect(warnings.warnMessages.some((m) => m.includes("rules/01-standards/naming.md"))).toBe(
+      true
+    );
+    expect(fs.listUnder(`${outDir}/.kilo/rules`)).toEqual([]);
+    expect(fs.listUnder(`${outDir}/.kilo/agents`).length).toBeGreaterThan(0);
   });
 });

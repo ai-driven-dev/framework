@@ -339,7 +339,15 @@ export async function createDeps(
   const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir, provider) =>
     createFrameworkBuildUseCase(
       { fs, assetProvider, logger: cacheBuildLogger },
-      { target, mode, outDir, force: true, ...(provider === undefined ? {} : { provider }) }
+      // An install keeps the rest of a plugin: a Rule the tool cannot scope is skipped, said aloud.
+      {
+        target,
+        mode,
+        outDir,
+        force: true,
+        inexpressibleRules: { kind: "skip", warn: logger },
+        ...(provider === undefined ? {} : { provider }),
+      }
     );
   const agentModelStore = new AgentModelStoreAdapter(fs, userConfigDir);
   const agentProviderFor: AgentProviderFor = async (target) =>

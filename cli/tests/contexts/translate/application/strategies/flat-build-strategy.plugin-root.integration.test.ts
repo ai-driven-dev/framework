@@ -62,7 +62,14 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
 async function build(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
   const contract = buildContractFor(tool, "flat");
   if (contract === undefined) throw new Error(`${tool} has no flat contract`);
-  const strategy = new FlatBuildStrategy(fs, ASSETS, contract(), false, OUT, async () => true);
+  const strategy = new FlatBuildStrategy(
+    fs,
+    ASSETS,
+    contract(),
+    { force: false },
+    OUT,
+    async () => true
+  );
   await strategy.preBuild(OUT, SOURCE);
   await strategy.writeAgents(PLUGIN, PLUGIN_SRC);
   await strategy.writeSkills(PLUGIN, PLUGIN_SRC);

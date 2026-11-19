@@ -105,9 +105,12 @@ export class FrameworkBuildUseCase implements FrameworkBuild {
     filesWritten += await this.strategy.writePluginManifest(entry.name, pluginSrc, outDir);
     filesWritten += await this.strategy.writeAgents(entry.name, pluginSrc, outDir);
     filesWritten += await this.strategy.writeSkills(entry.name, pluginSrc, outDir);
+    const rulesWritten = await this.strategy.writeRules(entry.name, pluginSrc, outDir);
+    filesWritten += rulesWritten;
     filesWritten += await this.strategy.writeHooks(entry.name, pluginSrc, outDir);
     filesWritten += await this.strategy.writeMcp(entry.name, pluginSrc, outDir);
-    const skippedSections = await this.warnOutOfScopeSections(entry.name, pluginSrc);
+    const emitted = rulesWritten > 0 ? ["rules"] : [];
+    const skippedSections = await this.warnOutOfScopeSections(entry.name, pluginSrc, emitted);
     return { name: entry.name, filesWritten, skippedSections };
   }
 
@@ -120,10 +123,12 @@ export class FrameworkBuildUseCase implements FrameworkBuild {
 
   private async warnOutOfScopeSections(
     pluginName: string,
-    pluginSrc: string
+    pluginSrc: string,
+    emittedSections: readonly string[]
   ): Promise<readonly string[]> {
     const skipped: string[] = [];
     for (const section of OUT_OF_SCOPE_PLUGIN_SECTIONS) {
+      if (emittedSections.includes(section)) continue;
       if (await this.fs.fileExists(join(pluginSrc, section))) {
         this.logger.warn(`Skipping ${section}/ in plugin '${pluginName}' (out of scope for MVP1).`);
         skipped.push(section);

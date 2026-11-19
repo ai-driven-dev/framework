@@ -1,13 +1,18 @@
 import { basename, dirname, join, relative } from "node:path";
 import {
+  FlatRuleNameClashError,
   FlatTargetExistsError,
   McpConfigError,
   OutDirNotDirectoryError,
+  PathScopedRuleUnsupportedError,
 } from "../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
 import { flatMcpKeyPrefix } from "../../../../kernel/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
-import { rewriteRelativeLinks } from "../../../../kernel/materialization/relative-link-rewrite.js";
+import {
+  relocateRelativeLinks,
+  rewriteRelativeLinks,
+} from "../../../../kernel/materialization/relative-link-rewrite.js";
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
@@ -21,6 +26,17 @@ import {
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import type { BuildOutputStrategy, SourceMarketplace } from "./build-output-strategy.js";
 
+/** A Rule scoped beyond what the target expresses fails the build, or is skipped with a warning. */
+export type InexpressibleRulePolicy =
+  | { readonly kind: "fail" }
+  | { readonly kind: "skip"; readonly warn: Logger };
+
+/** The caller's choices for one flat build: overwrite existing files, and treat an unscopable Rule. */
+export interface FlatBuildOptions {
+  readonly force: boolean;
+  readonly inexpressibleRules?: InexpressibleRulePolicy;
+}
+
 function parsePluginMcp(pluginName: string, content: string): unknown {
   try {
     return JSON.parse(content);
@@ -33,21 +49,31 @@ function parsePluginMcp(pluginName: string, content: string): unknown {
 
 export class FlatBuildStrategy implements BuildOutputStrategy {
   private sourceDir = "";
+  private readonly ruleDestinations = new Map<string, string>();
 
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly assetProvider: AssetProvider,
     private readonly contract: ToolBuildContract,
-    private readonly force: boolean,
+    private readonly options: FlatBuildOptions,
     private readonly absOut: string,
     private readonly isDirectory: (path: string) => Promise<boolean>,
     private readonly logger?: Logger
   ) {}
 
+  private get force(): boolean {
+    return this.options.force;
+  }
+
+  private get inexpressibleRules(): InexpressibleRulePolicy {
+    return this.options.inexpressibleRules ?? { kind: "fail" };
+  }
+
   async preBuild(outDir: string, sourceDir: string): Promise<void> {
     const exists = await this.fs.fileExists(outDir);
     if (!exists || !(await this.isDirectory(outDir))) throw new OutDirNotDirectoryError(outDir);
     this.sourceDir = sourceDir;
+    this.ruleDestinations.clear();
   }
 
   async writePluginManifest(): Promise<number> {
@@ -79,6 +105,22 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
       count += await this.writeFlatSkill(artifact, pluginName, absPath, skillsSrc);
     }
     return count;
+  }
+
+  async writeRules(pluginName: string, pluginSrc: string): Promise<number> {
+    const artifact = this.contract.artifacts.rules;
+    if (!artifact.supported) return 0;
+    const rulesSrc = join(pluginSrc, "rules");
+    if (!(await this.fs.fileExists(rulesSrc))) return 0;
+    const files = (await this.fs.listFilesRecursive(rulesSrc)).filter((p) => p.endsWith(".md"));
+    // Every Rule is transformed before any is written: a rejected Rule leaves none behind.
+    const outputs: { destPath: string; content: string }[] = [];
+    for (const absPath of files) {
+      const output = await this.prepareFlatRule(artifact, pluginName, absPath, rulesSrc);
+      if (output !== null) outputs.push(output);
+    }
+    for (const { destPath, content } of outputs) await this.fs.writeFile(destPath, content);
+    return outputs.length;
   }
 
   async writeHooks(pluginName: string, pluginSrc: string): Promise<number> {
@@ -120,6 +162,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const files = step.emit({
       builtPlugins: names,
       pluginMcp: await this.readPluginMcp(names),
+      rules: [...this.ruleDestinations.keys()].sort(),
       existing: await this.readEach(step.reads(names), (relPath) => join(outDir, relPath)),
       present: await this.presentOf(step.probes(names), outDir),
       assets: new Map(
@@ -188,6 +231,45 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
       : this.rewriteAgentForFlat(content, flatRelPath, pluginName);
     await this.fs.writeFile(destPath, outContent);
     return 1;
+  }
+
+  private async prepareFlatRule(
+    artifact: Extract<ArtifactContract, { supported: true }>,
+    pluginName: string,
+    absPath: string,
+    rulesSrc: string
+  ): Promise<{ destPath: string; content: string } | null> {
+    const ruleRel = relative(rulesSrc, absPath).replace(/\\/g, "/");
+    const srcRelPath = `rules/${ruleRel}`;
+    const content = await this.fs.readFile(absPath);
+    assertNoToolsPlaceholder(content, pluginName, srcRelPath);
+    const scope = artifact.inexpressibleScope?.(content);
+    if (scope !== undefined) {
+      if (this.inexpressibleRules.kind === "fail") {
+        throw new PathScopedRuleUnsupportedError(pluginName, srcRelPath, scope);
+      }
+      this.inexpressibleRules.warn.warn(
+        `Skipping Rule '${srcRelPath}' in plugin '${pluginName}': scoped by paths ` +
+          `${JSON.stringify(scope)}, which this target cannot express.`
+      );
+      return null;
+    }
+    const flatRelPath = artifact.path(pluginName, srcRelPath);
+    const destPath = join(this.absOut, flatRelPath);
+    // Two Rules flattening to one name would overwrite each other even under --force.
+    const ruleId = `${pluginName}/${srcRelPath}`;
+    const clashing = this.ruleDestinations.get(flatRelPath);
+    if (clashing !== undefined) throw new FlatRuleNameClashError(clashing, ruleId, flatRelPath);
+    this.ruleDestinations.set(flatRelPath, ruleId);
+    await this.checkCollision(destPath, pluginName);
+    const outContent = artifact.transform
+      ? artifact.transform(content, pluginName, ruleRel)
+      : relocateRelativeLinks(content, {
+          sourceFilePluginRelative: srcRelPath,
+          materializedFileRelative: flatRelPath,
+          resolveTargetPath: (rel) => this.resolveTargetForMd(pluginName, rel),
+        });
+    return { destPath, content: outContent };
   }
 
   /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer,
@@ -392,6 +474,9 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     }
     if (pluginRelPath.startsWith("skills/") && art.skills.supported) {
       return art.skills.path(pluginName, pluginRelPath);
+    }
+    if (pluginRelPath.startsWith("rules/") && art.rules.supported) {
+      return art.rules.path(pluginName, pluginRelPath);
     }
     return pluginRelPath;
   }

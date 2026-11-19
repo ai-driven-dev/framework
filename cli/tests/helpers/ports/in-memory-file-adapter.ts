@@ -25,6 +25,8 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   private readonly files = new Map<string, string>();
+  /** Directories created and never deleted, so an empty one exists as it does on disk. */
+  private readonly directories = new Set<string>();
   private readonly hasher: Hasher;
   /** Path → what it resolves to, for a test proving `realpath`-based containment
    * without a real filesystem — see `setSymlink`. */
@@ -47,8 +49,8 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     this.executable.delete(norm(path));
   }
 
-  async createDirectory(_path: string): Promise<void> {
-    // No-op: directories are implicit in path prefixes
+  async createDirectory(path: string): Promise<void> {
+    this.directories.add(norm(path));
   }
 
   async deleteEmptyDirectories(_path: string): Promise<void> {
@@ -83,7 +85,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
 
   async fileExists(path: string): Promise<boolean> {
     const normalizedPath = norm(path);
-    if (this.files.has(normalizedPath)) return true;
+    if (this.files.has(normalizedPath) || this.directories.has(normalizedPath)) return true;
     // Also return true if the path is a virtual directory (has children)
     const prefix = normalizedPath.endsWith("/") ? normalizedPath : `${normalizedPath}/`;
     for (const key of this.files.keys()) {
@@ -154,6 +156,9 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
       if (key.startsWith(prefix) || key === normalizedDir) {
         this.files.delete(key);
       }
+    }
+    for (const dir of [...this.directories]) {
+      if (dir.startsWith(prefix) || dir === normalizedDir) this.directories.delete(dir);
     }
   }
 

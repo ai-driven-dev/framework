@@ -64,7 +64,14 @@ async function flatMerge(
   seed: Record<string, string>
 ): Promise<InMemoryFileAdapter> {
   const fs = sourceFs(seed);
-  const strategy = new FlatBuildStrategy(fs, unused, contract, true, OUT, async () => true);
+  const strategy = new FlatBuildStrategy(
+    fs,
+    unused,
+    contract,
+    { force: true },
+    OUT,
+    async () => true
+  );
   await strategy.writeHooks(PLUGIN, SRC);
   return fs;
 }

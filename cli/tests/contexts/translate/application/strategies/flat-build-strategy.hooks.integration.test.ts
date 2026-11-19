@@ -69,7 +69,7 @@ function makeStrategy(
     memFs,
     makeAssetProvider(),
     contractFn(),
-    false,
+    { force: false },
     ABS_OUT,
     makeIsDirectory(memFs),
     logger
@@ -185,7 +185,7 @@ describe("cursor flat hooks", () => {
       memFs,
       makeAssetProvider(),
       buildCursorFlatContract(),
-      false,
+      { force: false },
       ABS_OUT,
       makeIsDirectory(memFs),
       logger
@@ -314,7 +314,7 @@ describe("opencode flat hooks", () => {
       memFs,
       makeOpencodeAssetProvider(),
       buildOpencodeFlatContract(),
-      false,
+      { force: false },
       ABS_OUT,
       makeIsDirectory(memFs),
       logger

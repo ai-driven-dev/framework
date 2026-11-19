@@ -53,7 +53,7 @@ function seeded(agentFile: string): InMemoryFileAdapter {
 function strategyFor(tool: ToolId, fs: InMemoryFileAdapter): FlatBuildStrategy {
   const contract = buildContractFor(tool, "flat");
   if (contract === undefined) throw new Error(`${tool} has no flat contract`);
-  return new FlatBuildStrategy(fs, ASSETS, contract(), false, OUT, async () => true);
+  return new FlatBuildStrategy(fs, ASSETS, contract(), { force: false }, OUT, async () => true);
 }
 
 function outRelative(fs: InMemoryFileAdapter): Set<string> {

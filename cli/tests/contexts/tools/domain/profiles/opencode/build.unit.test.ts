@@ -50,6 +50,7 @@ function emit(input: {
   return configArtifactOf().emit({
     builtPlugins: input.builtPlugins ?? [],
     pluginMcp: input.pluginMcp ?? new Map(),
+    rules: [],
     existing: new Map(Object.entries(input.existing ?? {})),
     present: new Set(input.present ?? []),
     assets: new Map([

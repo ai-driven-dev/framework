@@ -206,6 +206,26 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
   });
 
+  it("keeps the Rule instructions an extracted Kilo flat archive ships", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const shipped = { instructions: [".kilo/rules/aidd-test-style.md"] };
+    await deps.fs.writeFile(join(PROJECT_ROOT, ".kilo/kilo.jsonc"), JSON.stringify(shipped));
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    for (const force of [false, true]) {
+      await buildUseCase(deps).execute({
+        toolId: "kilo",
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        force,
+        version: "1.0.0",
+      });
+      const config = JSON.parse(await deps.fs.readFile(join(PROJECT_ROOT, ".kilo/kilo.jsonc")));
+      expect(config.instructions).toEqual(shipped.instructions);
+    }
+  });
+
   it("reuses Kilo's existing root JSONC config instead of creating a project-local config", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
