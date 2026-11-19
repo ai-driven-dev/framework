@@ -19,6 +19,7 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/install-global-plugins.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
@@ -131,6 +132,7 @@ async function buildUseCase(
       execute: ReturnType<typeof vi.fn>;
     };
     detectContext?: boolean;
+    installGlobalPlugins?: Pick<InstallGlobalPlugins, "execute">;
   }
 ) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
@@ -170,7 +172,7 @@ async function buildUseCase(
           new ConfigureMachineScope(options.userManifestRepo, deps.currentVersionProvider),
           setupMarketplaceRegistration,
           (syncOptions) => syncSettingsUseCase.execute(syncOptions),
-          { execute: async () => ({ plugins: [] }) }
+          options.installGlobalPlugins ?? { execute: async () => ({ plugins: [] }) }
         );
   const useCase = runSetupOf(
     deps.fs,
@@ -203,7 +205,13 @@ async function buildUseCase(
 }
 
 function remoteFlow(
-  opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[]; scope: "project" | "user" }> = {}
+  opts: Partial<{
+    aiTools: ToolId[];
+    ideTools: ToolId[];
+    scope: "project" | "user";
+    pluginMode: "all" | "named";
+    pluginNames: string[];
+  }> = {}
 ): SetupFlow {
   return new SetupFlow({
     ...flowTools(),
@@ -212,7 +220,8 @@ function remoteFlow(
     source: remoteFrameworkSource(),
     aiTools: opts.aiTools ?? [],
     ideTools: opts.ideTools ?? [],
-    pluginMode: "none",
+    pluginMode: opts.pluginMode ?? "none",
+    pluginNames: opts.pluginNames,
     interactive: false,
     scope: opts.scope,
   });
@@ -672,12 +681,7 @@ describe("setup --scope user", () => {
 
   it("hands the machine-wide sync the tools it registered and the plugins it enabled", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
-    const syncSettingsUseCase = makeNoOpMarketplaceSyncSettings() as Pick<
-      SyncSettings,
-      "execute"
-    > & {
-      execute: ReturnType<typeof vi.fn>;
-    };
+    const syncSettingsUseCase = { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
     const { useCase } = await buildUseCase(undefined, undefined, undefined, {
       userManifestRepo,
       syncSettingsUseCase,
@@ -687,6 +691,36 @@ describe("setup --scope user", () => {
 
     expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: [] })
+    );
+  });
+
+  it("installs the named plugins machine-wide and enables exactly those it installed", async () => {
+    const userManifestRepo = new InMemoryManifestRepository();
+    const syncSettingsUseCase = { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
+    const execute = vi.fn(async () => ({ plugins: ["aidd-dev"] }));
+    const { useCase } = await buildUseCase(undefined, undefined, undefined, {
+      userManifestRepo,
+      syncSettingsUseCase,
+      installGlobalPlugins: { execute },
+    });
+
+    await useCase.execute(
+      remoteFlow({
+        aiTools: [TOOL.claude],
+        scope: "user",
+        pluginMode: "named",
+        pluginNames: ["aidd-dev"],
+      })
+    );
+
+    expect(execute).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      toolIds: [TOOL.claude],
+      mode: "named",
+      pluginNames: ["aidd-dev"],
+    });
+    expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: ["aidd-dev"] })
     );
   });
 
