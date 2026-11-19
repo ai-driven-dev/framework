@@ -1,7 +1,6 @@
 import type { CheckStatus } from "../contexts/auth/application/check-status.js";
 import type { LogIn } from "../contexts/auth/application/log-in.js";
 import type { LogOut } from "../contexts/auth/application/log-out.js";
-import type { AddMarketplace } from "../contexts/distribution/application/add-marketplace.js";
 import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
@@ -51,6 +50,7 @@ import type { DoctorAll } from "../orchestration/global/doctor-all.js";
 import type { ReportAllStatus } from "../orchestration/global/report-all-status.js";
 import type { RestoreAll } from "../orchestration/global/restore-all.js";
 import type { UpdateTools } from "../orchestration/global/update-tools.js";
+import type { AddMarketplace } from "../orchestration/marketplace/add-marketplace.js";
 import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check-marketplace-upstream.js";
 import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remove-project-marketplace.js";
 import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user-marketplace.js";

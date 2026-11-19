@@ -4,10 +4,6 @@ import { AddMarketplace } from "../../../../src/contexts/distribution/applicatio
 import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
 import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import type {
-  MarketplaceRemovalRequest,
-  MarketplaceRemover,
-} from "../../../../src/contexts/distribution/ports/marketplace-remover.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
@@ -41,15 +37,8 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
-  const removals: MarketplaceRemovalRequest[] = [];
-  const remover: MarketplaceRemover = {
-    remove: async (request) => {
-      removals.push(request);
-      await registry.delete(request.projectRoot, request.name, request.scope ?? "project");
-    },
-  };
-  const useCase = new AddMarketplace(registry, trustStore, resolveMarketplace, prompter, remover);
-  return { useCase, registry, trustStore, removals };
+  const useCase = new AddMarketplace(registry, trustStore, resolveMarketplace, prompter);
+  return { useCase, registry, trustStore };
 }
 
 describe("AddMarketplace", () => {
@@ -123,52 +112,6 @@ describe("AddMarketplace", () => {
           autoTrust: true,
         })
       ).rejects.toThrow(InvalidMarketplaceNameError);
-    });
-
-    it("overwrite=true replaces an existing entry without throwing", async () => {
-      const { useCase, registry } = await buildUseCase();
-      const source = { kind: "local" as const, path: MARKETPLACE_FIXTURE };
-      await useCase.execute({
-        source,
-        name: "awesome",
-        scope: "project",
-        projectRoot: PROJECT_ROOT,
-        autoTrust: true,
-      });
-
-      await useCase.execute({
-        source,
-        name: "awesome",
-        scope: "project",
-        projectRoot: PROJECT_ROOT,
-        autoTrust: true,
-        overwrite: true,
-      });
-
-      const list = await registry.list(PROJECT_ROOT);
-      expect(list).toHaveLength(1);
-      expect(list[0]?.name).toBe("awesome");
-    });
-
-    it("with overwrite, a fetch failure leaves the previous entry removed", async () => {
-      const { useCase, registry, removals } = await buildUseCase();
-      const source = { kind: "local" as const, path: MARKETPLACE_FIXTURE };
-      const command = { name: "awesome", scope: "project" as const, projectRoot: PROJECT_ROOT };
-      await useCase.execute({ ...command, source, autoTrust: true });
-
-      await expect(
-        useCase.execute({
-          ...command,
-          source: { kind: "local", path: "/empty-marketplace-dir" },
-          autoTrust: true,
-          overwrite: true,
-        })
-      ).rejects.toThrow(InvalidPluginManifestError);
-
-      expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
-      expect(removals).toEqual([
-        { name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true, scope: "project" },
-      ]);
     });
 
     it("throws InvalidPluginManifestError when marketplace.json is missing at the source", async () => {

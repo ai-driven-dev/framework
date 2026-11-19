@@ -1,7 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { AddMarketplace } from "../../../src/contexts/distribution/application/add-marketplace.js";
+import { AddMarketplace as AddMarketplaceToRegistry } from "../../../src/contexts/distribution/application/add-marketplace.js";
 import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
@@ -9,9 +10,11 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distributi
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
+import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
 import {
   InvalidMarketplaceNameError,
+  InvalidPluginManifestError,
   TrustDeniedError,
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
@@ -81,13 +84,24 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
     prompter
   );
   const removals: { autoConfirm?: boolean; scope?: string }[] = [];
-  const add = new AddMarketplace(registry, trustStore, resolveMarketplace, prompter, {
-    remove: async (request) => {
+  const removeProject = {
+    execute: async (request: Parameters<typeof remove.execute>[0]) => {
       events.push("remove");
       removals.push({ autoConfirm: request.autoConfirm, scope: request.scope });
-      await remove.execute(request);
+      return remove.execute(request);
     },
-  });
+  };
+  const removeUser = {
+    execute: async (): Promise<never> => {
+      throw new Error("a project marketplace is removed by the project scenario");
+    },
+  };
+  const add = new AddMarketplace(
+    new ListMarketplaces(registry),
+    removeProject,
+    removeUser,
+    new AddMarketplaceToRegistry(registry, trustStore, resolveMarketplace, prompter)
+  );
   const command = {
     name: NAME,
     source: SOURCE,
@@ -122,17 +136,69 @@ describe("marketplace add, the order it takes its steps in", () => {
     expect(removals).toEqual([{ autoConfirm: true, scope: "project" }]);
   });
 
-  it("refuses the reserved name before it reads the registry", async () => {
-    const { add, command, registryReads } = await marketplaceAdd(
+  it("with overwrite, replaces the project entry that hides a user entry of the same name", async () => {
+    const { add, command, registry } = await marketplaceAdd(
+      (recorded) => new AnsweringPrompter(recorded, true)
+    );
+    const addedAt = "2026-01-01T00:00:00.000Z";
+    await registry.save(PROJECT_ROOT, Marketplace.create({ ...command, addedAt }));
+    await registry.save(PROJECT_ROOT, Marketplace.create({ ...command, scope: "user", addedAt }));
+
+    await add.execute({ ...command, autoTrust: true, overwrite: true });
+
+    expect(registry.getAll(PROJECT_ROOT).map((m) => m.scope)).toEqual(["project", "user"]);
+    expect((await registry.list(PROJECT_ROOT))[0]?.addedAt).not.toBe(addedAt);
+  });
+
+  it("with overwrite of a name not registered, removes nothing and adds it", async () => {
+    const { add, command, events, removals, registry } = await marketplaceAdd(
       (recorded) => new AnsweringPrompter(recorded, true)
     );
 
-    await expect(
-      add.execute({ ...command, name: FRAMEWORK_MARKETPLACE_NAME, autoTrust: true })
-    ).rejects.toThrow(InvalidMarketplaceNameError);
+    await add.execute({ ...command, autoTrust: true, overwrite: true });
 
-    expect(registryReads()).toBe(0);
+    expect(events).toEqual(["resolve", "save"]);
+    expect(removals).toEqual([]);
+    expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
   });
+
+  it("with overwrite, a fetch failure leaves the previous entry removed (current behaviour, not the wanted one)", async () => {
+    const { add, command, events, registry } = await marketplaceAdd(
+      (recorded) => new AnsweringPrompter(recorded, true)
+    );
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({ ...command, addedAt: "2026-01-01T00:00:00.000Z" })
+    );
+    events.length = 0;
+
+    await expect(
+      add.execute({
+        ...command,
+        source: { kind: "local", path: "/empty-marketplace-dir" },
+        autoTrust: true,
+        overwrite: true,
+      })
+    ).rejects.toThrow(InvalidPluginManifestError);
+
+    expect(events).toEqual(["remove", "resolve"]);
+    expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
+  });
+
+  it.each([false, true])(
+    "refuses the reserved name before it reads the registry, with overwrite %s",
+    async (overwrite) => {
+      const { add, command, registryReads } = await marketplaceAdd(
+        (recorded) => new AnsweringPrompter(recorded, true)
+      );
+
+      await expect(
+        add.execute({ ...command, name: FRAMEWORK_MARKETPLACE_NAME, autoTrust: true, overwrite })
+      ).rejects.toThrow(InvalidMarketplaceNameError);
+
+      expect(registryReads()).toBe(0);
+    }
+  );
 
   it("asks for no trust when autoTrust is set", async () => {
     const { add, command, events } = await marketplaceAdd(

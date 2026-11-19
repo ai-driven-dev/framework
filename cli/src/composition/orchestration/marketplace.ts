@@ -5,7 +5,6 @@ import { FindMarketplaceToRemove } from "../../contexts/distribution/application
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.js";
@@ -24,6 +23,7 @@ import { RecordSourceReference } from "../../contexts/machine-claims/application
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
+import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.js";
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user-marketplace.js";
@@ -99,6 +99,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     marketplaceTrustStore,
     releaseResolver,
     resolveMarketplaceUseCase,
+    listMarketplaces,
     refreshMarketplace,
     registerFrameworkMarketplace,
   } = base;
@@ -128,19 +129,14 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new RemoveMarketplace(marketplaceRegistry),
     resolveHomeDir()
   );
-  // Removing deletes installed plugin files, which is orchestration work: its two remove
-  // scenarios answer distribution's `MarketplaceRemover`.
-  const marketplaceRemover: MarketplaceRemover = {
-    remove: async (request) => {
-      await (request.scope === "user"
-        ? userMarketplaceRemoveUseCase.execute(request)
-        : marketplaceRemoveUseCase.execute(request));
-    },
-  };
-  const addMarketplace = wireAddMarketplace(
-    { marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase },
-    prompter,
-    marketplaceRemover
+  const addMarketplace = new AddMarketplace(
+    listMarketplaces,
+    marketplaceRemoveUseCase,
+    userMarketplaceRemoveUseCase,
+    wireAddMarketplace(
+      { marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase },
+      prompter
+    )
   );
   const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
     new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),

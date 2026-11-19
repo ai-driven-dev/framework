@@ -13,7 +13,6 @@ import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastru
 import { PluginCatalogRepositoryAdapter } from "../contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import type { MarketplaceRegistry } from "../contexts/distribution/ports/marketplace-registry.js";
-import type { MarketplaceRemover } from "../contexts/distribution/ports/marketplace-remover.js";
 import type { MarketplaceTrustStore } from "../contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginCatalogRepository } from "../contexts/distribution/ports/plugin-catalog-repository.js";
 import type { PluginFetcher } from "../contexts/distribution/ports/plugin-fetcher.js";
@@ -47,7 +46,7 @@ export interface DistributionDeps {
   registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
 
-/** `addMarketplace` is built by `wireAddMarketplace`, once the caller owns a remover. */
+/** `addMarketplace` is built by `wireAddMarketplace`. */
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
@@ -93,21 +92,17 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   };
 }
 
-/** `marketplace add --overwrite` removes before it adds, and removing deletes installed plugin
- * files, which distribution does not own: the caller hands in the remover. */
 export function wireAddMarketplace(
   deps: Pick<
     DistributionDeps,
     "marketplaceRegistry" | "marketplaceTrustStore" | "resolveMarketplaceUseCase"
   >,
-  prompter: Prompter,
-  remover: MarketplaceRemover
+  prompter: Prompter
 ): AddMarketplace {
   return new AddMarketplace(
     deps.marketplaceRegistry,
     deps.marketplaceTrustStore,
     deps.resolveMarketplaceUseCase,
-    prompter,
-    remover
+    prompter
   );
 }

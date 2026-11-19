@@ -1,5 +1,4 @@
 import {
-  InvalidMarketplaceNameError,
   InvalidPluginManifestError,
   MarketplaceAlreadyRegisteredError,
   TrustDeniedError,
@@ -7,10 +6,9 @@ import {
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { Prompter } from "../../../shared/ports/prompter.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
+import { assertNotReservedMarketplaceName } from "../contract/marketplace.js";
 import { Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
-import type { MarketplaceRemover } from "../ports/marketplace-remover.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 import type { ResolveMarketplace } from "./resolve-marketplace.js";
 
@@ -20,7 +18,8 @@ export interface AddMarketplaceCommand {
   scope: MarketplaceScope;
   projectRoot: string;
   autoTrust: boolean;
-  overwrite?: boolean;
+  /** Saves over the registered entry of the same name instead of refusing it. */
+  replace?: boolean;
 }
 
 export interface AddMarketplaceResult {
@@ -32,17 +31,12 @@ export class AddMarketplace {
     private readonly registry: MarketplaceRegistry,
     private readonly trustStore: MarketplaceTrustStore,
     private readonly resolveMarketplace: ResolveMarketplace,
-    private readonly prompter: Prompter,
-    private readonly remover: MarketplaceRemover
+    private readonly prompter: Prompter
   ) {}
 
   async execute(options: AddMarketplaceCommand): Promise<AddMarketplaceResult> {
-    if (options.name === FRAMEWORK_MARKETPLACE_NAME) {
-      throw new InvalidMarketplaceNameError(
-        `"${FRAMEWORK_MARKETPLACE_NAME}" is reserved for the framework auto-register entry`
-      );
-    }
-    await this.assertNotRegistered(options.projectRoot, options.name, options.overwrite ?? false);
+    assertNotReservedMarketplaceName(options.name);
+    if (!options.replace) await this.assertNotRegistered(options.projectRoot, options.name);
     const marketplace = Marketplace.create({
       name: options.name,
       source: options.source,
@@ -61,21 +55,9 @@ export class AddMarketplace {
     return { marketplace };
   }
 
-  private async assertNotRegistered(
-    projectRoot: string,
-    name: string,
-    overwrite: boolean
-  ): Promise<void> {
+  private async assertNotRegistered(projectRoot: string, name: string): Promise<void> {
     const existing = await this.registry.list(projectRoot);
-    const found = existing.find((m) => m.name === name);
-    if (!found) return;
-    if (!overwrite) throw new MarketplaceAlreadyRegisteredError(name);
-    await this.remover.remove({
-      name,
-      projectRoot,
-      autoConfirm: true,
-      scope: found.scope,
-    });
+    if (existing.some((m) => m.name === name)) throw new MarketplaceAlreadyRegisteredError(name);
   }
 
   private async ensureTrust(options: AddMarketplaceCommand): Promise<void> {
