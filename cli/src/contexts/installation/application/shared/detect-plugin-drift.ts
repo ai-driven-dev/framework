@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
 
@@ -82,10 +83,8 @@ export class DetectPluginDrift {
         drifted.push({ relativePath, kind: "missing" });
         continue;
       }
-      const diskHash = await this.fs.readFileHash(fullPath);
-      if (diskHash.value !== expectedHash) {
-        drifted.push({ relativePath, kind: "hash-mismatch" });
-      }
+      const verdict = driftOf(expectedHash, await this.fs.readFileHash(fullPath));
+      if (verdict !== "ok") drifted.push({ relativePath, kind: "hash-mismatch" });
     }
     return drifted;
   }

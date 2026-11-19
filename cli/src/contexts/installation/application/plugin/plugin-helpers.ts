@@ -6,6 +6,7 @@ import type { Scope } from "../../../../shared/domain/scope.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
@@ -68,7 +69,7 @@ export async function isPluginFileAtDesiredState(
 ): Promise<boolean> {
   if (!(await fs.fileExists(outputPath))) return false;
   const content = await fs.readFile(outputPath);
-  return FileHash.of(content).value === expectedHashValue;
+  return driftOf(expectedHashValue, FileHash.of(content)) === "ok";
 }
 
 /**

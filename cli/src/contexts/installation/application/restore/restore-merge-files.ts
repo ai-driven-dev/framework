@@ -7,6 +7,7 @@ import {
 } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import { driftOfKeys } from "../../domain/manifest/drift.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
 import { RestoreDriftEntries } from "./restore-drift-entries.js";
@@ -102,11 +103,8 @@ export class RestoreMergeFiles {
     const diskPath = join(projectRoot, entry.relativePath);
     if (!(await this.fs.fileExists(diskPath))) return "deleted";
     const diskContent = await this.fs.readFile(diskPath);
-    const diskEntries = extractMergeEntries(diskContent, entry.sectionKey);
-    const hasDrift = Object.keys(entry.entries).some(
-      (key) => diskEntries[key]?.value !== entry.entries[key].value
-    );
-    return hasDrift ? "modified" : null;
+    const verdict = driftOfKeys(entry.entries, extractMergeEntries(diskContent, entry.sectionKey));
+    return verdict === "ok" ? null : "modified";
   }
 
   private buildDriftEntry(

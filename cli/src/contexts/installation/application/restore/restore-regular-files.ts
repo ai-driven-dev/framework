@@ -3,6 +3,7 @@ import { type FileHash, InstallationFile } from "../../../../shared/domain/file.
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
 import { RestoreDriftEntries } from "./restore-drift-entries.js";
 
@@ -101,7 +102,7 @@ export class RestoreRegularFiles {
     manifestHashValue: string
   ): Promise<"deleted" | "modified" | null> {
     if (!(await this.fs.fileExists(diskPath))) return "deleted";
-    const diskHash = await this.fs.readFileHash(diskPath);
-    return diskHash.value !== manifestHashValue ? "modified" : null;
+    const verdict = driftOf(manifestHashValue, await this.fs.readFileHash(diskPath));
+    return verdict === "ok" ? null : "modified";
   }
 }
