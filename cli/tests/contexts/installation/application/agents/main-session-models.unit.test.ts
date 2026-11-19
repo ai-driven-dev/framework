@@ -41,6 +41,19 @@ interface Case {
   removal?: string | null | Error;
 }
 
+interface PlannedInstall {
+  path: string;
+  current: string | null;
+  values: unknown;
+  previous: MainModelRecord | undefined;
+  schema: string | undefined;
+}
+
+interface PlannedRemoval {
+  current: string | null;
+  recorded: MainModelRecord;
+}
+
 /** The in-memory files, noting each write and delete in the order they happen. */
 class RecordingFiles extends InMemoryFileAdapter {
   constructor(private readonly events: string[]) {
@@ -71,8 +84,8 @@ function harness(given: Case = {}) {
   for (const [path, content] of Object.entries(given.files ?? { [A]: "present" })) {
     files.setFile(path, content);
   }
-  const installs: unknown[][] = [];
-  const removals: unknown[][] = [];
+  const installs: PlannedInstall[] = [];
+  const removals: PlannedRemoval[] = [];
   let saved: MainModels | undefined;
   const store: AgentModelStore = {
     loadProviders: async () => ({}),
@@ -84,14 +97,14 @@ function harness(given: Case = {}) {
     },
   };
   const settings: MainSessionSettings = {
-    planInstall: (...args) => {
-      installs.push(args);
+    planInstall: (path, current, values, previous, schema) => {
+      installs.push({ path, current, values, previous, schema });
       const answer = given.install ?? { content: "installed", record: record(A, "new") };
       if (answer instanceof Error) throw answer;
       return answer;
     },
-    planRemoval: (...args) => {
-      removals.push(args);
+    planRemoval: (current, recorded) => {
+      removals.push({ current, recorded });
       const answer = given.removal === undefined ? "restored" : given.removal;
       if (answer instanceof Error) throw answer;
       return answer;
@@ -121,7 +134,15 @@ describe("MainSessionModels", () => {
 
       const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
 
-      expect(h.installs).toStrictEqual([[A, "current", { model: "p-model" }, undefined, SCHEMA]]);
+      expect(h.installs).toStrictEqual([
+        {
+          path: A,
+          current: "current",
+          values: { model: "p-model" },
+          previous: undefined,
+          schema: SCHEMA,
+        },
+      ]);
       expect(h.file(A)).toBe("installed");
       expect(h.saved()).toStrictEqual({ h: record(A, "new") });
       expect(outcome).toStrictEqual({ changed: [{ host: "h", path: A }], skipped: [] });
@@ -132,7 +153,7 @@ describe("MainSessionModels", () => {
 
       await h.subject.apply(["h"], new Map([["h", "p"]]));
 
-      expect(h.installs[0]?.[1]).toBeNull();
+      expect(h.installs[0]?.current).toBeNull();
     });
 
     it("hands the record it kept to the plan, so a value the person changed stays theirs", async () => {
@@ -141,7 +162,7 @@ describe("MainSessionModels", () => {
 
       await h.subject.apply(["h"], new Map([["h", "p"]]));
 
-      expect(h.installs[0]?.[3]).toStrictEqual(kept);
+      expect(h.installs[0]?.previous).toStrictEqual(kept);
       expect(h.removals).toStrictEqual([]);
     });
 
@@ -225,7 +246,7 @@ describe("MainSessionModels", () => {
 
       await h.subject.apply(["h"], new Map());
 
-      expect(h.removals[0]?.[0]).toBeNull();
+      expect(h.removals[0]?.current).toBeNull();
     });
 
     it("skips a recorded file it cannot restore, naming it, and keeps the record", async () => {
@@ -250,11 +271,11 @@ describe("MainSessionModels", () => {
 
       const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
 
-      expect(h.removals).toStrictEqual([["old-file", old]]);
-      expect(h.installs[0]?.[1]).toBe("new-file");
+      expect(h.removals).toStrictEqual([{ current: "old-file", recorded: old }]);
+      expect(h.installs[0]?.current).toBe("new-file");
       expect(h.file(B)).toBe("old-restored");
       expect(h.file(A)).toBe("installed");
-      expect(h.installs[0]?.[3]).toBeUndefined();
+      expect(h.installs[0]?.previous).toBeUndefined();
       expect(h.saved()).toStrictEqual({ h: record(A, "new") });
       expect(outcome.changed).toStrictEqual([
         { host: "h", path: B },
