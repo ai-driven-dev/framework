@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { withdrawProjectRegistrations } from "../../../../../src/contexts/host-registration/application/withdraw/withdraw-project-registrations.js";
 import type {
@@ -87,7 +88,7 @@ describe("withdrawing what a project registered through the host's own CLI", () 
 
     expect(activator.removedMarketplaces).toStrictEqual([]);
     expect(logger.warnMessages).toStrictEqual([
-      `claude: '${HOST_NAME}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json, and its cache at: ${["/cache", HOST_NAME].join("/")}.`,
+      `claude: '${HOST_NAME}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json, and its cache at: ${join("/cache", HOST_NAME)}.`,
     ]);
   });
 
@@ -134,7 +135,7 @@ describe("withdrawing what a project registered through the host's own CLI", () 
     );
 
     expect(logger.warnMessages).toStrictEqual([
-      `claude: registration left in place, the claude CLI is not on the PATH. Its cache survives at: ${["/cache", HOST_NAME].join("/")}.`,
+      `claude: registration left in place, the claude CLI is not on the PATH. Its cache survives at: ${join("/cache", HOST_NAME)}.`,
     ]);
   });
 

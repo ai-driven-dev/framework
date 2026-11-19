@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   proveUserRegistrations,
@@ -57,7 +58,7 @@ describe("withdrawing every user-scope registration through the host's own CLI",
     const activator = new FakeHostActions({ available: false });
 
     await expect(withdrawUserRegistrations(depsOf(activator), [withdrawal])).rejects.toThrow(
-      `claude: registration left in place, the claude CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). Its cache survives at: ${["/cache", HOST_NAME].join("/")}. User clean refused; canonical claims retained.`
+      `claude: registration left in place, the claude CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). Its cache survives at: ${join("/cache", HOST_NAME)}. User clean refused; canonical claims retained.`
     );
     expect(activator.removedMarketplaces).toStrictEqual([]);
   });
