@@ -45,6 +45,7 @@ const COMMAND_SHAPE_BASELINE: readonly string[] = [
   "src/contexts/telemetry/application/switch/consent-switch.ts",
   "src/contexts/telemetry/application/switch/remember-own-root.ts",
   "src/contexts/translate/application/sinks/disk-sink.ts",
+  // Owed debt: the target merges the flat writer into disk-sink, so no port or command is owed.
   "src/contexts/translate/application/sinks/flat-writer.ts",
   "src/orchestration/global/bulk-conflict-state.ts",
   "src/orchestration/setup/setup-marketplace-registration.ts",
