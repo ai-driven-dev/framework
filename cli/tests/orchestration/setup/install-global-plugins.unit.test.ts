@@ -9,6 +9,7 @@ import { TOOL } from "../../shared/testing/registered-tools.js";
 function match(name: string, recommended: boolean): PluginSourceMatch {
   return {
     marketplaceName: "aidd-framework",
+    githubMarketplace: true,
     entry: {
       name,
       source: { kind: "local", path: `./plugins/${name}` },

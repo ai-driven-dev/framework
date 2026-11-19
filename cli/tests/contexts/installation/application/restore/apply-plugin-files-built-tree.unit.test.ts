@@ -75,6 +75,7 @@ async function installMarketplacePlugin(
     },
     registeredTools()
   ).execute({
+    githubMarketplace: false,
     source: GIT_SUBDIR_SOURCE,
     toolIds: [TOOL.cursor],
     projectRoot: PROJECT_ROOT,

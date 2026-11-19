@@ -62,6 +62,7 @@ async function buildOpencodeProject(): Promise<{
 
 function addLocal(useCase: AddPlugin, path: string, replace?: boolean): Promise<void> {
   return useCase.execute({
+    githubMarketplace: false,
     source: { kind: "local", path },
     toolIds: [TOOL.opencode],
     projectRoot: PROJECT_ROOT,
@@ -137,6 +138,7 @@ describe("AddPlugin and opencode MCP servers", () => {
         })
       );
       await useCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: dir },
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -151,6 +153,7 @@ describe("AddPlugin and opencode MCP servers", () => {
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
 
     await useCase.execute({
+      githubMarketplace: false,
       source: { kind: "local", path: MCP_PLUGIN_DIR },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -202,6 +205,7 @@ describe("AddPlugin and opencode MCP servers", () => {
       );
 
       await useCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: MCP_PLUGIN_DIR },
         toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
@@ -257,6 +261,7 @@ describe("AddPlugin and opencode MCP servers", () => {
 
       await expect(
         useCase.execute({
+          githubMarketplace: false,
           source: { kind: "local", path: MCP_PLUGIN_DIR },
           toolIds: [TOOL.opencode],
           projectRoot: PROJECT_ROOT,

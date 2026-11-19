@@ -11,6 +11,7 @@ import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
 function match(marketplaceName: string): PluginSourceMatch {
   return {
     marketplaceName,
+    githubMarketplace: false,
     entry: {
       name: "aidd-dev",
       source: { kind: "local", path: "./aidd-dev" },

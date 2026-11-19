@@ -70,6 +70,7 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
       projectRoot: options.projectRoot,
       interactive: options.interactive,
       marketplace: chosen.marketplaceName,
+      githubMarketplace: chosen.githubMarketplace,
       requiredVersion,
       pluginMetadata: {
         name: chosen.entry.name,

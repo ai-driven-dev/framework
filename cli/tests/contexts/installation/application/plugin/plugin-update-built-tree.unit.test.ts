@@ -103,6 +103,7 @@ async function installStalePlugin(deps: Deps, registry: FakeMarketplaceRegistry)
     },
     registeredTools()
   ).execute({
+    githubMarketplace: false,
     source: GIT_SUBDIR_SOURCE,
     toolIds: [cursor],
     projectRoot: PROJECT_ROOT,
@@ -110,7 +111,6 @@ async function installStalePlugin(deps: Deps, registry: FakeMarketplaceRegistry)
     interactive: false,
     pluginMetadata: PLUGIN_METADATA,
   });
-
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
   const plugin = manifest.getPlugins(cursor).find((p) => p.name === "sample-plugin");

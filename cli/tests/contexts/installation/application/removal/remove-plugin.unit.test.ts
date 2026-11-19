@@ -76,6 +76,7 @@ async function installPlugin(
     registeredTools()
   );
   await addUseCase.execute({
+    githubMarketplace: false,
     source: { kind: "local", path: fixture },
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,

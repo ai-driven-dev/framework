@@ -34,6 +34,7 @@ export class ResolvePluginSource {
         if (entry.name !== command.pluginName) continue;
         matches.push({
           marketplaceName: marketplace.name,
+          githubMarketplace: marketplace.source.kind === "github",
           entry,
           source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
         });

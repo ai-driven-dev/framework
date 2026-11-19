@@ -36,6 +36,7 @@ async function installWithLogger(toolId: AiToolId) {
     registeredTools()
   );
   await useCase.execute({
+    githubMarketplace: false,
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,

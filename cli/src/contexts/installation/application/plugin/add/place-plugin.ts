@@ -18,10 +18,11 @@ import {
 } from "../../../domain/plugins/installed-plugin.js";
 import type { InstallRuntimeConfig } from "../../install/config/install-runtime-config.js";
 import type { PluginTranslator } from "../../materialize/plugin-translator.js";
+import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";
+import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
 import { writePluginFiles } from "../plugin-helpers.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin-target-resolution.js";
-import type { ResolveAddedPluginSource } from "./resolve-plugin-source.js";
 
 /** A distribution to place for each tool, and what the project already holds of it. */
 export interface PlacePluginCommand {
@@ -54,7 +55,7 @@ export class PlacePlugin {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly logger: Logger,
-    private readonly source: ResolveAddedPluginSource,
+    private readonly built: BuiltMaterializationDeps,
     private readonly tools: ToolCatalog,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {}
@@ -106,7 +107,7 @@ export class PlacePlugin {
   private async placeForTool(placement: ToolPlacement): Promise<Placement> {
     const { command, tool, userScopeDirTaken } = placement;
     const { dist, source, projectRoot, manifest, marketplace } = command;
-    const adapter = this.source.translatorFor(tool, this.fs);
+    const adapter = resolvePluginTranslator(tool, { fs: this.fs, built: this.built });
     if (adapter?.mode === "flat") {
       const result = await adapter.addPlugin(
         dist,
@@ -121,7 +122,7 @@ export class PlacePlugin {
       );
       return { ...result, notices: [] };
     }
-    const output = this.source.translate({ distribution: dist, tool });
+    const output = this.built.translate.execute({ distribution: dist, tool });
     return this.materializeNativePlugin(placement, adapter, {
       ...output,
       files: hashOutputFiles(output.files),

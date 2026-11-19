@@ -32,6 +32,7 @@ export class ListFrameworkPlugins {
     });
     return (catalog?.plugins ?? []).map((entry) => ({
       marketplaceName: marketplace.name,
+      githubMarketplace: marketplace.source.kind === "github",
       entry,
       source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
     }));

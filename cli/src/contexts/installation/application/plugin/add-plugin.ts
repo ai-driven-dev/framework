@@ -4,6 +4,7 @@ import {
   ToolNotInManifestError,
   VersionMismatchError,
 } from "../../../../shared/domain/errors.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -16,12 +17,14 @@ import {
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { PlacePlugin } from "./add/place-plugin.js";
-import type { ResolveAddedPluginSource } from "./add/resolve-plugin-source.js";
+import type {
+  GithubAddedPluginSource,
+  ResolveAddedPluginSource,
+} from "./add/resolve-added-plugin-source.js";
 import { resolvePluginToolIds, resolveScopeForInstall } from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
@@ -30,6 +33,8 @@ export interface PluginAddOptions {
   projectRoot: string;
   interactive: boolean;
   marketplace?: string;
+  /** Whether the marketplace is a github one, whose native tools register without a fetch. */
+  readonly githubMarketplace: boolean;
   requiredVersion?: string;
   pluginMetadata?: { name: string; version?: string; strict: boolean };
   /** When true, drop any existing entry with the same name before adding (idempotent re-add for setup re-runs). */
@@ -53,7 +58,7 @@ export class AddPlugin implements PluginAdd {
   constructor(
     private readonly fs: FileWriter & FileReader,
     manifests: AddPluginManifests,
-    private readonly source: ResolveAddedPluginSource,
+    private readonly source: Pick<ResolveAddedPluginSource, "execute">,
     private readonly place: PlacePlugin,
     private readonly tools: ToolCatalog
   ) {
@@ -66,7 +71,7 @@ export class AddPlugin implements PluginAdd {
   }
 
   private async executeLocked(options: PluginAddOptions): Promise<void> {
-    const { source, toolIds, projectRoot, marketplace } = options;
+    const { source, toolIds, projectRoot } = options;
     const resolveToolId: ToolIdResolver = (raw) => this.tools.toolId(raw);
     const manifest = Manifest.fromJSON(
       (await requireManifest(this.manifestRepo)).toJSON(),
@@ -79,13 +84,19 @@ export class AddPlugin implements PluginAdd {
         : Manifest.fromJSON(existingMachine.toJSON(), resolveToolId);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
-    if (
-      marketplace !== undefined &&
-      (await this.source.isGithubMarketplace(marketplace, projectRoot))
-    ) {
-      await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, machine);
+    const { githubMarketplace } = options;
+    if (githubMarketplace) await this.prepareGithubAdd(options, resolvedToolIds, manifest);
+    const added = await this.source.execute({
+      source,
+      projectRoot,
+      toolIds: resolvedToolIds,
+      githubMarketplace,
+      catalog: options.pluginMetadata,
+    });
+    if (added.isGithubMarketplace) {
+      await this.addGithubMarketplacePlugin(options, added, manifest, machine);
     } else {
-      await this.addLocalPlugin(options, resolvedToolIds, manifest, source, projectRoot, machine);
+      await this.addLocalPlugin(options, added.distribution, resolvedToolIds, manifest, machine);
     }
     const claimed = await this.recordUserScopeOwnership(
       manifest,
@@ -98,60 +109,46 @@ export class AddPlugin implements PluginAdd {
     await this.manifestRepo.save(manifest);
   }
 
-  private async addGithubMarketplacePlugin(
+  /** Refuses or clears an existing entry before anything is fetched. */
+  private async prepareGithubAdd(
     options: PluginAddOptions,
     toolIds: AiToolId[],
-    manifest: Manifest,
-    machine: Manifest
+    manifest: Manifest
   ): Promise<void> {
     const { pluginMetadata } = options;
     if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
-    if (options.replace === true)
+    if (options.replace === true) {
       await this.assertExistingContributionsUnchanged(
         pluginMetadata.name,
         toolIds,
         manifest,
         options.projectRoot
       );
-    if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
-    else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
-    const adapterMap = this.buildAdapterMap(toolIds);
-    const flatToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode === "flat");
-    const nativeToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode !== "flat");
-    if (flatToolIds.length > 0) {
-      await this.addLocalPlugin(
-        options,
-        flatToolIds,
-        manifest,
-        options.source,
-        options.projectRoot,
-        machine
-      );
-    }
-    await this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
+      this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
+    } else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
   }
 
-  private buildAdapterMap(toolIds: AiToolId[]): Map<AiToolId, PluginTranslator | null> {
-    const map = new Map<AiToolId, PluginTranslator | null>();
-    for (const id of toolIds) {
-      map.set(id, this.resolveAdapter(this.tools.aiProfile(id)));
-    }
-    return map;
+  private async addGithubMarketplacePlugin(
+    options: PluginAddOptions,
+    added: GithubAddedPluginSource,
+    manifest: Manifest,
+    machine: Manifest
+  ): Promise<void> {
+    const { flat, distribution } = added;
+    if (flat.length > 0 && distribution !== undefined)
+      await this.addLocalPlugin(options, distribution, flat, manifest, machine);
+    await this.registerNativeGithubPlugins(options, added, manifest);
   }
 
   private async registerNativeGithubPlugins(
     options: PluginAddOptions,
-    toolIds: AiToolId[],
+    added: GithubAddedPluginSource,
     manifest: Manifest
   ): Promise<void> {
     const { pluginMetadata, marketplace, source } = options;
-    if (pluginMetadata === undefined || toolIds.length === 0) return;
-    const version = await this.source.version(
-      options.source,
-      options.projectRoot,
-      pluginMetadata.version
-    );
-    for (const toolId of toolIds) {
+    const { native, version } = added;
+    if (pluginMetadata === undefined || native.length === 0 || version === undefined) return;
+    for (const toolId of native) {
       manifest.addPlugin(
         toolId,
         InstalledPlugin.fromMetadata(
@@ -168,14 +165,12 @@ export class AddPlugin implements PluginAdd {
 
   private async addLocalPlugin(
     options: PluginAddOptions,
+    read: PluginDistribution,
     resolvedToolIds: AiToolId[],
     manifest: Manifest,
-    source: PluginSource,
-    projectRoot: string,
     machine: Manifest
   ): Promise<void> {
-    const { marketplace, requiredVersion, replace, pluginMetadata } = options;
-    const read = await this.source.readDistribution(source, projectRoot);
+    const { source, projectRoot, marketplace, requiredVersion, replace, pluginMetadata } = options;
     const dist = pluginMetadata === undefined ? read : read.withStrict(pluginMetadata.strict);
     const pluginName = dist.manifest.name;
     this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
@@ -313,12 +308,6 @@ export class AddPlugin implements PluginAdd {
       const exists = manifest.getPlugins(toolId).some((p) => p.name === pluginName);
       if (exists) manifest.removePlugin(toolId, pluginName);
     }
-  }
-
-  private resolveAdapter(
-    tool: Parameters<ResolveAddedPluginSource["translatorFor"]>[0]
-  ): PluginTranslator | null {
-    return this.source.translatorFor(tool, this.fs);
   }
 }
 

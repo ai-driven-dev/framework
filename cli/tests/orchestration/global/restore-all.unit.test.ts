@@ -61,6 +61,7 @@ async function installPlugin(
     },
     registeredTools()
   ).execute({
+    githubMarketplace: false,
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -324,6 +325,7 @@ describe("RestoreAll — plugin materialization", () => {
       },
       registeredTools()
     ).execute({
+      githubMarketplace: false,
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: [TOOL.codex],
       projectRoot: PROJECT_ROOT,

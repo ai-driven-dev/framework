@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.js";
-import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
+import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { buildUnitDeps, initAndInstall } from "../../../../../helpers/ports/build-unit-deps.js";
@@ -36,19 +36,29 @@ async function placeForCursor(foundFile: string | undefined) {
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
   });
-  const source = new ResolveAddedPluginSource({
-    distributionLoader: new PluginDistributionLoader(
-      deps.pluginFetcher,
-      deps.pluginDistributionReader
-    ),
-    marketplaceRegistry: registry,
+  const built = {
     ...fakeBuildSources(),
+    marketplaceRegistry: registry,
+    homedir,
+    platform: process.platform,
+  };
+  const added = await new ResolveAddedPluginSource(
+    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
+    deps.fs,
+    built,
+    registeredTools()
+  ).execute({
+    source: GIT_SUBDIR_SOURCE,
+    projectRoot: PROJECT_ROOT,
+    toolIds: [cursor],
+    githubMarketplace: false,
   });
+  if (added.isGithubMarketplace) throw new Error("a local add reads its distribution");
   const logger = new CapturingLogger();
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("the project manifest was not initialised");
-  await new PlacePlugin(deps.fs, logger, source, registeredTools()).execute({
-    dist: await source.readDistribution(GIT_SUBDIR_SOURCE, PROJECT_ROOT),
+  await new PlacePlugin(deps.fs, logger, built, registeredTools()).execute({
+    dist: added.distribution,
     toolIds: [cursor],
     source: GIT_SUBDIR_SOURCE,
     projectRoot: PROJECT_ROOT,

@@ -53,6 +53,7 @@ async function legacyProject() {
   );
   const addPlugin = () =>
     add.execute({
+      githubMarketplace: false,
       source: { kind: "local", path: FIXTURE },
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,

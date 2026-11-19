@@ -88,6 +88,7 @@ function localAdd(toolId: AiToolId, path = PLUGIN_FIXTURE, replace?: boolean) {
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
     interactive: false,
+    githubMarketplace: false,
     replace,
     tools: registeredTools(),
   };
@@ -103,12 +104,7 @@ describe("AddPlugin", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
-      await useCase.execute({
-        source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
+      await useCase.execute(localAdd(TOOL.claude));
       expect(
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(true);
@@ -123,25 +119,13 @@ describe("AddPlugin", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
-      await useCase.execute({
-        source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-      await expect(
-        useCase.execute({
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          toolIds: [TOOL.claude],
-          projectRoot: PROJECT_ROOT,
-          interactive: false,
-        })
-      ).rejects.toThrow(DuplicatePluginError);
+      await useCase.execute(localAdd(TOOL.claude));
+      await expect(useCase.execute(localAdd(TOOL.claude))).rejects.toThrow(DuplicatePluginError);
     });
   });
 
   describe("github marketplace plugin", () => {
-    it("skips fetch and registers plugin reference without materializing files", async () => {
+    it("registers a plugin reference without materializing files", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new FakeMarketplaceRegistry();
@@ -150,20 +134,7 @@ describe("AddPlugin", () => {
         source: { kind: "github", repo: "ai-driven-dev/framework" },
         scope: "project",
       });
-      const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = buildAddPlugin(
-        { fs: deps.fs, logger: deps.logger },
-        { project: deps.manifestRepo, user: deps.userManifestRepo },
-        {
-          distributionLoader: new PluginDistributionLoader(
-            deps.pluginFetcher,
-            deps.pluginDistributionReader
-          ),
-          marketplaceRegistry: registry,
-          ...fakeBuildSources(),
-        },
-        registeredTools()
-      );
+      const useCase = buildAddUseCase(deps, registry);
       await useCase.execute({
         source: {
           kind: "git-subdir",
@@ -173,10 +144,10 @@ describe("AddPlugin", () => {
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         marketplace: "aidd-framework",
+        githubMarketplace: true,
         interactive: false,
         pluginMetadata: { name: "aidd-context", version: "1.0.0", strict: false },
       });
-      expect(fetchSpy).not.toHaveBeenCalled();
       const manifest = await deps.manifestRepo.load();
       const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
       const installed = plugins.find((p) => p.name === "aidd-context");
@@ -216,6 +187,7 @@ describe("AddPlugin", () => {
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
         })
       ).rejects.toThrow(MissingPluginMetadataError);
@@ -246,6 +218,7 @@ describe("AddPlugin", () => {
         registeredTools()
       );
       await useCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -306,6 +279,7 @@ describe("AddPlugin", () => {
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: { ...PLUGIN_METADATA, strict: true },
         });
@@ -347,6 +321,7 @@ describe("AddPlugin", () => {
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
         });
@@ -387,6 +362,7 @@ describe("AddPlugin", () => {
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
         });
@@ -416,6 +392,7 @@ describe("AddPlugin", () => {
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
           replace,
@@ -472,12 +449,7 @@ describe("AddPlugin", () => {
         const deps = await cursorDeps();
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");
 
-        await buildAddUseCase(deps).execute({
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          toolIds: [cursor],
-          projectRoot: PROJECT_ROOT,
-          interactive: false,
-        });
+        await buildAddUseCase(deps).execute(localAdd(cursor));
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
         expect(deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(0);
@@ -533,6 +505,7 @@ describe("AddPlugin", () => {
           toolIds: [cursor],
           projectRoot: "/B",
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
         });
@@ -574,6 +547,7 @@ describe("AddPlugin", () => {
           toolIds: [codex],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: { name: "sample-plugin", strict: false },
         });
@@ -590,7 +564,6 @@ describe("AddPlugin", () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, codex);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
-        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
@@ -609,10 +582,10 @@ describe("AddPlugin", () => {
           toolIds: [codex],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
         });
-        expect(fetchSpy).not.toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
         const plugins = manifest?.getPlugins(codex) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
@@ -646,6 +619,7 @@ describe("AddPlugin", () => {
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: { name: "sample-plugin", strict: false },
         });
@@ -661,7 +635,6 @@ describe("AddPlugin", () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
-        const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
@@ -680,10 +653,10 @@ describe("AddPlugin", () => {
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
         });
-        expect(fetchSpy).not.toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
         const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
@@ -717,6 +690,7 @@ describe("AddPlugin", () => {
           toolIds: [copilot],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
+          githubMarketplace: true,
           interactive: false,
           pluginMetadata: { name: "sample-plugin", strict: false },
         });
@@ -763,6 +737,7 @@ describe("AddPlugin", () => {
           registeredTools()
         );
         await useCase.execute({
+          githubMarketplace: false,
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -811,6 +786,7 @@ describe("AddPlugin", () => {
         registeredTools()
       );
       await useCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: "/some-plugin" },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -865,6 +841,7 @@ describe("AddPlugin", () => {
         toolIds: [codex],
         projectRoot: PROJECT_ROOT,
         marketplace: "aidd-framework",
+        githubMarketplace: true,
         interactive: false,
         pluginMetadata: { name: "sample-plugin", version: "1.0.0", strict: false },
         tools: registeredTools(),
@@ -907,6 +884,7 @@ describe("AddPlugin", () => {
         toolIds: [opencode],
         projectRoot: PROJECT_ROOT,
         marketplace: "aidd-framework",
+        githubMarketplace: true,
         interactive: false,
         pluginMetadata: { name: "sample-plugin", strict: false },
       });
@@ -1019,6 +997,7 @@ describe("AddPlugin", () => {
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
+        githubMarketplace: false,
         source: GITHUB_SOURCE,
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,

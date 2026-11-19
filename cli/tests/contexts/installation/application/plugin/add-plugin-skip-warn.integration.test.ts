@@ -38,6 +38,7 @@ describe("AddPlugin skip warnings", () => {
         registeredTools()
       );
       await useCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,

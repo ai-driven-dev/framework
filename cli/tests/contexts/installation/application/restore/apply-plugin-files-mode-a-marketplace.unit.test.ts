@@ -76,6 +76,7 @@ async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
     marketplace: "aidd-framework",
+    githubMarketplace: true,
     interactive: false,
     pluginMetadata: PLUGIN_METADATA,
   });

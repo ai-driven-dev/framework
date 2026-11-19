@@ -260,6 +260,7 @@ describe("PickPlugins — what it hands the installer", () => {
       projectRoot: PROJECT_ROOT,
       interactive: true,
       marketplace: "local",
+      githubMarketplace: false,
       pluginMetadata: { name: "sample-plugin", version: "1.0.0", strict: true },
       replace: true,
     });

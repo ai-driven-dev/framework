@@ -16,6 +16,7 @@ const HASH = "0".repeat(32);
 function match(name: string, recommended = true): PluginSourceMatch {
   return {
     marketplaceName: "aidd-framework",
+    githubMarketplace: true,
     entry: {
       name,
       source: { kind: "local", path: `./plugins/${name}` },

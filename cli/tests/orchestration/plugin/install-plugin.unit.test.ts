@@ -406,6 +406,7 @@ describe("InstallPlugin", () => {
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
+        githubMarketplace: false,
       });
       expect(result).toStrictEqual({ kind: "local", installed: [] });
     });

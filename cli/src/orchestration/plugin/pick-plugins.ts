@@ -96,6 +96,7 @@ export class PickPlugins implements PluginPick {
         projectRoot: options.projectRoot,
         interactive: options.interactive,
         marketplace: marketplace.name,
+        githubMarketplace: marketplace.source.kind === "github",
         pluginMetadata: {
           name: entry.name,
           version: entry.version,

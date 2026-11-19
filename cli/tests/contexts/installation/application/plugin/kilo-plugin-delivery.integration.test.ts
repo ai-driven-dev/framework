@@ -58,6 +58,7 @@ async function existingProject(configPath: string) {
   );
   const install = () =>
     add.execute({
+      githubMarketplace: false,
       source: { kind: "local", path: FIXTURE },
       toolIds: [TOOL.kilo],
       projectRoot: ROOT,

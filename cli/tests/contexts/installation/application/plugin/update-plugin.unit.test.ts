@@ -69,6 +69,7 @@ async function setup(
 
 async function addLocal(addUseCase: AddPlugin, path = PLUGIN_FIXTURE): Promise<void> {
   await addUseCase.execute({
+    githubMarketplace: false,
     source: { kind: "local", path },
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
@@ -98,6 +99,7 @@ describe("UpdatePlugin", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
+      githubMarketplace: false,
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -118,6 +120,7 @@ describe("UpdatePlugin", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
+      githubMarketplace: false,
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -139,6 +142,7 @@ describe("UpdatePlugin", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -165,6 +169,7 @@ describe("UpdatePlugin", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
+        githubMarketplace: false,
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,

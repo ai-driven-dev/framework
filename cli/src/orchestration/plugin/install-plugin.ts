@@ -86,6 +86,7 @@ export class InstallPlugin {
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
       interactive: options.interactive,
+      githubMarketplace: false,
     });
     return { kind: "local", installed: [] };
   }

@@ -57,6 +57,7 @@ export const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
   "PROFILE_READERS_ALLOWED",
   "REGISTRATION_SITES",
   "OWN_TOOL_FILES",
+  "HELPERS_BY_DESIGN",
 ]);
 
 /** A tolerated list is any variable whose name holds `BASELINE`, plus `OTHER_TOLERATED_LISTS`. */
