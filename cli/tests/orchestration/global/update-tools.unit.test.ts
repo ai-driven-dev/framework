@@ -121,18 +121,24 @@ describe("UpdateTools", () => {
   it("asks once for 'overwrite all' and not again for the next tool", async () => {
     const deps = await installed(TOOL.claude, TOOL.cursor);
     const loaded = await deps.manifestRepo.load();
+    const modified: string[] = [];
     for (const toolId of [TOOL.claude, TOOL.cursor]) {
       const first = loaded?.getToolFiles(toolId)[0];
-      if (first) await deps.fs.writeFile(`${PROJECT_ROOT}/${first.relativePath}`, "user-modified");
+      if (first === undefined) throw new Error(`${toolId} installed no file to modify`);
+      const path = `${PROJECT_ROOT}/${first.relativePath}`;
+      await deps.fs.writeFile(path, "user-modified");
+      modified.push(path);
     }
     const { prompter, asked } = promptingWith("overwrite-all");
 
-    await build(deps, prompter).useCase.execute({
+    const result = await build(deps, prompter).useCase.execute({
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: true,
     });
 
     expect(asked()).toBe(1);
+    expect(result.updatedTools.map((t) => t.toolId)).toStrictEqual(["claude", "cursor"]);
+    for (const path of modified) expect(await deps.fs.readFile(path)).not.toBe("user-modified");
   });
 });
