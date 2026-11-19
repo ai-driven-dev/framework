@@ -40,6 +40,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/helpers.ts`.
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
 - `process.exit` stays at the command edge: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
 - A directory holds ten direct source files at most: `folder-size.arch.test.ts`.
+- File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `code-size.arch.test.ts`.
 - A tolerated list only shrinks: `baseline-only-shrinks.arch.test.ts`.
 - Exports are named and nothing re-exports: `no-re-export.arch.test.ts`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.
 - Import from the defining module, relative, with the `.js` extension, and `import type` for a type-only import.

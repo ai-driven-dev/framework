@@ -4731,6 +4731,268 @@
       }
     },
     {
+      "includes": [
+        "src/**",
+        "!src/composition/container.ts",
+        "!src/composition/installation.ts",
+        "!src/composition/orchestration/clean.ts",
+        "!src/composition/orchestration/global.ts",
+        "!src/composition/orchestration/marketplace.ts",
+        "!src/composition/orchestration/plugin.ts",
+        "!src/composition/shared.ts",
+        "!src/composition/telemetry.ts",
+        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/withdraw-from-host.ts",
+        "!src/contexts/host-registration/domain/marketplace-source-drift.ts",
+        "!src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
+        "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
+        "!src/contexts/installation/application/plugin/update-user-plugin-files.ts",
+        "!src/contexts/installation/application/removal/remove-user-plugin.ts",
+        "!src/contexts/recipes/domain/recipe-rules.ts",
+        "!src/contexts/telemetry/application/ingest-usage.ts",
+        "!src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.ts",
+        "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
+        "!src/contexts/tools/domain/profile/define-tool.ts",
+        "!src/contexts/tools/domain/profiles/claude/profile.ts",
+        "!src/contexts/tools/domain/profiles/copilot/profile.ts",
+        "!src/orchestration/sync/sync-settings.ts",
+        "!src/presentation/commands/marketplace.ts",
+        "!src/presentation/commands/plugin.ts",
+        "!src/presentation/commands/setup.ts",
+        "!src/presentation/commands/telemetry.ts",
+        "!src/presentation/commands/tool-config.ts",
+        "!src/presentation/prompts/menu-use-case.ts"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveLinesPerFunction": {
+              "level": "error",
+              "options": {
+                "maxLines": 50,
+                "skipBlankLines": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/withdraw-from-host.ts",
+        "!src/contexts/host-registration/domain/marketplace-source-drift.ts",
+        "!src/contexts/installation/application/agents/main-session-models.ts",
+        "!src/contexts/installation/application/install/install-user-plugins.ts",
+        "!src/contexts/installation/application/plugin/add-plugin.ts",
+        "!src/contexts/installation/application/plugin/global-plugin-files.ts",
+        "!src/contexts/installation/application/plugin/update-user-plugin-files.ts",
+        "!src/contexts/installation/application/shared/detect-plugin-drift.ts",
+        "!src/contexts/installation/application/shared/remove-project-hooks.ts",
+        "!src/contexts/installation/application/sync/record-activation.ts",
+        "!src/contexts/installation/domain/manifest.ts",
+        "!src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts",
+        "!src/contexts/machine-claims/application/user-scope-plugin-files.ts",
+        "!src/contexts/recipes/application/validate-recipes.ts",
+        "!src/contexts/recipes/domain/markdown-scan.ts",
+        "!src/contexts/recipes/domain/recipe-rules.ts",
+        "!src/contexts/telemetry/application/ingest-usage.ts",
+        "!src/contexts/telemetry/application/read-usage.ts",
+        "!src/contexts/telemetry/domain/report/period.ts",
+        "!src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.ts",
+        "!src/presentation/commands/setup.ts",
+        "!src/presentation/display/telemetry-display.ts",
+        "!src/presentation/display/telemetry/telemetry-report-display.ts",
+        "!src/shared/domain/markdown.ts",
+        "!src/shared/domain/reading/jsonc.ts",
+        "!src/shared/domain/source.ts"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": {
+              "level": "error",
+              "options": {
+                "maxAllowedComplexity": 15
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/host-registration/infrastructure/marketplace-source-readers.ts",
+        "!src/contexts/host-registration/infrastructure/plugin-registry-readers.ts",
+        "!src/contexts/telemetry/application/directory-resolver.ts",
+        "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.ts",
+        "!src/presentation/terminal/prompter-adapter.ts",
+        "!src/shared/domain/errors.ts",
+        "!src/shared/domain/file.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveClassesPerFile": {
+              "level": "error",
+              "options": {
+                "maxClasses": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/withdraw-from-host.ts",
+        "!src/contexts/installation/application/plugin/add-plugin.ts",
+        "!src/contexts/translate/application/sink/disk-sink.ts",
+        "!src/shared/domain/errors.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveLinesPerFile": {
+              "level": "error",
+              "options": {
+                "maxLines": 400,
+                "skipBlankLines": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/composition/container.ts",
+        "!src/composition/installation.ts",
+        "!src/composition/orchestration/global.ts",
+        "!src/composition/orchestration/plugin.ts",
+        "!src/composition/orchestration/setup.ts",
+        "!src/composition/shared.ts",
+        "!src/contexts/distribution/application/fetch-marketplace-source.ts",
+        "!src/contexts/distribution/infrastructure/marketplace-registry-adapter.ts",
+        "!src/contexts/distribution/infrastructure/plugin-fetcher-adapter.ts",
+        "!src/contexts/distribution/ports/marketplace-registry.ts",
+        "!src/contexts/host-registration/application/host-marketplace-source-conflict.ts",
+        "!src/contexts/host-registration/application/native-host-registration-gate.ts",
+        "!src/contexts/host-registration/application/native-marketplace-source-proof.ts",
+        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/resolve-uninstall-scope.ts",
+        "!src/contexts/host-registration/application/withdraw-from-host.ts",
+        "!src/contexts/host-registration/domain/cache-purge-policy.ts",
+        "!src/contexts/host-registration/domain/marketplace-source-conflict.ts",
+        "!src/contexts/host-registration/domain/registration-record.ts",
+        "!src/contexts/installation/application/install/config/install-runtime-config.ts",
+        "!src/contexts/installation/application/install/content/install-content-section.ts",
+        "!src/contexts/installation/application/install/install-ai-tool.ts",
+        "!src/contexts/installation/application/install/install-config.ts",
+        "!src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
+        "!src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.ts",
+        "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
+        "!src/contexts/installation/application/materialize/flat-mcp-materializer.ts",
+        "!src/contexts/installation/application/materialize/mode-a-marketplace-translator.ts",
+        "!src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
+        "!src/contexts/installation/application/materialize/plugin-translator.ts",
+        "!src/contexts/installation/application/materialize/project-hooks-materializer.ts",
+        "!src/contexts/installation/application/plugin/add-plugin.ts",
+        "!src/contexts/installation/application/plugin/global-plugin-files.ts",
+        "!src/contexts/installation/application/plugin/plugin-helpers.ts",
+        "!src/contexts/installation/application/plugin/plugin-materializer.ts",
+        "!src/contexts/installation/application/plugin/plugin-target-resolution.ts",
+        "!src/contexts/installation/application/plugin/update-plugin.ts",
+        "!src/contexts/installation/application/removal/project-plugin-withdrawal.ts",
+        "!src/contexts/installation/application/removal/remove-plugin.ts",
+        "!src/contexts/installation/application/removal/remove-project-files.ts",
+        "!src/contexts/installation/application/removal/remove-project-plugin.ts",
+        "!src/contexts/installation/application/removal/remove-tool-files.ts",
+        "!src/contexts/installation/application/report-status.ts",
+        "!src/contexts/installation/application/resolve-sync-conflict.ts",
+        "!src/contexts/installation/application/restore/generate-tool-distribution.ts",
+        "!src/contexts/installation/application/restore/restore-all-plugins.ts",
+        "!src/contexts/installation/application/restore/restore-merge-files.ts",
+        "!src/contexts/installation/application/restore/restore-regular-files.ts",
+        "!src/contexts/installation/application/restore/restore-tool-files.ts",
+        "!src/contexts/installation/application/restore/restore.ts",
+        "!src/contexts/installation/application/shared/ensure-built-marketplace.ts",
+        "!src/contexts/installation/application/shared/remove-project-hooks.ts",
+        "!src/contexts/installation/application/sync/activate-native-tools.ts",
+        "!src/contexts/installation/application/sync/record-activation.ts",
+        "!src/contexts/installation/application/sync/sync-tool-settings-files.ts",
+        "!src/contexts/installation/application/sync/tracked-settings-file.ts",
+        "!src/contexts/installation/application/uninstall-tools.ts",
+        "!src/contexts/installation/domain/installed-rule.ts",
+        "!src/contexts/installation/domain/manifest.ts",
+        "!src/contexts/installation/domain/plugins/installed-plugin.ts",
+        "!src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
+        "!src/contexts/installation/ports/main-session-settings.ts",
+        "!src/contexts/installation/ports/native-host.ts",
+        "!src/contexts/machine-claims/application/native-plugin-ownership.ts",
+        "!src/contexts/machine-claims/application/plugin-removal-claims.ts",
+        "!src/contexts/machine-claims/application/user-plugin-ownership.ts",
+        "!src/contexts/machine-claims/application/user-scope-plugin-files.ts",
+        "!src/contexts/recipes/domain/markdown-scan.ts",
+        "!src/contexts/recipes/domain/recipe-rules.ts",
+        "!src/contexts/telemetry/application/remembered-resolutions.ts",
+        "!src/contexts/telemetry/application/switch/remember-own-root.ts",
+        "!src/contexts/telemetry/domain/branch-binding.ts",
+        "!src/contexts/telemetry/domain/declaration/binding-resolution.ts",
+        "!src/contexts/telemetry/domain/legacy/legacy-locations.ts",
+        "!src/contexts/telemetry/domain/report/report-filter.ts",
+        "!src/contexts/telemetry/domain/report/usage-report.ts",
+        "!src/contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/sources/line-values.ts",
+        "!src/contexts/telemetry/infrastructure/sources/transcript-files.ts",
+        "!src/contexts/telemetry/ports/usage-source.ts",
+        "!src/contexts/tools/contract/build-contract.ts",
+        "!src/contexts/tools/domain/bridges/event-bridge.ts",
+        "!src/contexts/tools/domain/formats/additive-mcp-merge.ts",
+        "!src/contexts/tools/domain/formats/hooks-descriptor.ts",
+        "!src/contexts/tools/domain/formats/typed-mcp-merge.ts",
+        "!src/contexts/tools/domain/hooks/hooks-merge.ts",
+        "!src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.ts",
+        "!src/contexts/tools/domain/marketplace-catalog.ts",
+        "!src/contexts/tools/domain/profile/flat-install-paths.ts",
+        "!src/contexts/tools/domain/profile/plugin-answers.ts",
+        "!src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.ts",
+        "!src/contexts/tools/domain/profiles/claude/build.ts",
+        "!src/contexts/tools/domain/profiles/codex/build.ts",
+        "!src/contexts/tools/domain/profiles/copilot/build.ts",
+        "!src/contexts/tools/domain/profiles/cursor/build.ts",
+        "!src/contexts/tools/domain/sections/mcp-section.ts",
+        "!src/contexts/translate/application/sink/disk-sink.ts",
+        "!src/contexts/translate/application/sink/write-skill-tree.ts",
+        "!src/contexts/translate/domain/engine.ts",
+        "!src/contexts/translate/domain/flat-layout.ts",
+        "!src/orchestration/doctor/check-registration.ts",
+        "!src/orchestration/setup/run-setup.ts",
+        "!src/orchestration/setup/setup-flow.ts",
+        "!src/presentation/commands/clean.ts",
+        "!src/presentation/commands/doctor.ts",
+        "!src/presentation/commands/plugin.ts",
+        "!src/presentation/commands/setup.ts",
+        "!src/presentation/commands/sync.ts",
+        "!src/presentation/commands/telemetry.ts",
+        "!src/presentation/commands/tool-config.ts",
+        "!src/presentation/display/doctor-display.ts",
+        "!src/presentation/display/tool-config-display.ts",
+        "!src/shared/domain/layout/aidd-layout.ts",
+        "!src/shared/domain/materialization/flat-paths.ts",
+        "!src/shared/domain/merge.ts"
+      ],
+      "plugins": ["./biome-plugins/max-function-params.grit"]
+    },
+    {
       "includes": ["src/**", "tests/**", "!**/*.d.ts"],
       "linter": {
         "rules": {
