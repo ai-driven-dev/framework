@@ -17,7 +17,7 @@ export class GitHubReleaseAdapter implements ReleaseLister, RepositoryVisibility
     private readonly tokenProvider?: TokenProvider
   ) {}
 
-  async listRootReleases(repo: string): Promise<string[]> {
+  async listReleaseTags(repo: string): Promise<string[]> {
     // `per_page=100`, GitHub's maximum, so root tags are not buried under release-please's
     // per-component tags on a busy repository.
     const url = `${GITHUB_API_BASE}/repos/${repo}/releases?per_page=100`;

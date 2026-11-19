@@ -26,7 +26,7 @@ export class ChooseMarketplaceSource {
 
   /** The root releases of `repo`, newest first. */
   async releases(repo: string): Promise<readonly string[]> {
-    return rootReleaseTags(await this.releaseResolver.listRootReleases(repo));
+    return rootReleaseTags(await this.releaseResolver.listReleaseTags(repo));
   }
 
   /** A repository source naming no release takes the newest one, or its tip when none exists. Any

@@ -17,20 +17,20 @@ describe("GitHubReleaseAdapter, the shape of an answer", () => {
   it("lists no root release when the body is not a list", async () => {
     const adapter = new GitHubReleaseAdapter(http({ message: "rate limited" }));
 
-    expect(await adapter.listRootReleases("o/r")).toStrictEqual([]);
+    expect(await adapter.listReleaseTags("o/r")).toStrictEqual([]);
   });
 
   it("keeps only tags that are text", async () => {
     const adapter = new GitHubReleaseAdapter(http([{ tag_name: 7 }, { tag_name: "v1.0.0" }]));
 
-    expect(await adapter.listRootReleases("o/r")).toStrictEqual(["v1.0.0"]);
+    expect(await adapter.listReleaseTags("o/r")).toStrictEqual(["v1.0.0"]);
   });
 
   it("lists releases with the token it was given", async () => {
     const client = http([]);
     const adapter = new GitHubReleaseAdapter(client, { resolve: async () => "tok" });
 
-    await adapter.listRootReleases("o/r");
+    await adapter.listReleaseTags("o/r");
 
     expect(client.calls).toStrictEqual([
       { url: "https://api.github.com/repos/o/r/releases?per_page=100", options: { token: "tok" } },

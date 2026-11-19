@@ -42,7 +42,7 @@ import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
-    listRootReleases: vi.fn().mockResolvedValue([]),
+    listReleaseTags: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }

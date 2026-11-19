@@ -29,7 +29,7 @@ import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
-    listRootReleases: vi.fn().mockResolvedValue([]),
+    listReleaseTags: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(isPublic),
   };
 }

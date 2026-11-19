@@ -13,7 +13,7 @@ import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeResolver(rootReleases: string[]): ReleaseLister & RepositoryVisibility {
   return {
-    listRootReleases: vi.fn().mockResolvedValue(rootReleases),
+    listReleaseTags: vi.fn().mockResolvedValue(rootReleases),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }
@@ -34,7 +34,7 @@ describe("AskMarketplaceSource", () => {
       });
 
       expect(result).toMatchObject({ ref: "v2.3.4" });
-      expect(resolver.listRootReleases).toHaveBeenCalledWith(DEFAULT_FRAMEWORK_REPO);
+      expect(resolver.listReleaseTags).toHaveBeenCalledWith(DEFAULT_FRAMEWORK_REPO);
     });
 
     it("throws InputRequiredError when no source given and non-interactive", async () => {
@@ -173,7 +173,7 @@ describe("AskMarketplaceSource", () => {
       });
 
       expect(result).toMatchObject({ ref: "v1.2.3" });
-      expect(resolver.listRootReleases).not.toHaveBeenCalled();
+      expect(resolver.listReleaseTags).not.toHaveBeenCalled();
     });
 
     it("asks nothing when the command line names a local source", async () => {

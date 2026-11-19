@@ -27,7 +27,7 @@ const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";
 
 function makeNoOpLatestResolver(isRepoPublic = true): ReleaseLister & RepositoryVisibility {
   return {
-    listRootReleases: vi.fn().mockResolvedValue([]),
+    listReleaseTags: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(isRepoPublic),
   };
 }

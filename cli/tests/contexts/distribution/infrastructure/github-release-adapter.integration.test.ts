@@ -23,7 +23,7 @@ function makeHttpThrowing(err: Error) {
 }
 
 describe("GitHubReleaseAdapter", () => {
-  describe("listRootReleases", () => {
+  describe("listReleaseTags", () => {
     it("lists every tag, component tags included, and leaves the root rule to the domain", async () => {
       const http = makeHttp([
         { tag_name: "aidd-refine-v1.0.0" },
@@ -33,7 +33,7 @@ describe("GitHubReleaseAdapter", () => {
         { tag_name: "v3.7.3-pm.1" },
       ]);
       const adapter = new GitHubReleaseAdapter(http);
-      const result = await adapter.listRootReleases(REPO);
+      const result = await adapter.listReleaseTags(REPO);
       expect(result).toEqual([
         "aidd-refine-v1.0.0",
         "aidd-context-v1.0.0",
@@ -46,7 +46,7 @@ describe("GitHubReleaseAdapter", () => {
     it("requests per_page=100 so root tags are not buried", async () => {
       const http = makeHttp([{ tag_name: "v1.0.0" }]);
       const adapter = new GitHubReleaseAdapter(http);
-      await adapter.listRootReleases(REPO);
+      await adapter.listReleaseTags(REPO);
       expect(http.get).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/releases?per_page=100",
         { token: undefined }
@@ -58,20 +58,20 @@ describe("GitHubReleaseAdapter", () => {
         new HttpNotFoundError("https://api.github.com/repos/owner/repo/releases")
       );
       const adapter = new GitHubReleaseAdapter(http);
-      const result = await adapter.listRootReleases(REPO);
+      const result = await adapter.listReleaseTags(REPO);
       expect(result).toEqual([]);
     });
 
     it("throws CatalogFetchAuthError on HTTP 401/403", async () => {
       const http = makeHttpThrowing(new AuthenticationError("HTTP 401"));
       const adapter = new GitHubReleaseAdapter(http);
-      await expect(adapter.listRootReleases(REPO)).rejects.toThrow(CatalogFetchAuthError);
+      await expect(adapter.listReleaseTags(REPO)).rejects.toThrow(CatalogFetchAuthError);
     });
 
     it("throws CatalogFetchError on network error", async () => {
       const http = makeHttpThrowing(new Error("ECONNREFUSED"));
       const adapter = new GitHubReleaseAdapter(http);
-      await expect(adapter.listRootReleases(REPO)).rejects.toThrow(CatalogFetchError);
+      await expect(adapter.listReleaseTags(REPO)).rejects.toThrow(CatalogFetchError);
     });
   });
 

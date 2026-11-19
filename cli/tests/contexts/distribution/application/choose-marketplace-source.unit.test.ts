@@ -9,7 +9,7 @@ import {
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
 
 function releasesOf(tags: string[]): ReleaseLister {
-  return { listRootReleases: vi.fn().mockResolvedValue(tags) };
+  return { listReleaseTags: vi.fn().mockResolvedValue(tags) };
 }
 
 describe("ChooseMarketplaceSource", () => {
@@ -21,7 +21,7 @@ describe("ChooseMarketplaceSource", () => {
       const result = await new ChooseMarketplaceSource(lister).pinNewest(source);
 
       expect(result).toBe(source);
-      expect(lister.listRootReleases).not.toHaveBeenCalled();
+      expect(lister.listReleaseTags).not.toHaveBeenCalled();
     });
 
     it("returns a local source unchanged without resolving a release", async () => {
@@ -31,7 +31,7 @@ describe("ChooseMarketplaceSource", () => {
       const result = await new ChooseMarketplaceSource(lister).pinNewest(source);
 
       expect(result).toBe(source);
-      expect(lister.listRootReleases).not.toHaveBeenCalled();
+      expect(lister.listReleaseTags).not.toHaveBeenCalled();
     });
 
     it("pins the newest root release of the source's repository", async () => {
@@ -42,7 +42,7 @@ describe("ChooseMarketplaceSource", () => {
       );
 
       expect(result).toMatchObject({ repo: "acme/fw", ref: "v2.3.4" });
-      expect(lister.listRootReleases).toHaveBeenCalledWith("acme/fw");
+      expect(lister.listReleaseTags).toHaveBeenCalledWith("acme/fw");
     });
 
     it("falls back to the tip when the repository has no root release", async () => {

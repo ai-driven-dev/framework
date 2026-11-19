@@ -28,7 +28,7 @@ const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
-    listRootReleases: vi.fn().mockResolvedValue([]),
+    listReleaseTags: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }
