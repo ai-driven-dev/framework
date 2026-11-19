@@ -15,8 +15,8 @@ const BASELINE: Readonly<Record<string, number>> = {
   "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1736,
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1008,
   "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts": 1450,
-  "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts": 1074,
-  "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts": 812,
+  "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts": 1055,
+  "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts": 811,
 };
 
 /** Lines as `wc -l` counts them: one per newline character. */

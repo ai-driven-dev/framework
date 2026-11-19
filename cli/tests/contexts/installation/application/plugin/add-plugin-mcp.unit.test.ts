@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import {
   buildUnitDeps,
   initAndInstall,
@@ -44,17 +44,17 @@ async function buildOpencodeProject(): Promise<{
   );
   const logger = new CapturingLogger();
   const registry = new FakeMarketplaceRegistry();
-  const useCase = new AddPlugin(
+  const useCase = buildAddPlugin(
     { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   );
   return { deps, logger, useCase, registry };

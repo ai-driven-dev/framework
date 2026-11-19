@@ -5,6 +5,7 @@ import { TrustPluginSource } from "../../contexts/distribution/application/plugi
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
 import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.js";
+import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.js";
 import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-plugin-source.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
@@ -135,17 +136,18 @@ export function wirePlugin(base: Base, inst: Installation) {
       tools
     )
   );
+  const addedPluginSource = new ResolveAddedPluginSource({
+    distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    marketplaceRegistry: marketplaceRegistry,
+    ensureBuilt: ensureBuiltMarketplaceUseCase,
+    translate: builtMaterializationDeps.translate,
+  });
   const pluginAddUseCase = new AddPlugin(
-    { fs: fs, logger: logger },
+    fs,
     { project: manifestRepo, user: userManifestRepo },
-    new ResolveAddedPluginSource({
-      distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-      marketplaceRegistry: marketplaceRegistry,
-      ensureBuilt: ensureBuiltMarketplaceUseCase,
-      translate: builtMaterializationDeps.translate,
-    }),
-    tools,
-    installRuntimeConfigUseCase
+    addedPluginSource,
+    new PlacePlugin(fs, logger, addedPluginSource, tools, installRuntimeConfigUseCase),
+    tools
   );
   const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(
     new ResolvePluginSource(marketplaceRegistry, resolveMarketplaceUseCase),

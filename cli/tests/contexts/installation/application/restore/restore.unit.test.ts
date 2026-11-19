@@ -1,11 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
@@ -36,14 +35,14 @@ async function installPlugin(
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const pluginReader = deps.pluginDistributionReader;
-  await new AddPlugin(
+  await buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   ).execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },

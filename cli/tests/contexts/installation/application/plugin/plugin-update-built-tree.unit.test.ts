@@ -1,8 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
@@ -12,6 +10,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -91,17 +90,17 @@ async function installStalePlugin(deps: Deps, registry: FakeMarketplaceRegistry)
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
   deps.fs.setFile(BUILT_SKILL, "# Demo skill");
-  await new AddPlugin(
+  await buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   ).execute({
     source: GIT_SUBDIR_SOURCE,

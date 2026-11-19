@@ -1,11 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -73,17 +72,17 @@ async function installStaleGithubPlugin(
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
 
-  await new AddPlugin(
+  await buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   ).execute({
     source: GIT_SUBDIR_SOURCE,

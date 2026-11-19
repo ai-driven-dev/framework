@@ -1,13 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { PluginFetchOptions } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -48,14 +48,14 @@ async function setup(
 ) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const reader = deps.pluginDistributionReader;
-  const addUseCase = new AddPlugin(
+  const addUseCase = buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   );
   const updateUseCase = new UpdatePlugin(

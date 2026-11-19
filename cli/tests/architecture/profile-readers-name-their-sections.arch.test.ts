@@ -89,7 +89,7 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
     TRANSLATE_HANDOFF,
   "src/contexts/installation/application/materialize/plugin-translator.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/materialize/replace-plugin-files.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/plugin/add-plugin.ts": TRANSLATE_HANDOFF,
+  "src/contexts/installation/application/plugin/add/place-plugin.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/plugin/plugin-helpers.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/plugin/plugin-materializer.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,

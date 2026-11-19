@@ -4868,7 +4868,6 @@
       "includes": [
         "src/**",
         "!src/contexts/host-registration/application/register-plugin-with-host.ts",
-        "!src/contexts/installation/application/plugin/add-plugin.ts",
         "!src/shared/domain/errors.ts"
       ],
       "linter": {

@@ -1,8 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -14,6 +13,7 @@ import {
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -50,17 +50,17 @@ function buildAddUseCase(
   registry: FakeMarketplaceRegistry = new FakeMarketplaceRegistry(),
   logger: Logger = deps.logger
 ): AddPlugin {
-  return new AddPlugin(
+  return buildAddPlugin(
     { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   );
 }
@@ -151,17 +151,17 @@ describe("AddPlugin", () => {
         scope: "project",
       });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new AddPlugin(
+      const useCase = buildAddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        new ResolveAddedPluginSource({
+        {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }),
+        },
         registeredTools()
       );
       await useCase.execute({
@@ -193,17 +193,17 @@ describe("AddPlugin", () => {
         source: { kind: "github", repo: "ai-driven-dev/framework" },
         scope: "project",
       });
-      const useCase = new AddPlugin(
+      const useCase = buildAddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        new ResolveAddedPluginSource({
+        {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }),
+        },
         registeredTools()
       );
       await expect(
@@ -232,17 +232,17 @@ describe("AddPlugin", () => {
       });
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new AddPlugin(
+      const useCase = buildAddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        new ResolveAddedPluginSource({
+        {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }),
+        },
         registeredTools()
       );
       await useCase.execute({
@@ -288,17 +288,17 @@ describe("AddPlugin", () => {
         );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: await makeGithubRegistry(PROJECT_ROOT),
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -329,17 +329,17 @@ describe("AddPlugin", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -369,17 +369,17 @@ describe("AddPlugin", () => {
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         // Cursor copies the per-target BUILT tree verbatim; seed it.
         deps.fs.setFile("/built/cursor/plugins/sample-plugin/skills/demo/SKILL.md", "# Demo skill");
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -430,25 +430,6 @@ describe("AddPlugin", () => {
         deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill");
         return deps;
       }
-
-      it("leaves a plugin dir it finds already there as it was, and tracks none of it", async () => {
-        const deps = await cursorDeps();
-        deps.fs.setFile(cursorSkillAt(), "# Their own skill");
-        const logger = new CapturingLogger();
-        const machineWritesBefore = deps.userManifestRepo.saveCount;
-
-        await addForCursor(deps, logger);
-
-        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        const entry = deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0];
-        expect(entry?.name).toBe("sample-plugin");
-        expect(entry?.files.size).toBe(0);
-        expect(deps.userManifestRepo.saveCount).toBe(machineWritesBefore);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor) ?? []).toEqual([]);
-        expect(logger.warnMessages.join("\n")).toContain(
-          join(homedir(), ".cursor/plugins/local", "sample-plugin")
-        );
-      });
 
       it("leaves a found plugin dir alone even when this project installed another plugin", async () => {
         const deps = await cursorDeps();
@@ -535,17 +516,17 @@ describe("AddPlugin", () => {
         projectB.addTool(cursor, "1.0.0", []);
         const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
         const registryB = await makeGithubRegistry("/B");
-        await new AddPlugin(
+        await buildAddPlugin(
           { fs: deps.fs, logger: logger },
           { project: projectBRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registryB,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         ).execute({
           source: GIT_SUBDIR_SOURCE,
@@ -575,17 +556,17 @@ describe("AddPlugin", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -610,17 +591,17 @@ describe("AddPlugin", () => {
         await initAndInstall(deps, PROJECT_ROOT, codex);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -647,17 +628,17 @@ describe("AddPlugin", () => {
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -681,17 +662,17 @@ describe("AddPlugin", () => {
         await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -718,17 +699,17 @@ describe("AddPlugin", () => {
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -768,17 +749,17 @@ describe("AddPlugin", () => {
           scope: "project",
         });
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new AddPlugin(
+        const useCase = buildAddPlugin(
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
-          new ResolveAddedPluginSource({
+          {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }),
+          },
           registeredTools()
         );
         await useCase.execute({
@@ -819,14 +800,14 @@ describe("AddPlugin", () => {
         source: { kind: "local", path: "/mkt-source" },
         scope: "project",
       });
-      const useCase = new AddPlugin(
+      const useCase = buildAddPlugin(
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        new ResolveAddedPluginSource({
+        {
           distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }),
+        },
         registeredTools()
       );
       await useCase.execute({

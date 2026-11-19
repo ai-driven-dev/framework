@@ -5,8 +5,6 @@ import { ResolvePluginSource } from "../../../src/contexts/distribution/applicat
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { ResolveAddedPluginSource } from "../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
@@ -17,6 +15,7 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { buildAddPlugin } from "../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -51,17 +50,17 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
-  const pluginAdd = new AddPlugin(
+  const pluginAdd = buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);

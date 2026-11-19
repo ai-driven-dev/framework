@@ -1,12 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -31,17 +30,17 @@ async function legacyProject() {
   await deps.manifestRepo.save(manifest);
   await deps.fs.writeFile(join(ROOT, "opencode.json"), USER_CONFIG);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
-  const add = new AddPlugin(
+  const add = buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools(),
     deps.installRuntimeConfigUseCase
   );

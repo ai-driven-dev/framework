@@ -1,8 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ResolveAddedPluginSource } from "../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.js";
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.js";
@@ -13,6 +11,7 @@ import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
 import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { buildAddPlugin } from "../../helpers/ports/build-add-plugin.js";
 import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
@@ -52,14 +51,14 @@ async function installPlugin(
   toolId: AiToolId,
   pluginReader: PluginDistributionReaderAdapter
 ): Promise<void> {
-  await new AddPlugin(
+  await buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    }),
+    },
     registeredTools()
   ).execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -315,14 +314,14 @@ describe("RestoreAll — plugin materialization", () => {
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
     await installPlugin(deps, TOOL.claude, reader);
-    await new AddPlugin(
+    await buildAddPlugin(
       { fs: deps.fs, logger: deps.logger },
       { project: deps.manifestRepo, user: deps.userManifestRepo },
-      new ResolveAddedPluginSource({
+      {
         distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
         marketplaceRegistry: deps.marketplaceRegistry,
         ...fakeBuildSources(),
-      }),
+      },
       registeredTools()
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },

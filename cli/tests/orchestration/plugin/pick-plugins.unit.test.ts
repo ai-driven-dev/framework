@@ -5,8 +5,6 @@ import { ListMarketplaces } from "../../../src/contexts/distribution/application
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { ResolveAddedPluginSource } from "../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.js";
@@ -17,6 +15,7 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { buildAddPlugin } from "../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -60,17 +59,17 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
-  const pluginAdd = new AddPlugin(
+  const pluginAdd = buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
-    new ResolveAddedPluginSource({
+    {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }),
+    },
     catalogOf()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);

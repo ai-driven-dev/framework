@@ -3,10 +3,9 @@
 
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ResolveAddedPluginSource } from "../../../../../src/contexts/installation/application/plugin/add/resolve-plugin-source.js";
-import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { ReadonlySkipList } from "../../../../../src/shared/domain/plugin/plugin-translation-skip.js";
+import { buildAddPlugin } from "../../../../helpers/ports/build-add-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -25,17 +24,17 @@ describe("AddPlugin skip warnings", () => {
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const capturingLogger = new CapturingLogger();
       const registry = new FakeMarketplaceRegistry();
-      const useCase = new AddPlugin(
+      const useCase = buildAddPlugin(
         { fs: deps.fs, logger: capturingLogger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
-        new ResolveAddedPluginSource({
+        {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
             deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }),
+        },
         registeredTools()
       );
       await useCase.execute({

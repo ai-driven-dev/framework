@@ -1,42 +1,28 @@
-import { homedir as nodeHomedir } from "node:os";
-import { join } from "node:path";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
   ToolNotInManifestError,
   VersionMismatchError,
 } from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
-import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
+import type { PlacePlugin } from "./add/place-plugin.js";
 import type { ResolveAddedPluginSource } from "./add/resolve-plugin-source.js";
-import { writePluginFiles } from "./plugin-helpers.js";
-import {
-  resolvePluginToolIds,
-  resolveScopeForInstall,
-  scopeBaseOf,
-} from "./plugin-target-resolution.js";
+import { resolvePluginToolIds, resolveScopeForInstall } from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
   source: PluginSource;
@@ -54,12 +40,6 @@ export interface PluginAdd {
   execute(options: PluginAddOptions): Promise<void>;
 }
 
-/** What the plugin writes through and reports with. */
-export interface AddPluginHost {
-  fs: FileWriter & FileReader;
-  logger: Logger;
-}
-
 /** The two manifests an add touches: the project's, and the machine's, which guards the lock. */
 export interface AddPluginManifests {
   project: ManifestRepository;
@@ -67,19 +47,16 @@ export interface AddPluginManifests {
 }
 
 export class AddPlugin implements PluginAdd {
-  private readonly fs: FileWriter & FileReader;
-  private readonly logger: Logger;
   private readonly manifestRepo: ManifestRepository;
   private readonly userManifestRepo: ManifestRepository & Lock;
 
   constructor(
-    host: AddPluginHost,
+    private readonly fs: FileWriter & FileReader,
     manifests: AddPluginManifests,
     private readonly source: ResolveAddedPluginSource,
-    private readonly tools: ToolCatalog,
-    private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
+    private readonly place: PlacePlugin,
+    private readonly tools: ToolCatalog
   ) {
-    ({ fs: this.fs, logger: this.logger } = host);
     this.manifestRepo = manifests.project;
     this.userManifestRepo = manifests.user;
   }
@@ -215,17 +192,17 @@ export class AddPlugin implements PluginAdd {
       manifest,
       replace
     );
-    await this.installPluginForAllTools(
+    await this.place.execute({
       dist,
-      resolvedToolIds,
+      toolIds: resolvedToolIds,
       source,
       projectRoot,
       manifest,
+      machine,
       marketplace,
-      prevMcpMap,
-      prevHooksMap,
-      machine
-    );
+      previousMcpEntries: prevMcpMap,
+      previousProjectHooks: prevHooksMap,
+    });
   }
 
   private async assertExistingContributionsUnchanged(
@@ -266,70 +243,6 @@ export class AddPlugin implements PluginAdd {
       this.validateNoDuplicates(pluginName, toolIds, manifest);
     }
     return { prevMcpMap, prevHooksMap };
-  }
-
-  private async installPluginForAllTools(
-    dist: PluginDistribution,
-    toolIds: AiToolId[],
-    source: PluginSource,
-    projectRoot: string,
-    manifest: Manifest,
-    marketplace: string | undefined,
-    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
-    prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
-    machine: Manifest
-  ): Promise<void> {
-    const allSkipped: ReadonlySkipList[] = [];
-    const allNotices: ReadonlyNoticeList[] = [];
-    for (const toolId of toolIds) {
-      const tool = this.tools.aiProfile(toolId);
-      await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
-      const foreignDir = await this.userScopeDirNotInstalledHere(
-        dist.manifest.name,
-        tool,
-        projectRoot,
-        machine
-      );
-      if (foreignDir !== undefined) {
-        this.logger.warn(
-          `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`
-        );
-      }
-      const prev = prevMcpMap.get(toolId) ?? new Map();
-      const { skipped, notices } = await this.addPluginForTool(
-        dist,
-        tool,
-        source,
-        projectRoot,
-        manifest,
-        marketplace,
-        prev,
-        foreignDir !== undefined ||
-          machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name),
-        prevHooksMap.get(toolId)
-      );
-      allSkipped.push(skipped);
-      allNotices.push(notices);
-    }
-    this.emitSkipWarnings(allSkipped.flat());
-    this.emitInstallNotices(allNotices.flat());
-  }
-
-  private async userScopeDirNotInstalledHere(
-    pluginName: string,
-    tool: AiToolProfile,
-    projectRoot: string,
-    machine: Manifest
-  ): Promise<string | undefined> {
-    const toolId = tool.toolId;
-    if (resolveScopeForInstall(tool) !== "user") return undefined;
-    if (machine.getPlugins(toolId).some((p) => p.name === pluginName)) return undefined;
-    const dir = join(
-      scopeBaseOf(tool, { scope: "user", projectRoot: projectRoot, homedir: nodeHomedir }),
-      pluginName
-    );
-    const present = await this.fs.listFilesRecursive(dir);
-    return present.length > 0 ? dir : undefined;
   }
 
   private async recordUserScopeOwnership(
@@ -402,107 +315,9 @@ export class AddPlugin implements PluginAdd {
     }
   }
 
-  private async addPluginForTool(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    source: PluginSource,
-    projectRoot: string,
-    manifest: Manifest,
-    marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string>,
-    userScopeDirTaken: boolean,
-    previousProjectHooks?: ProjectHooksProvenance
-  ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
-    const adapter = this.resolveAdapter(tool);
-    if (adapter?.mode === "flat") {
-      const result = await adapter.addPlugin(
-        dist,
-        tool,
-        source,
-        projectRoot,
-        manifest,
-        marketplace,
-        previousMcpEntries,
-        userScopeDirTaken,
-        previousProjectHooks
-      );
-      return { ...result, notices: [] };
-    }
-    const output = this.source.translate({ distribution: dist, tool });
-    const translated = { ...output, files: hashOutputFiles(output.files) };
-    return this.materializeNativePlugin(
-      dist,
-      tool,
-      source,
-      projectRoot,
-      manifest,
-      marketplace,
-      adapter,
-      translated
-    );
-  }
-
-  // `notices` survives every branch below, including the marketplace one that discards its
-  // own `translated.skipped` in favor of the adapter's: a delivered hook's trust notice is
-  // a fact about the tool, not about which materialization route happened to run.
-  private async materializeNativePlugin(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    source: PluginSource,
-    projectRoot: string,
-    manifest: Manifest,
-    marketplace: string | undefined,
-    adapter: PluginTranslator | null,
-    translated: {
-      files: InstallationFile[];
-      componentPaths: ReadonlyMap<string, string>;
-      skipped: ReadonlySkipList;
-      notices: ReadonlyNoticeList;
-    }
-  ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
-    const { files, componentPaths, skipped, notices } = translated;
-    if (files.length === 0) return { skipped, notices };
-    if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
-      const result = await adapter.addPlugin(
-        dist,
-        tool,
-        source,
-        projectRoot,
-        manifest,
-        marketplace
-      );
-      return { ...result, notices };
-    }
-    await writePluginFiles(files, projectRoot, this.fs);
-    manifest.addPlugin(
-      tool.toolId,
-      InstalledPlugin.fromDistribution(
-        dist,
-        source,
-        files,
-        resolveScopeForInstall(tool),
-        componentPaths,
-        marketplace
-      )
-    );
-    return { skipped, notices };
-  }
-
-  private emitSkipWarnings(skipped: ReadonlySkipList): void {
-    for (const entry of skipped) {
-      this.logger.warn(
-        `Plugin "${entry.pluginName}": ${entry.component} skipped for ${entry.toolId} — ${entry.reason}`
-      );
-    }
-  }
-
-  private emitInstallNotices(notices: ReadonlyNoticeList): void {
-    for (const entry of notices) {
-      this.logger.info(`Plugin "${entry.pluginName}" (${entry.toolId}): ${entry.message}`);
-    }
-  }
-
-  private resolveAdapter(tool: ToolProfile): PluginTranslator | null {
+  private resolveAdapter(
+    tool: Parameters<ResolveAddedPluginSource["translatorFor"]>[0]
+  ): PluginTranslator | null {
     return this.source.translatorFor(tool, this.fs);
   }
 }
