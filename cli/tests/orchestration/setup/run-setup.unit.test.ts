@@ -19,13 +19,13 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
 import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/install-global-plugins.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.js";
+import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
-import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
-import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
@@ -144,7 +144,7 @@ async function buildUseCase(
     deps.installIdeConfig
   );
   const pluginInstallFromMarketplace = makeNoOpPluginInstallFromMarketplace();
-  const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
+  const choosePlugins = new ChoosePlugins(
     makeNoOpPluginPick(),
     pluginInstallFromMarketplace,
     new ListMarketplaces(new InMemoryMarketplaceRegistry()),
@@ -187,7 +187,7 @@ async function buildUseCase(
       machineScope,
     },
     {
-      plugins: (promptOptions) => setupPluginsPromptUseCase.execute(promptOptions),
+      plugins: (promptOptions) => choosePlugins.execute(promptOptions),
       tools:
         chooseTools === undefined
           ? undefined

@@ -320,7 +320,7 @@ async function pluginsRecorded(ws: Workspace): Promise<string> {
 }
 
 /**
- * `aidd setup --plugins <names>` is the route that reinstalls: SetupPluginsPromptUseCase asks
+ * `aidd setup --plugins <names>` is the route that reinstalls: ChoosePlugins asks
  * for `replace: true`, so an existing plugin's entries are dropped and added again. The plugins
  * are installed from a marketplace first, as setup does, then setup runs over them.
  */
@@ -341,11 +341,11 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     interactive: false,
     tools: catalogOf(),
   } as const;
-  await wired.setupPluginsPromptUseCase.execute(options);
+  await wired.choosePlugins.execute(options);
   const before = await describeHookFiles(ws, [ws.project, ws.home]);
   let outcome = "setup over installed plugins resolved";
   try {
-    await wired.setupPluginsPromptUseCase.execute(options);
+    await wired.choosePlugins.execute(options);
   } catch (error) {
     outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
   }

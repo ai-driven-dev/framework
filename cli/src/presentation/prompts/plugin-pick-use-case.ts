@@ -6,29 +6,17 @@ import type {
 } from "../../contexts/distribution/contract/catalog.js";
 import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
+import type {
+  PluginPick,
+  PluginPickOptions,
+  PluginPickResult,
+} from "../../orchestration/plugin/pick-plugins.js";
 import {
   InteractiveOnlyError,
   InvalidPluginManifestError,
   NoMarketplacesRegisteredError,
 } from "../../shared/domain/errors.js";
-import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
-
-export interface PluginPickOptions {
-  toolIds: AiToolId[] | "all";
-  projectRoot: string;
-  interactive: boolean;
-}
-
-export interface PluginPickResult {
-  marketplace: MarketplaceView;
-  installed: readonly string[];
-}
-
-/** Picking a plugin interactively, as its callers need it: ask, get a choice back. */
-export interface PluginPick {
-  execute(options: PluginPickOptions): Promise<PluginPickResult>;
-}
 
 export class PluginPickUseCase implements PluginPick {
   constructor(

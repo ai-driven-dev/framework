@@ -1,21 +1,21 @@
-import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
-import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
-import type { PluginInstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
-import type { PluginInstallMode } from "../../orchestration/setup/setup-flow.js";
-import type { PluginPick } from "./plugin-pick-use-case.js";
-export interface SetupPluginsPromptOptions {
+import type { ListMarketplaces } from "../../../contexts/distribution/application/list-marketplaces.js";
+import type { ResolveMarketplace } from "../../../contexts/distribution/application/resolve-marketplace.js";
+import type { PluginCatalogEntry } from "../../../contexts/distribution/contract/catalog.js";
+import type { PluginInstallFromMarketplace } from "../../plugin/install-from-marketplace.js";
+import type { PluginPick } from "../../plugin/pick-plugins.js";
+import type { PluginInstallMode } from "../setup-flow.js";
+export interface ChoosePluginsOptions {
   projectRoot: string;
   mode: PluginInstallMode;
   pluginNames: readonly string[];
   interactive: boolean;
 }
 
-export interface SetupPluginsPromptResult {
+export interface ChoosePluginsResult {
   installed: readonly string[];
 }
 
-export class SetupPluginsPromptUseCase {
+export class ChoosePlugins {
   constructor(
     private readonly pluginPickUseCase: PluginPick,
     private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace,
@@ -23,15 +23,13 @@ export class SetupPluginsPromptUseCase {
     private readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">
   ) {}
 
-  async execute(options: SetupPluginsPromptOptions): Promise<SetupPluginsPromptResult> {
+  async execute(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
     if (options.mode === "none") return { installed: [] };
     if (options.mode === "interactive") return this.runInteractive(options);
     return this.runScripted(options);
   }
 
-  private async runInteractive(
-    options: SetupPluginsPromptOptions
-  ): Promise<SetupPluginsPromptResult> {
+  private async runInteractive(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
     if (!options.interactive) return { installed: [] };
     const result = await this.pluginPickUseCase.execute({
       toolIds: "all",
@@ -41,7 +39,7 @@ export class SetupPluginsPromptUseCase {
     return { installed: result.installed };
   }
 
-  private async runScripted(options: SetupPluginsPromptOptions): Promise<SetupPluginsPromptResult> {
+  private async runScripted(options: ChoosePluginsOptions): Promise<ChoosePluginsResult> {
     const names = await this.resolveScriptedNames(options);
     const installed: string[] = [];
     for (const name of names) {
@@ -58,9 +56,7 @@ export class SetupPluginsPromptUseCase {
     return { installed };
   }
 
-  private async resolveScriptedNames(
-    options: SetupPluginsPromptOptions
-  ): Promise<readonly string[]> {
+  private async resolveScriptedNames(options: ChoosePluginsOptions): Promise<readonly string[]> {
     if (options.mode === "named") return options.pluginNames;
     const entries = await this.loadCatalogEntries(options.projectRoot);
     if (options.mode === "recommended")

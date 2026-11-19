@@ -120,7 +120,7 @@ export async function createDeps(
     restoreAllUseCase,
     updateToolsUseCase,
   } = global;
-  const { setupPluginsPromptUseCase, runSetup } = setup;
+  const { choosePlugins, runSetup } = setup;
   const { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase } = doctor;
   const { uninstallTools, cleanUseCase, cleanUserScopeUseCase } = clean;
   const deps: Deps = {
@@ -160,7 +160,7 @@ export async function createDeps(
     doctorUseCase,
     doctorRegistrationUseCase,
     askMarketplaceSource,
-    setupPluginsPromptUseCase,
+    choosePlugins,
     runSetup,
     setAgentModels,
     selfUpdate: update.selfUpdate,

@@ -1,24 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
-import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
+import { ListMarketplaces } from "../../../../src/contexts/distribution/application/list-marketplaces.js";
 import type {
   ResolveMarketplace,
   ResolveMarketplaceCommand,
   ResolveMarketplaceResult,
-} from "../../../src/contexts/distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+} from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import type { PluginCatalogEntry } from "../../../../src/contexts/distribution/contract/catalog.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type {
   PluginInstallFromMarketplace,
   PluginInstallFromMarketplaceOptions,
   PluginInstallFromMarketplaceResult,
-} from "../../../src/orchestration/plugin/install-from-marketplace.js";
+} from "../../../../src/orchestration/plugin/install-from-marketplace.js";
 import type {
   PluginPick,
   PluginPickOptions,
   PluginPickResult,
-} from "../../../src/presentation/prompts/plugin-pick-use-case.js";
-import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+} from "../../../../src/orchestration/plugin/pick-plugins.js";
+import { ChoosePlugins } from "../../../../src/orchestration/setup/steps/choose-plugins.js";
+import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -84,7 +84,7 @@ async function build(
   for (const name of catalogs.keys()) await registry.save(PROJECT_ROOT, marketplace(name));
   const pick = new RecordingPluginPick(installedByPick);
   const installer = new RecordingInstaller();
-  const useCase = new SetupPluginsPromptUseCase(
+  const useCase = new ChoosePlugins(
     pick,
     installer,
     new ListMarketplaces(registry),
@@ -97,7 +97,7 @@ const ONE_MARKETPLACE = new Map([
   ["local", [entry("aidd-context", true), entry("aidd-dev", true), entry("aidd-ui", false)]],
 ]);
 
-describe("SetupPluginsPromptUseCase — the mode decides what is installed", () => {
+describe("ChoosePlugins — the mode decides what is installed", () => {
   it("installs nothing and asks nothing when no plugins were wanted", async () => {
     const { useCase, pick, installer } = await build(ONE_MARKETPLACE);
 
@@ -177,7 +177,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     await registry.save(PROJECT_ROOT, marketplace("empty"));
     await registry.save(PROJECT_ROOT, marketplace("local"));
     const installer = new RecordingInstaller();
-    const useCase = new SetupPluginsPromptUseCase(
+    const useCase = new ChoosePlugins(
       new RecordingPluginPick([]),
       installer,
       new ListMarketplaces(registry),
@@ -195,7 +195,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
   });
 });
 
-describe("SetupPluginsPromptUseCase — what each install is asked for", () => {
+describe("ChoosePlugins — what each install is asked for", () => {
   it("installs into every tool, replacing what is there and choosing its marketplace itself", async () => {
     const { useCase, installer } = await build();
 
@@ -232,7 +232,7 @@ describe("SetupPluginsPromptUseCase — what each install is asked for", () => {
   });
 });
 
-describe("SetupPluginsPromptUseCase — the interactive pick", () => {
+describe("ChoosePlugins — the interactive pick", () => {
   it("hands the pick every tool, and reports back what it installed", async () => {
     const { useCase, pick } = await build(ONE_MARKETPLACE, ["aidd-dev", "aidd-pm"]);
 
@@ -275,7 +275,7 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
     await registry.save(PROJECT_ROOT, marketplace("local"));
     const resolve = new SeededResolveMarketplace(new Map([["local", [entry("aidd-dev", true)]]]));
     const resolveSpy = vi.spyOn(resolve, "execute");
-    const useCase = new SetupPluginsPromptUseCase(
+    const useCase = new ChoosePlugins(
       new RecordingPluginPick([]),
       new RecordingInstaller(),
       new ListMarketplaces(registry),

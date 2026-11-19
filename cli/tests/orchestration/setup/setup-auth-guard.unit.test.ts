@@ -14,10 +14,10 @@ import type { ReleaseLister } from "../../../src/contexts/distribution/ports/rel
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
-import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
-import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
@@ -99,7 +99,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig
   );
-  const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
+  const choosePlugins = new ChoosePlugins(
     makeNoOpPluginPick(),
     makeNoOpPluginInstallFromMarketplace(),
     new ListMarketplaces(new InMemoryMarketplaceRegistry()),
@@ -125,7 +125,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
       syncSettings: (options) => makeNoOpSyncSettings().execute(options),
       version: deps.currentVersionProvider,
     },
-    { plugins: (options) => setupPluginsPromptUseCase.execute(options) }
+    { plugins: (options) => choosePlugins.execute(options) }
   );
 }
 

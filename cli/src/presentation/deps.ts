@@ -59,6 +59,7 @@ import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
 import type { RunSetup } from "../orchestration/setup/run-setup.js";
+import type { ChoosePlugins } from "../orchestration/setup/steps/choose-plugins.js";
 import type { SyncNativeActivation } from "../orchestration/sync/sync-native-activation.js";
 import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
@@ -70,7 +71,6 @@ import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
 import type { CLIOutput } from "./output.js";
-import type { SetupPluginsPromptUseCase } from "./prompts/setup-plugins-prompt-use-case.js";
 
 export interface FactoryOptions {
   verbose: boolean;
@@ -142,7 +142,7 @@ export interface Deps {
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;
   askMarketplaceSource: Pick<AskMarketplaceSource, "execute">;
-  setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">;
+  choosePlugins: Pick<ChoosePlugins, "execute">;
   runSetup: Pick<RunSetup, "execute">;
   /** The agents' provider and the main session's model: set by `setup`, forgotten by `clean`. */
   setAgentModels: Pick<SetAgentModels, "execute" | "reset">;

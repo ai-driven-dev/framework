@@ -9,7 +9,7 @@ import type { RepositoryVisibility } from "../../../src/contexts/distribution/po
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
-import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
+import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
@@ -57,7 +57,7 @@ async function buildUseCaseWithConflict() {
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig
   );
-  const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
+  const choosePlugins = new ChoosePlugins(
     { execute: vi.fn() },
     makeNoOpPluginInstallFromMarketplace(),
     new ListMarketplaces(new InMemoryMarketplaceRegistry()),
@@ -117,7 +117,7 @@ async function buildUseCaseWithConflict() {
       syncSettings: (options) => syncSettingsUseCase.execute(options),
       version: deps.currentVersionProvider,
     },
-    { plugins: (options) => setupPluginsPromptUseCase.execute(options) }
+    { plugins: (options) => choosePlugins.execute(options) }
   );
   return { useCase, activator };
 }

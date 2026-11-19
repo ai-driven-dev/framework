@@ -7,7 +7,7 @@ import { PlanPluginInstall } from "../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.js";
-import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
+import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
 import {
   InteractiveOnlyError,
   InvalidPluginScopeError,
