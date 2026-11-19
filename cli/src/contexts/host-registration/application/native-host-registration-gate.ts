@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
@@ -47,8 +48,6 @@ export class NativeHostRegistrationGate {
       projectRoot,
       registration
     );
-    if (proof.status !== "owned")
-      throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
     const owned = new Set((registrations.pluginClaims ?? []).map((claim) => claim.ref));
     const hostRefs = await assertNoForeignNativeRefs(
       reader,
@@ -60,12 +59,17 @@ export class NativeHostRegistrationGate {
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
       isRefOnHost(claim.ref, registration.hostName)
     );
-    for (const claim of refs) {
-      if (hostRefs.get(claim.ref)?.enabled !== true)
-        throw new Error(
-          `Cannot prove AIDD-owned host ref '${claim.ref}' is still enabled; refusing user-scope removal.`
-        );
-    }
+    const verdict = judgeRegistration({
+      intent: "withdraw-catalog",
+      source: proof,
+      unenabledClaim: refs.find((claim) => hostRefs.get(claim.ref)?.enabled !== true)?.ref,
+    });
+    if (verdict.outcome === "refuse")
+      throw new Error(
+        verdict.reason === "source-not-owned"
+          ? (verdict.reconcile ?? `${toolId}: catalogue source unproven.`)
+          : `Cannot prove AIDD-owned host ref '${verdict.reconcile}' is still enabled; refusing user-scope removal.`
+      );
     return {
       activator,
       refs,

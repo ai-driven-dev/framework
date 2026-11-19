@@ -80,17 +80,6 @@ describe("refresh host plugin", () => {
         /without its CLI and readable host registry/
       );
     }
-    for (const registry of [
-      reader(),
-      reader(new Map()),
-      reader(new Map([[REF, { enabled: false }]])),
-    ]) {
-      const command = new RefreshHostPlugin(
-        new Map([[copilot, activator]]),
-        new Map([[copilot, registry]])
-      );
-      await expect(refresh(copilot, command)).rejects.toThrow(/not provably enabled/);
-    }
     const command = new RefreshHostPlugin(
       new Map([[copilot, activator]]),
       new Map([[copilot, reader(enabled())]])

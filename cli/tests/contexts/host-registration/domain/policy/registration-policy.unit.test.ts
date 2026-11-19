@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   judgeRegistration,
+  type RefreshReadings,
   type RegisterReadings,
+  type WithdrawCatalogReadings,
 } from "../../../../../src/contexts/host-registration/domain/policy/registration-policy.js";
 
 const PROVEN: RegisterReadings = {
@@ -54,5 +56,104 @@ describe("judgeRegistration, register", () => {
     expect(judgeRegistration({ ...PROVEN, canonical: false })).toMatchObject({
       reconcile: undefined,
     });
+  });
+});
+
+const REFRESHABLE: RefreshReadings = {
+  intent: "refresh",
+  refEnabled: true,
+  source: { status: "owned" },
+};
+
+describe("judgeRegistration, refresh", () => {
+  it("proceeds with the readings that proved it", () => {
+    expect(judgeRegistration(REFRESHABLE)).toStrictEqual({
+      outcome: "proceed",
+      evidence: REFRESHABLE,
+    });
+  });
+
+  it("refuses a ref the host does not provably enable", () => {
+    expect(judgeRegistration({ ...REFRESHABLE, refEnabled: false })).toStrictEqual({
+      outcome: "refuse",
+      reason: "ref-not-enabled",
+      reconcile: undefined,
+    });
+  });
+
+  it("refuses a ref with no canonical catalogue to read", () => {
+    expect(judgeRegistration({ ...REFRESHABLE, source: undefined })).toStrictEqual({
+      outcome: "refuse",
+      reason: "no-canonical-source",
+      reconcile: undefined,
+    });
+  });
+
+  it.each(["absent", "unproven"] as const)(
+    "refuses a %s source, handing back why it was not owned",
+    (status) => {
+      expect(
+        judgeRegistration({ ...REFRESHABLE, source: { status, reason: "registered elsewhere" } })
+      ).toStrictEqual({
+        outcome: "refuse",
+        reason: "source-not-owned",
+        reconcile: "registered elsewhere",
+      });
+      expect(judgeRegistration({ ...REFRESHABLE, source: { status } })).toMatchObject({
+        reconcile: undefined,
+      });
+    }
+  );
+
+  it("names the first proof that failed", () => {
+    expect(
+      judgeRegistration({ ...REFRESHABLE, refEnabled: false, source: undefined })
+    ).toMatchObject({ reason: "ref-not-enabled" });
+  });
+});
+
+const WITHDRAWABLE: WithdrawCatalogReadings = {
+  intent: "withdraw-catalog",
+  source: { status: "owned" },
+  unenabledClaim: undefined,
+};
+
+describe("judgeRegistration, withdraw-catalog", () => {
+  it("proceeds with the readings that proved it", () => {
+    expect(judgeRegistration(WITHDRAWABLE)).toStrictEqual({
+      outcome: "proceed",
+      evidence: WITHDRAWABLE,
+    });
+  });
+
+  it.each(["absent", "unproven"] as const)(
+    "refuses a %s source, handing back why it was not owned",
+    (status) => {
+      expect(
+        judgeRegistration({ ...WITHDRAWABLE, source: { status, reason: "registered elsewhere" } })
+      ).toStrictEqual({
+        outcome: "refuse",
+        reason: "source-not-owned",
+        reconcile: "registered elsewhere",
+      });
+    }
+  );
+
+  it("refuses a claim the host does not provably enable, naming it", () => {
+    expect(judgeRegistration({ ...WITHDRAWABLE, unenabledClaim: "p@catalog" })).toStrictEqual({
+      outcome: "refuse",
+      reason: "claim-not-enabled",
+      reconcile: "p@catalog",
+    });
+  });
+
+  it("refuses the source before a claim", () => {
+    expect(
+      judgeRegistration({
+        ...WITHDRAWABLE,
+        source: { status: "unproven" },
+        unenabledClaim: "p@catalog",
+      })
+    ).toMatchObject({ reason: "source-not-owned" });
   });
 });

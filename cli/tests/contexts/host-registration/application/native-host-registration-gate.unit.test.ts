@@ -174,25 +174,6 @@ describe("native host registration gate", () => {
         )
       ).rejects.toThrow(/CLI or host registry unavailable/);
     }
-    for (const registry of [
-      reader(),
-      reader(new Map()),
-      reader(new Map([[REF, { enabled: false }]])),
-    ]) {
-      const gate = new NativeHostRegistrationGate(
-        new Map([[codex, activator]]),
-        new Map([[codex, registry]]),
-        new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
-      );
-      await expect(
-        gate.planMarketplaceRemoval(
-          registeredTools().aiProfile(codex),
-          provenCodex,
-          provenCodex.marketplaces[0],
-          "/A"
-        )
-      ).rejects.toThrow(/host plugin registry|still enabled/);
-    }
   });
 
   it("does not adopt a foreign same-catalogue ref, and returns only exact owned host scopes", async () => {

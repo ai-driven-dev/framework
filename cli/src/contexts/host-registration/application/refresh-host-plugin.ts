@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import {
   type RegistrationRecordData,
@@ -46,25 +47,33 @@ export class RefreshHostPlugin {
         `${toolId}: cannot update AIDD-owned ref '${ref}' without its CLI and readable host registry; canonical claims retained.`
       );
     }
-    if ((await reader.read(projectRoot)).refs?.get(ref)?.enabled !== true) {
-      throw new Error(
-        `${toolId}: ref '${ref}' is not provably enabled on the host; update refused.`
-      );
-    }
+    const refEnabled = (await reader.read(projectRoot)).refs?.get(ref)?.enabled === true;
     const registration = readRegistrationRecord(registrations)?.marketplaces.find((marketplace) =>
       isRefOnHost(ref, marketplace.hostName)
     );
-    if (registration === undefined)
-      throw new Error(
-        `${toolId}: ref '${ref}' has no canonical catalogue source proof; update refused.`
-      );
-    const proof = await inspectNativeMarketplaceSource(
-      this.sources.get(toolId),
-      projectRoot,
-      registration
-    );
-    if (proof.status !== "owned")
-      throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
+    const verdict = judgeRegistration({
+      intent: "refresh",
+      refEnabled,
+      source:
+        registration === undefined
+          ? undefined
+          : await inspectNativeMarketplaceSource(
+              this.sources.get(toolId),
+              projectRoot,
+              registration
+            ),
+    });
+    if (verdict.outcome === "refuse") {
+      if (verdict.reason === "ref-not-enabled")
+        throw new Error(
+          `${toolId}: ref '${ref}' is not provably enabled on the host; update refused.`
+        );
+      if (verdict.reason === "no-canonical-source")
+        throw new Error(
+          `${toolId}: ref '${ref}' has no canonical catalogue source proof; update refused.`
+        );
+      throw new Error(verdict.reconcile ?? `${toolId}: catalogue source unproven.`);
+    }
     return { apply: () => activator.updatePlugin(ref) };
   }
 }
