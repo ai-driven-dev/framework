@@ -12,7 +12,7 @@ import {
   printSearchHits,
 } from "../display/plugin-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { spawnCliCommand } from "../terminal/child-command.js";
 import { parseGlobalOptions } from "./global-options.js";
 
@@ -69,7 +69,6 @@ export function registerPluginCommand(
     .option("--scope <user|project>", "Removal scope (default: project)")
     .action(async (name: string, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const scope = parseScope(cmdOptions.scope) ?? "project";
@@ -83,7 +82,7 @@ export function registerPluginCommand(
         }
         printPluginRemoved(output, name);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -93,7 +92,6 @@ export function registerPluginCommand(
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (cmdOptions: { tool?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -102,7 +100,7 @@ export function registerPluginCommand(
         });
         printInstalledPlugins(output, result);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -126,7 +124,6 @@ export function registerPluginCommand(
         }
       ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
         try {
           const toolIds = parseToolOption(cmdOptions.tool, catalog);
           const scope = parseScope(cmdOptions.scope);
@@ -149,7 +146,7 @@ export function registerPluginCommand(
           );
           printPluginInstallOutcome(output, result);
         } catch (error) {
-          errorHandler.handle(error);
+          failCommand(output, error);
         }
       }
     );
@@ -161,7 +158,6 @@ export function registerPluginCommand(
     .option("--marketplace <name>", "Limit to a single marketplace")
     .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { hits } = await deps.searchPlugins.execute({
@@ -172,7 +168,7 @@ export function registerPluginCommand(
         });
         printSearchHits(output, hits);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -183,7 +179,6 @@ export function registerPluginCommand(
     .option("--scope <user|project>", "Update scope (default: project)")
     .action(async (name: string | undefined, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const scope = parseScope(cmdOptions.scope) ?? "project";
@@ -202,7 +197,7 @@ export function registerPluginCommand(
         }
         printPluginsUpdated(output, updated);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 }

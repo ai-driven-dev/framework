@@ -8,7 +8,7 @@ import {
 } from "../../contexts/translate/contract/build-targets.js";
 import type { DepsSliceFactory } from "../deps.js";
 import { printTranslateResult } from "../display/translate-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -31,7 +31,6 @@ interface TranslateExecutionParams {
 /** The build+report core, once `--to`/`--as`/`--out` flags are validated and resolved. */
 async function runTranslateCore(params: TranslateExecutionParams): Promise<void> {
   const { createDeps } = params;
-  const errorHandler = new ErrorHandler(params.output);
   try {
     const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
     const useCase = deps.frameworkBuild({
@@ -58,7 +57,7 @@ async function runTranslateCore(params: TranslateExecutionParams): Promise<void>
       outDir: result.outDir,
     });
   } catch (error) {
-    errorHandler.handle(error);
+    failCommand(params.output, error);
   }
 }
 

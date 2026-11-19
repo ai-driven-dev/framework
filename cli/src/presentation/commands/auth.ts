@@ -5,7 +5,7 @@ import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -63,11 +63,10 @@ function reportingErrors(
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
-    const errorHandler = new ErrorHandler(output);
     try {
       await run(await createDeps(projectRoot, { verbose }, output), output);
     } catch (error) {
-      errorHandler.handle(error);
+      failCommand(output, error);
     }
   };
 }
@@ -87,7 +86,6 @@ export function registerAuthCommand(
     .option("--level <user|project>", "Storage level (user or project)")
     .action(async (cmdOptions: LoginOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
 
       refuseInvalidOptions(cmdOptions, output);
 
@@ -98,7 +96,7 @@ export function registerAuthCommand(
         const result = await deps.logIn.execute({ credential, level });
         printAuthenticated(output, result.login, result.level);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 

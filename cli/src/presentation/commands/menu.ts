@@ -2,7 +2,7 @@ import readline from "node:readline";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MenuDepsFactory } from "../deps.js";
 import { printBanner } from "../display/menu-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import { CLIOutput } from "../output.js";
 import { resolveProjectRoot } from "../project-root.js";
@@ -26,9 +26,9 @@ export function isUserAbort(error: unknown): boolean {
   return error instanceof Error && error.name === USER_ABORT_ERROR_NAME;
 }
 
-export function routeMenuError(error: unknown, errorHandler: ErrorHandler): never {
+export function routeMenuError(error: unknown, output: CLIOutput): never {
   if (isUserAbort(error)) exitWith(0);
-  return errorHandler.handle(error);
+  return failCommand(output, error);
 }
 
 export async function runMenuLoop(
@@ -38,7 +38,6 @@ export async function runMenuLoop(
   const output = new CLIOutput();
   printBanner(output);
   const { manifestRepo, prompter } = createMenuDeps(resolveProjectRoot());
-  const errorHandler = new ErrorHandler(output);
   for (;;) {
     try {
       const result = await new InteractiveMenuUseCase(manifestRepo, prompter, tools).execute();
@@ -47,7 +46,7 @@ export async function runMenuLoop(
       await waitForEnter();
       if (exitCode !== 0 && result.command[0] === "setup") exitWith(exitCode);
     } catch (error) {
-      routeMenuError(error, errorHandler);
+      routeMenuError(error, output);
     }
   }
 }

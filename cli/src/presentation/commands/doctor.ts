@@ -13,7 +13,7 @@ import {
   printToolDrift,
   printUserScopeTools,
 } from "../display/doctor-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
@@ -191,7 +191,6 @@ export function registerDoctorCommand(
     .option("--global", GLOBAL_FLAG_HELP)
     .action(async (cmdOptions: DoctorCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
@@ -210,7 +209,7 @@ export function registerDoctorCommand(
           await runFullDoctor(deps, output, projectRoot, cmdOptions.plugin);
         }
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 }

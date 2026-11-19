@@ -2,7 +2,7 @@ import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../deps.js";
 import { renderRecipeValidation } from "../display/tool-config-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -20,7 +20,6 @@ export function registerRecipesCommand(
     .option("--bundled <directory>", "Include recipes from this skill asset directory")
     .action(async (paths: string[], options: { all: boolean; bundled?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const directories = [];
@@ -39,7 +38,7 @@ export function registerRecipesCommand(
           process.exitCode = 1;
         }
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 }

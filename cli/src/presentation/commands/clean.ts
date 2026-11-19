@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
@@ -78,7 +78,6 @@ export function registerCleanCommand(
     .option("--global", `${GLOBAL_FLAG_HELP}, and purge the shared source`)
     .action(async (cmdOptions: CleanCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
       try {
@@ -89,7 +88,7 @@ export function registerCleanCommand(
           await runProjectScopeClean(deps, output, projectRoot, cmdOptions);
         }
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 }

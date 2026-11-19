@@ -11,7 +11,7 @@ import {
   printRegisteredMarketplaces,
 } from "../display/marketplace-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import { spawnCliCommand } from "../terminal/child-command.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -69,7 +69,6 @@ export function registerMarketplaceCommand(
         }
       ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
         const interactive = process.stdout.isTTY;
         if (!interactive && (!nameArg || !sourceArg)) {
           output.error("name and source are required in non-interactive mode.");
@@ -106,7 +105,7 @@ export function registerMarketplaceCommand(
           );
           printMarketplaceRegistered(output, result.marketplace.name);
         } catch (error) {
-          errorHandler.handle(error);
+          failCommand(output, error);
         }
       }
     );
@@ -117,7 +116,6 @@ export function registerMarketplaceCommand(
     .option("--plugins", "Also fetch and print all plugins from each marketplace catalog")
     .action(async (cmdOptions: { plugins?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { marketplaces, catalogs } = await deps.listMarketplaces.execute({
@@ -126,7 +124,7 @@ export function registerMarketplaceCommand(
         });
         printRegisteredMarketplaces(output, marketplaces, catalogs);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -137,7 +135,6 @@ export function registerMarketplaceCommand(
     .option("--scope <project|user>", "Remove from project or user scope", "project")
     .action(async (name: string, cmdOptions: { yes?: boolean; scope: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const scope = parseScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -155,7 +152,7 @@ export function registerMarketplaceCommand(
         }
         printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -167,7 +164,6 @@ export function registerMarketplaceCommand(
     .option("--force", "Clear cache before re-fetching")
     .action(async (name: string | undefined, cmdOptions: { force?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { results, failedCount } = await deps.refreshMarketplace.execute({
@@ -179,7 +175,7 @@ export function registerMarketplaceCommand(
         printRefreshResults(output, results);
         if (failedCount > 0) exitWith(1);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -188,13 +184,12 @@ export function registerMarketplaceCommand(
     .description("Report stale marketplaces and upstream-removed plugins")
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
         printMarketplaceCheck(output, result);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 }

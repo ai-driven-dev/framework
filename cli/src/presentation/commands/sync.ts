@@ -8,7 +8,7 @@ import {
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
 } from "../display/sync-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
@@ -85,7 +85,6 @@ async function runSyncAction(
   cmdOptions: SyncCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const errorHandler = new ErrorHandler(output);
   try {
     const deps = await createDeps(projectRoot, { verbose }, output);
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
@@ -113,11 +112,11 @@ async function runSyncAction(
     printActivationOutcome(output, activation);
 
     // A run that errored synced nothing for that scope, so reporting success would name the
-    // unhealthy state healthy. `errorHandler` turns this into the non-zero exit.
+    // unhealthy state healthy. `failCommand` turns this into the non-zero exit.
     const errors = [...result.errors, ...activation.errors];
     if (result.failed || activation.failed) throw new SyncFailedError(errors);
   } catch (error) {
-    errorHandler.handle(error);
+    failCommand(output, error);
   }
 }
 

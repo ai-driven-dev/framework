@@ -14,7 +14,7 @@ import {
   printToolRemoved,
   printUpdateResult,
 } from "../display/tool-config-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { type RecipesKeys, registerRecipesCommand } from "./recipes.js";
@@ -160,12 +160,11 @@ export function registerToolConfigCommand(
     .option("--no-plugins", "Skip propagation of already-installed plugins onto the new tool")
     .action(async (cmdOptions: { tool: string; force: boolean; plugins: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         await installTool(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -177,12 +176,11 @@ export function registerToolConfigCommand(
     .requiredOption("--tool <tool>", "AI or IDE tool ID")
     .action(async (cmdOptions: { tool: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         await removeTool(deps, output, projectRoot, cmdOptions.tool, catalog);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -195,12 +193,11 @@ export function registerToolConfigCommand(
     .option("-f, --force", "Overwrite modified files without prompting", false)
     .action(async (cmdOptions: { tool?: string; force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         await updateTools(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 
@@ -210,7 +207,6 @@ export function registerToolConfigCommand(
     .option("--json", "Print the inventory as JSON")
     .action(async (cmdOptions: { json?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const { rules } = await deps.listInstalledRulesUseCase.execute({
@@ -219,7 +215,7 @@ export function registerToolConfigCommand(
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 

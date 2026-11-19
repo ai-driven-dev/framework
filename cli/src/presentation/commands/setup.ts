@@ -19,7 +19,7 @@ import {
   printWelcomeBanner,
 } from "../display/setup-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
@@ -146,7 +146,7 @@ export function expandAllKeyword(raw: string | undefined, all: readonly string[]
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
   cmdOptions: SetupCmdOptions,
-  errorHandler: ErrorHandler,
+  output: CLIOutput,
   tools: ToolCatalog
 ): { aiTools: string[]; ideTools: string[] } | null {
   const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
@@ -154,7 +154,7 @@ export function parseToolIds(
   try {
     if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all") assertAiToolIds(aiIds, tools);
   } catch (e) {
-    errorHandler.handle(e);
+    failCommand(output, e);
     return null;
   }
   const unique = [...new Set([...aiIds, ...ids])];
@@ -248,11 +248,10 @@ export function registerSetupCommand(
     .addHelpText("after", () => globalSetupHelp(catalog))
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
 
       const source = parseSourceFlag(cmdOptions, output);
       const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
-      const toolIds = parseToolIds(cmdOptions, errorHandler, catalog);
+      const toolIds = parseToolIds(cmdOptions, output, catalog);
       if (toolIds === null) return;
 
       const hasScriptingFlags = !!(
@@ -316,7 +315,7 @@ export function registerSetupCommand(
         if (interactive) printNextSteps(output, result.install.results.length > 0);
         reportNativeActivation(output, result.activation);
       } catch (error) {
-        errorHandler.handle(error);
+        failCommand(output, error);
       }
     });
 }

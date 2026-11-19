@@ -37,7 +37,7 @@ import {
   printIngestResult,
   printTelemetryStatus,
 } from "../display/telemetry-display.js";
-import { ErrorHandler } from "../error-handler.js";
+import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -54,7 +54,7 @@ function commandOf(program: Command, createDeps: DepsSliceFactory<TelemetryComma
     try {
       await body();
     } catch (error) {
-      new ErrorHandler(output).handle(error);
+      failCommand(output, error);
     }
   };
   const wire = () => createDeps(projectRoot, { verbose }, output);

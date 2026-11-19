@@ -146,6 +146,7 @@ src/
 │   ├── commands/
 │   ├── display/
 │   │   └── telemetry/
+│   ├── errors/
 │   ├── hooks/
 │   ├── prompts/
 │   └── terminal/
