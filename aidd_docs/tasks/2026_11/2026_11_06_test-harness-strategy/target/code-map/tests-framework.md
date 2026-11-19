@@ -182,6 +182,7 @@ Maps every file under `tests/contexts/framework/` to the target test layout. All
 | `-` | `tests/contexts/installation/infrastructure/manifest-repository.contract.test.ts` | add | runs the suite on the fake and the real adapter |
 | `-` | `tests/contexts/machine-claims/testing/claims-store.contract.ts` | add | claims store contract suite |
 | `-` | `tests/contexts/machine-claims/infrastructure/claims-store.contract.test.ts` | add | runs the suite on the fake and the real adapter |
+| `tests/composition/machine-manifest.contract.test.ts` | same | keep | real subject is installation's Manifest handed by shape; becomes machine-claims/ports/claims-store.contract.test.ts with INS-21+HR-17 |
 | `-` | `tests/contexts/host-registration/testing/fake-host-actions.ts` | add | fake that records calls and simulates host refusals, plus a ClaimsView stub |
 | `-` | `tests/contexts/host-registration/infrastructure/host-actions.contract.test.ts` | add | fake and real adapter against recorded host fixtures |
 | `-` | `tests/contexts/recipes/testing/in-memory-recipe-files.ts` | add | kit for the validate-recipes command |
