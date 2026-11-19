@@ -1,5 +1,9 @@
 import type { ToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
+import {
+  flatHookPaths,
+  translate,
+  translateWithComponentPaths,
+} from "../../../../src/contexts/translate/domain/engine.js";
 import {
   type PluginComponentFile,
   type PluginComponents,
@@ -8,7 +12,15 @@ import {
 import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 
-export const translator = new PluginContentEngine(registeredManifestPaths());
+const manifestPaths = registeredManifestPaths();
+
+/** The engine's functions with the registered manifest places filled in, as the composition hands them. */
+export const translator = {
+  translate: (dist: PluginDistribution, tool: ToolProfile) => translate(dist, tool, manifestPaths),
+  translateWithComponentPaths: (dist: PluginDistribution, tool: ToolProfile) =>
+    translateWithComponentPaths(dist, tool, manifestPaths),
+  flatHookPaths,
+};
 
 export const greetContent = `---
 name: aidd:04:greet

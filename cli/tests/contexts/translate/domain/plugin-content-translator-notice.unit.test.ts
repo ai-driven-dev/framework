@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
-import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { translator } from "../testing/plugin-content-translator-kit.js";
 import { codex, cursor, opencode } from "../testing/registered-profiles.js";
-
-const translator = new PluginContentEngine(registeredManifestPaths());
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node ./hooks/start.js" }] }] },

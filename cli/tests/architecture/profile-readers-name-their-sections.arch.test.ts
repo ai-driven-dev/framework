@@ -97,7 +97,7 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/restore-all-plugins.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/ports/plugin/plugin-translation.ts": TRANSLATE_HANDOFF,
-  "src/contexts/translate/application/translate-plugin-distribution.ts": OUTSIDE_WAVE,
+  "src/contexts/translate/application/translate-distribution.ts": OUTSIDE_WAVE,
   "src/contexts/translate/domain/engine.ts": OUTSIDE_WAVE,
   "src/presentation/commands/setup.ts": PRESENTATION_FILTER,
 };
