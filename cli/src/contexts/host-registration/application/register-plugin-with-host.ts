@@ -10,6 +10,7 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
+import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import type {
   NativeMarketplaceRegistration,
@@ -209,12 +210,7 @@ export class RegisterPluginWithHost {
         if (claim.addedThisRun === true) addedHostNames.add(claim.hostName);
       } else if (earlier !== undefined) {
         const proof = await this.nativeCatalogProof(run, earlier.hostName);
-        if (
-          proof.canonical &&
-          proof.hostReadable &&
-          proof.sourceStatus === "owned" &&
-          proof.foreignRef === undefined
-        )
+        if (judgeRegistration({ intent: "register", ...proof }).outcome === "proceed")
           ownMarketplaces.push(earlier);
         else preservedMarketplaces.push(earlier);
       }
@@ -235,13 +231,7 @@ export class RegisterPluginWithHost {
     for (const registration of ownMarketplaces) {
       const fresh = catalogClaims.find((claim) => claim.hostName === registration.hostName);
       const proof = await this.nativeCatalogProof(run, registration.hostName, fresh);
-      if (
-        !proof.canonical ||
-        !proof.hostReadable ||
-        proof.sourceStatus !== "owned" ||
-        proof.foreignRef !== undefined
-      )
-        continue;
+      if (judgeRegistration({ intent: "register", ...proof }).outcome === "refuse") continue;
       stillProven.push(registration);
       if (!addedHostNames.has(registration.hostName))
         bestEffortNativeCall(
@@ -569,16 +559,13 @@ export class RegisterPluginWithHost {
     const { toolId, activator, projectRoot } = run;
     const warn = (message: string): void => this.warn(run, message);
     const proof = await this.nativeCatalogProof(run, hostName);
-    if (
-      !proof.canonical ||
-      !proof.hostReadable ||
-      proof.sourceStatus !== "owned" ||
-      proof.foreignRef !== undefined
-    ) {
+    const judged = judgeRegistration({ intent: "register", ...proof });
+    if (judged.outcome === "refuse") {
+      const foreignRef = judged.reconcile;
       this.warn(
         run,
         `Native plugin activation — catalogue '${hostName}' collides with unproven AIDD ownership` +
-          `${proof.foreignRef === undefined ? "" : ` and foreign ref '${proof.foreignRef}'`}; host registration left untouched. ${addError.message}`
+          `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.message}`
       );
       return false;
     }
