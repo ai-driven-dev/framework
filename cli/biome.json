@@ -4955,7 +4955,7 @@
         "!src/contexts/tools/contract/build-contract.ts",
         "!src/contexts/tools/domain/bridges/event-bridge.ts",
         "!src/contexts/tools/domain/formats/additive-mcp-merge.ts",
-        "!src/contexts/tools/domain/formats/hooks-descriptor.ts",
+        "!src/contexts/tools/domain/formats/hooks/routes.ts",
         "!src/contexts/tools/domain/formats/typed-mcp-merge.ts",
         "!src/contexts/tools/domain/hooks/hooks-merge.ts",
         "!src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.ts",

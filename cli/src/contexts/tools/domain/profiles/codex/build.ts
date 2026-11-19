@@ -11,7 +11,7 @@ import {
   genericFlatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
-import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import { parseToml, stringifyToml } from "../../formats/toml.js";
 import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
 import {

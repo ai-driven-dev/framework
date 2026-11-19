@@ -1,4 +1,4 @@
-import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
+import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks/routes.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
 import { antigravityHooksFormat } from "./antigravity-hooks.js";

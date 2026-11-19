@@ -14,7 +14,7 @@ import type {
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
-import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks-descriptor.js";
+import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/routes.js";
 import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";

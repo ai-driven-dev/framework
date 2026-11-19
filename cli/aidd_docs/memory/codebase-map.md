@@ -107,6 +107,7 @@ src/
 │   │   └── domain/
 │   │       ├── bridges/
 │   │       ├── formats/
+│   │       │   └── hooks/
 │   │       ├── hooks/
 │   │       ├── models/
 │   │       ├── native-registration/

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CANONICAL_HOOK_EVENTS,
   type HookEventRoute,
-} from "../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
+} from "../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance.js";
 
 /** What a conformance check is told of the files a profile ships beside its code. */

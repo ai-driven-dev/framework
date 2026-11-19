@@ -5,7 +5,7 @@ import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vsco
 import { GITKEEP_FILE } from "../../../../../shared/domain/file.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
-import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { nativeHooksSupport } from "../../formats/hooks/routes.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { AgentsSection } from "../../sections/agents-section.js";

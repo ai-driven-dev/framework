@@ -2,7 +2,7 @@ import { genericFlatHooksScriptPath } from "../../../../shared/domain/materializ
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
-import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks-descriptor.js";
+import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook.

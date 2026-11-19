@@ -4,7 +4,7 @@ import cursorSettings from "../../../../../../assets/configs/cursor/settings.jso
 };
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
-import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
+import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks/routes.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";

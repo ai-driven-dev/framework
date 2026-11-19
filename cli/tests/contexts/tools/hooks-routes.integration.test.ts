@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
-import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
+import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
 import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";

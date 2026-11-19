@@ -6,11 +6,8 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../assets/hooks-runtime/host-bridge.cjs";
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
-import {
-  declareHooks,
-  type HookEventRoute,
-  type HooksDescriptor,
-} from "../formats/hooks-descriptor.js";
+import { declareHooks } from "../formats/hooks/declaration.js";
+import type { HookEventRoute, HooksDescriptor } from "../formats/hooks/descriptor.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
@@ -178,13 +175,16 @@ export function declareBridgeHooks<
   { loaderEntry, ...rest }: L
 ) {
   const bridged = (native: string): HookEventRoute => ({ native: [native], relay: "bridge" });
-  return declareHooks(toolId, directory, adapter, {
-    ...rest,
-    flat: { scriptsDir: `${directory}hooks/`, loaderEntry },
-    events: {
-      SessionStart: bridged(sessionStart),
-      PostToolUse: bridged(postToolUse),
-      Stop: bridged(stop),
-    },
-  });
+  return declareHooks(
+    { toolId, directory, adapter },
+    {
+      ...rest,
+      flat: { scriptsDir: `${directory}hooks/`, loaderEntry },
+      events: {
+        SessionStart: bridged(sessionStart),
+        PostToolUse: bridged(postToolUse),
+        Stop: bridged(stop),
+      },
+    }
+  );
 }

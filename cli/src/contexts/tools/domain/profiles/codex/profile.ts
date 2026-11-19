@@ -2,7 +2,7 @@ import { join } from "node:path";
 import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
-import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks/routes.js";
 import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";

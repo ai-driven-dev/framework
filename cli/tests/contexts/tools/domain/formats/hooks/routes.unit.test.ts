@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../src/contexts/tools/contract/build-contract.js";
+import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
+import type { HooksBrand } from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import {
   flatHooksArtifact,
   flatHooksSupport,
   flatProjectHooksDelivery,
-  type HooksBrand,
   hooksBridgePath,
   hooksConfigPart,
   nativeHooksSupport,
   pluginTreeHooksArtifact,
   projectHooksSupport,
-} from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
-import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../../../../../src/contexts/tools/domain/formats/hooks/routes.js";
+import { CapabilityConfigError } from "../../../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const SOURCE = { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" };
 const LOADER = { dir: ".tool/plugin/", baseName: "tool-plugin.js" };

@@ -12,7 +12,7 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
-import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,

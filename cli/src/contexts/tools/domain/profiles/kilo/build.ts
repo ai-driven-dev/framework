@@ -9,7 +9,7 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
-import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
+import { flatHooksArtifact } from "../../formats/hooks/routes.js";
 import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";

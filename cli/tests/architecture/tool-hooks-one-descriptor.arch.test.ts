@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { read, sourceFiles } from "./helpers.js";
 
 const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/(?!hooks\.ts$)[^/]+\.ts$/;
-const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks-descriptor.ts";
+const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks/descriptor.ts";
 
 const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g;
 const REFERENCE_OR_CALL =

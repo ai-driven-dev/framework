@@ -1,17 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../../../../src/contexts/tools/contract/plugin-root-token.js";
+import {
+  declareHooks,
+  type HooksDeclaration,
+  type HooksOwner,
+} from "../../../../../../src/contexts/tools/domain/formats/hooks/declaration.js";
 import {
   CANONICAL_HOOK_EVENTS,
-  declareHooks,
   type HookEventRoute,
-  type HooksDeclaration,
-} from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
-import type { HooksInvariant } from "../../../../../src/shared/domain/errors.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
+import type { HooksInvariant } from "../../../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';
-const OWNER = [TOOL.claude, ".claude/", UNSTAMPED] as const;
+const OWNER = { toolId: TOOL.claude, directory: ".claude/", adapter: UNSTAMPED };
 const ROUTE: HookEventRoute = { native: ["SessionStart"], relay: "native" };
 const FILE = { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } } as const;
 
@@ -26,7 +28,7 @@ function declaration(overrides: Partial<HooksDeclaration> = {}): HooksDeclaratio
 const BROKEN: readonly {
   invariant: HooksInvariant;
   case: string;
-  owner?: readonly [AiToolId, string, string];
+  owner?: HooksOwner;
   detail: string;
   broken: () => HooksDeclaration;
 }[] = [
@@ -98,38 +100,36 @@ const BROKEN: readonly {
     invariant: "adapter-not-stamped",
     detail: "the adapter does not name codex as its host",
     case: "an adapter naming another tool as its host",
-    owner: [TOOL.codex, ".codex/", 'const HOST = "claude";'],
+    owner: { toolId: TOOL.codex, directory: ".codex/", adapter: 'const HOST = "claude";' },
     broken: () => declaration(),
   },
 ];
 
 describe("declaring a tool's hooks", () => {
   it("accepts a declaration that breaks no invariant", () => {
-    expect(declareHooks(...OWNER, declaration()).runtime.adapter).toContain(
-      'const HOST = "claude";'
-    );
+    expect(declareHooks(OWNER, declaration()).runtime.adapter).toContain('const HOST = "claude";');
   });
 
   it.each(BROKEN)("refuses $case", ({ invariant, owner = OWNER, broken }) => {
-    expect(() => declareHooks(...owner, broken())).toThrow(expect.objectContaining({ invariant }));
+    expect(() => declareHooks(owner, broken())).toThrow(expect.objectContaining({ invariant }));
   });
 
   it.each(BROKEN)("says what $case broke", ({ invariant, owner = OWNER, broken, detail }) => {
-    expect(() => declareHooks(...owner, broken())).toThrow(
-      `The hooks descriptor of '${owner[0]}' breaks '${invariant}': ${detail}`
+    expect(() => declareHooks(owner, broken())).toThrow(
+      `The hooks descriptor of '${owner.toolId}' breaks '${invariant}': ${detail}`
     );
   });
 
   describe("what a declaration leaves out", () => {
     it("fires every canonical event under its own name, and relays the rest", () => {
-      const declared = declareHooks(...OWNER, {});
+      const declared = declareHooks(OWNER, {});
       expect([...declared.events.keys()]).toEqual([...CANONICAL_HOOK_EVENTS]);
       expect(declared.eventMap.Stop).toEqual(["Stop"]);
       expect(declared.undeclaredEvents).toBe("relayed");
     });
 
     it("reads a name or a list of names as native events of the hooks file", () => {
-      const declared = declareHooks(...OWNER, {
+      const declared = declareHooks(OWNER, {
         events: { SessionStart: "begin", Stop: ["a", "b"] },
       });
       expect(declared.events.get("SessionStart")).toEqual({ native: ["begin"], relay: "native" });
@@ -137,10 +137,10 @@ describe("declaring a tool's hooks", () => {
     });
 
     it("holds the plugin-root variable a hooks file states, and none without a file", () => {
-      expect(declareHooks(...OWNER, { file: FILE, rootToken: PLUGIN_ROOT_TOKEN }).rootToken).toBe(
+      expect(declareHooks(OWNER, { file: FILE, rootToken: PLUGIN_ROOT_TOKEN }).rootToken).toBe(
         PLUGIN_ROOT_TOKEN
       );
-      expect(declareHooks(...OWNER, {}).rootToken).toBeUndefined();
+      expect(declareHooks(OWNER, {}).rootToken).toBeUndefined();
     });
   });
 });
