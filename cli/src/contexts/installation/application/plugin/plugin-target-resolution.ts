@@ -1,8 +1,8 @@
-import { UnresolvableUserScopeError } from "../../../../shared/domain/errors.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { getToolSupportedScope } from "../../domain/install-scope.js";
+import { resolveScopeBase } from "../../domain/manifest/scope-base.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 
@@ -22,18 +22,16 @@ export function resolveScopeForInstall(tool: PluginPlacement): Scope {
   return getToolSupportedScope(tool.plugins()?.requiresUserScope() === true);
 }
 
-/** The base directory a plugin's `files` are relative to, from the manifest's own recorded
- * `scope`: never from the tool's current profile. Throws rather than falling back to `projectRoot`
- * for a `"user"` scope the profile no longer explains: a silent fallback would resolve a
- * suppression, a deletion or a drift check against the wrong directory. */
-export function resolveBaseDirFromRecord(
-  scope: Scope,
+/** The directory a plugin is installed under for the scope the manifest recorded. The home
+ * directory is read only when that scope is "user". */
+export function scopeBaseOf(
   tool: PluginPlacement,
-  projectRoot: string,
-  homedir: () => string
+  query: { scope: Scope; projectRoot: string; homedir: () => string }
 ): string {
-  if (scope === "project") return projectRoot;
-  const dir = tool.plugins()?.userPluginsBaseDir(homedir());
-  if (dir === null || dir === undefined) throw new UnresolvableUserScopeError(tool.toolId);
-  return dir;
+  return resolveScopeBase({
+    scope: query.scope,
+    projectRoot: query.projectRoot,
+    userBaseDir: () => tool.plugins()?.userPluginsBaseDir(query.homedir()),
+    toolId: tool.toolId,
+  });
 }

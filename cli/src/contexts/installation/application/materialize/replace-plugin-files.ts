@@ -12,7 +12,7 @@ import {
   materializeViaTranslator,
   writePluginFiles,
 } from "../plugin/plugin-helpers.js";
-import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
+import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { PluginTranslator } from "./plugin-translator.js";
@@ -38,7 +38,11 @@ export class ReplacePluginFiles {
   async execute(command: ReplacePluginFilesCommand): Promise<void> {
     const { plugin, dist, toolId, projectRoot, manifest } = command;
     const tool = this.tools.aiProfile(toolId);
-    const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
+    const baseDir = scopeBaseOf(tool, {
+      scope: plugin.scope,
+      projectRoot: projectRoot,
+      homedir: nodeHomedir,
+    });
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const translator = this.resolveTranslator(tool);
     if (translator !== null && plugin.marketplace !== undefined) {

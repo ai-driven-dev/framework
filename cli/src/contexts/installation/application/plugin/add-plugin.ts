@@ -38,9 +38,9 @@ import { requireManifest } from "../shared/require-manifest.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { writePluginFiles } from "./plugin-helpers.js";
 import {
-  resolveBaseDirFromRecord,
   resolvePluginToolIds,
   resolveScopeForInstall,
+  scopeBaseOf,
 } from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
@@ -365,7 +365,10 @@ export class AddPlugin implements PluginAdd {
     const toolId = tool.toolId;
     if (resolveScopeForInstall(tool) !== "user") return undefined;
     if (machine.getPlugins(toolId).some((p) => p.name === pluginName)) return undefined;
-    const dir = join(resolveBaseDirFromRecord("user", tool, projectRoot, nodeHomedir), pluginName);
+    const dir = join(
+      scopeBaseOf(tool, { scope: "user", projectRoot: projectRoot, homedir: nodeHomedir }),
+      pluginName
+    );
     const present = await this.fs.listFilesRecursive(dir);
     return present.length > 0 ? dir : undefined;
   }

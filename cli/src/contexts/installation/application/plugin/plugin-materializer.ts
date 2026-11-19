@@ -21,7 +21,7 @@ import {
 } from "./global-plugin-files.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { deleteOldFiles, writePluginFiles } from "./plugin-helpers.js";
-import { resolveBaseDirFromRecord } from "./plugin-target-resolution.js";
+import { scopeBaseOf } from "./plugin-target-resolution.js";
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
@@ -113,7 +113,11 @@ export class PluginMaterializer {
       );
     }
     await this.assertWritable(plugin, tool, files, home, isWithinUserScope);
-    const baseDir = resolveBaseDirFromRecord("user", tool, projectRoot, () => home);
+    const baseDir = scopeBaseOf(tool, {
+      scope: "user",
+      projectRoot: projectRoot,
+      homedir: () => home,
+    });
     return {
       plugin,
       tool,
@@ -176,7 +180,7 @@ export class PluginMaterializer {
       );
       return;
     }
-    const baseDir = resolveBaseDirFromRecord("user", tool, "", () => home);
+    const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot: "", homedir: () => home });
     // A first install owns no file yet, and a restore may have lost the directory: it is created
     // so the containment proof has a real path to resolve. The name is one safe path segment.
     if (PLUGIN_NAME_REGEX.test(plugin.name)) {

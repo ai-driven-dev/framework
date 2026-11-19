@@ -15,7 +15,7 @@ import {
   isPluginFileAtDesiredState,
   materializeViaTranslator,
 } from "../plugin/plugin-helpers.js";
-import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
+import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 
@@ -79,12 +79,11 @@ export class ApplyPluginFiles {
     // before that was true. Scoped to the manifest's own keys under the plugin's base dir: never a
     // directory scan: so it cannot touch files the plugin never wrote.
     if (translator.mode === "marketplace") {
-      const baseDir = resolveBaseDirFromRecord(
-        plugin.scope,
-        tool,
-        projectRoot,
-        this.builtDeps.homedir
-      );
+      const baseDir = scopeBaseOf(tool, {
+        scope: plugin.scope,
+        projectRoot: projectRoot,
+        homedir: () => this.builtDeps.homedir(),
+      });
       await deleteOldFiles(plugin.files, baseDir, this.fs);
     }
     return materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest, {

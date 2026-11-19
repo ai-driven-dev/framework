@@ -61,7 +61,7 @@ const MAX_BASELINE: Readonly<Record<string, number>> = {
   "cognitive complexity": 27,
   "one class per file": 8,
   "file length": 5,
-  "function parameters": 117,
+  "function parameters": 116,
 };
 
 interface Override {

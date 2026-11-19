@@ -11,10 +11,7 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-import {
-  resolveBaseDirFromRecord,
-  resolvePluginToolIds,
-} from "../plugin/plugin-target-resolution.js";
+import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { ProjectPluginWithdrawal } from "./project-plugin-withdrawal.js";
@@ -86,7 +83,11 @@ export class RemovePlugin<Proof> {
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
       const registrations = manifest.getNativeRegistrations(toolId);
-      const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
+      const baseDir = scopeBaseOf(tool, {
+        scope: plugin.scope,
+        projectRoot: projectRoot,
+        homedir: nodeHomedir,
+      });
       const confirmed = await this.withdrawal.withdraw(
         toolId,
         tool,

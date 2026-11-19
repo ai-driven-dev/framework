@@ -12,7 +12,7 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
-import { resolveBaseDirFromRecord } from "./plugin-target-resolution.js";
+import { scopeBaseOf } from "./plugin-target-resolution.js";
 
 export async function writePluginFiles(
   files: InstallationFile[],
@@ -49,7 +49,11 @@ export async function deletePluginFilesForTool(
   ownerScope: "project" | "user" = "project"
 ): Promise<string[]> {
   if (scope === "user" && ownerScope !== "user") return [];
-  const baseDir = resolveBaseDirFromRecord(scope, tool, projectRoot, nodeHomedir);
+  const baseDir = scopeBaseOf(tool, {
+    scope: scope,
+    projectRoot: projectRoot,
+    homedir: nodeHomedir,
+  });
   const deleted: string[] = [];
   for (const relativePath of files.keys()) {
     const fullPath = join(baseDir, relativePath);

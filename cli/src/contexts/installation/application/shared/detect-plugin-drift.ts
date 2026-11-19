@@ -5,7 +5,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
+import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 
 export type PluginFileDriftKind = "missing" | "hash-mismatch";
 
@@ -52,12 +52,8 @@ export class DetectPluginDrift {
       const plugins = manifest.getPlugins(toolId);
       const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
       for (const plugin of targets) {
-        const baseDir = resolveBaseDirFromRecord(
-          plugin.scope,
-          this.tools.aiProfile(toolId),
-          projectRoot,
-          homedir
-        );
+        const profile = this.tools.aiProfile(toolId);
+        const baseDir = scopeBaseOf(profile, { scope: plugin.scope, projectRoot, homedir });
         const files = await this.driftedFiles(plugin.files, baseDir);
         if (files.length === 0) continue;
         const allMissing =

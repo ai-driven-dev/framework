@@ -18,10 +18,7 @@ import {
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/plugin-helpers.js";
-import {
-  resolveBaseDirFromRecord,
-  resolveScopeForInstall,
-} from "../plugin/plugin-target-resolution.js";
+import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
@@ -111,7 +108,11 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const baseDir =
       mode === "flat"
         ? projectRoot
-        : resolveBaseDirFromRecord(scope, tool, projectRoot, this.built.homedir);
+        : scopeBaseOf(tool, {
+            scope: scope,
+            projectRoot: projectRoot,
+            homedir: () => this.built.homedir(),
+          });
     const owned = userScopeDirTaken ? [] : files;
     const written = await this.writeChangedFiles(owned, baseDir);
     manifest.addPlugin(

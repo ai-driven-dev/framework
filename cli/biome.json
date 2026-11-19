@@ -4908,7 +4908,6 @@
         "!src/contexts/installation/application/plugin/global-plugin-files.ts",
         "!src/contexts/installation/application/plugin/plugin-helpers.ts",
         "!src/contexts/installation/application/plugin/plugin-materializer.ts",
-        "!src/contexts/installation/application/plugin/plugin-target-resolution.ts",
         "!src/contexts/installation/application/plugin/update-plugin.ts",
         "!src/contexts/installation/application/removal/project-plugin-withdrawal.ts",
         "!src/contexts/installation/application/removal/remove-plugin.ts",

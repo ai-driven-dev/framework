@@ -16,10 +16,7 @@ import {
 } from "../../domain/plugins/installed-plugin.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
 import { isPluginFileAtDesiredState } from "../plugin/plugin-helpers.js";
-import {
-  resolveBaseDirFromRecord,
-  resolveScopeForInstall,
-} from "../plugin/plugin-target-resolution.js";
+import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
@@ -112,7 +109,11 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     const files = hashOutputFiles(translated.files);
     const { componentPaths, skipped } = translated;
     const scope = resolveScopeForInstall(tool);
-    const baseDir = resolveBaseDirFromRecord(scope, tool, projectRoot, this.homedir);
+    const baseDir = scopeBaseOf(tool, {
+      scope: scope,
+      projectRoot: projectRoot,
+      homedir: () => this.homedir(),
+    });
     return { files, componentPaths, skipped, baseDir, scope };
   }
 
