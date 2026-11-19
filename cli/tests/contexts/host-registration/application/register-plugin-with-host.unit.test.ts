@@ -14,6 +14,7 @@ import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-re
 import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.js";
 
+const PLATFORM = "linux";
 const DIR = "/built/aidd";
 const CATALOG = join(DIR, ".claude-plugin", "marketplace.json");
 const NONE: RegistrationClaims = {
@@ -71,7 +72,7 @@ function setup(
               ],
             ]),
     },
-    process.platform,
+    PLATFORM,
     registeredTools()
   );
   const run = (toolId: ToolId = TOOL.claude) =>
@@ -111,7 +112,7 @@ describe("register plugin with host", () => {
       new InMemoryFileAdapter(),
       new Map(),
       { marketplaceRegistries: new Map(), pluginRegistries: new Map(), sources: new Map() },
-      process.platform,
+      PLATFORM,
       registeredTools()
     );
     const result = await command.execute({
@@ -223,12 +224,14 @@ describe("register plugin with host", () => {
     [
       "warns about a plugin the host refuses",
       { activator: new FakeHostActions({ available: true, failOnPlugins: [REF] }) },
-      [],
+      [
+        "Native plugin activation \u2014 enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
+      ],
     ],
-  ])("%s", async (_case, options, enabledRefs) => {
+  ])("%s", async (_case, options, expectedWarnings) => {
     const { warnings, run } = setup({ ...options, refs: [REF] });
-    expect(await run()).toMatchObject({ outcome: { pluginRefs: enabledRefs } });
-    expect(warnings.length).toBe(_case.startsWith("warns") ? 1 : 0);
+    expect(await run()).toMatchObject({ outcome: { pluginRefs: [] } });
+    expect(warnings).toEqual(expectedWarnings);
   });
 
   describe("a ref the host already lists enabled", () => {
