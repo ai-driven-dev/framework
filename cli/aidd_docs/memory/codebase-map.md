@@ -27,6 +27,10 @@ src/
 │   │   │   └── inspect/
 │   │   ├── contract/
 │   │   ├── domain/
+│   │   │   ├── policy/
+│   │   │   ├── reading/
+│   │   │   ├── record/
+│   │   │   └── source/
 │   │   ├── infrastructure/
 │   │   └── ports/
 │   ├── installation/    # the installation record and what installs, restores and materializes it

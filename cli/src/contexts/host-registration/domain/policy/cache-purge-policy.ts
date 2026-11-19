@@ -1,4 +1,4 @@
-import type { HostMarketplaceRegistryReading } from "../domain/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistryReading } from "../reading/marketplace-registry-reading.js";
 
 /** Whether a host's cached directory may be deleted, and when it may not, the warning that names
  * why it stays. */

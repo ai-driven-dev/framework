@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../src/composition/host-registration.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";

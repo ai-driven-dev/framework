@@ -2,7 +2,7 @@ import type {
   MarketplaceListLayout,
   MarketplaceSourcesDeclaration,
 } from "../../tools/contract/native-registration-spec.js";
-import type { NativeMarketplaceSource } from "../domain/native-marketplace-source.js";
+import type { NativeMarketplaceSource } from "../domain/record/native-marketplace-source.js";
 import type { NativeMarketplaceSourceListContract } from "./native-marketplace-source-list-contract.js";
 
 type Sources = ReadonlyMap<string, NativeMarketplaceSource | null>;

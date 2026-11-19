@@ -1,4 +1,4 @@
-import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 
 /** A registry double whose answer is fixed at construction — never a real file, never a

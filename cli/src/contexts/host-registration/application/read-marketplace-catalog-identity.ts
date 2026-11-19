@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { MarketplaceCatalogIdentity } from "../domain/marketplace-source-conflict.js";
+import type { MarketplaceCatalogIdentity } from "../domain/source/marketplace-source-conflict.js";
 import type { CatalogProbeTool } from "../ports/host-tool.js";
 
 /**

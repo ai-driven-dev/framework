@@ -1,4 +1,4 @@
-import type { HostMarketplaceRegistryReading } from "../domain/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistryReading } from "../reading/marketplace-registry-reading.js";
 
 /**
  * What a catalog's own `marketplace.json` declares about itself: the fact that decides whether

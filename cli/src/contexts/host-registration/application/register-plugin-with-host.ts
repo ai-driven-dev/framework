@@ -10,24 +10,24 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
-import {
-  parseBuiltMarketplaceDir,
-  parseUserBuiltMarketplaceDir,
-} from "../domain/built-marketplace-location.js";
-import {
-  describePluginDiff,
-  type MarketplaceCatalogIdentity,
-  pluginSetDifference,
-} from "../domain/marketplace-source-conflict.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
-} from "../domain/native-marketplace-source.js";
+} from "../domain/record/native-marketplace-source.js";
 import {
   pluginRefsOf,
   type RegistrationRecordData,
   recordedMarketplaces,
-} from "../domain/registration-record.js";
+} from "../domain/record/registration-record.js";
+import {
+  parseBuiltMarketplaceDir,
+  parseUserBuiltMarketplaceDir,
+} from "../domain/source/built-marketplace-location.js";
+import {
+  describePluginDiff,
+  type MarketplaceCatalogIdentity,
+  pluginSetDifference,
+} from "../domain/source/marketplace-source-conflict.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";

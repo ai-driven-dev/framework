@@ -1,9 +1,9 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { NativeMarketplaceRegistration } from "../domain/native-marketplace-source.js";
+import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
   type RegistrationRecordData,
   readRegistrationRecord,
-} from "../domain/registration-record.js";
+} from "../domain/record/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";

@@ -3,7 +3,7 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import type { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.js";
-import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";

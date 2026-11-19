@@ -2,12 +2,12 @@ import { join } from "node:path";
 import {
   BUILT_CACHE_SUBDIR,
   userBuiltCacheRoot,
-} from "../../../shared/domain/layout/aidd-layout.js";
+} from "../../../../shared/domain/layout/aidd-layout.js";
 import {
   samePathSegment,
   segmentsUnder,
   stripTrailingSeparator,
-} from "../../../shared/domain/paths.js";
+} from "../../../../shared/domain/paths.js";
 
 /** What `userBuiltMarketplaceDir` encoded into a path, read back. */
 export interface UserBuiltMarketplaceLocation {

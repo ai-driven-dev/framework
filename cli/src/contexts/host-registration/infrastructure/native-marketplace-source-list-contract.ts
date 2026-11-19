@@ -1,4 +1,4 @@
-import type { NativeMarketplaceSource } from "../domain/native-marketplace-source.js";
+import type { NativeMarketplaceSource } from "../domain/record/native-marketplace-source.js";
 
 export interface NativeMarketplaceSourceListContract {
   readonly binary: string;

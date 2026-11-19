@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import {
   type NativeMarketplaceRegistration,
   readMarketplaceRegistration,

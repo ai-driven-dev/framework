@@ -3,7 +3,7 @@ import {
   type NativeMarketplaceSource,
   readMarketplaceRegistration,
   sameNativeMarketplaceSource,
-} from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
+} from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 
 const registry = (source: string): NativeMarketplaceSource => ({ kind: "registry", source });
 

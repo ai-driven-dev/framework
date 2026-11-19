@@ -3,7 +3,7 @@ import { NativeHostRegistrationGate } from "../../../../src/contexts/host-regist
 import type {
   DependentClaim,
   RegistrationRecord,
-} from "../../../../src/contexts/host-registration/domain/registration-record.js";
+} from "../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";

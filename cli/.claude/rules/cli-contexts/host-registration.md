@@ -24,7 +24,7 @@ paths:
 
 ## Registration record
 
-- The record is what aidd asked a host to register: `binary`, `marketplaces` and `pluginRefs`, host data only (`domain/registration-record.ts`). The manifest stores it as an opaque block beside its own claims on the refs; only this context reads or writes the record, and installation asks through `RegistrationRecordRules`.
+- The record is what aidd asked a host to register: `binary`, `marketplaces` and `pluginRefs`, host data only (`domain/record/registration-record.ts`). The manifest stores it as an opaque block beside its own claims on the refs; only this context reads or writes the record, and installation asks through `RegistrationRecordRules`.
 - A ref is `<plugin>@<host catalogue name>`: a qualified selector names one ref, a bare plugin name selects it in every catalogue.
 - Removing a ref drops its claim; removing a marketplace drops its refs and claims; data naming no binary is no record.
 

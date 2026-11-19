@@ -15,7 +15,7 @@ import {
   withoutClaimedRef,
   withoutMarketplace,
   withoutRef,
-} from "../contexts/host-registration/domain/registration-record.js";
+} from "../contexts/host-registration/domain/record/registration-record.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.js";
 import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.js";

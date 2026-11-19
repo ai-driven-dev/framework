@@ -4,8 +4,8 @@ import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,
   parseUserBuiltMarketplaceDir,
-} from "../../../../src/contexts/host-registration/domain/built-marketplace-location.js";
-import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
+} from "../../../../../src/contexts/host-registration/domain/source/built-marketplace-location.js";
+import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 
 describe("parseUserBuiltMarketplaceDir()", () => {
   it("tolerates a trailing separator on the path", () => {
@@ -242,7 +242,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
         join: win32.join,
       }));
       const { parseBuiltMarketplaceDirAtAnyRoot: parseOnWin32Host } = await import(
-        "../../../../src/contexts/host-registration/domain/built-marketplace-location.js"
+        "../../../../../src/contexts/host-registration/domain/source/built-marketplace-location.js"
       );
 
       expect(

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { NativeMarketplaceRegistration } from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
+import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import {
   type RegistrationRecord,
   readRegistrationRecord,
   recordedRegistrations,
   registrationRecordData,
-} from "../../../../src/contexts/host-registration/domain/registration-record.js";
+} from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
 
 const registrations: RegistrationRecord = {
   binary: "claude",

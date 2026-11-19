@@ -14,7 +14,7 @@ import {
   withoutClaimedRef,
   withoutMarketplace,
   withoutRef,
-} from "../../../../src/contexts/host-registration/domain/registration-record.js";
+} from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
 
 const claim = (ref: string) => ({ ref, dependents: [] as string[] });
 

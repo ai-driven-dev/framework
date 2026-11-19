@@ -1,6 +1,6 @@
-import { samePathSegment } from "../../../shared/domain/paths.js";
-import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
-import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
+import { samePathSegment } from "../../../../shared/domain/paths.js";
+import { compareSemver, isSemver } from "../../../../shared/domain/semver.js";
+import type { MarketplaceSourceDrift } from "../../contract/marketplace-source-drift.js";
 import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,

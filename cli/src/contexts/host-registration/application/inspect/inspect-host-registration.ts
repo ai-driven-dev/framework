@@ -5,11 +5,11 @@ import type {
   HostRegistrationFinding,
   InspectHostRegistrationResult,
 } from "../../contract/inspect-host-registration-result.js";
-import { answeredRegistry } from "../../domain/host-registration-answers.js";
+import { answeredRegistry } from "../../domain/reading/host-registration-answers.js";
 import {
   describePluginDiff,
   pluginSetDifference,
-} from "../../domain/marketplace-source-conflict.js";
+} from "../../domain/source/marketplace-source-conflict.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
 import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
 import {

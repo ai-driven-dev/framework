@@ -1,4 +1,4 @@
-import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 /** Source currently selected by the host for a named native plugin marketplace. */
 export type NativeMarketplaceSource =

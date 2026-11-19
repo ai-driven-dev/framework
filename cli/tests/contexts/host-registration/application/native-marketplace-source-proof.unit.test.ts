@@ -6,7 +6,7 @@ import {
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
-} from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
+} from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";

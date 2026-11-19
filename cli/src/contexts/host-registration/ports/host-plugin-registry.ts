@@ -1,4 +1,4 @@
-import type { HostPluginRegistryReading } from "../domain/plugin-registry-reading.js";
+import type { HostPluginRegistryReading } from "../domain/reading/plugin-registry-reading.js";
 
 export interface HostPluginRegistry {
   /** `projectRoot` because a registry may bind a ref to one project rather than to the machine

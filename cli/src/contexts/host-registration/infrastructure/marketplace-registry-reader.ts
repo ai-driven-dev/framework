@@ -1,6 +1,6 @@
 import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../shared/domain/describe-error.js";
-import type { HostMarketplaceRegistryReading } from "../domain/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistryReading } from "../domain/reading/marketplace-registry-reading.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 
 /**

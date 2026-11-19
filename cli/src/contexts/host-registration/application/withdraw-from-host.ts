@@ -10,15 +10,15 @@ import {
   judgeEmptiness,
   judgeRegistryClearance,
   type PurgeVerdict,
-} from "../domain/cache-purge-policy.js";
-import type { HostPluginRegistryReading } from "../domain/plugin-registry-reading.js";
+} from "../domain/policy/cache-purge-policy.js";
+import type { HostPluginRegistryReading } from "../domain/reading/plugin-registry-reading.js";
 import {
   type DependentClaim,
   type RegistrationRecord,
   type RegistrationRecordData,
   readRegistrationRecord,
   recordedRegistrations,
-} from "../domain/registration-record.js";
+} from "../domain/record/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";

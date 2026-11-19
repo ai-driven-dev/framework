@@ -4,7 +4,7 @@ import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
-} from "../domain/plugin-registry-reading.js";
+} from "../domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 
 function failedRead(location: string, error: unknown): HostPluginRegistryReading {

@@ -1,7 +1,7 @@
 import {
   type RegistrationRecord,
   readRegistrationRecord,
-} from "../../src/contexts/host-registration/domain/registration-record.js";
+} from "../../src/contexts/host-registration/domain/record/registration-record.js";
 import type {
   NativePluginClaim,
   NativeRegistrations,

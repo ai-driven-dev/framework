@@ -3,7 +3,7 @@ import {
   judgeConfirmation,
   judgeEmptiness,
   judgeRegistryClearance,
-} from "../../../../src/contexts/host-registration/domain/cache-purge-policy.js";
+} from "../../../../../src/contexts/host-registration/domain/policy/cache-purge-policy.js";
 
 const LABEL = "claude: cache for 'aidd'";
 const CANDIDATE = "/cache/aidd";

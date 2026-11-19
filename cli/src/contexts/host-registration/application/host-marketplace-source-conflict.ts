@@ -7,11 +7,11 @@ import {
   type MarketplaceCatalogIdentity,
   type MarketplaceSourceConflict,
   marketplaceSourceConflict,
-} from "../domain/marketplace-source-conflict.js";
+} from "../domain/source/marketplace-source-conflict.js";
 import {
   type MarketplaceSourceDriftContext,
   marketplaceSourceDrift,
-} from "../domain/marketplace-source-drift.js";
+} from "../domain/source/marketplace-source-drift.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { CatalogProbeTool } from "../ports/host-tool.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";

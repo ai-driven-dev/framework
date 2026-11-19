@@ -1,5 +1,5 @@
-import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
-import type { NativeMarketplaceSourceReading } from "../../../../src/contexts/host-registration/domain/native-marketplace-source-reading.js";
+import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import type { NativeMarketplaceSourceReading } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source-reading.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
 

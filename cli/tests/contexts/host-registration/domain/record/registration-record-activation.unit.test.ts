@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
+import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import {
   afterActivation,
   mergeCatalogueClaims,
-} from "../../../../src/contexts/host-registration/domain/registration-record.js";
+} from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
 
 const registry = (source: string): NativeMarketplaceSource => ({ kind: "registry", source });
 

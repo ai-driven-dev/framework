@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import type { NativeMarketplaceSourceReading } from "../domain/native-marketplace-source-reading.js";
+import type { NativeMarketplaceSourceReading } from "../domain/record/native-marketplace-source-reading.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import {
