@@ -22,7 +22,6 @@ const NAMED_AS_HISTORY = Object.freeze({
 
 /** Named inside a fixture or a runtime path a test builds, never a file of this repository. */
 const NOT_A_REPOSITORY_FILE = Object.freeze({
-  "cli/tests/architecture/test-mirror-path.arch.test.ts": ["src/contexts/x/domain/y.ts"],
   "scripts/__tests__/cli-type-honesty.test.js": [
     "cli/src/honest.ts",
     "cli/src/widened.ts",

@@ -20,9 +20,9 @@ paths:
 
 ## Guards
 
-- Kit: a context's tests import its own `tests/contexts/<ctx>/testing/` only, `kit-isolation.arch.test.ts`.
+- Kit: a context's tests import its own `tests/contexts/<ctx>/testing/` only, `kinds.ts`.
 - Another context is reached through its `application/` and `contract/` only, `test-cross-context-imports.arch.test.ts`.
-- Mirror: `tests/` follows `src/`, `test-mirror-path.arch.test.ts`.
+- Mirror: `tests/` follows `src/`, the mirror rule of `kinds.ts`.
 - A test file stays under 800 lines, `test-file-size.arch.test.ts`; 400 is a review point.
 
 ## Discipline

@@ -3,8 +3,8 @@
  * to the case it names. Debt is `kinds-debt.json`: every violation the tree has today, and it
  * only shrinks. A listed entry that no longer violates fails, so the fix removes it.
  */
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, posix } from "node:path";
 import {
   isArrowFunction,
   isClassDeclaration,
@@ -30,6 +30,7 @@ import {
   kindsOf,
   mirrorViolations,
   type Shape,
+  strayViolations,
   type Violation,
 } from "./kinds.js";
 import { walk, withVirtualProject } from "./ts-project.js";
@@ -164,7 +165,17 @@ describe("every file is exactly one kind", () => {
     }
   });
 
+  it("flags a file of src that is neither source nor a glossary, such as a sed backup", () => {
+    expect(
+      strayViolations(["src/a.ts", "src/b.md", "src/a.ts-E", "tests/c.json"]).map((v) => v.entry)
+    ).toEqual(["src/a.ts-E"]);
+  });
+
   it("holds every file of the tree, up to the debt", () => {
+    const everyFile = readdirSync(join(CLI_ROOT, "src"), { recursive: true, encoding: "utf8" })
+      .filter((entry) => statSync(join(CLI_ROOT, "src", entry)).isFile())
+      .map((entry) => canonicalPath(join("src", entry)));
+    expect(strayViolations(everyFile).map((violation) => violation.message)).toEqual([]);
     const paths = [...codeFilesUnder("src"), ...codeFilesUnder("tests")].filter(isInCatalog);
     expect(paths.length, "the scope is stale").toBeGreaterThan(500);
     const { unlisted, stale } = debtVerdict(classificationViolations(paths), loadDebt(), [
@@ -272,6 +283,18 @@ describe("a file imports only the kinds its kind allows", () => {
     ]);
   });
 
+  it("flags a profile that imports a file of another profile, and passes its own folder", () => {
+    const base = "src/contexts/tools/domain/profiles";
+    expect(
+      importsOf({
+        [`${base}/x/x.profile.ts`]:
+          'import { Y } from "../y/y.profile.js";\nimport { Z } from "./z.js";',
+        [`${base}/y/y.profile.ts`]: "export const Y = 1;",
+        [`${base}/x/z.ts`]: "export const Z = 1;",
+      })
+    ).toEqual([`${base}/x/x.profile.ts -> ${base}/y/y.profile.ts`]);
+  });
+
   it("flags composition imported by anything but composition", () => {
     expect(
       importsOf({
@@ -289,6 +312,33 @@ describe("a file imports only the kinds its kind allows", () => {
         "tests/contexts/b/testing/y.fake.ts": "export class Y {}",
       })
     ).toEqual(["tests/contexts/a/testing/x.fake.ts -> tests/contexts/b/testing/y.fake.ts"]);
+  });
+
+  it("flags a test of a context, a helper and the shared kit that import another context's kit", () => {
+    const kit = {
+      "tests/contexts/b/testing/y.fake.ts": "export class Y {}",
+    };
+    for (const file of [
+      "tests/contexts/a/x/y.unit.test.ts",
+      "tests/helpers/ports/h.ts",
+      "tests/shared/testing/h.ts",
+    ]) {
+      const target = "tests/contexts/b/testing/y.fake.ts";
+      const spec = posix.relative(posix.dirname(file), target).replace(/\.ts$/, ".js");
+      expect(importsOf({ ...kit, [file]: `import { Y } from "${spec}";` })).toEqual([
+        `${file} -> ${target}`,
+      ]);
+    }
+  });
+
+  it("lets orchestration tests and a context's own tests import the kits they compose", () => {
+    expect(
+      importsOf({
+        "tests/contexts/b/testing/y.fake.ts": "export class Y {}",
+        "tests/composition/c.unit.test.ts": 'import { Y } from "../contexts/b/testing/y.fake.js";',
+        "tests/contexts/b/x/y.unit.test.ts": 'import { Y } from "../testing/y.fake.js";',
+      })
+    ).toEqual([]);
   });
 
   it("passes a fake that imports the shared kit and its own source", () => {

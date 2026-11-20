@@ -340,11 +340,38 @@ export function classificationViolations(
   return out;
 }
 
+/** A file of `src/` that is neither source nor a glossary: a BSD `sed -i -E` leaves a `<file>-E`
+ * backup that no gate reads, and a committed one ships as dead code. */
+export function strayViolations(allPaths: readonly string[]): Violation[] {
+  return allPaths
+    .filter((path) => path.startsWith("src/") && !/\.(?:ts|md)$/.test(path))
+    .map((path) => ({
+      rule: "classification",
+      entry: path,
+      message: `${path}: a file of src/ is neither .ts nor .md. Rule: src/ holds source and glossaries only (tests/architecture/kinds.ts). Fix: delete it, such as a sed backup.`,
+    }));
+}
+
 /** The folder that owns a kit file: everything before its `/testing/`. */
 const kitOwner = (path: string): string | undefined => {
   const at = path.indexOf("/testing/");
   return at < 0 ? undefined : path.slice(0, at);
 };
+
+/** The tests of a context, and the helpers and shared kit that could hand a kit out, import their
+ * own kit and the shared one. Orchestration, presentation, composition, e2e and golden tests compose
+ * contexts and may import any kit. */
+const KIT_BOUND = /^tests\/(?:contexts\/[^/]+|helpers|shared)\//;
+
+const CONTEXT_KIT = /^tests\/contexts\/[^/]+\/testing\//;
+
+/** The context folder a test of a context belongs to, else the folder of its kit. */
+const kitHolder = (path: string): string | undefined =>
+  /^tests\/contexts\/[^/]+/.exec(path)?.[0] ?? kitOwner(path);
+
+/** The tool a profile file belongs to: a tool evolves inside its own folder. */
+const profileOf = (path: string): string | undefined =>
+  path.startsWith(PROFILE_FOLDER) ? path.slice(PROFILE_FOLDER.length).split("/")[0] : undefined;
 
 function contextOfSource(path: string): string | undefined {
   return /^src\/contexts\/([^/]+)\//.exec(path)?.[1];
@@ -374,6 +401,16 @@ export function importViolations(
       if (!known.has(target)) continue;
       const fromContext = contextOfSource(file);
       const toContext = contextOfSource(target);
+      const owner = profileOf(file);
+      const other = profileOf(target);
+      if (owner && other && owner !== other) {
+        report(
+          target,
+          `profile ${owner} imports a file of profile ${other}`,
+          "move what the two tools share to domain/formats, domain/hooks or domain/bridges"
+        );
+        continue;
+      }
       if (from?.within && !anyOf(from.within, target)) {
         report(
           target,
@@ -396,14 +433,14 @@ export function importViolations(
         continue;
       }
       if (
-        from?.ownKitOnly &&
+        (from?.ownKitOnly || (KIT_BOUND.test(file) && CONTEXT_KIT.test(target))) &&
         anyOf(KIT_FOLDER, target) &&
         !target.startsWith(SHARED_KIT) &&
-        kitOwner(target) !== kitOwner(file)
+        kitOwner(target) !== kitHolder(file)
       ) {
         report(
           target,
-          `a ${from.id} imports the kit of another folder`,
+          `${from?.id ?? "a test file"} imports the kit of another folder`,
           "build it from the shared kit and the sources under test, or copy the part it needs"
         );
         continue;

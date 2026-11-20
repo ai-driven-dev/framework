@@ -13,7 +13,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `presentation/deps.ts` do not count: `context-boundary.arch.test.ts`.
 3. An edge absent from `ALLOWED` is an error: `context-graph.arch.test.ts`, `edge-table.arch.test.ts`.
 4. No import cycle: Biome `noImportCycles`.
-5. Pure folders import no package and no Node builtin but `node:path` and `node:crypto`. Biome holds it for the `PURE_FOLDERS` of `biome-guards-bite.arch.test.ts`; in every other `domain/`, only `domain-does-no-io.arch.test.ts` holds it, for an inline `import("node:…")` and the file ports.
+5. Pure folders import no package and no Node builtin but `node:path` and `node:crypto`. Biome holds it for the `PURE_FOLDERS` of `biome-guards-bite.arch.test.ts`; in every other `domain/`, the kind gate (`kinds.ts`) holds it: a model imports models and `node:path` and `node:crypto` only, an inline `import("node:…")` included.
 6. Orchestration imports the `application/` and `contract/` of contexts only, reads no file and starts no process: `biome.json`.
 7. Only `composition/` and `cli.ts` import `shared/infrastructure/`, and only `cli.ts` imports `composition/` from outside it: `biome.json`, for every folder but `cli.ts`.
 8. A `shared/domain/` or `shared/ports/` file is earned by two importing contexts; a `shared/infrastructure/` file by implementing an earned shared port, being imported by an earned shared adapter, or two `composition/` importers: `earned-sharing.arch.test.ts`.
