@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { MarketplaceCatalogIdentity } from "../domain/source/marketplace-source-conflict.js";
 import type { CatalogProbeTool } from "../ports/host-tool.js";
@@ -46,8 +47,7 @@ export function marketplaceCatalogProbePath(
 function pluginNamesOf(plugins: readonly unknown[]): string[] {
   const names: string[] = [];
   for (const plugin of plugins) {
-    if (plugin === null || typeof plugin !== "object") continue;
-    const name = (plugin as { name?: unknown }).name;
+    const name = asPlainObject(plugin)?.name;
     if (typeof name === "string") names.push(name);
   }
   return names;

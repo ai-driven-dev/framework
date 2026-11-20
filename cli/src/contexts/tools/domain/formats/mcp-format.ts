@@ -79,10 +79,7 @@ export function deepMerge(
   for (const [key, value] of Object.entries(source)) {
     const existing = result[key];
     if (isPlainObject(value) && isPlainObject(existing)) {
-      result[key] = deepMerge(
-        existing as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
+      result[key] = deepMerge(existing, value);
     } else {
       result[key] = value;
     }
@@ -90,6 +87,6 @@ export function deepMerge(
   return result;
 }
 
-function isPlainObject(value: unknown): boolean {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

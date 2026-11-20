@@ -201,7 +201,7 @@ const CODEX_FLAT_CONFIG = ".codex/config.toml";
 
 function buildCodexConfigPayload(mcpServers: Record<string, unknown>): string {
   if (Object.keys(mcpServers).length === 0) return "";
-  return stringifyToml({ mcp_servers: mcpServers } as Record<string, unknown>);
+  return stringifyToml({ mcp_servers: mcpServers });
 }
 
 export function buildCodexFlatContract(): ToolBuildContract {

@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { type SpawnSyncOptionsWithStringEncoding, spawnSync } from "node:child_process";
 import type { NativeMarketplaceSourceReading } from "../domain/record/native-marketplace-source-reading.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
@@ -39,11 +39,11 @@ export class NativeMarketplaceSourceReaderAdapter implements HostMarketplaceSour
 
   async read(projectRoot: string): Promise<NativeMarketplaceSourceReading> {
     const location = `${this.contract.binary} ${this.contract.args.join(" ")} (cwd ${projectRoot})`;
-    const options = {
+    const options: SpawnSyncOptionsWithStringEncoding = {
       cwd: projectRoot,
-      encoding: "utf-8" as const,
+      encoding: "utf-8",
       timeout: 30000,
-      stdio: ["ignore", "pipe", "pipe"] as ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe"],
       shell: false,
     };
     const executable = resolveExecutableOnPath(this.contract.binary, hostExecutableLookup());

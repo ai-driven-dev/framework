@@ -8,6 +8,7 @@
  */
 import { join } from "node:path";
 import { InvalidSourceMarketplaceError } from "../../../shared/domain/errors.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { BuildFileReader, PluginPresence } from "../contract/build-contract.js";
 
 type SrcEntry =
@@ -84,10 +85,7 @@ export function buildSharedCatalogEntry(
   };
   if (typeof srcEntry?.strict === "boolean") entry.strict = srcEntry.strict;
   const metadata = srcEntry?.metadata;
-  const recommended =
-    metadata !== null && typeof metadata === "object"
-      ? (metadata as { recommended?: unknown }).recommended
-      : undefined;
+  const recommended = asPlainObject(metadata)?.recommended;
   if (typeof recommended === "boolean") entry.metadata = { recommended };
   return entry;
 }
