@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { legsOf, shardedOf } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
@@ -10,12 +12,15 @@ import {
   scopeFiles,
   scopeWeights,
   shardFiles,
+  sourceFiles,
 } from "../../scripts/mutation-shards.mjs";
 import { parseShard, scoreOf, shardConfig } from "../../scripts/run-mutation.mjs";
 import { present } from "../shared/testing/present.js";
-import { read, sourceFiles } from "./helpers.js";
 
-const declared = JSON.parse(read("mutation-scopes.json")) as { scopes: Record<string, Scope> };
+const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
+const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");
+
+const declared: { scopes: Record<string, Scope> } = JSON.parse(read("mutation-scopes.json"));
 const scopes = declared.scopes;
 
 interface Scope {
@@ -179,7 +184,7 @@ describe("scoring a sharded scope once, over every shard", () => {
 });
 
 describe("running one shard", () => {
-  const base = JSON.parse(read("stryker.conf.json")) as Record<string, unknown>;
+  const base: Record<string, unknown> = JSON.parse(read("stryker.conf.json"));
 
   it("keeps the whole config and makes only its files, sandbox and reports its own", () => {
     const config = shardConfig(base, {

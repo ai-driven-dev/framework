@@ -1,10 +1,12 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
-import { read } from "./helpers.js";
+
+const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
+const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");
 
 const ASSETS = [
   "assets/configs/opencode/opencode-events.js.txt",

@@ -2,12 +2,17 @@
  * The profile copy check runs before push (`pnpm jscpd:profiles`), not here: this file plants
  * the copies it must see and the look-alikes it must not, through the same functions.
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { BASELINE, compare, copiesBetweenProfiles, scan } from "../../scripts/profile-copies.mjs";
-import { read, readFromRepoRoot } from "./helpers.js";
+import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+
+const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
+const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");
+const readFromRepoRoot = (path: string): string =>
+  readFileSync(join(REPOSITORY_ROOT, path), "utf8");
 
 const MERGE_LOOP = (name: string): string =>
   [
@@ -38,7 +43,7 @@ const declaration = (tool: string): string =>
 
 describe("the profile copy check is wired before push", () => {
   it("is a package script the pre-push runs", () => {
-    const manifest = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
+    const manifest: { scripts: Record<string, string> } = JSON.parse(read("package.json"));
     const { scripts } = manifest;
 
     expect(scripts["jscpd:profiles"]).toBe("node scripts/profile-copies.mjs");
