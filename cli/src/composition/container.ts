@@ -42,6 +42,49 @@ export function createMenuDeps(
   return { menuLoop: new MenuLoop(menu, terminal.runner, terminal.pause), prompter };
 }
 
+/** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
+export interface ContainerOptions extends FactoryOptions {
+  projectRoot: string;
+  output?: CLIOutput;
+  tools: ToolCatalog;
+}
+
+/** Each context's wiring is built the first time it is read, then handed back unchanged. */
+function memoized<T extends object>(build: () => T): () => T {
+  let built: T | undefined;
+  return () => (built ??= build());
+}
+
+/** The wiring of one project root and token. Every context is a getter that builds it on first
+ * read, so a command pays only for the contexts it reads and two containers share nothing. */
+export function createContainer(options: ContainerOptions) {
+  const { projectRoot, verbose, token, output, tools } = options;
+  const shared = memoized(() => wireBase(projectRoot, { verbose, token }, output, tools));
+  const installation = memoized(() => wireInstallation(shared()));
+  const update = memoized(() => {
+    const { logger, http, fs, environment, tokenProvider, currentVersionProvider } = shared();
+    return wireUpdate({
+      logger,
+      http,
+      fs,
+      environment,
+      tokenProvider,
+      version: currentVersionProvider,
+    });
+  });
+  return {
+    get shared() {
+      return shared();
+    },
+    get installation() {
+      return installation();
+    },
+    get update() {
+      return update();
+    },
+  };
+}
+
 /** The factory the commands receive: it binds the catalog the commands were registered with. */
 export function bindCatalog(tools: ToolCatalog): DepsFactory {
   return (projectRoot, options, output) => createDeps(projectRoot, options, output, tools);
@@ -58,8 +101,9 @@ export async function createDeps(
   _cache.set(tools, graphs);
   const cached = graphs.get(cacheKey);
   if (cached !== undefined) return cached;
-  const base = wireBase(projectRoot, options, output, tools);
-  const inst = wireInstallation(base);
+  const container = createContainer({ projectRoot, ...options, output, tools });
+  const base = container.shared;
+  const inst = container.installation;
   const marketplace = wireMarketplace(base, inst);
   const plugin = wirePlugin(base, inst);
   const global = wireGlobal(base, inst, marketplace, plugin);
@@ -70,10 +114,6 @@ export async function createDeps(
   const {
     fs,
     logger,
-    http,
-    environment,
-    tokenProvider,
-    currentVersionProvider,
     manifestRepo,
     userManifestRepo,
     prompter,
@@ -84,15 +124,10 @@ export async function createDeps(
     listMarketplaces,
     refreshMarketplace,
     registerFrameworkMarketplace,
-  } = base;
-  const update = wireUpdate({
-    logger,
-    http,
-    fs,
+    currentVersionProvider,
     environment,
-    tokenProvider,
-    version: currentVersionProvider,
-  });
+  } = base;
+  const update = container.update;
   const { pluginListUseCase, assetProvider, listInstalledRulesUseCase } = inst;
   const {
     addMarketplace,

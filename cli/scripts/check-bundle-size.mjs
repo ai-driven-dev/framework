@@ -68,6 +68,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 805 KB: 804.4 KB, the translate sinks split, the presentation and composition moves, the trust
 // split, the installation commands, the withdrawal steps and the claims built by orchestration; expected to shrink in the final size
 // pass; 0.1% measured headroom.
+// 806 KB: 805.4 KB, the container that wires the commands with lazy getters; expected to shrink once
+// createDeps is removed; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
