@@ -101,12 +101,12 @@ module.exports = (ctx) => {
   const asset = toPosix(HOST_ADAPTER_ASSET);
   const host = hostAdapterCopies(root);
   const found = [];
-  const say = (fix, offending) => found.push({ line: 1, offending, fix });
-  for (const copy of differingCopies(root).differing) say(`${copy} differs from the other copies of the shared hook library, make every copy identical`, copy);
-  for (const copy of unusedLibraryCopies(root)) say(`${copy} is required by no hook, delete it`, copy);
-  for (const copy of host.differing) say(`${copy} differs from ${asset}, copy the asset over it`, copy);
-  for (const copy of host.missing) say(`${copy} is missing while a hook requires it, copy ${asset} there`, copy);
-  for (const copy of host.unused) say(`${copy} is required by no hook, delete it`, copy);
+  const say = (fix, copy) => found.push({ file: path.relative(ctx.root, path.join(root, copy)), line: 1, offending: copy, fix });
+  for (const copy of differingCopies(root).differing) say(`differs from the other copies of the shared hook library, make every copy identical`, copy);
+  for (const copy of unusedLibraryCopies(root)) say(`is required by no hook, delete it`, copy);
+  for (const copy of host.differing) say(`differs from ${asset}, copy the asset over it`, copy);
+  for (const copy of host.missing) say(`is missing while a hook requires it, copy ${asset} there`, copy);
+  for (const copy of host.unused) say(`is required by no hook, delete it`, copy);
   return found;
 };
 module.exports.differingCopies = differingCopies;

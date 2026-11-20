@@ -35,7 +35,15 @@ describe("contract watch", () => {
   it("runs a repo-wide contract when a given file is one it reads", () => {
     const out = run("docs/GUIDES.md");
     assert.equal(out.status, 1, out.stdout + out.stderr);
-    assert.match(out.stdout, /DOC-01 docs\/GUIDES\.md:3: nowhere\.md/u);
+    assert.match(out.stdout, /^docs\/GUIDES\.md:3 DOC-01 nowhere\.md/mu);
+  });
+
+  it("judges a baselined finding stale from the file it names, when that file is given", () => {
+    fs.writeFileSync(path.join(root, "scripts/check/baseline.json"), '{"docs/GUIDES.md DOC-01":1}\n');
+    assert.equal(run("docs/GUIDES.md").status, 0);
+    fs.writeFileSync(path.join(root, "docs/GUIDES.md"), "# Guides\n");
+    assert.match(run("docs/GUIDES.md").stdout, /no longer fires.*docs\/GUIDES\.md DOC-01/u);
+    assert.equal(run("src/a.js").status, 0);
   });
 
   it("does not run it for a file it does not read", () => {

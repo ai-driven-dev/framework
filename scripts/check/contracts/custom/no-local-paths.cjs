@@ -126,7 +126,7 @@ function leaksIn(root, files) {
 
 module.exports = (ctx) => {
   const root = path.resolve(path.dirname(ctx.abs), "..");
-  return leaksIn(root, trackedFiles(root)).map(({ file, line, label }) => ({ line: 1, fix: `${file}:${line}: ${label}, replace it with a placeholder (<home>, <worktree>, <scratch>, <tmp>) or a relative path` }));
+  return leaksIn(root, trackedFiles(root)).map(({ file, line, label }) => ({ file: path.relative(ctx.root, path.join(root, file)), line, fix: `${label}, replace it with a placeholder (<home>, <worktree>, <scratch>, <tmp>) or a relative path` }));
 };
 module.exports.findLocalPaths = findLocalPaths;
 module.exports.leaksIn = leaksIn;

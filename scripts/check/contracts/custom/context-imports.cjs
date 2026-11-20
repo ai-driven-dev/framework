@@ -59,9 +59,10 @@ function findHiddenImports(content) {
 module.exports = (ctx) =>
   collectContextFiles(ctx.root).flatMap((file) =>
     findHiddenImports(fs.readFileSync(file, "utf8")).map((h) => ({
-      line: 1,
+      file: path.relative(ctx.root, file).split(path.sep).join("/"),
+      line: h.line,
       offending: h.import,
-      fix: `${path.relative(ctx.root, file).split(path.sep).join("/")}:${h.line}: import inside the HTML block opened line ${h.openedBy.line} by ${h.openedBy.text}, add a blank line after the opening line or move the imports out`,
+      fix: `import inside the HTML block opened line ${h.openedBy.line} by ${h.openedBy.text}, add a blank line after the opening line or move the imports out`,
     })),
   );
 module.exports.findHiddenImports = findHiddenImports;

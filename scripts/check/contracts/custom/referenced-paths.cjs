@@ -65,7 +65,7 @@ function deadReferences(root, files = scannedFiles(root)) {
 }
 
 module.exports = (ctx) =>
-  deadReferences(ctx.root).map(({ file, line, target }) => ({ line: 1, offending: target, fix: `${path.relative(ctx.root, file).split(path.sep).join("/")}:${line}: ${target} names nothing on disk` }));
+  deadReferences(ctx.root).map(({ file, line, target }) => ({ file: path.relative(ctx.root, file).split(path.sep).join("/"), line, offending: target, fix: `${target} names nothing on disk` }));
 module.exports.referencedPaths = referencedPaths;
 module.exports.topLevelEntries = topLevelEntries;
 module.exports.scannedFiles = scannedFiles;

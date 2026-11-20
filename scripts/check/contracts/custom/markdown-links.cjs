@@ -335,10 +335,7 @@ const REASONS = {
 module.exports = (ctx) => {
   const core = linkChecker(ctx.root);
   const files = core.collectMarkdownFiles(["."], DEFAULT_IGNORES);
-  return files.flatMap((file) => core.checkFile(file)).map((p) => {
-    const where = `${core.normalizePathForDisplay(p.file)}:${p.line}`;
-    return { line: 1, offending: p.raw, fix: `${where}: ${REASONS[p.reason](p)}` };
-  });
+  return files.flatMap((file) => core.checkFile(file)).map((p) => ({ file: core.normalizePathForDisplay(p.file), line: p.line, offending: p.raw, fix: REASONS[p.reason](p) }));
 };
 module.exports.linkChecker = linkChecker;
 module.exports.DEFAULT_IGNORES = DEFAULT_IGNORES;

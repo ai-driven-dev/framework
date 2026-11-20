@@ -25,12 +25,13 @@ const SENTENCE_END = /(?<=[.!?])\s+/u;
  * bullets and pointers that carry no terminator, and joining them would hide every duplicate
  * inside a paragraph-sized blob.
  */
-function sentencesOf(markdown) {
-  const body = markdown.replace(FRONTMATTER, "");
-  const found = new Set();
+function sentenceLines(markdown) {
+  const skipped = markdown.length - markdown.replace(FRONTMATTER, "").length;
+  const offset = markdown.slice(0, skipped).split("\n").length - 1;
+  const found = new Map();
   let inFence = false;
 
-  for (const raw of body.split(/\r?\n/)) {
+  for (const [index, raw] of markdown.slice(skipped).split(/\r?\n/).entries()) {
     if (FENCE.test(raw.trim())) {
       inFence = !inFence;
       continue;
@@ -42,12 +43,14 @@ function sentencesOf(markdown) {
 
     for (const piece of line.split(SENTENCE_END)) {
       const sentence = normalise(piece);
-      if (sentence.split(" ").filter(Boolean).length >= MINIMUM_WORDS) found.add(sentence);
+      if (sentence.split(" ").filter(Boolean).length >= MINIMUM_WORDS && !found.has(sentence)) found.set(sentence, offset + index + 1);
     }
   }
 
-  return [...found];
+  return found;
 }
+
+const sentencesOf = (markdown) => [...sentenceLines(markdown).keys()];
 
 function normalise(piece) {
   return piece
@@ -113,12 +116,16 @@ function scannedFiles(root) {
 function duplicatesIn(root) {
   const files = scannedFiles(root);
   const filesToText = Object.fromEntries(files.map((file) => [file, fs.readFileSync(path.resolve(root, file), "utf8")]));
-  return [...carriersOf(filesToText)].filter(([, carriers]) => carriers.length > 1).map(([sentence, carriers]) => ({ sentence, files: carriers }));
+  return [...carriersOf(filesToText)].filter(([, carriers]) => carriers.length > 1).map(([sentence, carriers]) => ({ sentence, files: carriers, lines: carriers.map((file) => sentenceLines(filesToText[file]).get(sentence)) }));
 }
 
+/** One finding in each carrier, naming the others. */
 module.exports = (ctx) =>
-  duplicatesIn(ctx.root).map(({ sentence, files }) => ({ line: 1, offending: sentence, fix: `${files.join(", ")} carry the same sentence, keep it in one home and point the others at it` }));
+  duplicatesIn(ctx.root).flatMap(({ sentence, files, lines }) =>
+    files.map((file, i) => ({ file, line: lines[i], offending: sentence, fix: `the same sentence is also in ${files.filter((f) => f !== file).join(", ")}, keep it in one home and point the others at it` })),
+  );
 module.exports.sentencesOf = sentencesOf;
+module.exports.sentenceLines = sentenceLines;
 module.exports.carriersOf = carriersOf;
 module.exports.scannedFiles = scannedFiles;
 module.exports.duplicatesIn = duplicatesIn;

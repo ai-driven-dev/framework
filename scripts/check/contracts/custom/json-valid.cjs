@@ -89,7 +89,7 @@ function jsonProblems(root, files) {
 module.exports = (ctx) => {
   const root = path.resolve(path.dirname(ctx.abs), "..");
   const files = trackedFiles(root).filter((f) => f.endsWith(".json") && !EXCLUDED.some((dir) => f.startsWith(dir)));
-  return jsonProblems(root, files).map(({ file, message }) => ({ line: 1, offending: file, fix: `${file}: ${message}` }));
+  return jsonProblems(root, files).map(({ file, message }) => ({ file: path.relative(ctx.root, path.join(root, file)), line: 1, offending: file, fix: message }));
 };
 module.exports.problemsOf = problemsOf;
 module.exports.jsonProblems = jsonProblems;

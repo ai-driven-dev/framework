@@ -91,7 +91,7 @@ function excerpt(text) {
 
 const fill = (template, values) => template.replace(/\{(\w+)\}/gu, (whole, key) => (key in values ? values[key] : whole));
 
-/** Findings of every rule on one artifact (a folder or a file). */
+/** Findings of every rule on one artifact (a folder or a file). A hit may name its own `file`, relative to the artifact's folder (a file's directory). */
 function check(contract, target) {
   const { root, files } = unitFiles(contract, target);
   const findings = [];
@@ -117,7 +117,7 @@ function check(contract, target) {
     }
   }
   return findings
-    .map((f) => ({ ...f, path: contract.unit === "file" ? target : path.join(target, f.file) }))
+    .map((f) => ({ ...f, path: path.join(root, f.file) }))
     .sort((a, b) => a.path.localeCompare(b.path) || a.line - b.line || a.id.localeCompare(b.id));
 }
 

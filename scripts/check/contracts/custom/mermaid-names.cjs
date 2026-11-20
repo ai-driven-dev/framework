@@ -23,7 +23,7 @@ module.exports = (ctx) =>
     .flatMap((file) => {
       const rel = path.relative(ctx.root, file).split(path.sep).join("/");
       return diagrams(fs.readFileSync(file, "utf8")).flatMap(({ body, line }) =>
-        collisions(body).map((name) => ({ line: 1, offending: name, fix: `${rel}:${line}: the class "${name}" is also a node or a subgraph, rename the class` })),
+        collisions(body).map((name) => ({ file: rel, line, offending: name, fix: `the class "${name}" is also a node or a subgraph, rename the class` })),
       );
     });
 module.exports.collisions = collisions;

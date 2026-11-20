@@ -45,6 +45,12 @@ describe("doc contract", () => {
     assert.deepEqual(ids(), ["DOC-01"]);
   });
 
+  it("DOC-01 reports the file and line of the broken link, not the anchor", () => {
+    put({ "docs/guide.md": "# Guide\n\n[x](nowhere.md)\n" });
+    const [found] = findings(CONTRACT, path.join(dir, "README.md"));
+    assert.deepEqual([found.path, found.line], [path.join(dir, "docs/guide.md"), 3]);
+  });
+
   it("DOC-02 flags a backticked path naming nothing on disk", () => {
     put({ "docs/guide.md": "# Guide\n\n## Start\n\nSee `docs/missing.md`.\n" });
     assert.deepEqual(ids(), ["DOC-02"]);

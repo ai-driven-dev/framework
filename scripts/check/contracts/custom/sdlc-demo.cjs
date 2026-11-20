@@ -3,13 +3,14 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+const SCENES = "docs/assets/sdlc-demo/scenes.json";
 const DOCS = ["README.md", "docs/GUIDES.md", "docs/CONCEPTS.md", "docs/INSTALL.md", "docs/FAQ.md"];
 
 module.exports = (ctx) => {
   const root = path.resolve(path.dirname(ctx.abs), "..");
   const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
   const found = [];
-  const say = (offending, fix) => found.push({ line: 1, offending, fix });
+  const say = (offending, fix, file, line = 1) => found.push({ file: path.relative(ctx.root, path.join(root, file)), line, offending, fix });
 
   const folders = new Set();
   for (const plugin of fs.readdirSync(path.join(root, "plugins"))) {
@@ -19,25 +20,27 @@ module.exports = (ctx) => {
   const names = new Set([...folders].map((id) => id.split(":")[1]));
 
   const chain = /```mermaid\nflowchart TD\n {2}subgraph onboard[\s\S]*?```/u.exec(read("docs/GUIDES.md"))?.[0];
-  if (!chain) say("docs/GUIDES.md", "docs/GUIDES.md has no end-to-end diagram");
+  if (!chain) say("docs/GUIDES.md", "has no end-to-end diagram", "docs/GUIDES.md");
   const drawn = [...(chain ?? "").matchAll(/\/aidd-[a-z]+:\d+-([a-z-]+)/gu)].map((m) => m[1]);
-  if (chain && drawn.length <= 5) say("docs/GUIDES.md", "the chain diagram draws no skills");
-  for (const name of drawn) if (!names.has(name)) say(name, `the chain diagram draws ${name}, which is not a skill of this repository`);
+  if (chain && drawn.length <= 5) say("docs/GUIDES.md", "the chain diagram draws no skills", "docs/GUIDES.md");
+  for (const name of drawn) if (!names.has(name)) say(name, `the chain diagram draws ${name}, which is not a skill of this repository`, "docs/GUIDES.md");
 
-  const texts = JSON.parse(read("docs/assets/sdlc-demo/scenes.json")).scenes.flatMap((scene) => scene.lines.map((line) => line.text ?? ""));
+  const texts = JSON.parse(read(SCENES)).scenes.flatMap((scene) => scene.lines.map((line) => line.text ?? ""));
   const named = new Set(texts.flatMap((text) => text.match(/\/aidd-[a-z]+:[0-9a-z-]+/gu) ?? []));
-  if (named.size <= 5) say("scenes.json", "the animation names no skills");
+  if (named.size <= 5) say("scenes.json", "the animation names no skills", SCENES);
   for (const skill of named) {
     const [, plugin, name] = /^\/(aidd-[a-z]+):(.+)$/u.exec(skill);
-    if (!fs.existsSync(path.join(root, "plugins", plugin, "skills", name, "SKILL.md"))) say(skill, `the animation names ${skill}, which is not a skill of this repository`);
+    if (!fs.existsSync(path.join(root, "plugins", plugin, "skills", name, "SKILL.md"))) say(skill, `the animation names ${skill}, which is not a skill of this repository`, SCENES);
   }
   const shown = new Set(texts.flatMap((text) => [...text.matchAll(/\/aidd-[a-z]+:\d+-([0-9a-z-]+)/gu)].map((m) => m[1])));
   shown.delete("sdlc");
-  if (chain) for (const name of shown) if (!drawn.includes(name)) say(name, `${name} runs in the animation but is not in the chain diagram`);
+  if (chain) for (const name of shown) if (!drawn.includes(name)) say(name, `${name} runs in the animation but is not in the chain diagram`, SCENES);
 
   for (const file of DOCS) {
-    for (const [, plugin, name] of read(file).matchAll(/\/(aidd-[a-z]+):\d+-([0-9a-z-]+)/gu)) {
-      if (!folders.has(`${plugin}:${name}`)) say(`/${plugin}:${name}`, `${file} names /${plugin}:${name}, which is not a skill`);
+    for (const [index, line] of read(file).split("\n").entries()) {
+      for (const [, plugin, name] of line.matchAll(/\/(aidd-[a-z]+):\d+-([0-9a-z-]+)/gu)) {
+        if (!folders.has(`${plugin}:${name}`)) say(`/${plugin}:${name}`, `names /${plugin}:${name}, which is not a skill`, file, index + 1);
+      }
     }
   }
   return found;

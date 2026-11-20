@@ -93,7 +93,7 @@ describe("doc-duplication", () => {
     put("docs/CATALOG.md", `${sentence}.\n`);
     assert.deepEqual(custom("doc-duplication")(anchor()), []);
     put("docs/a.md", `${sentence}.\n`);
-    assert.equal(custom("doc-duplication")(anchor()).length, 1);
+    assert.deepEqual(custom("doc-duplication")(anchor()).map((f) => f.file), ["README.md", "docs/a.md"]);
   });
 });
 

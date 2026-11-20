@@ -2,7 +2,7 @@
 "use strict";
 // Usage: node scripts/check/run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]
 // Checks every artifact each contract names in its `targets` (scripts/check/contracts/*.json and plugins/*/skills/*/scripts/contract.json), and the vendored engine copies.
-// With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts, and engine copies are checked only if a file is under scripts/check/engine/ or a skill's scripts/lib/. --update-baseline takes no files.
+// With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts and the given files (a finding belongs to the file it names), and engine copies are checked only if a file is under scripts/check/engine/ or a skill's scripts/lib/. --update-baseline takes no files.
 // Each generator of scripts/check/generators runs on every full run, and on a scoped run when a given file matches its `watch` globs: a stale generated file is a finding, and --fix rewrites it first.
 // A contract may name `watch` globs: its anchor unit stands for repo-wide rules, so a scoped run also runs it when a given file matches.
 // Baseline keys are file and rule (no line, message or excerpt), counted. A finding above its count exits 1, and so does an entry that fires less.
@@ -80,7 +80,10 @@ function main(argv, { generators = require("./generators/index.cjs"), out = (tex
     return 0;
   }
   const fresh = findings.filter((f) => counts[f.key] > (baseline[f.key] ?? 0)).map((f) => f.text);
-  const inScope = (key) => !scoped || checked.some((t) => key.startsWith(`${t} `) || key.startsWith(`${t}/`));
+  const inScope = (key) => {
+    const file = key.slice(0, key.lastIndexOf(" "));
+    return !scoped || given.includes(file) || checked.some((t) => file === t || file.startsWith(`${t}/`));
+  };
   const gone = Object.entries(baseline)
     .filter(([key, count]) => inScope(key) && (counts[key] ?? 0) < count)
     .map(([key]) => `baseline entry no longer fires, run node scripts/check/run.cjs --update-baseline: ${key}`);

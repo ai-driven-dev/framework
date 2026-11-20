@@ -23,11 +23,12 @@ module.exports = (ctx) => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "release-please-config.json"), "utf8"));
   const versioned = Object.keys(config.packages).filter((p) => p.startsWith("plugins/")).map((p) => p.slice("plugins/".length)).sort();
   const found = [];
-  const compare = (names, where) => {
-    for (const name of listed) if (!names.includes(name)) found.push({ line: 1, offending: name, fix: `${name} is listed in the marketplace but not in ${where}` });
-    for (const name of names) if (!listed.includes(name)) found.push({ line: 1, offending: name, fix: `${name} is in ${where} but not listed in the marketplace` });
+  const at = (rel) => path.relative(ctx.root, path.join(root, rel));
+  const compare = (names, where, file) => {
+    for (const name of listed) if (!names.includes(name)) found.push({ file: at(file), line: 1, offending: name, fix: `${name} is listed in the marketplace but not in ${where}` });
+    for (const name of names) if (!listed.includes(name)) found.push({ file: at(file), line: 1, offending: name, fix: `${name} is in ${where} but not listed in the marketplace` });
   };
-  compare(built, "the build-plugin matrix of ci.yml");
-  compare(versioned, "the packages of release-please-config.json");
+  compare(built, "the build-plugin matrix of ci.yml", ".github/workflows/ci.yml");
+  compare(versioned, "the packages of release-please-config.json", "release-please-config.json");
   return found;
 };
