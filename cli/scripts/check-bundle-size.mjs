@@ -77,6 +77,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 808 KB: 807.2 KB, createDeps and its module cache removed, every command wired from the
 // container; 0.1% measured headroom.
 // 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
+// 810 KB: 809.3 KB, the kind rollout splits the recipe rules and passes named objects; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
