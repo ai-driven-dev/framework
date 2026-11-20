@@ -30,6 +30,18 @@ function partitionOf(name: string): string {
   return name.slice(0, -EXTENSION.length);
 }
 
+interface DayRead {
+  readonly records: readonly StoredUsage[];
+  readonly skippedLines: number;
+  /** A record's repository id was replaced by the one of now. */
+  readonly renamed: boolean;
+}
+
+interface Held {
+  readonly held: ReadonlyMap<string, string | null>;
+  readonly kept: ReadonlyMap<string, ReadonlySet<string>>;
+}
+
 /** The ledger as files under one private directory.
  *
  * `<YYYY-MM-DD>.jsonl`, one record per line, by the UTC day of the record's own time. A better
@@ -75,18 +87,11 @@ export class UsageLedgerAdapter implements UsageLedger {
     for (const name of names) {
       const partition = partitionOf(name);
       if (holds !== undefined && !holds(partition)) continue;
-      const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
-      for (const line of text.split("\n")) {
-        if (line === "") continue;
-        const read = parseStoredUsage(line);
-        if (read === null) {
-          skippedLines += 1;
-          damaged.add(partition);
-          continue;
-        }
-        const now = ids.get(read.repository_id);
-        const record = now === undefined ? read : { ...read, repository_id: now };
-        if (record !== read) unsettled.add(partition);
+      const day = await this.readDay(name, ids);
+      skippedLines += day.skippedLines;
+      if (day.skippedLines > 0) damaged.add(partition);
+      if (day.renamed) unsettled.add(partition);
+      for (const record of day.records) {
         found.push(record);
         const id = `${record.tool}\u0000${record.key}`;
         const first = heldIn.get(id);
@@ -100,19 +105,7 @@ export class UsageLedgerAdapter implements UsageLedger {
   async save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void> {
     await this.storage.ensureDirectory(this.dir);
     const named = (day: string): boolean => partitions === undefined || partitions.has(day);
-    const held = new Map<string, string | null>();
-    const kept = new Map<string, Set<string>>();
-    for (const name of await this.partitions()) {
-      const day = partitionOf(name);
-      if (!named(day)) continue;
-      const text = await readTextIfPresent(join(this.dir, name));
-      held.set(day, text);
-      for (const line of (text ?? "").split("\n")) {
-        if (line !== "" && parseStoredUsage(line) === null) {
-          kept.set(day, (kept.get(day) ?? new Set()).add(line));
-        }
-      }
-    }
+    const { held, kept } = await this.readHeld(named);
     const days = partitionByDay(records);
     const emptied: string[] = [];
     // Every write comes before any removal, so the order of the writes is free.
@@ -139,6 +132,46 @@ export class UsageLedgerAdapter implements UsageLedger {
   async savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void> {
     await this.storage.ensureDirectory(this.dir);
     await this.storage.replace(join(this.dir, OFFSETS_FILE), renderPositions(positions));
+  }
+
+  /** One day's file, its records under the repository ids of now. */
+  private async readDay(name: string, ids: ReadonlyMap<string, string>): Promise<DayRead> {
+    const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
+    const records: StoredUsage[] = [];
+    let skippedLines = 0;
+    let renamed = false;
+    for (const line of text.split("\n")) {
+      if (line === "") continue;
+      const read = parseStoredUsage(line);
+      if (read === null) {
+        skippedLines += 1;
+        continue;
+      }
+      const now = ids.get(read.repository_id);
+      const record = now === undefined ? read : { ...read, repository_id: now };
+      if (record !== read) renamed = true;
+      records.push(record);
+    }
+    return { records, skippedLines, renamed };
+  }
+
+  /** What each named day's file holds now, and the lines in it that are no record: kept as
+   * they are. */
+  private async readHeld(named: (day: string) => boolean): Promise<Held> {
+    const held = new Map<string, string | null>();
+    const kept = new Map<string, Set<string>>();
+    for (const name of await this.partitions()) {
+      const day = partitionOf(name);
+      if (!named(day)) continue;
+      const text = await readTextIfPresent(join(this.dir, name));
+      held.set(day, text);
+      for (const line of (text ?? "").split("\n")) {
+        if (line !== "" && parseStoredUsage(line) === null) {
+          kept.set(day, (kept.get(day) ?? new Set()).add(line));
+        }
+      }
+    }
+    return { held, kept };
   }
 
   private async partitions(): Promise<string[]> {

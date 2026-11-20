@@ -1,7 +1,7 @@
 import type { UsageRecord } from "../contract/usage-record.js";
 import type { LineNames, TranscriptPosition } from "../domain/transcript-position.js";
 import { foldUsage } from "../domain/usage-fold.js";
-import type { UsageSource } from "../ports/usage-source.js";
+import type { TranscriptRead, TranscriptRequest, UsageSource } from "../ports/usage-source.js";
 
 /** A line that gave no call, the directory and time it names, and its file. */
 export interface DroppedLine extends LineNames {
@@ -33,6 +33,15 @@ export interface ReadUsageCommand {
   readonly writtenFrom?: number;
 }
 
+/** What one transcript gave: its counted calls, the lines that name a directory without a
+ * call, and the shapes it did not recognise. */
+interface FileReading {
+  readonly records: readonly UsageRecord[];
+  readonly lines: readonly DroppedLine[];
+  readonly reasons: readonly string[];
+  readonly read: TranscriptRead;
+}
+
 /** Reads one tool's usage: its transcripts, from `source`, line by line in its format. */
 export class ReadUsage {
   constructor(private readonly source: UsageSource) {}
@@ -49,24 +58,11 @@ export class ReadUsage {
     const positions = new Map<string, TranscriptPosition>();
     let oldest: number | null = null;
     for (const path of await this.source.list()) {
-      const records: UsageRecord[] = [];
-      const lines: DroppedLine[] = [];
-      const reasons: string[] = [];
-      let context: unknown;
-      const read = await this.source.read(
-        { path, since: since.get(path) ?? null, writtenFrom },
-        (line, counted) => {
-          const outcome = this.source.decode(line, context);
-          if ("context" in outcome) context = outcome.context;
-          // A line read again only to know what came before: its calls were counted already.
-          if (!counted) return;
-          records.push(...outcome.records);
-          // Only a line that gives no call names anything.
-          if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
-          reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
-        }
-      );
-      reasons.push(...(read.unrecognised ?? []).map((reason) => `${path}: ${reason}`));
+      const { records, lines, reasons, read } = await this.readFile({
+        path,
+        since: since.get(path) ?? null,
+        writtenFrom,
+      });
       if (read.modifiedAt !== null && (oldest === null || read.modifiedAt < oldest)) {
         oldest = read.modifiedAt;
       }
@@ -79,8 +75,8 @@ export class ReadUsage {
         candidates.push(record);
         fileOf.set(record, path);
       }
-      for (const line of lines) dropped.push(line);
-      for (const reason of reasons) unrecognised.push(reason);
+      dropped.push(...lines);
+      unrecognised.push(...reasons);
     }
     return {
       records: foldUsage(candidates),
@@ -91,5 +87,25 @@ export class ReadUsage {
       oldestTranscriptAt: oldest === null ? null : new Date(oldest).toISOString(),
       skipped,
     };
+  }
+
+  private async readFile(request: TranscriptRequest): Promise<FileReading> {
+    const { path } = request;
+    const records: UsageRecord[] = [];
+    const lines: DroppedLine[] = [];
+    const reasons: string[] = [];
+    let context: unknown;
+    const read = await this.source.read(request, (line, counted) => {
+      const outcome = this.source.decode(line, context);
+      if ("context" in outcome) context = outcome.context;
+      // A line read again only to know what came before: its calls were counted already.
+      if (!counted) return;
+      records.push(...outcome.records);
+      // Only a line that gives no call names anything.
+      if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
+      reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
+    });
+    reasons.push(...(read.unrecognised ?? []).map((reason) => `${path}: ${reason}`));
+    return { records, lines, reasons, read };
   }
 }
