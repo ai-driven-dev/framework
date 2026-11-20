@@ -52,10 +52,7 @@ import {
  * A list renamed since the base, by the id it had there, naming the id that carries its count on.
  * An entry leaves once `next` holds the new name; none joins it to hide a list.
  */
-const RENAMED_LISTS: Readonly<Record<string, string>> = {
-  "tests/architecture/ports-are-called.arch.test.ts#CAPABILITY_BASELINE":
-    "tests/architecture/ports-are-called.arch.test.ts#SECTION_BASELINE",
-};
+const RENAMED_LISTS: Readonly<Record<string, string>> = {};
 
 /**
  * A list whose rule was retired on purpose, by its id at the base. The list is not renamed, it is
@@ -69,6 +66,14 @@ const RETIRED_LISTS: ReadonlySet<string> = new Set([
   "tests/architecture/orchestrator-deps.arch.test.ts#BASELINE",
   "tests/architecture/domain-does-no-io.arch.test.ts#BASELINE",
   "tests/architecture/test-mirror-path.arch.test.ts#MIRROR_BASELINE",
+  "tests/architecture/errors-that-are-thrown.arch.test.ts#BASELINE",
+  "tests/architecture/errors-that-instruct.arch.test.ts#BASELINE",
+  "tests/architecture/ports-are-called.arch.test.ts#BASELINE",
+  "tests/architecture/ports-are-called.arch.test.ts#OPTIONAL_BASELINE",
+  "tests/architecture/ports-are-called.arch.test.ts#CAPABILITY_BASELINE",
+  "tests/architecture/ports-are-called.arch.test.ts#SECTION_BASELINE",
+  "tests/architecture/plugins-are-asked-not-read.arch.test.ts#STORED_ANSWERS_ALLOWED",
+  "tests/architecture/test-file-size.arch.test.ts#BASELINE",
 ]);
 
 const CLI_DIRECTORY = "cli";
@@ -325,8 +330,8 @@ describe("the guard itself", () => {
     ).toBe(3);
     expect(
       list(
-        'const STORED_ANSWERS_ALLOWED: Readonly<Record<string, unknown>> = { "k1": "why, one", "k2": "why two" };'
-      ).get("a.ts#STORED_ANSWERS_ALLOWED")
+        'const PROFILE_READERS_ALLOWED: Readonly<Record<string, unknown>> = { "k1": "why, one", "k2": "why two" };'
+      ).get("a.ts#PROFILE_READERS_ALLOWED")
     ).toBe(2);
   });
 

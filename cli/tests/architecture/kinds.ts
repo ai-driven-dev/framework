@@ -8,7 +8,8 @@
  * Written limits: an import is read by the one extractor in `helpers.ts`, so a specifier quoted in
  * a comment counts; an import that resolves to no file of the tree is not judged.
  */
-import { posix } from "node:path";
+import { readFileSync } from "node:fs";
+import { join, posix } from "node:path";
 import { present } from "../shared/testing/present.js";
 import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./helpers.js";
 
@@ -251,7 +252,20 @@ export const OUTSIDE: readonly string[] = [
   "tests/architecture/*.ts",
 ];
 
-export type Rule = "classification" | "imports" | "mirror" | "shape";
+export type Rule =
+  | "classification"
+  | "imports"
+  | "mirror"
+  | "shape"
+  | "thrown"
+  | "instructs"
+  | "composition"
+  | "ports"
+  | "sections"
+  | "answers"
+  | "repository"
+  | "translate"
+  | "size";
 
 export interface Violation {
   readonly rule: Rule;
@@ -521,14 +535,48 @@ export function mirrorViolations(
 
 const escapeRegExp = (literal: string): string => literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export interface Debt {
-  readonly classification: readonly string[];
-  readonly imports: readonly string[];
-  readonly mirror: readonly string[];
-  readonly shape: readonly string[];
-}
+export type Debt = Readonly<Record<Rule, readonly string[]>>;
 
-const RULES: readonly Rule[] = ["classification", "imports", "mirror", "shape"];
+const RULES: readonly Rule[] = [
+  "classification",
+  "imports",
+  "mirror",
+  "shape",
+  "thrown",
+  "instructs",
+  "composition",
+  "ports",
+  "sections",
+  "answers",
+  "repository",
+  "translate",
+  "size",
+];
+
+/** A debt that lists nothing. */
+export const noDebt = (): Debt => ({
+  classification: [],
+  imports: [],
+  mirror: [],
+  shape: [],
+  thrown: [],
+  instructs: [],
+  composition: [],
+  ports: [],
+  sections: [],
+  answers: [],
+  repository: [],
+  translate: [],
+  size: [],
+});
+
+/** The debt file, a rule it does not name counting as none. */
+export function loadDebt(): Debt {
+  const raw: Partial<Debt> = JSON.parse(
+    readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8")
+  );
+  return { ...noDebt(), ...raw };
+}
 
 /** `unlisted`: violations the debt does not hold. `stale`: debt entries that no longer violate.
  * A check that finds the violations of some rules only names those rules. */

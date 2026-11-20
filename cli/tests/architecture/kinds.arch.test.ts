@@ -21,7 +21,6 @@ import { present } from "../shared/testing/present.js";
 import { CLI_ROOT, canonicalPath, matchesGlob } from "./helpers.js";
 import {
   classificationViolations,
-  type Debt,
   debtVerdict,
   importViolations,
   isInCatalog,
@@ -29,7 +28,9 @@ import {
   KINDS,
   type Kind,
   kindsOf,
+  loadDebt,
   mirrorViolations,
+  noDebt,
   type Shape,
   shapeViolations,
   strayViolations,
@@ -38,13 +39,7 @@ import {
 import { walk, withVirtualProject } from "./ts-project.js";
 import { useCaseShapeBreaks } from "./use-case-shape.js";
 
-const DEBT_FILE = join(import.meta.dirname, "kinds-debt.json");
 const CODE_FILE = /\.(?:ts|mts|cts|js|mjs|cjs)$/;
-
-function loadDebt(): Debt {
-  const debt: Debt = JSON.parse(readFileSync(DEBT_FILE, "utf8"));
-  return debt;
-}
 
 function codeFilesUnder(dir: string): string[] {
   return readdirSync(join(CLI_ROOT, dir), { recursive: true, encoding: "utf8" })
@@ -571,11 +566,11 @@ describe("debt only shrinks", () => {
     entry,
     message: `${entry} breaks ${rule}`,
   });
-  const debt: Debt = {
+  const debt = {
+    ...noDebt(),
     classification: ["a.ts"],
     imports: ["b.ts -> c.ts"],
     mirror: ["d.ts"],
-    shape: [],
   };
 
   it("passes when the violations are the debt", () => {

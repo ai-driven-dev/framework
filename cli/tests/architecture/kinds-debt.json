@@ -3,7 +3,16 @@
     "classification": "every file under src and tests is renamed or moved to the folder of its kind, or is listed outside the catalog on purpose",
     "imports": "the file stops importing that target, or the target moves to a kind the file may import",
     "mirror": "a test of the required level exists at the mirror path of the source",
-    "shape": "the class takes the shape of its kind: one class named after its file, a public execute, at most five dependencies, the tool catalog at construction"
+    "shape": "the class takes the shape of its kind: one class named after its file, a public execute, at most five dependencies, the tool catalog at construction",
+    "thrown": "the class is thrown where its code path is, or deleted",
+    "instructs": "the message names a command the CLI declares",
+    "composition": "composition holds one module per context, plus container, shared and orchestration/",
+    "ports": "the method gets a caller in src, or leaves the port",
+    "sections": "the method gets a caller in src, or leaves the section",
+    "answers": "the plugin answers by a method and its data is a # field",
+    "repository": "the test reaches the repository through tests/helpers/repository-root.ts",
+    "translate": "translate names no other host's manifest path",
+    "size": "the test file is split under 800 lines"
   },
   "classification": [
     "src/presentation/deps.ts",
@@ -409,5 +418,46 @@
     "src/contexts/translate/application/sinks/flat-writer.ts",
     "src/orchestration/global/bulk-conflict-state.ts",
     "src/orchestration/setup/setup-marketplace-registration.ts"
+  ],
+  "thrown": [],
+  "instructs": [],
+  "composition": [],
+  "ports": [],
+  "sections": [
+    "src/contexts/tools/domain/sections/agents-section.ts :: AgentsSection.accepts",
+    "src/contexts/tools/domain/sections/agents-section.ts :: AgentsSection.deserialize",
+    "src/contexts/tools/domain/sections/agents-section.ts :: AgentsSection.equals",
+    "src/contexts/tools/domain/sections/commands-section.ts :: CommandsSection.accepts",
+    "src/contexts/tools/domain/sections/commands-section.ts :: CommandsSection.equals",
+    "src/contexts/tools/domain/sections/rules-section.ts :: RulesSection.accepts",
+    "src/contexts/tools/domain/sections/rules-section.ts :: RulesSection.equals",
+    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.accepts",
+    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.equals",
+    "src/contexts/tools/domain/sections/skills-section.ts :: SkillsSection.accepts",
+    "src/contexts/tools/domain/sections/skills-section.ts :: SkillsSection.equals"
+  ],
+  "answers": [
+    "src/contexts/tools/domain/native-registration/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile",
+    "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.cliShape",
+    "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.hostBinary",
+    "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration",
+    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.mergeStrategy",
+    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath",
+    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.requiredTool",
+    "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.mergeStrategy",
+    "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.outputPath",
+    "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.mergeStrategy",
+    "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.outputPath"
+  ],
+  "repository": [],
+  "translate": [],
+  "size": [
+    "tests/orchestration/clean/clean-native-cache.integration.test.ts",
+    "tests/orchestration/clean/clean-use-case.unit.test.ts",
+    "tests/orchestration/clean/clean-user-scope.integration.test.ts",
+    "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts",
+    "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts",
+    "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts",
+    "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts"
   ]
 }

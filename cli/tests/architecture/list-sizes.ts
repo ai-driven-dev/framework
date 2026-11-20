@@ -53,7 +53,6 @@ export const ARCHITECTURE_DIRECTORY = "tests/architecture";
 /** Shrink-only lists whose name does not say so. Register a list here by name, never by content. */
 export const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
   "TRANSITIONAL_PAIRS",
-  "STORED_ANSWERS_ALLOWED",
   "PROFILE_READERS_ALLOWED",
   "REGISTRATION_SITES",
   "OWN_TOOL_FILES",

@@ -38,7 +38,7 @@ export function refAnotherProjectStillNeeds(input: {
 /**
  * The instruction for fully removing the shared source, once a message has already named which
  * other projects still need it. Each command name stays whole inside this one string literal:
- * `errors-that-instruct.arch.test.ts` reads every string and template literal under `application/`
+ * the `instructs` rule of `tests/architecture/kind-rules.ts` reads every string and template literal under `application/`
  * and checks each command it names against the ones the CLI declares.
  */
 export function describeFullRemovalInstruction(): string {
