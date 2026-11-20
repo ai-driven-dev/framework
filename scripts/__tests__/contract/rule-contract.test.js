@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it } = require("node:test");
-const { fill, validate } = require("./helpers.js");
+const { fill, validate, writeThenValidate } = require("./helpers.js");
 
 const SKILL = path.resolve(__dirname, "../../../plugins/aidd-context/skills/05-rule-generate");
 const SCRIPT = path.join(SKILL, "scripts/validate-rule.cjs");
@@ -35,5 +35,12 @@ describe("rule contract", () => {
 
   it("flags a rule with no targets", () => {
     assert.match(validate(SCRIPT, NAME, FILLED.replace(/targets: .*\n/u, "")).out, /front matter key "targets" missing/u);
+  });
+
+  it("accepts the source the writer renders from a drafted rule", () => {
+    const writer = path.join(SKILL, "scripts/write-rule.cjs");
+    const body = "# Naming\n\n- Name a thing for what it is.\n";
+    const request = { category: "01-standards", slug: "1-naming", description: "When naming things.", paths: ["src/**/*.ts"], body };
+    assert.deepEqual(writeThenValidate(writer, SCRIPT, request, "claude", "aidd_docs/rules/01-standards/1-naming.md"), { code: 0, out: "" });
   });
 });

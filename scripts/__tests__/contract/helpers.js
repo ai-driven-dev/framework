@@ -25,4 +25,21 @@ function validate(script, name, text) {
   }
 }
 
-module.exports = { fill, validate };
+/** Runs a skill's writer on a request in a scratch project, then its validator on one file the writer produced. */
+function writeThenValidate(writer, validator, request, tools, produced) {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contract-writer-")));
+  try {
+    const input = path.join(dir, "request.json");
+    fs.writeFileSync(input, JSON.stringify(request));
+    const project = path.join(dir, "project");
+    fs.mkdirSync(project);
+    const written = spawnSync(process.execPath, [writer, "--project", project, "--tools", tools, "--input", input], { encoding: "utf8" });
+    if (written.status !== 0) return { code: -1, out: written.stdout + written.stderr };
+    const run = spawnSync(process.execPath, [validator, path.join(project, produced)], { encoding: "utf8" });
+    return { code: run.status, out: run.stdout.split(project).join("") };
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+module.exports = { fill, validate, writeThenValidate };

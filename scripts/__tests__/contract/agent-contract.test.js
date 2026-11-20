@@ -5,6 +5,8 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
+const { writeThenValidate } = require("./helpers.js");
+
 const SKILL = path.resolve(__dirname, "../../../plugins/aidd-context/skills/06-agent-generate");
 const TEMPLATE = path.join(SKILL, "assets/agent-template.md");
 
@@ -68,5 +70,12 @@ describe("agent contract", () => {
 
   it("allows bold, which agents are not held to", () => {
     assert.deepEqual(validate("reviewer.md", FILLED.replace("Review the change.", "Review the **change**.")), { code: 0, out: "" });
+  });
+
+  it("accepts the Claude file the writer renders from a drafted agent", () => {
+    const body = "# Role\n\nReview the change.\n\n# Behavior\n\n- Read the diff.\n\n# Output\n\nA verdict.\n";
+    const request = { name: "reviewer", description: "Reviews a change. Use to check it before merge.", body };
+    const validator = path.join(SKILL, "scripts/validate-agent.cjs");
+    assert.deepEqual(writeThenValidate(path.join(SKILL, "scripts/write-agent.cjs"), validator, request, "claude", ".claude/agents/reviewer.md"), { code: 0, out: "" });
   });
 });

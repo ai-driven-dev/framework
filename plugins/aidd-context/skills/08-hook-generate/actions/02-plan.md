@@ -8,8 +8,8 @@ The confirmed frame, or the trial failure verify sent back.
 
 ## Process
 
-1. Draft the script per [hook-authoring.md](../references/hook-authoring.md), from [hook-template.md](../assets/hook-template.md), skipped on remove.
-   - Finding or trial failure: fix the script for what verify reported.
+1. Draft the script per [hook-authoring.md](../references/hook-authoring.md), from the handler skeleton in [hook-template.md](../assets/hook-template.md), skipped on remove.
+   - Trial failure: fix the script for what the host did.
 2. Write the input file per [writer.md](../references/writer.md), skipped on remove.
 3. Run the writer with `--plan` per [writer.md](../references/writer.md).
    - Non-zero exit: quote the writer's output, then read [frame](01-frame.md) to revise.

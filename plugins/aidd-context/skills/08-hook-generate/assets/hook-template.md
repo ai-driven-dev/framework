@@ -1,28 +1,6 @@
 # {{Hook name}}
 
-## hooks.json entry
-
-```json
-{
-  "hooks": {
-    "{{Event}}": [
-      {
-        "matcher": "{{tool or source filter, or delete this line}}",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/{{name}}.cjs",
-            "timeout": 5,
-            "statusMessage": "{{what the user sees while it runs}}"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-## Handler skeleton
+The handler script, one per hook. The writer renders each host's entry from its `runner`, `extension` and `hosts` input.
 
 ```js
 "use strict";

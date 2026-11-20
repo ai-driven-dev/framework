@@ -8,7 +8,14 @@
       "in": "*.md",
       "template": "../assets/command-template.md",
       "why": "one shape per command",
-      "fix": "follow command-template.md"
+      "fix": "follow command-template.md",
+      "optional": [
+        "argument-hint",
+        "model",
+        "agent",
+        "allowed-tools",
+        "disable-model-invocation"
+      ]
     }
   }
 }

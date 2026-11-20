@@ -134,7 +134,7 @@ const ops = {
       if (!(key in ctx.fm.fields)) { if (!(rule.optional ?? []).includes(key)) say(1, undefined, `front matter key "${key}" missing`); }
       else if (slotRe.test(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}": placeholder left, fill it`);
       else if (allowed) { if (!allowed.includes(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}" must be one of ${allowed.join(", ")}`); }
-      else if (!slotRe.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);
+      else if (value !== "" && !slotRe.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);
       else if (slotRe.test(value) && !unquote(ctx.fm.fields[key]).trim()) say(line, undefined, `front matter "${key}" empty`);
     }
     for (const key of Object.keys(ctx.fm.fields)) if (!(key in model.fm)) say(ctx.fm.fieldLine[key], key, `front matter key "${key}" is not in the template`);

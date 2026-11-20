@@ -111,6 +111,12 @@ describe("ops", () => {
     assert.match(findings({ op: "template", template: "t.md" }, '---\ntitle: "demo"\n---\n\n# T\n')[0].message, /key "note" missing/u);
   });
 
+  it("template accepts any value for a front matter key the template leaves bare", () => {
+    fs.writeFileSync(path.join(dir, "t.md"), "---\nmodel:\n---\n\n# T\n");
+    const rule = { op: "template", template: "t.md" };
+    assert.deepEqual(findings(rule, "---\nmodel: sonnet\n---\n\n# T\n"), []);
+  });
+
   it("json validates against a schema", () => {
     fs.writeFileSync(path.join(dir, "s.json"), JSON.stringify({ type: "object", required: ["a"] }));
     const rule = { op: "json", schema: "s.json", fix: "{problem}" };

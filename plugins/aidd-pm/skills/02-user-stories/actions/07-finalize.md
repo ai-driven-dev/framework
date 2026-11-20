@@ -17,7 +17,7 @@ The session drafts or the created and updated Story identities. After a write, r
 3. **Authorize.** Confirm approval or bounded write authority; otherwise return the proposal.
 4. **Link.** Apply [relations](../references/relations.md).
 5. **Write.** Create or update only the authorized Stories and preserve fields outside the authorized change.
-6. **Verify.** Read the affected graph back and report what changed.
+6. **Verify.** Read the affected graph back and report what changed. Markdown: run `scripts/validate-story.cjs`, next to the loaded `SKILL.md`, on each file written, and fix each finding until clean.
 7. **Report.** Return every persisted identity, then apply [handoffs](../references/handoffs.md) to the next move.
 
 ## Test

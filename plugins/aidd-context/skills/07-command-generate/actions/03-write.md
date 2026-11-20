@@ -12,7 +12,9 @@ The approved draft, input file and paths.
 2. Hosts: run the writer per [writer.md](../references/writer.md) with the plan's options, without `--plan`.
    - Planned `update`: add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
-3. Report only the paths written, one per line.
+3. Validate the Claude Code file, the plugin source or else `.claude/commands/<name>.md`, per [writer.md](../references/writer.md).
+   - Finding: quote it, fix the file or its input, rewrite with `--force`, then validate again until clean.
+4. Report only the paths written, one per line.
 
 ## Output
 
