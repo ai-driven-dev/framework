@@ -123,5 +123,5 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 - Freeze behaviour with characterization tests, each seen red; move before rename, rename before logic change.
 - Update the files that name paths: `old-layout-count.arch.test.ts`, `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, the repository root's `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
-- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), `PUBLIC_MODULES` and the `biome.json` overrides; `import-rules-bite.arch.test.ts` fails a pattern naming a vanished directory.
+- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), `PUBLIC_MODULES`, then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`; `import-rules-bite.arch.test.ts` fails a pattern naming a vanished directory.
 - Move memory and rules with the code: a `cli-contexts/<ctx>.md` page, `aidd_docs/memory/internal/<ctx>.md`, the `glossary.md`.
