@@ -13,7 +13,7 @@ const LIBRARY = "module.exports = { rules: true };\n";
 /** The contract with only the content rules: the others read anchor files a scratch repository does not hold. */
 function contentContract() {
   const contract = engine.loadContract(CONTRACT);
-  for (const id of Object.keys(contract.rules)) if (!/^REPO-0[456]$/u.test(id)) delete contract.rules[id];
+  for (const id of Object.keys(contract.rules)) if (!/^REPO-0[4567]$/u.test(id)) delete contract.rules[id];
   return contract;
 }
 
@@ -23,7 +23,7 @@ const CLEAN_ENV = Object.fromEntries(Object.entries(process.env).filter(([key]) 
 const PLUGIN = { name: "a", source: "./plugins/a", description: "d", strict: true, metadata: { recommended: true } };
 const marketplace = (plugin) => JSON.stringify({ name: "m", version: "1", description: "d", owner: { name: "o" }, plugins: [plugin] });
 
-/** A small tracked repository: REPO-04 to REPO-06 are silent on it. */
+/** A small tracked repository: REPO-04 to REPO-07 are silent on it. */
 const CLEAN = {
   ".claude-plugin/marketplace.json": marketplace(PLUGIN),
   "notes.md": "Nothing from a machine here.\n",
@@ -88,6 +88,10 @@ describe("repo content rules", () => {
 
   it("REPO-05 skips fixture trees", () => {
     assert.deepEqual(ids({ "cli/tests/fixtures/broken.json": "{" }), []);
+  });
+
+  it("REPO-07 flags a tracked source file holding a NUL byte", () => {
+    assert.deepEqual(ids({ "notes.md": "a\u0000b\n" }), ["REPO-07"]);
   });
 
   it("REPO-06 flags a host adapter that differs from the CLI's asset", () => {

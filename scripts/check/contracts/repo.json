@@ -34,6 +34,12 @@
       "in": "marketplace.json",
       "check": "hook-rule-copies",
       "why": "each plugin ships its own copy of the hook library and the host adapter, and a copy that drifts runs different rules"
+    },
+    "REPO-07": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "text-no-nul",
+      "why": "a NUL byte makes a source file binary to grep and diff, so a search over it fails in silence"
     }
   }
 }
