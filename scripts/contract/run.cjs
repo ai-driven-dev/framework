@@ -36,7 +36,9 @@ function main(argv) {
   const findings = [];
   for (const { contract, targets } of config.contracts) {
     const loaded = loadContract(path.join(root, contract));
-    for (const target of expand(root, targets)) {
+    const matched = expand(root, targets);
+    if (matched.length === 0) throw new Error(`${targets}: matches no file`);
+    for (const target of matched) {
       for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id} ${f.message} ${f.excerpt ?? ""}`, text: format({ ...f, path: rel(f.path) }) });
     }
   }

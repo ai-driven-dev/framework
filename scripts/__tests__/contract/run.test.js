@@ -99,6 +99,13 @@ describe("repository run", () => {
     assert.match(run().stdout, /lib\/engine\.cjs differs from scripts\/contract/u);
   });
 
+  it("exits 2 when a mapping matches no file", () => {
+    fs.rmSync(path.join(root, "agents"), { recursive: true });
+    const out = run();
+    assert.equal(out.status, 2);
+    assert.match(out.stderr, /agents\/\*\.md: matches no file/u);
+  });
+
   it("exits 2 on a missing config", () => {
     fs.rmSync(path.join(root, "validate.config.json"));
     assert.equal(run().status, 2);
