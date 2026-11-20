@@ -26,7 +26,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 - A class takes its ports through the constructor, typed as the port, and `composition/` hands in the adapter.
 - `composition/` holds one module per context plus the root and the shared adapters: `composition-holds-one-module-per-context.arch.test.ts`.
 - A command receives its dependencies as the `DepsFactory` of `presentation/deps.ts`, built in `cli.ts`.
-- `createDeps` memoizes one graph per catalog, project root and token; a command keeps no second cache.
+- `createContainer` builds each context's wiring on its first read and keeps it for that container; a command keeps no second cache.
 - A port, a `contract/` port included, declares no method nobody calls: `ports-are-called.arch.test.ts`.
 - A tool id appears only in its profile and the registration list: `tool-addition-cost.arch.test.ts`.
 

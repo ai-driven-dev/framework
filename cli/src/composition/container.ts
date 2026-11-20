@@ -18,8 +18,6 @@ import { wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 import { wireUpdate } from "./update.js";
 
-/** One graph per catalog, then per project root and token: two catalogs never share a graph. */
-
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
 export interface ContainerOptions extends FactoryOptions {
   projectRoot: string;
