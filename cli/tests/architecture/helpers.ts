@@ -160,30 +160,14 @@ export function matchesGlob(glob: string, path: string): boolean {
   return scopeGlob(glob, path);
 }
 
-// The context graph. The edge table is `allowed-edges.ts`, so `biome-context-parity.arch.test.ts`
-// compares biome's own per-context `noRestrictedImports` overrides against that same data.
+// The context graph. The edge table is `allowed-edges.ts`; `edge-table.arch.test.ts` holds
+// biome's per-context `noRestrictedImports` overrides to it.
 
 export function contextNames(): string[] {
   return readdirSync(join(SRC, "contexts"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-}
-
-const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
-
-/** `tools` keeps its `application/` to the composition root too: what an outside caller asks of
- * a tool is in `contract/`, and the one application file builds the catalog the root hands out. */
-const APPLICATION_CLOSED = new Set(["tools"]);
-
-/** The groups that forbid a held context's interior to an importer that may reach the rest. */
-export function interiorGroupsOf(context: string): string[] {
-  const folders: readonly string[] = APPLICATION_CLOSED.has(context)
-    ? [...INTERIOR_FOLDERS, "application"]
-    : INTERIOR_FOLDERS;
-  return folders
-    .filter((folder) => existsSync(join(SRC, "contexts", context, folder)))
-    .map((folder) => `**/${context}/${folder}/**`);
 }
 
 /**
@@ -221,13 +205,7 @@ interface Crossing {
   readonly target: string;
   readonly from: string;
   readonly to: string;
-  /** `domain`, `application`, `infrastructure`, or a migrated context's `ports` or `contract`
-   * or null when `file` is not itself under a context's own layer split (shared,
-   * presentation). */
-  readonly layer: "domain" | "application" | "infrastructure" | "ports" | "contract" | null;
 }
-
-const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure|ports|contract)\//;
 
 /** Whether an import from one layer to another is an edge worth naming. Presentation may
  * reach down, so only the reverse is one. */
@@ -243,12 +221,11 @@ function crossings(files: readonly string[]): Crossing[] {
   for (const file of files) {
     const from = contextOf(file);
     const source = read(file);
-    const layerMatch = LAYER_OF_FILE.exec(file);
     for (const match of source.matchAll(INTERNAL_IMPORT)) {
       const target = resolveImportTarget(file, match[1] as string);
       const to = contextOf(target);
       if (!isCrossing(from, to)) continue;
-      out.push({ file, target, from, to, layer: (layerMatch?.[1] as Crossing["layer"]) ?? null });
+      out.push({ file, target, from, to });
     }
   }
   return out;
@@ -288,21 +265,6 @@ export function weighedEdges(
 
 export function edgesBetweenContexts(files: readonly string[]): string[] {
   return [...weighedEdges(files).keys()].sort();
-}
-
-/** For each baselined edge, the layers of its `from` context that carry it — derived from the
- * same walk, so a debt file moving layer shows up without anyone updating a list. */
-export function baselineLayers(files: readonly string[]): Map<string, Set<string>> {
-  const baselineEdges = new Set(BASELINE.map((entry) => entry.edge));
-  const layers = new Map<string, Set<string>>();
-  for (const crossing of crossings(files)) {
-    const edge = `${crossing.from}->${crossing.to}`;
-    if (!baselineEdges.has(edge) || crossing.layer === null) continue;
-    const set = layers.get(edge) ?? new Set<string>();
-    set.add(crossing.layer);
-    layers.set(edge, set);
-  }
-  return layers;
 }
 
 /**
