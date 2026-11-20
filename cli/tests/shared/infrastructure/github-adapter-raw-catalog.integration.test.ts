@@ -39,7 +39,7 @@ describe("GitHubAdapter", () => {
 
     it("calls GitHub Contents API with correct URL and auth header", async () => {
       const http = makeHttp();
-      const tokenProvider = { resolve: async () => "my-token" as string | null };
+      const tokenProvider = { resolve: async (): Promise<string | null> => "my-token" };
       const adapter = new GitHubAdapter(http, { tokenProvider });
 
       await adapter.fetchCatalog({ kind: "github", repo: "owner/repo", ref: "main" }, CATALOG_PATH);

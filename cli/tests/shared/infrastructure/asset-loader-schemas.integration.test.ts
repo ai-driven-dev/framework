@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { AssetNotFoundError } from "../../../src/shared/domain/errors.js";
-import type { SchemaName } from "../../../src/shared/domain/file.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 
@@ -23,8 +22,8 @@ describe("BundledAssetProviderAdapter.loadSchema", () => {
   });
 
   it("names the file it could not find when a schema is not shipped", () => {
-    expect(() =>
-      new BundledAssetProviderAdapter(wireTools()).loadSchema("nope" as SchemaName)
-    ).toThrow(AssetNotFoundError);
+    const provider = new BundledAssetProviderAdapter(wireTools());
+    // @ts-expect-error a name outside SchemaName is what the loader must refuse
+    expect(() => provider.loadSchema("nope")).toThrow(AssetNotFoundError);
   });
 });

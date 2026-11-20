@@ -639,7 +639,7 @@ describe("every catalogue error", () => {
   type CodedError = Error & { code?: unknown };
 
   /** A constructor takes text or a list of text, whatever its arity: try the text first. */
-  function construct(name: string, Class: new (...args: unknown[]) => CodedError): CodedError {
+  function construct(name: string, Class: ErrorClass): CodedError {
     const given = CONSTRUCTED_WITH[name];
     if (given) return new Class(...given);
     try {
@@ -649,13 +649,13 @@ describe("every catalogue error", () => {
     }
   }
 
+  type ErrorClass = new (...args: unknown[]) => CodedError;
+  const isErrorClass = (value: unknown): value is ErrorClass => typeof value === "function";
+
   const instances = () =>
-    Object.entries(errors)
-      .filter(([name, value]) => typeof value === "function" && name !== "AiddError")
-      .map(([name, value]) => ({
-        name,
-        error: construct(name, value as new (...args: unknown[]) => CodedError),
-      }));
+    Object.entries(errors).flatMap(([name, value]) =>
+      isErrorClass(value) && name !== "AiddError" ? [{ name, error: construct(name, value) }] : []
+    );
 
   it("is an Error carrying a kebab-case code", () => {
     const all = instances();

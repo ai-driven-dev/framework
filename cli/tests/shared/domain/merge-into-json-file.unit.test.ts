@@ -16,7 +16,7 @@ describe("mergeIntoJsonFile", () => {
     it("creates file if it does not exist", async () => {
       const path = join(root, "new.json");
       await files.mergeJsonFile(path, JSON.stringify({ key: "value" }), "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
+      const result: unknown = JSON.parse(await files.readFile(path));
       expect(result).toEqual({ key: "value" });
     });
 
@@ -24,9 +24,8 @@ describe("mergeIntoJsonFile", () => {
       const path = join(root, "merge.json");
       files.setFile(path, JSON.stringify({ existing: "data" }));
       await files.mergeJsonFile(path, JSON.stringify({ newKey: "newValue" }), "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-      expect(result.existing).toBe("data");
-      expect(result.newKey).toBe("newValue");
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toMatchObject({ existing: "data", newKey: "newValue" });
     });
 
     describe("framework prime strategy", () => {
@@ -34,8 +33,8 @@ describe("mergeIntoJsonFile", () => {
         const path = join(root, "override-framework-prime.json");
         files.setFile(path, JSON.stringify({ key: "old" }));
         await files.mergeJsonFile(path, JSON.stringify({ key: "new" }), "framework-prime");
-        const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-        expect(result.key).toBe("new");
+        const result: unknown = JSON.parse(await files.readFile(path));
+        expect(result).toMatchObject({ key: "new" });
       });
     });
 
@@ -44,17 +43,16 @@ describe("mergeIntoJsonFile", () => {
         const path = join(root, "override-user-prime.json");
         files.setFile(path, JSON.stringify({ key: "user-value" }));
         await files.mergeJsonFile(path, JSON.stringify({ key: "framework-value" }), "user-prime");
-        const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-        expect(result.key).toBe("user-value");
+        const result: unknown = JSON.parse(await files.readFile(path));
+        expect(result).toMatchObject({ key: "user-value" });
       });
 
       it("new framework keys are added when absent in the existing file", async () => {
         const path = join(root, "new-keys-user-prime.json");
         files.setFile(path, JSON.stringify({ existing: "data" }));
         await files.mergeJsonFile(path, JSON.stringify({ newKey: "newValue" }), "user-prime");
-        const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-        expect(result.existing).toBe("data");
-        expect(result.newKey).toBe("newValue");
+        const result: unknown = JSON.parse(await files.readFile(path));
+        expect(result).toMatchObject({ existing: "data", newKey: "newValue" });
       });
     });
 
@@ -66,23 +64,16 @@ describe("mergeIntoJsonFile", () => {
         JSON.stringify({ outer: { b: 99, c: 3 } }),
         "framework-prime"
       );
-      const result = JSON.parse(await files.readFile(path)) as {
-        outer: Record<string, number>;
-      };
-      expect(result.outer.a).toBe(1);
-      expect(result.outer.b).toBe(99);
-      expect(result.outer.c).toBe(3);
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toMatchObject({ outer: { a: 1, b: 99, c: 3 } });
     });
 
     it("deduplicates merged arrays", async () => {
       const path = join(root, "arrays.json");
       files.setFile(path, JSON.stringify({ items: ["a", "b"] }));
       await files.mergeJsonFile(path, JSON.stringify({ items: ["b", "c"] }), "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as { items: string[] };
-      expect(result.items).toContain("a");
-      expect(result.items).toContain("b");
-      expect(result.items).toContain("c");
-      expect(result.items.filter((x) => x === "b")).toHaveLength(1);
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toEqual({ items: ["a", "b", "c"] });
     });
 
     it("deduplicates merged arrays of objects by value", async () => {
@@ -90,11 +81,8 @@ describe("mergeIntoJsonFile", () => {
       const entry = { file: "aidd_docs/templates/vcs/pull_request.md" };
       files.setFile(path, JSON.stringify({ instructions: [entry] }));
       await files.mergeJsonFile(path, JSON.stringify({ instructions: [entry] }), "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as {
-        instructions: (typeof entry)[];
-      };
-      expect(result.instructions).toHaveLength(1);
-      expect(result.instructions[0]).toEqual(entry);
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toEqual({ instructions: [entry] });
     });
 
     it("strips JSONC comments before merging", async () => {
@@ -106,9 +94,8 @@ describe("mergeIntoJsonFile", () => {
   "other": true
 }`;
       await files.mergeJsonFile(path, jsonc, "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-      expect(result.key).toBe("value");
-      expect(result.other).toBe(true);
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toMatchObject({ key: "value", other: true });
     });
 
     it("strips trailing commas in incoming content before merging", async () => {
@@ -120,9 +107,8 @@ describe("mergeIntoJsonFile", () => {
   },
 }`;
       await files.mergeJsonFile(path, jsonc, "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-      expect(result.key).toBe("value");
-      expect((result.nested as Record<string, number>).a).toBe(1);
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toMatchObject({ key: "value", nested: { a: 1 } });
     });
 
     it("tolerates comments and trailing commas in an existing .jsonc file", async () => {
@@ -142,10 +128,9 @@ describe("mergeIntoJsonFile", () => {
 }`;
       files.setFile(path, existingJsonc);
       await files.mergeJsonFile(path, JSON.stringify({ share: "disabled" }), "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-      expect(result.model).toBe("neogen/swe-dev");
-      expect(result.share).toBe("disabled");
-      expect((result.provider as Record<string, unknown>).neogen).toBeDefined();
+      const result: unknown = JSON.parse(await files.readFile(path));
+      expect(result).toMatchObject({ model: "neogen/swe-dev", share: "disabled" });
+      expect(result).toHaveProperty("provider.neogen");
     });
 
     describe("prototype pollution guard", () => {
@@ -155,14 +140,14 @@ describe("mergeIntoJsonFile", () => {
         // not create an own key, and test nothing.
         const malicious = '{"__proto__":{"polluted":true}}';
         await files.mergeJsonFile(path, malicious, "framework-prime");
-        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        expect(Object.prototype).not.toHaveProperty("polluted");
       });
 
       it("does not pollute Object.prototype after merging constructor payload", async () => {
         const path = join(root, "constructor-test.json");
         const malicious = '{"constructor":{"prototype":{"polluted":true}}}';
         await files.mergeJsonFile(path, malicious, "framework-prime");
-        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        expect(Object.prototype).not.toHaveProperty("polluted");
       });
 
       it("merges regular keys correctly when prototype keys are present", async () => {
@@ -170,9 +155,9 @@ describe("mergeIntoJsonFile", () => {
         files.setFile(path, JSON.stringify({ safe: "original" }));
         const malicious = '{"safe":"updated","__proto__":{"polluted":true}}';
         await files.mergeJsonFile(path, malicious, "framework-prime");
-        const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-        expect(result.safe).toBe("updated");
-        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        const result: unknown = JSON.parse(await files.readFile(path));
+        expect(result).toMatchObject({ safe: "updated" });
+        expect(Object.prototype).not.toHaveProperty("polluted");
       });
 
       it("keeps a __proto__ payload from reaching the merged keys that follow it", async () => {

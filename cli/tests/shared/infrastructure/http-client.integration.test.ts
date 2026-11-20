@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import type { AddressInfo } from "node:net";
 import { describe, expect, it } from "vitest";
 import {
   AuthenticationError,
@@ -12,9 +11,12 @@ function startServer(handler: (req: IncomingMessage, res: ServerResponse) => voi
   const server = createServer(handler);
   return new Promise<{ url: string; close: () => Promise<void> }>((resolve) => {
     server.listen(0, "127.0.0.1", () => {
-      const port = (server.address() as AddressInfo).port;
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        throw new Error("the test server is not listening on a port");
+      }
       resolve({
-        url: `http://127.0.0.1:${port}`,
+        url: `http://127.0.0.1:${address.port}`,
         close: () => new Promise((done) => server.close(() => done())),
       });
     });

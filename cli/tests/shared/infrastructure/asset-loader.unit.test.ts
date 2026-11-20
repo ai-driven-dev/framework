@@ -11,10 +11,7 @@ const provider = new BundledAssetProviderAdapter(wireTools());
 describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
   describe("claude", () => {
     it("returns parsed settings.json with permissions", () => {
-      const asset = provider.loadConfigAsset(TOOL.claude, "settings.json") as Record<
-        string,
-        unknown
-      >;
+      const asset = provider.loadConfigAsset(TOOL.claude, "settings.json");
       expect(asset).toHaveProperty("permissions");
     });
   });
@@ -28,17 +25,14 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
     });
 
     it("returns parsed opencode.json with instructions array", () => {
-      const asset = provider.loadConfigAsset(TOOL.opencode, "opencode.json") as Record<
-        string,
-        unknown
-      >;
+      const asset = provider.loadConfigAsset(TOOL.opencode, "opencode.json");
       expect(asset).toHaveProperty("instructions");
     });
   });
 
   describe("kilo", () => {
     it("returns parsed kilo.json with its schema", () => {
-      const asset = provider.loadConfigAsset(TOOL.kilo, "kilo.json") as Record<string, unknown>;
+      const asset = provider.loadConfigAsset(TOOL.kilo, "kilo.json");
       expect(asset).toMatchObject({
         $schema: "https://app.kilo.ai/config.json",
       });
@@ -55,18 +49,15 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
     // Model choice is owned by the account, not this repo: a pinned "gpt-5" is rejected by
     // ChatGPT-account Codex sessions, so Codex's own default applies.
     it("writes no model — the account decides which one it can use", () => {
-      const asset = provider.loadConfigAsset(TOOL.codex, "config.toml") as string;
-      const parsed = parseToml(asset);
+      const asset = provider.loadConfigAsset(TOOL.codex, "config.toml");
+      const parsed = parseToml(String(asset));
       expect(parsed).not.toHaveProperty("model");
     });
   });
 
   describe("copilot", () => {
     it("returns merged vscode-settings.json with ≥26 keys including both asset origins", () => {
-      const asset = provider.loadConfigAsset(TOOL.copilot, "vscode-settings.json") as Record<
-        string,
-        unknown
-      >;
+      const asset = provider.loadConfigAsset(TOOL.copilot, "vscode-settings.json");
       expect(Object.keys(asset).length).toBeGreaterThanOrEqual(26);
       expect(asset).toHaveProperty("chat.plugins.enabled", true);
       expect(asset).toHaveProperty("chat.useAgentSkills", true);
@@ -77,7 +68,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   describe("vscode", () => {
     it("returns settings.json as object", () => {
-      const asset = provider.loadConfigAsset(vscode, "settings.json") as Record<string, unknown>;
+      const asset = provider.loadConfigAsset(vscode, "settings.json");
       expect(asset).toHaveProperty("editor.formatOnSave");
     });
 
@@ -87,7 +78,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
     });
 
     it("returns extensions.json with recommendations", () => {
-      const asset = provider.loadConfigAsset(vscode, "extensions.json") as Record<string, unknown>;
+      const asset = provider.loadConfigAsset(vscode, "extensions.json");
       expect(asset).toHaveProperty("recommendations");
     });
   });
@@ -101,28 +92,22 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
 describe("BundledAssetProviderAdapter.loadSchema — marketplace", () => {
   it("returns a Copilot-native schema with required fields including metadata", () => {
-    const schema = provider.loadSchema("marketplace") as Record<string, unknown>;
-    expect(schema).toHaveProperty("required");
+    const schema = provider.loadSchema("marketplace");
     expect(schema).toHaveProperty("properties");
-    const required = schema.required as string[];
-    expect(required).toContain("name");
-    expect(required).toContain("metadata");
-    expect(required).toContain("owner");
-    expect(required).toContain("plugins");
+    expect(schema).toHaveProperty(
+      "required",
+      expect.arrayContaining(["name", "metadata", "owner", "plugins"])
+    );
   });
 
   it("requires metadata.pluginRoot in the schema properties", () => {
-    const schema = provider.loadSchema("marketplace") as {
-      properties: { metadata: { properties: { pluginRoot: unknown } } };
-    };
-    expect(schema.properties.metadata.properties.pluginRoot).toBeDefined();
+    const schema = provider.loadSchema("marketplace");
+    expect(schema).toHaveProperty("properties.metadata.properties.pluginRoot");
   });
 
   it("documents the awesome-copilot empirical source in $comment", () => {
-    const schema = provider.loadSchema("marketplace") as Record<string, unknown>;
-    const comment = schema.$comment as string;
-    expect(typeof comment).toBe("string");
-    expect(comment.toLowerCase()).toContain("awesome-copilot");
+    const schema = provider.loadSchema("marketplace");
+    expect(schema).toHaveProperty("$comment", expect.stringMatching(/awesome-copilot/i));
   });
 
   it("returns the same object on a second call (memoized)", () => {

@@ -6,10 +6,10 @@ import { userConfigDir } from "../../../src/shared/infrastructure/user-config-di
 const ENV_KEYS = ["AIDD_USER_CONFIG_DIR", "XDG_CONFIG_HOME"] as const;
 
 function saveEnv(): Record<(typeof ENV_KEYS)[number], string | undefined> {
-  return Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]])) as Record<
-    (typeof ENV_KEYS)[number],
-    string | undefined
-  >;
+  return {
+    AIDD_USER_CONFIG_DIR: process.env.AIDD_USER_CONFIG_DIR,
+    XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+  };
 }
 
 function restoreEnv(saved: Record<(typeof ENV_KEYS)[number], string | undefined>): void {

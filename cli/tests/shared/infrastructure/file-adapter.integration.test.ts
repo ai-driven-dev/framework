@@ -37,7 +37,7 @@ describe("FileAdapter", () => {
       await fs.writeFile(path, "new content");
 
       expect(rename).toHaveBeenCalledTimes(1);
-      const [renamedFrom, renamedTo] = vi.mocked(rename).mock.calls[0] as [string, string];
+      const [renamedFrom, renamedTo] = vi.mocked(rename).mock.calls[0] ?? [];
       expect(renamedTo).toBe(path);
       expect(renamedFrom).not.toBe(path);
       expect(await readFile(path, "utf-8")).toBe("new content");

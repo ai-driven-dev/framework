@@ -83,15 +83,15 @@ describe("parseFrontmatter() — block scalars", () => {
     const content = "---\ndescription: |\n  line one\n  line two\n---\nbody";
     const { frontmatter } = parseFrontmatter(content);
     expect(typeof frontmatter.description).toBe("string");
-    expect(frontmatter.description as string).toContain("line one");
-    expect(frontmatter.description as string).toContain("line two");
+    expect(frontmatter.description).toContain("line one");
+    expect(frontmatter.description).toContain("line two");
   });
 
   it("parses folded block scalar (>) joining lines with space", () => {
     const content = "---\ndescription: >\n  folded line one\n  folded line two\n---\nbody";
     const { frontmatter } = parseFrontmatter(content);
     expect(typeof frontmatter.description).toBe("string");
-    expect((frontmatter.description as string).trim()).toContain("folded line one");
+    expect(String(frontmatter.description).trim()).toContain("folded line one");
   });
 
   it("parses null scalar value", () => {
