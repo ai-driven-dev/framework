@@ -34,11 +34,6 @@ describe("mermaid-names", () => {
 describe("json-valid", () => {
   const { problemsOf } = custom("json-valid");
 
-  it("reads Claude settings: enabledPlugins holds booleans", () => {
-    assert.deepEqual(problemsOf(dir, ".claude/settings.json", { enabledPlugins: { a: true } }), []);
-    assert.deepEqual(problemsOf(dir, ".claude/settings.json", { enabledPlugins: { a: "yes" } }), ["enabledPlugins.a must be boolean"]);
-  });
-
   it("flags a duplicate marketplace plugin name", () => {
     const plugin = { name: "a", source: ".", description: "d", strict: true, metadata: { recommended: false } };
     const data = { name: "m", version: "1", description: "d", owner: { name: "o" }, plugins: [plugin, plugin] };

@@ -16,6 +16,13 @@
       "in": "plugin.json",
       "check": "coherence",
       "why": "an unlisted skill never installs, a listed missing one breaks the install"
+    },
+    "PLUGIN-03": {
+      "op": "json",
+      "in": "plugin.json",
+      "schema": "schemas/official/claude-code-plugin-manifest.json",
+      "why": "the host rejects a manifest that breaks its published schema",
+      "fix": "{problem}"
     }
   }
 }

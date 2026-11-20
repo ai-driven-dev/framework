@@ -1,6 +1,6 @@
 "use strict";
-// Every tracked JSON file parses, and the marketplace and Claude settings hold the fields and paths the host reads. Plugin manifests are PLUGIN-01's. Anchor: marketplace.json.
-// The local checks only: no network. The published schemas at schemastore.org stay with scripts/validate-json.mjs.
+// Every tracked JSON file parses, and the marketplace holds the fields and paths the host reads. Plugin manifests are PLUGIN-01's. Anchor: marketplace.json.
+// The project's own requirements only. Types and shapes are the official schemas' (PLUGIN-03, REPO-09, REPO-10): no field is checked twice.
 const fs = require("node:fs");
 const path = require("node:path");
 const { trackedFiles } = require("./no-local-paths.cjs");
@@ -13,7 +13,6 @@ const blank = (value) => typeof value !== "string" || value.trim() === "";
 
 function kindOf(file) {
   if (file.endsWith(".claude-plugin/marketplace.json")) return "marketplace";
-  if (file.endsWith(".claude/settings.json") || file.endsWith(".claude/settings.local.json") || file.includes("/.claude/settings.")) return "settings";
   return null;
 }
 
@@ -25,9 +24,7 @@ function problemsOf(root, file, data) {
   const exists = (rel, label, base) => fs.existsSync(path.resolve(base, rel)) || fail(`${label} does not exist: ${rel}`);
   const kind = kindOf(file);
   if (kind === "marketplace") {
-    for (const key of ["name", "version", "description"]) string(data, key);
-    if (!isObject(data.owner)) fail("missing or invalid object field 'owner'");
-    else string(data.owner, "name");
+    for (const key of ["version", "description"]) string(data, key);
     if (!Array.isArray(data.plugins) || data.plugins.length === 0) {
       fail("missing or invalid non-empty array 'plugins'");
       return out;
@@ -40,18 +37,12 @@ function problemsOf(root, file, data) {
         continue;
       }
       // A plugin's version is release-please's, stamped at release time, never in the manifest.
-      for (const key of ["name", "source", "description"]) if (blank(plugin[key])) fail(`${label}.${key} must be a non-empty string`);
+      if (blank(plugin.description)) fail(`${label}.description must be a non-empty string`);
       if (names.has(plugin.name)) fail(`duplicate plugin name: ${plugin.name}`);
       names.add(plugin.name);
-      if (typeof plugin.strict !== "boolean") fail(`${label}.strict must be boolean`);
       if (typeof plugin.metadata?.recommended !== "boolean") fail(`${label}.metadata.recommended must be boolean`);
       if (typeof plugin.source === "string") exists(plugin.source, `${label}.source`, root);
     }
-  } else if (kind === "settings") {
-    if (data.extraKnownMarketplaces !== undefined && !isObject(data.extraKnownMarketplaces)) fail("extraKnownMarketplaces must be an object when present");
-    if (data.enabledPlugins === undefined) return out;
-    if (!isObject(data.enabledPlugins)) fail("enabledPlugins must be an object when present");
-    else for (const [name, enabled] of Object.entries(data.enabledPlugins)) if (typeof enabled !== "boolean") fail(`enabledPlugins.${name} must be boolean`);
   }
   return out;
 }

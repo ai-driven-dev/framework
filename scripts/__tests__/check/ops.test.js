@@ -125,6 +125,38 @@ describe("ops", () => {
     assert.equal(findings(rule, "{}", "d.json").length, 1);
   });
 
+  it("json reads anyOf, oneOf, allOf, not, propertyNames, $ref, enum, bounds and uri", () => {
+    const schema = {
+      $defs: { word: { type: "string", pattern: "^[a-z]+$" } },
+      properties: {
+        any: { anyOf: [{ type: "string" }, { type: "integer" }] },
+        one: { oneOf: [{ type: "string" }, { type: "string", minLength: 3 }] },
+        all: { allOf: [{ type: "string", pattern: "^a" }, { type: "string", pattern: "z$" }] },
+        no: { not: { const: "x" } },
+        keys: { propertyNames: { pattern: "^k" } },
+        ref: { $ref: "#/$defs/word" },
+        pick: { enum: ["a", 2] },
+        size: { type: "string", minLength: 2, maxLength: 3 },
+        count: { type: "number", minimum: 1, maximum: 5, exclusiveMinimum: 1 },
+        list: { type: "array", minItems: 1, maxItems: 2, uniqueItems: true },
+        home: { type: "string", format: "uri" },
+      },
+    };
+    fs.writeFileSync(path.join(dir, "s.json"), JSON.stringify(schema));
+    const rule = { op: "json", schema: "s.json", fix: "{problem}" };
+    const ok = { any: 1, one: "ab", all: "az", no: "y", keys: { k1: 1 }, ref: "abc", pick: 2, size: "ab", count: 2, list: [1], home: "https://x.test" };
+    assert.deepEqual(findings(rule, JSON.stringify(ok), "d.json"), []);
+    const bad = { any: true, one: "abc", all: "a", no: "x", keys: { j: 1 }, ref: "A", pick: "b", size: "a", count: 1, list: [1, 1], home: "nope" };
+    for (const [key, value] of Object.entries(bad)) assert.equal(findings(rule, JSON.stringify({ ...ok, [key]: value }), "d.json").length, 1, key);
+  });
+
+  it("json refuses at load a schema keyword outside the subset", () => {
+    for (const schema of [{ if: {} }, { patternProperties: {} }, { properties: { a: { format: "date" } } }, { $ref: "#/$defs/none" }, { $ref: "other.json" }, { pattern: "\\-(" }]) {
+      fs.writeFileSync(path.join(dir, "s.json"), JSON.stringify(schema));
+      assert.throws(() => findings({ op: "json", schema: "s.json", fix: "{problem}" }, "{}", "d.json"), /s\.json/u);
+    }
+  });
+
   it("custom runs the named check of the contract's custom folder", () => {
     fs.mkdirSync(path.join(dir, "custom"));
     fs.writeFileSync(path.join(dir, "custom", "always.cjs"), "module.exports = () => [{ line: 2, offending: 'x' }];\n");

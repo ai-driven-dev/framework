@@ -155,8 +155,7 @@ const ops = {
     } catch (error) {
       return [{ line: 1, fix: `invalid JSON: ${error.message}` }];
     }
-    const schema = JSON.parse(fs.readFileSync(path.resolve(ctx.contractDir, rule.schema), "utf8"));
-    return conform(data, schema, "$").map((problem) => ({ line: lineOf(ctx.lines, problem.at), offending: problem.at, values: { problem: problem.say } }));
+    return validateJson(data, path.resolve(ctx.contractDir, rule.schema)).map((problem) => ({ line: lineOf(ctx.lines, problem.at), offending: problem.at, values: { problem: problem.say } }));
   },
   custom(ctx, rule) {
     return require(path.join(ctx.customDir, `${rule.check}.cjs`))(ctx, rule);
@@ -177,28 +176,98 @@ function frontMatterIssues(ctx, model, rule, say) {
   for (const key of Object.keys(ctx.fm.fields)) if (!(key in model.fm)) say(ctx.fm.fieldLine[key], key, `front matter key "${key}" is not in the template`);
 }
 
-/** JSON Schema subset: type, enum, const, pattern, required, properties, additionalProperties, items, minItems. */
-function conform(value, schema, at) {
+const JSON_ANNOTATIONS = ["$schema", "$id", "$comment", "title", "description", "default", "examples", "allowTrailingCommas"];
+const JSON_ASSERTIONS = ["type", "enum", "const", "pattern", "required", "minLength", "maxLength", "minimum", "maximum", "exclusiveMinimum", "minItems", "maxItems", "uniqueItems"];
+const JSON_SUBSCHEMA = ["items", "not", "propertyNames"];
+const JSON_SUBSCHEMAS = ["anyOf", "allOf", "oneOf"];
+const JSON_MAPS = ["properties", "$defs"];
+
+/** What a schema uses beyond the subset, as messages: an unknown keyword fails at load, never passes unchecked. */
+function schemaProblems(schema, at = "#", root = schema) {
+  const out = [];
+  if (schema === null || typeof schema !== "object" || Array.isArray(schema)) return [`${at} must be a schema object`];
+  for (const [key, value] of Object.entries(schema)) {
+    const here = `${at}/${key}`;
+    if (JSON_ANNOTATIONS.includes(key)) continue;
+    if (JSON_ASSERTIONS.includes(key)) {
+      if (key === "pattern") try { new RegExp(value, "u"); } catch { out.push(`${here} is not a valid pattern`); }
+    } else if (key === "additionalProperties") {
+      if (typeof value !== "boolean") out.push(...schemaProblems(value, here, root));
+    } else if (JSON_SUBSCHEMA.includes(key)) out.push(...schemaProblems(value, here, root));
+    else if (JSON_SUBSCHEMAS.includes(key)) value.forEach((sub, i) => out.push(...schemaProblems(sub, `${here}/${i}`, root)));
+    else if (JSON_MAPS.includes(key)) for (const [name, sub] of Object.entries(value)) out.push(...schemaProblems(sub, `${here}/${name}`, root));
+    else if (key === "format") { if (value !== "uri") out.push(`${here} format ${value} is not supported`); }
+    else if (key === "$ref") { if (!/^#\/\$defs\/[^/]+$/u.test(value) || !root.$defs?.[value.slice(8)]) out.push(`${here} must point to a #/$defs/<name> of the same file`); }
+    else out.push(`${here} keyword ${key} is not supported`);
+  }
+  return out;
+}
+
+const SCHEMAS = new Map();
+/** A schema file read and checked once; one outside the subset throws. */
+function readSchema(file) {
+  if (!SCHEMAS.has(file)) {
+    const schema = JSON.parse(fs.readFileSync(file, "utf8"));
+    const unsupported = schemaProblems(schema);
+    if (unsupported.length) throw new Error(`${file}: ${unsupported.join("; ")}`);
+    SCHEMAS.set(file, schema);
+  }
+  return SCHEMAS.get(file);
+}
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/** JSON Schema subset (see schemaProblems): type, enum, const, pattern, format uri, required, properties, additionalProperties, propertyNames, items, min/max of numbers, strings and arrays, uniqueItems, anyOf, allOf, oneOf, not, $ref to $defs. */
+function conform(value, schema, at, root = schema) {
   const out = [];
   const say = (message) => out.push({ at, say: `${at} ${message}` });
+  const sub = (v, s, where) => conform(v, s, where, root);
+  if (schema.$ref) return sub(value, root.$defs[schema.$ref.slice(8)], at);
   const kind = Array.isArray(value) ? "array" : value === null ? "null" : typeof value === "number" && Number.isInteger(value) ? "integer" : typeof value;
   if (schema.type && ![].concat(schema.type).some((t) => t === kind || (t === "number" && kind === "integer"))) return say(`must be ${schema.type}`), out;
-  if (schema.const !== undefined && value !== schema.const) say(`must be ${JSON.stringify(schema.const)}`);
-  if (schema.enum && !schema.enum.includes(value)) say(`must be one of ${schema.enum.join(", ")}`);
-  if (schema.pattern && typeof value === "string" && !new RegExp(schema.pattern, "u").test(value)) say(`must match ${schema.pattern}`);
+  if (schema.const !== undefined && !same(value, schema.const)) say(`must be ${JSON.stringify(schema.const)}`);
+  if (schema.enum && !schema.enum.some((option) => same(option, value))) say(`must be one of ${schema.enum.map((o) => JSON.stringify(o)).join(", ")}`);
+  if (typeof value === "string") {
+    if (schema.pattern && !new RegExp(schema.pattern, "u").test(value)) say(`must match ${schema.pattern}`);
+    const length = [...value].length;
+    if (schema.minLength !== undefined && length < schema.minLength) say(`needs ${schema.minLength} character(s) at least`);
+    if (schema.maxLength !== undefined && length > schema.maxLength) say(`needs ${schema.maxLength} character(s) at most`);
+    if (schema.format === "uri" && !URL.canParse(value)) say("must be a uri");
+  }
+  if (typeof value === "number") {
+    if (schema.minimum !== undefined && value < schema.minimum) say(`must be at least ${schema.minimum}`);
+    if (schema.maximum !== undefined && value > schema.maximum) say(`must be at most ${schema.maximum}`);
+    if (schema.exclusiveMinimum !== undefined && value <= schema.exclusiveMinimum) say(`must be above ${schema.exclusiveMinimum}`);
+  }
   if (kind === "object") {
     for (const key of schema.required ?? []) if (!(key in value)) say(`misses ${key}`);
-    for (const [key, sub] of Object.entries(value)) {
+    for (const [key, item] of Object.entries(value)) {
+      if (schema.propertyNames) out.push(...sub(key, schema.propertyNames, `${at}.${key}`).map((p) => ({ ...p, say: `${p.say} (key)` })));
       const rule = schema.properties?.[key] ?? schema.additionalProperties;
       if (rule === false) say(`has unknown key ${key}`);
-      else if (rule && typeof rule === "object") out.push(...conform(sub, rule, `${at}.${key}`));
+      else if (rule && typeof rule === "object") out.push(...sub(item, rule, `${at}.${key}`));
     }
   }
   if (kind === "array") {
-    if (schema.minItems !== undefined && value.length < schema.minItems) say(`needs ${schema.minItems} item(s)`);
-    if (schema.items) value.forEach((item, i) => out.push(...conform(item, schema.items, `${at}[${i}]`)));
+    if (schema.minItems !== undefined && value.length < schema.minItems) say(`needs ${schema.minItems} item(s) at least`);
+    if (schema.maxItems !== undefined && value.length > schema.maxItems) say(`needs ${schema.maxItems} item(s) at most`);
+    if (schema.uniqueItems && value.some((item, i) => value.findIndex((other) => same(other, item)) !== i)) say("must hold no duplicate");
+    if (schema.items) value.forEach((item, i) => out.push(...sub(item, schema.items, `${at}[${i}]`)));
   }
+  for (const branch of schema.allOf ?? []) out.push(...sub(value, branch, at));
+  if (schema.anyOf || schema.oneOf) {
+    const results = (schema.anyOf ?? schema.oneOf).map((branch) => sub(value, branch, at));
+    const matching = results.filter((r) => r.length === 0).length;
+    if (schema.anyOf && matching === 0) say(`matches no alternative (${[...new Set(results.map((r) => r[0].say.slice(at.length + 1)))].slice(0, 4).join("; ")})`);
+    if (schema.oneOf && matching !== 1) say(`must match exactly one alternative, matches ${matching}`);
+  }
+  if (schema.not && sub(value, schema.not, at).length === 0) say("must not match the forbidden form");
   return out;
+}
+
+/** The problems of a parsed value against a schema file, as `{ at, say }`; readSchema throws on a schema outside the subset. */
+function validateJson(data, schemaFile) {
+  return conform(data, readSchema(schemaFile), "$");
 }
 
 /** Best line for a JSON path: the line of its last key. */
@@ -244,4 +313,4 @@ function parseTemplate(file) {
   return templates.get(file);
 }
 
-module.exports = { ops, OPTIONS, shape, cells, LINK };
+module.exports = { ops, OPTIONS, shape, cells, LINK, schemaProblems, readSchema, validateJson };

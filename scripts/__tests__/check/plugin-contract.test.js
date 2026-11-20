@@ -55,6 +55,12 @@ describe("plugin contract", () => {
     assert.deepEqual(found({ ...MANIFEST, version: "1" }), ["PLUGIN-01"]);
   });
 
+  it("PLUGIN-03 flags a manifest that breaks the official schema, once per field", () => {
+    assert.deepEqual(found({ ...MANIFEST, homepage: "not a uri" }), ["PLUGIN-03"]);
+    assert.deepEqual(found({ ...MANIFEST, keywords: "demo" }), ["PLUGIN-03"]);
+    assert.deepEqual(found({ ...MANIFEST, author: "Someone" }), ["PLUGIN-03"]);
+  });
+
   it("PLUGIN-02 flags a declared skills list that differs from the folders", () => {
     assert.deepEqual(found({ ...MANIFEST, skills: [] }), ["PLUGIN-02"]);
     assert.deepEqual(found({ ...MANIFEST, skills: ["./skills/01-hello", "./skills/02-gone"] }), ["PLUGIN-02"]);

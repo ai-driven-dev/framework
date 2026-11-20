@@ -10,10 +10,10 @@ const ROOT = path.resolve(__dirname, "../../..");
 const CONTRACT = path.join(ROOT, "scripts/check/contracts/repo.json");
 const PIECES = ["plugins", "docs", "README.md", ".claude-plugin", "release-please-config.json", ".github/workflows/ci.yml"];
 
-/** The anchor-file rules only: REPO-04 to REPO-08 read git's tracked files, which a copy has none of. */
+/** The anchor-file rules only: REPO-04 to REPO-08 and REPO-10 read git's tracked files, which a copy has none of. */
 function anchorFindings(target) {
   const contract = engine.loadContract(CONTRACT);
-  for (const id of Object.keys(contract.rules)) if (/^REPO-0[45678]$/u.test(id)) delete contract.rules[id];
+  for (const id of Object.keys(contract.rules)) if (/^REPO-(0[45678]|10)$/u.test(id)) delete contract.rules[id];
   return engine.check(contract, target);
 }
 

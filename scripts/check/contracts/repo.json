@@ -46,6 +46,19 @@
       "in": "marketplace.json",
       "check": "no-model-override",
       "why": "a model set in a bundled skill or agent overrides the model the user chose"
+    },
+    "REPO-09": {
+      "op": "json",
+      "in": "marketplace.json",
+      "schema": "schemas/official/claude-code-marketplace.json",
+      "why": "the host rejects a marketplace that breaks its published schema",
+      "fix": "{problem}"
+    },
+    "REPO-10": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "settings-schema",
+      "why": "the host ignores a settings file that breaks its published schema, in silence"
     }
   }
 }

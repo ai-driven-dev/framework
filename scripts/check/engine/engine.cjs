@@ -4,7 +4,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { readText, frontmatter, proseLines } = require("./markdown.cjs");
-const { ops, OPTIONS } = require("./ops.cjs");
+const { ops, OPTIONS, readSchema } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
 const TOP_KEYS = ["version", "kind", "unit", "targets", "marker", "watch", "rules", "retired"];
@@ -63,6 +63,14 @@ function loadContract(file) {
     for (const key of Object.keys(rule)) if (![...RULE_KEYS, ...OPTIONS[rule.op]].includes(key)) fail(`${id}: unknown key ${key} for op ${rule.op}`);
     for (const key of rule.op === "custom" ? ["in", "why"] : ["in", "why", "fix"]) if (!rule[key]) fail(`${id}: ${key} is required`);
     if (rule.op === "max" && !["chars", "lines"].includes(rule.measure)) fail(`${id}: measure must be chars or lines`);
+    if (rule.op === "json") {
+      if (typeof rule.schema !== "string") fail(`${id}: schema is required`);
+      try {
+        readSchema(path.resolve(path.dirname(file), rule.schema));
+      } catch (error) {
+        fail(`${id}: ${error.message}`);
+      }
+    }
     rule.match = asList(rule.in).map(globRegex);
     rule.skip = asList(rule.notIn).map(globRegex);
   }

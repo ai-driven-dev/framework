@@ -13,7 +13,7 @@ const LIBRARY = "module.exports = { rules: true };\n";
 /** The contract with only the content rules: the others read anchor files a scratch repository does not hold. */
 function contentContract() {
   const contract = engine.loadContract(CONTRACT);
-  for (const id of Object.keys(contract.rules)) if (!/^REPO-0[45678]$/u.test(id)) delete contract.rules[id];
+  for (const id of Object.keys(contract.rules)) if (!/^REPO-(0[45678]|09|10)$/u.test(id)) delete contract.rules[id];
   return contract;
 }
 
@@ -84,6 +84,13 @@ describe("repo content rules", () => {
     assert.deepEqual(ids({ "plugins/a/.claude-plugin/plugin.json": "{}" }), []);
     const marketplace = { name: "m", version: "1", description: "d", owner: { name: "o" }, plugins: [{ name: "a", source: "./nowhere", description: "d", strict: true, metadata: { recommended: true } }] };
     assert.deepEqual(ids({ ".claude-plugin/marketplace.json": JSON.stringify(marketplace), }), ["REPO-05"]);
+  });
+
+  it("REPO-09 flags a marketplace that breaks the official schema, REPO-10 a settings file", () => {
+    assert.deepEqual(ids({ ".claude-plugin/marketplace.json": marketplace({ ...PLUGIN, source: 3 }) }), ["REPO-09"]);
+    assert.deepEqual(ids({ ".claude-plugin/marketplace.json": marketplace(PLUGIN), ".claude/settings.json": '{"cleanupPeriodDays":"x"}' }), ["REPO-10"]);
+    assert.deepEqual(ids({ ".claude/settings.json": '{"cleanupPeriodDays":30,"enabledPlugins":{"a@m":true}}' }), []);
+    assert.deepEqual(ids({ "cli/tests/fixtures/.claude/settings.json": '{"cleanupPeriodDays":"x"}' }), []);
   });
 
   it("REPO-05 skips fixture trees", () => {
