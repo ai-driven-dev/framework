@@ -13,6 +13,7 @@ import { CheckRegistration } from "../../../src/orchestration/doctor/check-regis
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
@@ -156,19 +157,20 @@ function manifestWithNativeRegistrations(
 }
 
 function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(toolId, "test", []);
-  manifest.addPlugin(
-    toolId,
-    InstalledPlugin.fromMetadata(
-      marketplace === undefined ? "hand-copied" : "aidd-context",
-      "1.0.0",
-      { kind: "github", repo: "ai-driven-dev/framework" },
-      true,
-      "user",
-      marketplace
+  const manifest = aManifest()
+    .withTool(toolId, [], { version: "test" })
+    .withPlugin(
+      toolId,
+      InstalledPlugin.fromMetadata(
+        marketplace === undefined ? "hand-copied" : "aidd-context",
+        "1.0.0",
+        { kind: "github", repo: "ai-driven-dev/framework" },
+        true,
+        "user",
+        marketplace
+      )
     )
-  );
+    .build();
   return manifest;
 }
 
@@ -334,9 +336,10 @@ describe("CheckRegistration — order", () => {
 
 describe("the tools whose built marketplaces are resolved", () => {
   it("are the AI tools the manifest holds, and no IDE tool", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
-    manifest.addTool(TOOL.vscode, "test", []);
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [], { version: "test" })
+      .withTool(TOOL.vscode, [], { version: "test" })
+      .build();
     const resolved: (readonly string[])[] = [];
     const builds: Pick<ResolveBuiltMarketplaces, "execute"> = {
       execute: async ({ toolIds }) => {

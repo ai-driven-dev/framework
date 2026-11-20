@@ -10,6 +10,7 @@ import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/te
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -377,19 +378,20 @@ describe("native catalogue source provenance", () => {
   ] as const)(
     "keeps foreign bytes and records no claim or enablement when post-add Codex proof is %s",
     async (proof) => {
-      const project = Manifest.create();
-      project.addTool(codex, "1.0.0", []);
-      project.addPlugin(
-        codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          "alias"
+      const project = aManifest()
+        .withTool(codex, [])
+        .withPlugin(
+          codex,
+          InstalledPlugin.fromMetadata(
+            "test-plugin",
+            "1.0.0",
+            { kind: "local", path: "/source" },
+            true,
+            "project",
+            "alias"
+          )
         )
-      );
+        .build();
       const projectRepo = new InMemoryManifestRepository(project);
       const machineRepo = new InMemoryManifestRepository(Manifest.create());
       const registry = new InMemoryMarketplaceRegistry();
@@ -504,19 +506,20 @@ describe("native catalogue source provenance", () => {
     "refuses Copilot activation with $label without changing declarative settings",
     async ({ reading, reason }) => {
       const projectRoot = "/A";
-      const project = Manifest.create();
-      project.addTool(copilot, "1.0.0", []);
-      project.addPlugin(
-        copilot,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          "alias"
+      const project = aManifest()
+        .withTool(copilot, [])
+        .withPlugin(
+          copilot,
+          InstalledPlugin.fromMetadata(
+            "test-plugin",
+            "1.0.0",
+            { kind: "local", path: "/source" },
+            true,
+            "project",
+            "alias"
+          )
         )
-      );
+        .build();
       const projectRepo = new InMemoryManifestRepository(project);
       const machineRepo = new InMemoryManifestRepository(Manifest.create());
       const registry = new InMemoryMarketplaceRegistry();
@@ -572,19 +575,20 @@ describe("native catalogue source provenance", () => {
   );
   it("claims a fresh Codex source after post-read and attaches B without replacing it", async () => {
     const projectRoot = "/A";
-    const project = Manifest.create();
-    project.addTool(codex, "1.0.0", []);
-    project.addPlugin(
-      codex,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        "alias"
+    const project = aManifest()
+      .withTool(codex, [])
+      .withPlugin(
+        codex,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          "alias"
+        )
       )
-    );
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const registry = new InMemoryMarketplaceRegistry();
@@ -652,19 +656,20 @@ describe("native catalogue source provenance", () => {
       sourceType: "local",
       source: "/built/codex",
     });
-    const projectB = Manifest.create();
-    projectB.addTool(codex, "1.0.0", []);
-    projectB.addPlugin(
-      codex,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        "alias"
+    const projectB = aManifest()
+      .withTool(codex, [])
+      .withPlugin(
+        codex,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          "alias"
+        )
       )
-    );
+      .build();
     const registryB = new InMemoryMarketplaceRegistry();
     await registryB.save(
       "/B",

@@ -19,6 +19,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -706,9 +707,7 @@ describe("shared framework references follow any successful native tool outcome"
   it.each(["project", "user"] as const)(
     "records references according to the requested %s activation scope despite another tool's refusal",
     async (scope) => {
-      const project = Manifest.create();
-      project.addTool(TOOL.claude, "1.0.0", []);
-      project.addTool(TOOL.codex, "1.0.0", []);
+      const project = aManifest().withTool(TOOL.claude, []).withTool(TOOL.codex, []).build();
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         ROOT,

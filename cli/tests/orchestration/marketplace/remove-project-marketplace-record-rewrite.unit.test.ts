@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
@@ -30,19 +30,20 @@ describe("the record a project marketplace removal writes", () => {
       new KeepPrompter(),
       spy.rules
     );
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.claude,
-      InstalledPlugin.fromMetadata(
-        "sample",
-        "1.0.0",
-        { kind: "github", repo: "owner/sample" },
-        false,
-        "project",
-        "awesome"
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(
+        TOOL.claude,
+        InstalledPlugin.fromMetadata(
+          "sample",
+          "1.0.0",
+          { kind: "github", repo: "owner/sample" },
+          false,
+          "project",
+          "awesome"
+        )
       )
-    );
+      .build();
     manifest.setNativeRegistrations(TOOL.claude, {
       binary: TOOL.claude,
       marketplaces: [{ alias: "awesome", hostName: "host-awesome" }],

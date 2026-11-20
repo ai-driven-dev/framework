@@ -18,6 +18,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import {
   pluginRemover,
   userPluginRemover,
@@ -164,19 +165,20 @@ for (const [toolId, catalogPath] of [
         })
       );
       const project = () => {
-        const manifest = Manifest.create();
-        manifest.addTool(toolId, "1.0.0", []);
-        manifest.addPlugin(
-          toolId,
-          InstalledPlugin.fromMetadata(
-            "test-plugin",
-            "1.0.0",
-            { kind: "local", path: "/src" },
-            false,
-            "project",
-            alias
+        const manifest = aManifest()
+          .withTool(toolId, [])
+          .withPlugin(
+            toolId,
+            InstalledPlugin.fromMetadata(
+              "test-plugin",
+              "1.0.0",
+              { kind: "local", path: "/src" },
+              false,
+              "project",
+              alias
+            )
           )
-        );
+          .build();
         return new InMemoryManifestRepository(manifest);
       };
       const a = project();

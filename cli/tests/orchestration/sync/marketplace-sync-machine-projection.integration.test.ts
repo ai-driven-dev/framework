@@ -9,6 +9,7 @@ import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/te
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -89,19 +90,20 @@ describe("native plugin ownership follows the host's activation scope", () => {
         hostName,
         provenance: { kind: "registry" as const, source: "/built/claude" },
       };
-      const project = Manifest.create();
-      project.addTool(claude, "1.0.0", []);
-      project.addPlugin(
-        claude,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          marketplaceName
+      const project = aManifest()
+        .withTool(claude, [])
+        .withPlugin(
+          claude,
+          InstalledPlugin.fromMetadata(
+            "test-plugin",
+            "1.0.0",
+            { kind: "local", path: "/source" },
+            true,
+            "project",
+            marketplaceName
+          )
         )
-      );
+        .build();
       const machine = Manifest.create();
       if (mode !== "fresh") {
         project.setNativeRegistrations(claude, {
@@ -219,19 +221,20 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const projectRoot = "/project";
     const alias = "user-catalog";
     const ref = "test-plugin@real-catalog";
-    const user = Manifest.create();
-    user.addTool(claude, "1.0.0", []);
-    user.addPlugin(
-      claude,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "user",
-        alias
+    const user = aManifest()
+      .withTool(claude, [])
+      .withPlugin(
+        claude,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "user",
+          alias
+        )
       )
-    );
+      .build();
     const userRepo = new InMemoryManifestRepository(user);
     const projectRepo = new InMemoryManifestRepository(Manifest.create());
     const registry = new InMemoryMarketplaceRegistry();
@@ -384,19 +387,20 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const projectRoot = "/codex-project";
     const marketplaceName = "local-catalog";
     const ref = "test-plugin@real-catalog";
-    const project = Manifest.create();
-    project.addTool(codex, "1.0.0", []);
-    project.addPlugin(
-      codex,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        marketplaceName
+    const project = aManifest()
+      .withTool(codex, [])
+      .withPlugin(
+        codex,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          marketplaceName
+        )
       )
-    );
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
     machine.addTool(codex, "1.0.0", []);
@@ -583,19 +587,20 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const projectRoot = "/B";
     const alias = "local-catalog";
     const ref = "test-plugin@real-catalog";
-    const project = Manifest.create();
-    project.addTool(codex, "1.0.0", []);
-    project.addPlugin(
-      codex,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        alias
+    const project = aManifest()
+      .withTool(codex, [])
+      .withPlugin(
+        codex,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          alias
+        )
       )
-    );
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
     machine.addTool(codex, "1.0.0", []);
@@ -659,19 +664,20 @@ describe("native plugin ownership follows the host's activation scope", () => {
   it("does not enable or claim a global ref when the host plugin registry cannot be read", async () => {
     const projectRoot = "/B";
     const alias = "local-catalog";
-    const project = Manifest.create();
-    project.addTool(codex, "1.0.0", []);
-    project.addPlugin(
-      codex,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        alias
+    const project = aManifest()
+      .withTool(codex, [])
+      .withPlugin(
+        codex,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          alias
+        )
       )
-    );
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const registry = new InMemoryMarketplaceRegistry();
@@ -721,19 +727,20 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const alias = "local-catalog";
     const requestedRef = "test-plugin@real-catalog";
     const otherRef = "test-plugin@other-catalog";
-    const project = Manifest.create();
-    project.addTool(codex, "1.0.0", []);
-    project.addPlugin(
-      codex,
-      InstalledPlugin.fromMetadata(
-        "test-plugin",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        true,
-        "project",
-        alias
+    const project = aManifest()
+      .withTool(codex, [])
+      .withPlugin(
+        codex,
+        InstalledPlugin.fromMetadata(
+          "test-plugin",
+          "1.0.0",
+          { kind: "local", path: "/source" },
+          true,
+          "project",
+          alias
+        )
       )
-    );
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
     machine.addTool(codex, "1.0.0", []);

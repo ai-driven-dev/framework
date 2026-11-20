@@ -10,6 +10,7 @@ import type { PluginSource } from "../../../src/shared/domain/source.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { registeredAiProfile } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -385,9 +386,10 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     const fs = seededBuiltCatalog();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
-    manifest.addTool(TOOL.codex, "test", []);
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [], { version: "test" })
+      .withTool(TOOL.codex, [], { version: "test" })
+      .build();
     await new ModeAMarketplaceTranslator().addPlugin(
       distribution("aidd-context"),
       registeredAiProfile(TOOL.claude),
@@ -439,9 +441,10 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       "/built/codex/.agents/plugins/marketplace.json",
       JSON.stringify({ name: "aidd-framework", version: "1.0.0", plugins: [] })
     );
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
-    manifest.addTool(TOOL.codex, "test", []);
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [], { version: "test" })
+      .withTool(TOOL.codex, [], { version: "test" })
+      .build();
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,
@@ -565,9 +568,10 @@ describe("a marketplace whose source the settings file cannot express", () => {
 describe("a project whose manifest also lists a tool with no plugin system", () => {
   it("syncs the other tools and reports only the one whose CLI ran", async () => {
     const fs = seededBuiltCatalog();
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
-    manifest.addTool(TOOL.vscode, "test", []);
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [], { version: "test" })
+      .withTool(TOOL.vscode, [], { version: "test" })
+      .build();
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,

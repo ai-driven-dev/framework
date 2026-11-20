@@ -3,10 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 import { projectCleaner } from "../testing/project-cleaner.js";
@@ -23,9 +23,7 @@ afterEach(async () => {
 
 function buildUseCase(logger: CapturingLogger): CleanProject {
   const fs = new FileAdapter(logger);
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  manifest.addTool(TOOL.vscode, "1.0.0", []);
+  const manifest = aManifest().withTool(TOOL.claude, []).withTool(TOOL.vscode, []).build();
   return projectCleaner({
     fs,
     manifestRepo: new InMemoryManifestRepository(manifest, projectRoot),

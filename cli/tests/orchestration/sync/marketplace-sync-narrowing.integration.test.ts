@@ -5,11 +5,12 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
@@ -56,30 +57,31 @@ function seededCatalogs(): InMemoryFileAdapter {
 }
 
 function manifestWithTwoPlugins(): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
-  manifest.addPlugin(
-    TOOL.claude,
-    InstalledPlugin.fromMetadata(
-      "plugin-a",
-      "1.0.0",
-      { kind: "github", repo: "ai-driven-dev/A" },
-      true,
-      "project",
-      "market-a"
+  const manifest = aManifest()
+    .withTool(TOOL.claude, [], { version: "test" })
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromMetadata(
+        "plugin-a",
+        "1.0.0",
+        { kind: "github", repo: "ai-driven-dev/A" },
+        true,
+        "project",
+        "market-a"
+      )
     )
-  );
-  manifest.addPlugin(
-    TOOL.claude,
-    InstalledPlugin.fromMetadata(
-      "plugin-b",
-      "1.0.0",
-      { kind: "github", repo: "ai-driven-dev/B" },
-      true,
-      "project",
-      "market-b"
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromMetadata(
+        "plugin-b",
+        "1.0.0",
+        { kind: "github", repo: "ai-driven-dev/B" },
+        true,
+        "project",
+        "market-b"
+      )
     )
-  );
+    .build();
   return manifest;
 }
 

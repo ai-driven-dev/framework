@@ -12,6 +12,7 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
@@ -384,13 +385,12 @@ describe("which plugins a removal orphans", () => {
         scripts: {},
       },
     });
-    const project = Manifest.create();
-    project.addTool(TOOL.cursor, "1.0.0", []);
-    project.addPlugin(TOOL.cursor, plugin);
+    const project = aManifest().withTool(TOOL.cursor, []).withPlugin(TOOL.cursor, plugin).build();
     const projectRepo = new InMemoryManifestRepository(project);
-    const machine = Manifest.create();
-    machine.addTool(TOOL.cursor, "1.0.0", []);
-    machine.addPlugin(TOOL.cursor, plugin.withDependents([PROJECT_ROOT, "/B"]));
+    const machine = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(TOOL.cursor, plugin.withDependents([PROJECT_ROOT, "/B"]))
+      .build();
     const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
@@ -430,23 +430,24 @@ describe("which plugins a removal orphans", () => {
       PROJECT_ROOT,
     ]);
     fs.setSymlink(mcpPath, foreignPath);
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.opencode, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.opencode,
-      InstalledPlugin.fromJSON({
-        name: "sample",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {},
-        mcpEntries: {
-          mine: FileHash.of(JSON.stringify({ type: "local" })).value,
-        },
-        scope: "project",
-        marketplace: "awesome",
-      })
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.opencode, [])
+      .withPlugin(
+        TOOL.opencode,
+        InstalledPlugin.fromJSON({
+          name: "sample",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          mcpEntries: {
+            mine: FileHash.of(JSON.stringify({ type: "local" })).value,
+          },
+          scope: "project",
+          marketplace: "awesome",
+        })
+      )
+      .build();
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
@@ -486,23 +487,24 @@ describe("which plugins a removal orphans", () => {
       }
     }
     const fs = new RefusingMcpWriteAdapter({ [mcpPath]: content });
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.opencode, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.opencode,
-      InstalledPlugin.fromJSON({
-        name: "sample",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {},
-        mcpEntries: {
-          mine: FileHash.of(JSON.stringify({ type: "local" })).value,
-        },
-        scope: "project",
-        marketplace: "awesome",
-      })
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.opencode, [])
+      .withPlugin(
+        TOOL.opencode,
+        InstalledPlugin.fromJSON({
+          name: "sample",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          mcpEntries: {
+            mine: FileHash.of(JSON.stringify({ type: "local" })).value,
+          },
+          scope: "project",
+          marketplace: "awesome",
+        })
+      )
+      .build();
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
@@ -531,23 +533,24 @@ describe("which plugins a removal orphans", () => {
 
   it("unmerges only the orphan's contributed OpenCode MCP server from the project", async () => {
     const { useCase, registry, manifestRepo, fs } = buildUseCase();
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.opencode, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.opencode,
-      InstalledPlugin.fromJSON({
-        name: "sample",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {},
-        mcpEntries: {
-          mine: FileHash.of(JSON.stringify({ type: "local" })).value,
-        },
-        scope: "project",
-        marketplace: "awesome",
-      })
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.opencode, [])
+      .withPlugin(
+        TOOL.opencode,
+        InstalledPlugin.fromJSON({
+          name: "sample",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          mcpEntries: {
+            mine: FileHash.of(JSON.stringify({ type: "local" })).value,
+          },
+          scope: "project",
+          marketplace: "awesome",
+        })
+      )
+      .build();
     await manifestRepo.save(manifest);
     const mcpPath = join(PROJECT_ROOT, "opencode.json");
     fs.setFile(

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
@@ -24,12 +24,14 @@ function outcomeOf(ref: string) {
 
 describe("the machine record is saved once any tool of the run changed it", () => {
   it("keeps the first tool's claim when a later tool's record is already current", async () => {
-    const project = Manifest.create();
-    project.addTool(claude, "test", []);
-    project.addTool(codex, "test", []);
-    const machine = Manifest.create();
-    machine.addTool(claude, "test", []);
-    machine.addTool(codex, "test", []);
+    const project = aManifest()
+      .withTool(claude, [], { version: "test" })
+      .withTool(codex, [], { version: "test" })
+      .build();
+    const machine = aManifest()
+      .withTool(claude, [], { version: "test" })
+      .withTool(codex, [], { version: "test" })
+      .build();
     machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [],

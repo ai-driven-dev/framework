@@ -13,6 +13,7 @@ import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/ref
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
@@ -192,9 +193,10 @@ describe("SetAgentModels", () => {
   });
 
   it("rewrites a plugin installed in the user's home whatever the scope", async () => {
-    const userManifest = Manifest.create();
-    userManifest.addTool(TOOL.cursor, "1.0.0", []);
-    userManifest.addPlugin(TOOL.cursor, plugin("user"));
+    const userManifest = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(TOOL.cursor, plugin("user"))
+      .build();
     const { useCase, userUpdates } = setup(undefined, userManifest);
 
     await useCase.execute({

@@ -9,6 +9,7 @@ import { removalClaims } from "../../../src/contexts/machine-claims/application/
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { errnoError, FaultingFileAdapter } from "../../shared/testing/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
@@ -36,19 +37,20 @@ function remove(
 }
 
 async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {}) {
-  const project = Manifest.create();
-  project.addTool(codex, "1.0.0", []);
-  project.addPlugin(
-    codex,
-    InstalledPlugin.fromMetadata(
-      "sample-plugin",
-      "1.0.0",
-      { kind: "local", path: "/fixture" },
-      false,
-      "project",
-      NAME
+  const project = aManifest()
+    .withTool(codex, [])
+    .withPlugin(
+      codex,
+      InstalledPlugin.fromMetadata(
+        "sample-plugin",
+        "1.0.0",
+        { kind: "local", path: "/fixture" },
+        false,
+        "project",
+        NAME
+      )
     )
-  );
+    .build();
   if (options.nativeMapping !== "absent")
     project.setNativeRegistrations(codex, {
       binary: "codex",
@@ -134,48 +136,50 @@ describe("project marketplace removal against machine native claims", () => {
     const globalMcp = join(homedir(), ".cursor/plugins/local/sample-plugin/mcp.json");
     fs.setFile(globalMcp, "B's MCP");
     fs.failOn("readFile", hooksPath, errnoError("EACCES"));
-    const project = Manifest.create();
-    project.addTool(cursor, "1.0.0", []);
-    project.addPlugin(
-      cursor,
-      InstalledPlugin.fromJSON({
-        name: "sample-plugin",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {},
-        scope: "user",
-        marketplace: NAME,
-        projectHooks: {
-          entries: [
-            {
-              event: "preToolUse",
-              command: "node ./.cursor/hooks/sample-plugin/pre.js",
-              digest: FileHash.of(
-                JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
-              ).value,
+    const project = aManifest()
+      .withTool(cursor, [])
+      .withPlugin(
+        cursor,
+        InstalledPlugin.fromJSON({
+          name: "sample-plugin",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "user",
+          marketplace: NAME,
+          projectHooks: {
+            entries: [
+              {
+                event: "preToolUse",
+                command: "node ./.cursor/hooks/sample-plugin/pre.js",
+                digest: FileHash.of(
+                  JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
+                ).value,
+              },
+            ],
+            scripts: {
+              ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
             },
-          ],
-          scripts: {
-            ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
           },
-        },
-      })
-    );
-    const machine = Manifest.create();
-    machine.addTool(cursor, "1.0.0", []);
-    machine.addPlugin(
-      cursor,
-      InstalledPlugin.fromJSON({
-        name: "sample-plugin",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {},
-        scope: "user",
-        dependents: ["/A", "/B"],
-      })
-    );
+        })
+      )
+      .build();
+    const machine = aManifest()
+      .withTool(cursor, [])
+      .withPlugin(
+        cursor,
+        InstalledPlugin.fromJSON({
+          name: "sample-plugin",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "user",
+          dependents: ["/A", "/B"],
+        })
+      )
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
@@ -290,49 +294,51 @@ describe("project marketplace removal against machine native claims", () => {
   });
 
   it("releases only A's Cursor file claim, leaving B's user bytes intact", async () => {
-    const project = Manifest.create();
-    project.addTool(cursor, "1.0.0", []);
-    project.addPlugin(
-      cursor,
-      InstalledPlugin.fromJSON({
-        name: "sample-plugin",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {},
-        scope: "user",
-        marketplace: NAME,
-        projectHooks: {
-          entries: [
-            {
-              event: "preToolUse",
-              command: "node ./.cursor/hooks/sample-plugin/pre.js",
-              digest: FileHash.of(
-                JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
-              ).value,
+    const project = aManifest()
+      .withTool(cursor, [])
+      .withPlugin(
+        cursor,
+        InstalledPlugin.fromJSON({
+          name: "sample-plugin",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "user",
+          marketplace: NAME,
+          projectHooks: {
+            entries: [
+              {
+                event: "preToolUse",
+                command: "node ./.cursor/hooks/sample-plugin/pre.js",
+                digest: FileHash.of(
+                  JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
+                ).value,
+              },
+            ],
+            scripts: {
+              ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
             },
-          ],
-          scripts: {
-            ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
           },
-        },
-      })
-    );
-    const machine = Manifest.create();
-    machine.addTool(cursor, "1.0.0", []);
-    machine.addPlugin(
-      cursor,
-      InstalledPlugin.fromJSON({
-        name: "sample-plugin",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: { "sample-plugin/skills/demo.md": "abc" },
-        scope: "user",
-        marketplace: NAME,
-        dependents: ["/A", "/B"],
-      })
-    );
+        })
+      )
+      .build();
+    const machine = aManifest()
+      .withTool(cursor, [])
+      .withPlugin(
+        cursor,
+        InstalledPlugin.fromJSON({
+          name: "sample-plugin",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: { "sample-plugin/skills/demo.md": "abc" },
+          scope: "user",
+          marketplace: NAME,
+          dependents: ["/A", "/B"],
+        })
+      )
+      .build();
     const machineRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(project);
     const registry = new InMemoryMarketplaceRegistry();

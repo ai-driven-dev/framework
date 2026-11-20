@@ -8,6 +8,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -65,19 +66,20 @@ function makeSync(
     },
     [PROJECT_ROOT]
   );
-  const project = Manifest.create();
-  project.addTool(toolId, "1.0.0", []);
-  project.addPlugin(
-    toolId,
-    InstalledPlugin.fromMetadata(
-      "aidd-dev",
-      "1.0.0",
-      { kind: "local", path: "/framework" },
-      true,
-      "project",
-      CATALOG
+  const project = aManifest()
+    .withTool(toolId, [])
+    .withPlugin(
+      toolId,
+      InstalledPlugin.fromMetadata(
+        "aidd-dev",
+        "1.0.0",
+        { kind: "local", path: "/framework" },
+        true,
+        "project",
+        CATALOG
+      )
     )
-  );
+    .build();
   if (options.projectNativePluginRefs !== undefined) {
     project.setNativeRegistrations(toolId, {
       binary: toolId,

@@ -15,6 +15,7 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
+import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
@@ -26,19 +27,20 @@ const DRIFTED_HASH = "def456def456def456def456def456de";
 const PLUGIN_FILE = ".claude/plugins/my-plugin/commands/cmd.md";
 
 function makeManifest(pluginFileHash: string): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.claude,
-    InstalledPlugin.fromJSON({
-      name: "my-plugin",
-      source: { kind: "local", path: "/some/path" },
-      version: "1.0.0",
-      strict: false,
-      files: { [PLUGIN_FILE]: pluginFileHash },
-      scope: "project",
-    })
-  );
+  const manifest = aManifest()
+    .withTool(TOOL.claude, [])
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromJSON({
+        name: "my-plugin",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: { [PLUGIN_FILE]: pluginFileHash },
+        scope: "project",
+      })
+    )
+    .build();
   return manifest;
 }
 
@@ -191,19 +193,20 @@ describe("DoctorUseCase — plugin integrity", () => {
 
   describe("when a user-scope plugin was never installed on this machine", () => {
     it("reports one not-installed-on-machine issue, not one 'missing' issue per file", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
-      manifest.addPlugin(
-        TOOL.cursor,
-        InstalledPlugin.fromJSON({
-          name: "aidd-test",
-          source: { kind: "local", path: "/some/path" },
-          version: "1.0.0",
-          strict: false,
-          files: { "a/one.md": EXPECTED_HASH, "a/two.md": EXPECTED_HASH },
-          scope: "user",
-        })
-      );
+      const manifest = aManifest()
+        .withTool(TOOL.cursor, [])
+        .withPlugin(
+          TOOL.cursor,
+          InstalledPlugin.fromJSON({
+            name: "aidd-test",
+            source: { kind: "local", path: "/some/path" },
+            version: "1.0.0",
+            strict: false,
+            files: { "a/one.md": EXPECTED_HASH, "a/two.md": EXPECTED_HASH },
+            scope: "user",
+          })
+        )
+        .build();
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = pluginCheck(fs, manifest);
 
