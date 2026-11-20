@@ -34,6 +34,12 @@
       "in": "README.md",
       "check": "mermaid-names",
       "why": "a class named like a node breaks every diagram after it on the page, and GitHub shows raw text"
+    },
+    "DOC-07": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "architecture-plugins",
+      "why": "a plugin missing from the architecture roster, or a row for one that is gone, tells the reader a wrong map"
     }
   }
 }

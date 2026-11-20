@@ -14,6 +14,7 @@ const CLEAN = {
   "docs/guide.md": "# Guide\n\n## Start\n\nRun `docs/guide.md` first.\n",
   "CLAUDE.md": "# Claude\n\n<!-- aidd_project_memory:start -->\n\n@docs/guide.md\n<!-- aidd_project_memory:end -->\n",
   "AGENTS.md": "# Agents\n\n<!-- aidd_project_memory:start -->\n\n[guide](docs/guide.md)\n<!-- aidd_project_memory:end -->\n",
+  "docs/ARCHITECTURE.md": "# Architecture\n\n| Plugin | Owns |\n| --- | --- |\n| `aidd-context` | Knowledge |\n",
   "plugins/aidd-context/hooks/memory.cjs": 'const TARGET_FILES = [{ path: "CLAUDE.md", syntax: "at" }, { path: "AGENTS.md", syntax: "link" }];\n',
 };
 
@@ -52,7 +53,7 @@ describe("doc contract", () => {
   });
 
   it("DOC-01 leaves skill markdown to SKILL-17", () => {
-    put({ "plugins/aidd-x/skills/01-a/SKILL.md": "# A\n\n[x](nowhere.md)\n" });
+    put({ "plugins/aidd-context/skills/01-a/SKILL.md": "# A\n\n[x](nowhere.md)\n" });
     assert.deepEqual(ids(), []);
   });
 
@@ -74,5 +75,13 @@ describe("doc contract", () => {
   it("DOC-06 flags a Mermaid class named like a node", () => {
     put({ "docs/guide.md": `${CLEAN["docs/guide.md"]}\n\`\`\`mermaid\nflowchart TD\n  classDef Box fill:#fff\n  Box[a] --> B[b]\n\`\`\`\n` });
     assert.deepEqual(ids(), ["DOC-06"]);
+  });
+
+  it("DOC-07 flags a plugin with no row, and a row with no plugin", () => {
+    put({ "plugins/aidd-x/README.md": "# X\n" });
+    assert.deepEqual(ids(), ["DOC-07"]);
+    fs.rmSync(path.join(dir, "plugins/aidd-x"), { recursive: true });
+    put({ "docs/ARCHITECTURE.md": "# Architecture\n\n| Plugin | Owns |\n| --- | --- |\n| `aidd-context` | Knowledge |\n| `aidd-gone` | Nothing |\n" });
+    assert.deepEqual(ids(), ["DOC-07"]);
   });
 });
