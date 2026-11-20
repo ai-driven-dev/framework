@@ -20,11 +20,11 @@ import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/te
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { projectCleaner } from "../../helpers/project-cleaner.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { projectCleaner } from "../testing/project-cleaner.js";
 
 const PROJECT_ROOT = "/test-project";
 // Resolve once for this in-memory fixture, then inject it into CleanProject: Stryker reuses

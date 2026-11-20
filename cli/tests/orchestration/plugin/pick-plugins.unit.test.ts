@@ -15,8 +15,11 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../contexts/installation/testing/installation-deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
@@ -55,7 +58,7 @@ function registerMarketplace(
 }
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();

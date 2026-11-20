@@ -8,12 +8,12 @@ import type { NativeRegistrations } from "../../../src/contexts/installation/dom
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, registeredAiProfile } from "../../contexts/tools/testing/catalog-of.js";
-import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
+import { buildCheckRegistration } from "../testing/build-check-registration.js";
 
 const { copilot } = TOOL;
 const HOST = "real-catalog";

@@ -4,18 +4,21 @@ import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve
 import { UpdateTools } from "../../../src/orchestration/global/update-tools.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import {
-  buildUnitDeps,
+  buildInstallationDeps,
   buildUpdateTool,
   initProject,
   installTool,
-} from "../../helpers/ports/build-unit-deps.js";
+} from "../../contexts/installation/testing/installation-deps.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+
+const CURRENT_VERSION = new FakeCurrentVersion();
 
 const PROJECT_ROOT = "/test-project";
 
 const NO_FORCE_NO_TTY = { userForce: false, interactive: false };
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function promptingWith(answer: "overwrite-all"): { prompter: Prompter; asked: () => number } {
   const resolveConflictBulk = vi.fn().mockResolvedValue(answer);
@@ -36,13 +39,13 @@ function build(deps: Deps, prompter: Prompter = promptingWith("overwrite-all").p
     new ListInstalledTools(deps.manifestRepo, registeredTools()),
     updateTool,
     new ResolveUpdateDecision(prompter),
-    deps.currentVersionProvider
+    CURRENT_VERSION
   );
   return { useCase, updateTool };
 }
 
 async function installed(...toolIds: Parameters<typeof installTool>[2][]): Promise<Deps> {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initProject(deps, PROJECT_ROOT);
   for (const toolId of toolIds) await installTool(deps, PROJECT_ROOT, toolId);
   return deps;
@@ -50,7 +53,7 @@ async function installed(...toolIds: Parameters<typeof installTool>[2][]): Promi
 
 describe("UpdateTools", () => {
   it("returns an empty result when nothing is installed", async () => {
-    const { useCase } = build(await buildUnitDeps(PROJECT_ROOT));
+    const { useCase } = build(await buildInstallationDeps());
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,

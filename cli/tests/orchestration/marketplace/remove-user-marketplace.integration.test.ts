@@ -16,10 +16,10 @@ import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
-import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.js";
+import { userMarketplaceRemover } from "../testing/user-marketplace-remover.js";
 
 const ALIAS = "project-alias";
 const HOST = "real-catalog";

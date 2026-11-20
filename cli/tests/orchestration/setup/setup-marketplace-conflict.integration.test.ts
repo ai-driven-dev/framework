@@ -12,17 +12,20 @@ import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plu
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
-import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
+import { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
-import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { runSetupOf } from "../../helpers/run-setup-of.js";
-import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
+import { runSetupOf } from "../testing/run-setup-of.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
+
+const CURRENT_VERSION = new FakeCurrentVersion();
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -50,7 +53,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
 /** A REAL `SyncSettings`, not the no-op double the other setup suites
  * substitute, behind a host registry already holding a different catalog under that name. */
 async function buildUseCaseWithConflict() {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
@@ -105,7 +108,7 @@ async function buildUseCaseWithConflict() {
     askSource,
     makeNoOpMarketplaceRegisterFramework(),
     makeNoOpMarketplaceRefresh(),
-    deps.currentVersionProvider,
+    CURRENT_VERSION,
     deps.logger,
     new InMemoryEnvironment()
   );
@@ -116,7 +119,7 @@ async function buildUseCaseWithConflict() {
       registration: setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => syncSettingsUseCase.execute(options),
-      version: deps.currentVersionProvider,
+      version: CURRENT_VERSION,
     },
     { plugins: (options) => choosePlugins.execute(options) }
   );

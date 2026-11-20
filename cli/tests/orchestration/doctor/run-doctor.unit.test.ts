@@ -9,8 +9,11 @@ import { LoadManifestForDoctor } from "../../../src/contexts/installation/applic
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import type { DoctorIssue } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../contexts/installation/testing/installation-deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -21,7 +24,7 @@ const issueOf =
 
 async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "warning") {
   const issue = issueOf(severity);
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   const loadManifest = new LoadManifest(deps.manifestRepo);
   const checks = {

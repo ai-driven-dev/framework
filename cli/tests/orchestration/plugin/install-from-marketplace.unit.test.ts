@@ -16,7 +16,10 @@ import {
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
-import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../contexts/installation/testing/installation-deps.js";
 import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
@@ -45,7 +48,7 @@ function seedMarketplaceFile(
 }
 
 async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompter } = {}) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
@@ -90,7 +93,7 @@ async function saveLocalMarketplace(
   );
 }
 
-function installedSamplePlugin(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
+function installedSamplePlugin(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
   return deps.manifestRepo
     .getCurrent()
     ?.getPlugins(TOOL.claude)

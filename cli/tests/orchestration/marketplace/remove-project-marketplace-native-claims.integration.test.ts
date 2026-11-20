@@ -10,11 +10,11 @@ import type { RemoveProjectMarketplace } from "../../../src/orchestration/market
 import { FileHash } from "../../../src/shared/domain/file.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
 import { errnoError, FaultingFileAdapter } from "../../shared/testing/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
+import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.js";
 
 const { cursor, codex } = TOOL;
 

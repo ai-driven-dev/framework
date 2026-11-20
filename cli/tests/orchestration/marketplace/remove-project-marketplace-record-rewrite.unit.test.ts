@@ -5,11 +5,11 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";
+import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.js";
 
 const PROJECT_ROOT = "/test-project";
 const EPOCH = "1970-01-01T00:00:00.000Z";

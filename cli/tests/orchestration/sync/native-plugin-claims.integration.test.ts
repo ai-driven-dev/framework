@@ -23,14 +23,14 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
-import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
 import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { userMarketplaceRemover } from "../testing/user-marketplace-remover.js";
+import { userScopeCleaner } from "../testing/user-scope-cleaner.js";
 
 for (const [toolId, catalogPath] of [
   [TOOL.codex, ".agents/plugins/marketplace.json"],

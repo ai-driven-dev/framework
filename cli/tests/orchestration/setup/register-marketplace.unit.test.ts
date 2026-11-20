@@ -13,14 +13,14 @@ import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
-import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { flowTools } from "../../shared/testing/registered-tools.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
 
 const PROJECT_ROOT = "/test-project";
 const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";

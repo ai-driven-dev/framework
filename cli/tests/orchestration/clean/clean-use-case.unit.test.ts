@@ -15,17 +15,20 @@ import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestrati
 import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../contexts/installation/testing/installation-deps.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
-import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { type ProjectCleanerParts, projectCleanerArgs } from "../../helpers/project-cleaner.js";
-import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { type ProjectCleanerParts, projectCleanerArgs } from "../testing/project-cleaner.js";
+import { userScopeCleaner } from "../testing/user-scope-cleaner.js";
 
 const PROJECT_ROOT = "/test-project";
 const AT_PROJECT = { tools: registeredTools(), projectRoot: PROJECT_ROOT } as const;
@@ -118,8 +121,7 @@ class CleanWithKnownHostSource extends ProductionCleanUseCase {
   }
 }
 
-/** Records every path `deleteFile` is called with, so a test can prove where a plugin's
- * file actually got deleted from without inspecting private use-case state. */
+/** Records every path `deleteFile` is called with, to prove where a plugin file got deleted. */
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly deletedPaths: string[] = [];
 
@@ -129,13 +131,12 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
   }
 }
 
-// Cursor Mode B: the file key is base-relative — no absolute prefix, resolved against
-// the user plugins dir.
+// Cursor Mode B: the file key is base-relative, resolved against the user plugins dir.
 const PLUGIN_KEY = "aidd-context/commands/hello.md";
 
 describe("clean", () => {
   it("with force removes .aidd/cache/ entry from .gitignore", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
@@ -156,7 +157,7 @@ describe("clean", () => {
   });
 
   it("with force leaves .gitignore unchanged when entry absent", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
@@ -175,7 +176,7 @@ describe("clean", () => {
   });
 
   it("preserves untracked user files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const userFile = join(PROJECT_ROOT, "my-custom-file.txt");
@@ -193,7 +194,7 @@ describe("clean", () => {
   });
 
   it("keeps .aidd/config.json and deletes .aidd/cache/ when config.json exists", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const configPath = join(PROJECT_ROOT, ".aidd", "config.json");
@@ -215,7 +216,7 @@ describe("clean", () => {
   });
 
   it("removes .aidd/plugin-cache/, which no install writes but plugin add does", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const pluginCacheFile = join(PROJECT_ROOT, ".aidd", "plugin-cache", "some-plugin", "x.json");
@@ -234,7 +235,7 @@ describe("clean", () => {
   });
 
   it("removes .aidd/ entirely when nothing but the manifest and cache lived there", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const cacheFile = join(PROJECT_ROOT, ".aidd", "cache", "built", "leftover.json");
@@ -251,7 +252,7 @@ describe("clean", () => {
     expect(deps.fs.listUnder(join(PROJECT_ROOT, ".aidd")).length).toBe(0);
   });
   it("removes the marketplaces this project registered, which `marketplace add` wrote", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // Written by `marketplace add`, not by an install — so it survived a clean that removed
@@ -272,7 +273,7 @@ describe("clean", () => {
   });
 
   it("removes the registry and still keeps config.json, when a project has both", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // The interaction the two rules meet in: one file clean wrote and must take back, one it
@@ -1965,7 +1966,7 @@ describe("clean", () => {
 
   describe("machine-local files a tool's own materialization writes outside the manifest", () => {
     it("removes .claude/settings.local.json, which install writes but the manifest never tracks", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const settingsLocalPath = join(PROJECT_ROOT, ".claude", "settings.local.json");
       await deps.fs.writeFile(settingsLocalPath, "{}");
@@ -2755,8 +2756,7 @@ class CrashingUninstallActivator implements HostActions {
   }
 }
 
-/** Records `uninstallPlugin`/`removeMarketplace` calls in the order they happen, so a test
- * can assert one came before the other. */
+/** Records `uninstallPlugin`/`removeMarketplace` calls in order, to assert which came first. */
 class OrderRecordingActivator implements HostActions {
   constructor(private readonly calls: string[]) {}
   isAvailable(): boolean {

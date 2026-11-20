@@ -10,11 +10,11 @@ import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
+import { buildCheckRegistration } from "../testing/build-check-registration.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };

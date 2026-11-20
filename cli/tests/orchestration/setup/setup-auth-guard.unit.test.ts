@@ -19,14 +19,17 @@ import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plu
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
-import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
+import { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { runSetupOf } from "../../helpers/run-setup-of.js";
-import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
 import { flowTools } from "../../shared/testing/registered-tools.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
+import { runSetupOf } from "../testing/run-setup-of.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
+
+const CURRENT_VERSION = new FakeCurrentVersion();
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
@@ -92,7 +95,7 @@ function makeTokenProvider(token: string | null): TokenProvider {
 const PROJECT_ROOT = "/test-project";
 
 async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = false) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeReleaseResolver(true));
   const setupToolsUseCase = new InstallTools(
@@ -111,7 +114,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     askSource,
     makeNoOpRegisterFramework(),
     makeNoOpRefresh(),
-    deps.currentVersionProvider,
+    CURRENT_VERSION,
     deps.logger,
     new InMemoryEnvironment(),
     tokenProvider,
@@ -124,7 +127,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
       registration: setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => makeNoOpSyncSettings().execute(options),
-      version: deps.currentVersionProvider,
+      version: CURRENT_VERSION,
     },
     { plugins: (options) => choosePlugins.execute(options) }
   );

@@ -30,17 +30,24 @@ import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
-import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+  initProject,
+} from "../../contexts/installation/testing/installation-deps.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { runSetupOf } from "../../helpers/run-setup-of.js";
-import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
+import { runSetupOf } from "../testing/run-setup-of.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
+
+const CURRENT_VERSION = new FakeCurrentVersion();
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
@@ -136,7 +143,7 @@ async function buildUseCase(
     installGlobalPlugins?: Pick<InstallGlobalPlugins, "execute">;
   }
 ) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
@@ -159,7 +166,7 @@ async function buildUseCase(
     askSource,
     marketplaceRegisterFramework,
     marketplaceRefresh,
-    deps.currentVersionProvider,
+    CURRENT_VERSION,
     logger ?? deps.logger,
     new InMemoryEnvironment(),
     undefined,
@@ -170,7 +177,7 @@ async function buildUseCase(
     options?.userManifestRepo === undefined
       ? undefined
       : new SetupMachineScope(
-          new ConfigureMachineScope(options.userManifestRepo, deps.currentVersionProvider),
+          new ConfigureMachineScope(options.userManifestRepo, CURRENT_VERSION),
           setupMarketplaceRegistration,
           (syncOptions) => syncSettingsUseCase.execute(syncOptions),
           options.installGlobalPlugins ?? { execute: async () => ({ plugins: [] }) }
@@ -182,7 +189,7 @@ async function buildUseCase(
       registration: setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
-      version: deps.currentVersionProvider,
+      version: CURRENT_VERSION,
       detectContext:
         options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
       machineScope,
@@ -436,12 +443,12 @@ describe("setup without TTY", () => {
   describe("this project's own reference to the shared source", () => {
     it("records it after registering the framework marketplace by default", async () => {
       const userSourceReferences = makeRecordingUserSourceReferences();
-      const { useCase, deps } = await buildUseCase(undefined, userSourceReferences);
+      const { useCase } = await buildUseCase(undefined, userSourceReferences);
 
       await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
 
       expect(userSourceReferences.added).toEqual([
-        { version: deps.currentVersionProvider.get(), projectRoot: PROJECT_ROOT },
+        { version: CURRENT_VERSION.get(), projectRoot: PROJECT_ROOT },
       ]);
     });
 

@@ -1,18 +1,18 @@
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
-import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
-import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
-import { PurgeUserScopeFiles } from "../../src/contexts/installation/application/purge-user-scope-files.js";
-import type { MachineStateGuards } from "../../src/contexts/installation/application/removal/purge-machine-state.js";
-import { PurgeMachineState } from "../../src/contexts/installation/application/removal/purge-machine-state.js";
-import { UserScopePluginFiles } from "../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { ReleaseClaims } from "../../src/contexts/machine-claims/application/release-claims.js";
-import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
-import { CleanUserScope } from "../../src/orchestration/clean/clean-user-scope.js";
-import { CapturingLogger } from "../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
-import { registeredTools } from "../shared/testing/registered-tools.js";
-import { InMemoryMarketplaceRegistry } from "./ports/in-memory-marketplace-registry.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
+import { PurgeUserScopeFiles } from "../../../src/contexts/installation/application/purge-user-scope-files.js";
+import type { MachineStateGuards } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
+import { PurgeMachineState } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
+import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { ReleaseClaims } from "../../../src/contexts/machine-claims/application/release-claims.js";
+import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import { CleanUserScope } from "../../../src/orchestration/clean/clean-user-scope.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
+import { registeredTools } from "../../shared/testing/registered-tools.js";
 
 type Purge = ConstructorParameters<typeof PurgeUserScopeFiles>;
 

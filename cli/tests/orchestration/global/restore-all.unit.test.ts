@@ -12,13 +12,13 @@ import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
-import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
-  buildUnitDeps,
+  buildInstallationDeps,
   initAndInstall,
   initProject,
   installTool,
-} from "../../helpers/ports/build-unit-deps.js";
+} from "../../contexts/installation/testing/installation-deps.js";
+import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
@@ -34,7 +34,7 @@ import { OverwritePrompter, ScriptedPrompter } from "../../shared/testing/script
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function builtDeps(deps: Deps) {
   return {
@@ -120,7 +120,7 @@ describe("RestoreAll — the --force flag", () => {
     reader: PluginDistributionReaderAdapter;
     trackedPath: string;
   }> {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const manifest = await deps.manifestRepo.load();
@@ -162,7 +162,7 @@ describe("RestoreAll — the --force flag", () => {
 
 describe("RestoreAll — an interactive run that ticks nothing", () => {
   it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     const tracked = manifest?.getToolFiles(TOOL.claude) ?? [];
@@ -191,7 +191,7 @@ describe("RestoreAll — an interactive run that ticks nothing", () => {
 
 describe("RestoreAll — plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(
@@ -214,7 +214,7 @@ describe("RestoreAll — plugin materialization", () => {
   });
 
   it("leaves a corrupted shared user plugin to explicit user-scope repair (cursor)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(
@@ -241,7 +241,7 @@ describe("RestoreAll — plugin materialization", () => {
   });
 
   it("result.pluginNamesRestored lists the restored plugin exactly once", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
@@ -257,7 +257,7 @@ describe("RestoreAll — plugin materialization", () => {
   });
 
   it("a plugin already up to date is not listed as restored and produces no error", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
@@ -283,7 +283,7 @@ describe("RestoreAll — plugin materialization", () => {
   it("interactive restore with an explicit file selection also skips unselected plugin files (translate-mode)", async () => {
     // The interactive picker never offers plugin drift, so once the user picks any specific
     // regular file ctx.fileFilter is active and no plugin path can match it.
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -309,7 +309,7 @@ describe("RestoreAll — plugin materialization", () => {
   });
 
   it("unscoped restore still restores every installed AI tool's plugins (no regression)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await installTool(deps, PROJECT_ROOT, TOOL.codex);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -366,7 +366,7 @@ describe("RestoreAll — consent to overwrite", () => {
   }
 
   async function askedWith(interactive: boolean, force: boolean): Promise<RestoreCommand> {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
@@ -406,7 +406,7 @@ describe("RestoreAll — consent to overwrite", () => {
 
 describe("RestoreAll — native-only tools", () => {
   it("forwards the native-only tool ids the restore it delegates to found", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
@@ -493,7 +493,7 @@ function recordingDelegate(): {
 
 describe("RestoreAll — before delegating", () => {
   it("refuses a project that has no manifest", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const useCase = restoreAllDelegatingTo(
       deps,
       new OverwritePrompter(),
@@ -510,7 +510,7 @@ describe("RestoreAll — before delegating", () => {
     ["non-interactive", false],
     ["interactive", true],
   ])("reads the manifest once for the whole %s run", async (_mode, interactive) => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     let reads = 0;
     const load = deps.manifestRepo.load.bind(deps.manifestRepo);
@@ -529,7 +529,7 @@ describe("RestoreAll — before delegating", () => {
   });
 
   it("hands the restore the version of the first installed tool", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const { asked, delegate } = recordingDelegate();
 
@@ -543,7 +543,7 @@ describe("RestoreAll — before delegating", () => {
   });
 
   it("hands the restore an unknown version when no tool is installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const { asked, delegate } = recordingDelegate();
 
@@ -557,7 +557,7 @@ describe("RestoreAll — before delegating", () => {
   });
 
   it("reports a failing restore as a config-restore error with nothing restored", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const useCase = restoreAllDelegatingTo(deps, new OverwritePrompter(), async () => {
       throw new Error("disk on fire");
@@ -582,7 +582,7 @@ describe("RestoreAll — the interactive file picker", () => {
   const SETTINGS = ".vscode/settings.json";
 
   async function vscodeProject(): Promise<Deps> {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     return deps;
   }

@@ -4,19 +4,19 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { doctorAll } from "../../../src/orchestration/global/doctor-all.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import {
-  buildDoctorUseCase,
-  buildUnitDeps,
+  buildInstallationDeps,
   initAndInstall,
   installTool,
-} from "../../helpers/ports/build-unit-deps.js";
+} from "../../contexts/installation/testing/installation-deps.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
+import { buildDoctorUseCase } from "../testing/build-doctor.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";
 const PLUGIN_FILE = ".claude/plugins/sample/agents/reviewer.md";
 
 async function depsWithBothCategories() {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await installTool(deps, PROJECT_ROOT, TOOL.vscode);
   const manifest = await deps.manifestRepo.load();
@@ -33,7 +33,7 @@ function healthOf(manifest: Manifest, toolId: ToolId) {
 }
 
 async function deleteOneTrackedFile(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   manifest: Manifest,
   toolId: ToolId
 ) {
@@ -46,7 +46,7 @@ function verdictOf(result: Awaited<ReturnType<typeof doctorAll>>) {
   return [result.healthy, result.ai?.healthy, result.ide?.healthy, result.errors];
 }
 
-function doctorAllOver(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
+function doctorAllOver(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
   const doctor = buildDoctorUseCase(deps);
   return {
     execute: (projectRoot: string, pluginName?: string) =>
@@ -56,7 +56,7 @@ function doctorAllOver(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
 
 describe("doctorAll", () => {
   it("records one error per scope, and no report, when no manifest exists", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT);
