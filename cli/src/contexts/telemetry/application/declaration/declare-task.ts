@@ -5,8 +5,8 @@ import { declarationOf, lockWaitFor } from "../../domain/declaration/task-declar
 import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { BindingsLock } from "../../ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
-import type { BranchDeclarations, BranchOutcome } from "../branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "../consented-repositories.js";
+import type { BranchOutcome, DeclareOnBranch } from "./declare-on-branch.js";
 
 export interface DeclareTaskCommand {
   readonly cwd: string;
@@ -40,7 +40,7 @@ export class DeclareTask {
   constructor(
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
-    private readonly branches: BranchDeclarations,
+    private readonly branches: DeclareOnBranch,
     private readonly lock: BindingsLock,
     private readonly options: DeclareOptions
   ) {}
@@ -58,11 +58,11 @@ export class DeclareTask {
         lockWaitFor(declaration.by)
       );
     }
-    const branch = await this.branches.declare(
-      repository.repositoryId,
-      repository.root,
-      declaration
-    );
+    const branch = await this.branches.execute({
+      repositoryId: repository.repositoryId,
+      root: repository.root,
+      declaration,
+    });
     return { status: "declared", declaration, sessionId, branch };
   }
 }

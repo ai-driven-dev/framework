@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { BranchDeclarations } from "../contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
+import { DeclareOnBranch } from "../contexts/telemetry/application/declaration/declare-on-branch.js";
 import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
+import { ReadCurrentBranch } from "../contexts/telemetry/application/declaration/read-current-branch.js";
 import { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
@@ -128,16 +129,14 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   const sessionId = declaringSessionOf(process.env);
   const processEnvironment = new EnvironmentAdapter();
   const repositories = new ConsentedRepositories(locator, consents, consentHistory);
-  const branchDeclarations = new BranchDeclarations(
-    new GitBranchBindingStoreAdapter(gitEnv),
-    branchSource,
-    snapshotBindings
-  );
+  const branchStore = new GitBranchBindingStoreAdapter(gitEnv);
+  const declareOnBranch = new DeclareOnBranch(branchStore, snapshotBindings);
+  const readCurrentBranch = new ReadCurrentBranch(branchStore, branchSource);
   const declaration = { environment: processEnvironment, sessionId, now: () => new Date() };
   const declareTask = new DeclareTask(
     repositories,
     sessions,
-    branchDeclarations,
+    declareOnBranch,
     bindingsLock,
     declaration
   );
@@ -145,7 +144,7 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   const readTelemetryStatus = new ReadTelemetryStatus(
     repositories,
     sessions,
-    branchDeclarations,
+    readCurrentBranch,
     declaration,
     identity
   );
