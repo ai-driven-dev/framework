@@ -1,4 +1,4 @@
-import type { InstalledRule } from "../../contexts/installation/domain/installed-rule.js";
+import type { InstalledRule } from "../../contexts/installation/contract/installed-rule.js";
 import type { CLIOutput } from "../output.js";
 
 /** The contract the explore skill reads, field for field; the two-space indent and the

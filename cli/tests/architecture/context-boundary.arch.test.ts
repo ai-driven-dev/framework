@@ -49,10 +49,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/contract/plugin-source-match.ts",
   ],
   installation: [
-    // the rule inventory `framework rules` prints, one row per installed rule
-    "src/contexts/installation/domain/installed-rule.ts",
     // what installation reports about a project and what a display reads of it
     "src/contexts/installation/contract/doctor-issue.ts",
+    "src/contexts/installation/contract/installed-rule.ts",
     "src/contexts/installation/contract/installed-tools-view.ts",
     "src/contexts/installation/contract/project-context.ts",
     "src/contexts/installation/contract/project-setup-state.ts",
