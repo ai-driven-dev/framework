@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { bestEffortNativeCall } from "../../../../src/contexts/host-registration/application/confirmation.js";
+import {
+  bestEffortNativeCall,
+  skippedWarning,
+} from "../../../../src/contexts/host-registration/application/confirmation.js";
 import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
 
 const refused = (): never => {
@@ -43,5 +46,13 @@ describe("bestEffortNativeCall", () => {
         () => undefined
       )
     ).toThrow("activator bug");
+  });
+});
+
+describe("skippedWarning", () => {
+  it("words a refused native step with its label and the host's reason", () => {
+    expect(skippedWarning("register marketplace 'aidd'")("exit 1")).toBe(
+      "Native plugin activation — register marketplace 'aidd' skipped: exit 1"
+    );
   });
 });

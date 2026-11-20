@@ -1,6 +1,6 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
-import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
+import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
 import { BuildMarketplaceForTool } from "../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
 import { LoadSyncContext } from "../../src/contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../src/contexts/installation/application/sync/record-activation.js";

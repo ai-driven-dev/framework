@@ -29,3 +29,7 @@ export function bestEffortNativeCall(
     return refused;
   }
 }
+
+/** The warning a skipped native step carries: which step, and the host's reason. */
+export const skippedWarning = (label: string) => (reason: string) =>
+  `Native plugin activation \u2014 ${label} skipped: ${reason}`;

@@ -4771,7 +4771,7 @@
         "!src/composition/orchestration/plugin.ts",
         "!src/composition/shared.ts",
         "!src/composition/telemetry.ts",
-        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/register/register-plugin-with-host.ts",
         "!src/contexts/host-registration/domain/source/marketplace-source-drift.ts",
         "!src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
         "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
@@ -4807,7 +4807,7 @@
     {
       "includes": [
         "src/**",
-        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/register/register-plugin-with-host.ts",
         "!src/contexts/host-registration/domain/source/marketplace-source-drift.ts",
         "!src/contexts/installation/application/agents/main-session-models.ts",
         "!src/contexts/installation/application/install/install-user-plugins.ts",
@@ -4873,11 +4873,7 @@
       }
     },
     {
-      "includes": [
-        "src/**",
-        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
-        "!src/shared/domain/errors.ts"
-      ],
+      "includes": ["src/**", "!src/shared/domain/errors.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -4908,7 +4904,7 @@
         "!src/contexts/host-registration/application/host-marketplace-source-conflict.ts",
         "!src/contexts/host-registration/application/native-host-registration-gate.ts",
         "!src/contexts/host-registration/application/native-marketplace-source-proof.ts",
-        "!src/contexts/host-registration/application/register-plugin-with-host.ts",
+        "!src/contexts/host-registration/application/register/register-plugin-with-host.ts",
         "!src/contexts/host-registration/domain/policy/cache-purge-policy.ts",
         "!src/contexts/host-registration/domain/record/registration-record.ts",
         "!src/contexts/host-registration/domain/source/marketplace-source-conflict.ts",
