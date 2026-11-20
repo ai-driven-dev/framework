@@ -9,11 +9,11 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { translateDistribution } from "../../testing/fake-build-sources.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { pluginRemover } from "../../testing/plugin-remover.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";

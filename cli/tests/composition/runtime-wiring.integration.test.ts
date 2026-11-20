@@ -32,11 +32,11 @@ import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/
 import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf, registeredAiProfile } from "../contexts/tools/testing/catalog-of.js";
-import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.js";
 import { CapturingOutput } from "../shared/testing/capturing-output.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.js";
 
 describe("hostBinaryAvailableIn", () => {
   const available = hostBinaryAvailableIn(

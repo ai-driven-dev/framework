@@ -8,9 +8,9 @@ import type { ToolProfile } from "../../../../../src/contexts/tools/contract/too
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakePlatform } from "../../testing/fake-platform.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";

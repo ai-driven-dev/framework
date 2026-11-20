@@ -8,13 +8,13 @@ import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { pluginRemover } from "../../testing/plugin-remover.js";
 
 const PROJECT_ROOT = "/test-project";
 const ALIAS = "my-local-alias";

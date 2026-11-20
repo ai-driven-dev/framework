@@ -1,5 +1,5 @@
 import { PlatformAdapter } from "../../../../src/contexts/installation/infrastructure/platform-adapter.js";
-import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
+import { FakePlatform } from "../testing/fake-platform.js";
 import { describePlatformContract } from "../testing/platform-contract.js";
 
 describePlatformContract("by the fake", () => ({

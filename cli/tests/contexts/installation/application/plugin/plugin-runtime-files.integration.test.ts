@@ -5,11 +5,11 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import { buildInstallationDeps } from "../../testing/installation-deps.js";
 
 const ROOT = "/test-project";

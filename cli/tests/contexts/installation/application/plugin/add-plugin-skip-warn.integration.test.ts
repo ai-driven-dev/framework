@@ -5,11 +5,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { ReadonlySkipList } from "../../../../../src/shared/domain/plugin/plugin-translation-skip.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { fakeBuildSources } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 

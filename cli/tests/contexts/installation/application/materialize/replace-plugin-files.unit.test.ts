@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_SOURCE_PATH = "/plugin-source/sample-plugin";

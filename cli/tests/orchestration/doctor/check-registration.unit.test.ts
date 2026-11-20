@@ -12,8 +12,8 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";

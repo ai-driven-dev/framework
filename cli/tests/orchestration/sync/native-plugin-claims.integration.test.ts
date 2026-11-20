@@ -16,14 +16,17 @@ import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
+import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import {
+  pluginRemover,
+  userPluginRemover,
+} from "../../contexts/installation/testing/plugin-remover.js";
+import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
-import { pluginRemover, userPluginRemover } from "../../helpers/plugin-remover.js";
-import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";

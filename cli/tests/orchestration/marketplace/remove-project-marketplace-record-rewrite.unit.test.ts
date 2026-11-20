@@ -3,9 +3,12 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import {
+  REWRITTEN_BINARY,
+  spiedRecordRules,
+} from "../../contexts/installation/testing/spy-record-rules.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";

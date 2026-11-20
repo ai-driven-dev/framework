@@ -12,10 +12,13 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import {
+  REWRITTEN_BINARY,
+  spiedRecordRules,
+} from "../../contexts/installation/testing/spy-record-rules.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.js";

@@ -26,7 +26,7 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     count: 1,
     reason: "hashing a tree skips directories and vanished entries",
   },
-  "tests/helpers/ports/seed-from-directory.ts": {
+  "tests/shared/testing/seed-from-directory.ts": {
     count: 1,
     reason: "seeding a fixture skips an unreadable entry",
   },

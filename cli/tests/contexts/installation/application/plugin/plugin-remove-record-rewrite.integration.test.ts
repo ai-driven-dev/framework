@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 import {
   installViaModeA,
   PLUGIN_NAME,
   REF,
   verifiedSourceReader,
-} from "../../../../helpers/framework-plugin-on-claude.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+} from "../../testing/framework-plugin-on-claude.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { pluginRemover } from "../../testing/plugin-remover.js";
+import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.js";
 
 const { claude } = TOOL;
 const PROJECT_ROOT = "/test-project";

@@ -8,9 +8,6 @@ import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
-import { userPluginRemover } from "../../../../helpers/plugin-remover.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -18,7 +15,10 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import type { FakeNativeSource } from "../../testing/fake-host-marketplace-sources.js";
 import type { FixedHostRegistry } from "../../testing/fake-host-plugin-registry.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../testing/manifest-builder.js";
+import { userPluginRemover } from "../../testing/plugin-remover.js";
+import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";

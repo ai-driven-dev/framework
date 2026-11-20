@@ -1,6 +1,6 @@
 import { vi } from "vitest";
-import { registrationRecordRules } from "../../src/composition/installation.js";
-import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import type { RegistrationRecordRules } from "../../../../src/contexts/installation/ports/native-host.js";
 
 /** What every rewrite of the spied rules stamps on the record it hands back, so a test can tell
  * a record the host rewrote from one the use case built itself. */

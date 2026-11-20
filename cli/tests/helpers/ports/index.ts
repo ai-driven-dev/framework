@@ -9,11 +9,8 @@ export {
   OverwritePrompter,
   ScriptedPrompter,
 } from "../../shared/testing/scripted-prompter.js";
-export { darwinPlatform, FakePlatform, linuxPlatform, win32Platform } from "./fake-platform.js";
 export { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
-export { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 export { InMemoryMarketplaceCache } from "./in-memory-marketplace-cache.js";
 export { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
 export { InMemoryMarketplaceTrustStore } from "./in-memory-marketplace-trust-store.js";
 export { manifestRepositoryLoading, prompterAnswering } from "./partial-ports.js";
-export { seedFromDirectory } from "./seed-from-directory.js";

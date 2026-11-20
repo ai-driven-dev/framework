@@ -13,13 +13,13 @@ import {
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { fakeBuildSources } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const { cursor, copilot, opencode, codex } = TOOL;

@@ -12,7 +12,7 @@ import { jsoncMainSessionSettings } from "../../../src/contexts/installation/inf
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 

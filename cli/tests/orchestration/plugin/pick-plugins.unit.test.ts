@@ -15,18 +15,18 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
+import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../contexts/installation/testing/installation-deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";
+import { seedFromDirectory } from "../../shared/testing/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";

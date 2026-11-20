@@ -30,12 +30,12 @@ import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   initProject,
 } from "../../contexts/installation/testing/installation-deps.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";

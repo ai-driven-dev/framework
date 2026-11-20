@@ -7,9 +7,9 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../testing/manifest-builder.js";
 
 const HASH = "0".repeat(32);

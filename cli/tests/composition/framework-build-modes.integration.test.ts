@@ -6,11 +6,11 @@ import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
-import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 

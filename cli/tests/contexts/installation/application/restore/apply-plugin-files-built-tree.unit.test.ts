@@ -3,15 +3,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
-import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
-import {
-  fakeBuildSources,
-  translateDistribution,
-} from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { restoreAllPluginsOf } from "../../testing/build-restore.js";
+import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 

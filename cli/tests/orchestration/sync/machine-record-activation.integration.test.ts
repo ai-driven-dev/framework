@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 

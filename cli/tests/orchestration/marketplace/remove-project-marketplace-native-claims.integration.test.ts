@@ -8,7 +8,7 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
-import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { errnoError, FaultingFileAdapter } from "../../shared/testing/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";

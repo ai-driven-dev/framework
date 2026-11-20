@@ -3,9 +3,9 @@ import { CheckProjectLayout } from "../../../../../src/contexts/installation/app
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_COMMAND = ".claude/commands/plan.md";

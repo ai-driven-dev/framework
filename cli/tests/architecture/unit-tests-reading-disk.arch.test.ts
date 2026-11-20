@@ -1,5 +1,5 @@
 /**
- * A unit test may not import `node:fs`, but `tests/helpers/ports/seed-from-directory.ts` reads a
+ * A unit test may not import `node:fs`, but `tests/shared/testing/seed-from-directory.ts` reads a
  * real directory on its behalf, past the biome guard. Importing it is the debt: a unit file that
  * does so is either renamed `.integration` or taken off the helper.
  */
@@ -65,7 +65,7 @@ describe("the guard itself", () => {
   it("finds a static and a dynamic import, and ignores other text", () => {
     const sources = new Map([
       ["a.unit.test.ts", 'import { s } from "../../helpers/ports/seed-from-directory.js";'],
-      ["b.unit.test.ts", 'const m = await import("../helpers/ports/seed-from-directory.js");'],
+      ["b.unit.test.ts", 'const m = await import("../shared/testing/seed-from-directory.js");'],
       ["c.unit.test.ts", 'import { x } from "./other.js";'],
     ]);
     expect(importers(sources)).toEqual(["a.unit.test.ts", "b.unit.test.ts"]);

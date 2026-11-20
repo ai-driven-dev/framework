@@ -5,11 +5,11 @@ import { FrameworkDescriptor } from "../../../../../src/contexts/installation/do
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
-import { restoreToolFilesOf } from "../../../../helpers/ports/build-restore.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { KeepPrompter, OverwritePrompter } from "../../../../shared/testing/scripted-prompter.js";
+import { restoreToolFilesOf } from "../../testing/build-restore.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";

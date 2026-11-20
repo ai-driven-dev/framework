@@ -1,10 +1,10 @@
-import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { Lock } from "../../../src/shared/ports/lock.js";
+import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
+import type { Lock } from "../../../../src/shared/ports/lock.js";
 import {
   InMemoryRepository,
   loadsOnlyUnderLock,
-} from "../../shared/testing/in-memory-repository.js";
+} from "../../../shared/testing/in-memory-repository.js";
 
 export class InMemoryManifestRepository
   extends InMemoryRepository<Manifest>

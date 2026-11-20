@@ -9,16 +9,16 @@ import {
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
+import { fakeBuildSources } from "../../testing/fake-build-sources.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 import { aManifest } from "../../testing/manifest-builder.js";
+import { pluginRemover } from "../../testing/plugin-remover.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly deletedPaths: string[] = [];

@@ -19,10 +19,10 @@ import {
 } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 
 const PROJECT = "/proj";
 

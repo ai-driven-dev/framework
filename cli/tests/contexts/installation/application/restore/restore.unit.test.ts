@@ -4,9 +4,6 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
-import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import {
   registeredTools,
   resolveRegisteredToolId,
@@ -17,7 +14,10 @@ import {
   OverwritePrompter,
   ScriptedPrompter,
 } from "../../../../shared/testing/scripted-prompter.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import {
   buildInstallationDeps,
   FIXTURE_DIR,

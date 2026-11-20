@@ -5,7 +5,6 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -13,6 +12,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";

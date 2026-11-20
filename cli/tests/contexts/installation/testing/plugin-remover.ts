@@ -1,30 +1,32 @@
-import { registrationRecordRules } from "../../src/composition/installation.js";
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import {
   claimedRefWithdrawal,
   projectHostWithdrawal,
   underMachineHome,
-} from "../../src/composition/orchestration/plugin.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
-import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
-import { ProjectPluginWithdrawal } from "../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
-import { RemovePlugin } from "../../src/contexts/installation/application/removal/remove-plugin.js";
-import { RemoveUserPlugin } from "../../src/contexts/installation/application/removal/remove-user-plugin.js";
-import { UserScopePluginFiles } from "../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
-import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
-import type { InstallationMarketplaceRegistry } from "../../src/contexts/installation/ports/marketplace-sources.js";
-import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
-import { pluginRemovalClaims } from "../../src/contexts/machine-claims/application/plugin-removal-claims.js";
-import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
-import type { UserSourceReferences } from "../../src/contexts/machine-claims/ports/user-source-references.js";
-import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
-import type { FileReader } from "../../src/shared/ports/file-reader.js";
-import type { FileWriter } from "../../src/shared/ports/file-writer.js";
-import type { Lock } from "../../src/shared/ports/lock.js";
-import type { Logger } from "../../src/shared/ports/logger.js";
-import { CapturingLogger } from "../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
-import { registeredTools } from "../shared/testing/registered-tools.js";
+} from "../../../../src/composition/orchestration/plugin.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import { ProjectPluginWithdrawal } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
+import { RemovePlugin } from "../../../../src/contexts/installation/application/removal/remove-plugin.js";
+import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.js";
+import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
+import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
+import type { RegistrationRecordRules } from "../../../../src/contexts/installation/ports/native-host.js";
+import {
+  type PluginRemovalClaimsDeps,
+  pluginRemovalClaims,
+} from "../../../../src/contexts/machine-claims/application/plugin-removal-claims.js";
+import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import { resolveHomeDir } from "../../../../src/shared/infrastructure/home-dir.js";
+import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
+import type { Lock } from "../../../../src/shared/ports/lock.js";
+import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.js";
 
 type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
 
@@ -35,7 +37,7 @@ export interface PluginRemoverParts {
   logger?: Logger;
   activators?: Withdrawing[2]["activators"];
   hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
-  userSourceReferences?: UserSourceReferences;
+  userSourceReferences?: PluginRemovalClaimsDeps["userSourceReferences"];
   marketplaceRegistry?: InstallationMarketplaceRegistry;
   userManifestRepo?: ManifestRepository & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];

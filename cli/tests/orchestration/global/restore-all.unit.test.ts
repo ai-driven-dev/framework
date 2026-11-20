@@ -13,23 +13,26 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
 import {
+  restoreAllPluginsOf,
+  restoreOf,
+} from "../../contexts/installation/testing/build-restore.js";
+import {
+  fakeBuildSources,
+  fakeBuiltDeps,
+  translateDistribution,
+} from "../../contexts/installation/testing/fake-build-sources.js";
+import {
   buildInstallationDeps,
   initAndInstall,
   initProject,
   installTool,
 } from "../../contexts/installation/testing/installation-deps.js";
-import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
-import {
-  fakeBuildSources,
-  fakeBuiltDeps,
-  translateDistribution,
-} from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
-import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
+import { seedFromDirectory } from "../../shared/testing/seed-from-directory.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

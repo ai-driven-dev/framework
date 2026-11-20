@@ -6,16 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
-import {
-  buildDist,
-  installViaModeA,
-  MARKETPLACE_NAME,
-  PLUGIN_NAME,
-  REF,
-  verifiedSourceReader,
-} from "../../../../helpers/framework-plugin-on-claude.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -26,6 +16,16 @@ import {
   type FixedRegistryReading,
 } from "../../testing/fake-host-plugin-registry.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import {
+  buildDist,
+  installViaModeA,
+  MARKETPLACE_NAME,
+  PLUGIN_NAME,
+  REF,
+  verifiedSourceReader,
+} from "../../testing/framework-plugin-on-claude.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { pluginRemover } from "../../testing/plugin-remover.js";
 
 const { claude } = TOOL;
 

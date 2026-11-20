@@ -2,8 +2,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.js";
+import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.js";
 import {
   describeManifestRepositoryContract,
   type ManifestRepositorySubject,

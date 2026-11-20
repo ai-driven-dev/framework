@@ -7,16 +7,16 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { PluginFetchOptions } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
   translateDistribution,
-} from "../../../../helpers/ports/fake-build-sources.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+} from "../../testing/fake-build-sources.js";
 import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
