@@ -5,7 +5,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const readme = require("../../check/generators/readme.cjs");
 
-const EMPTY = "# R\n\n<!--counts:start-->old<!--counts:end-->\n\n## [aidd-x](plugins/aidd-x/README.md)\n\n`9 skills`\n\n<!--plugins:start-->\n<!--plugins:end-->\n";
+const EMPTY = "# R\n\n<!--counts:start-->old<!--counts:end-->\n\n<!--plugins:start-->\n<!--plugins:end-->\n";
 
 let root;
 const at = (rel) => path.join(root, rel);
@@ -32,10 +32,9 @@ describe("readme generator", () => {
     assert.equal(text(), EMPTY);
   });
 
-  it("writes the hero, the skill count and the grid, then finds them fresh", () => {
+  it("writes the hero and the grid, then finds them fresh", () => {
     assert.deepEqual(readme.run({ root, write: true }), ["README.md"]);
     assert.match(text(), /<!--counts:start--><kbd>1 plugins<\/kbd> · <kbd>1 skills<\/kbd> · <kbd>1 agents<\/kbd><!--counts:end-->/u);
-    assert.match(text(), /\[aidd-x\]\(plugins\/aidd-x\/README\.md\)\n\n`1 skill`/u);
     assert.match(text(), /<a href="plugins\/aidd-x\/README\.md">\n<img align="right" alt="beta"/u);
     assert.match(text(), /<h3>🧪 aidd-x<\/h3>/u);
     assert.match(text(), /1 skill · 1 agent · 1 hook<br \/>\nDoes one thing/u);
@@ -48,9 +47,15 @@ describe("readme generator", () => {
     assert.deepEqual(readme.run({ root, write: false }), ["README.md"]);
   });
 
-  it("refuses a plugin with no entry in plugins.json", () => {
+  it("reports a plugin with no entry in plugins.json as a finding, not a throw", () => {
     write("plugins/aidd-y/skills/.keep", "");
-    assert.throws(() => readme.run({ root, write: false }), /No entry: aidd-y/u);
+    const [result] = readme.run({ root, write: false });
+    assert.match(result.problem, /No entry: aidd-y/u);
+  });
+
+  it("throws when the counts marker is missing", () => {
+    write("README.md", text().replace("<!--counts:start-->", ""));
+    assert.throws(() => readme.run({ root, write: false }), /counts:start/u);
   });
 
   it("does nothing without a README", () => {
@@ -59,7 +64,7 @@ describe("readme generator", () => {
   });
 
   it("refuses a README without the grid markers", () => {
-    write("README.md", "# R\n");
+    write("README.md", "# R\n<!--counts:start-->x<!--counts:end-->\n");
     assert.throws(() => readme.run({ root, write: false }), /markers <!--plugins:start-->/u);
   });
 });

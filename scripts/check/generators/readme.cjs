@@ -1,5 +1,5 @@
 "use strict";
-// README.md, from the plugin tree and docs/assets/plugins/plugins.json: the hero counts, the plugin grid and each plugin's skill count.
+// README.md, from the plugin tree and docs/assets/plugins/plugins.json: the hero counts and the plugin grid.
 // The tool list, from the CLI's tool-support record, stays with scripts/sync-generated-docs.mjs.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -12,7 +12,6 @@ const STATUS = {
 };
 
 const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
-const escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 
 module.exports = {
   name: "readme",
@@ -37,18 +36,14 @@ module.exports = {
     let text = before;
 
     const hero = `<kbd>${plugins.length} plugins</kbd> · <kbd>${plugins.reduce((n, p) => n + skillsOf(p).length, 0)} skills</kbd> · <kbd>${plugins.reduce((n, p) => n + agentsOf(p), 0)} agents</kbd>`;
-    text = text.replace(/<!--counts:start-->[\s\S]*?<!--counts:end-->/u, () => `<!--counts:start-->${hero}<!--counts:end-->`);
-    for (const name of plugins) {
-      const n = skillsOf(name).length;
-      // The first `N skill(s)` code-span within 140 characters of the plugin's heading link.
-      const pattern = new RegExp(`(\\[${escaped(name)}\\]\\(plugins/${escaped(name)}/README\\.md\\)[\\s\\S]{0,140}?\`)\\d+\\s+skills?(\`)`, "u");
-      text = text.replace(pattern, (_, open, close) => `${open}${plural(n, "skill")}${close}`);
-    }
+    const counts = /<!--counts:start-->[\s\S]*?<!--counts:end-->/u;
+    if (!counts.test(text)) throw new Error("markers <!--counts:start--> and <!--counts:end--> not found");
+    text = text.replace(counts, () => `<!--counts:start-->${hero}<!--counts:end-->`);
 
     const config = JSON.parse(fs.readFileSync(path.join(root, "docs", "assets", "plugins", "plugins.json"), "utf8"));
     const missing = plugins.filter((p) => !(p in config));
     const unknown = Object.keys(config).filter((p) => !plugins.includes(p));
-    if (missing.length > 0 || unknown.length > 0) throw new Error(`plugins.json and plugins/ disagree. No entry: ${missing}. No plugin: ${unknown}`);
+    if (missing.length > 0 || unknown.length > 0) return [{ problem: `docs/assets/plugins/plugins.json disagrees with plugins/. No entry: ${missing.join(", ") || "none"}. No plugin: ${unknown.join(", ") || "none"}` }];
     const cell = (plugin) => {
       const entry = config[plugin];
       const status = STATUS[entry.status];

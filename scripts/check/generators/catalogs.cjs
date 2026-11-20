@@ -1,20 +1,22 @@
 "use strict";
 // plugins/<name>/CATALOG.md: the index of what each plugin ships, rendered by scripts/summarize-markdown.js.
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const SUMMARIZE = path.resolve(__dirname, "..", "..", "summarize-markdown.js");
 
-/** The catalog of one plugin as it should be, rendered beside the real one so its relative links hold. */
+/** The catalog of one plugin as it should be. Rendered in the OS temp dir, never in the repository; links are then rebased so they read as if written beside the real file. */
 function render(plugin, name) {
-  const scratch = path.join(plugin, ".CATALOG.md.tmp");
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "catalog-"));
   try {
-    const run = spawnSync(process.execPath, [SUMMARIZE, plugin, scratch, "--depth=4", "--fields=description", `--title=${name} catalog`, `--tagline=Auto-generated index of skills, agents, references and assets shipped by the \`${name}\` plugin.`], { encoding: "utf8" });
+    const out = path.join(scratch, "CATALOG.md");
+    const run = spawnSync(process.execPath, [SUMMARIZE, plugin, out, "--depth=4", "--fields=description", `--title=${name} catalog`, `--tagline=Auto-generated index of skills, agents, references and assets shipped by the \`${name}\` plugin.`], { encoding: "utf8" });
     if (run.status !== 0) throw new Error(`catalog of ${name}: ${run.stderr.trim()}`);
-    return fs.readFileSync(scratch, "utf8");
+    return fs.readFileSync(out, "utf8").split(`](${path.relative(scratch, plugin).split(path.sep).join("/")}/`).join("](");
   } finally {
-    fs.rmSync(scratch, { force: true });
+    fs.rmSync(scratch, { recursive: true, force: true });
   }
 }
 

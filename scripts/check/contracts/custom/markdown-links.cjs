@@ -334,7 +334,8 @@ const REASONS = {
 
 module.exports = (ctx) => {
   const core = linkChecker(ctx.root);
-  const files = core.collectMarkdownFiles(["."], DEFAULT_IGNORES);
+  // Skill markdown is SKILL-17's: its links resolve from the skill's own folder.
+  const files = core.collectMarkdownFiles(["."], DEFAULT_IGNORES).filter((file) => !/^plugins\/[^/]+\/skills\//u.test(core.normalizePathForDisplay(file)));
   return files.flatMap((file) => core.checkFile(file)).map((p) => ({ file: core.normalizePathForDisplay(p.file), line: p.line, offending: p.raw, fix: REASONS[p.reason](p) }));
 };
 module.exports.linkChecker = linkChecker;

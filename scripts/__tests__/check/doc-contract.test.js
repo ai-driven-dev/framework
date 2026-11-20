@@ -51,6 +51,11 @@ describe("doc contract", () => {
     assert.deepEqual([found.path, found.line], [path.join(dir, "docs/guide.md"), 3]);
   });
 
+  it("DOC-01 leaves skill markdown to SKILL-17", () => {
+    put({ "plugins/aidd-x/skills/01-a/SKILL.md": "# A\n\n[x](nowhere.md)\n" });
+    assert.deepEqual(ids(), []);
+  });
+
   it("DOC-02 flags a backticked path naming nothing on disk", () => {
     put({ "docs/guide.md": "# Guide\n\n## Start\n\nSee `docs/missing.md`.\n" });
     assert.deepEqual(ids(), ["DOC-02"]);
