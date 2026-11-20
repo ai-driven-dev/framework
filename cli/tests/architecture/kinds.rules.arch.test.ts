@@ -10,6 +10,7 @@ import { CLI_ROOT, contextNames, declaredCommands, tsFilesUnder } from "./helper
 import {
   answerViolations,
   compositionViolations,
+  constructionViolations,
   contractReaderViolations,
   drivingPortViolations,
   errorViolations,
@@ -417,5 +418,43 @@ describe("the project-or-user union has one spelling", () => {
       )
     );
     expectUpToDebt(scopeViolations(files), "scope");
+  });
+});
+
+describe("presentation builds no command and no adapter", () => {
+  const files = (presentation: string) => ({
+    "src/orchestration/menu.ts": "export class MenuLoop {}\nexport class SetupFlow {}",
+    "src/contexts/a/infrastructure/b.adapter.ts": "export abstract class Gateway {}",
+    "src/presentation/x.controller.ts": presentation,
+  });
+  const found = (presentation: string) => entries(constructionViolations(files(presentation)));
+
+  it("reports a command and an adapter built in presentation", () => {
+    expect(found("const m = new MenuLoop(a);\nconst g = new Gateway();")).toEqual([
+      "src/presentation/x.controller.ts :: new Gateway",
+      "src/presentation/x.controller.ts :: new MenuLoop",
+    ]);
+  });
+
+  it("clears the value object presentation builds, and a class composition built", () => {
+    expect(found("const s = new SetupFlow(a);\nconst e = new Error();")).toEqual([]);
+  });
+
+  it("reports the binary entry too, and not composition", () => {
+    expect(
+      entries(
+        constructionViolations({
+          ...files(""),
+          "src/cli.ts": "new MenuLoop();",
+          "src/composition/c.ts": "new MenuLoop();",
+        })
+      )
+    ).toEqual(["src/cli.ts :: new MenuLoop"]);
+  });
+
+  it("holds the tree", () => {
+    const tree = src();
+    expect(Object.keys(tree).some((path) => path.startsWith("src/presentation/"))).toBe(true);
+    expectUpToDebt(constructionViolations(tree), "composition");
   });
 });

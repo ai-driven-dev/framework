@@ -563,3 +563,38 @@ export function scopeViolations(files: Readonly<Record<string, string>>): Violat
       )
     );
 }
+
+const BUILT_IN_COMPOSITION =
+  /^src\/(?:orchestration\/|contexts\/[^/]+\/(?:application|infrastructure)\/|shared\/infrastructure\/)/;
+const CLASS_DECLARATION = /^export (?:abstract )?class (\w+)/gm;
+
+/** A validating value object the setup command still builds: moving it would reorder the
+ * validation errors against the banner. */
+const BUILT_IN_PRESENTATION: ReadonlySet<string> = new Set(["SetupFlow"]);
+
+/** A class of an orchestration, an application, an infrastructure or the shared infrastructure
+ * that a presentation file or the binary entry builds with `new`. Presentation parses arguments
+ * and displays results; `composition/` builds the command or the adapter and hands it in, so a
+ * command never decides which adapter backs it. */
+export function constructionViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const composed = Object.entries(files)
+    .filter(([path]) => BUILT_IN_COMPOSITION.test(path))
+    .flatMap(([, text]) => [...text.matchAll(CLASS_DECLARATION)].map((match) => present(match[1])))
+    .filter((name) => !BUILT_IN_PRESENTATION.has(name));
+  return Object.entries(files)
+    .filter(([path]) => path.startsWith("src/presentation/") || path === "src/cli.ts")
+    .flatMap(([path, text]) =>
+      [...new Set(composed)]
+        .filter((name) => new RegExp(`\\bnew ${name}\\(`).test(text))
+        .sort()
+        .map((name) =>
+          violation(
+            "composition",
+            `${path} :: new ${name}`,
+            `builds ${name}`,
+            "presentation and the binary entry build no command and no adapter",
+            "build it in composition/ and hand it in"
+          )
+        )
+    );
+}

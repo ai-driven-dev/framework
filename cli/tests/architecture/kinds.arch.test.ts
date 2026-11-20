@@ -327,6 +327,21 @@ describe("a file imports only the kinds its kind allows", () => {
     ).toEqual([]);
   });
 
+  it("flags a presenter and a controller that import an adapter", () => {
+    expect(
+      importsOf({
+        "src/presentation/presenters/a.presenter.ts":
+          'import { G } from "../../shared/infrastructure/g.adapter.js";',
+        "src/presentation/controllers/a.controller.ts":
+          'import { G } from "../../shared/infrastructure/g.adapter.js";',
+        "src/shared/infrastructure/g.adapter.ts": "export const G = 1;",
+      })
+    ).toEqual([
+      "src/presentation/presenters/a.presenter.ts -> src/shared/infrastructure/g.adapter.ts",
+      "src/presentation/controllers/a.controller.ts -> src/shared/infrastructure/g.adapter.ts",
+    ]);
+  });
+
   it("flags a profile that imports outside tools and shared", () => {
     expect(
       importsOf({
