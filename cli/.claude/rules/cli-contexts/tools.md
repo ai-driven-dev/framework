@@ -21,7 +21,7 @@ paths:
 ## Rules
 
 - Outside callers import `contract/` only; Biome shuts `domain/` and `application/` (`HELD_BY_BIOME` in `tests/architecture/allowed-edges.ts`, `APPLICATION_CLOSED` in `tests/architecture/helpers.ts`).
-- A class takes the catalog in its constructor (`catalog-in-constructor.arch.test.ts`), asks a profile a question and never reads its structure.
+- A class takes the catalog in its constructor (the `shape` rule of `kinds.ts`), asks a profile a question and never reads its structure.
 - Adding a tool: the `tools` skill.
 - `src/composition/tools.ts` and `src/composition/host-registration.ts` are the only readers of `domain/`.
 - Exceptions to the context shape are in the exceptions table of `reference-context.md`.

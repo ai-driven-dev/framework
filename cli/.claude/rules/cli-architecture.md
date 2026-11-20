@@ -31,8 +31,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 
 ## Commands, errors, size and names
 
-- A command is one file with one class of the same name, a public `execute`, no `UseCase` suffix: `command-shape.arch.test.ts`.
-- A command takes at most 5 constructor dependencies: `orchestrator-deps.arch.test.ts`.
+- A use case is one file with one class of the same name, a public `execute` and at most 5 constructor dependencies: the `shape` rule of `kinds.ts`.
 - An error is a class of `shared/domain/errors.ts`; each class there is thrown: `errors-that-are-thrown.arch.test.ts`.
 - A message naming a command names a real one: `errors-that-instruct.arch.test.ts`.
 - An empty catch is a listed best effort with its reason, or a failure: `catches-that-swallow.arch.test.ts`.

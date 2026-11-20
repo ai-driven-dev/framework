@@ -251,7 +251,7 @@ export const OUTSIDE: readonly string[] = [
   "tests/architecture/*.ts",
 ];
 
-export type Rule = "classification" | "imports" | "mirror";
+export type Rule = "classification" | "imports" | "mirror" | "shape";
 
 export interface Violation {
   readonly rule: Rule;
@@ -338,6 +338,21 @@ export function classificationViolations(
     }
   }
   return out;
+}
+
+/** The use-case files, by the kind table: the files whose shape `use-case-shape.ts` reads. */
+export const isUseCase = (path: string): boolean => {
+  const found = kindsOf(path);
+  return found.length === 1 && found[0] === "use-case" && isInCatalog(path);
+};
+
+/** One violation per use-case file that breaks its shape, listing every break. */
+export function shapeViolations(breaks: ReadonlyMap<string, readonly string[]>): Violation[] {
+  return [...breaks].map(([file, list]) => ({
+    rule: "shape",
+    entry: file,
+    message: `${file}: ${list.join("; ")}. Rule: a use case is one class named after its file with a public execute, at most five constructor dependencies, and the tool catalog at construction (tests/architecture/kinds.ts). Fix: split the class by question, name it after the file, take the catalog in the constructor.`,
+  }));
 }
 
 /** A file of `src/` that is neither source nor a glossary: a BSD `sed -i -E` leaves a `<file>-E`
@@ -510,9 +525,10 @@ export interface Debt {
   readonly classification: readonly string[];
   readonly imports: readonly string[];
   readonly mirror: readonly string[];
+  readonly shape: readonly string[];
 }
 
-const RULES: readonly Rule[] = ["classification", "imports", "mirror"];
+const RULES: readonly Rule[] = ["classification", "imports", "mirror", "shape"];
 
 /** `unlisted`: violations the debt does not hold. `stale`: debt entries that no longer violate.
  * A check that finds the violations of some rules only names those rules. */

@@ -25,15 +25,18 @@ import {
   debtVerdict,
   importViolations,
   isInCatalog,
+  isUseCase,
   KINDS,
   type Kind,
   kindsOf,
   mirrorViolations,
   type Shape,
+  shapeViolations,
   strayViolations,
   type Violation,
 } from "./kinds.js";
 import { walk, withVirtualProject } from "./ts-project.js";
+import { useCaseShapeBreaks } from "./use-case-shape.js";
 
 const DEBT_FILE = join(import.meta.dirname, "kinds-debt.json");
 const CODE_FILE = /\.(?:ts|mts|cts|js|mjs|cjs)$/;
@@ -462,13 +465,118 @@ describe("a source owes a test at its mirror path", () => {
   });
 });
 
+describe("a use case holds one shape", () => {
+  const breaksOf = (path: string, text: string): string[] =>
+    useCaseShapeBreaks({ [path]: text }).get(path) ?? [];
+  const home = "src/contexts/a/application/";
+
+  it("passes one class named after its file with a public execute", () => {
+    expect(breaksOf(`${home}log-in.ts`, "export class LogIn { async execute(r: R) {} }")).toEqual(
+      []
+    );
+  });
+
+  it("flags a class that is not named after its file, and a second class", () => {
+    expect(
+      breaksOf(`${home}log-in.ts`, "export class Other { execute() {} }\nclass Two {}")
+    ).toEqual(["2 classes, expected one", "no class named LogIn"]);
+  });
+
+  it("flags an execute that is not public", () => {
+    expect(breaksOf(`${home}log-in.ts`, "export class LogIn { private execute() {} }")).toEqual([
+      "an execute that is not public",
+    ]);
+  });
+
+  it("flags a class that answers several questions through no execute, unless it implements a port", () => {
+    const many = "export class X { a() {} b() {} }";
+    expect(breaksOf(`${home}x.ts`, many)).toEqual(["2 public methods and no execute"]);
+    expect(
+      breaksOf(
+        `${home}x.ts`,
+        `import type { P } from "../ports/p.js";\nexport class X implements P { a() {} b() {} }`
+      )
+    ).toEqual([]);
+  });
+
+  it("flags public methods besides execute where a folder answers through execute alone", () => {
+    expect(
+      breaksOf(
+        "src/contexts/host-registration/application/withdraw/x.ts",
+        "export class X { execute() {} step() {} }"
+      )
+    ).toEqual(["public methods besides execute: step"]);
+  });
+
+  it("counts a destructured and an optional constructor parameter, and passes the limit", () => {
+    const params = (n: number) =>
+      Array.from({ length: n }, (_, i) => `private readonly p${i}?: P`).join(", ");
+    expect(
+      breaksOf(`${home}x.ts`, `export class X { constructor(${params(5)}) {} execute() {} }`)
+    ).toEqual([]);
+    expect(
+      breaksOf(`${home}x.ts`, `export class X { constructor(${params(6)}) {} execute() {} }`)
+    ).toEqual(["6 constructor dependencies, at most 5"]);
+    expect(
+      breaksOf(
+        `${home}x.ts`,
+        `export class X { constructor({ a, b, c, d, e, f }: O) {} execute() {} }`
+      )
+    ).toEqual(["6 constructor dependencies, at most 5"]);
+  });
+
+  it("flags the tool catalog taken by a method or an options type, and passes the constructor and a free function", () => {
+    expect(breaksOf(`${home}x.ts`, "export class X { execute(t: ToolCatalog) {} }")).toEqual([
+      "takes the tool catalog as a method parameter",
+    ]);
+    expect(
+      breaksOf(
+        `${home}x.ts`,
+        "export class X { execute() {} }\ninterface O { tools: Pick<ToolCatalog, 'a'> }"
+      )
+    ).toEqual(["carries the tool catalog as a property"]);
+    expect(
+      breaksOf(
+        `${home}x.ts`,
+        "export class X { constructor(private readonly t: ToolCatalog) {} execute() {} }\nexport function f(t: ToolCatalog) {}"
+      )
+    ).toEqual([]);
+  });
+
+  it("selects the use cases of the tree", () => {
+    expect(isUseCase("src/contexts/a/application/x.ts")).toBe(true);
+    expect(isUseCase("src/contexts/a/domain/x.ts")).toBe(false);
+    expect(isUseCase("tests/contexts/a/application/x.unit.test.ts")).toBe(false);
+  });
+
+  it("holds every use case of the tree, up to the debt", () => {
+    const files: Record<string, string> = {};
+    for (const path of codeFilesUnder("src").filter(isUseCase)) {
+      files[path] = readFileSync(join(CLI_ROOT, path), "utf8");
+    }
+    expect(Object.keys(files).length, "the scope is stale").toBeGreaterThan(100);
+    const { unlisted, stale } = debtVerdict(
+      shapeViolations(useCaseShapeBreaks(files)),
+      loadDebt(),
+      ["shape"]
+    );
+    expect(unlisted.map((violation) => violation.message)).toEqual([]);
+    expect(stale).toEqual([]);
+  });
+});
+
 describe("debt only shrinks", () => {
   const violation = (rule: Violation["rule"], entry: string): Violation => ({
     rule,
     entry,
     message: `${entry} breaks ${rule}`,
   });
-  const debt: Debt = { classification: ["a.ts"], imports: ["b.ts -> c.ts"], mirror: ["d.ts"] };
+  const debt: Debt = {
+    classification: ["a.ts"],
+    imports: ["b.ts -> c.ts"],
+    mirror: ["d.ts"],
+    shape: [],
+  };
 
   it("passes when the violations are the debt", () => {
     const found = [

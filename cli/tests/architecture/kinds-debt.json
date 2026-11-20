@@ -2,7 +2,8 @@
   "closesWhen": {
     "classification": "every file under src and tests is renamed or moved to the folder of its kind, or is listed outside the catalog on purpose",
     "imports": "the file stops importing that target, or the target moves to a kind the file may import",
-    "mirror": "a test of the required level exists at the mirror path of the source"
+    "mirror": "a test of the required level exists at the mirror path of the source",
+    "shape": "the class takes the shape of its kind: one class named after its file, a public execute, at most five dependencies, the tool catalog at construction"
   },
   "classification": [
     "src/presentation/deps.ts",
@@ -377,5 +378,36 @@
     "src/shared/infrastructure/github-adapter.ts",
     "src/shared/infrastructure/home-dir.ts",
     "src/shared/infrastructure/user-config-dir.ts"
+  ],
+  "shape": [
+    "src/contexts/distribution/application/choose-marketplace-source.ts",
+    "src/contexts/installation/application/agents/agent-providers.ts",
+    "src/contexts/installation/application/agents/main-session-models.ts",
+    "src/contexts/installation/application/clean-project-files.ts",
+    "src/contexts/installation/application/install/config/tracked-config-files.ts",
+    "src/contexts/installation/application/install/configure-machine-scope.ts",
+    "src/contexts/installation/application/materialize/project-hooks-materializer.ts",
+    "src/contexts/installation/application/plugin/plugin-distribution-loader.ts",
+    "src/contexts/installation/application/plugin/plugin-materializer.ts",
+    "src/contexts/installation/application/purge-user-scope-files.ts",
+    "src/contexts/installation/application/removal/project-plugin-withdrawal.ts",
+    "src/contexts/installation/application/removal/purge-machine-state.ts",
+    "src/contexts/installation/application/removal/remove-project-plugin.ts",
+    "src/contexts/installation/application/removal/user-scope-plugin-files.ts",
+    "src/contexts/installation/application/resolve-sync-conflict.ts",
+    "src/contexts/installation/application/sync/record-activation.ts",
+    "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
+    "src/contexts/installation/application/sync/tracked-settings-file.ts",
+    "src/contexts/machine-claims/application/release-claims.ts",
+    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts",
+    "src/contexts/telemetry/application/branch-declarations.ts",
+    "src/contexts/telemetry/application/consent-log.ts",
+    "src/contexts/telemetry/application/directory-resolver.ts",
+    "src/contexts/telemetry/application/remembered-resolutions.ts",
+    "src/contexts/telemetry/application/switch/consent-switch.ts",
+    "src/contexts/translate/application/sinks/disk-sink.ts",
+    "src/contexts/translate/application/sinks/flat-writer.ts",
+    "src/orchestration/global/bulk-conflict-state.ts",
+    "src/orchestration/setup/setup-marketplace-registration.ts"
   ]
 }

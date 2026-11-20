@@ -10,7 +10,6 @@ import {
   sourceFiles as srcFiles,
 } from "../../scripts/mutation-shards.mjs";
 import { present } from "../shared/testing/present.js";
-import { codeOnly } from "./source-shapes.js";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
@@ -317,70 +316,4 @@ export function unresolvedCommandMentions(text: string, declared: ReadonlySet<st
     missing.push(`${first} ${second}`);
   }
   return missing;
-}
-
-/** Where a command lives: a context's application layer, or an orchestration. */
-export function isCommandHome(file: string): boolean {
-  return /^src\/(?:contexts\/[^/]+\/application|orchestration)\//.test(file);
-}
-
-/** A command file the rules above are known to select, so a scope that drifts off the tree fails. */
-export const KNOWN_COMMAND_FILE = "src/orchestration/global/update-tools.ts";
-
-export function commandFiles(): string[] {
-  return sourceFiles().filter(isCommandHome);
-}
-
-const CLASS_DECLARATION = /(?:^|[\s;{}])class\s+(\w+)/g;
-const IMPLEMENTS_CLAUSE = /(?:^|[\s;{}])class\s+\w+[^{]*\simplements\s+([^{]+)\{/g;
-const NAMED_IMPORT = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+["']([^"']+)["']/g;
-const PUBLIC_METHOD =
-  /^ {2}(?:public\s+)?(?:async\s+)?(?:get\s+|set\s+)?([A-Za-z_]\w*)\s*(?:<[^>]*>)?\(/gm;
-const EXECUTE_METHOD = /(?:^|[\s;{}])(?:(public|private|protected)\s+)?(?:async\s+)?execute\(/g;
-
-export interface CommandSource {
-  /** Every class the file declares, exported or not. */
-  readonly classes: readonly string[];
-  /** Some `execute` method of any visibility, or an interface member of that name. */
-  readonly executes: boolean;
-  /** An `execute` method marked private or protected. */
-  readonly hidesExecute: boolean;
-  /** The methods a class of the file exposes, constructors apart: those indented as a member and
-   * marked neither private nor protected. */
-  readonly publicMethods: readonly string[];
-  /** A class of the file declares `implements`: its methods are the ones a port or contract names. */
-  readonly implementsInterface: boolean;
-}
-
-/** Whether a class implements a name the file imports from a `ports` or a `contract` folder: an
- * interface the class declares itself names no port, so it owes its shape. */
-function implementsPortOrContract(code: string): boolean {
-  const imported = new Set(
-    [...code.matchAll(NAMED_IMPORT)]
-      .filter((match) => /\/(?:ports|contract)\//.test(match[2] ?? ""))
-      .flatMap((match) => (match[1] ?? "").split(","))
-      .map((name) => (name.split(/\sas\s/).pop() ?? "").replace(/^\s*type\s+/, "").trim())
-  );
-  return [...code.matchAll(IMPLEMENTS_CLAUSE)]
-    .flatMap((match) => (match[1] ?? "").split(","))
-    .some((name) => imported.has(name.trim().replace(/<.*$/s, "").trim()));
-}
-
-/**
- * The one reading of what makes a file a command, shared by every rule that selects commands: a
- * command is a class with a public `execute`, and no suffix finds one. A file declaring no class
- * holds a port, not a command.
- */
-export function commandSourceOf(source: string): CommandSource {
-  const code = codeOnly(source);
-  const modifiers = [...code.matchAll(EXECUTE_METHOD)].map((match) => match[1]);
-  return {
-    classes: [...code.matchAll(CLASS_DECLARATION)].map((match) => match[1] ?? ""),
-    executes: modifiers.length > 0,
-    hidesExecute: modifiers.some((modifier) => modifier === "private" || modifier === "protected"),
-    publicMethods: [...code.matchAll(PUBLIC_METHOD)]
-      .map((match) => match[1] ?? "")
-      .filter((name) => name !== "constructor"),
-    implementsInterface: implementsPortOrContract(code),
-  };
 }

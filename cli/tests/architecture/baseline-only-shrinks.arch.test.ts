@@ -64,6 +64,9 @@ const RENAMED_LISTS: Readonly<Record<string, string>> = {
  */
 const RETIRED_LISTS: ReadonlySet<string> = new Set([
   "tests/architecture/folder-size.arch.test.ts#BASELINE",
+  "tests/architecture/command-shape.arch.test.ts#COMMAND_SHAPE_BASELINE",
+  "tests/architecture/command-shape.arch.test.ts#HELPERS_BY_DESIGN",
+  "tests/architecture/orchestrator-deps.arch.test.ts#BASELINE",
   "tests/architecture/domain-does-no-io.arch.test.ts#BASELINE",
   "tests/architecture/test-mirror-path.arch.test.ts#MIRROR_BASELINE",
 ]);
