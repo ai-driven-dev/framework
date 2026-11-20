@@ -26,14 +26,6 @@ describe("antigravity", () => {
     expect(installPathOf(antigravity, "skills", built)).toBe(path);
   });
 
-  it("accepts the skills it installed and no other host's", () => {
-    expect(antigravity.section("skills").accepts(".agents/skills/aidd-01-plan/SKILL.md")).toBe(
-      true
-    );
-    expect(antigravity.section("skills").accepts(".kilo/skills/x/SKILL.md")).toBe(false);
-    expect(antigravity.section("skills").accepts(".agents/agents/x/agent.md")).toBe(false);
-  });
-
   it("keeps a skill's frontmatter as it is", () => {
     const frontmatter = { name: "plan", description: "Plans." };
 

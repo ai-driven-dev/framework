@@ -1,4 +1,4 @@
-import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { AgentFrontmatter } from "../formats/agent-format.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 import { ToolSuffix } from "../profile/tool-suffix.js";
@@ -56,10 +56,6 @@ export class AgentsSection {
     return this.#suffix.strip(`${this.#params.directory}agents/${basename}`);
   }
 
-  accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.#params.directory);
-  }
-
   acceptsFileName(fileName: string): boolean {
     return this.#foreignSuffixes.accepts(fileName);
   }
@@ -71,17 +67,5 @@ export class AgentsSection {
   serialize(frontmatter: Record<string, unknown>, body: string): string {
     if (this.#params.serialize) return this.#params.serialize(frontmatter, body);
     return serializeFrontmatter(frontmatter, body, this.#params.quote);
-  }
-
-  deserialize(content: string): { frontmatter: Record<string, unknown>; body: string } {
-    return parseFrontmatter(content);
-  }
-
-  equals(other: AgentsSection): boolean {
-    return (
-      this.#params.directory === other.#params.directory &&
-      this.#params.toolSuffix === other.#params.toolSuffix &&
-      this.#params.format === other.#params.format
-    );
   }
 }

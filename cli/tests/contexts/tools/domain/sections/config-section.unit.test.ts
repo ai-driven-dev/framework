@@ -175,38 +175,3 @@ describe("ConfigSection", () => {
     });
   });
 });
-
-describe("ConfigSection path acceptance", () => {
-  it("accepts exactly its own output path", () => {
-    const cap = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "none",
-    });
-
-    expect(cap.accepts(".vscode/settings.json")).toBe(true);
-    expect(cap.accepts(".vscode/extensions.json")).toBe(false);
-    expect(cap.accepts("x/.vscode/settings.json")).toBe(false);
-  });
-});
-
-describe("ConfigSection equality", () => {
-  const base = { outputPath: ".vscode/settings.json", mergeStrategy: "none" as const };
-
-  it("is equal on the same output path and merge strategy", () => {
-    expect(new ConfigSection(base).equals(new ConfigSection({ ...base }))).toBe(true);
-  });
-
-  it("differs on the output path", () => {
-    expect(
-      new ConfigSection(base).equals(
-        new ConfigSection({ ...base, outputPath: ".vscode/extensions.json" })
-      )
-    ).toBe(false);
-  });
-
-  it("differs on the merge strategy", () => {
-    expect(
-      new ConfigSection(base).equals(new ConfigSection({ ...base, mergeStrategy: "user-prime" }))
-    ).toBe(false);
-  });
-});

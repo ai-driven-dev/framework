@@ -232,13 +232,11 @@ export const copilot = defineAiTool({
       convertFrontmatter: (fm) => skillsHandler.convertFrontmatter(fm),
     }),
     commands: new CommandsSection({
-      directory: DIRECTORY,
       toolSuffix: EXT_PROMPT,
       buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
     rules: new RulesSection({
-      directory: DIRECTORY,
       toolSuffix: EXT_INSTRUCTIONS,
       inputSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),

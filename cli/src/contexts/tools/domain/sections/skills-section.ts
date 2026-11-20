@@ -2,8 +2,6 @@ import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
-const AGENTS_SKILLS_PREFIX = ".agents/skills/";
-
 type SkillsSectionParams = {
   directory?: string;
   toolSuffix?: string;
@@ -40,20 +38,5 @@ export class SkillsSection {
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
     return serializeFrontmatter(frontmatter, body);
-  }
-
-  accepts(relativePath: string): boolean {
-    if (this.#params.agentsSkillsDirectory) {
-      return relativePath.startsWith(AGENTS_SKILLS_PREFIX);
-    }
-    return relativePath.startsWith(this.#params.directory as string);
-  }
-
-  equals(other: SkillsSection): boolean {
-    return (
-      this.#params.directory === other.#params.directory &&
-      this.#params.toolSuffix === other.#params.toolSuffix &&
-      this.#params.agentsSkillsDirectory === other.#params.agentsSkillsDirectory
-    );
   }
 }

@@ -34,7 +34,6 @@
   "src/contexts/tools/domain/profiles/opencode/build.ts": 1,
   "src/contexts/tools/domain/sections/mcp-section.ts": 2,
   "src/contexts/tools/domain/sections/models-section.ts": 1,
-  "src/contexts/tools/domain/sections/skills-section.ts": 1,
   "src/contexts/translate/application/build-native-tree.ts": 2,
   "src/contexts/translate/infrastructure/schema-validator.ts": 2,
   "src/contexts/update/infrastructure/npm-registry-release-adapter.ts": 1,

@@ -254,19 +254,7 @@
   "instructs": [],
   "composition": [],
   "ports": [],
-  "sections": [
-    "src/contexts/tools/domain/sections/agents-section.ts :: AgentsSection.accepts",
-    "src/contexts/tools/domain/sections/agents-section.ts :: AgentsSection.deserialize",
-    "src/contexts/tools/domain/sections/agents-section.ts :: AgentsSection.equals",
-    "src/contexts/tools/domain/sections/commands-section.ts :: CommandsSection.accepts",
-    "src/contexts/tools/domain/sections/commands-section.ts :: CommandsSection.equals",
-    "src/contexts/tools/domain/sections/rules-section.ts :: RulesSection.accepts",
-    "src/contexts/tools/domain/sections/rules-section.ts :: RulesSection.equals",
-    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.accepts",
-    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.equals",
-    "src/contexts/tools/domain/sections/skills-section.ts :: SkillsSection.accepts",
-    "src/contexts/tools/domain/sections/skills-section.ts :: SkillsSection.equals"
-  ],
+  "sections": [],
   "answers": [
     "src/contexts/tools/domain/native-registration/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile",
     "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.cliShape",

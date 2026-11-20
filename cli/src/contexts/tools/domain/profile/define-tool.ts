@@ -130,8 +130,8 @@ function bind(directory: string, suffix: ToolSuffix): BoundTool {
       `${directory}${subdirectory}${suffix.strip(fileName)}`,
     agents: (params) => new AgentsSection({ directory, toolSuffix, ...params }),
     skills: (params) => new SkillsSection({ directory, toolSuffix, ...params }),
-    commands: (params) => new CommandsSection({ directory, toolSuffix, ...params }),
-    rules: (params) => new RulesSection({ directory, toolSuffix, ...params }),
+    commands: (params) => new CommandsSection({ toolSuffix, ...params }),
+    rules: (params) => new RulesSection({ toolSuffix, ...params }),
   };
 }
 
