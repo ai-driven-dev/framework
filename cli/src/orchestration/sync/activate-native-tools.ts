@@ -2,6 +2,7 @@ import type {
   HostRegistrationOutcome,
   RegisterPluginWithHost,
 } from "../../contexts/host-registration/application/register-plugin-with-host.js";
+import type { BuiltCatalogs } from "../../contexts/host-registration/contract/built-catalogs.js";
 import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";
 import type { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.js";
 import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
@@ -81,7 +82,7 @@ export class ActivateNativeTools {
           scope,
           marketplaces,
           claims: claims(toolId),
-          build: (marketplace) => this.buildMarketplace.forTool(toolId, marketplace, projectRoot),
+          build: this.builtFor(toolId, projectRoot),
           refsToEnable: (hostNameByAlias) =>
             this.refsToEnableOn({
               toolId,
@@ -110,6 +111,11 @@ export class ActivateNativeTools {
       }
     }
     return { outcomes, binaryMissing, warnings, errors };
+  }
+
+  /** Each catalogue's tree, built for one tool the moment its registration asks for it. */
+  private builtFor(toolId: ToolId, projectRoot: string): BuiltCatalogs<SyncedMarketplaces[number]> {
+    return (marketplace) => this.buildMarketplace.forTool(toolId, marketplace, projectRoot);
   }
 
   /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked
