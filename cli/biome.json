@@ -6048,7 +6048,6 @@
         "!src/contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.ts",
         "!src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.ts",
         "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
-        "!src/contexts/telemetry/infrastructure/sources/line-values.ts",
         "!src/contexts/telemetry/infrastructure/sources/transcript-files.ts",
         "!src/contexts/telemetry/ports/usage-source.ts",
         "!src/contexts/tools/contract/build-contract.ts",

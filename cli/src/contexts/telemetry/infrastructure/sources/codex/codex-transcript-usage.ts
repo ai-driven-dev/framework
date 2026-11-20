@@ -1,7 +1,7 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { UsageRecord } from "../../../contract/usage-record.js";
+import { expected, type Json, text } from "../../../domain/line-values.js";
 import type { LineNames } from "../../../domain/transcript-position.js";
-import { expected, type Json, text } from "../line-values.js";
 
 export interface CodexUsageLine {
   readonly records: readonly UsageRecord[];
@@ -72,7 +72,8 @@ export function decodeCodexLine(line: string, before: unknown): CodexUsageLine {
   }
 
   const notes: string[] = [];
-  const count = (field: string) => expected(usage, field, "usage", notes);
+  const countOf = expected("usage", notes);
+  const count = (field: string) => countOf(usage, field);
   const input = count("input_tokens");
   const cacheRead = count("cached_input_tokens");
   const cacheWrite = count("cache_write_input_tokens");

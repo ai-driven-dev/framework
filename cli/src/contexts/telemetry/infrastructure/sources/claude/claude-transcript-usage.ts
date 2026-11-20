@@ -1,7 +1,7 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { UsageRecord } from "../../../contract/usage-record.js";
+import { counter, expected, type Json, text } from "../../../domain/line-values.js";
 import type { LineNames } from "../../../domain/transcript-position.js";
-import { counter, expected, type Json, text } from "../line-values.js";
 
 export interface ClaudeUsageLine {
   readonly records: readonly UsageRecord[];
@@ -44,7 +44,7 @@ function cacheWrites(
 ): { readonly total: number | null; readonly oneHour: number | null } {
   const messages = iterations.filter((iteration) => iteration.type === "message");
   const parts = messages.length > 0 ? messages : [usage];
-  const writes = parts.map((part) => expected(part, "cache_creation_input_tokens", "usage", notes));
+  const writes = parts.map((part) => expected("usage", notes)(part, "cache_creation_input_tokens"));
   const hours = parts.map((part) =>
     counter(asPlainObject(part.cache_creation)?.ephemeral_1h_input_tokens)
   );
@@ -95,19 +95,21 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     git_branch: text(root.gitBranch),
   } as const;
 
+  const count = expected("usage", notes);
   const main: UsageRecord = {
     ...shared,
     key,
     agent: root.isSidechain === true || text(root.agentId) !== null ? "subagent" : "main",
     model: text(message.model),
-    input: expected(usage, "input_tokens", "usage", notes),
-    output: expected(usage, "output_tokens", "usage", notes),
-    cache_read: expected(usage, "cache_read_input_tokens", "usage", notes),
+    input: count(usage, "input_tokens"),
+    output: count(usage, "output_tokens"),
+    cache_read: count(usage, "cache_read_input_tokens"),
     cache_write: writes.total,
     cache_write_1h: writes.oneHour,
     reasoning: counter(asPlainObject(usage.output_tokens_details)?.thinking_tokens),
   };
 
+  const advisorCount = expected("advisor", notes);
   const advisors = iterations
     .filter((iteration) => iteration.type === "advisor_message")
     .map(
@@ -116,10 +118,10 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
         key: `${key}#advisor${n}`,
         agent: "advisor",
         model: text(advisor.model),
-        input: expected(advisor, "input_tokens", "advisor", notes),
-        output: expected(advisor, "output_tokens", "advisor", notes),
-        cache_read: expected(advisor, "cache_read_input_tokens", "advisor", notes),
-        cache_write: expected(advisor, "cache_creation_input_tokens", "advisor", notes),
+        input: advisorCount(advisor, "input_tokens"),
+        output: advisorCount(advisor, "output_tokens"),
+        cache_read: advisorCount(advisor, "cache_read_input_tokens"),
+        cache_write: advisorCount(advisor, "cache_creation_input_tokens"),
         cache_write_1h: counter(asPlainObject(advisor.cache_creation)?.ephemeral_1h_input_tokens),
         reasoning: null,
       })

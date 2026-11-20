@@ -29,11 +29,11 @@ import { GrantConsent } from "../contexts/telemetry/application/switch/grant-con
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
 import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.js";
 import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.js";
+import { environmentWithoutGitVariables } from "../contexts/telemetry/domain/git-environment.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
-import { environmentWithoutGitVariables } from "../contexts/telemetry/infrastructure/git/git-environment.js";
 import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
@@ -105,7 +105,7 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   const root = telemetryDir();
   const ledgerDir = join(root, "ledger");
   const storage = new PrivateStorageAdapter();
-  const gitEnv = environmentWithoutGitVariables();
+  const gitEnv = environmentWithoutGitVariables(process.env);
   const bindingsDir = join(root, "bindings");
   const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
