@@ -21,12 +21,13 @@ export async function isMachineOwnedNativeRef(
   return (await machineNativePluginClaim(repo, toolId, ref)) !== undefined;
 }
 
-export async function detachNativePluginRefs(
-  repo: (MachineManifestRepository & Lock) | undefined,
-  fs: FileReader,
-  projectRoot: string,
-  refsByTool: ReadonlyMap<ToolId, readonly string[]>
-): Promise<void> {
+export async function detachNativePluginRefs(request: {
+  readonly repo: (MachineManifestRepository & Lock) | undefined;
+  readonly fs: FileReader;
+  readonly projectRoot: string;
+  readonly refsByTool: ReadonlyMap<ToolId, readonly string[]>;
+}): Promise<void> {
+  const { repo, fs, projectRoot, refsByTool } = request;
   if (repo === undefined || refsByTool.size === 0) return;
   const action = async () => {
     const machine = await repo.load();

@@ -1,21 +1,21 @@
 import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean-project-files.js";
 import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { ReleaseClaims } from "../../../src/contexts/machine-claims/application/release-claims.js";
+import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 type Constructed = ConstructorParameters<typeof CleanProject>;
 type Files = ConstructorParameters<typeof RemoveProjectFiles>;
-type Release = ConstructorParameters<typeof ReleaseClaims>;
 
 /** What a test names; everything else is the empty default. */
 export interface ProjectCleanerParts extends Partial<HostPorts> {
@@ -26,8 +26,8 @@ export interface ProjectCleanerParts extends Partial<HostPorts> {
   marketplaceRegistry?: ConstructorParameters<typeof ListMarketplaces>[0];
   prompter?: Constructed[4];
   homeDir?: () => string;
-  userSourceReferences?: Release[4];
-  userManifestRepo?: Release[3];
+  userSourceReferences?: UserSourceReferences;
+  userManifestRepo?: Parameters<typeof wireCleanClaims>[0]["userManifestRepo"];
 }
 
 export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
@@ -57,17 +57,13 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
       marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
       sources: parts.sources ?? new Map(),
     }),
-    {
-      release: new ReleaseClaims(
-        parts.fs,
-        parts.logger,
-        { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
-        parts.userManifestRepo,
-        parts.userSourceReferences
-      ),
+    wireCleanClaims({
+      fs: parts.fs,
+      logger: parts.logger,
+      userManifestRepo: parts.userManifestRepo ?? new InMemoryManifestRepository(),
+      userSourceReferences: parts.userSourceReferences,
       purgeCache,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    },
+    }),
     new ListMarketplaces(parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()),
     parts.prompter,
   ];

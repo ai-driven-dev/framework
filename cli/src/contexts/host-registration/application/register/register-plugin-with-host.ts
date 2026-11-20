@@ -2,7 +2,6 @@ import {
   NativePluginCliError,
   UnreadableBuiltCatalogError,
 } from "../../../../shared/domain/errors.js";
-import { samePath } from "../../../../shared/domain/paths.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -24,13 +23,13 @@ import {
 import {
   guardAgainstConflict,
   type HostRegistries,
-  marketplaceRegistryOf,
   nativeCatalogProof,
   proveAddedSource,
   type RegistrationRun,
   type RegistrationSubject,
   warnRegistration,
 } from "./catalog-source-guard.js";
+import { followsRequestedSource, untouchedReason } from "./marketplace-registration-guard.js";
 import { reclaimOrReport } from "./reclaim-dead-registration.js";
 
 /** What a registration says while it runs. The caller's own logger satisfies it. */
@@ -79,6 +78,15 @@ interface MarketplaceClaim {
   readonly addedThisRun?: true;
 }
 
+interface SettledMarketplaces extends Omit<HostRegistrationOutcome, "pluginRefs"> {
+  readonly addedHostNames: ReadonlySet<string>;
+}
+
+function registrationOf(alias: string, claim: MarketplaceClaim): RegisteredMarketplace {
+  const { hostName, provenance } = claim;
+  return { alias, hostName, ...(provenance === undefined ? {} : { provenance }) };
+}
+
 export class RegisterPluginWithHost {
   constructor(
     private readonly fs: FileReader,
@@ -98,7 +106,7 @@ export class RegisterPluginWithHost {
   async execute<M extends RegistrationSubject>(
     command: RegisterPluginWithHostCommand<M>
   ): Promise<RegisterPluginWithHostResult> {
-    const { toolId, projectRoot, scope, marketplaces, claims, sink } = command;
+    const { toolId, projectRoot, claims, sink } = command;
     const profile = this.tools.aiProfileIfAny(toolId);
     const binary = profile?.nativeActivation()?.hostBinary();
     const activator = binary === undefined ? undefined : this.activators.get(binary);
@@ -118,91 +126,95 @@ export class RegisterPluginWithHost {
       logger: sink.logger,
       warnings: sink.warnings,
     };
-    // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
-    // and installing a plugin from it are two acts. Measured against the real `claude` binary -
-    // a project with two registered marketplaces and no plugin was told about neither.
-    const ownMarketplaces: RegisteredMarketplace[] = [];
+    const settled = await this.settleMarketplaces(run, command);
+    const { marketplaces: own, preservedMarketplaces, catalogClaims, buildFailed } = settled;
+    const outcome = { marketplaces: own, preservedMarketplaces, catalogClaims, buildFailed };
+    if (!activator.enablesPlugins())
+      return { status: "activated", outcome: { ...outcome, pluginRefs: [] } };
+    const proven = await this.upgradeProven(run, settled);
+    const pluginRefs = await this.enableRefs(run, command, proven);
+    return { status: "activated", outcome: { ...outcome, pluginRefs } };
+  }
+
+  // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
+  // and installing a plugin from it are two acts. Measured against the real `claude` binary -
+  // a project with two registered marketplaces and no plugin was told about neither.
+  private async settleMarketplaces<M extends RegistrationSubject>(
+    run: RegistrationRun,
+    command: RegisterPluginWithHostCommand<M>
+  ): Promise<SettledMarketplaces> {
+    const marketplaces: RegisteredMarketplace[] = [];
     const preservedMarketplaces: RegisteredMarketplace[] = [];
     const catalogClaims: RegisteredMarketplace[] = [];
     const addedHostNames = new Set<string>();
-    const recorded = recordedMarketplaces(claims.recorded);
+    const recorded = recordedMarketplaces(command.claims.recorded);
     let buildFailed = false;
-    for (const marketplace of marketplaces) {
+    for (const marketplace of command.marketplaces) {
       const builtDir = await command.build(marketplace);
       if (builtDir === null) buildFailed = true;
       const claim =
         builtDir === null
           ? undefined
-          : await this.registerMarketplace(run, marketplace, builtDir, catalogClaims);
-      const earlier = recorded?.find((m) => m.alias === marketplace.name);
+          : await this.registerMarketplace(run, { marketplace, builtDir, catalogClaims });
       if (claim !== undefined) {
-        const entry = {
-          alias: marketplace.name,
-          hostName: claim.hostName,
-          ...(claim.provenance === undefined ? {} : { provenance: claim.provenance }),
-        };
-        ownMarketplaces.push(entry);
+        const entry = registrationOf(marketplace.name, claim);
+        marketplaces.push(entry);
         catalogClaims.push(entry);
         if (claim.addedThisRun === true) addedHostNames.add(claim.hostName);
-      } else if (earlier !== undefined) {
-        const proof = await nativeCatalogProof(run, earlier.hostName);
-        if (judgeRegistration({ intent: "register", ...proof }).outcome === "proceed")
-          ownMarketplaces.push(earlier);
-        else preservedMarketplaces.push(earlier);
+        continue;
       }
+      const earlier = recorded?.find((m) => m.alias === marketplace.name);
+      if (earlier === undefined) continue;
+      const proof = await nativeCatalogProof(run, earlier.hostName);
+      const proceeds = judgeRegistration({ intent: "register", ...proof }).outcome === "proceed";
+      (proceeds ? marketplaces : preservedMarketplaces).push(earlier);
     }
-    if (!activator.enablesPlugins())
-      return {
-        status: "activated",
-        outcome: {
-          marketplaces: ownMarketplaces,
-          preservedMarketplaces,
-          catalogClaims,
-          pluginRefs: [],
-          buildFailed,
-        },
-      };
-    const warn = (message: string): void => warnRegistration(run, message);
+    return { marketplaces, preservedMarketplaces, catalogClaims, addedHostNames, buildFailed };
+  }
+
+  /** The registrations still proven after this run, each one a marketplace the host held before
+   * asked to upgrade. */
+  private async upgradeProven(
+    run: RegistrationRun,
+    settled: SettledMarketplaces
+  ): Promise<RegisteredMarketplace[]> {
+    const { catalogClaims, addedHostNames } = settled;
     const stillProven: RegisteredMarketplace[] = [];
-    for (const registration of ownMarketplaces) {
+    for (const registration of settled.marketplaces) {
       const fresh = catalogClaims.find((claim) => claim.hostName === registration.hostName);
       const proof = await nativeCatalogProof(run, registration.hostName, fresh);
       if (judgeRegistration({ intent: "register", ...proof }).outcome === "refuse") continue;
       stillProven.push(registration);
       if (!addedHostNames.has(registration.hostName))
         bestEffortNativeCall(
-          () => activator.upgradeMarketplaces(registration.hostName),
+          () => run.activator.upgradeMarketplaces(registration.hostName),
           skippedWarning(`upgrade marketplace '${registration.hostName}'`),
-          warn
+          (message) => warnRegistration(run, message)
         );
     }
-    const hostNameByAlias = new Map(stillProven.map((m) => [m.alias, m.hostName]));
+    return stillProven;
+  }
+
+  private async enableRefs<M extends RegistrationSubject>(
+    run: RegistrationRun,
+    command: RegisterPluginWithHostCommand<M>,
+    proven: readonly RegisteredMarketplace[]
+  ): Promise<string[]> {
+    const hostNameByAlias = new Map(proven.map((m) => [m.alias, m.hostName]));
     const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
       run,
       command.refsToEnable(hostNameByAlias)
     );
     const enabledRefs = [...alreadyOwnedRefs];
     for (const ref of refsToEnable) {
-      if (
-        bestEffortNativeCall(
-          () => activator.enablePlugin(ref, scope),
-          skippedWarning(`enable plugin '${ref}'`),
-          warn
-        ).confirmed
-      ) {
-        enabledRefs.push(ref);
-      }
+      const call = bestEffortNativeCall(
+        () => run.activator.enablePlugin(ref, command.scope),
+        skippedWarning(`enable plugin '${ref}'`),
+        (message) => warnRegistration(run, message)
+      );
+      if (call.confirmed) enabledRefs.push(ref);
     }
-    return {
-      status: "activated",
-      outcome: {
-        marketplaces: ownMarketplaces,
-        preservedMarketplaces,
-        catalogClaims,
-        pluginRefs: enabledRefs,
-        buildFailed,
-      },
-    };
+    return enabledRefs;
   }
 
   private async refsThisProjectEnables(
@@ -242,11 +254,14 @@ export class RegisterPluginWithHost {
   // project just built and cannot read back is not registered at all (see the throw below).
   private async registerMarketplace<M extends RegistrationSubject>(
     run: RegistrationRun,
-    marketplace: M,
-    builtDir: string,
-    freshClaims: readonly RegisteredMarketplace[]
+    target: {
+      readonly marketplace: M;
+      readonly builtDir: string;
+      readonly catalogClaims: readonly RegisteredMarketplace[];
+    }
   ): Promise<MarketplaceClaim | undefined> {
-    const { toolId, profile, activator } = run;
+    const { profile, activator } = run;
+    const { marketplace, builtDir } = target;
     const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, profile, builtDir);
     if (requestedIdentity === undefined) {
       throw new UnreadableBuiltCatalogError(
@@ -258,59 +273,15 @@ export class RegisterPluginWithHost {
     const proof = await nativeCatalogProof(
       run,
       hostName,
-      freshClaims.find((claim) => claim.hostName === hostName)
+      target.catalogClaims.find((claim) => claim.hostName === hostName)
     );
-    if (
-      proof.sourceStatus === "unproven" ||
-      (proof.sourceStatus === "owned" && proof.source === undefined)
-    ) {
-      const existing = await marketplaceRegistryOf(run)?.read();
-      if (existing?.entries?.has(hostName) === true) await guardAgainstConflict(run, request);
-      warnRegistration(
-        run,
-        `${toolId}: catalogue '${hostName}' host source unproven (${proof.sourceReason ?? "unknown"}); registration left untouched.`
-      );
-      return undefined;
-    }
-    const hostMarketplaceReading = await marketplaceRegistryOf(run)?.read();
-    if (hostMarketplaceReading?.entries?.has(hostName) === true && !proof.canonical) {
-      await guardAgainstConflict(run, request);
-      warnRegistration(
-        run,
-        `${toolId}: catalogue '${hostName}' is already registered on the host without a canonical AIDD claim; same-name collision left untouched.`
-      );
-      return undefined;
-    }
-    if (
-      hostMarketplaceReading !== undefined &&
-      hostMarketplaceReading.entries === undefined &&
-      hostMarketplaceReading.absent !== true
-    ) {
-      warnRegistration(
-        run,
-        `${toolId}: catalogue '${hostName}' host registry is unreadable; ownership unproven and registration left untouched.`
-      );
-      return undefined;
-    }
-    if (!proof.hostReadable || proof.foreignRef !== undefined || proof.unreadable !== undefined) {
-      warnRegistration(
-        run,
-        proof.foreignRef === undefined
-          ? `${toolId}: catalogue '${hostName}' collides with unreadable host plugin registry (${proof.unreadable}); registration left untouched.`
-          : `${toolId}: catalogue '${hostName}' carries foreign host ref '${proof.foreignRef}'; registration left untouched.`
-      );
+    const untouched = await untouchedReason(run, request, proof);
+    if (untouched !== undefined) {
+      warnRegistration(run, untouched);
       return undefined;
     }
     const requestedSource = await this.fs.realpath(builtDir).catch(() => builtDir);
-    if (
-      proof.sourceStatus === "owned" &&
-      proof.source?.source !== undefined &&
-      samePath(proof.source.source, requestedSource, this.platform) &&
-      (proof.source.kind === "registry" ||
-        (proof.source.kind === "effective-list" &&
-          samePath(proof.source.root, requestedSource, this.platform) &&
-          proof.source.sourceType === "local"))
-    )
+    if (followsRequestedSource(proof, requestedSource, this.platform))
       return { hostName, provenance: proof.source };
     const decision = await guardAgainstConflict(run, request);
     // A "skip" is a host already following a newer shared build, never this project's own

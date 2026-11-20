@@ -58,7 +58,7 @@ export interface HostRegistries {
   readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
 }
 
-interface NativeCatalogProof {
+export interface NativeCatalogProof {
   readonly canonical: boolean;
   readonly hostReadable: boolean;
   readonly sourceStatus: "absent" | "owned" | "unproven";
@@ -184,17 +184,17 @@ export async function guardAgainstConflict(
   if (reader === undefined) return undefined;
   const requestedSource = await run.fs.realpath(builtDir).catch(() => builtDir);
   const check = await hostMarketplaceSourceConflict(
-    run.fs,
-    profile,
-    reader,
-    requestedSource,
-    requestedIdentity,
+    { fs: run.fs, tool: profile, reader },
     {
-      userCacheRoot: run.userCacheRoot(),
-      projectRoot: run.projectRoot,
-      marketplaceName: marketplace.name,
-      target: profile.toolId,
-      platform: run.platform,
+      requestedSource,
+      requestedIdentity,
+      driftContext: {
+        userCacheRoot: run.userCacheRoot(),
+        projectRoot: run.projectRoot,
+        marketplaceName: marketplace.name,
+        target: profile.toolId,
+        platform: run.platform,
+      },
     }
   );
   if (check !== undefined && isDriftFound(check)) return decideOnDrift(run, check);

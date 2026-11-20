@@ -1,15 +1,11 @@
+import { EnabledPluginsMapReader } from "../contexts/host-registration/infrastructure/enabled-plugins-map-reader.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
+import { HostRegistryMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
 import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
-import {
-  HostRegistryMarketplaceSourceReaderAdapter,
-  NativeMarketplaceSourceReaderAdapter,
-} from "../contexts/host-registration/infrastructure/marketplace-source-readers.js";
-import {
-  EnabledPluginsMapReader,
-  PluginEntriesByScopeReader,
-  TomlPluginTablesReader,
-} from "../contexts/host-registration/infrastructure/plugin-registry-readers.js";
+import { NativeMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/native-marketplace-source-reader-adapter.js";
+import { PluginEntriesByScopeReader } from "../contexts/host-registration/infrastructure/plugin-entries-by-scope-reader.js";
+import { TomlPluginTablesReader } from "../contexts/host-registration/infrastructure/toml-plugin-tables-reader.js";
 import type { HostActions } from "../contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../contexts/host-registration/ports/host-marketplace-sources.js";

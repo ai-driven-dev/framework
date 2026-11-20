@@ -1,5 +1,5 @@
-import type { Scope } from "../../../shared/domain/scope.js";
-import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
+import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
 
 export interface UninstallScopeRequest {
   readonly reader: HostPluginRegistry | undefined;

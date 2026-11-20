@@ -17,7 +17,11 @@ describe("marketplaceSourceConflict", () => {
     const reading = { location: LOCATION, unreadable: "ENOENT" };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/src/B", undefined, IDENTITY_A)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/src/B",
+        registeredIdentity: undefined,
+        requestedIdentity: IDENTITY_A,
+      })
     ).toBeUndefined();
   });
 
@@ -25,7 +29,11 @@ describe("marketplaceSourceConflict", () => {
     const reading = { location: LOCATION, entries: new Map<string, string>() };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/src/B", undefined, IDENTITY_A)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/src/B",
+        registeredIdentity: undefined,
+        requestedIdentity: IDENTITY_A,
+      })
     ).toBeUndefined();
   });
 
@@ -33,7 +41,11 @@ describe("marketplaceSourceConflict", () => {
     const reading = { location: LOCATION, entries: new Map([["probe-mkt", "/src/A"]]) };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/src/B", IDENTITY_A, IDENTITY_A_SAME)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/src/B",
+        registeredIdentity: IDENTITY_A,
+        requestedIdentity: IDENTITY_A_SAME,
+      })
     ).toBeUndefined();
   });
 
@@ -41,20 +53,22 @@ describe("marketplaceSourceConflict", () => {
     const reading = { location: LOCATION, entries: new Map([["probe-mkt", "/gone"]]) };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/src/B", undefined, IDENTITY_A)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/src/B",
+        registeredIdentity: undefined,
+        requestedIdentity: IDENTITY_A,
+      })
     ).toBeUndefined();
   });
 
   it("is a conflict when a different catalog is registered under the same name, and carries both identities", () => {
     const reading = { location: LOCATION, entries: new Map([["probe-mkt", "/src/A"]]) };
 
-    const conflict = marketplaceSourceConflict(
-      reading,
-      "probe-mkt",
-      "/src/B",
-      IDENTITY_A,
-      IDENTITY_B
-    );
+    const conflict = marketplaceSourceConflict(reading, "probe-mkt", {
+      requestedSource: "/src/B",
+      registeredIdentity: IDENTITY_A,
+      requestedIdentity: IDENTITY_B,
+    });
 
     expect(conflict).toEqual({
       name: "probe-mkt",
@@ -75,28 +89,52 @@ describe("marketplaceSourceConflict", () => {
       const a = { name: "probe-mkt", pluginNames: ["sample-plugin"] };
       const b = { name: "probe-mkt", pluginNames: ["other-plugin"] };
 
-      expect(marketplaceSourceConflict(reading, "probe-mkt", "/src/B", a, b)).toBeDefined();
+      expect(
+        marketplaceSourceConflict(reading, "probe-mkt", {
+          requestedSource: "/src/B",
+          registeredIdentity: a,
+          requestedIdentity: b,
+        })
+      ).toBeDefined();
     });
 
     it("is a conflict when only the declared name differs", () => {
       const a = { name: "probe-mkt", pluginNames: ["sample-plugin"] };
       const b = { name: "renamed-mkt", pluginNames: ["sample-plugin"] };
 
-      expect(marketplaceSourceConflict(reading, "probe-mkt", "/src/B", a, b)).toBeDefined();
+      expect(
+        marketplaceSourceConflict(reading, "probe-mkt", {
+          requestedSource: "/src/B",
+          registeredIdentity: a,
+          requestedIdentity: b,
+        })
+      ).toBeDefined();
     });
 
     it("is not a conflict when the plugin set is the same but listed in a different order", () => {
       const a = { name: "probe-mkt", pluginNames: ["a-plugin", "b-plugin"] };
       const b = { name: "probe-mkt", pluginNames: ["b-plugin", "a-plugin"] };
 
-      expect(marketplaceSourceConflict(reading, "probe-mkt", "/src/B", a, b)).toBeUndefined();
+      expect(
+        marketplaceSourceConflict(reading, "probe-mkt", {
+          requestedSource: "/src/B",
+          registeredIdentity: a,
+          requestedIdentity: b,
+        })
+      ).toBeUndefined();
     });
 
     it("is not a conflict when only a version field differs — an upgrade under the same name and plugin set, not a different catalog", () => {
       const a = { name: "probe-mkt", pluginNames: ["sample-plugin"], version: "1.0.0" };
       const b = { name: "probe-mkt", pluginNames: ["sample-plugin"], version: "2.0.0" };
 
-      expect(marketplaceSourceConflict(reading, "probe-mkt", "/src/B", a, b)).toBeUndefined();
+      expect(
+        marketplaceSourceConflict(reading, "probe-mkt", {
+          requestedSource: "/src/B",
+          registeredIdentity: a,
+          requestedIdentity: b,
+        })
+      ).toBeUndefined();
     });
   });
 });
@@ -128,7 +166,11 @@ describe("marketplaceSourceConflict, at the edges", () => {
     const reading = { location: LOCATION, entries: new Map([["other", "/src"]]) };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/req", IDENTITY_B, IDENTITY_A)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/req",
+        registeredIdentity: IDENTITY_B,
+        requestedIdentity: IDENTITY_A,
+      })
     ).toBeUndefined();
   });
 
@@ -137,7 +179,11 @@ describe("marketplaceSourceConflict, at the edges", () => {
     const wider = { name: "probe-mkt", pluginNames: ["sample-plugin", "zeta-plugin"] };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/req", IDENTITY_A, wider)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/req",
+        registeredIdentity: IDENTITY_A,
+        requestedIdentity: wider,
+      })
     ).toBeDefined();
   });
 
@@ -147,7 +193,11 @@ describe("marketplaceSourceConflict, at the edges", () => {
     const ordered = { name: "probe-mkt", pluginNames: ["a", "b"] };
 
     expect(
-      marketplaceSourceConflict(reading, "probe-mkt", "/req", unordered, ordered)
+      marketplaceSourceConflict(reading, "probe-mkt", {
+        requestedSource: "/req",
+        registeredIdentity: unordered,
+        requestedIdentity: ordered,
+      })
     ).toBeUndefined();
   });
 });

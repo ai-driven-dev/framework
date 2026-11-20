@@ -1,11 +1,23 @@
+import type { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
+import type { dropSourceClaim } from "../../contexts/machine-claims/application/drop-source-claim.js";
 import type { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
-import type { ReleaseClaims } from "../../contexts/machine-claims/application/release-claims.js";
+import type { readMachineClaims } from "../../contexts/machine-claims/application/read-machine-claims.js";
+import type { readSharedSourceClaim } from "../../contexts/machine-claims/application/read-shared-source-claim.js";
+import type { Lock } from "../../shared/ports/lock.js";
 
-/** What a clean asks of the machine record: who still references the shared source, and which
- * cache a manifest names is proven to sit inside its owner. Plus the name that shared source is
- * registered under, which the distribution owns and composition hands over. */
+/** What a clean asks of the machine record: who still references the shared source, this
+ * project's own claim on it and how it is released, and which cache a manifest names is proven to
+ * sit inside its owner. Plus the name that shared source is registered under, which the
+ * distribution owns and composition hands over. */
 export interface CleanClaims {
-  readonly release: ReleaseClaims;
+  readonly referencingProjects?: { listAllReferencingProjects(): Promise<readonly string[]> };
+  readonly sharedClaim: ReturnType<typeof readSharedSourceClaim>;
+  readonly dropClaim: ReturnType<typeof dropSourceClaim>;
+  /** Releases the project's native-registration refs, then each user plugin, from the machine
+   * manifest. */
+  readonly detach: ReturnType<typeof detachProjectClaims>;
+  readonly machineClaims: ReturnType<typeof readMachineClaims>;
+  readonly exclusive: Lock;
   readonly purgeCache: PurgeDeclaredCache;
   readonly frameworkMarketplaceName: string;
 }

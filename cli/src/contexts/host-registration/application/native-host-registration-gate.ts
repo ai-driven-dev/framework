@@ -51,11 +51,8 @@ export class NativeHostRegistrationGate {
     );
     const owned = new Set((registrations.pluginClaims ?? []).map((claim) => claim.ref));
     const hostRefs = await assertNoForeignNativeRefs(
-      reader,
-      registration.hostName,
-      owned,
-      projectRoot,
-      tool
+      { reader, tool },
+      { hostName: registration.hostName, ownedRefs: owned, projectRoot }
     );
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
       isRefOnHost(claim.ref, registration.hostName)

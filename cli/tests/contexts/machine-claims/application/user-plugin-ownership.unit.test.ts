@@ -23,7 +23,13 @@ describe("one project's canonical user plugin claim", () => {
   it("detaches only A's realpath, retaining B and the owned plugin bytes/record", async () => {
     const f = fixture();
     f.fs.setSymlink("/link-to-A", "/A");
-    await detachUserPlugin(f.repo, f.fs, TOOL.cursor, "sample-plugin", "/link-to-A");
+    await detachUserPlugin({
+      repo: f.repo,
+      fs: f.fs,
+      toolId: TOOL.cursor,
+      name: "sample-plugin",
+      projectRoot: "/link-to-A",
+    });
     expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
     expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
     expect(f.repo.saveCount).toBe(1);
@@ -31,7 +37,13 @@ describe("one project's canonical user plugin claim", () => {
 
   it("does not drop B or save for an unrelated project", async () => {
     const f = fixture();
-    await detachUserPlugin(f.repo, f.fs, TOOL.cursor, "sample-plugin", "/C");
+    await detachUserPlugin({
+      repo: f.repo,
+      fs: f.fs,
+      toolId: TOOL.cursor,
+      name: "sample-plugin",
+      projectRoot: "/C",
+    });
     expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/A", "/B"]);
     expect(f.repo.saveCount).toBe(0);
   });
@@ -42,7 +54,13 @@ describe("one project's canonical user plugin claim", () => {
       ["project", "sample-plugin"],
     ] as const) {
       const f = fixture(scope);
-      await detachUserPlugin(f.repo, f.fs, TOOL.cursor, name, "/A");
+      await detachUserPlugin({
+        repo: f.repo,
+        fs: f.fs,
+        toolId: TOOL.cursor,
+        name: name,
+        projectRoot: "/A",
+      });
       expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/A", "/B"]);
       expect(f.repo.saveCount).toBe(0);
     }
@@ -50,9 +68,21 @@ describe("one project's canonical user plugin claim", () => {
 
   it("ignores a missing repo or manifest without inventing ownership", async () => {
     const fs = new InMemoryFileAdapter({}, ["/A", "/B", "/C"]);
-    await detachUserPlugin(undefined, fs, TOOL.cursor, "sample-plugin", "/A");
+    await detachUserPlugin({
+      repo: undefined,
+      fs: fs,
+      toolId: TOOL.cursor,
+      name: "sample-plugin",
+      projectRoot: "/A",
+    });
     const repo = new InMemoryMachineManifestRepository();
-    await detachUserPlugin(repo, fs, TOOL.cursor, "sample-plugin", "/A");
+    await detachUserPlugin({
+      repo: repo,
+      fs: fs,
+      toolId: TOOL.cursor,
+      name: "sample-plugin",
+      projectRoot: "/A",
+    });
     expect(repo.getCurrent()).toBeNull();
     expect(repo.saveCount).toBe(0);
   });
@@ -60,7 +90,13 @@ describe("one project's canonical user plugin claim", () => {
   it("loads the latest machine record under exclusive access before detaching", async () => {
     const f = fixture();
     const locked = loadingOnlyUnderLock(f.repo);
-    await detachUserPlugin(locked, f.fs, TOOL.cursor, "sample-plugin", "/A");
+    await detachUserPlugin({
+      repo: locked,
+      fs: f.fs,
+      toolId: TOOL.cursor,
+      name: "sample-plugin",
+      projectRoot: "/A",
+    });
     expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
   });
 });

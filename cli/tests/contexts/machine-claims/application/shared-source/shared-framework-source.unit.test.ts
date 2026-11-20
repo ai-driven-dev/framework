@@ -23,11 +23,12 @@ describe("recording this project's claim on the shared source", () => {
   it("records nothing when the shared source is not among the listed marketplaces", async () => {
     const recorded: unknown[] = [];
 
-    await source(recorded).recordSharedSourceReference(
-      "/project",
-      [{ name: "aidd-framework", scope: "project" }],
-      REGISTERED_AS_SHARED
-    );
+    await source(recorded).execute({
+      kind: "record-reference",
+      projectRoot: "/project",
+      marketplaces: [{ name: "aidd-framework", scope: "project" }],
+      outcomes: REGISTERED_AS_SHARED,
+    });
 
     expect(recorded).toEqual([]);
   });
@@ -35,11 +36,14 @@ describe("recording this project's claim on the shared source", () => {
   it("records nothing when no host registered the shared source under its own name", async () => {
     const recorded: unknown[] = [];
 
-    await source(recorded).recordSharedSourceReference(
-      "/project",
-      [SHARED],
-      new Map([[TOOL.codex, { buildFailed: false, marketplaces: [{ alias: "another" }] }]])
-    );
+    await source(recorded).execute({
+      kind: "record-reference",
+      projectRoot: "/project",
+      marketplaces: [SHARED],
+      outcomes: new Map([
+        [TOOL.codex, { buildFailed: false, marketplaces: [{ alias: "another" }] }],
+      ]),
+    });
 
     expect(recorded).toEqual([]);
   });

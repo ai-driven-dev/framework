@@ -36,11 +36,11 @@ describe("current native marketplace source proof", () => {
     async (toolId) => {
       const refs = new Map([["foreign@real-catalog", { enabled: false }]]);
       const result = assertNoForeignNativeRefs(
-        { read: async () => ({ location: "host plugins", refs }) },
-        "real-catalog",
-        new Set(),
-        "/project-b",
-        toolId && registeredTools().aiProfile(toolId)
+        {
+          reader: { read: async () => ({ location: "host plugins", refs }) },
+          tool: toolId && registeredTools().aiProfile(toolId),
+        },
+        { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
       );
       if (toolId === "copilot") await expect(result).resolves.toEqual(refs);
       else await expect(result).rejects.toThrow(/foreign host ref/);
@@ -99,11 +99,12 @@ describe("current native marketplace source proof", () => {
     };
     await expect(
       assertNoForeignNativeRefs(
-        host,
-        "real-catalog",
-        new Set(["mine@real-catalog"]),
-        "/project-b",
-        registeredTools().aiProfile(TOOL.claude)
+        { reader: host, tool: registeredTools().aiProfile(TOOL.claude) },
+        {
+          hostName: "real-catalog",
+          ownedRefs: new Set(["mine@real-catalog"]),
+          projectRoot: "/project-b",
+        }
       )
     ).rejects.toThrow(/foreign host ref 'foreign@real-catalog'/);
     expect(requestedRoot).toBe("/project-b");
@@ -112,42 +113,39 @@ describe("current native marketplace source proof", () => {
   it("fails closed on unreadable or missing host plugin readers, but accepts explicit absence", async () => {
     await expect(
       assertNoForeignNativeRefs(
-        undefined,
-        "real-catalog",
-        new Set(),
-        "/project-b",
-        registeredTools().aiProfile(TOOL.claude)
+        { reader: undefined, tool: registeredTools().aiProfile(TOOL.claude) },
+        { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
       )
     ).rejects.toThrow(/reader unavailable/);
     await expect(
       assertNoForeignNativeRefs(
-        { read: async () => ({ location: "host plugins", unreadable: "EACCES" }) },
-        "real-catalog",
-        new Set(),
-        "/project-b",
-        registeredTools().aiProfile(TOOL.claude)
+        {
+          reader: { read: async () => ({ location: "host plugins", unreadable: "EACCES" }) },
+          tool: registeredTools().aiProfile(TOOL.claude),
+        },
+        { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
       )
     ).rejects.toThrow(/EACCES/);
     await expect(
       assertNoForeignNativeRefs(
         {
-          read: async () => {
-            throw new Error("EACCES");
+          reader: {
+            read: async () => {
+              throw new Error("EACCES");
+            },
           },
+          tool: registeredTools().aiProfile(TOOL.claude),
         },
-        "real-catalog",
-        new Set(),
-        "/project-b",
-        registeredTools().aiProfile(TOOL.claude)
+        { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
       )
     ).rejects.toThrow(/real-catalog.*host plugin registry read failed.*EACCES/);
     expect(
       await assertNoForeignNativeRefs(
-        { read: async () => ({ location: "host plugins", absent: true }) },
-        "real-catalog",
-        new Set(),
-        "/project-b",
-        registeredTools().aiProfile(TOOL.claude)
+        {
+          reader: { read: async () => ({ location: "host plugins", absent: true }) },
+          tool: registeredTools().aiProfile(TOOL.claude),
+        },
+        { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
       )
     ).toEqual(new Map());
   });
@@ -159,11 +157,15 @@ describe("current native marketplace source proof", () => {
     ]);
     expect(
       await assertNoForeignNativeRefs(
-        { read: async () => ({ location: "host plugins", refs }) },
-        "real-catalog",
-        new Set(["mine@real-catalog"]),
-        "/project-b",
-        registeredTools().aiProfile(TOOL.claude)
+        {
+          reader: { read: async () => ({ location: "host plugins", refs }) },
+          tool: registeredTools().aiProfile(TOOL.claude),
+        },
+        {
+          hostName: "real-catalog",
+          ownedRefs: new Set(["mine@real-catalog"]),
+          projectRoot: "/project-b",
+        }
       )
     ).toEqual(refs);
   });

@@ -58,9 +58,12 @@ export class CleanProject {
       tools: plan.tools,
       totalFileCount: plan.totalFileCount,
       nativeRegistrations: plan.nativeRegistrations,
-      sharedSourceOtherProjects: await this.claims.release.otherProjects(projectRoot, () =>
-        this.registered(projectRoot)
-      ),
+      sharedSourceOtherProjects: (
+        await this.claims.sharedClaim({
+          projectRoot,
+          list: () => this.registered(projectRoot),
+        })
+      )?.otherProjects,
     };
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
@@ -73,9 +76,10 @@ export class CleanProject {
     await this.cleanProject.assertRemovable(projectRoot, options.force);
     // Read the other projects before host cleanup, but keep this project's claim until every
     // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
-    const sharedSource = await this.claims.release.claim(projectRoot, () =>
-      this.registered(projectRoot)
-    );
+    const sharedSource = await this.claims.sharedClaim({
+      projectRoot,
+      list: () => this.registered(projectRoot),
+    });
     // Undoing a host's own registration must happen before any of the rest: the tool's CLI
     // resolves the marketplace name against the built tree under `.aidd/cache/`, which the
     // removal of AIDD's state deletes next, and a host may refuse to unregister a source that is
@@ -87,8 +91,8 @@ export class CleanProject {
     });
     const fileCount = await this.cleanProject.remove(projectRoot, options.force);
     // One project-level decrement, only after the local projection has been cleaned successfully.
-    await this.claims.release.drop(sharedSource?.resolvedRoot);
-    await this.claims.release.detach(projectRoot, plan.userPlugins, plan.nativeRefs);
+    await this.claims.dropClaim(sharedSource?.resolvedRoot);
+    await this.claims.detach(projectRoot, plan.userPlugins, plan.nativeRefs);
     return { dryRun: false, manifestFound: true, preview, fileCount };
   }
 
@@ -110,8 +114,8 @@ export class CleanProject {
       marketplaceScopes,
       sharedSource: undefined,
       frameworkAlias: this.claims.frameworkMarketplaceName,
-      machineClaims: (toolId) => this.claims.release.machineClaims(toolId),
-      exclusive: (action) => this.claims.release.exclusive(action),
+      machineClaims: (toolId) => this.claims.machineClaims(toolId),
+      exclusive: (action) => this.claims.exclusive.withExclusiveAccess(action),
       resolveCacheCandidate: (cacheRoot, segments, label) =>
         this.claims.purgeCache.resolveCandidate(cacheRoot, segments, label),
     };

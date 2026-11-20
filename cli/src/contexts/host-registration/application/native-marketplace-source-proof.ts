@@ -67,12 +67,18 @@ export async function inspectNativeMarketplaceSource(
 
 /** A source may be AIDD-owned while the host still carries somebody else's plugin from it. */
 export async function assertNoForeignNativeRefs(
-  reader: HostPluginRegistry | undefined,
-  hostName: string,
-  ownedRefs: ReadonlySet<string>,
-  projectRoot: string,
-  tool: HostRefCounter | undefined
+  host: {
+    readonly reader: HostPluginRegistry | undefined;
+    readonly tool: HostRefCounter | undefined;
+  },
+  claim: {
+    readonly hostName: string;
+    readonly ownedRefs: ReadonlySet<string>;
+    readonly projectRoot: string;
+  }
 ): Promise<ReadonlyMap<string, HostPluginRegistryEntry>> {
+  const { reader, tool } = host;
+  const { hostName, ownedRefs, projectRoot } = claim;
   if (reader === undefined)
     throw new Error(
       `Catalogue '${hostName}': host plugin registry reader unavailable; no host mutation made.`

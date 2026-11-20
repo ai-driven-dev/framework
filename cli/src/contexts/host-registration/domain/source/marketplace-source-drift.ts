@@ -35,67 +35,34 @@ export function marketplaceSourceDrift(
   requestedSource: string,
   context: MarketplaceSourceDriftContext
 ): MarketplaceSourceDrift | undefined {
-  const requested = parseUserBuiltMarketplaceDir(
-    context.userCacheRoot,
-    requestedSource,
-    context.platform
-  );
-  if (requested === undefined) return undefined;
+  const { userCacheRoot, projectRoot, platform } = context;
+  const isOurs = (location: { readonly marketplaceName: string; readonly target: string }) =>
+    samePathSegment(location.marketplaceName, context.marketplaceName, platform) &&
+    samePathSegment(location.target, context.target, platform);
+  const requested = parseUserBuiltMarketplaceDir(userCacheRoot, requestedSource, platform);
+  if (requested === undefined || !isOurs(requested)) return undefined;
+  const shared = parseUserBuiltMarketplaceDir(userCacheRoot, registeredSource, platform);
+  if (shared !== undefined)
+    return isOurs(shared) ? versionBehind(shared.version, requested.version) : undefined;
+  const project = parseBuiltMarketplaceDir(projectRoot, registeredSource, platform);
+  if (project !== undefined && isOurs(project)) return { kind: "unmigrated-project-source" };
+  const foreign = parseBuiltMarketplaceDirAtAnyRoot(registeredSource, platform);
   if (
-    !samePathSegment(requested.marketplaceName, context.marketplaceName, context.platform) ||
-    !samePathSegment(requested.target, context.target, context.platform)
-  ) {
-    return undefined;
-  }
-  const registeredShared = parseUserBuiltMarketplaceDir(
-    context.userCacheRoot,
-    registeredSource,
-    context.platform
-  );
-  if (registeredShared !== undefined) {
-    if (
-      !samePathSegment(
-        registeredShared.marketplaceName,
-        context.marketplaceName,
-        context.platform
-      ) ||
-      !samePathSegment(registeredShared.target, context.target, context.platform)
-    ) {
-      return undefined;
-    }
-    if (!isSemver(registeredShared.version) || !isSemver(requested.version)) return undefined;
-    if (compareSemver(registeredShared.version, requested.version) <= 0) return undefined;
-    return {
-      kind: "version-behind",
-      registeredVersion: registeredShared.version,
-      requestedVersion: requested.version,
-    };
-  }
-  const registeredProject = parseBuiltMarketplaceDir(
-    context.projectRoot,
-    registeredSource,
-    context.platform
-  );
-  if (
-    registeredProject !== undefined &&
-    samePathSegment(registeredProject.marketplaceName, context.marketplaceName, context.platform) &&
-    samePathSegment(registeredProject.target, context.target, context.platform)
-  ) {
-    return { kind: "unmigrated-project-source" };
-  }
-  const registeredForeign = parseBuiltMarketplaceDirAtAnyRoot(registeredSource, context.platform);
-  if (
-    registeredForeign !== undefined &&
-    samePathSegment(registeredForeign.marketplaceName, context.marketplaceName, context.platform) &&
-    samePathSegment(registeredForeign.target, context.target, context.platform) &&
-    !samePathSegment(registeredForeign.projectRoot, context.projectRoot, context.platform)
-  ) {
-    return {
-      kind: "unmigrated-foreign-project-source",
-      projectRoot: registeredForeign.projectRoot,
-    };
-  }
+    foreign !== undefined &&
+    isOurs(foreign) &&
+    !samePathSegment(foreign.projectRoot, projectRoot, platform)
+  )
+    return { kind: "unmigrated-foreign-project-source", projectRoot: foreign.projectRoot };
   return undefined;
+}
+
+function versionBehind(
+  registeredVersion: string,
+  requestedVersion: string
+): MarketplaceSourceDrift | undefined {
+  if (!isSemver(registeredVersion) || !isSemver(requestedVersion)) return undefined;
+  if (compareSemver(registeredVersion, requestedVersion) <= 0) return undefined;
+  return { kind: "version-behind", registeredVersion, requestedVersion };
 }
 
 /** The versions a skipped registration names: the host already follows `registeredVersion`, newer

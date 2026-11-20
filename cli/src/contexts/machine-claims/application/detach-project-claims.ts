@@ -15,9 +15,14 @@ export function detachProjectClaims(
     userPlugins: readonly { toolId: AiToolId; name: string }[],
     nativeRefs: ReadonlyMap<ToolId, readonly string[]>
   ): Promise<void> => {
-    await detachNativePluginRefs(userManifestRepo, fs, projectRoot, nativeRefs);
+    await detachNativePluginRefs({
+      repo: userManifestRepo,
+      fs,
+      projectRoot,
+      refsByTool: nativeRefs,
+    });
     for (const { toolId, name } of userPlugins) {
-      await detachUserPlugin(userManifestRepo, fs, toolId, name, projectRoot);
+      await detachUserPlugin({ repo: userManifestRepo, fs, toolId, name, projectRoot });
     }
   };
 }

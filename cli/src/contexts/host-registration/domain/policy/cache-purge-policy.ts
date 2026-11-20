@@ -37,11 +37,10 @@ export function judgeEmptiness(label: string, candidate: string, entryCount: num
  * why.
  */
 export function judgeRegistryClearance(
-  binary: string,
-  hostName: string,
-  candidate: string,
+  target: { readonly binary: string; readonly hostName: string; readonly candidate: string },
   reading: HostMarketplaceRegistryReading
 ): PurgeVerdict {
+  const { binary, hostName, candidate } = target;
   if (reading.absent === true) return PURGE;
   if (reading.entries === undefined)
     return keep(

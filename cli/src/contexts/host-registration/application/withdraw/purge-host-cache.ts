@@ -135,7 +135,10 @@ async function purgeMarketplaceCache(
     return;
   }
   if (deps.reader !== undefined) {
-    const verdict = judgeRegistryClearance(binary, hostName, candidate, await deps.reader.read());
+    const verdict = judgeRegistryClearance(
+      { binary, hostName, candidate },
+      await deps.reader.read()
+    );
     await deleteWhenJudged(deps, verdict, target);
     return;
   }

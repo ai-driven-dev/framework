@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveUninstallScopeOrder } from "../../../../src/contexts/host-registration/domain/uninstall-scope-order.js";
-import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import type { Scope } from "../../../../src/shared/domain/scope.js";
-import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.fake.js";
+import { resolveUninstallScopeOrder } from "../../../../../src/contexts/host-registration/application/withdraw/uninstall-scope-order.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
 
 const REF = "aidd-telemetry@aidd-framework";
 const PROJECT_ROOT = "/test-project";

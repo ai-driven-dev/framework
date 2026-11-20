@@ -4,7 +4,6 @@ import {
   type RegistrationRecord,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
-import { resolveUninstallScopeOrder } from "../../domain/uninstall-scope-order.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import {
   assertNoForeignNativeRefs,
@@ -17,6 +16,7 @@ import {
   survivingCachePaths,
   uninstallAtFirstAcceptedScope,
 } from "./host-call.js";
+import { resolveUninstallScopeOrder } from "./uninstall-scope-order.js";
 import type {
   ProjectCleanFacts,
   ProjectRegistrationWithdrawal,
@@ -100,11 +100,15 @@ async function uninstallProjectRef(run: ProjectToolRun, ref: string): Promise<vo
   const reader = deps.ports.pluginRegistries.get(withdrawal.tool.toolId);
   try {
     await assertNoForeignNativeRefs(
-      reader,
-      sourceRegistration.hostName,
-      new Set([...registrations.pluginRefs, ...(await machineRefs(facts, withdrawal.tool.toolId))]),
-      facts.projectRoot,
-      withdrawal.tool
+      { reader, tool: withdrawal.tool },
+      {
+        hostName: sourceRegistration.hostName,
+        ownedRefs: new Set([
+          ...registrations.pluginRefs,
+          ...(await machineRefs(facts, withdrawal.tool.toolId)),
+        ]),
+        projectRoot: facts.projectRoot,
+      }
     );
   } catch (error) {
     deps.logger.warn(`${registrations.binary}: '${ref}' left enabled; ${String(error)}`);

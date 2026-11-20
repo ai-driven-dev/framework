@@ -12,8 +12,8 @@ export function removalClaims(
 ) {
   return {
     detachNativeRefs: (projectRoot: string, refsByTool: ReadonlyMap<ToolId, readonly string[]>) =>
-      detachNativePluginRefs(repo, fs, projectRoot, refsByTool),
+      detachNativePluginRefs({ repo, fs, projectRoot, refsByTool }),
     detachUserPlugin: (toolId: AiToolId, name: string, projectRoot: string) =>
-      detachUserPlugin(repo, fs, toolId, name, projectRoot),
+      detachUserPlugin({ repo, fs, toolId, name, projectRoot }),
   };
 }

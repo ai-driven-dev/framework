@@ -38,17 +38,17 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
     });
 
     const check = await hostMarketplaceSourceConflict(
-      fs,
-      registeredTools().profile(TOOL.claude),
-      reader,
-      requestedSource,
-      { name: NAME, pluginNames: [] },
+      { fs, tool: registeredTools().profile(TOOL.claude), reader },
       {
-        userCacheRoot: rawUserCacheRoot,
-        projectRoot: "/project",
-        marketplaceName: NAME,
-        target: "claude",
-        platform: process.platform,
+        requestedSource,
+        requestedIdentity: { name: NAME, pluginNames: [] },
+        driftContext: {
+          userCacheRoot: rawUserCacheRoot,
+          projectRoot: "/project",
+          marketplaceName: NAME,
+          target: "claude",
+          platform: process.platform,
+        },
       }
     );
 
@@ -72,17 +72,17 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
     });
 
     const check = await hostMarketplaceSourceConflict(
-      fs,
-      registeredTools().profile(TOOL.claude),
-      reader,
-      requestedSource,
-      { name: NAME, pluginNames: [] },
+      { fs, tool: registeredTools().profile(TOOL.claude), reader },
       {
-        userCacheRoot,
-        projectRoot: "/project",
-        marketplaceName: NAME,
-        target: "claude",
-        platform: process.platform,
+        requestedSource,
+        requestedIdentity: { name: NAME, pluginNames: [] },
+        driftContext: {
+          userCacheRoot,
+          projectRoot: "/project",
+          marketplaceName: NAME,
+          target: "claude",
+          platform: process.platform,
+        },
       }
     );
 
@@ -110,13 +110,13 @@ describe("hostMarketplaceSourceConflict — without a drift context", () => {
     });
 
     const check = await hostMarketplaceSourceConflict(
-      fs,
-      registeredTools().profile(TOOL.claude),
-      reader,
-      "/requested",
+      { fs, tool: registeredTools().profile(TOOL.claude), reader },
       {
-        name: NAME,
-        pluginNames: ["aidd-dev", "aidd-vcs"],
+        requestedSource: "/requested",
+        requestedIdentity: {
+          name: NAME,
+          pluginNames: ["aidd-dev", "aidd-vcs"],
+        },
       }
     );
 

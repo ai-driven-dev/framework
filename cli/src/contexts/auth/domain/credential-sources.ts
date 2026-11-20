@@ -1,15 +1,19 @@
-import type { Environment } from "../../../shared/ports/environment.js";
 import type { AuthLevel } from "../contract/credential.js";
 import { type CredentialRecord, LEVELS_BY_PRECEDENCE } from "./credential-record.js";
 
 /** The variable that hands a token for a run without storing one. */
 export const TOKEN_VARIABLE = "AIDD_TOKEN";
 
+/** The variables a run was started with, as far as a token is read from them. */
+interface TokenEnvironment {
+  get(name: string): string | undefined;
+}
+
 /** The tokens a run was handed rather than read from a record. */
 export interface SuppliedTokens {
   /** A token the command line carried: composed in, never published to the environment. */
   readonly commandLine?: string;
-  readonly environment: Environment;
+  readonly environment: TokenEnvironment;
 }
 
 type CommandLineSource = { readonly kind: "command-line"; readonly token: string };
