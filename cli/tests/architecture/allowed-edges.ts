@@ -29,7 +29,7 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
  * The contexts whose interior is held by Biome's folder groups instead of the public-surface
  * list in `context-boundary.arch.test.ts`: they publish `contract/` and `application/` and
  * keep the three folders below to themselves and the composition root. The list is data for
- * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
+ * `generate-biome-boundaries.mjs`, which writes the groups every importer must carry.
  */
 export const HELD_BY_BIOME: readonly string[] = [
   "auth",

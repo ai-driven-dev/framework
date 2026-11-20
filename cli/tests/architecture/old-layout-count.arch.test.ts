@@ -1,6 +1,6 @@
 /**
  * No `src/` area and no `tests/` area may be recreated under the name of a folder already
- * gone. A context recreated under `src/contexts/` is caught by `biome-context-parity`, which
+ * gone. A context recreated under `src/contexts/` is caught by `edge-table`, which
  * reads the contexts on disk against the biome overrides.
  */
 import { readdirSync } from "node:fs";
