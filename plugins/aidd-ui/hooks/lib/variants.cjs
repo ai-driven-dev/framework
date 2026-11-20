@@ -165,7 +165,7 @@ function dressedOf(html, { background, text, accent, font, sizes }) {
 }
 
 /** A frame of a document at a size, scaled by the script to the width of its column. A frame with no label has no caption. */
-const frameOf = ({ variant, path, doc, label, size: [size, width, height] }) => `<figure class="frame">${label ? `<figcaption>${escaped(label)}</figcaption>` : ""}<div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${path} ${size}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
+const frameOf = ({ variant, title, doc, label, size: [size, width, height] }) => `<figure class="frame">${label ? `<figcaption>${escaped(label)}</figcaption>` : ""}<div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${title}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
 
 /** A render in one mobile frame, whole: the script of the bar above the columns picks its state and its size. It names the
  * states the render holds, and keeps a note, hidden until the chosen state is one it lacks. */
@@ -173,7 +173,7 @@ function framesOf({ variant, file, tokens, labels }) {
   const doc = inlined(file.text, tokens);
   const named = statesOf(file.text);
   const own = named.length ? ` data-states="${escaped(named.join(" "))}"` : "";
-  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}><h3>${escaped(fileTitleOf(variant, file))}</h3>${frameOf({ variant, path: file.path, doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
+  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}><h3>${escaped(fileTitleOf(variant, file))}</h3>${frameOf({ variant, title: fileTitleOf(variant, file), doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
 }
 
 const DESKTOP = SIZES.find(([size]) => size === "desktop");
@@ -184,7 +184,7 @@ const MOBILE = SIZES.find(([size]) => size === "mobile");
 function screenOf({ variant, docs, tokens, labels }) {
   const [first] = docs;
   const kept = docs.map((each) => `<template class="screen-doc" data-path="${escaped(each.path)}" data-doc="${escaped(inlined(each.text, tokens))}"></template>`).join("");
-  return `<div class="file screen" data-path="${escaped(first.path)}">${frameOf({ variant, path: first.path, doc: inlined(first.text, tokens), label: labels.mobile, size: MOBILE })}${kept}</div>`;
+  return `<div class="file screen" data-path="${escaped(first.path)}">${frameOf({ variant, title: fileTitleOf(variant, first), doc: inlined(first.text, tokens), label: labels.mobile, size: MOBILE })}${kept}</div>`;
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */

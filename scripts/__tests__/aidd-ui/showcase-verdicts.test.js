@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 afterEach(() => removeTmp(tmp));
 
-const pagesOf = (lang = "en") => showcaseOf({ project: load(tmp), problems: [], tokens: null, captures: new Set(), lang });
+const pagesOf = (lang = "en") => showcaseOf({ project: load(tmp), tokens: null, captures: new Set(), lang });
 const reviewOf = (html) => html.match(/<section class="review"[\s\S]*?<\/section>/)[0];
 const barOf = (html) => reviewOf(html).match(/<div class="verdict-bar">[\s\S]*?<\/div>/)?.[0];
 
@@ -45,7 +45,7 @@ describe("the verdicts beside the state tabs", () => {
       assert.match(html, new RegExp(`<section class="decisions" id="decisions" hidden data-copy="${LABELS[lang].toCopy.replace("{", "\\{").replace("}", "\\}")}" data-words="[^"]*"><h3>${LABELS[lang].decisions}</h3><ul></ul></section>`), lang);
     }
     const bare = { ...load(tmp), records: [] };
-    assert.match(showcaseOf({ project: bare, problems: [], tokens: null, captures: new Set(), lang: "fr" })["index.html"], new RegExp(`<p class="nothing">${LABELS.fr.nothing}</p>`));
+    assert.match(showcaseOf({ project: bare, tokens: null, captures: new Set(), lang: "fr" })["index.html"], new RegExp(`<p class="nothing">${LABELS.fr.nothing}</p>`));
     const home = JSON.parse(pagesOf("fr")["onboarding.html"].match(/id="review-records">([^<]*)</)[1]).find((each) => each.record === "home");
     assert.equal(typeof home.title, "string");
     assert.ok(home.states.some((each) => each.state === "default" && each.name === "par défaut"));

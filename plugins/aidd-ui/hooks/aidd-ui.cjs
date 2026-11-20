@@ -221,7 +221,7 @@ function writeShowcase(args) {
     const lang = languageOf(values[LANG_FLAG]);
     const stylesheet = path.join(root, tokens.cssFileOf(project));
     const sets = drafts.setsOf(root);
-    const pages = showcaseOf({ project, problems: problemsOf(project), tokens: fs.existsSync(stylesheet) ? fs.readFileSync(stylesheet, "utf8") : null, captures: capturesOf(root), lang, sets });
+    const pages = showcaseOf({ project, tokens: fs.existsSync(stylesheet) ? fs.readFileSync(stylesheet, "utf8") : null, captures: capturesOf(root), lang, sets });
     const dir = path.join(root, UI_DIR, SHOWCASE_DIR);
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir, { recursive: true });

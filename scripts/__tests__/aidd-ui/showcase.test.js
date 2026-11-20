@@ -27,7 +27,7 @@ beforeEach(() => {
 afterEach(() => removeTmp(tmp));
 
 const read = (name) => fs.readFileSync(path.join(tmp, name), "utf8");
-const pagesOf = (options = {}) => showcaseOf({ project: load(tmp), problems: [], tokens: null, captures: new Set(), lang: "en", ...options });
+const pagesOf = (options = {}) => showcaseOf({ project: load(tmp), tokens: null, captures: new Set(), lang: "en", ...options });
 const written = (...args) => {
   const run = engine("showcase", "--root", tmp, ...args);
   return { code: run.status, out: run.stdout, err: run.stderr };
@@ -182,7 +182,6 @@ describe("aidd-ui showcase", () => {
       const home = pagesOf()["home.html"];
       assert.deepEqual(home.match(/<h1[ >][^<]*<\/h1>/g), ["<h1>Home</h1>"]);
       assert.match(headerOf(home), /<div class="stamp"><span class="chip" data-status="validated">validated<\/span><span class="version">v1<\/span><\/div>/);
-      assert.match(headerOf(home), /<div class="chips"><span class="chip" data-key="route">/);
       assert.doesNotMatch(home, /data-key="id"|data-key="kind"|data-key="version"/);
       assert.doesNotMatch(headerOf(home), /class="lede"/);
       assert.match(home, /<title>Home<\/title>/);
@@ -197,11 +196,10 @@ describe("aidd-ui showcase", () => {
       assert.match(page, /<p>Kept below\.<\/p>/);
     });
 
-    it("shows the code links and the route of a screen as chips", () => {
+    it("leaves the route and the code links of a screen to its record, off the page", () => {
       const home = pagesOf()["home.html"];
-      assert.match(home, /<span class="chip" data-key="route"><span class="key">route<\/span>\/<\/span>/);
-      assert.ok(home.includes('data-key="code"'));
-      assert.ok(home.includes("src/ui/HomePage.tsx#HomePage@1"));
+      assert.doesNotMatch(home, /data-key="route"|data-key="code"|class="chips"/);
+      assert.ok(!home.includes("src/ui/HomePage.tsx"));
     });
 
     it("renders each state of a record in a frame that holds the tokens", () => {
@@ -669,9 +667,9 @@ describe("aidd-ui showcase", () => {
       assert.match(articleOf(home, "default"), /<figure class="capture" data-file="screens\/home\.default@1\.png"><img src="\.\.\/screens\/home\.default@1\.png"/);
     });
 
-    it("names the path to save when the capture is missing", () => {
+    it("says the capture is missing without its path, kept for the script", () => {
       const article = articleOf(pagesOf({ captures: new Set(["screens/home.default@1.png"]) })["home.html"], "empty");
-      assert.match(article, /<div class="capture missing" data-file="screens\/home\.empty@1\.png">No capture. Save it at screens\/home\.empty@1\.png<\/div>/);
+      assert.match(article, /<div class="capture missing" data-file="screens\/home\.empty@1\.png">No capture of the app yet<\/div>/);
       assert.doesNotMatch(article, /<img /);
     });
 
@@ -693,27 +691,14 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(pages["search-flow.html"], /class="capture/);
     });
 
-    it("holds the engine checks of the record and of its render, and no other record's", () => {
-      const problems = [
-        { rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "home record problem", fix: "f" },
-        { rule: "V2", severity: "error", file: `${UI}/screens/home.html`, message: "home render problem", fix: "f" },
-        { rule: "V3", severity: "error", file: `${UI}/components/button.md`, message: "button problem", fix: "f" },
-      ];
-      const pages = pagesOf({ problems });
-      assert.ok(pages["home.html"].includes("home record problem") && pages["home.html"].includes("home render problem"));
-      assert.ok(!pages["home.html"].includes("button problem"));
-      assert.ok(pages["button.html"].includes("button problem") && !pages["button.html"].includes("home record problem"));
-      assert.match(pages["home.html"], /<li data-rule="V1">/);
-    });
-
     describe("the order of a record page", () => {
       const problems = [{ rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "m", fix: "f" }];
-      const positions = (html) => ["<section class=\"review\"", "<article class=\"doc\"", "<section class=\"appears\"", "<details class=\"checks\""].map((marker) => html.indexOf(marker));
+      const positions = (html) => ["<section class=\"review\"", "<article class=\"doc\"", "<section class=\"appears\""].map((marker) => html.indexOf(marker));
 
-      it("puts the review, then the prose, then where it appears, then the checks for developers last", () => {
+      it("puts the review, then the prose, then where it appears", () => {
         for (const id of ["button", "home"]) {
           const at = positions(pagesOf({ problems: [{ ...problems[0], file: `${UI}/${id === "home" ? "screens" : "components"}/${id}.md` }] })[`${id}.html`]);
-          assert.ok(at.every((place) => place >= 0), `${id} holds all four: ${at}`);
+          assert.ok(at.every((place) => place >= 0), `${id} holds all three: ${at}`);
           assert.deepEqual([...at].sort((a, b) => a - b), at, id);
         }
       });
@@ -727,15 +712,11 @@ describe("aidd-ui showcase", () => {
       });
     });
 
-    it("folds the engine checks into a closed block named for developers, with their count", () => {
-      const problems = [
-        { rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "home record problem", fix: "f" },
-        { rule: "V2", severity: "error", file: `${UI}/screens/home.html`, message: "home render problem", fix: "f" },
-      ];
-      const block = (html) => html.match(/<details class="checks"[^>]*>[\s\S]*?<\/details>/)[0];
-      assert.match(block(pagesOf({ problems })["home.html"]), /^<details class="checks"><summary>For developers \(2\)<\/summary>/);
-      assert.match(block(pagesOf({ problems, lang: "fr" })["home.html"]), /^<details class="checks"><summary>Pour les d\u00e9veloppeurs \(2\)<\/summary>/);
-      assert.doesNotMatch(pagesOf({ problems })["button.html"], /class="checks"/);
+    it("shows none of the engine checks, which validate reports", () => {
+      const problems = [{ rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "home record problem", fix: "f" }];
+      const home = pagesOf({ problems })["home.html"];
+      assert.ok(!home.includes("home record problem"));
+      assert.doesNotMatch(home, /class="checks"|data-rule=/);
     });
 
     it("shows what a record uses by title, not by id", () => {
@@ -752,16 +733,6 @@ describe("aidd-ui showcase", () => {
       assert.deepEqual(headings(pagesOf()["button.html"]).slice(-4), ["Usage", "Keyboard", "Breakpoints", "Something else"]);
       assert.deepEqual(headings(pagesOf({ lang: "fr" })["button.html"]).slice(-4), ["Utilisation", "Clavier", "Points de rupture", "Something else"]);
       assert.ok(read(`${UI}/components/button.md`).includes("## Usage"));
-    });
-
-    it("leaves the expected-component check out of a page, the engine still reports it", () => {
-      const problems = [
-        { rule: "R18", severity: "warning", file: `${UI}/wireframes/search-flow.md`, message: "expected component", fix: "f" },
-        { rule: "V13", severity: "warning", file: `${UI}/wireframes/search-flow.md`, message: "same markup", fix: "f" },
-      ];
-      const page = pagesOf({ problems })["search-flow.html"];
-      assert.doesNotMatch(page, /data-rule="R18"/);
-      assert.match(page, /data-rule="V13"/);
     });
 
     it("holds the review only on a record with states and a render", () => {
@@ -1148,7 +1119,7 @@ describe("aidd-ui showcase", () => {
       put(tmp, `${UI}/components/button.md`, read(`${UI}/components/button.md`).replace("states: [default, hover, focus, disabled]", "states: [default, hover, focus, disabled, pressed, selected, checked, ghost]"));
       const button = pagesOf({ lang: "fr" })["button.html"];
       const picked = (state) => rowOf(button, "button", state).match(/class="pick"[^>]*>([^<]*)</)[1];
-      assert.deepEqual(["hover", "focus", "disabled", "pressed", "selected", "checked"].map(picked), ["survol", "focus", "d\u00e9sactiv\u00e9", "appuy\u00e9", "s\u00e9lectionn\u00e9", "coch\u00e9"]);
+      assert.deepEqual(["hover", "focus", "disabled", "pressed", "selected", "checked"].map(picked), ["survol", "focus clavier", "d\u00e9sactiv\u00e9", "appuy\u00e9", "s\u00e9lectionn\u00e9", "coch\u00e9"]);
       assert.equal(picked("ghost"), "ghost", "an unknown name as written");
       assert.match(rowOf(pagesOf()["home.html"], "home", "error"), /class="pick"[^>]*>error</);
       assert.equal(copiedOf([{ record: "home", version: 1, verdicts: [{ state: "empty", verdict: "ok", comment: "" }] }]).includes('"state": "empty"'), true);
@@ -1162,10 +1133,9 @@ describe("aidd-ui showcase", () => {
       assert.match(headerOf(pagesOf({ lang: "fr" })["search-flow.html"]), /data-status="odd">odd</);
     });
 
-    it("stamps the status and the version under the title, clear of the review button, and keeps the route and the code below", () => {
+    it("stamps the status and the version under the title, clear of the review button", () => {
       const home = headerOf(pagesOf()["home.html"]);
       assert.match(home, /<\/h1><div class="stamp">/);
-      assert.doesNotMatch(home.match(/<div class="chips">[\s\S]*?<\/div>/)[0], /data-status|class="version"/);
       assert.match(rule(pagesOf()["home.html"], ".head"), /flex-direction: column/);
       assert.doesNotMatch(pagesOf()["home.html"], /\.head \{[^}]*grid-template-columns/);
     });
@@ -1230,12 +1200,12 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(rule(html, ".asset-image img"), /(?<!max-)width: 100%/);
     });
 
-    it("names the path of an asset whose file is missing instead of a broken image", () => {
+    it("says the file of an asset is missing instead of a broken image, its path kept for the script", () => {
       fs.rmSync(path.join(tmp, UI, "assets/icon-search.svg"));
       const html = pagesOf()["icon-search.html"];
       assert.doesNotMatch(html, /<figure class="asset-image"/);
-      assert.match(html, /<div class="asset-image missing" data-file="assets\/icon-search\.svg">No file\. Save it at assets\/icon-search\.svg<\/div>/);
-      assert.match(pagesOf({ lang: "fr" })["icon-search.html"], /Aucun fichier\. Enregistrez-le dans assets\/icon-search\.svg/);
+      assert.match(html, /<div class="asset-image missing" data-file="assets\/icon-search\.svg">No file yet<\/div>/);
+      assert.match(pagesOf({ lang: "fr" })["icon-search.html"], />Pas encore de fichier</);
     });
 
     it("shows no image for an asset file that points outside the design system folder", () => {

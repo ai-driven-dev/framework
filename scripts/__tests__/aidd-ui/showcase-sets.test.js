@@ -33,7 +33,7 @@ const SET = (overrides = {}) => ({
   fingerprint: "f1",
   ...overrides,
 });
-const pagesOf = (sets, options = {}) => showcaseOf({ project: load(tmp), problems: [], tokens: ":root { --accent: #123456; }\n", captures: new Set(), lang: "en", sets, ...options });
+const pagesOf = (sets, options = {}) => showcaseOf({ project: load(tmp), tokens: ":root { --accent: #123456; }\n", captures: new Set(), lang: "en", sets, ...options });
 const groupOf = (html, group) => html.match(new RegExp(`<section data-group="${group}">[\\s\\S]*?</section>`))?.[0];
 const unescaped = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
 const columnsOf = (html) => [...html.matchAll(/<section class="variant" data-variant="([^"]+)">[\s\S]*?<\/section>/g)].map((match) => ({ name: match[1], html: match[0] }));

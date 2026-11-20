@@ -1,5 +1,5 @@
 // The showcase: one static page per record of the design system and a home page, rendered from
-// the project, the engine's problems, the tokens stylesheet and the captures already read. Pure:
+// the project, the tokens stylesheet and the captures already read; the engine's checks stay with validate. Pure:
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const path = require("node:path");
@@ -21,7 +21,6 @@ const WIREFRAMES_SHOWN = 2;
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
 const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
-const EXPECTED_COMPONENT = "R18";
 const FEW_ITEMS = 3; // a drawer holding this many records or fewer opens every group
 const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
 
@@ -77,8 +76,8 @@ const LABELS = {
     revise: "Revise",
     comment: "What should change?",
     outdated: "outdated, v{version}",
-    noCapture: "No capture. Save it at {path}",
-    noAssetFile: "No file. Save it at {path}",
+    noCapture: "No capture of the app yet",
+    noAssetFile: "No file yet",
     capture: "Capture of {state}",
     copy: "Finish and copy",
     copied: "Copied",
@@ -124,8 +123,8 @@ const LABELS = {
     states: "States",
     stateNames: {},
     sections: {},
+    themeNames: {},
     columns: {},
-    checksFolded: "For developers ({count})",
     noRender: "No render",
     statuses: { proposed: "proposed", validated: "validated", deprecated: "deprecated" },
     stepOf: "Step {at} of {count}",
@@ -182,8 +181,8 @@ const LABELS = {
     revise: "À revoir",
     comment: "Que faut-il changer ?",
     outdated: "obsolète, v{version}",
-    noCapture: "Aucune capture. Enregistrez-la dans {path}",
-    noAssetFile: "Aucun fichier. Enregistrez-le dans {path}",
+    noCapture: "Pas encore de capture de l'app",
+    noAssetFile: "Pas encore de fichier",
     capture: "Capture de {state}",
     copy: "Terminer et copier",
     copied: "Copié",
@@ -200,6 +199,7 @@ const LABELS = {
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
     copyHint: "Donnez un avis sur au moins un état.",
     theme: "Thème",
+    themeNames: { light: "clair", dark: "sombre" },
     platform: "Plateforme",
     sides: "Côte à côte",
     combination: "Combinaison",
@@ -227,10 +227,9 @@ const LABELS = {
     forPersona: "Pour",
     persona: "Pour {name}\u202f: {said}",
     states: "États",
-    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché", "no-rights": "sans droits" },
+    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", focus: "focus clavier", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché", "no-rights": "sans droits" },
     columns: { Word: "Mot", Forbidden: "Interdit" },
-    sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", Breakpoints: "Points de rupture", Project: "Projet", Glossary: "Glossaire" },
-    checksFolded: "Pour les développeurs ({count})",
+    sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", "Imposed charter": "Charte imposée", Breakpoints: "Points de rupture", Project: "Projet", Glossary: "Glossaire" },
     noRender: "Aucun rendu",
     statuses: { proposed: "proposé", validated: "validé", deprecated: "déprécié" },
     stepOf: "Étape {at} sur {count}",
@@ -312,7 +311,7 @@ nav summary a.step-name { padding: 0; font-weight: 600; color: inherit; }
 nav .step-mark { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
 nav h2 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s5) 0 var(--s1); padding-left: var(--s5); }
 nav h3 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s3) 0 var(--s1); padding-left: var(--s5); }
-nav ul, .links ul, .checks ul, .appears ul, .drawer ol { list-style: none; margin: 0; padding: 0; }
+nav ul, .links ul, .appears ul, .drawer ol { list-style: none; margin: 0; padding: 0; }
 nav li, nav .home { display: flex; align-items: center; gap: var(--s2); border-radius: var(--r2); }
 nav li a, nav .home a { flex: 1; min-width: 0; padding: 5px var(--s2) 5px var(--s5); color: var(--muted); font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 nav li:hover, nav .home:hover { background: var(--sunken); }
@@ -325,11 +324,8 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .head h1, main > h1 { margin: 0; font-size: var(--t-2xl); line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; }
 .lede { margin: 0; color: var(--text); font-size: var(--t-lg); max-width: 72ch; }
 .head .persona { margin: 0; color: #4a4a45; max-width: 72ch; }
-.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: var(--s1) 0 0; }
 .version { color: var(--faint); font-size: var(--t-sm); font-weight: 500; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0 10px; line-height: 22px; font-size: var(--t-sm); color: var(--text); }
-.chip .key { color: var(--faint); }
-.chip[data-key="code"] { font-family: var(--mono); font-size: var(--t-xs); }
 .chip[data-status] { border-color: transparent; font-weight: 500; }
 .chip[data-status="proposed"] { background: var(--revise-soft); color: var(--revise); }
 .chip[data-status="validated"] { background: var(--ok-soft); color: var(--ok); }
@@ -339,12 +335,6 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .links h2 { font-size: var(--t-sm); color: var(--muted); font-weight: 500; min-width: 4rem; }
 .links ul { display: flex; gap: 6px; flex-wrap: wrap; }
 .links a { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); font-size: var(--t-sm); }
-.checks { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); }
-.checks { padding: var(--s3) var(--s5); }
-.checks summary { cursor: pointer; font-size: var(--t-sm); font-weight: 500; color: var(--muted); }
-.checks li { padding: var(--s2) 0; border-top: 1px solid var(--line); color: var(--muted); }
-.checks li b { display: inline-block; margin-right: var(--s2); padding: 0 6px; border-radius: 4px; background: var(--revise-soft); color: var(--revise); font: 600 var(--t-xs)/18px var(--mono); }
-.checks .fix { display: block; color: var(--faint); font-size: var(--t-sm); }
 .doc { color: var(--text); max-width: 68ch; }
 .doc:empty { display: none; }
 .doc h1, .doc h2, .doc h3 { margin: var(--s5) 0 var(--s2); line-height: 1.3; }
@@ -1225,8 +1215,6 @@ for (const bar of document.querySelectorAll(".journey-bar")) {
 }
 `;
 
-const chipOf = (key, value) => `<span class="chip" data-key="${key}"><span class="key">${key}</span>${escaped(String(value))}</span>`;
-
 const statusOf = (record, labels) => (fm(record).status === undefined ? "" : `<span class="chip" data-status="${escaped(fm(record).status)}">${escaped(statusLabel(labels, fm(record).status))}</span>`);
 
 /** The status of a record with its version small beside it, stamped on the title line. */
@@ -1234,14 +1222,6 @@ function stampOf(record, labels) {
   const { version } = fm(record);
   const parts = [statusOf(record, labels), ...(version === undefined ? [] : [`<span class="version">v${escaped(String(version))}</span>`])].join("");
   return parts ? `<div class="stamp">${parts}</div>` : "";
-}
-
-/** The line under the description of a record: its route and code links. Its id and kind are left to
- * the navigation and the group above the title. */
-function chipsOf(record) {
-  const { route } = fm(record);
-  const chips = [...(route === undefined ? [] : [chipOf("route", route)]), ...list(fm(record).code).map((code) => chipOf("code", code))].join("");
-  return chips ? `<div class="chips">${chips}</div>` : "";
 }
 
 /** The two-way switch between a screen and the wireframe it dresses, on the page of either; empty for any other record. */
@@ -1260,14 +1240,6 @@ function appearsOf({ project, ids, recordsById, labels }) {
   if (!ids.length) return "";
   const card = (id) => `<li><a class="mini-card" href="${escaped(id)}.html"><b>${escaped(titleOf(project, recordsById.get(id), labels))}</b>${statusOf(recordsById.get(id), labels)}</a></li>`;
   return `<section class="appears"><h2>${labels.appearsIn}</h2><ul>${ids.map(card).join("")}</ul></section>`;
-}
-
-/** The engine checks about a record or its render. A component the design system does not hold yet (R18) is left to the final reply. */
-function checksOf(problems, record, labels) {
-  const own = problems.filter((each) => each.rule !== EXPECTED_COMPONENT && (each.file === record.file || each.file === renderOf(record)));
-  if (!own.length) return "";
-  const items = own.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
-  return `<details class="checks"><summary>${escaped(filled(labels.checksFolded, { count: own.length }))}</summary><ul>${items.join("")}</ul></details>`;
 }
 
 /** How a wireframe looks in the showcase: a lo-fi sketch on paper. Text in a readable scale, buttons as
@@ -1314,13 +1286,14 @@ function stateDocument(render, tokens, state, sketch) {
   return doc.replace(/<\/head>/i, () => `${hide}</head>`);
 }
 
-const optionsOf = (values, second) => values.map((value, at) => `<option value="${escaped(value)}"${second && at === 1 ? " selected" : ""}>${escaped(value)}</option>`).join("");
+/** The options of a picker: each value kept as written for the script, shown by its name in the language when it has one. */
+const optionsOf = (values, second, names = {}) => values.map((value, at) => `<option value="${escaped(value)}"${second && at === 1 ? " selected" : ""}>${escaped(Object.hasOwn(names, value) ? names[value] : value)}</option>`).join("");
 
 /** The theme and platform pickers: a combination A, a combination B shown beside it on request. */
 function toolbarOf(system, labels) {
-  const axes = [["theme", labels.theme, list(system && fm(system).themes)], ["platform", labels.platform, list(system && fm(system).platforms)]].filter(([, , values]) => values.length > 1);
+  const axes = [["theme", labels.theme, list(system && fm(system).themes), labels.themeNames], ["platform", labels.platform, list(system && fm(system).platforms)]].filter(([, , values]) => values.length > 1);
   if (!axes.length) return "";
-  const combo = (name, second) => `<fieldset data-combo="${name}"${second ? " hidden" : ""}><legend>${labels.combination} ${name.toUpperCase()}</legend>${axes.map(([axis, label, values]) => `<label>${label} <select data-axis="${axis}">${optionsOf(values, second)}</select></label>`).join("")}</fieldset>`;
+  const combo = (name, second) => `<fieldset data-combo="${name}"${second ? " hidden" : ""}><legend>${labels.combination} ${name.toUpperCase()}</legend>${axes.map(([axis, label, values, names]) => `<label>${label} <select data-axis="${axis}">${optionsOf(values, second, names)}</select></label>`).join("")}</fieldset>`;
   return `<div class="toolbar">${combo("a", false)}${combo("b", true)}<button type="button" id="sides" aria-pressed="false">${labels.sides}</button></div>`;
 }
 
@@ -1331,10 +1304,10 @@ const panelId = (state) => `panel-${state}`;
 /** One state of a record, as the panel of its tab: an older verdict or a comment already given, then its
  * render on the canvas, the capture beside it for a coded screen. Only the first panel starts open. The
  * verdicts are chosen in the review panel. */
-function stateOf({ record, state, verdict, render, tokens, captures, labels, platform, first }) {
+function stateOf({ record, title, state, verdict, render, tokens, captures, labels, platform, first }) {
   const { id, version } = fm(record);
   const file = `${record.folder}/${id}.${state}@${version}.png`;
-  const capture = !isCoded(record) ? "" : captures.has(file) ? `<figure class="capture" data-file="${escaped(file)}"><img src="../${escaped(file)}" alt="${escaped(filled(labels.capture, { state }))}"></figure>` : `<div class="capture missing" data-file="${escaped(file)}">${escaped(filled(labels.noCapture, { path: file }))}</div>`;
+  const capture = !isCoded(record) ? "" : captures.has(file) ? `<figure class="capture" data-file="${escaped(file)}"><img src="../${escaped(file)}" alt="${escaped(filled(labels.capture, { state: stateNameOf(labels, state) }))}"></figure>` : `<div class="capture missing" data-file="${escaped(file)}">${escaped(labels.noCapture)}</div>`;
   const notes = [
     verdict.outdated === null ? "" : `<p class="outdated" data-version="${escaped(verdict.outdated)}">${escaped(filled(labels.outdated, { version: verdict.outdated }))}</p>`,
     verdict.comment ? `<p class="said">${escaped(verdict.comment)}</p>` : "",
@@ -1342,7 +1315,7 @@ function stateOf({ record, state, verdict, render, tokens, captures, labels, pla
   return [
     `<article class="state" data-state="${escaped(state)}" data-current="${escaped(verdict.current)}" role="tabpanel" id="${escaped(panelId(state))}" aria-labelledby="${escaped(tabId(state))}"${first ? "" : " hidden"}>`,
     notes ? `<div class="state-bar">${notes}</div>` : "",
-    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state, fm(record).kind === "wireframe"))}"></iframe></div>${capture}</div>`,
+    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${title} ${stateNameOf(labels, state)}`)}" srcdoc="${escaped(stateDocument(render, tokens, state, fm(record).kind === "wireframe"))}"></iframe></div>${capture}</div>`,
     "</article>",
   ].filter(Boolean).join("\n");
 }
@@ -1379,7 +1352,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
     widthOf(system, labels),
     tabsOf(ordered, labels),
     verdictBarOf(labels),
-    ...ordered.map(({ state, verdict }, at) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
+    ...ordered.map(({ state, verdict }, at) => stateOf({ record, title: titleOf(project, record, labels), state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
     "</section>",
   ].join("\n");
 }
@@ -1497,13 +1470,13 @@ function assetImageOf({ project, record, labels }) {
   if (fm(record).kind !== "asset" || typeof file !== "string" || !file.trim()) return "";
   const resolved = path.posix.normalize(path.posix.join(record.folder, file.trim()));
   if (resolved === ".." || resolved.startsWith("../")) return "";
-  if (text(project, `${UI_DIR}/${resolved}`) === null) return `<div class="asset-image missing" data-file="${escaped(resolved)}">${escaped(filled(labels.noAssetFile, { path: resolved }))}</div>`;
+  if (text(project, `${UI_DIR}/${resolved}`) === null) return `<div class="asset-image missing" data-file="${escaped(resolved)}">${escaped(labels.noAssetFile)}</div>`;
   return `<figure class="asset-image" data-file="${escaped(resolved)}"><img src="../${escaped(resolved)}" alt="${escaped(String(fm(record).alt ?? ""))}"></figure>`;
 }
 
 /** The heading of a record's page: its group, its title, its status and version under the title, clear of the
- * review button at the top right, then its description, a journey's persona, its route and code. */
-const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels.stepNames[stepOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}</header>`;
+ * review button at the top right, then its description and a journey's persona. */
+const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels.stepNames[stepOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}</header>`;
 
 /** The home page: how many steps are done, what awaits review by step, then the records to rework. Links and
  * counts only, no card: what to open next is a list, not a gallery. */
@@ -1604,9 +1577,9 @@ if (navToggle) {
 const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}${CHARTE_STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}${NAVIGATION}</script>`, "</body>", "</html>", ""].join("\n");
 
 /** The pages of the showcase by file name: `index.html`, one page per record that is not a review and one per set of variants.
- * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside
+ * `tokens` is the stylesheet text or null, `captures` the png paths beside
  * the records, relative to the design system folder. */
-function showcaseOf({ project, problems, tokens, captures, lang, sets: found = [] }) {
+function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   const language = languageOf(lang);
   const labels = LABELS[language];
   const records = placed(project).filter((record) => fm(record).kind !== REVIEW_KIND && fm(record).id);
@@ -1645,7 +1618,6 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets: found = [
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
       sectionsById.has(id) ? sectionsById.get(id).map(sectionHtml).join("\n") : specOf(project, record, labels),
       appearsOf({ project, ids: usedBy, recordsById, labels }),
-      checksOf(problems, record, labels),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS + (widthOf(system, labels) ? WIDTH : "") : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
     pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets, rows, sectionsById), body, drawer: drawer(id), script, wide: journey });
