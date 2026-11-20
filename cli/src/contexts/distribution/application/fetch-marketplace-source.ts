@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import type { PluginSourceGitHub } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
@@ -44,10 +43,7 @@ export class FetchMarketplaceSource {
       rawCatalogFetcher !== undefined &&
       fs !== undefined
     ) {
-      const catalog = await rawCatalogFetcher.fetchCatalog(
-        marketplace.source as PluginSourceGitHub,
-        CLAUDE_CATALOG_PATH
-      );
+      const catalog = await rawCatalogFetcher.fetchCatalog(marketplace.source, CLAUDE_CATALOG_PATH);
       await fs.writeFile(join(cacheDir, CLAUDE_CATALOG_PATH), catalog);
       return this.probeAndMaybeFallback(fs, marketplace, cacheDir, fetchOptions);
     }
@@ -78,7 +74,7 @@ export class FetchMarketplaceSource {
   ): Promise<PluginCatalog | null> {
     try {
       const catalogFilePath = join(cacheDir, CLAUDE_CATALOG_PATH);
-      const raw = JSON.parse(await fs.readFile(catalogFilePath)) as unknown;
+      const raw: unknown = JSON.parse(await fs.readFile(catalogFilePath));
       return parsePluginCatalog(raw);
     } catch (err) {
       this.logger?.warn(`Could not load raw catalog from ${cacheDir}: ${String(err)}`);

@@ -85,7 +85,7 @@ export class RefreshMarketplace {
   private async isStaleCache(fs: FileReader, cacheDir: string): Promise<boolean> {
     try {
       const catalogFilePath = join(cacheDir, CLAUDE_CATALOG_PATH);
-      const raw = JSON.parse(await fs.readFile(catalogFilePath)) as unknown;
+      const raw: unknown = JSON.parse(await fs.readFile(catalogFilePath));
       const catalog = parsePluginCatalog(raw);
       if (!hasRelativePluginSources(catalog)) return false;
       return this.hasAnyMissingPluginPath(fs, catalog, cacheDir);

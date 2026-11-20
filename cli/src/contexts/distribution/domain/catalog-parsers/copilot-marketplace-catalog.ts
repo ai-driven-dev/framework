@@ -5,6 +5,7 @@
  */
 
 import { InvalidPluginManifestError } from "../../../../shared/domain/errors.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { PluginCatalog, PluginCatalogEntry } from "../../contract/catalog.js";
 
 const COPILOT_SOURCE = "copilot-catalog";
@@ -18,11 +19,10 @@ function parseRaw(rawJson: string): unknown {
 }
 
 function extractPluginRoot(obj: Record<string, unknown>): string {
-  const metadata = obj.metadata;
-  if (metadata === null || typeof metadata !== "object" || Array.isArray(metadata)) {
+  const meta = asPlainObject(obj.metadata);
+  if (meta === null) {
     throw new InvalidPluginManifestError(`${COPILOT_SOURCE}: "metadata" must be an object`);
   }
-  const meta = metadata as Record<string, unknown>;
   if (typeof meta.pluginRoot !== "string" || meta.pluginRoot.length === 0) {
     throw new InvalidPluginManifestError(
       `${COPILOT_SOURCE}: "metadata.pluginRoot" must be a non-empty string`
@@ -32,10 +32,10 @@ function extractPluginRoot(obj: Record<string, unknown>): string {
 }
 
 function parseEntry(raw: unknown, index: number, pluginRoot: string): PluginCatalogEntry {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+  const obj = asPlainObject(raw);
+  if (obj === null) {
     throw new InvalidPluginManifestError(`${COPILOT_SOURCE}: plugins[${index}] must be an object`);
   }
-  const obj = raw as Record<string, unknown>;
   if (typeof obj.name !== "string" || obj.name.length === 0) {
     throw new InvalidPluginManifestError(
       `${COPILOT_SOURCE}: plugins[${index}].name must be a non-empty string`
@@ -63,12 +63,12 @@ function parseEntry(raw: unknown, index: number, pluginRoot: string): PluginCata
 
 export function parseCopilotMarketplaceCatalog(rawJson: string): PluginCatalog {
   const parsed = parseRaw(rawJson);
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+  const obj = asPlainObject(parsed);
+  if (obj === null) {
     throw new InvalidPluginManifestError(
       `${COPILOT_SOURCE}: marketplace.json must be a JSON object`
     );
   }
-  const obj = parsed as Record<string, unknown>;
   const pluginRoot = extractPluginRoot(obj);
   if (!Array.isArray(obj.plugins)) {
     throw new InvalidPluginManifestError(`${COPILOT_SOURCE}: "plugins" must be an array`);

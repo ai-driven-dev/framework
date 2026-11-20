@@ -60,8 +60,7 @@ function makeSpyFileAdapter(
     deletedFiles.push(path);
     return origDelete(path);
   };
-  (adapter as InMemoryFileAdapter & { deletedFiles: string[] }).deletedFiles = deletedFiles;
-  return adapter as InMemoryFileAdapter & { deletedFiles: string[] };
+  return Object.assign(adapter, { deletedFiles });
 }
 
 describe("FetchMarketplaceSource", () => {

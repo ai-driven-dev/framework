@@ -17,10 +17,10 @@ const mockGitInstance = {
   checkout: mockCheckoutFn,
 };
 
-const mockSimpleGit = vi.fn(() => mockGitInstance);
+const mockSimpleGit = vi.fn((..._args: unknown[]) => mockGitInstance);
 
 vi.mock("simple-git", () => ({
-  simpleGit: (...args: unknown[]) => mockSimpleGit(...(args as [])),
+  simpleGit: (...args: unknown[]) => mockSimpleGit(...args),
 }));
 
 const mockExecFile = vi.fn().mockResolvedValue({ stdout: "", stderr: "" });
@@ -67,12 +67,12 @@ function adapter(token?: string, files: Record<string, string> = {}): PluginFetc
 }
 
 function clonedInto(): string {
-  return mockCloneFn.mock.calls[0]?.[1] as string;
+  return mockCloneFn.mock.calls[0]?.[1];
 }
 
 /** The URL the clone was given — the one that may legitimately carry a token. */
 function clonedFrom(): string {
-  return mockCloneFn.mock.calls[0]?.[0] as string;
+  return mockCloneFn.mock.calls[0]?.[0];
 }
 
 describe("where a fetched source lands in the cache", () => {

@@ -55,7 +55,7 @@ describe("PluginFetcherAdapter — npm option-injection prevention", () => {
     // InMemoryFileAdapter has no node_modules dir, so execFile is invoked
     await adapter.fetch({ kind: "npm", package: "my-plugin", version: "1.0.0" }, "/cache");
 
-    const argv: string[] = mockExecFile.mock.calls[0][1] as string[];
+    const argv: string[] = mockExecFile.mock.calls[0][1];
     const separatorIndex = argv.indexOf("--");
     const specIndex = argv.indexOf("my-plugin@1.0.0");
     expect(separatorIndex).toBeGreaterThanOrEqual(0);
@@ -68,7 +68,7 @@ describe("PluginFetcherAdapter — npm option-injection prevention", () => {
 
     await adapter.fetch({ kind: "npm", package: "@scope/my-plugin" }, "/cache");
 
-    const argv: string[] = mockExecFile.mock.calls[0][1] as string[];
+    const argv: string[] = mockExecFile.mock.calls[0][1];
     const separatorIndex = argv.indexOf("--");
     expect(separatorIndex).toBeGreaterThanOrEqual(0);
     expect(argv[separatorIndex + 1]).toBe("@scope/my-plugin@latest");

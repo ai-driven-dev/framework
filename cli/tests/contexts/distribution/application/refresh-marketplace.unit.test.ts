@@ -293,9 +293,8 @@ describe("RefreshMarketplace", () => {
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const infoCallsWithStale = (logger.info as ReturnType<typeof vi.fn>).mock.calls.filter(
-        (args: unknown[]) =>
-          typeof args[0] === "string" && (args[0] as string).includes("Detected stale")
+      const infoCallsWithStale = logger.info.mock.calls.filter(
+        (args: unknown[]) => typeof args[0] === "string" && args[0].includes("Detected stale")
       );
       expect(infoCallsWithStale).toHaveLength(0);
     });

@@ -2,6 +2,7 @@ import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileHash } from "../../../shared/domain/file.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { type PluginSource, serializePluginSource } from "../../../shared/domain/source.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 
@@ -46,8 +47,8 @@ export class MarketplaceTrustStoreAdapter implements MarketplaceTrustStore {
     } catch {
       return [];
     }
-    const parsed = JSON.parse(raw) as TrustStoreFile;
-    return parsed.trusted;
+    const trusted = asPlainObject(JSON.parse(raw))?.trusted;
+    return Array.isArray(trusted) ? trusted.filter((key) => typeof key === "string") : [];
   }
 
   private async write(projectRoot: string, trusted: readonly string[]): Promise<void> {
