@@ -385,9 +385,3 @@ export function failedRunOf(error: unknown): {
     code: typeof code === "number" ? code : undefined,
   };
 }
-
-/** A value a test has just seen held, narrowed past `undefined`. */
-export function present<T>(value: T | undefined, what = "value"): T {
-  if (value === undefined) throw new Error(`expected ${what} to be present`);
-  return value;
-}

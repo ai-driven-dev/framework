@@ -6,8 +6,8 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { CLI_ROOT, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 /** The top-level entries of `src/`. A file moved to any other one escapes every rule written per area. */
 const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([

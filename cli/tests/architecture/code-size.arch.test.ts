@@ -8,8 +8,8 @@ import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { biomeFindings, CLI_ROOT, expectRatchet, read } from "./helpers.js";
-import { present } from "./present.js";
 
 type Guard =
   | {

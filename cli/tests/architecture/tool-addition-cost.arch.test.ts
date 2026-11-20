@@ -5,8 +5,8 @@
  * not coupling. Comments are stripped first — prose about a tool's layout is documentation.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 /** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
 function toolIds(files: readonly string[]): string[] {

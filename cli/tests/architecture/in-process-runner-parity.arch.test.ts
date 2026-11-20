@@ -3,8 +3,8 @@
  * A command the binary gains and the runner misses would only surface when someone tests it in process.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { read } from "./helpers.js";
-import { present } from "./present.js";
 
 const calls = (text: string, pattern: RegExp): string[] =>
   [...text.matchAll(pattern)].map((match) => present(match[1]));

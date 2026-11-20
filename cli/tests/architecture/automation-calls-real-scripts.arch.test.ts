@@ -7,8 +7,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { CLI_ROOT } from "./helpers.js";
-import { present } from "./present.js";
 
 const REPO_ROOT = join(CLI_ROOT, "..");
 const WORKFLOWS = join(REPO_ROOT, ".github", "workflows");

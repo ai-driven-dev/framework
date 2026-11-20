@@ -5,6 +5,7 @@
  * context reaching back into either is an edge recorded here. Data lives in `allowed-edges.ts`.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { ALLOWED, TRANSITIONAL_PAIRS } from "./allowed-edges.js";
 import {
   BASELINE,
@@ -17,7 +18,6 @@ import {
   sourceFiles,
   weighedEdges,
 } from "./helpers.js";
-import { present } from "./present.js";
 
 function forbiddenEdges(edges: readonly string[], allowed: ReadonlySet<string>): string[] {
   return edges.filter((edge) => !allowed.has(edge));

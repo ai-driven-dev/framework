@@ -6,8 +6,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { CLI_ROOT } from "./helpers.js";
-import { present } from "./present.js";
 
 const WORKFLOWS = join(CLI_ROOT, "..", ".github", "workflows");
 const INSTALL = /cd cli && pnpm install\b/;

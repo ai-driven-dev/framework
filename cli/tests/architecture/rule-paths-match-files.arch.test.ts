@@ -5,8 +5,8 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { CLI_ROOT, canonicalPath, matchesGlob, read } from "./helpers.js";
-import { present } from "./present.js";
 
 const RULES_DIR = ".claude/rules";
 

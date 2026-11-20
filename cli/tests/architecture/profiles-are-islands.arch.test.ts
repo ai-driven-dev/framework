@@ -4,8 +4,8 @@
  * `domain/hooks/` or `domain/bridges/`, owned by neither.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { INTERNAL_IMPORT, read, resolveImportTarget, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\/.+\.ts$/;
 const PROFILE_FOLDER = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\//;

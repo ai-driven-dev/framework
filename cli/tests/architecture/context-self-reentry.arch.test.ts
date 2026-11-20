@@ -4,8 +4,8 @@
  * violation: a real cross-context edge climbs out and never comes back.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { expectRatchet, INTERNAL_IMPORT, read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 /** `src/contexts/<X>/` is always three path segments. */
 const CONTEXT_ROOT_DEPTH = 3;

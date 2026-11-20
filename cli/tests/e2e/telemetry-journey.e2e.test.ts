@@ -5,7 +5,8 @@ import { delimiter, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { cliPath, createTestEnv, present, runCli, sandboxedEnv } from "./helpers.js";
+import { present } from "../shared/testing/present.js";
+import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
 
 /**
  * The whole journey on the built binary, driven by the plugin's real hooks: a person opts in,

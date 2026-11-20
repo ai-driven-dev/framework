@@ -4,8 +4,8 @@
  * test reads as used, and a test asserting `new SomeError().name` is not a caller.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 const CATALOG = "src/shared/domain/errors.ts";
 

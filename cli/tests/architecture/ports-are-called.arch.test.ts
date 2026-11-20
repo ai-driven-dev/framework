@@ -13,8 +13,8 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { CLI_ROOT, canonicalPath, expectRatchet, SRC, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 /** "ports" and "contract" must be their own path segment: a substring check also matches
  * `supports/` and `reports/`. A `contract/` file is a port the context offers others, so its

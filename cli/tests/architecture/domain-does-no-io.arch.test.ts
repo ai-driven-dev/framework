@@ -12,6 +12,7 @@
  * `node:crypto` are pure, so any other builtin named that way in a domain folder is I/O.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import {
   expectRatchet,
   INTERNAL_IMPORT,
@@ -19,7 +20,6 @@ import {
   resolveImportTarget,
   sourceFiles,
 } from "./helpers.js";
-import { present } from "./present.js";
 
 const FILE_PORTS = new Set(["src/shared/ports/file-reader.ts", "src/shared/ports/file-writer.ts"]);
 

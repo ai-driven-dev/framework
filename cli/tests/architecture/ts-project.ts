@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import type { Node } from "typescript/unstable/ast";
 import { createVirtualFileSystem } from "typescript/unstable/fs";
 import { API, type Project } from "typescript/unstable/sync";
-import { present } from "./present.js";
+import { present } from "../shared/testing/present.js";
 
 export function walk(node: Node, visit: (node: Node) => void): void {
   visit(node);

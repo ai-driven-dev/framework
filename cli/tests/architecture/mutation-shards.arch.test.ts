@@ -12,8 +12,8 @@ import {
   shardFiles,
 } from "../../scripts/mutation-shards.mjs";
 import { parseShard, scoreOf, shardConfig } from "../../scripts/run-mutation.mjs";
+import { present } from "../shared/testing/present.js";
 import { read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 const declared = JSON.parse(read("mutation-scopes.json")) as { scopes: Record<string, Scope> };
 const scopes = declared.scopes;

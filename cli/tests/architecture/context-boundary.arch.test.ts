@@ -4,9 +4,9 @@
  * The list is the fence, not a description of what happens to be used.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { HELD_BY_BIOME } from "./allowed-edges.js";
 import { expectRatchet, importersByFile, read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 /** A context's declared public surface, one entry per context. Every context is held by Biome
  * today (`HELD_BY_BIOME`), so the table is empty and a context that cannot be held that way

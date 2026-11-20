@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { failedRunOf, pathDirsWithoutAidd, present, shellDirsWithoutAidd } from "./helpers.js";
+import { failedRunOf, pathDirsWithoutAidd, shellDirsWithoutAidd } from "./helpers.js";
 
 /**
  * Git runs a hook by looking its shebang interpreter up by name on `PATH`, so a narrow
@@ -114,14 +114,5 @@ describe("failedRunOf", () => {
       code: undefined,
     });
     expect(failedRunOf(null)).toEqual({ stdout: "", stderr: "", code: undefined });
-  });
-});
-
-describe("present", () => {
-  it("hands back a held value, falsy ones included, and names what is missing otherwise", () => {
-    expect([present(""), present(0), present(null)]).toEqual(["", 0, null]);
-    expect(() => present(undefined, "the first call")).toThrow(
-      "expected the first call to be present"
-    );
   });
 });

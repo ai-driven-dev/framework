@@ -9,7 +9,7 @@ import {
   matchesGlob as scopeGlob,
   sourceFiles as srcFiles,
 } from "../../scripts/mutation-shards.mjs";
-import { present } from "./present.js";
+import { present } from "../shared/testing/present.js";
 import { codeOnly } from "./source-shapes.js";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");

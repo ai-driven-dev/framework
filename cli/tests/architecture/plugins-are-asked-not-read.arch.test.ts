@@ -13,8 +13,8 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 const TOOLS_CONTEXT = /^(src|tests)\/contexts\/tools\//;
 

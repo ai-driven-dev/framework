@@ -4,6 +4,7 @@
  * the callers counted are contexts: a module only one context imports belongs to that context.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import {
   contextOf,
   expectRatchet,
@@ -12,7 +13,6 @@ import {
   read,
   sourceFiles,
 } from "./helpers.js";
-import { present } from "./present.js";
 
 /** Files that fail the rule today. This list may only shrink. */
 const BASELINE: readonly string[] = [];

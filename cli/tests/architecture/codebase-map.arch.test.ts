@@ -5,8 +5,8 @@
  * it runs in both directions: an invented directory sends a reader to create a file there.
  */
 import { describe, expect, it } from "vitest";
+import { present } from "../shared/testing/present.js";
 import { read, sourceFiles } from "./helpers.js";
-import { present } from "./present.js";
 
 const MAP = "aidd_docs/memory/codebase-map.md";
 
