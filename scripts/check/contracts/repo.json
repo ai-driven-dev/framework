@@ -40,6 +40,12 @@
       "in": "marketplace.json",
       "check": "text-no-nul",
       "why": "a NUL byte makes a source file binary to grep and diff, so a search over it fails in silence"
+    },
+    "REPO-08": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "no-model-override",
+      "why": "a model set in a bundled skill or agent overrides the model the user chose"
     }
   }
 }
