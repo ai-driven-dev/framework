@@ -28,7 +28,7 @@ export function scanBrackets(
 ): number {
   let depth = 0;
   for (let at = from; at < text.length; at++) {
-    const char = text[at] as string;
+    const char = text.charAt(at);
     if (char === "=" && text[at + 1] === ">") at++;
     else if (isEnd(char, depth)) return at;
     else if ("([{<".includes(char)) depth++;
@@ -49,8 +49,8 @@ export function topLevelPieces(text: string): string[] {
   let from = 0;
   for (let at = 0; at < text.length; at++) {
     if (text[at] === "=" && text[at + 1] === ">") at++;
-    else if ("([{<".includes(text[at] as string)) depth++;
-    else if (")]}>".includes(text[at] as string)) depth--;
+    else if ("([{<".includes(text.charAt(at))) depth++;
+    else if (")]}>".includes(text.charAt(at))) depth--;
     else if (text[at] === "," && depth === 0) {
       pieces.push(text.slice(from, at));
       from = at + 1;

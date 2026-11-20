@@ -13,9 +13,10 @@ import {
 } from "../../scripts/mutation-shards.mjs";
 import { parseShard, scoreOf, shardConfig } from "../../scripts/run-mutation.mjs";
 import { read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
-const scopes = (JSON.parse(read("mutation-scopes.json")) as { scopes: Record<string, Scope> })
-  .scopes;
+const declared: { scopes: Record<string, Scope> } = JSON.parse(read("mutation-scopes.json"));
+const scopes = declared.scopes;
 
 interface Scope {
   readonly mutate: string | readonly string[];
@@ -70,7 +71,7 @@ describe("splitting a scope into shards", () => {
   });
 
   it("weighs each file of a scope by the mutants it holds, as mutantCountOf counts them", async () => {
-    const scope = scopes["tools-codex"] as Scope;
+    const scope = present(scopes["tools-codex"]);
     const files = sourceFiles();
     const mutantsIn = await scopeWeights(scope.mutate, files);
     for (const file of scopeFiles(scope.mutate, files)) {
@@ -178,7 +179,7 @@ describe("scoring a sharded scope once, over every shard", () => {
 });
 
 describe("running one shard", () => {
-  const base = JSON.parse(read("stryker.conf.json")) as Record<string, unknown>;
+  const base: Record<string, unknown> = JSON.parse(read("stryker.conf.json"));
 
   it("keeps the whole config and makes only its files, sandbox and reports its own", () => {
     const config = shardConfig(base, {

@@ -6,6 +6,7 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, canonicalPath, matchesGlob, read } from "./helpers.js";
+import { present } from "./present.js";
 
 const RULES_DIR = ".claude/rules";
 
@@ -13,7 +14,7 @@ const RULES_DIR = ".claude/rules";
 function pathGlobs(rule: string): string[] {
   const frontmatter = /^---\n([\s\S]*?)\n---/.exec(rule)?.[1] ?? "";
   const list = /^paths:\n((?:\s+- .*\n?)*)/m.exec(frontmatter)?.[1] ?? "";
-  return [...list.matchAll(/^\s+- "?([^"\n]+?)"?\s*$/gm)].map((match) => match[1] as string);
+  return [...list.matchAll(/^\s+- "?([^"\n]+?)"?\s*$/gm)].map((match) => present(match[1]));
 }
 
 /** `matchesGlob` reads `/**\/` as any depth; a trailing `/**` means every file below. */
@@ -41,7 +42,7 @@ describe("rule paths follow the code", () => {
     const tree = new Map<string, string[]>();
     const dead = ruleFiles().flatMap((rule) =>
       pathGlobs(read(rule)).flatMap((glob) => {
-        const root = glob.split("/")[0] as string;
+        const root = present(glob.split("/")[0]);
         const files = tree.get(root) ?? filesUnder(root);
         tree.set(root, files);
         return files.some((file) => reaches(glob, file)) ? [] : [`${rule}: ${glob}`];

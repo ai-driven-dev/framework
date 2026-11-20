@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { expectRatchet, INTERNAL_IMPORT, read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 /** `src/contexts/<X>/` is always three path segments. */
 const CONTEXT_ROOT_DEPTH = 3;
@@ -32,10 +33,10 @@ function selfReentryViolations(files: readonly string[]): string[] {
   for (const file of files) {
     const match = /^src\/contexts\/([^/]+)\//.exec(file);
     if (!match) continue;
-    const context = match[1] as string;
+    const context = present(match[1]);
     const fileDirDepth = file.slice(0, file.lastIndexOf("/")).split("/").length;
     for (const importMatch of read(file).matchAll(INTERNAL_IMPORT)) {
-      const specifier = importMatch[1] as string;
+      const specifier = present(importMatch[1]);
       if (climbsOutAndReenters(specifier, context, fileDirDepth)) {
         violations.push(`${file} -> ${specifier}`);
       }

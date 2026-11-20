@@ -5,12 +5,15 @@ import mutation from "../../vitest.mutation.config.js";
 const SETUP = "./tests/helpers/throwaway-profile.ts";
 const RUNS_SOURCE = ["unit", "contract", "integration"];
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 function projectsRunningSource(
   projects: readonly unknown[]
 ): { name: string; globalSetup: unknown }[] {
   return projects.flatMap((project) => {
-    const test = (project as { test?: { name?: string; globalSetup?: unknown } }).test;
-    return test?.name && RUNS_SOURCE.includes(test.name)
+    const test = isRecord(project) ? project.test : undefined;
+    return isRecord(test) && typeof test.name === "string" && RUNS_SOURCE.includes(test.name)
       ? [{ name: test.name, globalSetup: test.globalSetup }]
       : [];
   });

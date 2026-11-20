@@ -14,6 +14,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 const TOOLS_CONTEXT = /^(src|tests)\/contexts\/tools\//;
 
@@ -118,7 +119,7 @@ function answeringFiles(): string[] {
 function readableIn(file: string, source: string): string[] {
   const fields: string[] = [];
   for (const block of source.matchAll(CLASS_BLOCK)) {
-    const body = block[2] as string;
+    const body = present(block[2]);
     for (const pattern of [
       PUBLIC_FIELD,
       PARAMETER_PROPERTY,
@@ -172,15 +173,15 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
   it("the guard itself: names an allowlist key whose file path is off by one character", () => {
     const [key] = Object.keys(STORED_ANSWERS_ALLOWED);
-    const broken = (key as string).replace(".ts ::", "x.ts ::");
+    const broken = present(key).replace(".ts ::", "x.ts ::");
     expect(missingFilesOf([broken])).toEqual([broken.split(" :: ")[0]]);
-    expect(missingFilesOf([key as string])).toEqual([]);
+    expect(missingFilesOf([present(key)])).toEqual([]);
   });
 });
 
 /** The files an allowlist's keys point at that no longer exist. */
 function missingFilesOf(keys: readonly string[]): string[] {
   return keys
-    .map((key) => key.split(" :: ")[0] as string)
+    .map((key) => present(key.split(" :: ")[0]))
     .filter((file) => !existsSync(join(CLI_ROOT, file)));
 }

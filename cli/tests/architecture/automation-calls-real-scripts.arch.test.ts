@@ -8,6 +8,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT } from "./helpers.js";
+import { present } from "./present.js";
 
 const REPO_ROOT = join(CLI_ROOT, "..");
 const WORKFLOWS = join(REPO_ROOT, ".github", "workflows");
@@ -36,9 +37,9 @@ const PNPM_BUILTINS = new Set([
 ]);
 
 function manifestScripts(): Set<string> {
-  const manifest = JSON.parse(readFileSync(join(CLI_ROOT, "package.json"), "utf8")) as {
+  const manifest: {
     scripts: Record<string, string>;
-  };
+  } = JSON.parse(readFileSync(join(CLI_ROOT, "package.json"), "utf8"));
   return new Set(Object.keys(manifest.scripts));
 }
 
@@ -65,19 +66,19 @@ function runBodies(text: string): string[][] {
   const bodies: string[][] = [];
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i] as string;
+    const line = present(lines[i]);
     const match = /^(\s*)(?:-\s+)?run:\s*(.*)$/.exec(line);
     if (!match) {
       i++;
       continue;
     }
     const keyIndent = indentOf(line);
-    const rest = (match[2] as string).trim();
+    const rest = present(match[2]).trim();
     if (/^[|>][+-]?$/.test(rest)) {
       const body: string[] = [];
       i++;
       while (i < lines.length) {
-        const bodyLine = lines[i] as string;
+        const bodyLine = present(lines[i]);
         if (bodyLine.trim() !== "" && indentOf(bodyLine) <= keyIndent) break;
         body.push(bodyLine);
         i++;
@@ -104,11 +105,11 @@ function pnpmCallsAgainst(dir: string, body: readonly string[]): string[] {
       const trimmed = segment.trim();
       const cd = /^cd\s+(\S+)/.exec(trimmed);
       if (cd) {
-        cwd = cd[1] as string;
+        cwd = present(cd[1]);
         continue;
       }
       const pnpm = /^pnpm\s+([a-z][\w:.-]*)/.exec(trimmed);
-      if (pnpm && cwd === dir) calls.push(pnpm[1] as string);
+      if (pnpm && cwd === dir) calls.push(present(pnpm[1]));
     }
   }
   return calls;
@@ -125,7 +126,7 @@ function undeclaredScriptCalls(text: string, declared: ReadonlySet<string>): str
 }
 
 function foreignIncludes(tsconfig: string): string[] {
-  const config = JSON.parse(tsconfig.replace(/\/\/[^\n]*/g, "")) as { include?: string[] };
+  const config: { include?: string[] } = JSON.parse(tsconfig.replace(/\/\/[^\n]*/g, ""));
   return (config.include ?? []).filter((pattern) => pattern.startsWith("../"));
 }
 
@@ -197,7 +198,7 @@ describe("the guard itself", () => {
         "          npm install -g ./dist/ai-driven-dev-cli-*.tgz --force",
       ],
     ]);
-    expect(pnpmCallsAgainst("cli", runBodies(block)[0] as string[])).toContain("build");
+    expect(pnpmCallsAgainst("cli", present(runBodies(block)[0]))).toContain("build");
   });
 
   it("does not let cd cross into a later, unrelated run: body", () => {

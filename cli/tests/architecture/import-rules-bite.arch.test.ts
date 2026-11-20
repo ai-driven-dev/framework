@@ -12,7 +12,7 @@ interface RestrictedPattern {
 }
 
 function restrictedPatterns(): RestrictedPattern[] {
-  const config = JSON.parse(read("biome.json")) as {
+  const config: {
     overrides?: readonly {
       includes?: readonly string[];
       linter?: {
@@ -25,7 +25,7 @@ function restrictedPatterns(): RestrictedPattern[] {
         };
       };
     }[];
-  };
+  } = JSON.parse(read("biome.json"));
   const out: RestrictedPattern[] = [];
   for (const override of config.overrides ?? []) {
     const scope = (override.includes ?? []).join(", ");

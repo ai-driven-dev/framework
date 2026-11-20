@@ -193,7 +193,7 @@ function numbersIn(node: Node): number {
 }
 
 /** The key of an array entry: the string its `path`, `file` or `edge` field holds. */
-function entryKeyOf(element: Expression): string | null {
+function entryKeyOf(element: Node): string | null {
   if (!isObjectLiteralExpression(element)) return null;
   for (const property of element.properties) {
     if (!isPropertyAssignment(property)) continue;
@@ -216,9 +216,7 @@ function numberedEntries(initializer: Expression): [string, number][] | null {
   for (const element of elements) {
     const weight = numbersIn(element);
     if (weight === 0) continue;
-    const key = isPropertyAssignment(element)
-      ? propertyKey(element.name)
-      : entryKeyOf(element as Expression);
+    const key = isPropertyAssignment(element) ? propertyKey(element.name) : entryKeyOf(element);
     if (key === null) return null;
     entries.push([key, weight]);
   }

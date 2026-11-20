@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { biomeFindings, CLI_ROOT, expectRatchet, read } from "./helpers.js";
+import { present } from "./present.js";
 
 type Guard =
   | {
@@ -72,8 +73,10 @@ interface Override {
   };
 }
 
-const overrides = (): readonly Override[] =>
-  (JSON.parse(read("biome.json")) as { overrides?: Override[] }).overrides ?? [];
+const overrides = (): readonly Override[] => {
+  const config: { overrides?: Override[] } = JSON.parse(read("biome.json"));
+  return config.overrides ?? [];
+};
 
 const pluginPath = (file: string): string => `./biome-plugins/${file}`;
 
@@ -109,7 +112,7 @@ describe("biome carries the code-size guards", () => {
       it("is carried by exactly one override, and that override carries nothing else", () => {
         const carriers = carriersOf(guard);
         expect(carriers, `${guard.name} must sit in exactly one override`).toHaveLength(1);
-        const carrier = carriers[0] as Override;
+        const carrier = present(carriers[0]);
 
         if (guard.kind === "plugin") {
           expect(Object.keys(carrier).sort()).toEqual(["includes", "plugins"]);
@@ -127,7 +130,7 @@ describe("biome carries the code-size guards", () => {
       });
 
       it("lists exactly as many files as its ceiling", () => {
-        const ceiling = MAX_BASELINE[guard.name] as number;
+        const ceiling = present(MAX_BASELINE[guard.name]);
         expect(
           baselineOf(guard).length,
           `${guard.name} baseline must hold ${ceiling} files: a new violator is fixed, never listed; a fixed file lowers the ceiling`
@@ -304,9 +307,8 @@ describe("the guard itself", () => {
       writeFileSync(join(planted, path), content);
     }
 
-    baselinePath = baselineOf(
-      GUARDS.find((g) => g.name === "function parameters") as Guard
-    )[0] as string;
+    const parameterGuard = present(GUARDS.find((g) => g.name === "function parameters"));
+    baselinePath = present(baselineOf(parameterGuard)[0]);
     mkdirSync(join(planted, dirname(baselinePath)), { recursive: true });
     writeFileSync(join(planted, baselinePath), fourParams("Baseline"));
 

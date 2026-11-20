@@ -20,10 +20,12 @@
  * caller names the files to read, so a file the caller leaves out is not seen.
  */
 import {
-  type Expression,
+  type CallExpression,
+  type Identifier,
   isCallExpression,
   isIdentifier,
   isInterfaceDeclaration,
+  isSourceFile,
   isTypeAliasDeclaration,
   type Node,
   SyntaxKind,
@@ -49,7 +51,7 @@ function enclosingCall(node: Node): Node | null {
   for (let parent = node.parent; parent; child = parent, parent = parent.parent) {
     if (LITERAL_WRAPPERS.has(parent.kind)) continue;
     const isCall = isCallExpression(parent) || parent.kind === SyntaxKind.NewExpression;
-    const calledOn = (parent as { expression?: Node }).expression;
+    const calledOn = "expression" in parent ? parent.expression : undefined;
     return isCall && calledOn !== child ? parent : null;
   }
   return null;
@@ -59,8 +61,8 @@ function enclosingCall(node: Node): Node | null {
 function declaringFile(project: Project, call: Node, root: string): string | undefined {
   const declaration = project.checker.getResolvedSignature(call)?.declaration?.resolve(project);
   let node = declaration;
-  while (node && node.kind !== SyntaxKind.SourceFile) node = node.parent;
-  const name = (node as (Node & { fileName?: string }) | undefined)?.fileName;
+  while (node && !isSourceFile(node)) node = node.parent;
+  const name = node?.fileName;
   return name?.startsWith(root) ? name.slice(root.length) : undefined;
 }
 
@@ -93,7 +95,7 @@ function flowsIn(
   for (const file of files) {
     const source = program.getSourceFile(at(file));
     if (!source) throw new Error(`the compiler returned no source for ${file}`);
-    const expressions: Node[] = [];
+    const expressions: (CallExpression | Identifier)[] = [];
     walk(source, (node) => {
       if (isIdentifier(node) || isCallExpression(node)) expressions.push(node);
     });
@@ -104,7 +106,7 @@ function flowsIn(
       if (call === null) continue;
       const signature = checker.getResolvedSignature(call);
       if (signature === undefined || signature.target !== undefined) continue;
-      if (!isWhole(checker.getContextualType(expression as Expression))) continue;
+      if (!isWhole(checker.getContextualType(expression))) continue;
       if (exemptCallees.includes(declaringFile(project, call, root) ?? "")) continue;
       hits.push(file);
       break;

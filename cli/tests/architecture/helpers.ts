@@ -9,6 +9,7 @@ import {
   matchesGlob as scopeGlob,
   sourceFiles as srcFiles,
 } from "../../scripts/mutation-shards.mjs";
+import { present } from "./present.js";
 import { codeOnly } from "./source-shapes.js";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
@@ -43,7 +44,7 @@ export function biomeFindings(projectDir: string, launcher = BIOME): string[] {
       (match) =>
         `${relative(
           realpathSync(projectDir),
-          realpathSync(resolve(projectDir, reportedFile(match[2] as string)))
+          realpathSync(resolve(projectDir, reportedFile(present(match[2]))))
         )
           .split(sep)
           .join("/")}:${match[1]}`
@@ -127,7 +128,7 @@ export function importersByFile(): Map<string, Set<string>> {
   for (const file of files) {
     const text = read(file);
     for (const match of text.matchAll(INTERNAL_IMPORT)) {
-      const target = resolveImportTarget(file, match[1] as string);
+      const target = resolveImportTarget(file, present(match[1]));
       if (!known.has(target)) continue;
       const set = importers.get(target) ?? new Set<string>();
       set.add(file);
@@ -182,7 +183,7 @@ export const BASELINE: readonly {
 
 export function contextOf(file: string): string {
   const inContext = /^src\/contexts\/([^/]+)\//.exec(file);
-  if (inContext) return inContext[1] as string;
+  if (inContext) return present(inContext[1]);
   if (file.startsWith("src/shared/")) return "shared";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/composition/")) return "composition";
@@ -222,7 +223,7 @@ function crossings(files: readonly string[]): Crossing[] {
     const from = contextOf(file);
     const source = read(file);
     for (const match of source.matchAll(INTERNAL_IMPORT)) {
-      const target = resolveImportTarget(file, match[1] as string);
+      const target = resolveImportTarget(file, present(match[1]));
       const to = contextOf(target);
       if (!isCrossing(from, to)) continue;
       out.push({ file, target, from, to });
@@ -279,7 +280,7 @@ export function declaredCommands(): Set<string> {
     // is one of its subcommands.
     const parent = /program\s*\n?\s*\.?command\("([a-z][a-z-]*)"/.exec(source)?.[1];
     for (const match of source.matchAll(/\.command\("([a-z][a-z-]*)/g)) {
-      declared.add(match[1] as string);
+      declared.add(present(match[1]));
       if (parent !== undefined && match[1] !== parent) declared.add(`${parent} ${match[1]}`);
     }
   }
@@ -306,13 +307,13 @@ export function unresolvedCommandMentions(text: string, declared: ReadonlySet<st
     // A bare verb needs only itself declared — `aidd setup --ai` reads as one, a flag being
     // no word this pattern captures. A pair needs the pair.
     if (second === undefined) {
-      if (!declared.has(first as string)) missing.push(first as string);
+      if (!declared.has(present(first))) missing.push(present(first));
       continue;
     }
     if (declared.has(`${first} ${second}`)) continue;
     // A declared verb followed by something else is that verb plus an argument:
     // `aidd marketplace add` is a pair, `aidd update --force` is not.
-    if (declared.has(first as string) && isArgumentLike(second, trailing ?? "")) continue;
+    if (declared.has(present(first)) && isArgumentLike(second, trailing ?? "")) continue;
     missing.push(`${first} ${second}`);
   }
   return missing;

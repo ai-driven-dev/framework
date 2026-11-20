@@ -7,6 +7,7 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 /** The top-level entries of `src/`. A file moved to any other one escapes every rule written per area. */
 const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
@@ -21,7 +22,7 @@ const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
 /** Every file under a top-level `src/` entry that is not a known area. */
 function unknownAreaVerdicts(found: readonly string[]): string[] {
   return found
-    .filter((path) => !KNOWN_SOURCE_AREAS.has(path.split("/")[1] as string))
+    .filter((path) => !KNOWN_SOURCE_AREAS.has(present(path.split("/")[1])))
     .map(
       (path) =>
         `${path} sits in an unknown top-level area: nothing new enters outside the known ones`

@@ -28,7 +28,7 @@ function bareCode(source: string): string {
 function enclosingOpen(text: string, at: number): number {
   let depth = 0;
   for (let index = at - 1; index >= 0; index--) {
-    const char = text[index] as string;
+    const char = text.charAt(index);
     if (")]}".includes(char)) depth++;
     else if ("([{".includes(char)) {
       if (depth === 0) return index;

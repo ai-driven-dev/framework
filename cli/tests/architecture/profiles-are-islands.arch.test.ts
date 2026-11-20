@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { INTERNAL_IMPORT, read, resolveImportTarget, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\/.+\.ts$/;
 const PROFILE_FOLDER = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\//;
@@ -17,7 +18,7 @@ function crossProfileImports(sources: ReadonlyMap<string, string>): string[] {
     const owner = PROFILE_FILE.exec(file)?.[1];
     if (owner === undefined) continue;
     for (const match of text.matchAll(INTERNAL_IMPORT)) {
-      const target = resolveImportTarget(file, match[1] as string);
+      const target = resolveImportTarget(file, present(match[1]));
       if (!sources.has(target)) continue;
       const other = PROFILE_FOLDER.exec(target)?.[1];
       if (other !== undefined && other !== owner) found.push(`${file} -> ${target}`);

@@ -14,6 +14,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, canonicalPath, expectRatchet, SRC, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 /** "ports" and "contract" must be their own path segment: a substring check also matches
  * `supports/` and `reports/`. A `contract/` file is a port the context offers others, so its
@@ -44,7 +45,7 @@ const OPTIONAL_METHOD = /^ {2}\w+\?\s*(<|\()/m;
 function declaredMethods(file: string, source: string): string[] {
   const declared: string[] = [];
   for (const block of source.matchAll(INTERFACE_BLOCK)) {
-    for (const method of (block[2] as string).matchAll(METHOD_SIGNATURE)) {
+    for (const method of present(block[2]).matchAll(METHOD_SIGNATURE)) {
       declared.push(`${file} :: ${block[1]}.${method[1]}`);
     }
   }
@@ -147,8 +148,8 @@ function uncalledSectionMethods(
   for (const file of sections) {
     for (const block of (bodies.get(file) ?? "").matchAll(SECTION_CLASS)) {
       const className = `${block[1]}Section`;
-      const key = (block[1] as string).toLowerCase();
-      for (const member of (block[2] as string).matchAll(CLASS_METHOD)) {
+      const key = present(block[1]).toLowerCase();
+      for (const member of present(block[2]).matchAll(CLASS_METHOD)) {
         const [, isStatic, isGetter, name] = member;
         if (name === "constructor") continue;
         const use = new RegExp(
@@ -161,7 +162,7 @@ function uncalledSectionMethods(
           ([caller, body]) =>
             body.includes(`.${name}`) &&
             [...body.matchAll(use)].some((match) => {
-              const receiver = match[1] as string;
+              const receiver = present(match[1]);
               if (caller === file && receiver === "this") return true;
               if (caller === file) return false;
               if (isStatic) return receiver === className;

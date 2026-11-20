@@ -38,8 +38,8 @@ const declaration = (tool: string): string =>
 
 describe("the profile copy check is wired before push", () => {
   it("is a package script the pre-push runs", () => {
-    const scripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> })
-      .scripts;
+    const manifest: { scripts: Record<string, string> } = JSON.parse(read("package.json"));
+    const { scripts } = manifest;
 
     expect(scripts["jscpd:profiles"]).toBe("node scripts/profile-copies.mjs");
     expect(readFromRepoRoot("lefthook.yml")).toMatch(

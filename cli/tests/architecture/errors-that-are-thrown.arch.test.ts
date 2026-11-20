@@ -5,15 +5,16 @@
  */
 import { describe, expect, it } from "vitest";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 const CATALOG = "src/shared/domain/errors.ts";
 
 function declaredErrorNames(source: string): string[] {
-  return [...source.matchAll(/^export class (\w+) extends/gm)].map((match) => match[1] as string);
+  return [...source.matchAll(/^export class (\w+) extends/gm)].map((match) => present(match[1]));
 }
 
 function thrownNames(source: string): string[] {
-  return [...source.matchAll(/throw new (\w+)/g)].map((match) => match[1] as string);
+  return [...source.matchAll(/throw new (\w+)/g)].map((match) => present(match[1]));
 }
 
 function thrownErrors(files: readonly string[]): Set<string> {

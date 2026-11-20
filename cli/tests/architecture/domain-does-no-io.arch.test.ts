@@ -19,6 +19,7 @@ import {
   resolveImportTarget,
   sourceFiles,
 } from "./helpers.js";
+import { present } from "./present.js";
 
 const FILE_PORTS = new Set(["src/shared/ports/file-reader.ts", "src/shared/ports/file-writer.ts"]);
 
@@ -41,7 +42,7 @@ function fileIoImports(bodies: ReadonlyMap<string, string>): string[] {
     if (!DOMAIN.test(file) || DOMAIN_PORTS.test(file)) continue;
     let imports = 0;
     for (const match of body.matchAll(INTERNAL_IMPORT)) {
-      if (FILE_PORTS.has(resolveImportTarget(file, match[1] as string))) imports += 1;
+      if (FILE_PORTS.has(resolveImportTarget(file, present(match[1])))) imports += 1;
     }
     if (imports > 0) found.push(`${file} (${imports})`);
   }
@@ -54,7 +55,7 @@ function impureInlineBuiltins(bodies: ReadonlyMap<string, string>): string[] {
   for (const [file, body] of bodies) {
     if (!ANY_DOMAIN.test(file)) continue;
     for (const match of body.matchAll(INLINE_BUILTIN_IMPORT)) {
-      const builtin = match[1] as string;
+      const builtin = present(match[1]);
       if (!PURE_BUILTINS.has(builtin)) found.push(`${file} (node:${builtin})`);
     }
   }

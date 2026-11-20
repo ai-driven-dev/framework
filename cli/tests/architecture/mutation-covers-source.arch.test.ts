@@ -32,7 +32,8 @@ interface ScopeDeclaration {
 }
 
 function declaration(): ScopeDeclaration {
-  return JSON.parse(read("mutation-scopes.json")) as ScopeDeclaration;
+  const parsed: ScopeDeclaration = JSON.parse(read("mutation-scopes.json"));
+  return parsed;
 }
 
 function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
@@ -109,7 +110,7 @@ describe("mutation covers every source file", () => {
   });
 
   it("package.json runs every scope, and nothing it does not", () => {
-    const { scripts } = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
+    const { scripts }: { scripts: Record<string, string> } = JSON.parse(read("package.json"));
     const scripted = Object.keys(scripts)
       .filter((name) => name.startsWith("test:mutation:"))
       .map((name) => name.slice("test:mutation:".length));
@@ -118,7 +119,7 @@ describe("mutation covers every source file", () => {
   });
 
   it("no other file lists what mutation covers", () => {
-    const stryker = JSON.parse(read("stryker.conf.json")) as Record<string, unknown>;
+    const stryker: Record<string, unknown> = JSON.parse(read("stryker.conf.json"));
     expect("mutate" in stryker, "stryker.conf.json declares its own mutate again").toBe(false);
   });
 });

@@ -4,9 +4,10 @@
  */
 import { describe, expect, it } from "vitest";
 import { read } from "./helpers.js";
+import { present } from "./present.js";
 
 const calls = (text: string, pattern: RegExp): string[] =>
-  [...text.matchAll(pattern)].map((match) => match[1] as string);
+  [...text.matchAll(pattern)].map((match) => present(match[1]));
 
 describe("the in-process runner", () => {
   it("registers the same commands as the binary, in the same order", () => {

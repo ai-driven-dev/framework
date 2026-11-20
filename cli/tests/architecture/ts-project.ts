@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import type { Node } from "typescript/unstable/ast";
 import { createVirtualFileSystem } from "typescript/unstable/fs";
 import { API, type Project } from "typescript/unstable/sync";
+import { present } from "./present.js";
 
 export function walk(node: Node, visit: (node: Node) => void): void {
   visit(node);
@@ -48,7 +49,7 @@ export function withVirtualProject<T>(
     cwd: root,
     fs: createVirtualFileSystem({
       [at("tsconfig.json")]: JSON.stringify({ compilerOptions, files: paths.map(at) }),
-      ...Object.fromEntries(paths.map((path) => [at(path), files[path] as string])),
+      ...Object.fromEntries(paths.map((path) => [at(path), present(files[path])])),
     }),
   });
   try {

@@ -12,6 +12,7 @@ import {
   read,
   sourceFiles,
 } from "./helpers.js";
+import { present } from "./present.js";
 
 /** Files that fail the rule today. This list may only shrink. */
 const BASELINE: readonly string[] = [];
@@ -69,7 +70,7 @@ function contextsImporting(file: string, importers: Map<string, Set<string>>): S
 
 /** The interface names a shared port file declares. */
 function declaredBy(portText: string): string[] {
-  return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => m[1] as string);
+  return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => present(m[1]));
 }
 
 /**

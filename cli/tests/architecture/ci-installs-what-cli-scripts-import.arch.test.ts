@@ -7,6 +7,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT } from "./helpers.js";
+import { present } from "./present.js";
 
 const WORKFLOWS = join(CLI_ROOT, "..", ".github", "workflows");
 const INSTALL = /cd cli && pnpm install\b/;
@@ -46,7 +47,7 @@ function jobsOf(text: string): Map<string, string[]> {
     const opens = /^ {2}([\w-]+):\s*$/.exec(line);
     if (opens) {
       current = [];
-      jobs.set(opens[1] as string, current);
+      jobs.set(present(opens[1]), current);
     } else current?.push(line);
   }
   return jobs;

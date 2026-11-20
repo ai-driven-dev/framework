@@ -6,13 +6,14 @@
  */
 import { describe, expect, it } from "vitest";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 /** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
 function toolIds(files: readonly string[]): string[] {
   const ids = new Set<string>();
   for (const file of files) {
     const match = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\//.exec(file);
-    if (match) ids.add(match[1] as string);
+    if (match) ids.add(present(match[1]));
   }
   return [...ids].sort();
 }
@@ -76,10 +77,10 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
     new RegExp(`["'\`]\\.(${alternation})\\.md["'\`]`, "g"),
   ];
   for (const form of forms) {
-    for (const match of body.matchAll(form)) named.add(match[1] as string);
+    for (const match of body.matchAll(form)) named.add(present(match[1]));
   }
   for (const literal of body.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)) {
-    const inside = literal[2] as string;
+    const inside = present(literal[2]);
     const listed = ids.filter((id) => new RegExp(`\\b${id}\\b`).test(inside));
     if (listed.length >= 2) for (const id of listed) named.add(id);
   }
@@ -171,7 +172,7 @@ describe("a tool identifier stays inside its own profile", () => {
   it("lists only files that still name their own tool", () => {
     const ids = toolIds(sourceFiles());
     const unneeded = Object.keys(OWN_TOOL_FILES).filter(
-      (file) => !toolsNamedIn(read(file), ids).includes(OWN_TOOL_FILES[file] as string)
+      (file) => !toolsNamedIn(read(file), ids).includes(present(OWN_TOOL_FILES[file]))
     );
     expect(unneeded, "names no tool — take it off OWN_TOOL_FILES").toEqual([]);
   });

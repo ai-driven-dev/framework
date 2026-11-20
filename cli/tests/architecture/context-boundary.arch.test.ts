@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { HELD_BY_BIOME } from "./allowed-edges.js";
 import { expectRatchet, importersByFile, read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 /** A context's declared public surface, one entry per context. Every context is held by Biome
  * today (`HELD_BY_BIOME`), so the table is empty and a context that cannot be held that way
@@ -16,7 +17,7 @@ function contextsOnDisk(files: readonly string[]): string[] {
   const names = new Set<string>();
   for (const file of files) {
     const match = /^src\/contexts\/([^/]+)\//.exec(file);
-    if (match) names.add(match[1] as string);
+    if (match) names.add(present(match[1]));
   }
   return [...names].sort();
 }
@@ -50,9 +51,9 @@ function drivingPortViolations(source: string): string[] {
   const found: string[] = [];
   for (const match of source.matchAll(/^import\s+(type\s+)?[^;]*?from\s+"([^"]+)"/gms)) {
     const [, typeOnly, specifier] = match;
-    if (!(specifier as string).startsWith("../contexts/")) continue;
+    if (!present(specifier).startsWith("../contexts/")) continue;
     if (typeOnly === undefined) found.push(`${specifier} is a value import`);
-    else if (!DRIVING_PORT_TARGET.test(specifier as string))
+    else if (!DRIVING_PORT_TARGET.test(present(specifier)))
       found.push(`${specifier} is neither application nor contract`);
   }
   return found;

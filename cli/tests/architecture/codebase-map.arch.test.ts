@@ -6,13 +6,14 @@
  */
 import { describe, expect, it } from "vitest";
 import { read, sourceFiles } from "./helpers.js";
+import { present } from "./present.js";
 
 const MAP = "aidd_docs/memory/codebase-map.md";
 
 /** The fenced block whose first line is `src/`. */
 function sourceTreeBlock(text: string): string {
   for (const match of text.matchAll(/```[a-z]*\n([\s\S]*?)```/g)) {
-    const body = match[1] as string;
+    const body = present(match[1]);
     if (body.trimStart().startsWith("src/")) return body;
   }
   throw new Error(`${MAP} has no fenced block drawing the source tree`);
@@ -28,9 +29,9 @@ function drawnDirectoriesInText(block: string): Set<string> {
   for (const line of block.split("\n")) {
     const entry = TREE_ENTRY.exec(line);
     if (entry === null) continue;
-    const depth = (entry[1] as string).length / LEVEL_WIDTH;
+    const depth = present(entry[1]).length / LEVEL_WIDTH;
     stack.length = depth;
-    stack[depth] = entry[2] as string;
+    stack[depth] = present(entry[2]);
     if (entry[3] === "/") drawn.add(`src/${stack.slice(0, depth + 1).join("/")}`);
   }
   return drawn;

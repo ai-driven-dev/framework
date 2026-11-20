@@ -34,12 +34,12 @@ const isWordChar = (char: string): boolean => /[\w$]/.test(char);
 function opensRegex(previous: string): boolean {
   if (previous === "") return true;
   if (previous === ")" || previous === "]" || previous === "}") return false;
-  if (isWordChar(previous[0] as string)) return REGEX_AFTER_WORD.has(previous);
+  if (isWordChar(previous.charAt(0))) return REGEX_AFTER_WORD.has(previous);
   return !previous.startsWith('"') && !previous.startsWith("'") && !previous.startsWith("`");
 }
 
 function skipQuoted(source: string, from: number): number {
-  const quote = source[from] as string;
+  const quote = source.charAt(from);
   let at = from + 1;
   while (at < source.length && source[at] !== quote && source[at] !== "\n") {
     at += source[at] === "\\" ? 2 : 1;
@@ -51,7 +51,7 @@ function skipRegex(source: string, from: number): number {
   let at = from + 1;
   let inClass = false;
   while (at < source.length && source[at] !== "\n") {
-    const char = source[at] as string;
+    const char = source.charAt(at);
     if (char === "\\") at++;
     else if (char === "[") inClass = true;
     else if (char === "]") inClass = false;
@@ -59,7 +59,7 @@ function skipRegex(source: string, from: number): number {
     at++;
   }
   at++;
-  while (at < source.length && isWordChar(source[at] as string)) at++;
+  while (at < source.length && isWordChar(source.charAt(at))) at++;
   return at;
 }
 
@@ -75,7 +75,7 @@ export function commentRanges(source: string): CommentRange[] {
   const scanTemplateText = (from: number): number => {
     let index = from;
     while (index < source.length) {
-      const char = source[index] as string;
+      const char = source.charAt(index);
       if (char === "\\") index += 2;
       else if (char === "`") return index + 1;
       else if (char === "$" && source[index + 1] === "{") {
@@ -89,7 +89,7 @@ export function commentRanges(source: string): CommentRange[] {
   };
 
   while (at < source.length) {
-    const char = source[at] as string;
+    const char = source.charAt(at);
     const next = source[at + 1];
     if (/\s/.test(char)) at++;
     else if (char === "/" && next === "/") {
@@ -115,7 +115,7 @@ export function commentRanges(source: string): CommentRange[] {
       at = stop;
     } else if (isWordChar(char)) {
       let stop = at;
-      while (stop < source.length && isWordChar(source[stop] as string)) stop++;
+      while (stop < source.length && isWordChar(source.charAt(stop))) stop++;
       previous = source.slice(at, stop);
       at = stop;
     } else {

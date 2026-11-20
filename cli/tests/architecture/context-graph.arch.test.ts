@@ -17,6 +17,7 @@ import {
   sourceFiles,
   weighedEdges,
 } from "./helpers.js";
+import { present } from "./present.js";
 
 function forbiddenEdges(edges: readonly string[], allowed: ReadonlySet<string>): string[] {
   return edges.filter((edge) => !allowed.has(edge));
@@ -161,7 +162,7 @@ describe("the guard itself", () => {
     });
     expect(
       transitionalDrift([held, stable], {
-        "installation->distribution": [listed["installation->distribution"][0] as string],
+        "installation->distribution": [present(listed["installation->distribution"][0])],
       })
     ).toEqual({ added: [], gone: [] });
   });
