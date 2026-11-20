@@ -65,7 +65,7 @@ function machine(sessions: string, projects?: string) {
   locator.directories.set("/work/none", { status: "outside-repository" });
   const ingest = new IngestUsage(
     [
-      new ReadUsage(new CodexTranscriptSourceAdapter([sessions])),
+      new ReadUsage(new CodexTranscriptSourceAdapter({ roots: [sessions], tool: "codex" })),
       ...(projects === undefined
         ? []
         : [new ReadUsage(new ClaudeTranscriptSourceAdapter(projects))]),

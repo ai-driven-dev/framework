@@ -301,7 +301,9 @@ describe("reading Codex usage", () => {
     await mkdir(sessions, { recursive: true });
     const path = join(sessions, "rollout-a.jsonl");
     await writeFile(path, meta + turn("gpt-5.5", "/work/one") + call("resp_1"));
-    const useCase = new ReadUsage(new CodexTranscriptSourceAdapter([sessions]));
+    const useCase = new ReadUsage(
+      new CodexTranscriptSourceAdapter({ roots: [sessions], tool: "codex" })
+    );
     const first = await useCase.execute({ since: new Map() });
     await appendFile(path, call("resp_2") + turn("gpt-5.6", "/work/two") + call("resp_3"));
     const second = await useCase.execute({ since: first.positions });
@@ -317,9 +319,9 @@ describe("reading Codex usage", () => {
     await mkdir(sessions, { recursive: true });
     const path = join(sessions, "rollout-a.jsonl.zst");
     await writeFile(path, "");
-    const reading = await new ReadUsage(new CodexTranscriptSourceAdapter([sessions], null)).execute(
-      { since: new Map() }
-    );
+    const reading = await new ReadUsage(
+      new CodexTranscriptSourceAdapter({ roots: [sessions], tool: "codex", decompress: null })
+    ).execute({ since: new Map() });
     expect(reading.unrecognised).toEqual([
       `${path}: a compressed session file is not read: this Node has no zstd`,
     ]);

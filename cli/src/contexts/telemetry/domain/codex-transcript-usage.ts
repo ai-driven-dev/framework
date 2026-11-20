@@ -1,7 +1,7 @@
-import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
-import type { UsageRecord } from "../../../contract/usage-record.js";
-import { expected, type Json, text } from "../../../domain/line-values.js";
-import type { LineNames } from "../../../domain/transcript-position.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import type { UsageRecord, UsageTool } from "../contract/usage-record.js";
+import { expected, type Json, text } from "./line-values.js";
+import type { LineNames } from "./transcript-position.js";
 
 export interface CodexUsageLine {
   readonly records: readonly UsageRecord[];
@@ -34,19 +34,16 @@ export class CodexContext {
  * the file's first `session_meta` (a sub-agent's file carries its parent's after its own). Only
  * a `token_usage_record` is a call: the turn and thread totals beside it, and `token_count`
  * events, are running totals that would count a call many times. The result's `context` is what
- * the next line is read with. */
-export function decodeCodexLine(line: string, before: unknown): CodexUsageLine {
+ * the next line is read with. `tool` is the id the records carry. */
+export function decodeCodexLine(line: string, before: unknown, tool: UsageTool): CodexUsageLine {
   const context = before instanceof CodexContext ? before : new CodexContext();
-  const unrecognised = (reason: string, at: string | null): CodexUsageLine => ({
-    records: [],
-    unrecognised: [reason],
-    named: { cwd: context.cwd, at },
-  });
   let parsed: unknown;
   try {
     parsed = JSON.parse(line);
   } catch {
-    return line.includes(CALL) ? unrecognised(`a line holding ${CALL} is not JSON`, null) : NONE;
+    return line.includes(CALL)
+      ? unrecognisedCall(context, `a line holding ${CALL} is not JSON`, null)
+      : NONE;
   }
   const root = asPlainObject(parsed);
   const payload = asPlainObject(root?.payload);
@@ -58,14 +55,32 @@ export function decodeCodexLine(line: string, before: unknown): CodexUsageLine {
     return { ...NONE, context: new CodexContext(context.session, payload) };
   }
   if (root?.type !== CALL) return NONE;
+  return decodeCall({ root, payload, context, tool });
+}
 
+function unrecognisedCall(
+  context: CodexContext,
+  reason: string,
+  at: string | null
+): CodexUsageLine {
+  return { records: [], unrecognised: [reason], named: { cwd: context.cwd, at } };
+}
+
+function decodeCall(from: {
+  readonly root: Json;
+  readonly payload: Json | null;
+  readonly context: CodexContext;
+  readonly tool: UsageTool;
+}): CodexUsageLine {
+  const { root, payload, context, tool } = from;
   const usage = asPlainObject(payload?.usage);
   const key = text(payload?.response_id);
   const sessionId = text(payload?.session_id);
   const thread = text(payload?.thread_id);
   const at = text(root.timestamp);
   if (usage === null || key === null || sessionId === null || thread === null || at === null) {
-    return unrecognised(
+    return unrecognisedCall(
+      context,
       `a ${CALL} lacks response_id, session_id, thread_id, timestamp or usage`,
       at
     );
@@ -79,7 +94,7 @@ export function decodeCodexLine(line: string, before: unknown): CodexUsageLine {
   const cacheWrite = count("cache_write_input_tokens");
   const { session, turn } = context;
   const record: UsageRecord = {
-    tool: "codex",
+    tool,
     tool_version: text(session?.cli_version),
     key,
     session_id: sessionId,

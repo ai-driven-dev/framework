@@ -70,8 +70,6 @@
     "src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "src/contexts/installation/infrastructure/manifest-file-io.ts",
     "src/contexts/installation/infrastructure/platform-adapter.ts",
-    "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",
-    "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
     "src/contexts/telemetry/infrastructure/sources/transcript-files.ts",
     "src/orchestration/clean/clean-project.ts",
     "src/orchestration/clean/clean-user-scope.ts",
@@ -177,7 +175,6 @@
     "function length :: src/contexts/installation/application/plugin/update-user-plugin-files.ts",
     "function length :: src/contexts/installation/application/removal/remove-user-plugin.ts",
     "function length :: src/contexts/recipes/domain/recipe-rules.ts",
-    "function length :: src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
     "function length :: src/orchestration/sync/sync-settings.ts",
     "function length :: src/presentation/commands/marketplace.ts",
     "function length :: src/presentation/commands/plugin.ts",
@@ -258,7 +255,6 @@
     "function parameters :: src/shared/domain/layout/aidd-layout.ts",
     "function parameters :: src/shared/domain/materialization/flat-paths.ts",
     "function parameters :: src/shared/domain/merge.ts",
-    "one class per file :: src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
     "one class per file :: src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.ts",
     "one class per file :: src/presentation/terminal/prompter-adapter.ts",
     "one class per file :: src/shared/domain/errors.ts",
@@ -271,12 +267,7 @@
     "src/contexts/telemetry/contract/usage-record.ts: 1"
   ],
   "toolSites": ["src/composition/telemetry.ts: 2"],
-  "toolOwn": [
-    "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts: claude",
-    "src/contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.ts: claude",
-    "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts: codex",
-    "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts: codex"
-  ],
+  "toolOwn": [],
   "toolIdentifiers": [],
   "exemptProcessExit": ["src/presentation/exit.ts"],
   "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],

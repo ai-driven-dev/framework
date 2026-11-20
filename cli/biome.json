@@ -5863,7 +5863,6 @@
         "!src/contexts/installation/application/plugin/update-user-plugin-files.ts",
         "!src/contexts/installation/application/removal/remove-user-plugin.ts",
         "!src/contexts/recipes/domain/recipe-rules.ts",
-        "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
         "!src/orchestration/sync/sync-settings.ts",
         "!src/presentation/commands/marketplace.ts",
         "!src/presentation/commands/plugin.ts",
@@ -5926,7 +5925,6 @@
     {
       "includes": [
         "src/**",
-        "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
         "!src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.ts",
         "!src/presentation/terminal/prompter-adapter.ts",
         "!src/shared/domain/errors.ts",
