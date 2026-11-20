@@ -23,7 +23,7 @@ flowchart LR
 - Read each box's file, then do what it says.
 - Call tools, speaking only to ask or to give the final reply.
 - After asking, wait for the answer.
-- Write each question, option and label in the person's language.
+- Write every reply, question, option and label in the language the person writes in, even when the project's own files use another.
 - Say what the person will see, by record title and state label.
 - Never show a path, file name, id, rule code, size, version or unit.
 - Never show a skill name, history, changelog or warning count.
