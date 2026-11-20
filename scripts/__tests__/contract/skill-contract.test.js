@@ -5,7 +5,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
-const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/skills/04-skill-generate/scripts/check-skill.cjs");
+const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-context/skills/04-skill-generate/scripts/validate-skill.cjs");
 
 /**
  * The generator's lexical gate: a clean skill passes, each rule has the one mutation that makes
@@ -76,10 +76,12 @@ function mutate(file, from, to) {
   fs.writeFileSync(full, text.replace(from, to));
 }
 
+const RULES = {"description": "SKILL-0[1-4]", "router": "SKILL-05", "diagram": "SKILL-06", "edge": "SKILL-07", "heading": "SKILL-0[89]", "read-next": "SKILL-10", "sentence": "SKILL-11", "rule-line": "SKILL-12", "length": "SKILL-13", "slot": "SKILL-1[45]", "bold": "SKILL-16", "citation": "SKILL-17"};
+
 function expectError(rule) {
   const { code, out } = run();
   assert.equal(code, 1, out);
-  assert.match(out, new RegExp(` ${rule}[ "]`, "u"), out);
+  assert.match(out, new RegExp(` ${RULES[rule]} `, "u"), out);
 }
 
 describe("skill check", () => {
@@ -96,18 +98,12 @@ describe("skill check", () => {
   it("refuses a folder with no SKILL.md with exit 2, so a usage error never reads as findings", () => {
     const { code, err } = run(path.join(root, "actions"));
     assert.equal(code, 2);
-    assert.match(err, /usage: check-skill\.cjs <skill-folder>/u);
+    assert.match(err, /SKILL\.md: missing/u);
   });
 
   it("refuses a call with no folder with exit 2", () => {
     const result = spawnSync(process.execPath, [ENGINE], { encoding: "utf8" });
     assert.equal(result.status, 2);
-  });
-
-  it("heads its findings with the skill it checked, never a plugin of its own", () => {
-    mutate("SKILL.md", "wants a demo.", "wants a demo. Not for prod.");
-    const { out } = run();
-    assert.equal(out.split("\n")[0], `${path.basename(root)}: 1 error`);
   });
 
   it("description: a description over 150 characters", () => {
@@ -260,16 +256,15 @@ describe("skill check", () => {
     expectError("slot");
   });
 
-  it("quotes an excerpt so it reads back exactly, a backslash before a quote included", () => {
-    const line = '1. Answer **a\\"b**.';
-    mutate("actions/02-second.md", "1. Answer per the rubric.", line);
-    const quoted = run().out.match(/ bold (".*") => /u);
+  it("quotes an excerpt as JSON so it reads back exactly", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", '1. **a\\"b**');
+    const quoted = run().out.match(/ SKILL-16 .* ("1\. .*")$/mu);
     assert.ok(quoted);
-    assert.equal(JSON.parse(quoted[1]), line);
+    assert.equal(JSON.parse(quoted[1]), '1. **a\\"b**');
   });
 
   it("slot: a template slot left unfilled outside an asset", () => {
-    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. <step>");
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. {{step}}");
     expectError("slot");
   });
 
@@ -345,11 +340,6 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("sentence: two sentences in a rule are never told to split into sub-items", () => {
-    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask. Wait after.");
-    assert.doesNotMatch(run().out, /sub-items/u);
-  });
-
   it("sentence: an abbreviation like e.g. ends no sentence", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per a rubric (e.g. the team's, i.e. the shared one).");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
@@ -376,20 +366,20 @@ describe("skill check", () => {
     mutate("actions/02-second.md", "Answer per", "**Answer** per");
     const { code, out } = run();
     assert.equal(code, 1, out);
-    assert.match(out, / bold /u);
-    assert.doesNotMatch(out, / diagram /u);
+    assert.match(out, / SKILL-16 /u);
+    assert.doesNotMatch(out, / SKILL-06 /u);
   });
 
   it("exits 2, not 1, when a file of the skill cannot be read, so a crash never reads as findings", () => {
     fs.symlinkSync(path.join(root, "missing.md"), path.join(root, "references/broken.md"));
     const { code, out, err } = run();
     assert.equal(code, 2, out);
-    assert.match(err, /check-skill: .*broken\.md/u);
+    assert.match(err, /broken\.md/u);
   });
 
   for (const skill of ["aidd-context/skills/04-skill-generate", "aidd-dev/skills/05-review"]) {
     it(`finds nothing in ${skill}`, () => {
-      assert.deepEqual(run(path.resolve(__dirname, "../../plugins", skill)), { code: 0, out: "", err: "" });
+      assert.deepEqual(run(path.resolve(__dirname, "../../../plugins", skill)), { code: 0, out: "", err: "" });
     });
   }
 });

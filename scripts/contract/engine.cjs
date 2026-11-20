@@ -126,7 +126,6 @@ function run(contractFile, targets) {
     if (findings.length) process.stdout.write(`${findings.map(format).join("\n")}\n`);
     return findings.length ? EXIT.FINDINGS : EXIT.OK;
   } catch (error) {
-    if (!(error instanceof ContractError)) throw error;
     process.stderr.write(`${error.message}\n`);
     return EXIT.USAGE;
   }

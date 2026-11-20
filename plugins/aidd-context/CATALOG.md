@@ -115,8 +115,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
-| `scripts` | [check-skill.cjs](skills/04-skill-generate/scripts/check-skill.cjs) | - |
+| `scripts` | [contract.json](skills/04-skill-generate/scripts/contract.json) | - |
 | `scripts` | [scaffold-skill.cjs](skills/04-skill-generate/scripts/scaffold-skill.cjs) | - |
+| `scripts` | [validate-skill.cjs](skills/04-skill-generate/scripts/validate-skill.cjs) | - |
 | `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Creates or updates a skill across the host AI tools, when the user wants to create a skill, or to refactor, rewrite or reformat an existing one.` |
 
 #### `skills/05-rule-generate`
@@ -147,6 +148,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
 | `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/06-agent-generate/references/writer.md) | - |
+| `scripts` | [contract.json](skills/06-agent-generate/scripts/contract.json) | - |
+| `scripts` | [validate-agent.cjs](skills/06-agent-generate/scripts/validate-agent.cjs) | - |
 | `scripts` | [write-agent.cjs](skills/06-agent-generate/scripts/write-agent.cjs) | - |
 | `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.` |
 

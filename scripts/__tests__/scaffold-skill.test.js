@@ -7,7 +7,7 @@ const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const SKILL = path.resolve(__dirname, "../../plugins/aidd-context/skills/04-skill-generate");
 const ENGINE = path.join(SKILL, "scripts/scaffold-skill.cjs");
-const CHECK = path.join(SKILL, "scripts/check-skill.cjs");
+const CHECK = path.join(SKILL, "scripts/validate-skill.cjs");
 
 /**
  * The generator's scaffold: it fills the structural slots of the skill's own templates from a
@@ -48,7 +48,7 @@ function fillContent(dir) {
   for (const file of ["SKILL.md", ...fs.readdirSync(path.join(dir, "actions")).map((name) => `actions/${name}`)]) {
     const full = path.join(dir, file);
     const text = fs.readFileSync(full, "utf8");
-    fs.writeFileSync(full, text.replace(/^> Fill every.*\n/mu, "").replace(/<[^>\n]+>/gu, "Filled."));
+    fs.writeFileSync(full, text.replace(/^> Fill every.*\n/mu, "").replace(/\{\{[^}\n]+\}\}/gu, "Filled."));
   }
 }
 
