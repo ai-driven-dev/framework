@@ -33,6 +33,7 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
  */
 export const HELD_BY_BIOME: readonly string[] = [
   "auth",
+  "distribution",
   "host-registration",
   "recipes",
   "telemetry",

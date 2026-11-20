@@ -9,7 +9,7 @@ paths:
 
 ## 1. Purpose and status
 
-- `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`) lists the contexts Biome closes to everything but the composition root; `distribution`, `installation` and `machine-claims` still publish through `PUBLIC_MODULES` (`context-boundary.arch.test.ts`).
+- `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`) lists the contexts Biome closes to everything but the composition root; `installation` and `machine-claims` still publish through `PUBLIC_MODULES` (`context-boundary.arch.test.ts`).
 - A deviation is a row of section 9 or a change to this page, in the PR that needs it; an exception deviates from the target architecture.
 
 ## 2. Folder layout
@@ -113,7 +113,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ### Migration state
 | Deviation | Closes when |
 | --- | --- |
-| `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin | `distribution` joins `HELD_BY_BIOME` and its published types are the only thing outside reads |
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED` in `profile-readers-name-their-sections.arch.test.ts`) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |

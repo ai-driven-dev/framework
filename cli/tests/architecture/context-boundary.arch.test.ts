@@ -11,43 +11,6 @@ import { expectRatchet, importersByFile, read, sourceFiles } from "./helpers.js"
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // Measured with the composition root excluded, and not one entry is an adapter: the
   // adapters are wired from `composition/` alone, so they stay internal.
-  distribution: [
-    // what a marketplace is, and where it can be read from
-    "src/contexts/distribution/contract/marketplace-view.ts",
-    "src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/distribution/contract/catalog.ts",
-    "src/contexts/distribution/contract/requested-version-policy.ts",
-    // which marketplaces went stale and what each catalog lists, read for a check
-    "src/contexts/distribution/application/check-marketplaces.ts",
-    "src/contexts/distribution/contract/marketplace-catalogs.ts",
-    // finding the marketplace a removal targets and forgetting it, the two ends of that removal
-    "src/contexts/distribution/application/remove/find-marketplace-to-remove.ts",
-    "src/contexts/distribution/application/remove/remove-marketplace.ts",
-    "src/contexts/distribution/application/remove/find-user-marketplace.ts",
-    // registering the framework marketplace from a chosen source, for setup
-    "src/contexts/distribution/application/choose-marketplace-source.ts",
-    "src/contexts/distribution/application/ensure-framework-marketplace.ts",
-    "src/contexts/distribution/contract/framework-source.ts",
-    "src/contexts/distribution/contract/marketplace-removal.ts",
-    // where this run's build of each registered marketplace lives, recomputed for a check
-    "src/contexts/distribution/application/resolve-built-marketplaces.ts",
-    "src/contexts/distribution/contract/built-marketplaces.ts",
-    // the ports its callers hold, so they can be given an implementation
-    "src/contexts/distribution/ports/marketplace-registry.ts",
-    // the three operations other contexts genuinely ask for
-    "src/contexts/distribution/application/resolve-marketplace.ts",
-    "src/contexts/distribution/application/refresh-marketplace.ts",
-    "src/contexts/distribution/application/register-framework-marketplace.ts",
-    "src/contexts/distribution/application/list-marketplaces.ts",
-    // adding a marketplace, which the add scenario runs once any overwrite removal is done
-    "src/contexts/distribution/application/add/prepare-marketplace.ts",
-    "src/contexts/distribution/application/add/record-marketplace.ts",
-    "src/contexts/distribution/application/plugin-source/resolve-plugin-source.ts",
-    "src/contexts/distribution/application/plugin-source/trust-plugin-source.ts",
-    "src/contexts/distribution/application/plugin-source/list-framework-plugins.ts",
-    "src/contexts/distribution/application/plugin-source/plugin-choices.ts",
-    "src/contexts/distribution/contract/plugin-source-match.ts",
-  ],
   installation: [
     // what installation reports about a project and what a display reads of it
     "src/contexts/installation/contract/doctor-issue.ts",

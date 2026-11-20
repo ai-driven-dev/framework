@@ -481,6 +481,14 @@
                   },
                   {
                     "group": [
+                      "**/distribution/domain/**",
+                      "**/distribution/ports/**",
+                      "**/distribution/infrastructure/**"
+                    ],
+                    "message": "distribution publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
                       "**/host-registration/domain/**",
                       "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
