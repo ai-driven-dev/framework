@@ -1,11 +1,12 @@
 import { expect } from "vitest";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 
-/** A repository holding one record in memory, counting its saves. Exclusive access is granted
- * at once: nothing else contends for it. */
+/** A repository holding one record in memory, counting its saves. Exclusive access runs one
+ * action at a time, in the order asked. */
 export class InMemoryRepository<Held> implements Lock {
   saveCount = 0;
   protected record: Held | null;
+  private turn: Promise<unknown> = Promise.resolve();
 
   constructor(seed: Held | null = null) {
     this.record = seed;
@@ -21,7 +22,9 @@ export class InMemoryRepository<Held> implements Lock {
   }
 
   withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
-    return action();
+    const result = this.turn.then(action);
+    this.turn = result.catch(() => undefined);
+    return result;
   }
 
   getCurrent(): Held | null {
