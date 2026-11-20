@@ -59,7 +59,7 @@ export class AddPlugin implements PluginAdd {
     private readonly fs: FileWriter & FileReader,
     manifests: AddPluginManifests,
     private readonly source: Pick<ResolveAddedPluginSource, "execute">,
-    private readonly place: PlacePlugin,
+    private readonly place: Pick<PlacePlugin, "execute">,
     private readonly tools: ToolCatalog
   ) {
     this.manifestRepo = manifests.project;

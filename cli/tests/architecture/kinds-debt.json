@@ -49,7 +49,6 @@
     "src/contexts/installation/application/materialize/mode-a-marketplace-translator.ts",
     "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     "src/contexts/installation/application/materialize/plugin-translator-factory.ts",
-    "src/contexts/installation/application/plugin/add-plugin.ts",
     "src/contexts/installation/application/plugin/update-user-plugin-files.ts",
     "src/contexts/installation/application/purge-user-scope-files.ts",
     "src/contexts/installation/application/removal/remove-plugin.ts",
