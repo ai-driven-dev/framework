@@ -55,6 +55,7 @@ const CLEAN = {
   "references/rubric.md": ["# Rubric", "", "| Case | Answer |", "| --- | --- |", "| any | yes |", ""].join("\n"),
 };
 
+let base;
 let root;
 
 function write(files) {
@@ -76,7 +77,7 @@ function mutate(file, from, to) {
   fs.writeFileSync(full, text.replace(from, to));
 }
 
-const RULES = {"description": "SKILL-0[1-4]", "router": "SKILL-05", "diagram": "SKILL-06", "edge": "SKILL-07", "heading": "SKILL-0[89]", "read-next": "SKILL-10", "sentence": "SKILL-11", "rule-line": "SKILL-12", "length": "SKILL-13", "slot": "SKILL-1[45]", "bold": "SKILL-16", "citation": "SKILL-17"};
+const RULES = {"description": "SKILL-0[1-4]", "router": "SKILL-05", "diagram": "SKILL-06", "edge": "SKILL-07", "heading": "SKILL-0[89]", "read-next": "SKILL-10", "sentence": "SKILL-11", "rule-line": "SKILL-12", "length": "SKILL-13", "slot": "SKILL-1[45]", "bold": "SKILL-16", "citation": "SKILL-17", "folder name": "SKILL-18", "no name": "SKILL-19", "no description": "SKILL-20", "outside link": "SKILL-21", "sibling": "SKILL-22"};
 
 function expectError(rule) {
   const { code, out } = run();
@@ -86,10 +87,11 @@ function expectError(rule) {
 
 describe("skill check", () => {
   beforeEach(() => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), "skill-check-"));
+    base = fs.mkdtempSync(path.join(os.tmpdir(), "skill-check-"));
+    root = path.join(base, "plugins/aidd-demo/skills/demo");
     write(CLEAN);
   });
-  afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+  afterEach(() => fs.rmSync(base, { recursive: true, force: true }));
 
   it("passes a clean skill silently", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
@@ -229,6 +231,40 @@ describe("skill check", () => {
   it("citation: a link to a file that does not exist", () => {
     mutate("actions/01-first.md", "../references/rubric.md", "../references/missing.md");
     expectError("citation");
+  });
+
+  it("folder name: a name other than the folder's", () => {
+    mutate("SKILL.md", "name: demo", "name: other");
+    expectError("folder name");
+  });
+
+  it("no name: an empty name", () => {
+    mutate("SKILL.md", "name: demo", "name:");
+    expectError("no name");
+  });
+
+  it("no description: an empty description", () => {
+    mutate("SKILL.md", "description: Demonstrates a skill, when the user wants a demo.", "description:");
+    expectError("no description");
+  });
+
+  it("outside link: a link leaving the skill, even in an asset", () => {
+    write({ "assets/answer.md": "# Answer\n\n[out](../../../README.md)\n" });
+    expectError("outside link");
+  });
+
+  it("citation: a dead link in an asset is no finding", () => {
+    write({ "assets/answer.md": "# Answer\n\n[next](./phase-1.md)\n" });
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("sibling: a skill of a sibling plugin named in a reference, but not the plugin's own or an asset's", () => {
+    mutate("references/rubric.md", "| any | yes |", "| any | /aidd-demo:02-own |");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+    write({ "assets/answer.md": "Run /aidd-dev:01-plan.\n" });
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+    mutate("references/rubric.md", "/aidd-demo:02-own", "/aidd-dev:01-plan");
+    expectError("sibling");
   });
 
   it("a second link to the same file is no finding", () => {

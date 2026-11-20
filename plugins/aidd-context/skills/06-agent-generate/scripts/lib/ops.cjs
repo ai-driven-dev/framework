@@ -15,13 +15,13 @@ const ABBREVIATION = /\b(?:e\.g|i\.e|etc|vs|cf)\./giu;
 const OPTIONS = {
   required: ["field"],
   max: ["measure", "field", "max"],
-  pattern: ["regex", "field", "line"],
+  pattern: ["regex", "field", "line", "any"],
   forbidden: ["regex", "field", "line", "scope"],
   sections: ["allowed", "order", "required", "level"],
   equals: ["field", "to"],
   oneSentence: ["sections", "skipIndentedIn"],
   flatList: ["sections"],
-  links: [],
+  links: ["inside"],
   template: ["template", "optional", "values"],
   json: ["schema"],
   custom: ["check"],
@@ -48,6 +48,7 @@ const ops = {
   },
   pattern(ctx, rule) {
     const regex = new RegExp(rule.regex, "u");
+    if (rule.any) return targets(ctx, rule).some(({ value }) => regex.test(value)) ? [] : [at(1, undefined)];
     return targets(ctx, rule).filter(({ value }) => !regex.test(value)).map(({ line, value }) => at(line, value));
   },
   forbidden(ctx, rule) {
@@ -97,17 +98,21 @@ const ops = {
     return found;
   },
   equals(ctx, rule) {
-    const expected = rule.to === "basename" ? ctx.file.split("/").pop().replace(/\.[^.]+$/u, "") : rule.to;
-    const value = ctx.fm.fields[rule.field] ?? "";
+    const expected = rule.to === "basename" ? ctx.file.split("/").pop().replace(/\.[^.]+$/u, "") : rule.to === "folder" ? path.basename(ctx.root) : rule.to;
+    const value = unquote(ctx.fm.fields[rule.field] ?? "");
     return value === expected ? [] : [at(ctx.fm.fieldLine[rule.field] ?? 1, value, { expected })];
   },
-  links(ctx) {
+  links(ctx, rule) {
     const found = [];
     ctx.prose.forEach((line, index) => {
       for (const match of line.matchAll(LINK)) {
         const target = match[1];
         if (/^[a-z]+:/iu.test(target)) continue;
-        if (!fs.existsSync(path.resolve(path.dirname(ctx.abs), target))) found.push(at(index + 1, match[0], { target }));
+        const resolved = path.resolve(path.dirname(ctx.abs), target);
+        if (rule.inside) {
+          const from = path.relative(ctx.root, resolved);
+          if (from.startsWith("..") || path.isAbsolute(from)) found.push(at(index + 1, match[0], { target }));
+        } else if (!fs.existsSync(resolved)) found.push(at(index + 1, match[0], { target }));
       }
     });
     return found;

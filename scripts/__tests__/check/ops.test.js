@@ -55,6 +55,21 @@ describe("ops", () => {
     assert.deepEqual(lines(findings({ op: "equals", field: "name", to: "basename" }, "---\nname: z\n---\n")), [2]);
   });
 
+  it("equals to folder compares a field to the unit folder name, quotes ignored", () => {
+    const rule = { op: "equals", field: "name", to: "folder" };
+    const name = path.basename(dir);
+    assert.deepEqual(findings(rule, `---\nname: ${name}\n---\n`), []);
+    assert.deepEqual(findings(rule, `---\nname: "${name}"\n---\n`), []);
+    assert.deepEqual(lines(findings(rule, "---\nname: other\n---\n")), [2]);
+    assert.deepEqual(lines(findings(rule, "---\ndescription: x\n---\n")), [1]);
+  });
+
+  it("pattern any passes when one line matches", () => {
+    const rule = { op: "pattern", regex: "^## Run", any: true };
+    assert.deepEqual(findings(rule, "# T\n\n## Run 1\n"), []);
+    assert.deepEqual(lines(findings(rule, "# T\n\n```\n## Run 1\n```\n")), [1]);
+  });
+
   it("oneSentence flags two clauses in a list item", () => {
     const rule = { op: "oneSentence", sections: ["S"] };
     assert.deepEqual(findings(rule, "## S\n\n- One thing.\n"), []);
@@ -71,6 +86,15 @@ describe("ops", () => {
     fs.writeFileSync(path.join(dir, "b.md"), "");
     assert.deepEqual(findings({ op: "links" }, "[b](b.md) [web](https://x.y)\n"), []);
     assert.deepEqual(lines(findings({ op: "links" }, "[c](c.md)\n")), [1]);
+  });
+
+  it("links inside flags a link leaving the unit folder, existing or not", () => {
+    fs.mkdirSync(path.join(dir, "sub"));
+    fs.writeFileSync(path.join(dir, "sub/b.md"), "");
+    const rule = { op: "links", inside: true };
+    assert.deepEqual(findings(rule, "[b](sub/b.md) [up](./sub/../sub/b.md) [web](https://x.y) [here](#top)\n"), []);
+    assert.deepEqual(lines(findings(rule, "ok\n[out](../x.md)\n")), [2]);
+    assert.deepEqual(lines(findings(rule, "[abs](/etc/hosts)\n")), [1]);
   });
 
   it("template flags an unfilled slot and accepts a filled copy", () => {
