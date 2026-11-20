@@ -106,7 +106,7 @@ export class ActivateNativeTools {
       } catch (error) {
         errors.push({
           scope: toolId,
-          message: (error as Error).message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }

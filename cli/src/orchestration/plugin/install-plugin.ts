@@ -52,9 +52,10 @@ export class InstallPlugin {
         scope: options.scope,
       });
     }
-    if (options.pluginArg === undefined) return this.executeNoArg(options);
-    if (this.isSourceArg(options.pluginArg)) return this.executeLocalSource(options);
-    return this.executeMarketplace(options);
+    const { pluginArg } = options;
+    if (pluginArg === undefined) return this.executeNoArg(options);
+    if (this.isSourceArg(pluginArg)) return this.executeLocalSource(options, pluginArg);
+    return this.executeMarketplace(options, pluginArg);
   }
 
   private isSourceArg(arg: string): boolean {
@@ -74,8 +75,11 @@ export class InstallPlugin {
     return { kind: "picked", installed: result.installed };
   }
 
-  private async executeLocalSource(options: PluginInstallOptions): Promise<PluginInstallResult> {
-    const source = parsePluginSourceShorthand(options.pluginArg as string);
+  private async executeLocalSource(
+    options: PluginInstallOptions,
+    pluginArg: string
+  ): Promise<PluginInstallResult> {
+    const source = parsePluginSourceShorthand(pluginArg);
     await this.trustPluginSource.execute({
       projectRoot: options.projectRoot,
       source,
@@ -91,8 +95,11 @@ export class InstallPlugin {
     return { kind: "local", installed: [] };
   }
 
-  private async executeMarketplace(options: PluginInstallOptions): Promise<PluginInstallResult> {
-    const { name, version } = parsePluginSpec(options.pluginArg as string);
+  private async executeMarketplace(
+    options: PluginInstallOptions,
+    pluginArg: string
+  ): Promise<PluginInstallResult> {
+    const { name, version } = parsePluginSpec(pluginArg);
     const result = await this.installFromMarketplace.execute({
       pluginName: name,
       version,

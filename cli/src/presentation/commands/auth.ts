@@ -38,7 +38,7 @@ function refuseInvalidOptions(options: LoginOptions, output: CLIOutput): void {
 }
 
 async function askLevel(prompter: Prompter, rawLevel: string | undefined): Promise<AuthLevel> {
-  if (rawLevel !== undefined) return rawLevel as AuthLevel;
+  if (rawLevel === "user" || rawLevel === "project") return rawLevel;
   return prompter.select<AuthLevel>("Storage level:", [
     { name: "User (~/.config/aidd/auth.json)", value: "user" },
     { name: `Project (${AIDD_DIR}/auth.json)`, value: "project" },

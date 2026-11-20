@@ -87,7 +87,8 @@ export function registerTranslateCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
       const targets = supportedBuildTargets(tools);
-      if (!(targets as readonly string[]).includes(cmdOptions.to)) {
+      const target = targets.find((candidate) => candidate === cmdOptions.to);
+      if (target === undefined) {
         output.error(
           `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`
         );
@@ -110,7 +111,7 @@ export function registerTranslateCommand(
         output,
         sourceDir: resolve(projectRoot, source),
         outDir: resolve(projectRoot, cmdOptions.out),
-        target: cmdOptions.to as FrameworkBuildTarget,
+        target,
         mode,
         force: cmdOptions.force ?? false,
       });

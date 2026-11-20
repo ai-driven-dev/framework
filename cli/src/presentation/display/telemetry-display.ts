@@ -13,6 +13,9 @@ import type { CLIOutput } from "../output.js";
 export const UNRECOGNISED_WORDS =
   "not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call.";
 
+const isNotStoredReason = (key: string): key is NotStoredReason =>
+  Object.hasOwn(NOT_STORED_WORDS, key);
+
 /** Why a billed call was read and not stored, as the end of a sentence about N calls. */
 export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
@@ -58,9 +61,11 @@ export function leftOutLines(
       text: `${count(left.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`,
     });
   }
-  for (const [reason, n] of Object.entries(left.notStored) as [NotStoredReason, number][]) {
-    const text = `Not stored by this read: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`;
-    if (n > 0) lines.push({ warn: false, text });
+  for (const [reason, n] of Object.entries(left.notStored)) {
+    if (n > 0 && isNotStoredReason(reason)) {
+      const text = `Not stored by this read: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`;
+      lines.push({ warn: false, text });
+    }
   }
   if (left.consentLogDamaged) lines.push({ warn: true, text: DAMAGED_CONSENT_LOG_WORDS });
   const kept = left.skippedLedgerLines;
