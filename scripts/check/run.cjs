@@ -2,7 +2,7 @@
 "use strict";
 // Usage: node scripts/check/run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]
 // Checks every artifact each contract names in its `targets` (scripts/check/contracts/*.json and plugins/*/skills/*/scripts/contract.json), and the vendored engine copies.
-// With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts and the given files (a finding belongs to the file it names), and engine copies are checked only if a file is under scripts/check/engine/ or a skill's scripts/lib/. --update-baseline takes no files.
+// With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts and the given files (a finding belongs to the file it names), and engine and hook copies are checked only if a file is under scripts/check/engine/, a skill's scripts/ or assets/, or a plugin's generated hooks files. --update-baseline takes no files.
 // Each generator of scripts/check/generators runs on every full run, and on a scoped run when a given file matches its `watch` globs: a stale generated file is a finding, and --fix rewrites it first; a `{ problem }` result is a finding --fix cannot repair.
 // A contract may name `watch` globs: its anchor unit stands for repo-wide rules, so a scoped run also runs it when a given file matches.
 // Baseline keys are file and rule (no line, message or excerpt), counted. A finding above its count exits 1, and so does an entry that fires less.
@@ -10,7 +10,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { check, loadContract, format, ContractError, isUsage } = require("./engine/engine.cjs");
-const { sync } = require("./engine/sync.cjs");
+const { sync, syncHooks, describeHook } = require("./engine/sync.cjs");
 
 const BASELINE = "scripts/check/baseline.json";
 const CONTRACTS = "scripts/check/contracts";
@@ -37,7 +37,7 @@ function globMatch(glob, file) {
 const watches = (globs, given) => given.some((g) => (globs ?? []).some((glob) => globMatch(glob, g)));
 
 const USAGE = "usage: run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]";
-const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/scripts\/lib\/)/u;
+const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/(?:scripts|assets)\/|plugins\/[^/]+\/hooks\/(?:artifacts\.cjs|lib\/contracts\/))/u;
 
 function main(argv, { generators = require("./generators/index.cjs"), out = (text) => process.stdout.write(text) } = {}) {
   const at = argv.indexOf("--root");
@@ -89,6 +89,7 @@ function main(argv, { generators = require("./generators/index.cjs"), out = (tex
     .map(([key]) => `baseline entry no longer fires, run node scripts/check/run.cjs --update-baseline: ${key}`);
   const outdated = !scoped || given.some((g) => ENGINE_PATH.test(g));
   const stale = (outdated ? sync({ root }) : []).map((copy) => `${copy} differs from scripts/check/engine, run node scripts/check/engine/sync.cjs`);
+  if (outdated) stale.push(...syncHooks({ root }).map(describeHook));
   for (const generator of generators) {
     if (scoped && !watches(generator.watch, given)) continue;
     for (const result of generator.run({ root, write: fix })) {

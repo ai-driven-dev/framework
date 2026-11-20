@@ -63,6 +63,18 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-batch`       | Execute independent tasks in parallel and summarize each agent's status and result | `01-batch`                                                            |
 
+<!--extras-aidd-dev:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-dev:end-->
+
 ## 📋 aidd-pm
 
 Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.
@@ -79,6 +91,18 @@ Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Task
 | `08-three-amigos`         | Reconcile product, delivery, and quality refinement        | `01-assess`, `02-reconcile`      |
 | `09-defect`               | Record and manage an observed product mismatch             | `01-capture`, `02-assess`, `03-finalize` |
 | `10-task`                 | Record and manage bounded delivery work                    | `01-frame`, `02-review`, `03-finalize` |
+
+<!--extras-aidd-pm:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-pm:end-->
 
 ## 🪞 aidd-refine
 

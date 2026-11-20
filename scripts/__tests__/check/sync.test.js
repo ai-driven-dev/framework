@@ -48,4 +48,56 @@ describe("contract sync", () => {
     assert.equal(sync().status, 0);
     assert.equal(sync("--check").status, 0);
   });
+
+  describe("hook copies", () => {
+    const plugin = () => path.join(root, "plugins", "p");
+    const scope = () => {
+      const contract = path.join(plugin(), "skills", "a", "scripts", "contract.json");
+      fs.writeFileSync(contract, JSON.stringify({ scope: ["x/*.md"], rules: { R: { template: "../assets/t.md" } } }));
+      fs.mkdirSync(path.join(plugin(), "skills", "a", "assets"), { recursive: true });
+      fs.writeFileSync(path.join(plugin(), "skills", "a", "assets", "t.md"), "# t\n");
+    };
+
+    it("a plugin with a scoped contract gets artifacts.cjs and the contract, engine and named template", () => {
+      scope();
+      sync();
+      const hooks = path.join(plugin(), "hooks");
+      assert.ok(fs.existsSync(path.join(hooks, "artifacts.cjs")));
+      for (const file of ["scripts/contract.json", "scripts/lib/engine.cjs", "assets/t.md"]) assert.ok(fs.existsSync(path.join(hooks, "lib", "contracts", "a", file)), file);
+      assert.equal(sync("--check").status, 0);
+    });
+
+    it("a plugin whose contracts have no scope gets nothing", () => {
+      sync();
+      assert.equal(fs.existsSync(path.join(plugin(), "hooks")), false);
+    });
+
+    it("--check names an edited copy, and the sync repairs it", () => {
+      scope();
+      sync();
+      const copied = path.join(plugin(), "hooks", "lib", "contracts", "a", "assets", "t.md");
+      fs.appendFileSync(copied, "edited\n");
+      const run = sync("--check");
+      assert.equal(run.status, 1);
+      assert.match(run.stdout, /plugins\/p\/hooks\/lib\/contracts\/a\/assets\/t\.md differs/u);
+      assert.equal(sync().status, 0);
+      assert.equal(sync("--check").status, 0);
+    });
+
+    it("an orphan copy and a hook left without a scoped contract are named, then removed", () => {
+      scope();
+      sync();
+      const orphan = path.join(plugin(), "hooks", "lib", "contracts", "gone", "x.md");
+      fs.mkdirSync(path.dirname(orphan), { recursive: true });
+      fs.writeFileSync(orphan, "");
+      assert.match(sync("--check").stdout, /gone\/x\.md has no source/u);
+      sync();
+      assert.equal(fs.existsSync(path.dirname(orphan)), false);
+      fs.writeFileSync(path.join(plugin(), "skills", "a", "scripts", "contract.json"), "{}");
+      assert.match(sync("--check").stdout, /hooks\/artifacts\.cjs has no source/u);
+      sync();
+      assert.equal(fs.existsSync(path.join(plugin(), "hooks", "artifacts.cjs")), false);
+      assert.equal(fs.existsSync(path.join(plugin(), "hooks", "lib", "contracts")), false);
+    });
+  });
 });

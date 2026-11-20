@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Artifact hook, its generated copies, aidd-dev and aidd-pm wired
