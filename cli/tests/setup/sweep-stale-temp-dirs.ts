@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { REPOSITORY_ROOT } from "./repository-root.js";
+import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
 
 /** Vitest's entry point into the repository's single sweep. The implementation is
  * `scripts/sweep-stale-test-dirs.cjs`, shared with the plugin's `node:test` suites so one

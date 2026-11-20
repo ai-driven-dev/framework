@@ -28,7 +28,8 @@ export type KindId =
   | "test"
   | "builder"
   | "fake"
-  | "contract-suite";
+  | "contract-suite"
+  | "setup";
 
 export type TestLevel = "unit" | "contract" | "integration" | "golden" | "e2e" | "arch";
 
@@ -56,6 +57,7 @@ export interface Kind {
 const PURE_BUILTINS = ["node:path", "node:crypto"];
 const ANY_TEST_FOLDER = ["tests/**/*"];
 const KIT_FOLDER = ["tests/**/testing/**/*"];
+const SETUP_FOLDER = ["tests/setup/**/*"];
 
 export const KINDS: readonly Kind[] = [
   {
@@ -239,6 +241,17 @@ export const KINDS: readonly Kind[] = [
     imports: "any",
     externals: "any",
     ownKitOnly: true,
+    tests: [],
+  },
+  {
+    // A setup file is claimed by its folder alone: a vitest config loads it, nothing imports it.
+    id: "setup",
+    suffix: /(?!)/,
+    folders: SETUP_FOLDER,
+    fallback: SETUP_FOLDER,
+    except: [],
+    imports: "any",
+    externals: "any",
     tests: [],
   },
 ];
@@ -494,6 +507,14 @@ export function importViolations(
           target,
           `context ${fromContext} reaches into context ${toContext} past its contract`,
           `import ${toContext}'s contract, or expose what you need there`
+        );
+        continue;
+      }
+      if (anyOf(SETUP_FOLDER, target) && !anyOf(SETUP_FOLDER, file)) {
+        report(
+          target,
+          "a setup file is imported by a test file or a source",
+          "only a vitest config loads a file of tests/setup; move what a test needs to a kit"
         );
         continue;
       }

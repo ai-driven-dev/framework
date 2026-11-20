@@ -5,7 +5,7 @@ import { defineConfig } from "tsup";
 
 /**
  * Where the build lands. `dist` normally; each e2e run passes its own directory under
- * `.e2e-build/` (`tests/e2e/global-setup.ts`) so two concurrent vitest invocations never
+ * `.e2e-build/` (`tests/setup/global-setup.ts`) so two concurrent vitest invocations never
  * share, and race to rewrite, one `dist/cli.js`.
  *
  * Those two are the whole legitimate set, and anything else is refused rather than

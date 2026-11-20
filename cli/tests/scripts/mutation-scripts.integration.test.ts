@@ -102,7 +102,7 @@ describe("the mutation scripts", () => {
     expect(scopesToRun(["README.md"], mixed)).toEqual([]);
     expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], mixed)).toEqual([]);
     expect(scopesToRun(["cli/tests/shared/domain/paths.unit.test.ts"], mixed)).toEqual(["shared"]);
-    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.ts"], mixed)).toEqual([
+    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], mixed)).toEqual([
       "shared",
     ]);
     expect(
@@ -115,16 +115,16 @@ describe("the mutation scripts", () => {
 
   it("runs a gated scope when its tests or kit change, never a scope with no floor", () => {
     const scopes = declaration().scopes;
-    expect(scopesToRun(["cli/tests/contexts/telemetry/testing/fake-locator.ts"], scopes)).toEqual([
-      "telemetry",
-    ]);
+    expect(
+      scopesToRun(["cli/tests/contexts/telemetry/testing/fake-locator.fake.ts"], scopes)
+    ).toEqual(["telemetry"]);
     expect(
       scopesToRun(
         ["cli/tests/presentation/display/telemetry/telemetry-report-display.unit.test.ts"],
         scopes
       )
     ).toEqual(["telemetry"]);
-    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.ts"], scopes)).toEqual([
+    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], scopes)).toEqual([
       "shared",
     ]);
     expect(

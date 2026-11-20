@@ -11,7 +11,7 @@
  * - No source comment holds an em dash: one printed to a user is a string and stays, one in a
  *   comment is prose that drifted from the writing rule.
  * - No test resolves a path into the shared `dist/`: the build cleans it, so a second concurrent
- *   run rewrites the binary a first run is reading. `tests/e2e/global-setup.ts` builds a private
+ *   run rewrites the binary a first run is reading. `tests/setup/global-setup.ts` builds a private
  *   binary per run.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -45,7 +45,7 @@ describe("git hooks are installed from the repository root only", () => {
   });
 });
 
-const SETUP = "./tests/helpers/throwaway-profile.ts";
+const SETUP = "./tests/setup/throwaway-profile.ts";
 const RUNS_SOURCE = ["unit", "contract", "integration"];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

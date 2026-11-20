@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
-import { textLoader } from "./tests/helpers/vitest-text-loader.js";
+import { textLoader } from "./tests/setup/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
@@ -17,8 +17,8 @@ export default defineConfig({
           globals: false,
           environment: "node",
           globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
           ],
         },
       },
@@ -31,8 +31,8 @@ export default defineConfig({
           globals: false,
           environment: "node",
           globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
           ],
         },
       },
@@ -59,8 +59,8 @@ export default defineConfig({
           // A `beforeEach` that spawns git is slower than the 10s default on a loaded Windows runner.
           hookTimeout: 60000,
           globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
           ],
         },
       },
@@ -73,7 +73,7 @@ export default defineConfig({
           globals: false,
           environment: "node",
           testTimeout: 60000,
-          globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
+          globalSetup: ["./tests/setup/global-setup.ts", "./tests/setup/sweep-stale-temp-dirs.ts"],
         },
       },
       {
@@ -85,7 +85,7 @@ export default defineConfig({
           globals: false,
           environment: "node",
           testTimeout: 60000,
-          globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
+          globalSetup: ["./tests/setup/global-setup.ts", "./tests/setup/sweep-stale-temp-dirs.ts"],
         },
       },
     ],

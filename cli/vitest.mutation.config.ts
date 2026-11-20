@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
-import { CheapestKillerFirst } from "./tests/helpers/mutation-sequencer.js";
-import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
-import { textLoader } from "./tests/helpers/vitest-text-loader.js";
+import { CheapestKillerFirst } from "./tests/setup/mutation-sequencer.js";
+import { UnloadableFileAsFailedTest } from "./tests/setup/unloadable-file-as-failed-test.js";
+import { textLoader } from "./tests/setup/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
@@ -72,7 +72,7 @@ export default defineConfig({
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+          globalSetup: ["./tests/setup/throwaway-profile.ts"],
         },
       },
       {
@@ -83,7 +83,7 @@ export default defineConfig({
           include: ["tests/**/*.contract.test.ts"],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+          globalSetup: ["./tests/setup/throwaway-profile.ts"],
         },
       },
       {
@@ -95,7 +95,7 @@ export default defineConfig({
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+          globalSetup: ["./tests/setup/throwaway-profile.ts"],
           testTimeout: 60000,
           hookTimeout: 60000,
         },

@@ -121,6 +121,7 @@ describe("every file is exactly one kind", () => {
     ["tests/contexts/auth/testing/auth.builder.ts", "builder"],
     ["tests/contexts/auth/testing/credentials.fake.ts", "fake"],
     ["tests/contexts/auth/testing/credentials.contract.ts", "contract-suite"],
+    ["tests/setup/vitest-text-loader.ts", "setup"],
   ])("%s is a %s", (path, kind) => {
     expect(kindsOf(path)).toEqual([kind]);
     expect(violationsOf(path)).toEqual([]);
@@ -410,6 +411,24 @@ describe("a file imports only the kinds its kind allows", () => {
         "tests/contexts/b/x/y.unit.test.ts": 'import { Y } from "../testing/y.fake.js";',
       })
     ).toEqual([]);
+  });
+
+  it("flags a setup file imported by a test, a kit or a source, as only a vitest config loads it", () => {
+    for (const file of [
+      "tests/contexts/a/x/y.unit.test.ts",
+      "tests/contexts/a/testing/x.fake.ts",
+      "tests/shared/testing/h.ts",
+      "src/presentation/x.ts",
+    ]) {
+      const target = "tests/setup/loader.ts";
+      const spec = posix.relative(posix.dirname(file), target).replace(/\.ts$/, ".js");
+      expect(
+        importsOf({
+          [target]: "export const loader = 1;",
+          [file]: `import { loader } from "${spec}";`,
+        })
+      ).toEqual([`${file} -> ${target}`]);
+    }
   });
 
   it("passes a fake that imports the shared kit and its own source", () => {

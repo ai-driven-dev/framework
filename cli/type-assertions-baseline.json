@@ -111,10 +111,6 @@
   "tests/golden/expect-golden.ts": 1,
   "tests/golden/framework-build.golden.test.ts": 1,
   "tests/golden/tool-support-surface.golden.test.ts": 1,
-  "tests/helpers/mutation-sequencer.integration.test.ts": 1,
-  "tests/helpers/sweep-stale-temp-dirs.ts": 1,
-  "tests/helpers/unloadable-file-as-failed-test.integration.test.ts": 1,
-  "tests/helpers/unloadable-file-as-failed-test.ts": 1,
   "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1,
   "tests/orchestration/doctor/check-registration-sources.integration.test.ts": 1,
   "tests/orchestration/doctor/doctor-use-case.unit.test.ts": 1,
@@ -137,5 +133,9 @@
   "tests/presentation/testing/in-process-cli.builder.ts": 2,
   "tests/presentation/testing/project-state.builder.ts": 3,
   "tests/scripts/mutation-shards.integration.test.ts": 2,
-  "tests/scripts/profile-copies.integration.test.ts": 1
+  "tests/scripts/profile-copies.integration.test.ts": 1,
+  "tests/setup/mutation-sequencer.integration.test.ts": 1,
+  "tests/setup/sweep-stale-temp-dirs.ts": 1,
+  "tests/setup/unloadable-file-as-failed-test.integration.test.ts": 1,
+  "tests/setup/unloadable-file-as-failed-test.ts": 1
 }
