@@ -1,3 +1,4 @@
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import { rewriteRelativeLinks } from "../../../../src/shared/domain/materialization/relative-link-rewrite.js";
 
@@ -141,6 +142,32 @@ describe("rewriteRelativeLinks", () => {
       const input = `A: @${CLAUDE_ROOT}/agents/foo.md B: @${CLAUDE_ROOT}/skills/bar.md`;
       const output = rewriteRelativeLinks(input, opts);
       expect(output).toBe("A: [foo.md](../flat/agents/foo.md) B: [bar.md](../flat/skills/bar.md)");
+    });
+  });
+
+  // node's posix flavour is the oracle for the slash arithmetic: current files and targets are
+  // plugin-relative, so they are never rooted and never climb above the plugin root.
+  describe("link path matches node's posix path arithmetic", () => {
+    const CASES: ReadonlyArray<readonly [string, string]> = [
+      ["SKILL.md", "rules/r.md"],
+      ["skills/01-x/SKILL.md", "rules/r.md"],
+      ["skills/01-x/SKILL.md", "skills/01-x/ref.md"],
+      ["skills/01-x/SKILL.md", "skills/02-y/ref.md"],
+      ["skills/01-x/deep/SKILL.md", "skills/01-x/ref.md"],
+      ["skills//01-x//SKILL.md", "skills/01-x/ref.md"],
+      ["skills/01-x/SKILL.md", "skills/./01-x/ref.md"],
+      ["skills/01-x/SKILL.md", "skills/01-x/dir/"],
+    ];
+
+    it.each(CASES)("from %j to %j", (current, target) => {
+      const relative = posix.relative(posix.dirname(current), target);
+      const link = relative.startsWith(".") ? relative : `./${relative}`;
+
+      expect(
+        rewriteRelativeLinks(`@\${CLAUDE_PLUGIN_ROOT}/${target}`, {
+          currentFilePluginRelative: current,
+        })
+      ).toBe(`[${posix.basename(target)}](${link})`);
     });
   });
 });
