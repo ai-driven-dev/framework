@@ -1,11 +1,11 @@
 import { createServer, type Server } from "node:http";
 import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
-import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";
+import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.fake.js";
 import {
   describeIdentityVerifierContract,
   type VerifierSubject,
-} from "../testing/identity-verifier-contract.js";
+} from "../testing/identity-verifier.contract.js";
 
 const KNOWN = "ghp_known";
 const REFUSED = "ghp_refused";

@@ -4,9 +4,9 @@ import { SelfUpdate } from "../../../../src/contexts/update/application/self-upd
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
 import type { CliReleaseSource } from "../../../../src/contexts/update/ports/cli-release-source.js";
 import type { UpdateCheckCache } from "../../../../src/contexts/update/ports/update-check-cache.js";
-import { FakeCliInstaller } from "./fake-cli-installer.js";
-import { FakeCliReleaseSource } from "./fake-cli-release-source.js";
-import { InMemoryUpdateCheckCache } from "./in-memory-update-check-cache.js";
+import { FakeCliInstaller } from "./fake-cli-installer.fake.js";
+import { FakeCliReleaseSource } from "./fake-cli-release-source.fake.js";
+import { InMemoryUpdateCheckCache } from "./in-memory-update-check-cache.fake.js";
 
 /** `aidd update` over neutral doubles: version 1.0.0 installed, 2.0.0 published, an installer
  * that succeeds. */

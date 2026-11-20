@@ -7,8 +7,8 @@ import {
   describeCliReleaseSourceContract,
   type ReleaseScenario,
   type ReleaseSubject,
-} from "../testing/cli-release-source-contract.js";
-import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.js";
+} from "../testing/cli-release-source.contract.js";
+import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.fake.js";
 
 describeCliReleaseSourceContract(
   "the fake",

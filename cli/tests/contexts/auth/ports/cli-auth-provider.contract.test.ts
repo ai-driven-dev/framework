@@ -7,8 +7,8 @@ import {
   type CliScenario,
   type CliSubject,
   describeCliAuthProviderContract,
-} from "../testing/cli-auth-provider-contract.js";
-import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.js";
+} from "../testing/cli-auth-provider.contract.js";
+import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
 
 describeCliAuthProviderContract(
   "the fake",

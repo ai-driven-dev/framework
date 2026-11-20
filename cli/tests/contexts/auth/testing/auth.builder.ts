@@ -7,9 +7,9 @@ import type { ExternalTokenSource } from "../../../../src/contexts/auth/ports/ex
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { InMemoryEnvironment } from "../../../shared/testing/in-memory-environment.js";
-import { FakeCliAuthProvider } from "./fake-cli-auth-provider.js";
-import { FakeIdentityVerifier } from "./fake-identity-verifier.js";
-import { InMemoryCredentialRecordRepository } from "./in-memory-credential-record-repository.js";
+import { FakeCliAuthProvider } from "./fake-cli-auth-provider.fake.js";
+import { FakeIdentityVerifier } from "./fake-identity-verifier.fake.js";
+import { InMemoryCredentialRecordRepository } from "./in-memory-credential-record-repository.fake.js";
 
 /** A token provider over neutral doubles: no record, no supplied token, a provider with
  * nothing, a logger that keeps what it is told. */

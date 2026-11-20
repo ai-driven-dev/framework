@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { aLogOut } from "../testing/auth-builders.js";
-import { anExternalRecord, aStoredRecord } from "../testing/credential-records.js";
-import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.js";
+import { aLogOut } from "../testing/auth.builder.js";
+import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
+import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
 describe("LogOut", () => {
   describe("when nothing is stored", () => {

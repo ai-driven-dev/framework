@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.js";
-import { aPrintUpdateNotice } from "../testing/update-builders.js";
+import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
+import { aPrintUpdateNotice } from "../testing/update.builder.js";
 
 describe("PrintUpdateNotice", () => {
   it("warns of a newer release the last check kept, however old the check", async () => {

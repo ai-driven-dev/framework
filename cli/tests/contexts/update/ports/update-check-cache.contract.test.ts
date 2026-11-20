@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { UpdateCheckCacheAdapter } from "../../../../src/contexts/update/infrastructure/update-check-cache-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.js";
-import { describeUpdateCheckCacheContract } from "../testing/update-check-cache-contract.js";
+import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
+import { describeUpdateCheckCacheContract } from "../testing/update-check-cache.contract.js";
 
 describeUpdateCheckCacheContract("the in-memory cache", async () => {
   let cache = new InMemoryUpdateCheckCache();

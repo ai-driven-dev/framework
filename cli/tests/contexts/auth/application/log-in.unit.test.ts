@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
-import { aLogIn } from "../testing/auth-builders.js";
-import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.js";
-import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";
-import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.js";
+import { aLogIn } from "../testing/auth.builder.js";
+import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
+import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.fake.js";
+import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
 describe("LogIn", () => {
   describe("when a stored token is handed", () => {

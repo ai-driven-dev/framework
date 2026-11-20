@@ -54,7 +54,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 ## 7. Contract-suite template
 
-- `describe<Port>Contract(subjectName, makeSubject)` in the kit (`tests/contexts/auth/testing/credential-record-repository-contract.ts`), called by one `*.contract.test.ts` under `tests/contexts/<ctx>/ports/` on the fake and on the real adapter.
+- `describe<Port>Contract(subjectName, makeSubject)` in the kit (`tests/contexts/auth/testing/credential-record-repository.contract.ts`), called by one `*.contract.test.ts` under `tests/contexts/<ctx>/ports/` on the fake and on the real adapter.
 - A suite holds only cases the port can drive; how an adapter words what its system said belongs to the adapter's own test.
 - A case red on the real adapter is a wrong case; red on the fake, a divergence fixed in the fake.
 

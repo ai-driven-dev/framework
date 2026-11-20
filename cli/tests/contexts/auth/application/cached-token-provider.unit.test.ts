@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { aCachedTokenProvider } from "../testing/auth-builders.js";
-import { anExternalRecord, aStoredRecord } from "../testing/credential-records.js";
-import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.js";
-import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.js";
+import { aCachedTokenProvider } from "../testing/auth.builder.js";
+import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
+import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
+import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
 interface Row {
   commandLine?: string;

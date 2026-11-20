@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ElevatedPermissionUpdateError } from "../../../../src/shared/domain/errors.js";
-import { FakeCliInstaller } from "../testing/fake-cli-installer.js";
-import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.js";
-import { aSelfUpdate } from "../testing/update-builders.js";
+import { FakeCliInstaller } from "../testing/fake-cli-installer.fake.js";
+import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.fake.js";
+import { aSelfUpdate } from "../testing/update.builder.js";
 
 const NOTES = { version: "2.6.0", changelog: "Release notes" };
 const off = { check: false, dryRun: false, force: false };

@@ -5,8 +5,8 @@ import { CredentialRecordFileAdapter } from "../../../../src/contexts/auth/infra
 import {
   describeCredentialRecordRepositoryContract,
   type RepositorySubject,
-} from "../testing/credential-record-repository-contract.js";
-import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.js";
+} from "../testing/credential-record-repository.contract.js";
+import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
 describeCredentialRecordRepositoryContract(
   "the in-memory repository",

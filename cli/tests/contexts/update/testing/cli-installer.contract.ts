@@ -6,7 +6,7 @@ import {
   PackageManagerDetectionError,
   UpdateError,
 } from "../../../../src/shared/domain/errors.js";
-import type { InstallScenario } from "./fake-cli-installer.js";
+import type { InstallScenario } from "./fake-cli-installer.fake.js";
 
 export interface InstallerSubject {
   readonly installer: CliInstaller;
