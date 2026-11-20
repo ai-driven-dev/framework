@@ -1,24 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { ReleaseClaims } from "../../../../src/contexts/machine-claims/application/release-claims.js";
+import { dropSourceClaim } from "../../../../src/contexts/machine-claims/application/drop-source-claim.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { RecordingSourceReferences } from "../testing/recording-source-references.fake.js";
 
 function claims(references?: RecordingSourceReferences) {
-  return new ReleaseClaims(
-    new InMemoryFileAdapter(),
-    new CapturingLogger(),
-    { frameworkMarketplaceName: "aidd-framework", platform: process.platform },
-    undefined,
-    references
-  );
+  return dropSourceClaim(new CapturingLogger(), references);
 }
 
 describe("dropping this project's claim on the shared source", () => {
   it("removes the claim under the root it resolved", async () => {
     const references = new RecordingSourceReferences();
 
-    await claims(references).drop("/project");
+    await claims(references)("/project");
 
     expect(references.removed).toEqual(["/project"]);
   });
@@ -26,12 +19,12 @@ describe("dropping this project's claim on the shared source", () => {
   it("removes nothing when no root was resolved before the project was cleaned", async () => {
     const references = new RecordingSourceReferences();
 
-    await claims(references).drop(undefined);
+    await claims(references)(undefined);
 
     expect(references.removed).toEqual([]);
   });
 
   it("does nothing, and does not fail, when no references file is wired", async () => {
-    await expect(claims(undefined).drop("/project")).resolves.toBeUndefined();
+    await expect(claims(undefined)("/project")).resolves.toBeUndefined();
   });
 });

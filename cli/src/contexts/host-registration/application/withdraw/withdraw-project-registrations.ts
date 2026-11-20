@@ -4,7 +4,6 @@ import {
   type RegistrationRecord,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
-import { resolveUninstallScopeOrder } from "../../domain/uninstall-scope-order.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import {
   assertNoForeignNativeRefs,
@@ -17,6 +16,7 @@ import {
   survivingCachePaths,
   uninstallAtFirstAcceptedScope,
 } from "./host-call.js";
+import { resolveUninstallScopeOrder } from "./uninstall-scope-order.js";
 import type {
   ProjectCleanFacts,
   ProjectRegistrationWithdrawal,

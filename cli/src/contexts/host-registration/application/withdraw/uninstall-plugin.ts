@@ -1,9 +1,9 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import { readRegistrationRecord } from "../../domain/record/registration-record.js";
-import { resolveUninstallScopeOrder } from "../../domain/uninstall-scope-order.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import { hostNameFor, uninstallAtFirstAcceptedScope } from "./host-call.js";
+import { resolveUninstallScopeOrder } from "./uninstall-scope-order.js";
 import type { WithdrawalDeps, WithdrawFromHostCommand } from "./withdrawal.js";
 
 /** Returns `undefined` when nothing was undone, else whether the host's own CLI confirmed it. */

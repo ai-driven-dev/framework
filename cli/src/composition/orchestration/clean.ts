@@ -11,15 +11,51 @@ import { RemoveToolFiles } from "../../contexts/installation/application/removal
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
+import { dropSourceClaim } from "../../contexts/machine-claims/application/drop-source-claim.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
-import { ReleaseClaims } from "../../contexts/machine-claims/application/release-claims.js";
+import { readMachineClaims } from "../../contexts/machine-claims/application/read-machine-claims.js";
+import { readSharedSourceClaim } from "../../contexts/machine-claims/application/read-shared-source-claim.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
+import type { MachineManifestRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
+import type { UserSourceReferences } from "../../contexts/machine-claims/ports/user-source-references.js";
+import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
+import type { FileReader } from "../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../shared/ports/file-writer.js";
+import type { Lock } from "../../shared/ports/lock.js";
+import type { Logger } from "../../shared/ports/logger.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
+
+/** What a clean asks of the machine record, over the user manifest and the shared source's references. */
+export function wireCleanClaims(parts: {
+  fs: FileReader & FileWriter;
+  logger: Logger;
+  userManifestRepo: MachineManifestRepository & Lock;
+  userSourceReferences?: UserSourceReferences;
+  purgeCache: PurgeDeclaredCache;
+}): CleanClaims {
+  const { fs, logger, userManifestRepo, userSourceReferences, purgeCache } = parts;
+  return {
+    referencingProjects: userSourceReferences,
+    sharedClaim: readSharedSourceClaim({
+      fs,
+      logger,
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      platform: process.platform,
+      references: userSourceReferences,
+    }),
+    dropClaim: dropSourceClaim(logger, userSourceReferences),
+    detach: detachProjectClaims(userManifestRepo, fs),
+    machineClaims: readMachineClaims(userManifestRepo),
+    exclusive: userManifestRepo,
+    purgeCache,
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+  };
+}
 
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {
@@ -43,17 +79,13 @@ export function wireClean(base: Base, inst: Installation) {
     tools
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
-  const claims = {
-    release: new ReleaseClaims(
-      fs,
-      logger,
-      { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
-      userManifestRepo,
-      userSourceReferences
-    ),
+  const claims = wireCleanClaims({
+    fs,
+    logger,
+    userManifestRepo,
+    userSourceReferences,
     purgeCache,
-    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-  };
+  });
   const guards: MachineStateGuards = {
     userConfigDir,
     resolveCacheCandidate: (cacheRoot, segments, label) =>

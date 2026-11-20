@@ -32,8 +32,6 @@
     "src/presentation/project-root.ts"
   ],
   "imports": [
-    "src/contexts/auth/domain/credential-sources.ts -> src/shared/ports/environment.ts",
-    "src/contexts/host-registration/domain/uninstall-scope-order.ts -> src/contexts/host-registration/ports/host-plugin-registry.ts",
     "src/contexts/telemetry/domain/declaration/task-declaration.ts -> src/contexts/telemetry/ports/bindings/bindings-lock.ts",
     "src/contexts/telemetry/domain/telemetry-consent.ts -> src/shared/ports/environment.ts",
     "src/contexts/tools/domain/formats/toml.ts -> smol-toml",
@@ -250,8 +248,6 @@
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
     "src/contexts/installation/application/sync/tracked-settings-file.ts",
-    "src/contexts/machine-claims/application/release-claims.ts",
-    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts",
     "src/contexts/telemetry/application/branch-declarations.ts",
     "src/contexts/telemetry/application/consent-log.ts",
     "src/contexts/telemetry/application/directory-resolver.ts",

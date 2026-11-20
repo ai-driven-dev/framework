@@ -22,6 +22,22 @@ export interface ActivationEvidence {
   readonly errors: readonly unknown[];
 }
 
+/** What the shared source is asked after native activation: to be recorded as referenced by this
+ * project, or to have this project's own pre-migration copy of it purged. */
+export type SharedSourceRequest =
+  | {
+      readonly kind: "record-reference";
+      readonly projectRoot: string;
+      readonly marketplaces: readonly ListedMarketplace[];
+      readonly outcomes: ReadonlyMap<ToolId, RegistrationEvidence>;
+    }
+  | {
+      readonly kind: "purge-stale-project-cache";
+      readonly projectRoot: string;
+      readonly marketplaces: readonly ListedMarketplace[];
+      readonly activation: ActivationEvidence;
+    };
+
 /** The machine's shared framework source and this project's own pre-migration copy of it. */
 export class SharedFrameworkSource {
   constructor(
@@ -36,17 +52,23 @@ export class SharedFrameworkSource {
     private readonly frameworkMarketplaceName: string
   ) {}
 
+  execute(request: SharedSourceRequest): Promise<void> {
+    return request.kind === "record-reference"
+      ? this.recordSharedSourceReference(request)
+      : this.purgeStaleProjectCache(request);
+  }
+
   /**
    * Never run before every tool's own native activation: a host's CLI needs the tree it is
    * unregistering from to still exist, and a binary off `PATH` or a failed build can leave a
    * registration still naming this project's own pre-migration cache. `resolveCacheCandidate`
    * refuses anything that does not `realpath` strictly inside `projectRoot`.
    */
-  async purgeStaleProjectCache(
-    projectRoot: string,
-    marketplaces: readonly ListedMarketplace[],
-    activation: ActivationEvidence
-  ): Promise<void> {
+  private async purgeStaleProjectCache({
+    projectRoot,
+    marketplaces,
+    activation,
+  }: Extract<SharedSourceRequest, { kind: "purge-stale-project-cache" }>): Promise<void> {
     if (activation.errors.length > 0) return;
     const framework = marketplaces.find((m) =>
       frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
@@ -81,11 +103,11 @@ export class SharedFrameworkSource {
   /**
    * Refreshed only after native activation proves that the host uses the shared source.
    */
-  async recordSharedSourceReference(
-    projectRoot: string,
-    marketplaces: readonly ListedMarketplace[],
-    outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
-  ): Promise<void> {
+  private async recordSharedSourceReference({
+    projectRoot,
+    marketplaces,
+    outcomes,
+  }: Extract<SharedSourceRequest, { kind: "record-reference" }>): Promise<void> {
     const framework = marketplaces.find((m) =>
       frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
     );

@@ -1,3 +1,4 @@
+import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
@@ -6,8 +7,8 @@ import type { MachineStateGuards } from "../../../src/contexts/installation/appl
 import { PurgeMachineState } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { ReleaseClaims } from "../../../src/contexts/machine-claims/application/release-claims.js";
 import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { CleanUserScope } from "../../../src/orchestration/clean/clean-user-scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -24,7 +25,7 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   marketplaceRegistry?: ConstructorParameters<typeof PurgeMachineState>[2];
   userConfigDir?: () => string;
   homeDir?: () => string;
-  userSourceReferences?: ConstructorParameters<typeof ReleaseClaims>[4];
+  userSourceReferences?: UserSourceReferences;
   prompter?: ConstructorParameters<typeof CleanUserScope>[4];
 }
 
@@ -60,17 +61,13 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
       sources: parts.sources ?? new Map(),
     }),
-    {
-      release: new ReleaseClaims(
-        fs,
-        logger,
-        { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
-        parts.repo,
-        parts.userSourceReferences
-      ),
+    wireCleanClaims({
+      fs,
+      logger,
+      userManifestRepo: parts.repo,
+      userSourceReferences: parts.userSourceReferences,
       purgeCache,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    },
+    }),
     logger,
     parts.prompter
   );

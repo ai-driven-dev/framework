@@ -55,8 +55,8 @@ export class CleanUserScope {
   }
 
   private async executeLocked(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
-    const inspection = await this.purgeFiles.inspect(() =>
-      this.claims.release.referencingProjects()
+    const inspection = await this.purgeFiles.inspect(
+      async () => (await this.claims.referencingProjects?.listAllReferencingProjects()) ?? []
     );
     const { manifestFound, ...preview } = inspection;
     if (!manifestFound) this.logger.info(this.describeNoUserRegistration(preview));

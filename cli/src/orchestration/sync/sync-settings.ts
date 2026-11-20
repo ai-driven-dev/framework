@@ -118,11 +118,12 @@ export class SyncSettings {
     // A refused or unproven host registration cannot establish a new shared-source claim.
     // User-scope runs have no project manifest for a later `clean` to decrement it.
     if (scope !== "user") {
-      await this.sharedSource.recordSharedSourceReference(
+      await this.sharedSource.execute({
+        kind: "record-reference",
         projectRoot,
         marketplaces,
-        activation.outcomes
-      );
+        outcomes: activation.outcomes,
+      });
     }
     const wroteHashes = await this.recordActivation.recordWhatActivationWrote(
       projectRoot,
@@ -143,7 +144,12 @@ export class SyncSettings {
       scope === "project" ? projectRoot : undefined
     );
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
-      await this.sharedSource.purgeStaleProjectCache(projectRoot, marketplaces, activation);
+      await this.sharedSource.execute({
+        kind: "purge-stale-project-cache",
+        projectRoot,
+        marketplaces,
+        activation,
+      });
     }
     return {
       activated: [...activation.outcomes.keys()],
