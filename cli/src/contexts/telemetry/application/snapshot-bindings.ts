@@ -4,8 +4,9 @@ import {
   nextSnapshot,
   snapshotKey,
 } from "../domain/branch-binding.js";
+import type { LockWait } from "../domain/declaration/task-declaration.js";
 import type { BindingSnapshotStore } from "../ports/bindings/binding-snapshot-store.js";
-import type { BindingsLock, LockWait } from "../ports/bindings/bindings-lock.js";
+import type { BindingsLock } from "../ports/bindings/bindings-lock.js";
 import type { BranchBindingSource } from "../ports/branch-binding-source.js";
 
 export interface SnapshotBindingsCommand {

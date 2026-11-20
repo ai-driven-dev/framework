@@ -7,7 +7,7 @@ import {
   requestlessCallOf,
   type StoredUsage,
 } from "../domain/stored-usage.js";
-import { measurementRefused } from "../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { LeftOutEntry, UsageLedger } from "../ports/usage-ledger.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
@@ -80,7 +80,7 @@ export class IngestUsage {
   ) {}
 
   async execute(): Promise<IngestUsageResult> {
-    if (measurementRefused(this.options.environment)) {
+    if (measurementRefused(this.options.environment.get(MEASUREMENT_SWITCH))) {
       return {
         refused: true,
         filesRead: 0,

@@ -1,7 +1,5 @@
-import type {
-  BindingsLock,
-  LockWait,
-} from "../../../../src/contexts/telemetry/ports/bindings/bindings-lock.js";
+import type { LockWait } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import type { BindingsLock } from "../../../../src/contexts/telemetry/ports/bindings/bindings-lock.js";
 
 export class InMemoryBindingsLock implements BindingsLock {
   /** Pass one array to several fakes to see the order they were used in. */

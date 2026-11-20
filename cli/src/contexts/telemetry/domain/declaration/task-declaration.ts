@@ -5,7 +5,6 @@ import {
   type DeclarationRequest,
   type DeclaredBy,
 } from "../../contract/task-declaration.js";
-import type { LockWait } from "../../ports/bindings/bindings-lock.js";
 
 /** Text as a person typed it, trimmed; `null` when nothing is left. A report filter is trimmed
  * the same way, so it compares with what was stored. */
@@ -28,6 +27,12 @@ export function requestOf(
  * takes it. The hook gives `aidd` 20 s to answer; a wait that ends before that lets `aidd` say
  * who holds the lock, where a longer one would be cut off with no reason. */
 export const HOOK_LOCK_WAIT_MS = 8_000;
+
+/** How long to wait on a lock that is held, when the lock's own wait is not what the caller
+ * can afford. */
+export interface LockWait {
+  readonly waitMs: number;
+}
 
 /** The lock wait a declaration can afford: the lock's own for a person at a terminal. */
 export function lockWaitFor(by: DeclaredBy): LockWait | undefined {

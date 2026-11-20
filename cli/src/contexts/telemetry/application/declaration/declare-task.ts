@@ -2,7 +2,7 @@ import type { Environment } from "../../../../shared/ports/environment.js";
 import type { DeclarationRequest, DeclaredBy } from "../../contract/task-declaration.js";
 import type { TaskDeclaration } from "../../domain/declaration/task-declaration.js";
 import { declarationOf, lockWaitFor } from "../../domain/declaration/task-declaration.js";
-import { measurementRefused } from "../../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { BindingsLock } from "../../ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
 import type { BranchDeclarations, BranchOutcome } from "../branch-declarations.js";
@@ -46,7 +46,7 @@ export class DeclareTask {
   ) {}
 
   async execute(input: DeclareTaskCommand): Promise<DeclareTaskResult> {
-    if (measurementRefused(this.options.environment))
+    if (measurementRefused(this.options.environment.get(MEASUREMENT_SWITCH)))
       return { status: "refused", reason: "environment" };
     const repository = await this.repositories.open(input.cwd);
     if (repository.status === "refused") return repository;

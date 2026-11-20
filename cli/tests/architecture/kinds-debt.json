@@ -34,8 +34,6 @@
   "imports": [
     "src/contexts/auth/domain/credential-sources.ts -> src/shared/ports/environment.ts",
     "src/contexts/host-registration/domain/uninstall-scope-order.ts -> src/contexts/host-registration/ports/host-plugin-registry.ts",
-    "src/contexts/telemetry/domain/declaration/task-declaration.ts -> src/contexts/telemetry/ports/bindings/bindings-lock.ts",
-    "src/contexts/telemetry/domain/telemetry-consent.ts -> src/shared/ports/environment.ts",
     "src/contexts/tools/domain/formats/toml.ts -> smol-toml",
     "src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts -> node:child_process",
     "src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts -> node:url",

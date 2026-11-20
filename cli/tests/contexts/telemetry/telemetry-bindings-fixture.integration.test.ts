@@ -20,6 +20,7 @@ import {
 } from "../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import {
   consentOf,
+  MEASUREMENT_SWITCH,
   measurementRefused,
 } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
 import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
@@ -228,7 +229,7 @@ describe("the shared fixture of task bindings", () => {
   });
 
   it.each(Object.entries(cases.environmentRefusal))("refuses on %s", (name, env) => {
-    expect(measurementRefused({ get: (k) => env[k] })).toBe(expected.environmentRefusal?.[name]);
+    expect(measurementRefused(env[MEASUREMENT_SWITCH])).toBe(expected.environmentRefusal?.[name]);
   });
 
   it.each(Object.entries(cases.telemetryDir))("finds the telemetry dir for %s", (name, input) => {
