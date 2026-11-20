@@ -3,11 +3,19 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
+const engine = require("../../check/engine/engine.cjs");
 const { findings } = require("./helpers.js");
 
 const ROOT = path.resolve(__dirname, "../../..");
 const CONTRACT = path.join(ROOT, "scripts/check/contracts/repo.json");
 const PIECES = ["plugins", "docs", "README.md", ".claude-plugin", "release-please-config.json", ".github/workflows/ci.yml"];
+
+/** The anchor-file rules only: REPO-04 to REPO-06 read git's tracked files, which a copy has none of. */
+function anchorFindings(target) {
+  const contract = engine.loadContract(CONTRACT);
+  for (const id of Object.keys(contract.rules)) if (/^REPO-0[456]$/u.test(id)) delete contract.rules[id];
+  return engine.check(contract, target);
+}
 
 /** A copy of the repository's anchor files, mutated per test. */
 let copy;
@@ -26,7 +34,7 @@ function ids(file, from, to) {
   const text = fs.readFileSync(target, "utf8");
   assert.ok(text.includes(from), `${file} no longer holds ${from}`);
   fs.writeFileSync(target, text.replace(from, to));
-  return [...new Set(findings(CONTRACT, path.join(copy, ".claude-plugin/marketplace.json")).map((f) => f.id))];
+  return [...new Set(anchorFindings(path.join(copy, ".claude-plugin/marketplace.json")).map((f) => f.id))];
 }
 
 describe("repo contract", () => {

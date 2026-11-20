@@ -14,100 +14,15 @@
  * so is a plugin whose hooks require the host adapter and carry none.
  */
 
-const crypto = require("node:crypto");
-const fs = require("node:fs");
 const path = require("node:path");
+const core = require("./check/contracts/custom/hook-rule-copies.cjs");
 
 const ROOT = path.resolve(__dirname, "..");
-const LIBRARY = path.join("hooks", "lib", "common-rules.cjs");
-const HASH_LENGTH = 8;
-const HOST_ADAPTER = path.join("hooks", "lib", "host.cjs");
-const HOST_ADAPTER_ASSET = path.join("cli", "assets", "hooks-runtime", "host-claude.cjs");
-
-function toPosix(file) {
-  return file.split(path.sep).join("/");
-}
-
-function copiesUnder(root) {
-  const plugins = path.join(root, "plugins");
-  if (!fs.existsSync(plugins)) return [];
-
-  return fs
-    .readdirSync(plugins, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => path.join("plugins", entry.name, LIBRARY))
-    .filter((copy) => fs.existsSync(path.join(root, copy)))
-    .map(toPosix)
-    .sort();
-}
-
-function shortHash(content) {
-  return crypto.createHash("sha256").update(content).digest("hex").slice(0, HASH_LENGTH);
-}
-
-function differingCopies(root = ROOT) {
-  const copies = copiesUnder(root);
-  // Copies are compared by their whole content; the short hash only names them in the report.
-  const contents = Object.fromEntries(copies.map((copy) => [copy, fs.readFileSync(path.join(root, copy)).toString("base64")]));
-  const hashes = Object.fromEntries(copies.map((copy) => [copy, shortHash(contents[copy])]));
-  const counts = new Map();
-  for (const content of Object.values(contents)) counts.set(content, (counts.get(content) ?? 0) + 1);
-  if (counts.size < 2) return { copies, hashes, differing: [] };
-
-  const [first, second] = [...counts.values()].sort((a, b) => b - a);
-  const majority = first > second ? [...counts].find(([, count]) => count === first)[0] : null;
-  const differing = copies.filter((copy) => contents[copy] !== majority);
-  return { copies, hashes, differing };
-}
-
-function readOrNull(file) {
-  return fs.existsSync(file) ? fs.readFileSync(file) : null;
-}
-
-function scriptsUnder(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return scriptsUnder(full);
-    return /\.c?js$/u.test(entry.name) ? [full] : [];
-  });
-}
-
-/** Whether a script under the plugin's hooks folder requires the library, from `hooks/` or `hooks/lib/`. */
-function requiresLibrary(pluginDir, library) {
-  const name = path.basename(library).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  const pattern = new RegExp(`require\\(\\s*["']\\./(?:lib/)?${name}["']\\s*\\)`, "u");
-  return scriptsUnder(path.join(pluginDir, "hooks")).some((script) => pattern.test(fs.readFileSync(script, "utf8")));
-}
-
-/** A plugin carries the library when its hooks read it, and only then. */
-function hostAdapterCopies(root = ROOT) {
-  const plugins = path.join(root, "plugins");
-  const names = fs.existsSync(plugins)
-    ? fs
-        .readdirSync(plugins, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-        .sort()
-    : [];
-  const copy = (name) => path.join("plugins", name, HOST_ADAPTER);
-  const present = names.filter((name) => fs.existsSync(path.join(root, copy(name))));
-  const required = names.filter((name) => requiresLibrary(path.join(plugins, name), HOST_ADAPTER));
-  const asset = readOrNull(path.join(root, HOST_ADAPTER_ASSET));
-  return {
-    copies: present.map((name) => toPosix(copy(name))),
-    differing: present
-      .filter((name) => asset === null || !fs.readFileSync(path.join(root, copy(name))).equals(asset))
-      .map((name) => toPosix(copy(name))),
-    missing: required.filter((name) => !present.includes(name)).map((name) => toPosix(copy(name))),
-    unused: present.filter((name) => !required.includes(name)).map((name) => toPosix(copy(name))),
-  };
-}
-
-/** The shared library's copies that no hook of their plugin requires. */
-function unusedLibraryCopies(root = ROOT) {
-  return copiesUnder(root).filter((copy) => !requiresLibrary(path.join(root, path.dirname(path.dirname(path.dirname(copy)))), LIBRARY));
-}
+const { HOST_ADAPTER_ASSET } = core;
+const toPosix = (file) => file.split(path.sep).join("/");
+const differingCopies = (root = ROOT) => core.differingCopies(root);
+const hostAdapterCopies = (root = ROOT) => core.hostAdapterCopies(root);
+const unusedLibraryCopies = (root = ROOT) => core.unusedLibraryCopies(root);
 
 function run(root = ROOT, logger = console.error, successLogger = console.log) {
   const { copies, hashes, differing } = differingCopies(root);

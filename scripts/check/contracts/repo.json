@@ -21,6 +21,24 @@
       "in": "marketplace.json",
       "check": "sdlc-demo",
       "why": "the animation and the guides must show the skills that exist, in the order the chain draws"
+    },
+    "REPO-04": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "no-local-paths",
+      "why": "a path from one machine names its owner and stays in history once pushed"
+    },
+    "REPO-05": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "json-valid",
+      "why": "a JSON file that does not parse, or a manifest missing a field or a path, breaks the host reading it"
+    },
+    "REPO-06": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "hook-rule-copies",
+      "why": "each plugin ships its own copy of the hook library and the host adapter, and a copy that drifts runs different rules"
     }
   }
 }
