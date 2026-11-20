@@ -149,6 +149,7 @@ export async function runInProcess(
       tools,
       createSlice: depsFactory,
       telemetryRequests: wireTelemetryRequests(),
+      runCommand: async () => 0,
     });
 
     try {

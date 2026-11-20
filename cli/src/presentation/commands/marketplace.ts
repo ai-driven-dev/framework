@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import type { Scope } from "../../shared/domain/scope.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
-import type { DepsSliceFactory } from "../deps.js";
+import type { CommandRunner, DepsSliceFactory } from "../deps.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -13,7 +13,6 @@ import {
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
-import { spawnCliCommand } from "../terminal/child-command.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -29,7 +28,8 @@ type MarketplaceKeys =
 
 export function registerMarketplaceCommand(
   program: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>
+  createDeps: DepsSliceFactory<MarketplaceKeys>,
+  runCommand: CommandRunner
 ): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
 
@@ -46,7 +46,7 @@ export function registerMarketplaceCommand(
       { name: "Remove marketplace", value: "remove", description: "requires name arg" },
       { name: "Check marketplaces", value: "check" },
     ]);
-    await spawnCliCommand(["marketplace", choice]);
+    await runCommand(["marketplace", choice]);
   });
 
   marketplace

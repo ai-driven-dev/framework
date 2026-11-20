@@ -80,7 +80,7 @@ async function register(
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
   });
-  await useCase.registerIfPresent(flow, localFrameworkSource("/framework-source"));
+  await useCase.register(flow, localFrameworkSource("/framework-source"));
   return refresh;
 }
 
@@ -117,7 +117,7 @@ describe("RegisterMarketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      const attempt = useCase.registerIfPresent(flow, remoteFrameworkSource("owner/repo"));
+      const attempt = useCase.register(flow, remoteFrameworkSource("owner/repo"));
 
       await expect(attempt).rejects.toThrow(CatalogFetchAuthError);
       await expect(attempt).rejects.toThrow(
@@ -135,7 +135,7 @@ describe("RegisterMarketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      const attempt = useCase.registerIfPresent(flow, remoteFrameworkSource("owner/repo"));
+      const attempt = useCase.register(flow, remoteFrameworkSource("owner/repo"));
 
       await expect(attempt).rejects.toThrow(CatalogFetchAuthError);
     });
@@ -150,7 +150,7 @@ describe("RegisterMarketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.registerIfPresent(flow, localFrameworkSource("/framework-source"));
+      await useCase.register(flow, localFrameworkSource("/framework-source"));
 
       expect(register.execute).toHaveBeenCalledWith({
         projectRoot: PROJECT_ROOT,
@@ -167,7 +167,7 @@ describe("RegisterMarketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.registerIfPresent(flow, remoteFrameworkSource("owner/repo", "v1.0.0"));
+      await useCase.register(flow, remoteFrameworkSource("owner/repo", "v1.0.0"));
 
       expect(register.execute).toHaveBeenCalledWith({
         projectRoot: PROJECT_ROOT,
@@ -190,7 +190,7 @@ describe("RegisterMarketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.registerIfPresent(flow, localFrameworkSource("/framework-source"));
+      await useCase.register(flow, localFrameworkSource("/framework-source"));
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([PROJECT_ROOT]);
     });
@@ -210,7 +210,7 @@ describe("RegisterMarketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.registerIfPresent(flow, localFrameworkSource("/framework-source"));
+      await useCase.register(flow, localFrameworkSource("/framework-source"));
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([]);
     });

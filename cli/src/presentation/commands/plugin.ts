@@ -3,7 +3,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { DepsSliceFactory } from "../deps.js";
+import type { CommandRunner, DepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
@@ -13,7 +13,6 @@ import {
 } from "../display/plugin-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { spawnCliCommand } from "../terminal/child-command.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -39,10 +38,15 @@ export function parseToolOption(
   return [id];
 }
 
+interface PluginWiring {
+  readonly catalog: ToolCatalog;
+  readonly createDeps: DepsSliceFactory<PluginKeys>;
+  readonly runCommand: CommandRunner;
+}
+
 export function registerPluginCommand(
   program: Command,
-  catalog: ToolCatalog,
-  createDeps: DepsSliceFactory<PluginKeys>
+  { catalog, createDeps, runCommand }: PluginWiring
 ): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
 
@@ -59,7 +63,7 @@ export function registerPluginCommand(
       { name: "Update plugins", value: "update" },
       { name: "Remove a plugin", value: "remove", description: "requires name arg" },
     ]);
-    await spawnCliCommand(["plugin", choice]);
+    await runCommand(["plugin", choice]);
   });
 
   plugin

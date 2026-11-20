@@ -2,8 +2,8 @@ import type { ConfigureMachineScope } from "../../contexts/installation/applicat
 import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.js";
 import type { InstallGlobalPlugins } from "./install-global-plugins.js";
-import type { SetupFlow, SetupResult } from "./setup-flow.js";
-import type { SetupMarketplaceRegistration } from "./setup-marketplace-registration.js";
+import type { ResolveSetupSource } from "./resolve-setup-source.js";
+import type { RegisterFrameworkSource, SetupFlow, SetupResult } from "./setup-flow.js";
 
 /** Drives native activation machine-wide, enabling the plugins a machine-scope setup installed.
  * Which manifest it works on is not this scenario's: composition binds it. */
@@ -30,25 +30,23 @@ export class SetupMachineScope {
       ConfigureMachineScope,
       "whileLocked" | "initialize" | "registerTools"
     >,
-    private readonly registration: Pick<
-      SetupMarketplaceRegistration,
-      "resolveSourceIfNeeded" | "registerIfPresent"
-    >,
+    private readonly resolveSource: Pick<ResolveSetupSource, "execute">,
+    private readonly register: RegisterFrameworkSource,
     private readonly syncMachineScope: SyncMachineScope,
     private readonly installPlugins: Pick<InstallGlobalPlugins, "execute">
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
-    const source = await this.registration.resolveSourceIfNeeded(flow);
+    const source = await this.resolveSource.execute(flow);
     return this.configureMachineScope.whileLocked(() => this.executeLocked(flow, source));
   }
 
   private async executeLocked(
     flow: SetupFlow,
-    source: Awaited<ReturnType<SetupMarketplaceRegistration["resolveSourceIfNeeded"]>>
+    source: Awaited<ReturnType<ResolveSetupSource["execute"]>>
   ): Promise<SetupResult> {
     const isNew = await this.configureMachineScope.initialize();
-    await this.registration.registerIfPresent(flow, source);
+    await this.register(flow, source);
     await this.configureMachineScope.registerTools(flow.aiTools);
     const plugins = await this.installGlobalPlugins(flow);
     const activation = await this.syncMachineScope({

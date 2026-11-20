@@ -32,10 +32,8 @@ import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/rem
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user-marketplace.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
-import {
-  type RegisterFrameworkSource,
-  SetupMarketplaceRegistration,
-} from "../../orchestration/setup/setup-marketplace-registration.js";
+import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.js";
+import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
 import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.js";
 import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
@@ -211,10 +209,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
     refreshMarketplace,
     environment
   );
-  const setupMarketplaceRegistration = new SetupMarketplaceRegistration(
-    askedFrom(askMarketplaceSource),
-    registerForFlow(registerMarketplace)
-  );
+  const resolveSetupSource = new ResolveSetupSource(askedFrom(askMarketplaceSource));
+  const registerSetupSource = registerForFlow(registerMarketplace);
   return {
     marketplaceRemoveUseCase,
     userMarketplaceRemoveUseCase,
@@ -223,7 +219,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
     syncSettingsUseCase,
     syncNativeActivation,
     askMarketplaceSource,
-    setupMarketplaceRegistration,
+    resolveSetupSource,
+    registerSetupSource,
   };
 }
 

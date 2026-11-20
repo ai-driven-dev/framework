@@ -31,7 +31,12 @@ program
   .version(formatVersion(version), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerCommands(program, { tools, createSlice, telemetryRequests: wireTelemetryRequests() });
+registerCommands(program, {
+  tools,
+  createSlice,
+  telemetryRequests: wireTelemetryRequests(),
+  runCommand: spawnCliCommand,
+});
 registerUpdateNoticeHooks(program, createSlice);
 
 // A reader that stops reading (`aidd … | head -1`) closes stdout under the run: what is left to

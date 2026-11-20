@@ -27,10 +27,6 @@ const createDeps = vi.fn(async () => ({
   prompter: prompterAnswering({ select: menuSelect }),
 }));
 
-vi.mock("../../../src/presentation/terminal/child-command.js", () => ({
-  spawnCliCommand: spawn,
-}));
-
 const { registerPluginCommand } = await import("../../../src/presentation/commands/plugin.js");
 
 const PROJECT_ROOT = process.cwd();
@@ -77,7 +73,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program, CATALOG, createDeps);
+  registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
   await program.parseAsync(["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -369,7 +365,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
-    registerPluginCommand(program, CATALOG, createDeps);
+    registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;

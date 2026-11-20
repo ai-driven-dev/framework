@@ -29,7 +29,7 @@ describe("marketplace add narrows native activation to the marketplace it just r
   it("passes marketplaceNames: [name] to SyncSettings.execute", async () => {
     const program = new Command();
     program.exitOverride();
-    registerMarketplaceCommand(program, createDeps);
+    registerMarketplaceCommand(program, createDeps, vi.fn());
 
     await program.parseAsync(["node", "aidd", "marketplace", "add", "market-b", "/some/source"]);
 

@@ -179,7 +179,8 @@ async function buildUseCase(
       ? undefined
       : new SetupMachineScope(
           new ConfigureMachineScope(options.userManifestRepo, CURRENT_VERSION),
-          setupMarketplaceRegistration,
+          setupMarketplaceRegistration.resolveSource,
+          setupMarketplaceRegistration.register,
           (syncOptions) => syncSettingsUseCase.execute(syncOptions),
           options.installGlobalPlugins ?? { execute: async () => ({ plugins: [] }) }
         );
@@ -187,7 +188,7 @@ async function buildUseCase(
     deps.fs,
     deps.manifestRepo,
     {
-      registration: setupMarketplaceRegistration,
+      ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
       version: CURRENT_VERSION,

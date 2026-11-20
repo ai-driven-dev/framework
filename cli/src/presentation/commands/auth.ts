@@ -2,7 +2,6 @@ import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
 import { InputRequiredError } from "../../shared/domain/errors.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { failCommand } from "../errors/error-translator.js";
@@ -11,6 +10,8 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
+type Prompting = Deps["prompter"];
+
 type AuthKeys = "prompter" | "logIn" | "logOut" | "checkStatus";
 
 interface LoginOptions {
@@ -37,7 +38,7 @@ function refuseInvalidOptions(options: LoginOptions, output: CLIOutput): void {
   }
 }
 
-async function askLevel(prompter: Prompter, rawLevel: string | undefined): Promise<AuthLevel> {
+async function askLevel(prompter: Prompting, rawLevel: string | undefined): Promise<AuthLevel> {
   if (rawLevel === "user" || rawLevel === "project") return rawLevel;
   return prompter.select<AuthLevel>("Storage level:", [
     { name: "User (~/.config/aidd/auth.json)", value: "user" },
@@ -45,7 +46,7 @@ async function askLevel(prompter: Prompter, rawLevel: string | undefined): Promi
   ]);
 }
 
-async function askCredential(prompter: Prompter, options: LoginOptions): Promise<Credential> {
+async function askCredential(prompter: Prompting, options: LoginOptions): Promise<Credential> {
   if (options.gh) return { method: "external", provider: "gh" };
   if (options.token) return { method: "stored", token: options.token };
   const wantsPat = await prompter.confirm("Do you have a Personal Access Token?");

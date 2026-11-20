@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { DepsFactory, TelemetryRequests } from "../deps.js";
+import type { CommandRunner, DepsFactory, TelemetryRequests } from "../deps.js";
 import { registerAuthCommand } from "./auth.js";
 import { registerCleanCommand } from "./clean.js";
 import { registerDoctorCommand } from "./doctor.js";
@@ -19,17 +19,18 @@ export interface CommandWiring {
   readonly tools: ToolCatalog;
   readonly createSlice: DepsFactory;
   readonly telemetryRequests: TelemetryRequests;
+  readonly runCommand: CommandRunner;
 }
 
 export function registerCommands(
   program: Command,
-  { tools, createSlice, telemetryRequests }: CommandWiring
+  { tools, createSlice, telemetryRequests, runCommand }: CommandWiring
 ): void {
   registerSetupCommand(program, tools, createSlice);
   registerToolConfigCommand(program, tools, createSlice);
   registerTranslateCommand(program, tools, createSlice);
-  registerPluginCommand(program, tools, createSlice);
-  registerMarketplaceCommand(program, createSlice);
+  registerPluginCommand(program, { catalog: tools, createDeps: createSlice, runCommand });
+  registerMarketplaceCommand(program, createSlice, runCommand);
   registerAuthCommand(program, createSlice);
   registerSyncCommand(program, tools, createSlice);
   registerUpdateCommand(program, createSlice);

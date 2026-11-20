@@ -31,12 +31,7 @@
     "src/presentation/output.ts",
     "src/presentation/project-root.ts"
   ],
-  "imports": [
-    "src/contexts/tools/domain/formats/toml.ts -> smol-toml",
-    "src/presentation/commands/auth.ts -> src/shared/ports/prompter.ts",
-    "src/presentation/commands/marketplace.ts -> src/presentation/terminal/child-command.ts",
-    "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts"
-  ],
+  "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
   "mirror": [
     "src/contexts/installation/application/agents/agent-providers.ts",
     "src/contexts/installation/application/install/content/install-content-section.ts",
@@ -89,7 +84,6 @@
     "src/orchestration/plugin/install-from-marketplace.ts",
     "src/orchestration/plugin/pick-plugins.ts",
     "src/orchestration/setup/setup-machine-scope.ts",
-    "src/orchestration/setup/setup-marketplace-registration.ts",
     "src/orchestration/sync/activate-native-tools.ts",
     "src/orchestration/sync/sync-settings.ts",
     "src/presentation/commands/recipes.ts",
@@ -114,8 +108,7 @@
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
     "src/contexts/installation/application/sync/tracked-settings-file.ts",
-    "src/contexts/telemetry/application/directory-resolver.ts",
-    "src/orchestration/setup/setup-marketplace-registration.ts"
+    "src/contexts/telemetry/application/directory-resolver.ts"
   ],
   "thrown": [],
   "instructs": [],

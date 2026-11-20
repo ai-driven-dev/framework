@@ -23,13 +23,16 @@ import type { Plugin } from "./plugin.js";
 /** What a project-scope setup does at each stage. */
 export function setupStepsOf(
   base: Pick<Base, "currentVersionProvider">,
-  m: Pick<Marketplace, "setupMarketplaceRegistration"> & {
+  m: {
+    readonly resolveSetupSource: SetupSteps["resolveSource"];
+    readonly registerSetupSource: SetupSteps["register"];
     readonly syncSettingsUseCase: Pick<Marketplace["syncSettingsUseCase"], "execute">;
   },
   g: Pick<Global, "setupToolsUseCase" | "projectContextDetector" | "setupMachineScope">
 ): SetupSteps {
   return {
-    registration: m.setupMarketplaceRegistration,
+    resolveSource: m.resolveSetupSource,
+    register: m.registerSetupSource,
     installTools: g.setupToolsUseCase,
     syncSettings: (options) => m.syncSettingsUseCase.execute(options),
     version: base.currentVersionProvider,

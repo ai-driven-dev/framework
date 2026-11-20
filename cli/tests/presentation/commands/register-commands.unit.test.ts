@@ -12,6 +12,7 @@ it("registers every command of the binary", () => {
     tools,
     createSlice: bindContainer(tools),
     telemetryRequests: wireTelemetryRequests(),
+    runCommand: async () => 0,
   });
   expect(program.commands.map((command) => command.name())).toEqual([
     "setup",

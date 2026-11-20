@@ -42,7 +42,7 @@
   "tests/architecture/automation-calls-real-scripts.arch.test.ts": 2,
   "tests/architecture/mutation-covers-source.arch.test.ts": 3,
   "tests/architecture/repository-hygiene.arch.test.ts": 1,
-  "tests/composition/runtime-wiring.integration.test.ts": 14,
+  "tests/composition/runtime-wiring.integration.test.ts": 13,
   "tests/contexts/distribution/infrastructure/plugin-fetcher-failfast.unit.test.ts": 2,
   "tests/contexts/host-registration/domain/record/registration-projection.unit.test.ts": 1,
   "tests/contexts/host-registration/domain/record/registration-record.unit.test.ts": 1,
