@@ -152,13 +152,7 @@ const OWNER_OR_WIRING = /^src\/(contexts\/tools\/|composition\/)/;
 export const PROFILE_MODULE_FILE = "src/contexts/tools/contract/tool-profile.ts";
 
 /** The catalog methods that answer a whole profile. */
-export const CATALOG_PROFILE_METHODS = [
-  "profile",
-  "aiProfile",
-  "ideProfile",
-  "aiProfileIfAny",
-  "sortedById",
-];
+export const CATALOG_PROFILE_METHODS = ["profile", "aiProfile", "ideProfile", "aiProfileIfAny"];
 const CATALOG_PROFILE_CALL = new RegExp(String.raw`\.(?:${CATALOG_PROFILE_METHODS.join("|")})\(`);
 /** An import of the profile module under a `biome-ignore lint/plugin` comment: a file that hands the profile on. */
 export const HANDS_PROFILE_ON =

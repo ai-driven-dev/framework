@@ -26,14 +26,6 @@ describe("antigravity", () => {
     expect(installPathOf(antigravity, "skills", built)).toBe(path);
   });
 
-  it("accepts the skills it installed and no other host's", () => {
-    expect(antigravity.section("skills").accepts(".agents/skills/aidd-01-plan/SKILL.md")).toBe(
-      true
-    );
-    expect(antigravity.section("skills").accepts(".kilo/skills/x/SKILL.md")).toBe(false);
-    expect(antigravity.section("skills").accepts(".agents/agents/x/agent.md")).toBe(false);
-  });
-
   it("keeps a skill's frontmatter as it is", () => {
     const frontmatter = { name: "plan", description: "Plans." };
 
@@ -59,7 +51,10 @@ describe("antigravity", () => {
       deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    expect(antigravity.projectHooksDelivery()?.format.merge).toBe(mergeAntigravityHooks);
+    const hooks = JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ command: "a" }] }] } });
+    expect(antigravity.projectHooksDelivery()?.format.merge(null, hooks, "p")).toStrictEqual(
+      mergeAntigravityHooks(null, { json: hooks, plugin: "p" })
+    );
     expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
       "hooks",
       "layout",

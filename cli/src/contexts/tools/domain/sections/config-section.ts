@@ -60,22 +60,11 @@ export class ConfigSection {
     return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
   }
 
-  accepts(relativePath: string): boolean {
-    return relativePath === this.#params.outputPath;
-  }
-
   mergeStrategy(): MergeStrategy {
     return this.#params.mergeStrategy;
   }
 
   outputPath(): string {
     return this.#params.outputPath;
-  }
-
-  equals(other: ConfigSection): boolean {
-    return (
-      this.#params.outputPath === other.#params.outputPath &&
-      this.#params.mergeStrategy === other.#params.mergeStrategy
-    );
   }
 }

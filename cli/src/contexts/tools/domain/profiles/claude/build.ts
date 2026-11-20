@@ -66,8 +66,8 @@ export function buildClaudeContract(): ToolBuildContract {
       schemaName: "claude-marketplace",
       destRelPath: marketplaceRelative,
     }),
-    buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) =>
-      buildSharedEntry(name, outDir, srcEntry, manifestRelative, fs),
+    buildMarketplaceEntry: async ({ name, outDir, srcEntry, fs }) =>
+      buildSharedEntry({ fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative }),
   };
 }
 
@@ -127,7 +127,7 @@ export function buildClaudeFlatContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
         merge: (existing, incoming, force) =>
-          mergeAdditiveMcp(existing, incoming, force, "mcpServers"),
+          mergeAdditiveMcp(existing, incoming, { force, serversKey: "mcpServers" }),
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.mcp.json`,
       },

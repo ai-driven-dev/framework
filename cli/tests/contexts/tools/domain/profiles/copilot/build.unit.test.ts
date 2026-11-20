@@ -123,13 +123,13 @@ describe("buildCopilotMarketplaceContract()", () => {
       }),
     });
 
-    const entry = await buildCopilotMarketplaceContract().buildMarketplaceEntry?.(
-      "aidd-dev",
-      "/src/plugins/aidd-dev",
-      "/out",
-      undefined,
-      fs
-    );
+    const entry = await buildCopilotMarketplaceContract().buildMarketplaceEntry?.({
+      name: "aidd-dev",
+      pluginSrc: "/src/plugins/aidd-dev",
+      outDir: "/out",
+      srcEntry: undefined,
+      fs,
+    });
 
     expect(entry).toStrictEqual({
       name: "aidd-dev",
@@ -160,7 +160,10 @@ describe("buildCopilotFlatContract()", () => {
       ".github/hooks/aidd-dev.hooks.json",
       false,
     ]);
-    expect(hooks.hooksFile?.merge(null, HOOKS_JSON, "aidd-dev", (path) => path).content).toBe(
+    expect(
+      hooks.hooksFile?.merge(null, { json: HOOKS_JSON, plugin: "aidd-dev", locate: (path) => path })
+        .content
+    ).toBe(
       `${JSON.stringify(
         {
           version: 1,
@@ -228,7 +231,8 @@ describe("buildCopilotFlatContract()", () => {
     });
 
     const written = JSON.parse(
-      hooks.hooksFile?.merge(null, incoming, "aidd-dev", (path) => path).content ?? ""
+      hooks.hooksFile?.merge(null, { json: incoming, plugin: "aidd-dev", locate: (path) => path })
+        .content ?? ""
     );
 
     expect(written.hooks.PostToolUse).toStrictEqual([

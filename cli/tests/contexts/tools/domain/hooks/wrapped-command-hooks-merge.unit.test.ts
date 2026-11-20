@@ -21,7 +21,7 @@ const pluginHooks = (command: string, event = "SessionStart") =>
   JSON.stringify({ hooks: { [event]: [{ hooks: [{ type: "command", command, timeout: 5 }] }] } });
 
 const merged = (existing: string | null, json: string, plugin = "p") =>
-  mergeWrappedCommandHooks(target, existing, json, plugin);
+  mergeWrappedCommandHooks(target, existing, { json, plugin });
 
 describe("wrapped command hooks", () => {
   it("wraps each command of a mapped event under the plugin's name, keeping its timeout", () => {
@@ -58,7 +58,11 @@ describe("wrapped command hooks", () => {
 
   it("places a path outside hooks/ with locate, and a hooks/ path under the scripts directory", () => {
     const json = pluginHooks(`${ROOT}/hooks/a.sh && ${ROOT}/b.sh`);
-    const { content } = mergeWrappedCommandHooks(target, null, json, "p", (path) => `L/${path}`);
+    const { content } = mergeWrappedCommandHooks(target, null, {
+      json,
+      plugin: "p",
+      locate: (path) => `L/${path}`,
+    });
     const command = JSON.parse(content).p.SessionStart[0].command as string;
     const wrapped = Buffer.from(command.split(" ").at(-1) as string, "base64").toString();
 
@@ -99,7 +103,10 @@ describe("wrapped command hooks", () => {
   });
 
   it("keeps a path outside hooks/ as it is when no locator is given", () => {
-    const { content } = mergeWrappedCommandHooks(target, null, pluginHooks(`${ROOT}/b.sh`), "p");
+    const { content } = mergeWrappedCommandHooks(target, null, {
+      json: pluginHooks(`${ROOT}/b.sh`),
+      plugin: "p",
+    });
     const command = JSON.parse(content).p.SessionStart[0].command as string;
 
     expect(Buffer.from(command.split(" ").at(-1) as string, "base64").toString()).toBe("./b.sh");

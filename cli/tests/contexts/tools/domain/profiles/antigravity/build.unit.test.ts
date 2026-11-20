@@ -35,7 +35,11 @@ describe("buildAntigravityFlatContract", () => {
     ]);
     expect(
       JSON.parse(
-        hooks.hooksFile?.merge(null, incoming, "aidd-context", (path) => path).content ?? ""
+        hooks.hooksFile?.merge(null, {
+          json: incoming,
+          plugin: "aidd-context",
+          locate: (path) => path,
+        }).content ?? ""
       )
     ).toEqual({
       "aidd-context": {
@@ -132,9 +136,10 @@ describe("buildAntigravityFlatContract", () => {
       hooks: { Stop: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
     });
 
-    expect(hooksFile?.merge(null, incoming, "aidd-dev", (path) => path).warnings).toEqual([
-      "antigravity: unmapped event 'Stop' skipped",
-    ]);
+    expect(
+      hooksFile?.merge(null, { json: incoming, plugin: "aidd-dev", locate: (path) => path })
+        .warnings
+    ).toEqual(["antigravity: unmapped event 'Stop' skipped"]);
   });
 
   it.each(["mcp", "rules", "commands"] as const)("declares %s unsupported", (kind) => {

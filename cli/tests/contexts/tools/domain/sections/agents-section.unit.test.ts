@@ -18,18 +18,6 @@ describe("AgentsSection", () => {
     frontmatter: identity,
   };
 
-  describe("accepts", () => {
-    it("returns true when path starts with directory", () => {
-      const cap = new AgentsSection(markdownParams);
-      expect(cap.accepts(".claude/agents/foo.md")).toBe(true);
-    });
-
-    it("returns false when path does not start with directory", () => {
-      const cap = new AgentsSection(markdownParams);
-      expect(cap.accepts(".cursor/agents/foo.md")).toBe(false);
-    });
-  });
-
   describe("serialize (markdown)", () => {
     it("produces frontmatter-delimited markdown content", () => {
       const cap = new AgentsSection(markdownParams);
@@ -46,43 +34,6 @@ describe("AgentsSection", () => {
       serialize: (fm, body) => `${fm.name}|${body}`,
     });
     expect(cap.serialize({ name: "a" }, "b")).toBe("a|b");
-  });
-
-  describe("deserialize", () => {
-    it("parses frontmatter and body from markdown content", () => {
-      const cap = new AgentsSection(markdownParams);
-      const content = "---\nname: my-agent\ndescription: A test\n---\nBody text.";
-      const { frontmatter, body } = cap.deserialize(content);
-      expect(frontmatter).toEqual({ name: "my-agent", description: "A test" });
-      expect(body).toBe("Body text.");
-    });
-
-    it("returns empty frontmatter when no delimiter present", () => {
-      const cap = new AgentsSection(markdownParams);
-      const { frontmatter, body } = cap.deserialize("plain body");
-      expect(frontmatter).toEqual({});
-      expect(body).toBe("plain body");
-    });
-  });
-
-  describe("equals", () => {
-    it("returns true for identical params", () => {
-      const a = new AgentsSection(markdownParams);
-      const b = new AgentsSection({ ...markdownParams });
-      expect(a.equals(b)).toBe(true);
-    });
-
-    it("returns false when directory differs", () => {
-      const a = new AgentsSection(markdownParams);
-      const b = new AgentsSection({ ...markdownParams, directory: ".cursor/" });
-      expect(a.equals(b)).toBe(false);
-    });
-
-    it("returns false when format differs", () => {
-      const a = new AgentsSection(markdownParams);
-      const b = new AgentsSection({ ...markdownParams, format: "toml" });
-      expect(a.equals(b)).toBe(false);
-    });
   });
 });
 
@@ -167,21 +118,6 @@ describe("AgentsSection frontmatter conversion", () => {
 
   it("refuses a declared name that is not a string", () => {
     expect(cap.convertFrontmatter({ name: 7 })).toStrictEqual({ native: { name: undefined } });
-  });
-});
-
-describe("AgentsSection equality", () => {
-  const base = {
-    directory: ".claude/",
-    toolSuffix: ".claude.md",
-    format: "markdown" as const,
-    frontmatter: identity,
-  };
-
-  it("differs on the tool suffix", () => {
-    expect(
-      new AgentsSection(base).equals(new AgentsSection({ ...base, toolSuffix: ".x.md" }))
-    ).toBe(false);
   });
 });
 

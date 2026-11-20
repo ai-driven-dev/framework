@@ -7,7 +7,7 @@ import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks/routes.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { nativeLayout } from "../../sections/layout-section.js";
+import { type NativeLayoutParams, nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
@@ -26,6 +26,70 @@ function commandsDir(phase: string): string {
 }
 
 const hooksSupport = nativeHooksSupport(CLAUDE_HOOKS);
+
+// Claude registers its own marketplaces and enables its own plugins, both driven here.
+// At project scope the command rewrites `.claude/settings.json` after this CLI hashed
+// it: two writers, one recorder, and `status` reporting drift forever. `--scope local`
+// writes `.claude/settings.local.json` instead, a file this CLI neither writes nor
+// tracks, which is what makes the verbs below safe to declare.
+const CLAUDE_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
+  binary: "claude",
+  scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+  userRemoveArgs: [],
+  enableVerb: "install",
+  disableVerb: "uninstall",
+  upgradeVerb: "update",
+  // `--yes` gates a prune confirmation these calls never request, but a headless
+  // stdin has no terminal to answer any prompt at all.
+  pluginArgs: ["--yes"],
+  // Root of claude's own marketplace registry, read by the sync guard that refuses a
+  // name-stealing re-add before driving `marketplace add` at all. Declared here alone,
+  // which is what keeps that guard claude-only by declaration.
+  marketplaceRegistry: {
+    location: (h) => join(h, ".claude", "plugins", "known_marketplaces.json"),
+    layout: "install-locations-by-name",
+  },
+  marketplaceSources: { from: "marketplace-registry" },
+  // Claude's own plugin registry, read by `doctor`: one entry per scope a ref was
+  // installed at, an entry installed at a project scope also naming its project.
+  pluginRegistry: {
+    location: (h) => join(h, ".claude", "plugins", "installed_plugins.json"),
+    layout: "plugin-entries-by-scope",
+  },
+  // Root of claude's own plugin cache. `clean` composes `<root>/<hostName>` and purges
+  // only once a fresh read of `marketplaceRegistry` above no longer names it: claude
+  // marks an orphaned tree `.orphaned_at` but never deletes it itself.
+  pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
+  // Where a `--scope user` install or marketplace add lands, measured against the real
+  // binary, under `CLAUDE_CONFIG_DIR` when set. aidd writes the main session's model
+  // there, nothing else.
+  userSettingsPath: (h, env) =>
+    join(env("CLAUDE_CONFIG_DIR") || join(h, ".claude"), "settings.json"),
+};
+
+const CLAUDE_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
+  settingsPath: ".claude/settings.json",
+  settingsKey: "extraKnownMarketplaces",
+  // The registered marketplace is the tree this CLI builds under `.aidd/cache/`, named
+  // by absolute path, so the entry describes one machine and must not be committed. It
+  // is the file `claude plugin marketplace add --scope local` writes itself.
+  marketplacesSettingsPath: ".claude/settings.local.json",
+  enabledPluginsKey: "enabledPlugins",
+  toEntryKey: sharedMarketplaceKey,
+};
+
+function convertRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+  if ("paths" in fm) {
+    const paths = fm.paths;
+    if (Array.isArray(paths) && paths.length === 0) return {};
+    return { paths };
+  }
+  if ("globs" in fm) return { paths: fm.globs };
+  if (fm.alwaysApply === false && fm.description !== undefined) {
+    return { description: fm.description };
+  }
+  return {};
+}
 
 export const claude = defineAiTool({
   toolId: "claude",
@@ -66,18 +130,7 @@ export const claude = defineAiTool({
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: (fm) => {
-        if ("paths" in fm) {
-          const paths = fm.paths;
-          if (Array.isArray(paths) && paths.length === 0) return {};
-          return { paths };
-        }
-        if ("globs" in fm) return { paths: fm.globs };
-        if (fm.alwaysApply === false && fm.description !== undefined) {
-          return { description: fm.description };
-        }
-        return {};
-      },
+      convertFrontmatter: convertRuleFrontmatter,
     }),
     mcp: {
       config: new McpConfigPart({
@@ -90,55 +143,8 @@ export const claude = defineAiTool({
     hooks: { delivery: hooksSupport.delivery },
     layout: nativeLayout({
       pluginsDir: ".claude/plugins/",
-      // Claude registers its own marketplaces and enables its own plugins, both driven here.
-      // At project scope the command rewrites `.claude/settings.json` after this CLI hashed
-      // it: two writers, one recorder, and `status` reporting drift forever. `--scope local`
-      // writes `.claude/settings.local.json` instead, a file this CLI neither writes nor
-      // tracks, which is what makes the verbs below safe to declare.
-      nativeActivation: {
-        binary: "claude",
-        scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
-        userRemoveArgs: [],
-        enableVerb: "install",
-        disableVerb: "uninstall",
-        upgradeVerb: "update",
-        // `--yes` gates a prune confirmation these calls never request, but a headless
-        // stdin has no terminal to answer any prompt at all.
-        pluginArgs: ["--yes"],
-        // Root of claude's own marketplace registry, read by the sync guard that refuses a
-        // name-stealing re-add before driving `marketplace add` at all. Declared here alone,
-        // which is what keeps that guard claude-only by declaration.
-        marketplaceRegistry: {
-          location: (h) => join(h, ".claude", "plugins", "known_marketplaces.json"),
-          layout: "install-locations-by-name",
-        },
-        marketplaceSources: { from: "marketplace-registry" },
-        // Claude's own plugin registry, read by `doctor`: one entry per scope a ref was
-        // installed at, an entry installed at a project scope also naming its project.
-        pluginRegistry: {
-          location: (h) => join(h, ".claude", "plugins", "installed_plugins.json"),
-          layout: "plugin-entries-by-scope",
-        },
-        // Root of claude's own plugin cache. `clean` composes `<root>/<hostName>` and purges
-        // only once a fresh read of `marketplaceRegistry` above no longer names it: claude
-        // marks an orphaned tree `.orphaned_at` but never deletes it itself.
-        pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
-        // Where a `--scope user` install or marketplace add lands, measured against the real
-        // binary, under `CLAUDE_CONFIG_DIR` when set. aidd writes the main session's model
-        // there, nothing else.
-        userSettingsPath: (h, env) =>
-          join(env("CLAUDE_CONFIG_DIR") || join(h, ".claude"), "settings.json"),
-      },
-      marketplaceSettings: {
-        settingsPath: ".claude/settings.json",
-        settingsKey: "extraKnownMarketplaces",
-        // The registered marketplace is the tree this CLI builds under `.aidd/cache/`, named
-        // by absolute path, so the entry describes one machine and must not be committed. It
-        // is the file `claude plugin marketplace add --scope local` writes itself.
-        marketplacesSettingsPath: ".claude/settings.local.json",
-        enabledPluginsKey: "enabledPlugins",
-        toEntryKey: sharedMarketplaceKey,
-      },
+      nativeActivation: CLAUDE_ACTIVATION,
+      marketplaceSettings: CLAUDE_MARKETPLACE_SETTINGS,
     }),
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",

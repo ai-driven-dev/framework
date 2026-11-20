@@ -1,7 +1,7 @@
 import { nativeRegistrationsOf } from "../../../src/composition/host-registration.js";
+import { REGISTERED_PROFILES } from "../../../src/composition/tools.js";
 import { marketplaceListContract } from "../../../src/contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import type { NativeMarketplaceSourceListContract } from "../../../src/contexts/host-registration/infrastructure/native-marketplace-source-list-contract.js";
-import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 
 /** The list contract a tool's own declaration yields, as the composition builds it. */

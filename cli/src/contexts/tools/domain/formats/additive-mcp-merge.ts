@@ -10,8 +10,7 @@
 export function mergeAdditiveMcp(
   existing: string | null,
   incoming: Record<string, unknown>,
-  force: boolean,
-  serversKey = "servers"
+  { force, serversKey = "servers" }: { force: boolean; serversKey?: string }
 ): { mergedContent: string; collisions: ReadonlyArray<string> } {
   const { full, servers } = parseExisting(existing, serversKey);
   const { servers: mergedServers, collisions } = applyIncoming(servers, incoming, force);

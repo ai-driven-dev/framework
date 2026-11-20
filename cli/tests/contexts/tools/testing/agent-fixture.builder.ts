@@ -1,4 +1,5 @@
 import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
+import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 
 /** A Claude-format agent carrying every key a host may translate. */
 export const NAMED_AGENT = `---
@@ -19,7 +20,7 @@ Plan before building.
 /** What a plugin install writes for `planner.md`. */
 export function installed(tool: AiTool<WithSections<"agents">>, content: string): string {
   const agents = tool.section("agents");
-  const { frontmatter, body } = agents.deserialize(content);
+  const { frontmatter, body } = parseFrontmatter(content);
   return agents.serialize(agents.convertFrontmatter(frontmatter, "planner.md"), body);
 }
 

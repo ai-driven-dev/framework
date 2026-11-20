@@ -97,7 +97,11 @@ export function buildKiloFlatContract(): ToolBuildContract {
         const incoming = collectKiloMcp(builtPlugins, pluginMcp);
         const asset = assets.get("kilo.json");
         const base = typeof asset === "string" ? asset : JSON.stringify(asset);
-        const config = buildTypedMcpFlatConfig(base, existing.get(configPath) ?? null, incoming);
+        const config = buildTypedMcpFlatConfig({
+          baseConfig: base,
+          existing: existing.get(configPath) ?? null,
+          incoming,
+        });
         return [{ path: configPath, content: config }];
       },
     },

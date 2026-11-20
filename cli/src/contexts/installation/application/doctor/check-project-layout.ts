@@ -28,7 +28,8 @@ export class CheckProjectLayout {
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
     const installedToolDirs = manifest.getInstalledDirectories();
-    for (const tool of this.tools.sortedById()) {
+    for (const id of this.tools.sortedIds()) {
+      const tool = this.tools.profile(id);
       if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) {
         if (!installedToolDirs.has(tool.directory)) {
           issues.push({

@@ -23,9 +23,9 @@ describe("an event Cursor does not fire", () => {
   const notify = JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "a" }] }] } });
 
   it("is skipped and reported under Cursor's name by a flat build", () => {
-    expect(flatFile().merge(null, notify, "p", asIs).warnings).toStrictEqual([
-      "cursor: unmapped event 'Notification' skipped",
-    ]);
+    expect(
+      flatFile().merge(null, { json: notify, plugin: "p", locate: asIs }).warnings
+    ).toStrictEqual(["cursor: unmapped event 'Notification' skipped"]);
   });
 });
 

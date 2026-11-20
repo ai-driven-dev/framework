@@ -34,7 +34,7 @@ function declaresUserScopeActivation(toolId) {
   const profile = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId, "profile.ts");
   const text = fs.readFileSync(profile, "utf8");
   return (
-    /nativeActivation:\s*\{/u.test(text) ||
+    /nativeActivation:\s*[\w{]/u.test(text) ||
     /installScope:\s*"user"/u.test(text) ||
     /globalFiles:\s*\{/u.test(text)
   );

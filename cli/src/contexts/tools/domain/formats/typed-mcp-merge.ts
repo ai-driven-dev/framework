@@ -96,12 +96,17 @@ export function mergeTypedMcp(
  * omitted entirely when neither side contributes one, and malformed `existing` content throws
  * rather than being silently discarded.
  */
-export function buildTypedMcpFlatConfig(
-  baseConfig: string,
-  existing: string | null,
-  incoming: Record<string, unknown>,
-  mergedKeys: readonly string[] = []
-): string {
+export function buildTypedMcpFlatConfig({
+  baseConfig,
+  existing,
+  incoming,
+  mergedKeys = [],
+}: {
+  baseConfig: string;
+  existing: string | null;
+  incoming: Record<string, unknown>;
+  mergedKeys?: readonly string[];
+}): string {
   const base = JSON.parse(baseConfig) as Record<string, unknown>;
   const { full, mcp } = parseExisting(existing);
   const userKeys = { ...full };

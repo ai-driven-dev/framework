@@ -32,7 +32,11 @@ describe("the telemetry plugin's hooks on both Codex routes", () => {
     );
     const hooks = buildCodexFlatContract().artifacts.hooks;
     if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
-    const merged = hooks.hooksFile.merge(null, shipped, "aidd-telemetry", (path) => path).content;
+    const merged = hooks.hooksFile.merge(null, {
+      json: shipped,
+      plugin: "aidd-telemetry",
+      locate: (path) => path,
+    }).content;
 
     expect(JSON.parse(merged)).toStrictEqual(
       JSON.parse(shipped.replaceAll(`${ROOT}/hooks/`, "./.codex/hooks/aidd-telemetry/"))
@@ -59,7 +63,9 @@ describe("the Codex flat hooks file", () => {
     if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
 
     expect(
-      JSON.parse(hooks.hooksFile.merge(null, shipped, "p", (path) => path).content)
+      JSON.parse(
+        hooks.hooksFile.merge(null, { json: shipped, plugin: "p", locate: (path) => path }).content
+      )
     ).toStrictEqual({
       hooks: { Stop: [{ hooks: [{ command: "node ./.codex/hooks/p/a.cjs", type: "command" }] }] },
     });

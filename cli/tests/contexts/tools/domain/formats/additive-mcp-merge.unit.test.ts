@@ -9,7 +9,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        false
+        { force: false }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["aidd-dev-mcp"]).toEqual(PLUGIN_SERVER);
@@ -17,7 +17,11 @@ describe("mergeAdditiveMcp", () => {
     });
 
     it("produces valid JSON with 2-space indent and trailing newline", () => {
-      const { mergedContent } = mergeAdditiveMcp(null, { "aidd-dev-mcp": PLUGIN_SERVER }, false);
+      const { mergedContent } = mergeAdditiveMcp(
+        null,
+        { "aidd-dev-mcp": PLUGIN_SERVER },
+        { force: false }
+      );
       expect(mergedContent).toBe(
         `${JSON.stringify({ servers: { "aidd-dev-mcp": PLUGIN_SERVER } }, null, 2)}\n`
       );
@@ -32,7 +36,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        false
+        { force: false }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["user-custom"]).toEqual({ command: "myserver" });
@@ -45,7 +49,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        false
+        { force: false }
       );
       const parsed = JSON.parse(mergedContent) as { inputs: unknown[]; servers: unknown };
       expect(parsed.inputs).toEqual([]);
@@ -60,7 +64,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        false
+        { force: false }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["aidd-personal"]).toEqual({ command: "mine" });
@@ -77,7 +81,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        false
+        { force: false }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect((parsed.servers["aidd-dev-mcp"] as { command: string }).command).toBe("old");
@@ -93,7 +97,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        true
+        { force: true }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["aidd-dev-mcp"]).toEqual(PLUGIN_SERVER);
@@ -106,12 +110,12 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent: firstRun } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        true
+        { force: true }
       );
       const { mergedContent: secondRun } = mergeAdditiveMcp(
         firstRun,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        true
+        { force: true }
       );
       expect(secondRun).toBe(firstRun);
     });
@@ -120,7 +124,11 @@ describe("mergeAdditiveMcp", () => {
   describe("insertion order", () => {
     it("preserves existing server key order and appends new keys", () => {
       const existing = JSON.stringify({ servers: { "a-server": {}, "b-server": {} } });
-      const { mergedContent } = mergeAdditiveMcp(existing, { "c-server": PLUGIN_SERVER }, false);
+      const { mergedContent } = mergeAdditiveMcp(
+        existing,
+        { "c-server": PLUGIN_SERVER },
+        { force: false }
+      );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       const keys = Object.keys(parsed.servers);
       expect(keys).toEqual(["a-server", "b-server", "c-server"]);

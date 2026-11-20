@@ -140,10 +140,9 @@ export class McpConfigPart {
   frameworkConfigOver(
     baseConfig: string,
     existing: string | null,
-    incoming: Record<string, unknown>,
-    mergedKeys: readonly string[] = []
+    incoming: Record<string, unknown>
   ): string {
-    return buildTypedMcpFlatConfig(baseConfig, existing, incoming, mergedKeys);
+    return buildTypedMcpFlatConfig({ baseConfig, existing, incoming });
   }
 
   merge(existing: string, incoming: string): string {

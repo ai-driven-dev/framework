@@ -130,8 +130,8 @@ function bind(directory: string, suffix: ToolSuffix): BoundTool {
       `${directory}${subdirectory}${suffix.strip(fileName)}`,
     agents: (params) => new AgentsSection({ directory, toolSuffix, ...params }),
     skills: (params) => new SkillsSection({ directory, toolSuffix, ...params }),
-    commands: (params) => new CommandsSection({ directory, toolSuffix, ...params }),
-    rules: (params) => new RulesSection({ directory, toolSuffix, ...params }),
+    commands: (params) => new CommandsSection({ toolSuffix, ...params }),
+    rules: (params) => new RulesSection({ toolSuffix, ...params }),
   };
 }
 
@@ -207,7 +207,11 @@ function refuseDisagreeingPlugin(toolId: string, sections: ProfileSections): voi
 function pluginsOf(sections: ProfileSections): PluginAnswers | null {
   const { layout, hooks } = sections;
   if (layout === undefined || hooks === undefined) return null;
-  return pluginAnswers(layout, sections.manifest ?? null, hooks, sections.mcp ?? null);
+  return pluginAnswers(layout, {
+    manifest: sections.manifest ?? null,
+    hooks,
+    mcp: sections.mcp ?? null,
+  });
 }
 
 function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | undefined {
@@ -259,13 +263,10 @@ function destinationsOf(
   );
 }
 
-export function defineAiTool<C extends ProfileSections>(
-  spec: AiToolSpec<C>
-): AiTool<C> & ProfileBrand {
-  const { toolId, capabilities: declare, ...fields } = spec;
-  refuseDirectory(toolId, spec.directory);
-  const suffix = new ToolSuffix(spec.toolSuffix);
-  const contracts = spec.buildContracts;
+function refuseWithoutBuildContract(
+  toolId: string,
+  contracts: AiToolSpec<ProfileSections>["buildContracts"]
+): void {
   if (contracts.marketplace === undefined && contracts.flat === undefined) {
     throw new InvalidToolProfileError(
       toolId,
@@ -273,6 +274,66 @@ export function defineAiTool<C extends ProfileSections>(
       "an AI tool declares a marketplace or a flat build contract."
     );
   }
+}
+
+/** Where a flat plugin's files land under the tool's directory, and which of them are its own. */
+function pathAnswers(directory: string, capabilities: ProfileSections) {
+  const skillLayout = skillLayoutOf(capabilities);
+  return {
+    flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
+      flatInstallPath({ directory, skillLayout, section, pluginName, fileName }),
+    ownsFlatPath: (relativePath: string, pluginName: string) =>
+      ownsFlatPath({ directory, skillLayout, relativePath, pluginName }),
+  };
+}
+
+/** The config files the tool ships and the mcp configuration it keeps. */
+function configAnswers(
+  assets: readonly ShippedConfig[] | undefined,
+  capabilities: ProfileSections
+) {
+  return {
+    configFiles: () => ({
+      ...destinationsOf(assets, "install"),
+      ...destinationsOf(assets, "runtime"),
+    }),
+    runtimeFiles: () => destinationsOf(assets, "runtime"),
+    configAsset: (name: string) => configAssetNamed(assets, name),
+    mcpConfig: () => capabilities.mcp?.config ?? null,
+    flatPluginMcp: () =>
+      capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
+      capabilities.layout?.mode === "flat"
+        ? capabilities.mcp.config
+        : null,
+    settingsFiles: () => settingsOf(capabilities),
+  };
+}
+
+/** What the tool answers about where an install puts its files and how it keeps them. */
+function deliveryAnswers(displayName: string, capabilities: ProfileSections) {
+  return {
+    machineLocalFiles: () => marketplaceOf(capabilities)?.machineLocalFiles() ?? [],
+    installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
+    pluginEnablementIsMachineGlobal: () =>
+      capabilities.layout?.mode === "native"
+        ? capabilities.layout.activation?.scopesEnablement() !== true
+        : true,
+    projectHooksDelivery: () => {
+      const placement =
+        capabilities.hooks === undefined ? null : projectPlacement(capabilities.hooks.delivery);
+      return placement === null ? null : { ...placement, toolName: displayName };
+    },
+  };
+}
+
+export function defineAiTool<C extends ProfileSections>(
+  spec: AiToolSpec<C>
+): AiTool<C> & ProfileBrand {
+  const { toolId, capabilities: declare, ...fields } = spec;
+  refuseDirectory(toolId, spec.directory);
+  const suffix = new ToolSuffix(spec.toolSuffix);
+  const contracts = spec.buildContracts;
+  refuseWithoutBuildContract(toolId, contracts);
   const capabilities = declare(bind(spec.directory, suffix));
   refuseUnknownSections(toolId, capabilities);
   refuseDisagreeingPlugin(toolId, capabilities);
@@ -296,10 +357,7 @@ export function defineAiTool<C extends ProfileSections>(
     },
     distributionPaths: (kind: "manifest" | "marketplace") =>
       fields.distributionProbes?.[kind] ?? [],
-    flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
-      flatInstallPath(spec.directory, skillLayoutOf(capabilities), section, pluginName, fileName),
-    ownsFlatPath: (relativePath: string, pluginName: string) =>
-      ownsFlatPath(spec.directory, skillLayoutOf(capabilities), relativePath, pluginName),
+    ...pathAnswers(spec.directory, capabilities),
     configWrites: () => aiConfigWrites(capabilities),
     plugins: () => plugins,
     supportsUserScopeActivation: () => plugins?.supportsUserScopeActivation() ?? false,
@@ -309,32 +367,10 @@ export function defineAiTool<C extends ProfileSections>(
     agentModels: () => models,
     hostRefInUse: (enabled: boolean) =>
       nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
-    configFiles: () => ({
-      ...destinationsOf(spec.configAssets, "install"),
-      ...destinationsOf(spec.configAssets, "runtime"),
-    }),
-    runtimeFiles: () => destinationsOf(spec.configAssets, "runtime"),
-    configAsset: (name: string) => configAssetNamed(spec.configAssets, name),
-    mcpConfig: () => capabilities.mcp?.config ?? null,
-    flatPluginMcp: () =>
-      capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
-      capabilities.layout?.mode === "flat"
-        ? capabilities.mcp.config
-        : null,
-    settingsFiles: () => settingsOf(capabilities),
+    ...configAnswers(spec.configAssets, capabilities),
     marketplaceRegistration: () => marketplaceOf(capabilities) ?? null,
-    machineLocalFiles: () => marketplaceOf(capabilities)?.machineLocalFiles() ?? [],
-    installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
-    pluginEnablementIsMachineGlobal: () =>
-      capabilities.layout?.mode === "native"
-        ? capabilities.layout.activation?.scopesEnablement() !== true
-        : true,
+    ...deliveryAnswers(spec.displayName, capabilities),
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
-    projectHooksDelivery: () => {
-      const placement =
-        capabilities.hooks === undefined ? null : projectPlacement(capabilities.hooks.delivery);
-      return placement === null ? null : { ...placement, toolName: spec.displayName };
-    },
   };
   return profile as AiTool<C> & ProfileBrand;
 }

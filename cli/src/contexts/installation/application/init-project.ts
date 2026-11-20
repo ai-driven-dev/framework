@@ -75,8 +75,10 @@ export class InitProject {
   }
 
   private async hasAiddSignals(projectRoot: string): Promise<boolean> {
-    for (const tool of this.tools.sortedById()) {
-      if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) return true;
+    for (const id of this.tools.sortedIds()) {
+      if ((await detectToolSignals(this.fs, this.tools.profile(id), projectRoot)).length > 0) {
+        return true;
+      }
     }
     return false;
   }

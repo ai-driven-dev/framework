@@ -83,10 +83,10 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
       schemaName: "marketplace",
       destRelPath: marketplaceRelative,
     }),
-    buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) => {
-      const args = [fs, name, srcEntry, outDir, manifestRelative] as const;
-      const version = await resolveVersion(...args);
-      const description = await resolveDescription(...args);
+    buildMarketplaceEntry: async ({ name, outDir, srcEntry, fs }) => {
+      const source = { fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative };
+      const version = await resolveVersion(source);
+      const description = await resolveDescription(source);
       return { name, source: name, description, version };
     },
   };
@@ -153,7 +153,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => FLAT_VSCODE_MCP_PATH,
-        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, force),
+        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, { force }),
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },

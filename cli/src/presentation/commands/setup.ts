@@ -168,7 +168,10 @@ function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
 
 /** What `--global` does for each registered tool, read from its profile. */
 export function globalSetupHelp(catalog: ToolCatalog): string {
-  const global = catalog.sortedById().filter(activatesAtUserScope);
+  const global = catalog
+    .sortedIds()
+    .map((id) => catalog.profile(id))
+    .filter(activatesAtUserScope);
   const tools = global.map((profile) => profile.toolId);
   const native = global.filter((profile) => profile.nativeActivation() !== undefined);
   const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());

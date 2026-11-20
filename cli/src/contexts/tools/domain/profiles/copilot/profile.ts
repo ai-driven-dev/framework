@@ -11,7 +11,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { AgentsSection } from "../../sections/agents-section.js";
 import { CommandsSection } from "../../sections/commands-section.js";
 import { ConfigSection } from "../../sections/config-section.js";
-import { nativeLayout } from "../../sections/layout-section.js";
+import { type NativeLayoutParams, nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
@@ -192,6 +192,66 @@ function rewriteCopilotContent(content: string): string {
 
 const hooksSupport = nativeHooksSupport(COPILOT_HOOKS);
 
+// Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
+// must therefore never receive a declarative true entry before native source proof.
+// Its registry is global to the user and keyed by name, so a name held by a project that
+// no longer exists breaks every other project's installs: measured; `update` exits 1 on a
+// local path that is gone and 0 otherwise, which is what lets a dead name be reclaimed with
+// `--force` without ever taking one that still resolves.
+const COPILOT_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
+  binary: "copilot",
+  upgradeVerb: "update",
+  updateVerb: "update",
+  enableVerb: "install",
+  disableVerb: "uninstall",
+  sourceCheckVerb: "update",
+  forceRemoveArgs: ["--force"],
+  // Measured on 1.0.98: `plugin uninstall` sets the ref to `false` in enabledPlugins
+  // rather than deleting it.
+  uninstallLeavesRefDisabled: true,
+  // Where `copilot plugin marketplace add`/`install` land, measured against the real
+  // binary. Never written by aidd; named here for a diagnostic alone.
+  userSettingsPath: (h) => join(h, ".copilot", "settings.json"),
+  // Copilot's registry is `settings.json`, never `config.json`, whose `installedPlugins`
+  // reads empty on a machine that has run installs.
+  pluginRegistry: {
+    location: (h) => join(h, ".copilot", "settings.json"),
+    layout: "enabled-plugins-map",
+  },
+  // 1.0.98 answers `--json`; the installed 1.0.83 rejects it and stays unreadable.
+  marketplaceSources: {
+    from: "list-command",
+    args: ["plugin", "marketplace", "list", "--json"],
+    layout: "name-source-rows",
+    hostLabel: "Copilot",
+    unavailableMessage:
+      "Copilot CLI marketplace list --json unavailable; upgrade to a supported binary and retry",
+    unverifiedMessage:
+      "Copilot CLI marketplace list --json output shape is not verified; upgrade to a supported binary and reconcile manually",
+  },
+};
+
+// Copilot CLI and cloud agent read this repository file; enabledPlugins auto-installs.
+// Keep machine-local marketplace paths out and project only proven native refs.
+const COPILOT_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
+  settingsPath: ".github/copilot/settings.json",
+  settingsKey: "extraKnownMarketplaces",
+  marketplacesSettingsPath: null,
+  enabledPluginsKey: "enabledPlugins",
+  declarativePluginActivationRequiresNativeProof: true,
+  toEntryKey: sharedMarketplaceKey,
+};
+
+/** Copilot reads `servers` where the framework config writes `mcpServers`. */
+function serversKeyed(content: string): string {
+  const parsed = JSON.parse(content) as Record<string, unknown>;
+  if ("mcpServers" in parsed && !("servers" in parsed)) {
+    const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<string, unknown>;
+    return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
+  }
+  return content;
+}
+
 export const copilot = defineAiTool({
   toolId: "copilot",
   distributionProbes: {
@@ -232,13 +292,11 @@ export const copilot = defineAiTool({
       convertFrontmatter: (fm) => skillsHandler.convertFrontmatter(fm),
     }),
     commands: new CommandsSection({
-      directory: DIRECTORY,
       toolSuffix: EXT_PROMPT,
       buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
     rules: new RulesSection({
-      directory: DIRECTORY,
       toolSuffix: EXT_INSTRUCTIONS,
       inputSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
@@ -249,17 +307,7 @@ export const copilot = defineAiTool({
         outputPath: ".vscode/mcp.json",
         format: "json",
         consumes: [MCP_CONFIG_REF],
-        transformContent: (content) => {
-          const parsed = JSON.parse(content) as Record<string, unknown>;
-          if ("mcpServers" in parsed && !("servers" in parsed)) {
-            const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
-              string,
-              unknown
-            >;
-            return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
-          }
-          return content;
-        },
+        transformContent: serversKeyed,
       }),
       plugin: PLUGIN_MCP,
     },
@@ -274,54 +322,8 @@ export const copilot = defineAiTool({
     hooks: { delivery: hooksSupport.delivery },
     layout: nativeLayout({
       pluginsDir: ".github/plugins/",
-      // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
-      // must therefore never receive a declarative true entry before native source proof.
-      // Its registry is global to the user and keyed by name, so a name held by a project that
-      // no longer exists breaks every other project's installs: measured; `update` exits 1 on a
-      // local path that is gone and 0 otherwise, which is what lets a dead name be reclaimed with
-      // `--force` without ever taking one that still resolves.
-      nativeActivation: {
-        binary: "copilot",
-        upgradeVerb: "update",
-        updateVerb: "update",
-        enableVerb: "install",
-        disableVerb: "uninstall",
-        sourceCheckVerb: "update",
-        forceRemoveArgs: ["--force"],
-        // Measured on 1.0.98: `plugin uninstall` sets the ref to `false` in enabledPlugins
-        // rather than deleting it.
-        uninstallLeavesRefDisabled: true,
-        // Where `copilot plugin marketplace add`/`install` land, measured against the real
-        // binary. Never written by aidd; named here for a diagnostic alone.
-        userSettingsPath: (h) => join(h, ".copilot", "settings.json"),
-        // Copilot's registry is `settings.json`, never `config.json`, whose `installedPlugins`
-        // reads empty on a machine that has run installs.
-        pluginRegistry: {
-          location: (h) => join(h, ".copilot", "settings.json"),
-          layout: "enabled-plugins-map",
-        },
-        // 1.0.98 answers `--json`; the installed 1.0.83 rejects it and stays unreadable.
-        marketplaceSources: {
-          from: "list-command",
-          args: ["plugin", "marketplace", "list", "--json"],
-          layout: "name-source-rows",
-          hostLabel: "Copilot",
-          unavailableMessage:
-            "Copilot CLI marketplace list --json unavailable; upgrade to a supported binary and retry",
-          unverifiedMessage:
-            "Copilot CLI marketplace list --json output shape is not verified; upgrade to a supported binary and reconcile manually",
-        },
-      },
-      // Copilot CLI and cloud agent read this repository file; enabledPlugins auto-installs.
-      // Keep machine-local marketplace paths out and project only proven native refs.
-      marketplaceSettings: {
-        settingsPath: ".github/copilot/settings.json",
-        settingsKey: "extraKnownMarketplaces",
-        marketplacesSettingsPath: null,
-        enabledPluginsKey: "enabledPlugins",
-        declarativePluginActivationRequiresNativeProof: true,
-        toEntryKey: sharedMarketplaceKey,
-      },
+      nativeActivation: COPILOT_ACTIVATION,
+      marketplaceSettings: COPILOT_MARKETPLACE_SETTINGS,
     }),
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",

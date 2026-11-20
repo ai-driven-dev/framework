@@ -101,12 +101,11 @@ describe("buildClaudeFlatContract()", () => {
     const hooks = supported(buildClaudeFlatContract().artifacts.hooks);
 
     expect(
-      hooks.hooksFile?.merge(
-        JSON.stringify({ model: "opus" }),
-        HOOKS_JSON,
-        "aidd-dev",
-        (path) => path
-      )
+      hooks.hooksFile?.merge(JSON.stringify({ model: "opus" }), {
+        json: HOOKS_JSON,
+        plugin: "aidd-dev",
+        locate: (path) => path,
+      })
     ).toStrictEqual({
       content: `${JSON.stringify(
         {

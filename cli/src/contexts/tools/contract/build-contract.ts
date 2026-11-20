@@ -62,9 +62,7 @@ export type ArtifactContract =
          * `locate` names, in a command, a path the plugin ships outside `hooks/`. */
         readonly merge: (
           existing: string | null,
-          pluginHooks: string,
-          plugin: string,
-          locate: (pluginPath: string) => string
+          shipped: ShippedHooks
         ) => { content: string; warnings: readonly string[] };
       };
       /** A hook script as the tool runs it, given its path in the plugin: the tool's own host
@@ -122,14 +120,26 @@ export interface ToolBuildContract {
     | null;
 
   readonly buildMarketplaceEntry:
-    | ((
-        name: string,
-        pluginSrc: string,
-        outDir: string,
-        srcEntry: SourcePluginEntryRef | undefined,
-        fs: BuildFileReader
-      ) => Promise<Record<string, unknown>>)
+    | ((entry: MarketplaceEntryInput) => Promise<Record<string, unknown>>)
     | null;
+}
+
+/** What a marketplace entry is built from: the plugin, as built under `outDir`, and the entry
+ * the source marketplace holds for it. */
+export interface MarketplaceEntryInput {
+  readonly name: string;
+  readonly pluginSrc: string;
+  readonly outDir: string;
+  readonly srcEntry: SourcePluginEntryRef | undefined;
+  readonly fs: BuildFileReader;
+}
+
+/** A plugin's hooks as it ships them. `locate` names, in a command, a path the plugin ships
+ * outside `hooks/`; left out, such a path stays as written. */
+export interface ShippedHooks {
+  readonly json: string;
+  readonly plugin: string;
+  readonly locate?: (pluginPath: string) => string;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and

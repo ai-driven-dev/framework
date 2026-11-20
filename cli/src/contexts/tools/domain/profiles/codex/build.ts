@@ -161,7 +161,7 @@ export function buildCodexContract(): ToolBuildContract {
       schemaName: "codex-marketplace",
       destRelPath: marketplaceRelative,
     }),
-    buildMarketplaceEntry: async (name, _src, _outDir, srcEntry, _fs) =>
+    buildMarketplaceEntry: async ({ name, srcEntry }) =>
       buildCodexMarketplaceEntry(name, srcEntry as Record<string, unknown> | undefined),
   };
 }

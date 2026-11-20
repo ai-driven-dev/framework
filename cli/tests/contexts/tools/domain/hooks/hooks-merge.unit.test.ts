@@ -42,7 +42,7 @@ function merged(
   target: HooksMergeTarget,
   plugin = "p"
 ): unknown {
-  return JSON.parse(mergeHooks(existing, pluginHooks, plugin, target).content);
+  return JSON.parse(mergeHooks(existing, { json: pluginHooks, plugin: plugin }, target).content);
 }
 
 describe("where a plugin's scripts land", () => {
@@ -69,7 +69,11 @@ describe("the plugin's commands", () => {
 describe("a path the plugin ships outside its hooks", () => {
   it("lands where the caller places it", () => {
     const hooks = shipped("Start", { hooks: [{ command: `cat ${ROOT}/skills/s/SKILL.md` }] });
-    const located = mergeHooks(null, hooks, "p", CURSOR_LIKE, (path) => `.tool/${path}`).content;
+    const located = mergeHooks(
+      null,
+      { json: hooks, plugin: "p", locate: (path) => `.tool/${path}` },
+      CURSOR_LIKE
+    ).content;
 
     expect(JSON.parse(located)).toStrictEqual({
       version: 1,
@@ -89,8 +93,7 @@ describe("the file's wrapper", () => {
     const existing = JSON.stringify({ model: "opus", hooks: {}, theme: "dark" });
     const content = mergeHooks(
       existing,
-      shipped("Start", { hooks: [{ type: "command", command: "a" }] }),
-      "p",
+      { json: shipped("Start", { hooks: [{ type: "command", command: "a" }] }), plugin: "p" },
       NESTED
     ).content;
 
@@ -101,12 +104,16 @@ describe("the file's wrapper", () => {
     expect(merged(null, JSON.stringify({ hooks: {} }), COPILOT_LIKE)).toStrictEqual({
       version: 1,
     });
-    expect(mergeHooks(null, "{}", "p", NESTED).content).toBe("{}\n");
+    expect(mergeHooks(null, { json: "{}", plugin: "p" }, NESTED).content).toBe("{}\n");
   });
 
   it("is serialized two-space indented, with a closing newline", () => {
     expect(
-      mergeHooks(null, shipped("Start", { hooks: [{ command: "a" }] }), "p", CURSOR_LIKE).content
+      mergeHooks(
+        null,
+        { json: shipped("Start", { hooks: [{ command: "a" }] }), plugin: "p" },
+        CURSOR_LIKE
+      ).content
     ).toBe(
       '{\n  "version": 1,\n  "hooks": {\n    "Start": [\n      {\n        "command": "a"\n      }\n    ]\n  }\n}\n'
     );
@@ -250,7 +257,11 @@ describe("the tool's events", () => {
 
   it("skip and report an event the tool does not fire", () => {
     expect(
-      mergeHooks(null, shipped("Notify", { hooks: [{ command: "a" }] }), "p", target)
+      mergeHooks(
+        null,
+        { json: shipped("Notify", { hooks: [{ command: "a" }] }), plugin: "p" },
+        target
+      )
     ).toStrictEqual({
       content: '{\n  "version": 1\n}\n',
       warnings: ["unmapped event 'Notify' skipped"],
@@ -259,7 +270,11 @@ describe("the tool's events", () => {
 
   it("are the source's own where the tool maps none", () => {
     expect(
-      mergeHooks(null, shipped("Notify", { hooks: [{ command: "a" }] }), "p", CURSOR_LIKE).warnings
+      mergeHooks(
+        null,
+        { json: shipped("Notify", { hooks: [{ command: "a" }] }), plugin: "p" },
+        CURSOR_LIKE
+      ).warnings
     ).toStrictEqual([]);
   });
 });

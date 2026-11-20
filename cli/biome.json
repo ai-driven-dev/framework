@@ -5868,9 +5868,6 @@
         "!src/contexts/telemetry/application/ingest-usage.ts",
         "!src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.ts",
         "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
-        "!src/contexts/tools/domain/profile/define-tool.ts",
-        "!src/contexts/tools/domain/profiles/claude/profile.ts",
-        "!src/contexts/tools/domain/profiles/copilot/profile.ts",
         "!src/orchestration/sync/sync-settings.ts",
         "!src/presentation/commands/marketplace.ts",
         "!src/presentation/commands/plugin.ts",
@@ -6049,22 +6046,6 @@
         "!src/contexts/telemetry/infrastructure/sources/line-values.ts",
         "!src/contexts/telemetry/infrastructure/sources/transcript-files.ts",
         "!src/contexts/telemetry/ports/usage-source.ts",
-        "!src/contexts/tools/contract/build-contract.ts",
-        "!src/contexts/tools/domain/bridges/event-bridge.ts",
-        "!src/contexts/tools/domain/formats/additive-mcp-merge.ts",
-        "!src/contexts/tools/domain/formats/hooks/routes.ts",
-        "!src/contexts/tools/domain/formats/typed-mcp-merge.ts",
-        "!src/contexts/tools/domain/hooks/hooks-merge.ts",
-        "!src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.ts",
-        "!src/contexts/tools/domain/marketplace-catalog.ts",
-        "!src/contexts/tools/domain/profile/flat-install-paths.ts",
-        "!src/contexts/tools/domain/profile/plugin-answers.ts",
-        "!src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.ts",
-        "!src/contexts/tools/domain/profiles/claude/build.ts",
-        "!src/contexts/tools/domain/profiles/codex/build.ts",
-        "!src/contexts/tools/domain/profiles/copilot/build.ts",
-        "!src/contexts/tools/domain/profiles/cursor/build.ts",
-        "!src/contexts/tools/domain/sections/mcp-section.ts",
         "!src/orchestration/doctor/check-registration.ts",
         "!src/orchestration/setup/run-setup.ts",
         "!src/orchestration/setup/setup-flow.ts",
@@ -6104,14 +6085,14 @@
       "plugins": ["./biome-plugins/no-laundered-test-interior.grit"]
     },
     {
-      "includes": ["src/**", "!src/contexts/tools/**", "!src/composition/**"],
+      "includes": ["src/**", "!src/composition/**"],
       "plugins": [
         "./biome-plugins/whole-profile-import.grit",
         "./biome-plugins/whole-profile-namespace-import.grit"
       ]
     },
     {
-      "includes": ["src/**", "!src/contexts/tools/**", "!src/presentation/**"],
+      "includes": ["src/**", "!src/presentation/**"],
       "plugins": ["./biome-plugins/no-profile-list.grit"]
     },
     {

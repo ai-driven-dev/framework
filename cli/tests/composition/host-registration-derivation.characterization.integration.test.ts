@@ -217,9 +217,9 @@ describe("the native registrations the catalog is asked about", () => {
   it("leave a tool the catalog does not register without a driver", () => {
     const withoutClaude = catalogOf(
       catalogOf()
-        .sortedById()
-        .filter((profile) => profile.toolId !== "claude")
-        .map((profile) => registeredConfig(profile.toolId))
+        .sortedIds()
+        .filter((id) => id !== "claude")
+        .map((id) => registeredConfig(id))
     );
 
     const wired = wireHostRegistration(withoutClaude, home);

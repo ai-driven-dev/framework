@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { CANONICAL_PROFILES, REGISTERED_PROFILES } from "../../../../src/composition/tools.js";
 import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
-import {
-  CANONICAL_PROFILES,
-  REGISTERED_PROFILES,
-} from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   DuplicateToolIdError,
   ToolListMismatchError,
@@ -21,9 +18,9 @@ describe("the registered tool catalog", () => {
   });
 
   it("sorts by id whatever order its profiles were registered in", () => {
-    const sorted = catalogOf([...REGISTERED_PROFILES].reverse()).sortedById();
+    const sorted = catalogOf([...REGISTERED_PROFILES].reverse()).sortedIds();
 
-    expect(sorted[0]?.toolId).toBe("antigravity");
+    expect(sorted[0]).toBe("antigravity");
   });
 
   describe("the AI ids in the canonical order", () => {

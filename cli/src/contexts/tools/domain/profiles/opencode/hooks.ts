@@ -4,8 +4,7 @@ import { OPENCODE_DIRECTORY, OPENCODE_PLUGIN_ENTRY_BASENAME } from "./opencode-p
 // No family OpenCode's loader scans is named "hooks", so a plugin's scripts land under
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
 export const OPENCODE_HOOKS = declareBridgeHooks(
-  "opencode",
-  OPENCODE_DIRECTORY,
+  { toolId: "opencode", directory: OPENCODE_DIRECTORY },
   ["server-init", "tool.execute.after", "session.idle"],
   {
     // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or

@@ -1,8 +1,7 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
-import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import { REGISTERED_PROFILES, wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 
 const build = vi.fn();

@@ -2,7 +2,6 @@ import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 type RulesSectionParams = {
-  directory: string;
   toolSuffix: string;
   inputSuffix?: string;
   buildInstallPath: (fileName: string) => string | null;
@@ -55,16 +54,5 @@ export class RulesSection {
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
     return serializeFrontmatter(frontmatter, body);
-  }
-
-  accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.#params.directory);
-  }
-
-  equals(other: RulesSection): boolean {
-    return (
-      this.#params.directory === other.#params.directory &&
-      this.#params.toolSuffix === other.#params.toolSuffix
-    );
   }
 }

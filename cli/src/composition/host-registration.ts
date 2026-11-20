@@ -21,10 +21,10 @@ import type {
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
-import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
 import { DuplicateToolIdError, UnregisteredToolError } from "../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
+import { REGISTERED_PROFILES } from "./tools.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {
