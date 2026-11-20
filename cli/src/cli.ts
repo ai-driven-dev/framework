@@ -2,6 +2,7 @@ import { platform } from "node:os";
 import { Command } from "commander";
 import {
   bindCatalog,
+  bindContainer,
   createMenuDeps as createCatalogMenuDeps,
   createContainer,
 } from "./composition/container.js";
@@ -34,6 +35,7 @@ const tools = wireTools();
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
   .version;
 const createDeps: DepsFactory = bindCatalog(tools);
+const createSlice = bindContainer(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
 const createMenuDeps: MenuDepsFactory = (projectRoot) =>
   createCatalogMenuDeps(projectRoot, tools, terminal);
@@ -48,17 +50,17 @@ program
 
 registerSetupCommand(program, tools, createDeps);
 registerToolConfigCommand(program, tools, createDeps);
-registerTranslateCommand(program, tools, createDeps);
+registerTranslateCommand(program, tools, createSlice);
 registerPluginCommand(program, tools, createDeps, createMenuDeps);
 registerMarketplaceCommand(program, createDeps, createMenuDeps);
-registerAuthCommand(program, createDeps);
+registerAuthCommand(program, createSlice);
 registerSyncCommand(program, tools, createDeps);
-registerUpdateCommand(program, createDeps);
+registerUpdateCommand(program, createSlice);
 registerDoctorCommand(program, tools, createDeps);
 registerCleanCommand(program, createDeps);
 registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
 
-registerUpdateNoticeHooks(program, createDeps);
+registerUpdateNoticeHooks(program, createSlice);
 
 // A reader that stops reading (`aidd … | head -1`) closes stdout under the run: what is left to
 // print has nobody to read it, so the run goes on without it and exits on its own outcome.

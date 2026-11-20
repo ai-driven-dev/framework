@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createContainer } from "../../src/composition/container.js";
+import { bindContainer, createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
@@ -62,5 +62,24 @@ describe("createContainer", () => {
     const container = createContainer({ projectRoot: root, verbose: false, output, tools });
 
     expect(container.shared.logger).toBe(output);
+  });
+
+  it("hands a command only the contexts it reads, wired on first read", async () => {
+    const slice = await bindContainer(tools)(root, { verbose: false }, new CLIOutput(false));
+
+    slice.selfUpdate;
+    slice.logIn;
+    expect(wireInstallation).not.toHaveBeenCalled();
+
+    slice.frameworkBuild;
+    expect(wireInstallation).toHaveBeenCalledTimes(1);
+  });
+
+  it("builds one container per call", async () => {
+    const forContainer = bindContainer(tools);
+    const first = await forContainer(root, { verbose: false }, new CLIOutput(false));
+    const second = await forContainer(root, { verbose: false }, new CLIOutput(false));
+
+    expect(second.selfUpdate).not.toBe(first.selfUpdate);
   });
 });

@@ -88,6 +88,65 @@ export function createContainer(options: ContainerOptions) {
   };
 }
 
+/** The contexts the update, auth and translate commands and the update notice read. */
+type ContainerSlice = Pick<
+  Deps,
+  | "selfUpdate"
+  | "printUpdateNotice"
+  | "refreshUpdateCheck"
+  | "logger"
+  | "prompter"
+  | "logIn"
+  | "logOut"
+  | "checkStatus"
+  | "frameworkBuild"
+>;
+
+/** The factory those commands receive: each call builds one container, and a member wires its
+ * context when the command first reads it. */
+export function bindContainer(tools: ToolCatalog) {
+  return async (
+    projectRoot: string,
+    options: FactoryOptions,
+    output: CLIOutput | undefined
+  ): Promise<ContainerSlice> => {
+    const container = createContainer({ projectRoot, ...options, output, tools });
+    return {
+      get selfUpdate() {
+        return container.update.selfUpdate;
+      },
+      get printUpdateNotice() {
+        return container.update.printUpdateNotice;
+      },
+      get refreshUpdateCheck() {
+        return container.update.refreshUpdateCheck;
+      },
+      get logger() {
+        return container.shared.logger;
+      },
+      get prompter() {
+        return container.shared.prompter;
+      },
+      get logIn() {
+        return container.shared.logIn;
+      },
+      get logOut() {
+        return container.shared.logOut;
+      },
+      get checkStatus() {
+        return container.shared.checkStatus;
+      },
+      get frameworkBuild() {
+        const { fs, logger } = container.shared;
+        const { assetProvider } = container.installation;
+        const build: Deps["frameworkBuild"] = (ctx) =>
+          createFrameworkBuildUseCase(tools, { fs, assetProvider, logger }, ctx);
+        return build;
+      },
+    };
+  };
+}
+
 /** The factory the commands receive: it binds the catalog the commands were registered with. */
 export function bindCatalog(tools: ToolCatalog): DepsFactory {
   return (projectRoot, options, output) => createDeps(projectRoot, options, output, tools);
