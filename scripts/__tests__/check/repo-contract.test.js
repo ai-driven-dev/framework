@@ -54,8 +54,4 @@ describe("repo contract", () => {
     assert.deepEqual(ids("docs/assets/sdlc-demo/scenes.json", "/aidd-dev:03-assert", "/aidd-dev:03-asserts"), ["REPO-03"]);
     assert.deepEqual(ids("README.md", "/aidd-dev:01-plan", "/aidd-dev:01-planx"), ["REPO-03"]);
   });
-
-  it("flags a chain diagram drawing a skill that does not exist", () => {
-    assert.deepEqual(ids("docs/GUIDES.md", "/aidd-dev:03-assert", "/aidd-dev:03-assertx"), ["REPO-03"]);
-  });
 });

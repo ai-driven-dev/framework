@@ -15,7 +15,7 @@
       "op": "custom",
       "in": "marketplace.json",
       "check": "sdlc-demo",
-      "why": "the animation and the guides must show the skills that exist, in the order the chain draws"
+      "why": "a skill named in the guides or the animation that does not exist sends the reader to nothing"
     },
     "REPO-04": {
       "op": "custom",

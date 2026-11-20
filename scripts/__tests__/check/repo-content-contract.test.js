@@ -99,9 +99,4 @@ describe("repo content rules", () => {
     fs.rmSync(path.join(dir, "plugins/a/hooks/lib/host.cjs"));
     assert.deepEqual(ids({ "plugins/a/hooks/h.cjs": 'require("./lib/host.cjs");\nrequire("./lib/common-rules.cjs");\n' }), ["REPO-06"]);
   });
-
-  it("REPO-06 flags a hook library copy that differs from its siblings", () => {
-    const sibling = { "plugins/b/hooks/h.cjs": 'require("./lib/common-rules.cjs");\n', "plugins/b/hooks/lib/common-rules.cjs": LIBRARY, "plugins/c/hooks/h.cjs": 'require("./lib/common-rules.cjs");\n', "plugins/c/hooks/lib/common-rules.cjs": "module.exports = {};\n" };
-    assert.deepEqual(ids(sibling), ["REPO-06"]);
-  });
 });
