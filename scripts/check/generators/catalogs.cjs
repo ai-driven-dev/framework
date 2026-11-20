@@ -14,7 +14,11 @@ function render(plugin, name) {
     const out = path.join(scratch, "CATALOG.md");
     const run = spawnSync(process.execPath, [SUMMARIZE, plugin, out, "--depth=4", "--fields=description", `--title=${name} catalog`, `--tagline=Auto-generated index of skills, agents, references and assets shipped by the \`${name}\` plugin.`], { encoding: "utf8" });
     if (run.status !== 0) throw new Error(`catalog of ${name}: ${run.stderr.trim()}`);
-    return fs.readFileSync(out, "utf8").split(`](${path.relative(scratch, plugin).split(path.sep).join("/")}/`).join("](");
+    const prefix = `${path.relative(scratch, plugin).split(path.sep).join("/")}/`;
+    return fs.readFileSync(out, "utf8").replace(/\]\(([^)\s]*)\)/gu, (link, href) => {
+      const posix = path.sep === "\\" ? href.split("\\").join("/") : href;
+      return posix.startsWith(prefix) ? `](${posix.slice(prefix.length)})` : link;
+    });
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
   }

@@ -7,10 +7,19 @@ const engine = require("../../check/engine/engine.cjs");
 const ENGINE = path.resolve(__dirname, "../../check/engine/engine.cjs");
 const RUN = "process.exitCode = require(process.argv[1]).run(process.argv[2], process.argv.slice(3));";
 
+/** The text without HTML comments, stripped until none is left so a nested opener cannot survive. */
+function stripComments(text) {
+  let previous;
+  do {
+    previous = text;
+    text = text.replace(/<!--[\s\S]*?-->\n?/gu, "");
+  } while (text !== previous);
+  return text;
+}
+
 /** A template filled the way a model fills it: comments and the closing note dropped, every slot given a value. */
 function fill(template) {
-  return template
-    .replace(/<!--[\s\S]*?-->\n?/gu, "")
+  return stripComments(template)
     .replace(/^> Fill every.*\n?/mu, "")
     .replace(/\{\{[^}\n]*\}\}/gu, "x");
 }
@@ -55,4 +64,4 @@ function writeThenValidate(writer, validator, request, tools, produced) {
   }
 }
 
-module.exports = { fill, validate, lint, findings, writeThenValidate };
+module.exports = { stripComments, fill, validate, lint, findings, writeThenValidate };

@@ -153,7 +153,11 @@ describe("repository run", () => {
   describe("generators", () => {
     const generator = { name: "fake", watch: ["docs/**"], run: ({ root: at, write: on }) => {
       const file = path.join(at, "generated.txt");
-      if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === "fresh\n") return [];
+      let current = null;
+      try {
+        current = fs.readFileSync(file, "utf8");
+      } catch {}
+      if (current === "fresh\n") return [];
       if (on) fs.writeFileSync(file, "fresh\n");
       return ["generated.txt"];
     } };

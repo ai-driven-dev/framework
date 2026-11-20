@@ -31,7 +31,7 @@ function sync({ root = ROOT, write = false } = {}) {
       const source = fs.readFileSync(path.join(__dirname, name));
       const copy = path.join(skill, "scripts", "lib", name);
       if (fs.existsSync(copy) && fs.readFileSync(copy).equals(source)) continue;
-      stale.push(path.relative(root, copy));
+      stale.push(path.relative(root, copy).split(path.sep).join("/"));
       if (write) {
         fs.mkdirSync(path.dirname(copy), { recursive: true });
         fs.writeFileSync(copy, source);

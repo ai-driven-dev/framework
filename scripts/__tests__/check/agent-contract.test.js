@@ -5,7 +5,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
-const { writeThenValidate } = require("./helpers.js");
+const { stripComments, writeThenValidate } = require("./helpers.js");
 
 const SKILL = path.resolve(__dirname, "../../../plugins/aidd-context/skills/06-agent-generate");
 const TEMPLATE = path.join(SKILL, "assets/agent-template.md");
@@ -57,7 +57,7 @@ describe("agent contract", () => {
   });
 
   it("accepts the template once its slots and comments are filled", () => {
-    const filled = fs.readFileSync(TEMPLATE, "utf8").replace(/<!--[\s\S]*?-->\n?/gu, "").replace(/\{\{([^}]*)\}\}/gu, (_, slot) => slot.replace(/\W+/gu, "-"));
+    const filled = stripComments(fs.readFileSync(TEMPLATE, "utf8")).replace(/\{\{([^}]*)\}\}/gu, (_, slot) => slot.replace(/\W+/gu, "-"));
     assert.deepEqual(validate("name.md", filled.replace(/^name: .*$/mu, "name: name")), { code: 0, out: "" });
   });
 
