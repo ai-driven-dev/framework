@@ -37,7 +37,7 @@ export interface PluginPick {
 export class PickPlugins implements PluginPick {
   constructor(
     private readonly listMarketplaces: Pick<ListMarketplaces, "execute">,
-    private readonly resolveMarketplace: ResolveMarketplace,
+    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
     private readonly pluginAddUseCase: PluginAdd,
     private readonly prompter: Prompter
   ) {}

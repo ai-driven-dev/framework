@@ -7,7 +7,10 @@ import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 
 const TOOL_PROMPT = `Tool (e.g. ${REGISTERED_PROFILES.map((profile) => profile.toolId).join(", ")})`;
 
-type SelectChoice = { name: string; value: string };
+type SelectCall = [
+  message: string,
+  choices: Array<{ name: string; value: string; description?: string }>,
+];
 
 /** A project the installation reports as set up, or not. */
 function setUp(isSetUp: boolean): ProjectSetupState {
@@ -19,17 +22,12 @@ function makeQueuedPrompter(
   inputResponses: string[] = []
 ): {
   prompter: Prompter;
-  selectMock: ReturnType<typeof vi.fn>;
+  selectCalls: SelectCall[];
   inputMock: ReturnType<typeof vi.fn>;
 } {
   let selectIdx = 0;
   let inputIdx = 0;
-  const selectMock = vi.fn().mockImplementation((_msg: string, choices: SelectChoice[]) => {
-    const val = selectResponses[selectIdx++];
-    const match = choices.find((c) => c.value === val);
-    if (!match) throw new Error(`No choice with value "${val}"`);
-    return Promise.resolve(match.value);
-  });
+  const selectCalls: SelectCall[] = [];
   const inputMock = vi.fn().mockImplementation(() => {
     return Promise.resolve(inputResponses[inputIdx++] ?? "");
   });
@@ -38,10 +36,16 @@ function makeQueuedPrompter(
     resolveConflictBulk: vi.fn(),
     confirm: vi.fn(),
     input: inputMock,
-    select: selectMock,
+    select: async (message, choices) => {
+      selectCalls.push([message, choices.map((c) => ({ ...c, value: String(c.value) }))]);
+      const val = selectResponses[selectIdx++];
+      const match = choices.find((c) => String(c.value) === val);
+      if (!match) throw new Error(`No choice with value "${val}"`);
+      return match.value;
+    },
     checkbox: vi.fn(),
   };
-  return { prompter, selectMock, inputMock };
+  return { prompter, selectCalls, inputMock };
 }
 
 describe("interactive menu", () => {
@@ -95,11 +99,11 @@ describe("interactive menu", () => {
 
   describe("project with AIDD installed", () => {
     it("groups commands by usage area", async () => {
-      const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
+      const { prompter, selectCalls } = makeQueuedPrompter(["exit"]);
 
       await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
-      const values = (selectMock.mock.calls[0][1] as SelectChoice[]).map((c) => c.value);
+      const values = selectCalls[0][1].map((c) => c.value);
       expect(values).toContain("inspect");
       expect(values).toContain("manage-tools");
       expect(values).toContain("manage-plugins");
@@ -110,11 +114,11 @@ describe("interactive menu", () => {
     });
 
     it("each group has a description to guide the user", async () => {
-      const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
+      const { prompter, selectCalls } = makeQueuedPrompter(["exit"]);
 
       await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
-      const choices = selectMock.mock.calls[0][1] as Array<{ value: string; description?: string }>;
+      const choices = selectCalls[0][1];
       const groupsWithDescription = choices.filter((c) => c.value !== "exit" && c.description);
       expect(groupsWithDescription.length).toBe(6);
     });
@@ -144,32 +148,32 @@ describe("interactive menu", () => {
     });
 
     it("exit is available directly from a group submenu", async () => {
-      const { prompter, selectMock } = makeQueuedPrompter(["inspect", "exit"]);
+      const { prompter, selectCalls } = makeQueuedPrompter(["inspect", "exit"]);
       const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["exit"]);
-      expect(selectMock).toHaveBeenCalledTimes(2);
+      expect(selectCalls).toHaveLength(2);
     });
 
     it("going back from a group returns to the main menu", async () => {
-      const { prompter, selectMock } = makeQueuedPrompter(["inspect", "back", "exit"]);
+      const { prompter, selectCalls } = makeQueuedPrompter(["inspect", "back", "exit"]);
       const result = await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
       expect(result.command).toEqual(["exit"]);
-      expect(selectMock).toHaveBeenCalledTimes(3);
+      expect(selectCalls).toHaveLength(3);
     });
 
     it("internal commands adopt and init are never exposed", async () => {
       const allValues: string[] = [];
-      const selectMock = vi.fn().mockImplementation((_msg: string, choices: SelectChoice[]) => {
-        allValues.push(...choices.map((c) => c.value));
-        const first = choices.find((c) => c.value !== "exit" && c.value !== "back");
-        return Promise.resolve(first?.value ?? "exit");
-      });
+      const select: Prompter["select"] = async (_msg, choices) => {
+        allValues.push(...choices.map((c) => String(c.value)));
+        const first = choices.find((c) => c.value !== "exit" && c.value !== "back") ?? choices[0];
+        return first.value;
+      };
       const prompter: Prompter = {
         resolveConflict: vi.fn(),
         resolveConflictBulk: vi.fn(),
         confirm: vi.fn(),
         input: vi.fn().mockResolvedValue(""),
-        select: selectMock,
+        select,
         checkbox: vi.fn(),
       };
       await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
@@ -191,13 +195,13 @@ const BACK_AND_EXIT = [
   { name: "Exit", value: "exit" },
 ];
 
-async function choicesAt(path: string[]): Promise<[string, unknown]> {
-  const { prompter, selectMock } = makeQueuedPrompter([...path, "exit"]);
+async function choicesAt(path: string[]): Promise<SelectCall> {
+  const { prompter, selectCalls } = makeQueuedPrompter([...path, "exit"]);
 
   await new BuildMenu(setUp(true), prompter, catalogOf()).execute();
 
-  const call = selectMock.mock.calls[path.length];
-  return [call[0] as string, call[1]];
+  const call = selectCalls[path.length];
+  return [call[0], call[1]];
 }
 
 describe("interactive menu — the rows each level offers", () => {
@@ -239,7 +243,7 @@ describe("interactive menu — the rows each level offers", () => {
   it("offers no way back from the root, only out", async () => {
     const [, choices] = await choicesAt([]);
 
-    expect((choices as { value: string }[]).map((choice) => choice.value)).not.toContain("back");
+    expect(choices.map((choice) => choice.value)).not.toContain("back");
   });
 
   it("offers the three inspect commands under the group's own name", async () => {

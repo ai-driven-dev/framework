@@ -72,16 +72,7 @@
     "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",
     "src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.ts",
     "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
-    "src/contexts/telemetry/infrastructure/sources/transcript-files.ts",
-    "src/orchestration/global/restore-all.ts",
-    "src/orchestration/menu/build-menu.ts",
-    "src/orchestration/menu/menu-tree.ts",
-    "src/orchestration/plugin/install-from-marketplace.ts",
-    "src/orchestration/plugin/pick-plugins.ts",
-    "src/orchestration/setup/setup-machine-scope.ts",
-    "src/presentation/commands/recipes.ts",
-    "src/presentation/terminal/child-command.ts",
-    "src/presentation/terminal/wait-for-enter.ts"
+    "src/contexts/telemetry/infrastructure/sources/transcript-files.ts"
   ],
   "shape": [
     "src/contexts/installation/application/agents/agent-providers.ts",
