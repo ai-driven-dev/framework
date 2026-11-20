@@ -53,7 +53,7 @@ describe("hooks contract", () => {
     assert.match(validate(entry({ command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/missing.cjs" })).out, / HOOKS-02 hooks\/missing\.cjs does not exist/u);
   });
 
-  it("flags a handler with a syntax error", () => {
+  it("flags a handler Node cannot parse", () => {
     fs.writeFileSync(path.join(plugin, "hooks/guard.cjs"), "const = ;\n");
     assert.match(validate(entry()).out, / HOOKS-02 hooks\/guard\.cjs does not parse/u);
   });
