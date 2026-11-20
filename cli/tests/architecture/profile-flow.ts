@@ -147,3 +147,32 @@ export function wholeProfileFlowsInSources(
     (project, at) => flowsIn(project, profileModule, files, exemptCallees, at)
   );
 }
+
+const OWNER_OR_WIRING = /^src\/(contexts\/tools\/|composition\/)/;
+export const PROFILE_MODULE_FILE = "src/contexts/tools/contract/tool-profile.ts";
+
+/** The catalog methods that answer a whole profile. */
+export const CATALOG_PROFILE_METHODS = [
+  "profile",
+  "aiProfile",
+  "ideProfile",
+  "aiProfileIfAny",
+  "sortedById",
+];
+const CATALOG_PROFILE_CALL = new RegExp(String.raw`\.(?:${CATALOG_PROFILE_METHODS.join("|")})\(`);
+/** An import of the profile module under a `biome-ignore lint/plugin` comment: a file that hands the profile on. */
+export const HANDS_PROFILE_ON =
+  /biome-ignore lint\/plugin:[^\n]*\n(?:import|export)[^;]*tools\/contract\/tool-profile\.js/;
+
+/** The files of `texts` outside the tools context and the composition root that call a catalog
+ * profile method, and the files among them that hand the profile on. */
+export function profileReaders(texts: Readonly<Record<string, string>>): {
+  readers: string[];
+  handsOn: string[];
+} {
+  const watched = Object.keys(texts).filter((file) => !OWNER_OR_WIRING.test(file));
+  return {
+    readers: watched.filter((file) => CATALOG_PROFILE_CALL.test(texts[file] ?? "")),
+    handsOn: watched.filter((file) => HANDS_PROFILE_ON.test(texts[file] ?? "")),
+  };
+}

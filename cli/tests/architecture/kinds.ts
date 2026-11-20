@@ -268,6 +268,7 @@ export type Rule =
   | "repository"
   | "translate"
   | "scope"
+  | "profile"
   | "size";
 
 export interface Violation {
@@ -603,6 +604,7 @@ const RULES: readonly Rule[] = [
   "repository",
   "translate",
   "scope",
+  "profile",
   "size",
 ];
 
@@ -621,6 +623,7 @@ export const noDebt = (): Debt => ({
   repository: [],
   translate: [],
   scope: [],
+  profile: [],
   size: [],
   limits: [],
   exemptProcessExit: [],

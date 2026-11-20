@@ -22,7 +22,8 @@
     "exemptGithubUrl": "the file stops writing the GitHub API URL, or the adapter is the only one that ever did",
     "exemptDefaultExport": "no declaration file needs a default export",
     "exemptProfileImport": "the folder stops importing a whole profile",
-    "exemptProfileList": "the folder stops listing profiles"
+    "exemptProfileList": "the folder stops listing profiles",
+    "profile": "the reader names the sections of the tool it reads in its own ports, never the whole profile"
   },
   "classification": [
     "src/presentation/deps.ts",
@@ -672,5 +673,6 @@
   "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],
   "exemptDefaultExport": ["**/*.d.ts"],
   "exemptProfileImport": ["src/contexts/tools/**", "src/composition/**"],
-  "exemptProfileList": ["src/contexts/tools/**", "src/presentation/**"]
+  "exemptProfileList": ["src/contexts/tools/**", "src/presentation/**"],
+  "profile": []
 }

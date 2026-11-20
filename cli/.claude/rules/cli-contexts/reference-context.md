@@ -71,7 +71,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | --- | --- |
 | `ToolId` is opaque and carries no list; only the profiles and `ToolCatalog` lookups mint one | `tool-addition-cost.arch.test.ts`, `scripts/check-cli-type-honesty.mjs` |
 | A caller asks a plugin section a question and never reads its fields | the `answers` rule of `kinds.rules.arch.test.ts`, up to the debt |
-| A reader outside `tools` names the profile sections it reads in its own `ports/` | `whole-profile-import.grit` for the import, `profile-readers-name-their-sections.arch.test.ts` for the flow of a catalog profile into a whole-profile parameter |
+| A reader outside `tools` names the profile sections it reads in its own `ports/` | `whole-profile-import.grit` for the import, the `profile` rule of the kind gate for the flow of a catalog profile into a whole-profile parameter |
 | Tests build a synthetic tool profile with `ProfileBuilder` (`tests/contexts/tools/testing/profiles.ts`) and wrap it with `catalogOf` (`tests/contexts/tools/testing/catalog-of.ts`) instead of the real catalog | none |
 | The real catalog and tool ids reach a test only through `registeredTools()` and `TOOL` in `tests/shared/testing/registered-tools.ts` | none |
 | A GitHub API URL is written in `shared/infrastructure/github-adapter.ts` only | `biome-plugins/one-github-api-url.grit`, `biome-guards-bite.arch.test.ts` |
@@ -94,7 +94,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `catalog-of.ts` keeps `TOOL` and `resolveRegisteredToolId` as aliases of the shared kit | the characterization test `host-registration-derivation.characterization.integration.test.ts` and the e2e files that import them stay frozen | those files import `tests/shared/testing/registered-tools.ts` |
 | `rewritePluginRootToken` lives in `tools/contract/plugin-root-token.ts`, not in `tools/domain/formats/` | `translate` calls it from `domain/engine.ts` and `application/sinks/disk-sink.ts` and reaches `tools` through `contract/` only | none, accepted placement |
 | The two whole-`src` scans of `ports-are-called.arch.test.ts` can be slow or flaky under load | each reads every `src` body with a regex per declared method | none, a written limit |
-| the flow half of `profile-readers-name-their-sections.arch.test.ts` does not read an element-access alias of a profile (`tools["aiProfile"](id)`) | no `src` file writes one | none, a written limit |
+| the `profile` rule of the kind gate does not read an element-access alias of a profile (`tools["aiProfile"](id)`) | no `src` file writes one | none, a written limit |
 | the per-context test overrides in `biome.json` cover `tests/contexts`, `tests/helpers` and `tests/shared` only | orchestration, presentation, composition, e2e and golden tests compose contexts and may import any kit (`kinds.ts`) | none, deliberate |
 | `shared/domain/errors.ts` holds more than one class | the target keeps one central error catalogue | none, deliberate |
 | `STORED_ANSWERS_ALLOWED` in `plugins-are-asked-not-read.arch.test.ts` lists the stored values a plugin variant still answers verbatim | each has a caller that needs the value itself, recorded beside its entry | a caller asks a plugin question instead of reading the stored value, or the variant stops answering it, and the entry leaves |
@@ -120,5 +120,5 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 - Freeze behaviour with characterization tests, each seen red; move before rename, rename before logic change.
 - Update the files that name paths: `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, the repository root's `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
-- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`.
+- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`.
 - Move memory and rules with the code: a `cli-contexts/<ctx>.md` page, `aidd_docs/memory/internal/<ctx>.md`, the `glossary.md`.

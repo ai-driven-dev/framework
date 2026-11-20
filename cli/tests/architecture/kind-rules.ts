@@ -28,6 +28,7 @@ import {
 import { present } from "../shared/testing/present.js";
 import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./helpers.js";
 import type { Rule, Violation } from "./kinds.js";
+import { PROFILE_MODULE_FILE, profileReaders, wholeProfileFlows } from "./profile-flow.js";
 import { walk, withVirtualProject } from "./ts-project.js";
 
 const violation = (
@@ -597,4 +598,24 @@ export function constructionViolations(files: Readonly<Record<string, string>>):
           )
         )
     );
+}
+
+/** A file outside the tools context that asks the catalog for a profile and passes it into a
+ * parameter typed as the whole profile. Biome holds the half that names the whole profile in an
+ * import; this half needs types, so the compiler reads the project at `cwd`. A reader names the
+ * sections of a tool it reads, in its own ports. */
+export function profileViolations(
+  texts: Readonly<Record<string, string>>,
+  cwd: string
+): Violation[] {
+  const { readers, handsOn } = profileReaders(texts);
+  return wholeProfileFlows(cwd, PROFILE_MODULE_FILE, readers, handsOn).map((path) =>
+    violation(
+      "profile",
+      path,
+      "passes a catalog profile into a whole-profile parameter",
+      "a reader outside tools names the sections of a tool it reads, never the whole profile",
+      "name the sections it reads, in its own ports/"
+    )
+  );
 }
