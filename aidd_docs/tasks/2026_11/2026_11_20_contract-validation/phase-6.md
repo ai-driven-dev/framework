@@ -69,6 +69,6 @@ status: pending
 
 | Task | Acceptance criteria              |
 | ---- | -------------------------------- |
-| 1 | the 15 known manifest findings are reported, then baselined |
+| 1 | the 13 known manifest findings are reported, then baselined |
 | 2 | today's tree exits 0; one injected finding exits 1 |
 | 3 | `make check` and the scripts suite pass |

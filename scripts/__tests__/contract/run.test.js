@@ -35,15 +35,40 @@ describe("repository run", () => {
     assert.match(bad.stdout, /^agents\/b\.md:\d+ AGENT-/mu);
   });
 
-  it("lets baselined findings pass, and fails when one more appears", () => {
-    write("agents/b.md", "no front matter\n");
-    assert.match(run("--update-baseline").stdout, /^baseline: \d+ findings/u);
+  const baselined = (text) => {
+    write("agents/b.md", text);
+    run("--update-baseline");
+  };
+
+  it("lets baselined findings pass, and fails on one more", () => {
+    baselined("no front matter\n");
     assert.equal(run().status, 0);
-    const config = JSON.parse(fs.readFileSync(path.join(root, "validate.config.json"), "utf8"));
-    const key = Object.keys(config.baseline)[0];
-    config.baseline[key] -= 1;
-    write("validate.config.json", JSON.stringify(config));
+    write("agents/c.md", "no front matter\n");
     assert.equal(run().status, 1);
+  });
+
+  it("fails on a swap: one finding fixed, another added in the same file and rule", () => {
+    baselined("---\nname: b\n---\n\n# Role\n");
+    assert.equal(run().status, 0);
+    write("agents/b.md", "---\nname: b\ndescription: changed\n---\n\n# Role\n");
+    const swapped = run();
+    assert.equal(swapped.status, 1);
+  });
+
+  it("fails on a stale entry and says how to update", () => {
+    baselined("no front matter\n");
+    fs.copyFileSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/b.md"));
+    const stale = run();
+    assert.equal(stale.status, 1);
+    assert.match(stale.stdout, /no longer fires, run node scripts\/contract\/run\.cjs --update-baseline/u);
+    assert.equal(run("--update-baseline").status, 0);
+    assert.equal(run().status, 0);
+  });
+
+  it("ignores a line shift above a baselined finding", () => {
+    baselined("no front matter\n");
+    write("agents/b.md", "\n\nno front matter\n");
+    assert.equal(run().status, 0);
   });
 
   it("exits 1 when a vendored engine copy is edited", () => {

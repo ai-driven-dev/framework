@@ -2,7 +2,7 @@
 "use strict";
 // Usage: node scripts/contract/run.cjs [--update-baseline] [--root <dir>]
 // Checks every artifact mapped in validate.config.json against its contract, and the vendored engine copies.
-// Findings already counted in the config's baseline pass; any other finding exits 1. Exit 2 is a usage or contract error.
+// Baseline keys are file, rule, message and excerpt (no line), counted. A finding above its count exits 1, and so does an entry that fires less: the baseline only shrinks. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
 const path = require("node:path");
 const { check, loadContract, format } = require("./engine.cjs");
@@ -36,7 +36,7 @@ function main(argv) {
   for (const { contract, targets } of config.contracts) {
     const loaded = loadContract(path.join(root, contract));
     for (const target of expand(root, targets)) {
-      for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id}`, text: format({ ...f, path: rel(f.path) }) });
+      for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id} ${f.message} ${f.excerpt ?? ""}`, text: format({ ...f, path: rel(f.path) }) });
     }
   }
 
@@ -51,8 +51,11 @@ function main(argv) {
 
   const baseline = config.baseline ?? {};
   const fresh = findings.filter((f) => counts[f.key] > (baseline[f.key] ?? 0)).map((f) => f.text);
+  const gone = Object.entries(baseline)
+    .filter(([key, count]) => (counts[key] ?? 0) < count)
+    .map(([key]) => `baseline entry no longer fires, run node scripts/contract/run.cjs --update-baseline: ${key}`);
   const stale = sync({ root }).map((copy) => `${copy} differs from scripts/contract, run node scripts/contract/sync.cjs`);
-  const lines = [...fresh, ...stale];
+  const lines = [...fresh, ...gone, ...stale];
   if (lines.length) process.stdout.write(`${lines.join("\n")}\n`);
   return lines.length ? 1 : 0;
 }
