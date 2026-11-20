@@ -10,11 +10,11 @@ import {
   skillDist,
   translator,
   treeOf,
-} from "../testing/engine-kit.js";
+} from "../testing/engine-kit.builder.js";
 import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
 import { markdownSectionInstalling } from "../testing/markdown-section-stub.builder.js";
 import { nativePluginsStub } from "../testing/native-plugins-stub.builder.js";
-import { claude, opencode, vscode } from "../testing/registered-profiles.js";
+import { claude, opencode, vscode } from "../testing/registered-profiles.builder.js";
 import { syntheticToolProfile } from "../testing/synthetic-tool-profile.builder.js";
 
 const agents = [makeFile("agents/rev.md", "---\nname: rev\n---\n\nReview.\n")];

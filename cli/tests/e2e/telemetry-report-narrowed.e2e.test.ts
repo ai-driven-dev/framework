@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { aidd, held, useReportSandbox } from "./telemetry-report-sandbox.js";
+import {
+  aidd,
+  held,
+  useReportSandbox,
+} from "../contexts/telemetry/testing/telemetry-report-sandbox.builder.js";
 
 useReportSandbox();
 

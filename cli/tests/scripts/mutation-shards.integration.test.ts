@@ -15,7 +15,7 @@ import {
   sourceFiles,
 } from "../../scripts/mutation-shards.mjs";
 import { parseShard, scoreOf, shardConfig } from "../../scripts/run-mutation.mjs";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");

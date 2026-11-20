@@ -12,10 +12,10 @@ import {
   skillDist,
   translator,
   treeOf,
-} from "../testing/engine-kit.js";
+} from "../testing/engine-kit.builder.js";
 import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
 import { nativePluginsStub } from "../testing/native-plugins-stub.builder.js";
-import { claude, codex, cursor, opencode, vscode } from "../testing/registered-profiles.js";
+import { claude, codex, cursor, opencode, vscode } from "../testing/registered-profiles.builder.js";
 import { unsupportedPluginsStub } from "../testing/unsupported-plugins-stub.builder.js";
 
 describe("a plugin's mcp declaration", () => {

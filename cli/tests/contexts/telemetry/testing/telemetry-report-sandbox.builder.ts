@@ -1,4 +1,6 @@
 import { afterEach, beforeEach } from "vitest";
+import { createTestEnv, runCli } from "../../../shared/testing/cli-sandbox.builder.js";
+import { sandboxGitEnv } from "../../../shared/testing/git-sandbox.builder.js";
 import {
   type Aidd,
   declareBranch as declareBranchOn,
@@ -8,12 +10,10 @@ import {
   reportEnv,
   reportPaths,
   seedReport,
-} from "../contexts/telemetry/testing/telemetry-report-seed.js";
-import { sandboxGitEnv } from "../helpers/git-sandbox.js";
-import { createTestEnv, runCli } from "./helpers.js";
+} from "./telemetry-report-seed.builder.js";
 
 /* The sandbox every `aidd telemetry report` e2e file starts each test from, seeded by
- * `tests/contexts/telemetry/testing/telemetry-report-seed.ts` through the built binary. One file per subject, so
+ * `tests/contexts/telemetry/testing/telemetry-report-seed.builder.ts` through the built binary. One file per subject, so
  * Vitest runs them side by side instead of one after another. */
 
 let env: Awaited<ReturnType<typeof createTestEnv>>;

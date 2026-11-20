@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RECIPE } from "../presentation/testing/recipe-fixture.builder.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 describe("recipe validation through the built CLI", () => {
   it("validates a recipe without changing it", async () => {

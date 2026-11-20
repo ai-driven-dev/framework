@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git } from "../../helpers/git-sandbox.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
 import {
   checkRow,
   HOUR,
@@ -17,7 +17,7 @@ import {
   SHARED,
   startWorld,
   stopWorld,
-} from "./testing/consent-world.js";
+} from "./testing/consent-world.builder.js";
 
 const LATER_ROWS: readonly Row[] = [
   {

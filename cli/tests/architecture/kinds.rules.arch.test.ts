@@ -300,7 +300,9 @@ describe("a test reaches the repository through one helper", () => {
 
   it("clears a climb that stays inside cli/, the helper itself and the gate's own tests", () => {
     expect(found('import { x } from "../../../src/x.js"; join(dir, "..")')).toEqual([]);
-    expect(found('join(CLI_ROOT, "..")', "tests/helpers/repository-root.ts")).toEqual([]);
+    expect(
+      found('join(CLI_ROOT, "..")', "tests/shared/testing/repository-root.builder.ts")
+    ).toEqual([]);
     expect(found('join(CLI_ROOT, "..")', "tests/architecture/x.arch.test.ts")).toEqual([]);
   });
 

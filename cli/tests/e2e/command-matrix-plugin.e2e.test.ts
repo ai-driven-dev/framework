@@ -1,7 +1,7 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 const AIDD_DIR = ".aidd";
 const EMPTY_MANIFEST = { version: 8, tools: {} };

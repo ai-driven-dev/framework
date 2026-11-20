@@ -3,7 +3,11 @@ import { copyFile, mkdir, symlink, writeFile } from "node:fs/promises";
 import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, pathWithoutAidd, sandboxedEnv } from "./helpers.js";
+import {
+  createTestEnv,
+  pathWithoutAidd,
+  sandboxedEnv,
+} from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
 

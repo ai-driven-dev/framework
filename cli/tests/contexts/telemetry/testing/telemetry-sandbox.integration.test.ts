@@ -1,6 +1,6 @@
 import { rmSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
-import { createTelemetrySandbox } from "./telemetry-sandbox.js";
+import { createTelemetrySandbox } from "./telemetry-sandbox.builder.js";
 
 describe("the telemetry sandbox's git environment", () => {
   const saved = { claude: process.env.CLAUDE_CODE_SESSION_ID, codex: process.env.CODEX_THREAD_ID };

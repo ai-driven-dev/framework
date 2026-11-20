@@ -8,7 +8,7 @@ import {
   pathWithoutAidd,
   runCli,
   writeFakeToolBinary,
-} from "./helpers.js";
+} from "../shared/testing/cli-sandbox.builder.js";
 
 const PLUGIN_FIXTURE = resolve(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 

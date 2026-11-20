@@ -13,24 +13,17 @@ import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
-import { bindContainer } from "../../src/composition/container.js";
-import { InitProject } from "../../src/contexts/installation/application/init-project.js";
-import { UpdateGitignore } from "../../src/contexts/installation/application/update-gitignore.js";
-import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
-import { CLIOutput } from "../../src/presentation/output.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
+import { bindContainer } from "../../../src/composition/container.js";
+import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/infrastructure/git/git-environment.js";
+import { CLIOutput } from "../../../src/presentation/output.js";
+import { catalogOf } from "./catalog-of.builder.js";
 
 export const execFileAsync = promisify(execFile);
 
 export async function gitInit(cwd: string): Promise<void> {
   await execFileAsync("git", ["init"], { cwd, env: withoutGitEnv(process.env) });
-}
-
-export async function gitSetOriginRemote(cwd: string, url: string): Promise<void> {
-  await execFileAsync("git", ["remote", "add", "origin", url], {
-    cwd,
-    env: withoutGitEnv(process.env),
-  });
 }
 
 /**
@@ -60,7 +53,6 @@ export function cliPath(): string {
   return cachedCliPath;
 }
 export const FRAMEWORK_PATH = resolve(process.cwd(), "tests/fixtures/framework");
-export const FRAMEWORK_V2_PATH = resolve(process.cwd(), "tests/fixtures/framework-v2");
 
 export async function createTestEnv(prefix: string): Promise<{
   tempDir: string;
@@ -285,24 +277,6 @@ export async function runCli(
   options?: { realHome?: boolean; env?: Record<string, string> }
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const env = sandboxedEnv(fakeHome, options?.env, options);
-  try {
-    const { stdout, stderr } = await execFileAsync(process.execPath, [cliPath(), ...args], {
-      cwd,
-      env,
-    });
-    return { stdout, stderr, exitCode: 0 };
-  } catch (error) {
-    const { stdout, stderr, code } = failedRunOf(error);
-    return { stdout, stderr, exitCode: code ?? 1 };
-  }
-}
-
-export async function runCliFast(
-  args: string[],
-  cwd: string,
-  fakeHome: string
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const env = sandboxedEnv(fakeHome, { AIDD_SKIP_MARKETPLACE_REFRESH: "1" });
   try {
     const { stdout, stderr } = await execFileAsync(process.execPath, [cliPath(), ...args], {
       cwd,

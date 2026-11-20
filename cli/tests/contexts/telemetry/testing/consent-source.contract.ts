@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import type { ConsentSource } from "../../../../src/contexts/telemetry/ports/consent-source.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface ConsentSourceSubject extends ContractSubject {
   readonly source: ConsentSource;

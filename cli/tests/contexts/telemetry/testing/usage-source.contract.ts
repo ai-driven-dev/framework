@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 /** Read whatever its age. */
 const EVERYTHING = Number.NEGATIVE_INFINITY;

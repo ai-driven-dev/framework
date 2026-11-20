@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import {
+  registeredAiProfile,
+  registeredProfile,
+} from "../../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { registeredAiProfile, registeredProfile } from "../../testing/catalog-of.builder.js";
 
 describe("ToolProfile.machineLocalFiles()", () => {
   it("answers none for an editor", () => {

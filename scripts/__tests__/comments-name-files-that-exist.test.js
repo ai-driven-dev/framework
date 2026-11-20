@@ -42,7 +42,7 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   "scripts/__tests__/aidd-ui/extract.test.js": ["system.md"],
   "scripts/__tests__/aidd-ui/skill.test.js": ["system.md", "history.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
-  "cli/tests/e2e/helpers.ts": ["dist/cli.js"],
+  "cli/tests/shared/testing/cli-sandbox.builder.ts": ["dist/cli.js"],
   "cli/tests/setup/global-setup.ts": ["dist/cli.js"],
 });
 

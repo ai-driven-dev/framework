@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { gitStatusPorcelain } from "../presentation/testing/project-state.builder.js";
-import { createTestEnv, gitInit, runCli } from "./helpers.js";
+import { createTestEnv, gitInit, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 // CI runners carry no git identity; a commit made by a test brings its own.
 const GIT_TEST_IDENTITY = ["-c", "user.email=t@t.com", "-c", "user.name=t"];

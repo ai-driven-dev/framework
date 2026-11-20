@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { BindingsLock } from "../../../../src/contexts/telemetry/ports/bindings/bindings-lock.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface BindingsLockSubject extends ContractSubject {
   readonly lock: BindingsLock;

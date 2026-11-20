@@ -11,7 +11,7 @@ import {
   type PluginRegistryScenario,
   type PluginRegistrySubject,
 } from "../testing/host-plugin-registry.contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostPluginRegistryContract(
   "the fake",

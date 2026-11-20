@@ -3,7 +3,7 @@ import type { ProjectSetupState } from "../../../src/contexts/installation/contr
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
+import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 
 const TOOL_PROMPT = `Tool (e.g. ${REGISTERED_PROFILES.map((profile) => profile.toolId).join(", ")})`;
 

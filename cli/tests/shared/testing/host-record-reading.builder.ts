@@ -1,11 +1,11 @@
 import {
   type RegistrationRecord,
   readRegistrationRecord,
-} from "../../src/contexts/host-registration/domain/record/registration-record.js";
+} from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type {
   NativePluginClaim,
   NativeRegistrations,
-} from "../../src/contexts/installation/domain/manifest/native-registrations.js";
+} from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 
 type ClaimedRecord = RegistrationRecord & { readonly pluginClaims?: readonly NativePluginClaim[] };
 

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { describeProfileFileConformance } from "../../testing/profile-file-conformance.contract.js";
 
 /**

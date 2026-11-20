@@ -13,7 +13,7 @@ import { CheckRegistration } from "../../../src/orchestration/doctor/check-regis
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
+import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

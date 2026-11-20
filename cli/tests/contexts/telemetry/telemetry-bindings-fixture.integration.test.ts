@@ -22,7 +22,7 @@ import {
   consentOf,
   measurementRefused,
 } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 /** The contract between the CLI and the plugin hooks: the hook tests read these same files. */
 const FIXTURE = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "telemetry-bindings");

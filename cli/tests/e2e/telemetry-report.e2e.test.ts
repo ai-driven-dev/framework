@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  aidd,
+  declareBranch,
+  held,
+  json,
+  useReportSandbox,
+} from "../contexts/telemetry/testing/telemetry-report-sandbox.builder.js";
+import {
   AXES,
   CALLS,
   type Call,
   COUNTERS,
-} from "../contexts/telemetry/testing/telemetry-report-seed.js";
-import { aidd, declareBranch, held, json, useReportSandbox } from "./telemetry-report-sandbox.js";
+} from "../contexts/telemetry/testing/telemetry-report-seed.builder.js";
 
 useReportSandbox();
 

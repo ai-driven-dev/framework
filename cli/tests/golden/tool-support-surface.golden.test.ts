@@ -3,10 +3,10 @@
 import { join } from "node:path";
 import { describe, it } from "vitest";
 import type { ArtifactContract } from "../../src/contexts/tools/contract/build-contract.js";
-import { catalogOf, registeredAiConfig } from "../contexts/tools/testing/catalog-of.builder.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { expectGolden } from "./expect-golden.js";
+import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
+import { expectGolden } from "./testing/expect-golden.builder.js";
 
 const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-support/surface.json");
 

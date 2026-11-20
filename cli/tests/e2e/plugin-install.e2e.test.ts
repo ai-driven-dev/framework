@@ -1,7 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
+import {
+  createTestEnv,
+  FRAMEWORK_PATH,
+  initProject,
+  runCli,
+} from "../shared/testing/cli-sandbox.builder.js";
 
 const PLUGIN_FIXTURE = resolve(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 

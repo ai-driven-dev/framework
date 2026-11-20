@@ -9,7 +9,7 @@ import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
-import { translator } from "../testing/engine-kit.js";
+import { translator } from "../testing/engine-kit.builder.js";
 
 const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");
 const OUT = resolve("/tmp/aidd-conformance-out").replaceAll("\\", "/");

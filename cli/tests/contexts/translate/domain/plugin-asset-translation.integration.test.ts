@@ -2,10 +2,17 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { translator } from "../testing/engine-kit.js";
-import { claude, codex, copilot, cursor, kilo, opencode } from "../testing/registered-profiles.js";
+import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import { translator } from "../testing/engine-kit.builder.js";
+import {
+  claude,
+  codex,
+  copilot,
+  cursor,
+  kilo,
+  opencode,
+} from "../testing/registered-profiles.builder.js";
 
 /**
  * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.

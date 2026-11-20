@@ -14,7 +14,7 @@ import {
   type MarketplaceSourcesScenario,
   type MarketplaceSourcesSubject,
 } from "../testing/host-marketplace-sources.contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostMarketplaceSourcesContract(
   "the fake",

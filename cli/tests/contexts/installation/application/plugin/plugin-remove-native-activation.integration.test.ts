@@ -25,7 +25,7 @@ import {
   PLUGIN_NAME,
   REF,
   verifiedSourceReader,
-} from "../../testing/framework-plugin-on-claude.js";
+} from "../../testing/framework-plugin-on-claude.builder.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const { claude } = TOOL;

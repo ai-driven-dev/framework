@@ -8,7 +8,7 @@ import {
   type HostActionsScenario,
   type HostActionsSubject,
 } from "../testing/host-actions.contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostActionsContract(
   "the fake",

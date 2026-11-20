@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindContainer, createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { CLIOutput } from "../../src/presentation/output.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 
 vi.mock("../../src/composition/installation.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/composition/installation.js")>();

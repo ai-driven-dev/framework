@@ -3,10 +3,10 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../src/shared/domain/markdown.js";
-import { createTestEnv } from "../../e2e/helpers.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
 import { readJson, seedEmptyManifest } from "../testing/project-state.builder.js";
 
 const PLUGIN_FIXTURE = join(

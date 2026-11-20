@@ -4,7 +4,7 @@ import {
   snapshotKey,
 } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
 import type { BindingSnapshotStore } from "../../../../src/contexts/telemetry/ports/bindings/binding-snapshot-store.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface SnapshotStoreSubject extends ContractSubject {
   readonly store: BindingSnapshotStore;

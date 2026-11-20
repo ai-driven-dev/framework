@@ -5,7 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
-import { sandboxedEnv } from "../../e2e/helpers.js";
+import { sandboxedEnv } from "./cli-sandbox.builder.js";
 
 /**
  * Drives the real Commander tree and the real container inside the test process, under a

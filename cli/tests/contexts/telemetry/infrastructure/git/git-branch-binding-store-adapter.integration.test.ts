@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { GitBranchBindingSourceAdapter } from "../../../../../src/contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../../../../../src/contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
-import { git, initRepository, sandboxGitEnv } from "../../../../helpers/git-sandbox.js";
+import {
+  git,
+  initRepository,
+  sandboxGitEnv,
+} from "../../../../shared/testing/git-sandbox.builder.js";
 
 let base: string;
 let repo: string;

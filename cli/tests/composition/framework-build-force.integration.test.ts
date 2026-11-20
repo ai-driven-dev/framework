@@ -9,8 +9,8 @@ import {
 } from "../../src/composition/translate.js";
 import { FlatTargetExistsError } from "../../src/shared/domain/errors.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";

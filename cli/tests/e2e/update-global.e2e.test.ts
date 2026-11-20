@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { seedEmptyManifest } from "../presentation/testing/project-state.builder.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 describe.concurrent("aidd framework update", () => {
   it("reports all tools up to date when no tools have drift", async () => {

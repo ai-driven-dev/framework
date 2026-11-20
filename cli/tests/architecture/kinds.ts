@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import { parseJsonRecord, stringList } from "../shared/testing/json-value.builder.js";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
 import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./helpers.js";
 

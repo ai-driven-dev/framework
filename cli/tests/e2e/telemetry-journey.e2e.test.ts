@@ -3,10 +3,15 @@ import { existsSync } from "node:fs";
 import { appendFile, chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { present } from "../shared/testing/present.js";
-import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
+import {
+  cliPath,
+  createTestEnv,
+  runCli,
+  sandboxedEnv,
+} from "../shared/testing/cli-sandbox.builder.js";
+import { git, initRepository, sandboxGitEnv } from "../shared/testing/git-sandbox.builder.js";
+import { present } from "../shared/testing/present.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 /**
  * The whole journey on the built binary, driven by the plugin's real hooks: a person opts in,

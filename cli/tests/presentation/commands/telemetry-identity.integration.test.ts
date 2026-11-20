@@ -5,9 +5,9 @@ import { writeUsageTranscripts } from "../../contexts/telemetry/testing/claude-u
 import {
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../../contexts/telemetry/testing/telemetry-sandbox.js";
-import { backdateConsent } from "../../e2e/helpers.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
+} from "../../contexts/telemetry/testing/telemetry-sandbox.builder.js";
+import { backdateConsent } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 
 let box: TelemetrySandbox;
 let userConfig: string;

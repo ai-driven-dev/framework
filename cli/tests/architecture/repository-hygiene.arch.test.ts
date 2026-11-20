@@ -19,7 +19,7 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import config from "../../vitest.config.js";
 import mutation from "../../vitest.mutation.config.js";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { commentRanges } from "./comment-ranges.js";
 import {
   CLI_ROOT,
@@ -240,7 +240,7 @@ describe("no test resolves a path into the shared dist/ build output", () => {
 
     expect(
       violations,
-      "resolves into the shared dist/ — read cliPath() from tests/e2e/helpers.ts instead"
+      "resolves into the shared dist/ — read cliPath() from tests/shared/testing/cli-sandbox.builder.ts instead"
     ).toEqual([]);
   });
 });

@@ -18,13 +18,13 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTelemetry } from "../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../src/presentation/deps.js";
-import { git } from "../../helpers/git-sandbox.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "./testing/telemetry-sandbox.js";
+} from "./testing/telemetry-sandbox.builder.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000bb";
 const BARE = '{"telemetry":{"enabled":true},"keep":{"me":1}}';

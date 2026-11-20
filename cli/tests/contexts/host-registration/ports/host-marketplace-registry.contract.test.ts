@@ -7,7 +7,7 @@ import {
   type MarketplaceRegistryScenario,
   type MarketplaceRegistrySubject,
 } from "../testing/host-marketplace-registry.contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostMarketplaceRegistryContract(
   "the fake",

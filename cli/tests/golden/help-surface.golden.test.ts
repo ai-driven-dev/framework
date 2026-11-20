@@ -1,8 +1,8 @@
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "vitest";
-import { createTestEnv, runCli } from "../e2e/helpers.js";
-import { expectGolden } from "./expect-golden.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { expectGolden } from "./testing/expect-golden.builder.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/help/surface.json");

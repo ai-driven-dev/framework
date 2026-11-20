@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 const AIDD_DIR = ".aidd";
 

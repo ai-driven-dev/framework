@@ -1,4 +1,4 @@
-import { createTestEnv } from "../../e2e/helpers.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
 
 type Sandbox = Awaited<ReturnType<typeof createTestEnv>>;
 

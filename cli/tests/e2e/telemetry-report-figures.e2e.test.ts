@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { WINDOW } from "../contexts/telemetry/testing/telemetry-report-seed.js";
-import { aidd, declareBranch, useReportSandbox } from "./telemetry-report-sandbox.js";
+import {
+  aidd,
+  declareBranch,
+  useReportSandbox,
+} from "../contexts/telemetry/testing/telemetry-report-sandbox.builder.js";
+import { WINDOW } from "../contexts/telemetry/testing/telemetry-report-seed.builder.js";
 
 useReportSandbox();
 

@@ -1,21 +1,21 @@
-import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
-import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
+import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type {
   AiToolProfile,
   ToolProfile,
-} from "../../../../src/contexts/tools/contract/tool-profile.js";
-import type { BuiltToolConfig } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
-import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
+} from "../../../src/contexts/tools/contract/tool-profile.js";
+import type { BuiltToolConfig } from "../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { AiTool } from "../../../src/contexts/tools/domain/profile.js";
 import {
   CANONICAL_PROFILES,
   REGISTERED_PROFILES,
-} from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
-import type { AiToolId, ToolId, ToolIdResolver } from "../../../../src/shared/domain/tool.js";
+} from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
+import type { AiToolId, ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";
 import {
   TOOL as REGISTERED_TOOL_IDS,
   resolveRegisteredToolId as registeredToolIdResolver,
-} from "../../../shared/testing/registered-tools.builder.js";
+} from "./registered-tools.builder.js";
 
 /** A catalog over the given profiles, the registered ones when none is given, canonical order
  * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a

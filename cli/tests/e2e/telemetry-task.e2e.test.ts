@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { git, initRepository, sandboxGitEnv } from "../shared/testing/git-sandbox.builder.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 

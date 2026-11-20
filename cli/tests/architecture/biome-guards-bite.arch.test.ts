@@ -27,7 +27,7 @@ import {
   restrictedImportOptions,
 } from "../../scripts/generate-biome-boundaries.mjs";
 import { isRecord, parseJsonRecord } from "../shared/testing/json-value.builder.js";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED, HELD_BY_BIOME } from "./allowed-edges.js";
 import { PLANTS } from "./biome-plants.js";
 import {

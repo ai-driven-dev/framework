@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
-import { cliPath, execFileAsync } from "./helpers.js";
+import { TOOL } from "../shared/testing/catalog-of.builder.js";
+import { cliPath, execFileAsync } from "../shared/testing/cli-sandbox.builder.js";
 
 /**
  * Run against the built binary, which is what the skill invokes: a use case passing in

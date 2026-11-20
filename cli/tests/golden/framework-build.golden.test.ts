@@ -9,9 +9,9 @@ import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
-import { runCli } from "../e2e/helpers.js";
-import { expectGolden } from "./expect-golden.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+import { runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { expectGolden } from "./testing/expect-golden.builder.js";
 import { twoCaptures } from "./testing/two-captures.builder.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");

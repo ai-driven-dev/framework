@@ -18,8 +18,8 @@ import {
   strykerArgs,
   survivorsOf,
 } from "../../scripts/run-mutation.mjs";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
 import { mutationScopes } from "../shared/testing/json-value.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const REPO_ROOT = REPOSITORY_ROOT;
@@ -100,7 +100,7 @@ describe("the mutation scripts", () => {
       scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], mixed)
     ).toEqual([]);
     expect(scopesToRun(["README.md"], mixed)).toEqual([]);
-    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], mixed)).toEqual([]);
+    expect(scopesToRun(["cli/tests/golden/testing/expect-golden.builder.ts"], mixed)).toEqual([]);
     expect(scopesToRun(["cli/tests/shared/domain/paths.unit.test.ts"], mixed)).toEqual(["shared"]);
     expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], mixed)).toEqual([
       "shared",
@@ -130,7 +130,7 @@ describe("the mutation scripts", () => {
     expect(
       scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
     ).toEqual([]);
-    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([]);
+    expect(scopesToRun(["cli/tests/golden/testing/expect-golden.builder.ts"], scopes)).toEqual([]);
     for (const [name, scope] of Object.entries(scopes)) {
       for (const glob of scope.tests ?? []) {
         expect(

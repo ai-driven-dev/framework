@@ -10,10 +10,10 @@ import {
 } from "../../../../../src/shared/domain/errors.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { FRAMEWORK_REAL } from "../../../../presentation/testing/fixture-setup.builder.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 // Avoid biome noTemplateCurlyInString: split literal for the placeholder.

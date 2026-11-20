@@ -5,7 +5,7 @@ import {
 } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { ResolutionStore } from "../../../../src/contexts/telemetry/ports/resolution-store.js";
 import { cloneOf } from "./clone.builder.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface ResolutionStoreSubject extends ContractSubject {
   readonly store: ResolutionStore;

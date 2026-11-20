@@ -30,7 +30,7 @@ How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../..
 
 - `tests/fixtures/` is read-only; mutate a copy in a temp directory.
 - A temp directory is `mkdtemp(join(tmpdir(), "aidd-<thing>-"))`; the prefix is what the repository root's `scripts/sweep-stale-test-dirs.cjs` reclaims, loaded by `tests/setup/sweep-stale-temp-dirs.ts`.
-- A sandboxed run relocates `HOME`, `XDG_CONFIG_HOME`, `USERPROFILE`, `APPDATA` and `CODEX_HOME` and narrows `PATH` (`tests/e2e/helpers.ts`, held by `sandbox-reaches-no-tool-binary.e2e.test.ts`).
+- A sandboxed run relocates `HOME`, `XDG_CONFIG_HOME`, `USERPROFILE`, `APPDATA` and `CODEX_HOME` and narrows `PATH` (`tests/shared/testing/cli-sandbox.builder.ts`, held by `sandbox-reaches-no-tool-binary.e2e.test.ts`).
 - Never run `setup`, `marketplace add` or `plugin install` at the repository root: it tracks `.codex/`, `.agents/` and `.claude/`, so use a fresh temp directory.
 - Green unit and integration tests prove output shape, never that a tool consumes it: that is `pnpm smoke`.
 - `setup` always registers the marketplace as `aidd-framework`: [`marketplace-identity-is-name-plus-plugins.md`](internal/decisions/marketplace-identity-is-name-plus-plugins.md).

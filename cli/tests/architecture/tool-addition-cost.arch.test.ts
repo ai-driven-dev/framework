@@ -5,7 +5,7 @@
  * not coupling. Comments are stripped first — prose about a tool's layout is documentation.
  */
 import { describe, expect, it } from "vitest";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
 import { loadDebt } from "./kinds.js";
 

@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { BASELINE, compare, copiesBetweenProfiles, scan } from "../../scripts/profile-copies.mjs";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");

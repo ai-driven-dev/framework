@@ -14,10 +14,10 @@ import { delimiter, dirname, join } from "node:path";
 import { expect, vi } from "vitest";
 import { wireTelemetry } from "../../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../../src/presentation/deps.js";
-import { git, initRepository } from "../../../helpers/git-sandbox.js";
-import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
+import { git, initRepository } from "../../../shared/testing/git-sandbox.builder.js";
 import { prompterAnswering } from "../../../shared/testing/partial-ports.builder.js";
-import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.js";
+import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.builder.js";
 
 /** One predicate, one table: a call is stored only if its directory was seen alive belonging to
  * clone X, X had an open consent interval at the call's time, and `AIDD_TELEMETRY=0` is not set.

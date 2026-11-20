@@ -12,7 +12,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { CLI_ROOT } from "./helpers.js";
 
 const REPO_ROOT = join(CLI_ROOT, "..");

@@ -2,8 +2,8 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createTestEnv } from "../../e2e/helpers.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 import { seedEmptyManifest } from "../testing/project-state.builder.js";
 
 let project: string;

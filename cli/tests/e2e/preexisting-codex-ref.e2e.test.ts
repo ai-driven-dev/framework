@@ -1,7 +1,12 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, pathWithoutAidd, runCli, writeFakeToolBinary } from "./helpers.js";
+import {
+  createTestEnv,
+  pathWithoutAidd,
+  runCli,
+  writeFakeToolBinary,
+} from "../shared/testing/cli-sandbox.builder.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 const PLUGIN_NAME = "aidd-vcs";

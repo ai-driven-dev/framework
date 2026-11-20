@@ -3,8 +3,8 @@ import type { ToolBuildContract } from "../../../../../src/contexts/tools/contra
 import { AGENT_MODELS } from "../../../../../src/contexts/tools/domain/models/agent-models.js";
 import { ModelsSection } from "../../../../../src/contexts/tools/domain/sections/models-section.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { catalogOf, registeredAiProfile } from "../../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { catalogOf, registeredAiProfile } from "../../testing/catalog-of.builder.js";
 
 /** The tool's flat build, its agents on the provider's models. */
 function withAgentModels(tool: AiToolId, provider: string): ToolBuildContract {

@@ -6,8 +6,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { createTestEnv, runCli } from "../e2e/helpers.js";
-import { expectGolden } from "./expect-golden.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { expectGolden } from "./testing/expect-golden.builder.js";
 import { twoCaptures } from "./testing/two-captures.builder.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");

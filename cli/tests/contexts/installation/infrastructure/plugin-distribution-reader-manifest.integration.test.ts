@@ -7,7 +7,7 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { MANIFEST_PROBES } from "../testing/manifest-probes.js";
+import { MANIFEST_PROBES } from "../testing/manifest-probes.builder.js";
 
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { GitConsentAdapter } from "../../../../src/contexts/telemetry/infrastructure/git/git-consent-adapter.js";
 import { readCloneIdentity } from "../../../../src/contexts/telemetry/infrastructure/storage/consent/clone-identity-reader.js";
-import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
+import { git, initRepository, sandboxGitEnv } from "../../../shared/testing/git-sandbox.builder.js";
 import { cloneOf } from "../testing/clone.builder.js";
 import {
   type ConsentSourceSubject,

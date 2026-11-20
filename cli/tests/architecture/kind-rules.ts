@@ -25,7 +25,7 @@ import {
   type SourceFile,
   SyntaxKind,
 } from "typescript/unstable/ast";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./helpers.js";
 import type { Rule, Violation } from "./kinds.js";
 import { PROFILE_MODULE_FILE, profileReaders, wholeProfileFlows } from "./profile-flow.js";
@@ -389,7 +389,7 @@ export function answerViolations(files: Readonly<Record<string, string>>): Viola
 const CLIMB = /["'`]((?:\.\.\/)+)[^"'`]*["'`]/g;
 const CWD_PARENT = /process\.cwd\(\)\s*,\s*["']\.\.["']/g;
 const PACKAGE_PARENT = /\b(?:resolve|join)\(\s*CLI_ROOT\s*,\s*["']\.\.["']/g;
-const REPOSITORY_HELPER = "tests/helpers/repository-root.ts";
+const REPOSITORY_HELPER = "tests/shared/testing/repository-root.builder.ts";
 /** The gate's own tests read the checkout as text and plant climbing literals on purpose; test
  * data is never copied. */
 const NEVER_COPIED = /^tests\/(?:architecture|fixtures|golden\/snapshots)\//;
@@ -414,7 +414,7 @@ export function repositoryViolations(files: Readonly<Record<string, string>>): V
           "repository",
           `${file} :: ${how}`,
           "leaves cli/ on its own",
-          "a test reaches the repository through tests/helpers/repository-root.ts",
+          "a test reaches the repository through tests/shared/testing/repository-root.builder.ts",
           "import REPOSITORY_ROOT from it"
         )
       );

@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseToml } from "../../src/contexts/tools/domain/formats/toml.js";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
-import { createTestEnv } from "../e2e/helpers.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { runInProcess } from "../presentation/testing/in-process-cli.builder.js";
+import { createTestEnv } from "../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 const PLUGIN = "aidd-orchestrator";
 const SOURCE_DIR = join(REPOSITORY_ROOT, "plugins", PLUGIN, "agents");

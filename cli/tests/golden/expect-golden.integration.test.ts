@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { expectGolden } from "./expect-golden.js";
+import { expectGolden } from "./testing/expect-golden.builder.js";
 
 describe("expectGolden", () => {
   let dir: string;

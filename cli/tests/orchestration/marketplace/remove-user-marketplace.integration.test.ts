@@ -17,8 +17,8 @@ import {
   REWRITTEN_BINARY,
   spiedRecordRules,
 } from "../../contexts/installation/testing/spy-record-rules.fake.js";
-import { hostRecord } from "../../helpers/host-record-reading.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";

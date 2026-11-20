@@ -3,7 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { GitUserSourceAdapter } from "../../../../../src/contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
-import { git, initRepository, sandboxGitEnv } from "../../../../helpers/git-sandbox.js";
+import {
+  git,
+  initRepository,
+  sandboxGitEnv,
+} from "../../../../shared/testing/git-sandbox.builder.js";
 
 let root: string;
 let repo: string;

@@ -17,7 +17,7 @@ import {
   isTypeAliasDeclaration,
 } from "typescript/unstable/ast";
 import { describe, expect, it } from "vitest";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
 import { CLI_ROOT, canonicalPath, matchesGlob } from "./helpers.js";
 import {
@@ -137,7 +137,7 @@ describe("every file is exactly one kind", () => {
   });
 
   it("flags a test helper that carries no kind suffix", () => {
-    expect(violationsOf("tests/helpers/git-sandbox.ts")).toHaveLength(1);
+    expect(violationsOf("tests/helpers/other.ts")).toHaveLength(1);
   });
 
   it("flags a kind suffix outside the folders of its kind", () => {

@@ -7,8 +7,8 @@ import {
   type FrameworkBuildTarget,
 } from "../../src/contexts/translate/contract/build-targets.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
 
 const ALL_TARGETS: readonly FrameworkBuildTarget[] = catalogOf().idsInCanonicalOrder("ai");

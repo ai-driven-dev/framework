@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import {
+  registeredAiConfig,
+  registeredAiProfile,
+} from "../../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { registeredAiConfig, registeredAiProfile } from "../../testing/catalog-of.builder.js";
 import { flatPlugins } from "../../testing/plugin-mode.builder.js";
 import { aProfile } from "../../testing/profiles.builder.js";
 

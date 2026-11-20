@@ -4,7 +4,7 @@ import type {
   TaskDeclaration,
 } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { SessionBindingStore } from "../../../../src/contexts/telemetry/ports/bindings/session-binding-store.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface SessionBindingSubject extends ContractSubject {
   readonly store: SessionBindingStore;

@@ -13,7 +13,7 @@ import {
   ruleContent,
   skillContent,
   translator,
-} from "../testing/engine-kit.js";
+} from "../testing/engine-kit.builder.js";
 import {
   antigravity,
   claude,
@@ -22,7 +22,7 @@ import {
   cursor,
   opencode,
   vscode,
-} from "../testing/registered-profiles.js";
+} from "../testing/registered-profiles.builder.js";
 
 describe("the engine translate()", () => {
   it.each([

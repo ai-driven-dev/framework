@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import type { ConsentEvent } from "../../../../src/contexts/telemetry/domain/consent/consent-history.js";
 import type { ConsentHistory } from "../../../../src/contexts/telemetry/ports/consent-history.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface ConsentHistorySubject extends ContractSubject {
   readonly history: ConsentHistory;

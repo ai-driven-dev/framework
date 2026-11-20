@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ForeignSuffixFilter } from "../../../../../src/contexts/tools/domain/profile/foreign-suffix-filter.js";
-import { catalogOf } from "../../testing/catalog-of.builder.js";
+import { catalogOf } from "../../../../shared/testing/catalog-of.builder.js";
 
 describe("ForeignSuffixFilter", () => {
   const claude = ForeignSuffixFilter.keeping(".claude.md");

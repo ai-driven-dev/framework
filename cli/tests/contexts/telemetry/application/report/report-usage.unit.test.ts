@@ -20,7 +20,7 @@ import {
   type SessionCarry,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
-import { AUTUMN } from "../../testing/autumn.js";
+import { AUTUMN } from "../../testing/autumn.builder.js";
 import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../../testing/fake-consents.fake.js";

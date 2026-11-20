@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { cliPath, failedRunOf } from "./helpers.js";
+import { cliPath, failedRunOf } from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
 const FAKE_TAG = "v999.0.0"; // current CLI is 4.6.x → always outdated against this

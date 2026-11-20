@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../../contexts/telemetry/testing/telemetry-sandbox.js";
-import { git } from "../../helpers/git-sandbox.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
+} from "../../contexts/telemetry/testing/telemetry-sandbox.builder.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 

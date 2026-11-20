@@ -3,8 +3,8 @@ import { mkdir, readdir, readFile, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
-import { resolveRegisteredToolId, TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { resolveRegisteredToolId, TOOL } from "../shared/testing/catalog-of.builder.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 const PLUGIN = "aidd-context";

@@ -11,7 +11,7 @@
  * it runs in both directions: an invented directory sends a reader to create a file there.
  */
 import { describe, expect, it } from "vitest";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import {
   declaredCommands,
   pluginReadmes,

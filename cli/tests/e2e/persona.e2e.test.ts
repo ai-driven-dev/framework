@@ -1,4 +1,4 @@
-import { TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
+import { TOOL } from "../shared/testing/catalog-of.builder.js";
 /**
  * TTY scenarios use /usr/bin/expect: only a real terminal proves the banner and the menu.
  */
@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { cliPath, createTestEnv, failedRunOf } from "./helpers.js";
+import { cliPath, createTestEnv, failedRunOf } from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
 

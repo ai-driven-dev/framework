@@ -4,7 +4,7 @@
  * the callers counted are contexts: a module only one context imports belongs to that context.
  */
 import { describe, expect, it } from "vitest";
-import { present } from "../shared/testing/present.js";
+import { present } from "../shared/testing/present.builder.js";
 import { contextOf, importersByFile, isContext, read, sourceFiles } from "./helpers.js";
 
 /** The functional area a file belongs to. Two callers in one area are still one area. */

@@ -9,7 +9,7 @@ import { LoadManifestForDoctor } from "../../../src/contexts/installation/applic
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import type { DoctorIssue } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
+import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,

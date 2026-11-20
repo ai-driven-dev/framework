@@ -7,7 +7,7 @@ import {
   wireHostRegistration,
 } from "../../src/composition/host-registration.js";
 import { DuplicateToolIdError, UnregisteredToolError } from "../../src/shared/domain/errors.js";
-import { catalogOf, registeredConfig, TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
+import { catalogOf, registeredConfig, TOOL } from "../shared/testing/catalog-of.builder.js";
 import { listContractOf } from "../shared/testing/list-command-contract.builder.js";
 
 /**

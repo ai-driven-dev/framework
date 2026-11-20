@@ -13,9 +13,9 @@ import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../contexts/telemetry/testing/telemetry-sandbox.js";
-import { git } from "../helpers/git-sandbox.js";
-import { runCli } from "./helpers.js";
+} from "../contexts/telemetry/testing/telemetry-sandbox.builder.js";
+import { runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { git } from "../shared/testing/git-sandbox.builder.js";
 
 const DELEGATE = `#!/bin/sh
 # Installed by \`aidd telemetry on\`, removed by \`aidd telemetry off\`.

@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { GitRepositoryLocatorAdapter } from "../../../../src/contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
-import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
+import { git, initRepository, sandboxGitEnv } from "../../../shared/testing/git-sandbox.builder.js";
 import { cloneOf } from "../testing/clone.builder.js";
 import { FakeLocator } from "../testing/fake-locator.fake.js";
 import {

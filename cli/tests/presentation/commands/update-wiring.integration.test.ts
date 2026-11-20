@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
+import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 

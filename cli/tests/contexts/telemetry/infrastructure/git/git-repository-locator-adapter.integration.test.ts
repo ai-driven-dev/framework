@@ -14,7 +14,11 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { sameClone } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { GitRepositoryLocatorAdapter } from "../../../../../src/contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
-import { git, initRepository, sandboxGitEnv } from "../../../../helpers/git-sandbox.js";
+import {
+  git,
+  initRepository,
+  sandboxGitEnv,
+} from "../../../../shared/testing/git-sandbox.builder.js";
 
 let base: string;
 let env: NodeJS.ProcessEnv;

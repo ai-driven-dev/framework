@@ -13,7 +13,7 @@ import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hoo
 import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
 import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
 import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 const SCRUBBED_PROJECT = "/Users/user/project";

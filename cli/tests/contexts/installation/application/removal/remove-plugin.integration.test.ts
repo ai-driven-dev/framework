@@ -18,7 +18,7 @@ import {
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
-import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
+import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.builder.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";

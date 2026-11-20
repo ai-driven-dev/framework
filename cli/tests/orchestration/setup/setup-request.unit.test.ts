@@ -5,7 +5,7 @@ import {
   selectTools,
 } from "../../../src/orchestration/setup/setup-request.js";
 import { CategoryMismatchError } from "../../../src/shared/domain/errors.js";
-import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.builder.js";
+import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 
 describe("agentModelsRequest", () => {
   it("names the tool that does not run the provider asked for", () => {

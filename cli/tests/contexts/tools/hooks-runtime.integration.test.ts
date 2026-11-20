@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 const RUNTIME = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");

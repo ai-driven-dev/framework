@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createTestEnv } from "../../e2e/helpers.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 
 let project: string;
 let home: string;

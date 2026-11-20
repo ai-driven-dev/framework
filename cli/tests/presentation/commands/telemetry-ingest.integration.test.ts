@@ -5,10 +5,10 @@ import { writeUsageTranscripts } from "../../contexts/telemetry/testing/claude-u
 import {
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../../contexts/telemetry/testing/telemetry-sandbox.js";
-import { backdateConsent } from "../../e2e/helpers.js";
-import { git } from "../../helpers/git-sandbox.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
+} from "../../contexts/telemetry/testing/telemetry-sandbox.builder.js";
+import { backdateConsent } from "../../shared/testing/cli-sandbox.builder.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 
 const FIXTURES = join(import.meta.dirname, "..", "..", "fixtures", "claude-usage", "projects");
 

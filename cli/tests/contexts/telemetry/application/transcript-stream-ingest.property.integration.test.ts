@@ -20,7 +20,7 @@ import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js
 import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
 import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
 import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
-import { WholeTranscriptReader } from "../testing/whole-transcript-reader.js";
+import { WholeTranscriptReader } from "../testing/whole-transcript-reader.fake.js";
 
 let root: string;
 let runs = 0;

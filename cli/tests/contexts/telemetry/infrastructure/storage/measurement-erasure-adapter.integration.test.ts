@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MeasurementErasureAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
-import { assertUnderTemporaryDirectory } from "../../testing/telemetry-sandbox.js";
+import { assertUnderTemporaryDirectory } from "../../testing/telemetry-sandbox.builder.js";
 
 let root: string;
 let telemetry: string;

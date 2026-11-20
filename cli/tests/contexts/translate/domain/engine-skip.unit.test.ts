@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { translator } from "../testing/engine-kit.js";
-import { cursor, opencode } from "../testing/registered-profiles.js";
+import { translator } from "../testing/engine-kit.builder.js";
+import { cursor, opencode } from "../testing/registered-profiles.builder.js";
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { PreToolUse: [{ hooks: [{ type: "command", command: "node ./hooks/pre.js" }] }] },

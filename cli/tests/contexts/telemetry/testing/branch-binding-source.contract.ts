@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { BranchBindingSource } from "../../../../src/contexts/telemetry/ports/branch-binding-source.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface BranchDeclaration {
   readonly branch: string;

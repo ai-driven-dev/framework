@@ -14,7 +14,7 @@ import type {
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { MANIFEST_PROBES } from "../testing/manifest-probes.js";
+import { MANIFEST_PROBES } from "../testing/manifest-probes.builder.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 const IN_MEMORY_ROOT = "/plugins/in-memory";

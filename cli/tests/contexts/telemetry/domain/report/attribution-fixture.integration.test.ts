@@ -11,7 +11,7 @@ import {
   parseSessionDeclaration,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { attribute } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
 /** The hook answers what a session is bound to at one instant, to decide whether to ask. The
  * report answers what a call belongs to, once everything has been declared. They agree on every

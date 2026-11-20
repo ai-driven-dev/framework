@@ -6,8 +6,8 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
 

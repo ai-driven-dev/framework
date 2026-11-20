@@ -2,9 +2,9 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createTestEnv } from "../../e2e/helpers.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 import { setupFromFixture } from "../testing/fixture-setup.builder.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
 import { readJson } from "../testing/project-state.builder.js";
 
 const PLUGIN = "aidd-context";

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildCodexFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
 
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {

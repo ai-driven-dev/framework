@@ -2,8 +2,8 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { TOOL } from "../shared/testing/catalog-of.builder.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 const AIDD_DIR = ".aidd";
 const MARKETPLACE = "aidd-e2e-cache-mkt";

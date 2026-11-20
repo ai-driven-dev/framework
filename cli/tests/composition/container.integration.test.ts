@@ -17,9 +17,9 @@ import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.j
 import type { Scope } from "../../src/shared/domain/scope.js";
 import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
-import { hostRecord } from "../helpers/host-record-reading.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../shared/testing/fake-host-actions.fake.js";
+import { hostRecord } from "../shared/testing/host-record-reading.builder.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 
 const graphOf = (

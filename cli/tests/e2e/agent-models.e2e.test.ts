@@ -2,8 +2,8 @@ import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 const AGENT = ".opencode/agents/aidd-orchestrator-reviewer.md";
 

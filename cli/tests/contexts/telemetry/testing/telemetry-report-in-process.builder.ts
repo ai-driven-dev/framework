@@ -1,6 +1,6 @@
 import { rm } from "node:fs/promises";
 import { afterEach, beforeEach } from "vitest";
-import { runInProcess } from "../../../presentation/testing/in-process-cli.builder.js";
+import { runInProcess } from "../../../shared/testing/in-process-cli.builder.js";
 import {
   type Aidd,
   addCall as addCallTo,
@@ -11,10 +11,10 @@ import {
   reportEnv,
   reportPaths,
   seedReport,
-} from "./telemetry-report-seed.js";
-import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.js";
+} from "./telemetry-report-seed.builder.js";
+import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.builder.js";
 
-/** The report world of `telemetry-report-seed.ts`, seeded through the command layer in process
+/** The report world of `telemetry-report-seed.builder.ts`, seeded through the command layer in process
  * and removed once each test ends: the integration counterpart of the e2e report sandbox. */
 export interface InProcessReportWorld {
   readonly box: TelemetrySandbox;

@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { PersonIdentityStore } from "../../../../src/contexts/telemetry/ports/identity/person-identity-store.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface PersonIdentitySubject extends ContractSubject {
   readonly store: PersonIdentityStore;

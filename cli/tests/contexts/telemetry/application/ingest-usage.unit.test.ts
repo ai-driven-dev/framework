@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { AUTUMN } from "../testing/autumn.js";
+import { AUTUMN } from "../testing/autumn.builder.js";
 import { cloneOf, tokenOf } from "../testing/clone.builder.js";
-import { A, line, NOT_STORED, NOW, repository, setup, sha } from "../testing/ingest-usage-setup.js";
+import {
+  A,
+  line,
+  NOT_STORED,
+  NOW,
+  repository,
+  setup,
+  sha,
+} from "../testing/ingest-usage-setup.builder.js";
 
 describe("not reading what no consent can cover", () => {
   // The default clone opted in at 2026-01-01T00:00:00.000Z: no interval starts earlier.

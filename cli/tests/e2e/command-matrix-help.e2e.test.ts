@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTestEnv, runCli } from "./helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 describe.concurrent("Command Matrix: Help", () => {
   it("aidd --help exits 0 and lists top-level commands", async () => {

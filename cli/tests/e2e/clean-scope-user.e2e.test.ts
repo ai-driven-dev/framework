@@ -10,7 +10,7 @@ import {
   listFilesUnder,
   readJson,
 } from "../presentation/testing/project-state.builder.js";
-import { createTestEnv, gitInit, runCli } from "./helpers.js";
+import { createTestEnv, gitInit, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 interface MarketplacesFile {
   marketplaces: Array<{ name: string; [field: string]: unknown }>;

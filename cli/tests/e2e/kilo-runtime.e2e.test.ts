@@ -5,8 +5,13 @@ import { createServer } from "node:http";
 import { delimiter, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
+import {
+  createTestEnv,
+  execFileAsync,
+  runCli,
+  sandboxedEnv,
+} from "../shared/testing/cli-sandbox.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
 const KILO_PREFIX = join(

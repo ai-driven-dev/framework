@@ -1,6 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { failedRunOf, pathDirsWithoutAidd, shellDirsWithoutAidd } from "./helpers.js";
+import {
+  failedRunOf,
+  pathDirsWithoutAidd,
+  shellDirsWithoutAidd,
+} from "../shared/testing/cli-sandbox.builder.js";
 
 /**
  * Git runs a hook by looking its shebang interpreter up by name on `PATH`, so a narrow

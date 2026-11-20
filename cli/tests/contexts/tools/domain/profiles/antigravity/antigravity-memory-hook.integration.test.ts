@@ -18,7 +18,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
 import { flatOf } from "../../../testing/plugin-mode.builder.js";
 
 const PLUGIN = "aidd-context";

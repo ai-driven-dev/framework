@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { RepositoryLocator } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { type ContractSubject, describeSubject } from "./contract-subject.js";
+import { type ContractSubject, describeSubject } from "./contract-subject.builder.js";
 
 export interface RepositoryOptions {
   /** The url `origin` points at; none when absent. */

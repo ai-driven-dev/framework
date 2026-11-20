@@ -1,10 +1,10 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createTestEnv } from "../../e2e/helpers.js";
-import { initRepository, sandboxGitEnv } from "../../helpers/git-sandbox.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { initRepository, sandboxGitEnv } from "../../shared/testing/git-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 import { setupFromFixture } from "../testing/fixture-setup.builder.js";
-import { runInProcess } from "../testing/in-process-cli.builder.js";
 import {
   directoryExists,
   gitStatusPorcelain,

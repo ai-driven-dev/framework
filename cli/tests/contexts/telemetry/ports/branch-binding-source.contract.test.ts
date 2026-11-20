@@ -2,7 +2,7 @@ import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { GitBranchBindingSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
-import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
+import { git, initRepository, sandboxGitEnv } from "../../../shared/testing/git-sandbox.builder.js";
 import {
   type BranchBindingSourceSubject,
   describeBranchBindingSourceContract,

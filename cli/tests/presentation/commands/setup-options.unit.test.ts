@@ -7,8 +7,8 @@ import {
   parseToolIds,
   requireAgentHosts,
 } from "../../../src/presentation/commands/setup.js";
-import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { catalogOf, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 
 function refuseByThrowing() {
   return vi.spyOn(process, "exit").mockImplementation(() => {
