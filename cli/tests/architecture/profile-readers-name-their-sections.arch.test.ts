@@ -1,45 +1,27 @@
 /**
  * A reader outside the tools context names the sections of a tool it reads, never the whole
- * profile. The whole profile is about thirty members wide; a reader that takes it is coupled to all
- * of them, and a change to a section it never reads still reaches it. The narrow input is
- * declared where it is read (`ports/`), built from the answer types `tools/contract` publishes,
- * and composition hands in the real profile, which satisfies it by shape.
+ * profile. Biome holds the half that names it (`biome-plugins/whole-profile-import.grit` and
+ * `whole-profile-namespace-import.grit`): an import of `AiToolProfile`, `IdeToolProfile` or
+ * `ToolProfile` outside the tools context and the composition root, each handing-on file carrying
+ * a `biome-ignore lint/plugin` with its reason above the import.
  *
- * The unit is the file that names `AiToolProfile`, `IdeToolProfile` or `ToolProfile`, by import,
- * re-export, namespace import, or the catalog's whole-profile methods typed by index. Importing
- * the module for a section answer (`PluginAnswers`, `ConfigWrite`) is already narrow and is not
- * a reader. A file that never names the whole profile is still one when it asks the catalog for a
- * profile and passes it into a parameter typed as the whole profile: `profile-flow.ts` reads that
- * from the compiler, over the files that call a whole-profile catalog method, and leaves out a
- * call whose callee is declared in a listed file, which already carries that debt. The tools
- * context owns the profile and `src/composition/` wires every context, so neither is watched.
- * The list below may only shrink.
+ * This is the half Biome cannot see, because it needs types: a file that never names the whole
+ * profile is still a reader when it asks the catalog for a profile and passes it into a parameter
+ * typed as the whole profile. `profile-flow.ts` reads that from the compiler, over the files that
+ * call a whole-profile catalog method, and leaves out a call whose callee is declared in a file
+ * that carries such a `biome-ignore`, which already carries that debt.
+ *
+ * Written limit: an element-access alias of a profile (`tools["aiProfile"](id)`, `profiles[0]`) is
+ * not read; no file under src/ writes one.
  */
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, expectRatchet, read, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
 import { wholeProfileFlows, wholeProfileFlowsInSources } from "./profile-flow.js";
 
 const OWNER_OR_WIRING = /^src\/(contexts\/tools\/|composition\/)/;
-
 const PROFILE_MODULE_FILE = "src/contexts/tools/contract/tool-profile.ts";
-const WHOLE_PROFILE = "(?:AiToolProfile|IdeToolProfile|ToolProfile)";
-const PROFILE_MODULE = String.raw`[^"']*tools/contract/tool-profile\.js`;
-/** A named import or re-export from the profile module, on one line or many, `type` or not. */
-const NAMED_IMPORT = new RegExp(
-  String.raw`(?:import|export)\s+(?:type\s+)?\{([^}]*)\}\s+from\s+["']${PROFILE_MODULE}["']`,
-  "g"
-);
-const WHOLE_NAME = new RegExp(String.raw`\b${WHOLE_PROFILE}\b`);
-/** `import("…/tool-profile.js").ToolProfile`, which names the type without an import line. */
-const INLINE_IMPORT = new RegExp(
-  String.raw`import\(\s*["']${PROFILE_MODULE}["']\s*\)\s*\.\s*${WHOLE_PROFILE}\b`
-);
-/** A namespace import reaches every member, the whole profile among them. */
-const NAMESPACE_IMPORT = new RegExp(
-  String.raw`(?:import|export)\s+(?:type\s+)?\*\s+(?:as\s+\w+\s+)?from\s+["']${PROFILE_MODULE}["']`
-);
-/** The catalog methods that answer a whole profile; `ToolCatalog["aiProfile"]` types it without
- * naming the profile. */
+
+/** The catalog methods that answer a whole profile. */
 const CATALOG_PROFILE_METHODS = [
   "profile",
   "aiProfile",
@@ -47,56 +29,10 @@ const CATALOG_PROFILE_METHODS = [
   "aiProfileIfAny",
   "sortedById",
 ];
-const CATALOG_INDEXED_ACCESS = new RegExp(
-  String.raw`\bToolCatalog\s*\[\s*["'](?:${CATALOG_PROFILE_METHODS.join("|")})["']\s*\]`
-);
-
-function namesWholeProfile(text: string): boolean {
-  for (const match of text.matchAll(NAMED_IMPORT)) {
-    if (WHOLE_NAME.test(match[1] ?? "")) return true;
-  }
-  return (
-    INLINE_IMPORT.test(text) || NAMESPACE_IMPORT.test(text) || CATALOG_INDEXED_ACCESS.test(text)
-  );
-}
-
-// Written limit: an element-access alias of a profile (`tools["aiProfile"](id)`, `profiles[0]`) is not read; no file under src/ writes one.
 const CATALOG_PROFILE_CALL = new RegExp(String.raw`\.(?:${CATALOG_PROFILE_METHODS.join("|")})\(`);
-
-function wholeProfileReaders(): string[] {
-  const watched = sourceFiles().filter((file) => !OWNER_OR_WIRING.test(file));
-  const flowing = wholeProfileFlows(
-    CLI_ROOT,
-    PROFILE_MODULE_FILE,
-    watched.filter((file) => CATALOG_PROFILE_CALL.test(read(file))),
-    Object.keys(PROFILE_READERS_ALLOWED)
-  );
-  return [
-    ...new Set([...watched.filter((file) => namesWholeProfile(read(file))), ...flowing]),
-  ].sort();
-}
-
-const TRANSLATE_HANDOFF =
-  "hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input";
-const PRESENTATION_FILTER =
-  "filters the catalog's whole profiles to the AI tools that activate at user scope with a type guard, then reads five members; presentation has no ports/ to name a section in";
-
-/** Shrink-only: a file that stops naming the whole profile leaves the list. */
-const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
-  "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts":
-    TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts":
-    TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/materialize/plugin-translator.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/materialize/replace-plugin-files.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/plugin/add/place-plugin.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/plugin/plugin-helpers.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/plugin/plugin-materializer.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/restore/restore-all-plugins.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/ports/plugin/plugin-translation.ts": TRANSLATE_HANDOFF,
-  "src/presentation/commands/setup.ts": PRESENTATION_FILTER,
-};
+/** An import of the profile module under a `biome-ignore lint/plugin` comment: a file that hands the profile on. */
+const HANDS_PROFILE_ON =
+  /biome-ignore lint\/plugin:[^\n]*\n(?:import|export)[^;]*tools\/contract\/tool-profile\.js/;
 
 /**
  * The flow reading starts a compiler process and checks the project: measured 0.3s alone, 0.7s in
@@ -106,41 +42,23 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
 const FLOW_TIMEOUT_MS = 30_000;
 
 describe("a reader names the sections of a tool it reads", () => {
-  it("no file outside the tools context takes the whole profile but the ones listed", {
+  it("no file outside the tools context passes a catalog profile into a whole-profile parameter", {
     timeout: FLOW_TIMEOUT_MS,
   }, () => {
-    const { added, fixed } = expectRatchet(
-      wholeProfileReaders(),
-      Object.keys(PROFILE_READERS_ALLOWED)
+    const watched = sourceFiles().filter((file) => !OWNER_OR_WIRING.test(file));
+    const handsOn = watched.filter((file) => HANDS_PROFILE_ON.test(read(file)));
+    expect(
+      handsOn.length,
+      "no file hands the profile on: the exemption reads nothing"
+    ).toBeGreaterThan(0);
+
+    const flowing = wholeProfileFlows(
+      CLI_ROOT,
+      PROFILE_MODULE_FILE,
+      watched.filter((file) => CATALOG_PROFILE_CALL.test(read(file))),
+      handsOn
     );
-    expect({
-      added: added.map((file) => `${file}: name the sections it reads, in its own ports/`),
-      fixed: fixed.map((file) => `${file}: remove it from PROFILE_READERS_ALLOWED`),
-    }).toEqual({ added: [], fixed: [] });
-  });
-
-  it("the guard itself: sees a multi-line import and an inline import, not a section-only one", () => {
-    const multiLine = `import type {\n  PluginAnswers,\n  AiToolProfile,\n} from "../../tools/contract/tool-profile.js";`;
-    const inline = `type T = import("../tools/contract/tool-profile.js").ToolProfile;`;
-    const sectionOnly = `import type { PluginAnswers, ConfigWrite } from "../../tools/contract/tool-profile.js";`;
-    expect(namesWholeProfile(multiLine)).toBe(true);
-    expect(namesWholeProfile(inline)).toBe(true);
-    expect(namesWholeProfile(sectionOnly)).toBe(false);
-  });
-
-  it("the guard itself: sees a re-export, a namespace import and the catalog's whole-profile methods", () => {
-    const reExport = `export type { PluginAnswers, AiToolProfile } from "../tools/contract/tool-profile.js";`;
-    const namespace = `import type * as Profile from "../tools/contract/tool-profile.js";`;
-    const returned = `type T = NonNullable<ReturnType<ToolCatalog["aiProfile"]>>;`;
-    const listed = `type T = ReturnType<ToolCatalog['sortedById']>[number];`;
-    const sectionReExport = `export type { PluginAnswers } from "../tools/contract/tool-profile.js";`;
-    const idOnly = `type T = ReturnType<ToolCatalog["toolId"]>;`;
-    expect(namesWholeProfile(reExport)).toBe(true);
-    expect(namesWholeProfile(namespace)).toBe(true);
-    expect(namesWholeProfile(returned)).toBe(true);
-    expect(namesWholeProfile(listed)).toBe(true);
-    expect(namesWholeProfile(sectionReExport)).toBe(false);
-    expect(namesWholeProfile(idOnly)).toBe(false);
+    expect(flowing, "name the sections it reads, in its own ports/").toEqual([]);
   });
 
   it("the guard itself: lists every catalog method that answers a whole profile", () => {
@@ -150,6 +68,17 @@ describe("a reader names the sections of a tool it reads", () => {
       ),
     ].map((match) => match[1]);
     expect([...new Set(answering)].sort()).toEqual([...CATALOG_PROFILE_METHODS].sort());
+  });
+
+  it("the guard itself: reads a file that hands the profile on, multi-line or not", () => {
+    const single =
+      '// biome-ignore lint/plugin: hands it on\nimport type { AiToolProfile } from "../tools/contract/tool-profile.js";';
+    const multi =
+      '// biome-ignore lint/plugin: hands it on\nimport type {\n  AiToolProfile,\n} from "../tools/contract/tool-profile.js";';
+    const bare = 'import type { AiToolProfile } from "../tools/contract/tool-profile.js";';
+    expect(HANDS_PROFILE_ON.test(single)).toBe(true);
+    expect(HANDS_PROFILE_ON.test(multi)).toBe(true);
+    expect(HANDS_PROFILE_ON.test(bare)).toBe(false);
   });
 });
 

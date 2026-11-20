@@ -1,7 +1,8 @@
 /**
- * Three rules live in biome rather than here: `process.exit` outside the exit function through the
- * GritQL plugin, `export default` under src/ and tests/, and the `process` global in a context's
- * domain and application. A rule biome silently stops applying is invisible, so each is planted.
+ * The rules that live in biome rather than in a test: `process.exit` outside the exit function
+ * through the GritQL plugin, `export default` under src/ and tests/, the `process` global in a
+ * context's domain and application. A rule biome silently stops applying is invisible, so each is
+ * planted; the rules that hold a test or a catch are in `biome-plants.arch.test.ts`.
  */
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { builtinModules } from "node:module";
@@ -131,6 +132,7 @@ describe("biome carries the exit and default-export rules", () => {
 
     expect(carrier?.includes, "no override denies fs and child_process to a unit test").toEqual([
       "tests/**/*.unit.test.ts",
+      "!tests/contexts/**",
     ]);
   });
 });

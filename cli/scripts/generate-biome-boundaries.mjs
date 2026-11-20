@@ -9,6 +9,11 @@
  * pattern is regenerated in place, found by what it holds, so the rationale written beside it
  * stays. A context layer with no override, or an edge with no interior pattern to carry its
  * message, is refused: write that rationale once by hand, then regenerate.
+ *
+ * The tests of a context are generated whole: two overrides per `tests/contexts/<context>/`, one
+ * for its unit files and one for the rest, because a unit file also carries the unit-test
+ * restrictions of the override it is cloned from. Each closes every other context's folders but
+ * `application/` and `contract/`.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -26,6 +31,12 @@ const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"];
  * a tool is in `contract/`, and the one application file builds the catalog the root hands out. */
 const APPLICATION_CLOSED = new Set(["tools"]);
 const COMPOSITION = ["**/composition/**"];
+/** The only folders of a context another context's tests may reach. */
+const PUBLISHED_FOLDERS = ["application", "contract"];
+const UNIT_TESTS = "tests/**/*.unit.test.ts";
+const TEST_CONTEXTS = "tests/contexts/";
+const TEST_REACH_MESSAGE =
+  "a test reaches another context through its application/ and contract/ only: the other folders are that context's own";
 /** What a file at each layer must not import, whatever its context. */
 const LAYER_GROUPS = {
   domain: ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
@@ -55,14 +66,19 @@ export function interiorGroupsOf(context, contextsDir) {
 }
 
 /** The edge table and the source tree, in the shape `boundaryOverrides` reads. */
-export function boundaryInputs(srcDir, { allowed, heldByBiome }) {
+export function boundaryInputs(srcDir, { allowed, heldByBiome }, testsDir) {
   const contextsDir = join(srcDir, "contexts");
   const contexts = readdirSync(contextsDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
+  const testContextsDir = testsDir === undefined ? undefined : join(testsDir, "contexts");
   return {
     contexts,
+    testContexts:
+      testContextsDir === undefined || !existsSync(testContextsDir)
+        ? []
+        : contexts.filter((context) => existsSync(join(testContextsDir, context))),
     allowed,
     heldByBiome,
     layersOf: (context) => [
@@ -134,6 +150,44 @@ function regeneratePatterns(patterns, { context, layer, input, known }) {
   return out;
 }
 
+function testContextOverrides(overrides, input) {
+  if (!input.testContexts?.length) return overrides;
+  const base = overrides.findIndex(
+    (candidate) => candidate.includes?.[0] === UNIT_TESTS && restrictedImportOptions(candidate)
+  );
+  if (base === -1) throw new Error(`no unit test override at ${UNIT_TESTS}`);
+  const generated = [];
+  for (const context of input.testContexts) {
+    const reach = {
+      group: input.contexts
+        .filter((other) => other !== context)
+        .flatMap((other) => [
+          `**/contexts/${other}/**`,
+          ...PUBLISHED_FOLDERS.map((folder) => `!**/contexts/${other}/${folder}/**`),
+        ]),
+      message: TEST_REACH_MESSAGE,
+    };
+    const unit = structuredClone(overrides[base]);
+    unit.includes = [`${TEST_CONTEXTS}${context}/**/*.unit.test.ts`];
+    const options = restrictedImportOptions(unit);
+    options.patterns = [...(options.patterns ?? []), reach];
+    generated.push(unit, {
+      includes: [
+        `${TEST_CONTEXTS}${context}/**/*.ts`,
+        `!${TEST_CONTEXTS}${context}/**/*.unit.test.ts`,
+      ],
+      linter: {
+        rules: {
+          style: { noRestrictedImports: { level: "error", options: { patterns: [reach] } } },
+        },
+      },
+    });
+  }
+  const kept = overrides.filter((candidate) => !candidate.includes?.[0]?.startsWith(TEST_CONTEXTS));
+  kept.splice(kept.indexOf(overrides[base]) + 1, 0, ...generated);
+  return kept;
+}
+
 /** The config with every context layer's `noRestrictedImports` groups recomputed from the table. */
 export function boundaryOverrides(config, input) {
   const known = new Set(input.contexts);
@@ -150,17 +204,21 @@ export function boundaryOverrides(config, input) {
       options.patterns = regeneratePatterns(options.patterns, { context, layer, input, known });
     }
   }
-  return { ...config, overrides };
+  return { ...config, overrides: testContextOverrides(overrides, input) };
 }
 
 async function main() {
   const { ALLOWED, HELD_BY_BIOME } = await import("../tests/architecture/allowed-edges.ts");
   const file = join(CLI_ROOT, "biome.json");
   const config = JSON.parse(readFileSync(file, "utf8"));
-  const input = boundaryInputs(join(CLI_ROOT, "src"), {
-    allowed: ALLOWED,
-    heldByBiome: HELD_BY_BIOME,
-  });
+  const input = boundaryInputs(
+    join(CLI_ROOT, "src"),
+    {
+      allowed: ALLOWED,
+      heldByBiome: HELD_BY_BIOME,
+    },
+    join(CLI_ROOT, "tests")
+  );
   writeFileSync(file, `${JSON.stringify(boundaryOverrides(config, input), null, 2)}\n`);
   const biome = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
   const run = spawnSync(process.execPath, [biome, "format", "--write", file], {

@@ -74,13 +74,16 @@ const RETIRED_LISTS: ReadonlySet<string> = new Set([
   "tests/architecture/ports-are-called.arch.test.ts#SECTION_BASELINE",
   "tests/architecture/plugins-are-asked-not-read.arch.test.ts#STORED_ANSWERS_ALLOWED",
   "tests/architecture/test-file-size.arch.test.ts#BASELINE",
+  "tests/architecture/catches-that-swallow.arch.test.ts#BASELINE",
+  "tests/architecture/unit-tests-reading-disk.arch.test.ts#BASELINE",
+  "tests/architecture/profile-readers-name-their-sections.arch.test.ts#PROFILE_READERS_ALLOWED",
 ]);
 
 const CLI_DIRECTORY = "cli";
 const ARCHITECTURE_DIRECTORY_IN_REPO = `${CLI_DIRECTORY}/${ARCHITECTURE_DIRECTORY}`;
 const DEFAULT_BASE_BRANCH = "next";
 const MAX_GIT_OUTPUT_BYTES = 64 * 1024 * 1024;
-const FEWEST_LISTS_THE_TREE_HOLDS = 10;
+const FEWEST_LISTS_THE_TREE_HOLDS = 9;
 
 /** The ref a change is compared with: the one named, else the branch a pull request merges into. */
 function baseRef(env: NodeJS.ProcessEnv = process.env): string {
@@ -330,8 +333,8 @@ describe("the guard itself", () => {
     ).toBe(3);
     expect(
       list(
-        'const PROFILE_READERS_ALLOWED: Readonly<Record<string, unknown>> = { "k1": "why, one", "k2": "why two" };'
-      ).get("a.ts#PROFILE_READERS_ALLOWED")
+        'const REGISTRATION_SITES: Readonly<Record<string, unknown>> = { "k1": "why, one", "k2": "why two" };'
+      ).get("a.ts#REGISTRATION_SITES")
     ).toBe(2);
   });
 

@@ -4,6 +4,7 @@
  * `options` with the LAST override matching a file rather than merging pattern arrays, so each
  * file must carry exactly one `noRestrictedImports` override.
  */
+import { join } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { describe, expect, it } from "vitest";
 import {
@@ -18,14 +19,21 @@ import {
   restrictedImportOptions,
 } from "../../scripts/generate-biome-boundaries.mjs";
 import { ALLOWED, HELD_BY_BIOME } from "./allowed-edges.js";
-import { matchesGlob, read, SRC, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, matchesGlob, read, SRC, sourceFiles, tsFilesUnder } from "./helpers.js";
 
 const committed: BiomeConfig = JSON.parse(read("biome.json"));
-const input = boundaryInputs(SRC, { allowed: ALLOWED, heldByBiome: HELD_BY_BIOME });
+const input = boundaryInputs(
+  SRC,
+  { allowed: ALLOWED, heldByBiome: HELD_BY_BIOME },
+  join(CLI_ROOT, "tests")
+);
 
 function restrictedGroups(override: BiomeOverride): string[] | undefined {
   return restrictedImportOptions(override)?.patterns?.flatMap((pattern) => pattern.group ?? []);
 }
+
+/** A glob as biome reads it: a trailing `/**` takes everything beneath, which `matchesGlob` does not. */
+const biomeGlob = (glob: string) => (glob.endsWith("/**") ? `${glob}/*` : glob);
 
 function filesMatchedTwice(
   files: readonly string[],
@@ -35,8 +43,8 @@ function filesMatchedTwice(
     (file) =>
       includes.filter(
         (globs) =>
-          globs.some((glob) => !glob.startsWith("!") && matchesGlob(glob, file)) &&
-          !globs.some((glob) => glob.startsWith("!") && matchesGlob(glob.slice(1), file))
+          globs.some((glob) => !glob.startsWith("!") && matchesGlob(biomeGlob(glob), file)) &&
+          !globs.some((glob) => glob.startsWith("!") && matchesGlob(biomeGlob(glob.slice(1)), file))
       ).length > 1
   );
 }
@@ -64,6 +72,16 @@ describe("cli/biome.json holds exactly the edges the table admits", () => {
     expect(
       filesMatchedTwice(
         sourceFiles(),
+        overrides.map((override) => override.includes ?? [])
+      ),
+      "a file matched by two noRestrictedImports overrides silently loses the first"
+    ).toEqual([]);
+  });
+
+  it("at most one noRestrictedImports override matches any test file", () => {
+    expect(
+      filesMatchedTwice(
+        tsFilesUnder("tests"),
         overrides.map((override) => override.includes ?? [])
       ),
       "a file matched by two noRestrictedImports overrides silently loses the first"
@@ -205,5 +223,56 @@ describe("the generator", () => {
     const generated = patternsAt(boundaryOverrides(split, table), 2);
     expect(drifted(split, table)).toEqual(["src/contexts/tools/domain/**/*.ts"]);
     expect(generated).toHaveLength(3);
+  });
+
+  describe("for the tests of a context", () => {
+    const withTests: BoundaryInputs = { ...table, testContexts: ["auth", "installation"] };
+    const base = (): BiomeConfig => ({
+      overrides: [
+        ...(build().overrides ?? []),
+        {
+          includes: ["tests/**/*.unit.test.ts", "!tests/contexts/**"],
+          linter: {
+            rules: { style: { noRestrictedImports: { options: { paths: { "node:fs": "x" } } } } },
+          },
+        },
+      ],
+    });
+    const generated = () => boundaryOverrides(base(), withTests).overrides ?? [];
+    const tested = () =>
+      generated().filter((found) => found.includes?.[0]?.startsWith("tests/contexts/"));
+    const groupsOf = (index: number) => restrictedGroups(tested()[index] ?? {});
+
+    it("adds a unit and a non-unit override per test context, after the unit base", () => {
+      const scopes = generated().map((found) => found.includes?.[0]);
+      expect(scopes.slice(scopes.indexOf("tests/**/*.unit.test.ts"))).toEqual([
+        "tests/**/*.unit.test.ts",
+        "tests/contexts/auth/**/*.unit.test.ts",
+        "tests/contexts/auth/**/*.ts",
+        "tests/contexts/installation/**/*.unit.test.ts",
+        "tests/contexts/installation/**/*.ts",
+      ]);
+    });
+
+    it("bars every other context's interior and spares its application and contract", () => {
+      expect(groupsOf(1)).toEqual([
+        "**/contexts/installation/**",
+        "!**/contexts/installation/application/**",
+        "!**/contexts/installation/contract/**",
+        "**/contexts/tools/**",
+        "!**/contexts/tools/application/**",
+        "!**/contexts/tools/contract/**",
+      ]);
+    });
+
+    it("keeps the unit base's disk bans on the unit override", () => {
+      const unit = tested()[0];
+      expect(unit && restrictedImportOptions(unit)?.paths).toEqual({ "node:fs": "x" });
+    });
+
+    it("regenerates the same override whatever it held before", () => {
+      const once = boundaryOverrides(base(), withTests);
+      expect(boundaryOverrides(once, withTests)).toEqual(once);
+    });
   });
 });

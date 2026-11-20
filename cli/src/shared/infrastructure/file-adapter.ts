@@ -34,6 +34,7 @@ export class FileAdapter implements FileReader, FileWriter {
   }
 
   async deleteFile(path: string): Promise<void> {
+    // biome-ignore lint/plugin: a refusal to delete something present must not fail an uninstall midway
     try {
       await rm(path);
     } catch {

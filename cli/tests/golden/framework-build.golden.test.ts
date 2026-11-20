@@ -65,6 +65,7 @@ async function hashDirectory(dir: string): Promise<TargetSnapshot> {
   const entries = await readdir(dir, { recursive: true });
   for (const entry of entries) {
     const fullPath = join(dir, entry);
+    // biome-ignore lint/plugin: hashing a tree skips directories and vanished entries
     try {
       const content = await readFile(fullPath);
       const normalized = normalizeLineEndings(content);

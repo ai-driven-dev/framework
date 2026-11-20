@@ -5,6 +5,7 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+// biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";

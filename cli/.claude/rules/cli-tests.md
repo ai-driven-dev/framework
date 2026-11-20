@@ -10,7 +10,7 @@ paths:
 
 | Level | Folder | Use for |
 | --- | --- | --- |
-| unit `.unit.test.ts` | mirror path of the module | a domain rule or a command over in-memory doubles, no fs (`unit-tests-reading-disk.arch.test.ts`) |
+| unit `.unit.test.ts` | mirror path of the module | a domain rule or a command over in-memory doubles, no fs (Biome `noRestrictedImports` on `*.unit.test.ts`) |
 | contract `.contract.test.ts` | `tests/contexts/<ctx>/ports/` | one suite per port, run on the double and on the real adapter |
 | integration `.integration.test.ts` | mirror path of the module | an adapter on a real temp directory, or layers assembled |
 | e2e `.e2e.test.ts` | `tests/e2e/` | the built binary: exit code, output, files; one per command and per family of failure |
@@ -21,7 +21,7 @@ paths:
 ## Guards
 
 - Kit: a context's tests import its own `tests/contexts/<ctx>/testing/` only, `kinds.ts`.
-- Another context is reached through its `application/` and `contract/` only, `test-cross-context-imports.arch.test.ts`.
+- Another context is reached through its `application/` and `contract/` only (Biome `noRestrictedImports`, generated per context by `pnpm biome:boundaries`; `no-laundered-test-interior.grit` for a re-export from `tests/helpers` or `tests/shared`).
 - Mirror: `tests/` follows `src/`, the mirror rule of `kinds.ts`.
 - A test file stays under 800 lines, `test-file-size.arch.test.ts`; 400 is a review point.
 

@@ -1,6 +1,7 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
+// biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";

@@ -4755,7 +4755,7 @@
       "plugins": ["./biome-plugins/one-github-api-url.grit"]
     },
     {
-      "includes": ["tests/**/*.unit.test.ts"],
+      "includes": ["tests/**/*.unit.test.ts", "!tests/contexts/**"],
       "linter": {
         "rules": {
           "style": {
@@ -4766,7 +4766,1081 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
-                }
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/auth/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/auth/**/*.ts", "!tests/contexts/auth/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/distribution/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "tests/contexts/distribution/**/*.ts",
+        "!tests/contexts/distribution/**/*.unit.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/host-registration/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "tests/contexts/host-registration/**/*.ts",
+        "!tests/contexts/host-registration/**/*.unit.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/installation/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "tests/contexts/installation/**/*.ts",
+        "!tests/contexts/installation/**/*.unit.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/machine-claims/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "tests/contexts/machine-claims/**/*.ts",
+        "!tests/contexts/machine-claims/**/*.unit.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/recipes/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/recipes/**/*.ts", "!tests/contexts/recipes/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/telemetry/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "tests/contexts/telemetry/**/*.ts",
+        "!tests/contexts/telemetry/**/*.unit.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/tools/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/tools/**/*.ts", "!tests/contexts/tools/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/translate/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "tests/contexts/translate/**/*.ts",
+        "!tests/contexts/translate/**/*.unit.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/update/**",
+                      "!**/contexts/update/application/**",
+                      "!**/contexts/update/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/update/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts",
+                  "node:child_process": "a unit test touches no filesystem and no process: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/seed-from-directory.js"],
+                    "message": "seed-from-directory reads a real directory on a unit test's behalf: use the in-memory doubles in tests/helpers/ports, or rename the file .integration.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/contexts/update/**/*.ts", "!tests/contexts/update/**/*.unit.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/contexts/auth/**",
+                      "!**/contexts/auth/application/**",
+                      "!**/contexts/auth/contract/**",
+                      "**/contexts/distribution/**",
+                      "!**/contexts/distribution/application/**",
+                      "!**/contexts/distribution/contract/**",
+                      "**/contexts/host-registration/**",
+                      "!**/contexts/host-registration/application/**",
+                      "!**/contexts/host-registration/contract/**",
+                      "**/contexts/installation/**",
+                      "!**/contexts/installation/application/**",
+                      "!**/contexts/installation/contract/**",
+                      "**/contexts/machine-claims/**",
+                      "!**/contexts/machine-claims/application/**",
+                      "!**/contexts/machine-claims/contract/**",
+                      "**/contexts/recipes/**",
+                      "!**/contexts/recipes/application/**",
+                      "!**/contexts/recipes/contract/**",
+                      "**/contexts/telemetry/**",
+                      "!**/contexts/telemetry/application/**",
+                      "!**/contexts/telemetry/contract/**",
+                      "**/contexts/tools/**",
+                      "!**/contexts/tools/application/**",
+                      "!**/contexts/tools/contract/**",
+                      "**/contexts/translate/**",
+                      "!**/contexts/translate/application/**",
+                      "!**/contexts/translate/contract/**"
+                    ],
+                    "message": "a test reaches another context through its application/ and contract/ only: the other folders are that context's own"
+                  }
+                ]
               }
             }
           }
@@ -5024,6 +6098,29 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/**", "tests/**"],
+      "plugins": ["./biome-plugins/no-swallowed-catch.grit"]
+    },
+    {
+      "includes": ["src/**"],
+      "plugins": ["./biome-plugins/no-inline-re-export.grit"]
+    },
+    {
+      "includes": ["tests/helpers/**", "tests/shared/**"],
+      "plugins": ["./biome-plugins/no-laundered-test-interior.grit"]
+    },
+    {
+      "includes": ["src/**", "!src/contexts/tools/**", "!src/composition/**"],
+      "plugins": [
+        "./biome-plugins/whole-profile-import.grit",
+        "./biome-plugins/whole-profile-namespace-import.grit"
+      ]
+    },
+    {
+      "includes": ["src/**", "!src/contexts/tools/**", "!src/presentation/**"],
+      "plugins": ["./biome-plugins/no-profile-list.grit"]
     }
   ]
 }

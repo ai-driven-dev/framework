@@ -34,12 +34,12 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 - A use case is one file with one class of the same name, a public `execute` and at most 5 constructor dependencies: the `shape` rule of `kinds.ts`.
 - An error is a class of `shared/domain/errors.ts`; each class there is thrown: `errors-that-are-thrown.arch.test.ts`.
 - A message naming a command names a real one: `errors-that-instruct.arch.test.ts`.
-- An empty catch is a listed best effort with its reason, or a failure: `catches-that-swallow.arch.test.ts`.
+- An empty catch is a failure unless a `biome-ignore lint/plugin: <reason>` above its `try` says why (`biome-plugins/no-swallowed-catch.grit`).
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
 - `process.exit` stays in `presentation/exit.ts`: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
 - File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `code-size.arch.test.ts`.
 - A tolerated list only shrinks: `baseline-only-shrinks.arch.test.ts`.
-- Exports are named and nothing re-exports: `no-re-export.arch.test.ts`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.
+- Exports are named and nothing re-exports: `biome-plugins/no-inline-re-export.grit`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.
 - Import from the defining module, relative, with the `.js` extension, and `import type` for a type-only import.
 - Files are kebab-case, values camelCase, types PascalCase, constants CONSTANT_CASE.
 - A name states the intention, and `executeInternal` means no concept was found.

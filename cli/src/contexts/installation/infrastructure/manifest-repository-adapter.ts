@@ -37,12 +37,14 @@ export class ManifestRepositoryAdapter implements ManifestRepository {
   }
 
   async delete(): Promise<void> {
+    // biome-ignore lint/plugin: deleting a manifest must not fail an uninstall midway
     try {
       await rm(this.path, { force: true });
     } catch {
       // No error if missing
     }
 
+    // biome-ignore lint/plugin: removing the empty directory must not fail an uninstall midway
     try {
       const entries = await readdir(this.aiddDir);
       if (entries.length === 0) {

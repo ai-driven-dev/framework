@@ -43,6 +43,7 @@ async function walkDir(dir: string, callback: (path: string) => Promise<void>): 
     if (entry.isDir) {
       await walkDir(fullPath, callback);
     } else {
+      // biome-ignore lint/plugin: seeding a fixture skips an unreadable entry
       try {
         const s = await stat(fullPath);
         if (s.isFile()) await callback(fullPath);

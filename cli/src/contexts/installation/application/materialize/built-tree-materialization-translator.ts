@@ -6,6 +6,7 @@ import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-t
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+// biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 /**
  * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
