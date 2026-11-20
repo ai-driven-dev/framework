@@ -52,9 +52,7 @@
     "src/contexts/translate/domain/engine.ts -> src/contexts/translate/ports/translate-profile.ts",
     "src/presentation/commands/auth.ts -> src/shared/ports/prompter.ts",
     "src/presentation/commands/marketplace.ts -> src/presentation/terminal/child-command.ts",
-    "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts",
-    "src/shared/domain/merge.ts -> src/shared/ports/file-reader.ts",
-    "src/shared/domain/merge.ts -> src/shared/ports/file-writer.ts"
+    "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts"
   ],
   "mirror": [
     "src/contexts/distribution/application/add/prepare-marketplace.ts",
@@ -191,15 +189,7 @@
     "src/orchestration/sync/sync-settings.ts",
     "src/presentation/commands/recipes.ts",
     "src/presentation/terminal/child-command.ts",
-    "src/presentation/terminal/wait-for-enter.ts",
-    "src/shared/domain/merge.ts",
-    "src/shared/domain/plugin/plugin-distribution.ts",
-    "src/shared/domain/tool.ts",
-    "src/shared/infrastructure/asset-loader.ts",
-    "src/shared/infrastructure/environment-adapter.ts",
-    "src/shared/infrastructure/github-adapter.ts",
-    "src/shared/infrastructure/home-dir.ts",
-    "src/shared/infrastructure/user-config-dir.ts"
+    "src/presentation/terminal/wait-for-enter.ts"
   ],
   "shape": [
     "src/contexts/distribution/application/choose-marketplace-source.ts",

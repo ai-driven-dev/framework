@@ -5,7 +5,7 @@
       "mutate": ["src/shared/domain/**/*.ts", "src/shared/infrastructure/home-dir.ts"],
       "tests": [
         "tests/shared/domain/**",
-        "tests/shared/infrastructure/home-dir.unit.test.ts",
+        "tests/shared/infrastructure/home-dir.integration.test.ts",
         "tests/shared/testing/**"
       ],
       "break": 96,
