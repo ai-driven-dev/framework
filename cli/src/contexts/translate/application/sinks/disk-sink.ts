@@ -265,13 +265,13 @@ export class DiskSink {
     const entries: Record<string, unknown>[] = [];
     for (const built of builtPlugins) {
       entries.push(
-        await contract.buildMarketplaceEntry(
-          built.name,
-          join(t.outDir, "plugins", built.name),
-          t.outDir,
-          sourceMarketplace.plugins.find((p) => p.name === built.name),
-          this.fs
-        )
+        await contract.buildMarketplaceEntry({
+          name: built.name,
+          pluginSrc: join(t.outDir, "plugins", built.name),
+          outDir: t.outDir,
+          srcEntry: sourceMarketplace.plugins.find((p) => p.name === built.name),
+          fs: this.fs,
+        })
       );
     }
     const { catalog, schemaName, destRelPath } = await contract.buildMarketplaceCatalog(

@@ -383,7 +383,7 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
     schemaName: "marketplace" | null
   ): ToolBuildContract {
     return stubContract({
-      buildMarketplaceEntry: (name, pluginSrc, _outDir, srcEntry) => {
+      buildMarketplaceEntry: ({ name, pluginSrc, srcEntry }) => {
         seen.push({ name, pluginSrc, srcEntry });
         return Promise.resolve({ name, version: srcEntry?.version ?? "0.0.0" });
       },

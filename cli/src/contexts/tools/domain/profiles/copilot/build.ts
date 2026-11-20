@@ -83,7 +83,7 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
       schemaName: "marketplace",
       destRelPath: marketplaceRelative,
     }),
-    buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) => {
+    buildMarketplaceEntry: async ({ name, outDir, srcEntry, fs }) => {
       const source = { fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative };
       const version = await resolveVersion(source);
       const description = await resolveDescription(source);

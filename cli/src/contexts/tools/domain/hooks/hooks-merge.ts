@@ -56,10 +56,6 @@ export function pluginScriptPath(scriptsDir: string, plugin: string, pluginPath:
   return genericFlatHooksScriptPath(scriptsDir, plugin, rest);
 }
 
-/** How a command names a path the plugin ships outside `hooks/`; the caller knows its other
- * artifacts. Left as written where the caller says nothing. */
-export type LocatePluginPath = (pluginPath: string) => string;
-
 /** Merges a plugin's hooks, as the plugin ships them, into the tool's file: its commands
  * pointed at where its scripts land, its earlier entries removed first, every other entry kept.
  * An event the tool does not fire is skipped and reported. */

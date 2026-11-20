@@ -177,8 +177,7 @@ export function declareBridgeHooks<
     readonly bridgeRuntime?: HooksDescriptor["bridgeRuntime"];
   },
 >(
-  toolId: string,
-  directory: string,
+  { toolId, directory }: { toolId: string; directory: string },
   [sessionStart, postToolUse, stop]: BridgeNativeEvents,
   { loaderEntry, ...rest }: L
 ) {

@@ -64,13 +64,13 @@ export async function expectClaudeStyleCatalog(profile: Buildable, folder: strin
       description: "Development loop",
     }),
   });
-  const entry = await contract.buildMarketplaceEntry?.(
-    "aidd-dev",
-    "/src/plugins/aidd-dev",
-    "/out",
-    undefined,
-    fs
-  );
+  const entry = await contract.buildMarketplaceEntry?.({
+    name: "aidd-dev",
+    pluginSrc: "/src/plugins/aidd-dev",
+    outDir: "/out",
+    srcEntry: undefined,
+    fs,
+  });
   expect(entry).toStrictEqual({
     name: "aidd-dev",
     source: "./plugins/aidd-dev",

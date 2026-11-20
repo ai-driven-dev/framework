@@ -156,13 +156,13 @@ describe("buildCodexContract()", () => {
   });
 
   it("builds a catalog entry carrying the installation, authentication and category Codex requires", async () => {
-    const entry = await buildCodexContract().buildMarketplaceEntry?.(
-      "aidd-dev",
-      "/src/plugins/aidd-dev",
-      "/out",
-      { name: "aidd-dev" },
-      new InMemoryFileAdapter()
-    );
+    const entry = await buildCodexContract().buildMarketplaceEntry?.({
+      name: "aidd-dev",
+      pluginSrc: "/src/plugins/aidd-dev",
+      outDir: "/out",
+      srcEntry: { name: "aidd-dev" },
+      fs: new InMemoryFileAdapter(),
+    });
 
     expect(entry).toStrictEqual({
       name: "aidd-dev",

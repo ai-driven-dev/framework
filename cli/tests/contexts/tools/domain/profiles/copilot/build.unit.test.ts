@@ -123,13 +123,13 @@ describe("buildCopilotMarketplaceContract()", () => {
       }),
     });
 
-    const entry = await buildCopilotMarketplaceContract().buildMarketplaceEntry?.(
-      "aidd-dev",
-      "/src/plugins/aidd-dev",
-      "/out",
-      undefined,
-      fs
-    );
+    const entry = await buildCopilotMarketplaceContract().buildMarketplaceEntry?.({
+      name: "aidd-dev",
+      pluginSrc: "/src/plugins/aidd-dev",
+      outDir: "/out",
+      srcEntry: undefined,
+      fs,
+    });
 
     expect(entry).toStrictEqual({
       name: "aidd-dev",

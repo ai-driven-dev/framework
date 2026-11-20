@@ -79,7 +79,7 @@ export function buildCursorContract(): ToolBuildContract {
       schemaName: "claude-marketplace",
       destRelPath: marketplaceRelative,
     }),
-    buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) =>
+    buildMarketplaceEntry: async ({ name, outDir, srcEntry, fs }) =>
       buildSharedEntry({ fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative }),
   };
 }
