@@ -3,7 +3,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
-const { showcaseOf, decisionsOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
+const { showcaseOf, decisionsOf, copiedOf, entriesOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The verdict of a state is given beside the tabs of the record, and the drawer only recaps it: the page script
 // is run here on a stand-in for the page, as the sets' tests do.
@@ -61,6 +61,43 @@ describe("the verdicts beside the state tabs", () => {
       { title: "Alpha", name: "par défaut", verdict: "ok", comment: "" },
       { title: "Alpha", name: "vide", verdict: "revise", comment: "bigger" },
     ]);
+  });
+
+  it("lists the verdicts of a set's variants after the records, then the axes picked, each under the set's title", () => {
+    const model = {
+      records: [{ key: "a@1", record: "a", title: "Alpha", states: [{ state: "default", name: "default" }] }],
+      sets: [{ key: "set:layout@f1", set: "layout", title: "Layout", variants: ["airy", "dense", "bold"] }],
+    };
+    const choices = { "a@1": { default: { verdict: "ok", comment: "" } }, "set:layout@f1": { dense: { verdict: "discard", comment: "" }, airy: { verdict: "keep", comment: " calm " }, "@picks": { Tone: "bold" } } };
+    assert.deepEqual(decisionsOf(model, choices), [
+      { title: "Alpha", name: "default", verdict: "ok", comment: "" },
+      { title: "Layout", name: "airy", verdict: "keep", comment: " calm " },
+      { title: "Layout", name: "dense", verdict: "discard", comment: "" },
+      { title: "Layout", name: "Tone", verdict: "pick", comment: "", variant: "bold" },
+    ]);
+  });
+
+  it("lists one decision for each verdict and each pick the copy holds, so the count to copy is the copy's", () => {
+    const model = {
+      records: [{ key: "a@1", record: "a", version: "1", title: "Alpha", states: [{ state: "default", name: "default" }, { state: "empty", name: "empty" }] }],
+      sets: [{ key: "s@1", set: "s", title: "S", variants: ["x", "y"] }, { key: "t@1", set: "t", title: "T", variants: ["z"] }],
+    };
+    const choices = { "a@1": { empty: { verdict: "revise", comment: "c" } }, "s@1": { y: { verdict: "keep" }, "@picks": { A: "x", B: "y" } }, "t@1": {} };
+    const copied = JSON.parse(copiedOf(entriesOf(model, choices)).replace(/^```json\n|\n```\n$/g, ""));
+    const held = copied.reduce((sum, entry) => sum + (entry.verdicts ? entry.verdicts.length : entry.variants.filter((each) => each.verdict).length + Object.keys(entry.picks || {}).length), 0);
+    assert.equal(held, 4);
+    assert.equal(decisionsOf(model, choices).length, held);
+  });
+
+  it("names every verdict and the pick of an axis in the drawer's words, and titles each set it offers", () => {
+    const SET = { id: "layout", rows: [], axes: ["Tone"], fingerprint: "f1", problems: [], variants: ["a", "b"].map((name) => ({ name, intent: "i", axes: [["Tone", name]], files: [{ path: "preview.html", text: "<p>x</p>" }] })) };
+    for (const lang of ["en", "fr"]) {
+      const html = showcaseOf({ project: load(tmp), tokens: null, captures: new Set(), lang, sets: [SET] })["index.html"];
+      const words = JSON.parse(html.match(/data-words="([^"]*)"/)[1].replaceAll("&quot;", "\""));
+      assert.deepEqual(Object.keys(words).sort(), ["discard", "keep", "ok", "pick", "revise"], lang);
+      assert.equal(words.keep, LABELS[lang].keep);
+      assert.match(html, /<details class="choice" data-set="layout" data-title="Layout" /, lang);
+    }
   });
 
   it("puts none on a page with no state tabs", () => {

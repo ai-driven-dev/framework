@@ -47,6 +47,7 @@ const LABELS = {
     stepEmpty: "no content",
     decided: "chosen",
     picks: "axes picked",
+    pickedFrom: "taken from {variant}",
     round: "Round {round}",
     changed: "Changed from {parent}",
     desktop: "Desktop",
@@ -152,6 +153,7 @@ const LABELS = {
     stepEmpty: "vide",
     decided: "choisies",
     picks: "axes pris",
+    pickedFrom: "pris de {variant}",
     round: "Tour {round}",
     changed: "Changé depuis {parent}",
     desktop: "Ordinateur",
@@ -660,13 +662,21 @@ function entriesOf(model, choices) {
   return records.concat(sets);
 }
 
-/** What the copy will hold of the records, one line per decided state, from the page's `model` (each record with its
- * `title` and its states' `name`) and its `choices`: what the drawer lists so a verdict given is seen before it is copied. */
+/** What the copy will hold, one line per decided state, per decided variant and per axis picked, from the page's
+ * `model` (each record and set with its `title`, each state with its `name`) and its `choices`: what the drawer lists
+ * so a verdict given is seen before it is copied. Records come first, then sets, as in the copy. */
 function decisionsOf(model, choices) {
-  return model.records.flatMap((each) => each.states.filter((one) => (choices[each.key] || {})[one.state]).map((one) => {
+  const records = model.records.flatMap((each) => each.states.filter((one) => (choices[each.key] || {})[one.state]).map((one) => {
     const choice = choices[each.key][one.state];
     return { title: each.title, name: one.name, verdict: choice.verdict, comment: choice.comment || "" };
   }));
+  const sets = (model.sets || []).flatMap((each) => {
+    const own = choices[each.key] || {};
+    const voted = each.variants.filter((name) => own[name]).map((name) => ({ title: each.title, name, verdict: own[name].verdict, comment: own[name].comment || "" }));
+    const picked = Object.entries(own["@picks"] || {}).map(([axis, variant]) => ({ title: each.title, name: axis, verdict: "pick", comment: "", variant }));
+    return voted.concat(picked);
+  });
+  return records.concat(sets);
 }
 
 /** The picks of a set after one more pick of `variant` for `axis`: the last pick of an axis stands, and the same
@@ -775,7 +785,7 @@ function recordsOf() {
 }
 const model = () => ({
   records: recordsOf(),
-  sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, variants: variantsOf(set).map((row) => row.dataset.variant) })),
+  sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, title: set.dataset.title, variants: variantsOf(set).map((row) => row.dataset.variant) })),
 });
 const entries = () => entriesOf(model(), choices);
 const decided = document.getElementById("decisions");
@@ -788,7 +798,7 @@ function paintDecisions(list) {
   decided.querySelector("ul").replaceChildren(...list.map((each) => {
     const line = document.createElement("li");
     line.dataset.verdict = each.verdict;
-    line.textContent = each.title + " \u00b7 " + each.name + " \u00b7 " + words[each.verdict] + (each.comment.trim() ? " : " + each.comment.trim() : "");
+    line.textContent = each.title + " \u00b7 " + each.name + " \u00b7 " + words[each.verdict].replace("{variant}", each.variant || "") + (each.comment.trim() ? " : " + each.comment.trim() : "");
     return line;
   }));
   decided.hidden = list.length === 0;
@@ -1389,7 +1399,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
-    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.title)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
+    return `<details class="choice" data-set="${escaped(set.id)}" data-title="${escaped(set.title)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.title)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
   };
   const open = sets.filter((set) => !set.problems.length);
   const choices = open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${open.map(choice).join("")}</section>` : "";
@@ -1400,7 +1410,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
     `<script type="application/json" id="review-records">${JSON.stringify(known).replaceAll("<", "\\u003c")}</script>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
-    `<div class="drawer-body"><section class="decisions" id="decisions" hidden data-copy="${escaped(labels.toCopy)}" data-words="${escaped(JSON.stringify({ ok: labels.ok, revise: labels.revise }))}"><h3>${labels.decisions}</h3><ul></ul></section>${choices}${groups || (choices ? "" : `<p class="nothing">${labels.nothing}</p>`)}</div>`,
+    `<div class="drawer-body"><section class="decisions" id="decisions" hidden data-copy="${escaped(labels.toCopy)}" data-words="${escaped(JSON.stringify({ ok: labels.ok, revise: labels.revise, keep: labels.keep, discard: labels.discard, pick: labels.pickedFrom }))}"><h3>${labels.decisions}</h3><ul></ul></section>${choices}${groups || (choices ? "" : `<p class="nothing">${labels.nothing}</p>`)}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}" data-hint="${escaped(labels.copyHint)}">${labels.copy}</button></div>`,
     "</aside>",
   ].join("\n");

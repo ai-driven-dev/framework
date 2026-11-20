@@ -742,24 +742,26 @@ describe("aidd-ui showcase sets", () => {
           const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict }));
           return element({ variant: name }, { below: { ".vote": votes, ".comment": [field] }, field, votes });
         });
-        const set = element({ set: "layout", fingerprint: "f1" }, { below: { "li.pvariant": rows, ".done": [element({ label: "chosen" })], ".picked": [element({ axes: "2", label: "picked" })] } });
+        const set = element({ set: "layout", title: "Layout", fingerprint: "f1" }, { below: { "li.pvariant": rows, ".done": [element({ label: "chosen" })], ".picked": [element({ axes: "2", label: "picked" })] } });
         const columns = ["a", "b"].map((name) => {
           const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict, variant: name }));
           const field = element();
           return element({ variant: name }, { below: { ".colvote": votes, ".colcomment": [field] }, votes, field });
         });
-        const holder = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": columns, ".colvote": columns.flatMap((column) => column.votes) } });
+        const takes = ["a", "b"].map((name) => element({ axis: "Tone", variant: name }));
+        const holder = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": columns, ".colvote": columns.flatMap((column) => column.votes), ".take": takes } });
         // A folded earlier round holds columns with no verdict and no comment box, under the same set.
         const folded = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": [element({ variant: "old" })], ".colvote": [] } });
         const holders = past ? [folded, holder] : [holder];
-        const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element() };
-        const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? holders : []), querySelector: () => null };
+        const list = element({}, { children: [], replaceChildren: (...nodes) => { list.children = nodes; } });
+        const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element(), decisions: element({ copy: "{count} to copy", words: JSON.stringify({ keep: "Keep", revise: "Revise", discard: "Discard", pick: "taken from {variant}" }) }, { below: { ul: [list] } }) };
+        const document = { body: { dataset: {} }, createElement: () => element(), addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? holders : []), querySelector: () => null };
         const written = [];
         const memory = {};
         const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
         const navigator = { clipboard: { writeText: async (content) => { written.push(content); } } };
         new Function("document", "window", "navigator", "setTimeout", script)(document, window, navigator, () => {});
-        return { rows, columns, by, written };
+        return { rows, columns, takes, list, by, written };
       };
       const verdictsOf = (text) => JSON.parse(text.replace(/^```json\n|\n```\n$/g, ""))[0].variants.map((each) => [each.name, each.verdict, each.comment]);
 
@@ -771,6 +773,14 @@ describe("aidd-ui showcase sets", () => {
         page.by.copy.listeners.click();
         await new Promise((resolve) => setImmediate(resolve));
         assert.deepEqual(verdictsOf(page.written[0]), [["a", "keep", ""], ["b", null, ""]]);
+      });
+
+      it("lists in the drawer a verdict and a pick given in the columns, under the set's title", () => {
+        const page = open();
+        page.columns[1].votes[0].listeners.click();
+        page.takes[0].listeners.click();
+        assert.deepEqual(page.list.children.map((line) => line.textContent), ["Layout \u00b7 b \u00b7 Keep", "Layout \u00b7 Tone \u00b7 taken from a"]);
+        assert.equal(page.by.decisions.hidden, false);
       });
 
       it("gives the columns of the latest round their handlers when an earlier round's column has no comment box", () => {
@@ -828,7 +838,7 @@ describe("aidd-ui showcase sets", () => {
         const group = groupOfSets(html);
         assert.ok(group, "a group in the drawer");
         assert.match(group, new RegExp(`<h3>${LABELS.en.choose}</h3>`));
-        assert.match(group, /<details class="choice" data-set="layout" data-fingerprint="f1" open>/);
+        assert.match(group, /<details class="choice" data-set="layout" data-title="Layout" data-fingerprint="f1" open>/);
         const rows = [...group.matchAll(/<li class="pvariant" data-variant="([^"]+)">([\s\S]*?)<\/li>/g)];
         assert.deepEqual(rows.map((row) => row[1]), ["a", "b"]);
         for (const [, , row] of rows) {
