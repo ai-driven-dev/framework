@@ -150,8 +150,8 @@ function isCompositionRoot(file: string): boolean {
 /** The driving port names the type of each member the commands read, and nothing else. */
 const DRIVING_PORT = "src/presentation/deps.ts";
 
-/** What the driving port may name from a context: an application or contract type, or a port. */
-const DRIVING_PORT_TARGET = /\/(application|contract|ports)\//;
+/** What the driving port may name from a context: an application or contract type. */
+const DRIVING_PORT_TARGET = /\/(application|contract)\//;
 
 function isDrivingPortEdge(importer: string, target: string): boolean {
   return importer === DRIVING_PORT && DRIVING_PORT_TARGET.test(target);
@@ -164,7 +164,8 @@ function drivingPortViolations(source: string): string[] {
     const [, typeOnly, specifier] = match;
     if (!(specifier as string).startsWith("../contexts/")) continue;
     if (typeOnly === undefined) found.push(`${specifier} is a value import`);
-    else if (!DRIVING_PORT_TARGET.test(specifier as string)) found.push(`${specifier} is no port`);
+    else if (!DRIVING_PORT_TARGET.test(specifier as string))
+      found.push(`${specifier} is neither application nor contract`);
   }
   return found;
 }
@@ -252,7 +253,7 @@ describe("nothing imports a context's interior", () => {
 });
 
 describe("the driving port", () => {
-  it("names context types only, by import type, from application, contract or a port", () => {
+  it("names context types only, by import type, from application or contract", () => {
     expect(drivingPortViolations(read(DRIVING_PORT))).toEqual([]);
   });
 });
@@ -360,17 +361,20 @@ describe("the guard itself", () => {
     ]);
   });
 
-  it("reports a value import and a non-port target in the driving port, and clears an import type of a use case", () => {
+  it("reports a value import, a domain type and a port type in the driving port, and clears an import type of a use case or a contract", () => {
     const source = [
       'import type { A } from "../contexts/acme/application/a.js";',
       'import { B } from "../contexts/acme/application/b.js";',
       'import type { C } from "../contexts/acme/domain/c.js";',
       'import type { D } from "../shared/d.js";',
+      'import type { E } from "../contexts/acme/ports/e.js";',
+      'import type { F } from "../contexts/acme/contract/f.js";',
     ].join("\n");
 
     expect(drivingPortViolations(source)).toEqual([
       "../contexts/acme/application/b.js is a value import",
-      "../contexts/acme/domain/c.js is no port",
+      "../contexts/acme/domain/c.js is neither application nor contract",
+      "../contexts/acme/ports/e.js is neither application nor contract",
     ]);
   });
 
