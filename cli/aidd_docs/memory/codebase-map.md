@@ -1,6 +1,6 @@
 # Codebase Map
 
-Where things live. `tests/architecture/codebase-map.arch.test.ts` holds the tree to the directories in both directions.
+Where things live. `tests/architecture/docs-do-not-lie.arch.test.ts` holds the tree to the directories in both directions.
 
 ```txt
 src/
