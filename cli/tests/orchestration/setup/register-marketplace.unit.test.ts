@@ -11,7 +11,7 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
@@ -33,9 +33,7 @@ function makeNoOpLatestResolver(isRepoPublic = true): ReleaseLister & Repository
   };
 }
 
-function makeRegisterFramework(
-  scope: MarketplaceScope
-): Pick<RegisterFrameworkMarketplace, "execute"> {
+function makeRegisterFramework(scope: Scope): Pick<RegisterFrameworkMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ registered: true, scope }) };
 }
 
@@ -43,7 +41,7 @@ interface Collaborators {
   tokenProvider?: TokenProvider;
   releaseResolver?: ReleaseLister & RepositoryVisibility;
   userSourceReferences?: UserSourceReferences;
-  registeredScope?: MarketplaceScope;
+  registeredScope?: Scope;
 }
 
 function makeUseCase(

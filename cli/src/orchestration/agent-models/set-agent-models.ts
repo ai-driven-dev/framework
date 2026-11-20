@@ -4,7 +4,7 @@ import type {
   MainSessionOutcome,
 } from "../../contexts/installation/application/agents/main-session-models.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { RefreshAgentPlugins } from "./refresh-agent-plugins.js";
 
@@ -15,7 +15,7 @@ export interface SetAgentModelsOptions {
   readonly provider?: string;
   /** `"user"` also refreshes what `setup --global` installed; the provider and the main
    * session's model hold for the whole machine either way. */
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 export interface SetAgentModelsResult extends MainSessionOutcome {

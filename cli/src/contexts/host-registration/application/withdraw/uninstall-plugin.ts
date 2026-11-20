@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import { readRegistrationRecord } from "../../domain/record/registration-record.js";
 import { resolveUninstallScopeOrder } from "../../domain/uninstall-scope-order.js";
@@ -81,7 +81,7 @@ interface UninstallRequest {
   readonly binary: string;
   readonly ref: string;
   readonly toolId: AiToolId;
-  readonly manifestScope: MarketplaceScope;
+  readonly manifestScope: Scope;
   readonly projectRoot: string;
 }
 

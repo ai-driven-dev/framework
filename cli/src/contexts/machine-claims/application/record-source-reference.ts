@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { VersionReader } from "../../../shared/ports/version-reader.js";
@@ -11,7 +11,7 @@ import {
 
 export interface RecordSourceReferenceCommand {
   projectRoot: string;
-  marketplace: { readonly name: string; readonly scope: MarketplaceScope };
+  marketplace: { readonly name: string; readonly scope: Scope };
 }
 
 /** Records that a project references the shared machine-scope framework source, when that is what

@@ -3,7 +3,7 @@ import { ListFrameworkPlugins } from "../../../../../src/contexts/distribution/a
 import type { ResolveMarketplaceCommand } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 
 const CATALOG: PluginCatalogEntry[] = [
   {
@@ -20,7 +20,7 @@ const CATALOG: PluginCatalogEntry[] = [
   },
 ];
 
-function framework(scope: MarketplaceScope, source: Marketplace["source"]): Marketplace {
+function framework(scope: Scope, source: Marketplace["source"]): Marketplace {
   return Marketplace.create({
     name: "aidd-framework",
     source,

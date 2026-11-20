@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { PluginSourceGitHub, PluginSourceLocal } from "../../../shared/domain/source.js";
 
 export const DEFAULT_FRAMEWORK_REPO = "ai-driven-dev/framework";
@@ -21,5 +21,5 @@ export function localFrameworkSource(path: string): PluginSourceLocal {
 /** The framework marketplace as registered: its name and the scope it ended up at. */
 export interface EnsuredFrameworkMarketplace {
   readonly name: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }

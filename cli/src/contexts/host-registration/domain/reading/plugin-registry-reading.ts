@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 
 /**
  * What a host's own plugin registry says, read from the file that host maintains itself.
@@ -17,7 +17,7 @@ import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
  * a mismatched-scope uninstall outright. */
 export interface HostPluginRegistryEntry {
   readonly enabled: boolean;
-  readonly scope?: MarketplaceScope;
+  readonly scope?: Scope;
 }
 
 export interface HostPluginRegistryReading {

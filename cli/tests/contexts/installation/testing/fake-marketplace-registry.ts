@@ -2,7 +2,7 @@ import type {
   DeclaredMarketplace,
   InstallationMarketplaceRegistry,
 } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
-import type { MarketplaceScope } from "../../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
 
 /** The marketplaces an installation reads, as each test declares them: a project's own, and the
  * machine's, named alone. */
@@ -24,7 +24,7 @@ export class FakeMarketplaceRegistry implements InstallationMarketplaceRegistry 
     return [...own, ...[...this.user.values()].filter(({ name }) => !shadowed.has(name))];
   }
 
-  async delete(projectRoot: string, name: string, scope: MarketplaceScope): Promise<void> {
+  async delete(projectRoot: string, name: string, scope: Scope): Promise<void> {
     if (scope === "user") this.user.delete(name);
     else this.project.delete(`${projectRoot}:${name}`);
   }

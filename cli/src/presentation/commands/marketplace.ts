@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { DepsSliceFactory } from "../deps.js";
@@ -82,7 +82,7 @@ export function registerMarketplaceCommand(
           exitWith(1);
         }
         try {
-          const scope: MarketplaceScope = cmdOptions.scope === "user" ? "user" : "project";
+          const scope: Scope = cmdOptions.scope === "user" ? "user" : "project";
           const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));

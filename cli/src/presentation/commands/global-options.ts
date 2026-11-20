@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import { exitWith } from "../exit.js";
 import { CLIOutput } from "../output.js";
 
@@ -27,14 +27,11 @@ export const GLOBAL_FLAG_HELP = "act on the machine-wide install `setup --global
 export function resolveScopeFlags(
   options: { scope?: string; global?: boolean },
   output: CLIOutput
-): MarketplaceScope | undefined {
+): Scope | undefined {
   return options.global === true ? "user" : parseScopeFlag(options.scope, output);
 }
 
-export function parseScopeFlag(
-  raw: string | undefined,
-  output: CLIOutput
-): MarketplaceScope | undefined {
+export function parseScopeFlag(raw: string | undefined, output: CLIOutput): Scope | undefined {
   if (raw === undefined || raw === "project" || raw === "user") return raw;
   output.error(`Invalid --scope "${raw}" — expected "project" or "user".`);
   exitWith(1);

@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type {
   NativePluginClaim,
@@ -118,8 +118,8 @@ export interface HostWithdrawal<Proof> {
 
 /** What installation does to a host once a catalogue removal is proven. */
 export interface MarketplaceRemovalActions {
-  readonly uninstallPlugin: (pluginRef: string, scope?: MarketplaceScope) => void;
-  readonly removeMarketplace: (name: string, scope: MarketplaceScope) => void;
+  readonly uninstallPlugin: (pluginRef: string, scope?: Scope) => void;
+  readonly removeMarketplace: (name: string, scope: Scope) => void;
 }
 
 /** What installation asks of a host to plan a catalogue removal. */
@@ -141,7 +141,7 @@ export interface MarketplaceRemovalPlanner {
 interface WithdrawnPlugin {
   readonly name: string;
   readonly marketplace: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 export interface WithdrawFromHostCommand {
@@ -181,7 +181,7 @@ interface RegisteredTool {
 
 export interface ProjectRegistrationWithdrawal extends RegisteredTool {
   /** The scope the manifest recorded for each plugin ref, by ref. */
-  readonly refScopes: ReadonlyMap<string, MarketplaceScope>;
+  readonly refScopes: ReadonlyMap<string, Scope>;
 }
 
 export interface UserRegistrationWithdrawal extends RegisteredTool {

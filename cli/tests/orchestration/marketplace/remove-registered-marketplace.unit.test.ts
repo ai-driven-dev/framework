@@ -4,13 +4,13 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.js";
 import { InvalidMarketplaceNameError } from "../../../src/shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const OUTCOME = { marketplace: { name: "awesome" }, removedPluginCount: 0, orphanCount: 0 };
 
-async function removalOf(registeredScope: MarketplaceScope | undefined) {
+async function removalOf(registeredScope: Scope | undefined) {
   const removed: string[] = [];
   const registry = new InMemoryMarketplaceRegistry();
   if (registeredScope !== undefined) {

@@ -2,7 +2,7 @@
  * A step imports this and `withdrawal.ts`, never another step. */
 import { join } from "node:path";
 import { NativePluginCliError } from "../../../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
@@ -22,7 +22,7 @@ export function callHost(deps: WithdrawalDeps, action: () => void, label: string
 export function uninstallAtFirstAcceptedScope(
   activator: HostActions,
   ref: string,
-  order: readonly MarketplaceScope[]
+  order: readonly Scope[]
 ): string | undefined {
   let lastMessage = "";
   for (const scope of order) {

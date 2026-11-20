@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
@@ -8,7 +8,7 @@ import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
 export interface MarketplaceToBuild {
   readonly name: string;
   readonly source: PluginSource;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 export interface EnsureBuiltMarketplaceCommand {

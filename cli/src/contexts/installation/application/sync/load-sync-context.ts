@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -14,7 +14,7 @@ export interface SyncContextRequest {
   toolIds?: readonly ToolId[];
   recreateFrameworkIfMissing?: boolean;
   /** `"user"` works on the machine manifest, anything else on the project's. */
-  scope: MarketplaceScope;
+  scope: Scope;
   marketplaceNames?: readonly string[];
 }
 
@@ -46,14 +46,14 @@ export class LoadSyncContext {
   ) {}
 
   /** A project-scope run holds the machine manifest's lock; a user-scope one already works on it. */
-  runLocked<T>(scope: MarketplaceScope, work: () => Promise<T>): Promise<T> {
+  runLocked<T>(scope: Scope, work: () => Promise<T>): Promise<T> {
     if (scope === "project" && this.userManifestRepo !== undefined) {
       return this.userManifestRepo.withExclusiveAccess(work);
     }
     return work();
   }
 
-  private repositoryOf(scope: MarketplaceScope): ManifestRepository {
+  private repositoryOf(scope: Scope): ManifestRepository {
     return scope === "user" ? (this.userManifestRepo ?? this.manifestRepo) : this.manifestRepo;
   }
 

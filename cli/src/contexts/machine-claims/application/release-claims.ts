@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
@@ -28,7 +28,7 @@ interface SharedSourceIdentity {
 }
 
 /** The marketplaces registered for a project, listed only when a claim is actually looked up. */
-type ListMarketplaces = () => Promise<readonly { name: string; scope: MarketplaceScope }[]>;
+type ListMarketplaces = () => Promise<readonly { name: string; scope: Scope }[]>;
 
 /**
  * What a clean reads and releases on the machine record: the projects still referencing the shared

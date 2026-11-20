@@ -2,13 +2,13 @@ import type { FindUserMarketplace } from "../../contexts/distribution/applicatio
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
 import type { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 
 export interface RemoveUserMarketplaceCommand {
   name: string;
   projectRoot: string;
   autoConfirm: boolean;
-  scope?: MarketplaceScope;
+  scope?: Scope;
 }
 
 /** Removes a user-scope marketplace: finds it, and under the machine lock proves it is unchanged,

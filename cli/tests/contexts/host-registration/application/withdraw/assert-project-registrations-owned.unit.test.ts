@@ -6,7 +6,7 @@ import type {
   WithdrawalDeps,
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -27,7 +27,7 @@ const withdrawal: ProjectRegistrationWithdrawal = {
   refScopes: new Map(),
 };
 
-function factsAt(scope: MarketplaceScope): ProjectCleanFacts {
+function factsAt(scope: Scope): ProjectCleanFacts {
   return {
     projectRoot: "/project",
     marketplaceScopes: new Map([[HOST_NAME, scope]]),

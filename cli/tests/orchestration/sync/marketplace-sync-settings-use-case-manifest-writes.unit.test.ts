@@ -8,7 +8,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
@@ -39,7 +39,7 @@ class SaveCountingManifestRepository extends InMemoryManifestRepository {
 interface Setup {
   readonly toolIds?: readonly ToolId[];
   readonly marketplaceNames?: readonly string[];
-  readonly marketplaceScope?: MarketplaceScope;
+  readonly marketplaceScope?: Scope;
   readonly failingBuilds?: readonly string[];
   readonly activator?: FakeHostActions;
   readonly withPlugin?: boolean;

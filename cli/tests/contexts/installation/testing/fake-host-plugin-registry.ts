@@ -1,8 +1,8 @@
-import type { MarketplaceScope } from "../../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
 
 interface FixedRegistryEntry {
   readonly enabled: boolean;
-  readonly scope?: MarketplaceScope;
+  readonly scope?: Scope;
 }
 
 /** What a host's own plugin registry answers: the refs it carries, or why it carries none. */

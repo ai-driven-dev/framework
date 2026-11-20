@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { FindUserMarketplace } from "../../../../../src/contexts/distribution/application/remove/find-user-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceNotFoundError } from "../../../../../src/shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/project";
 
-function entry(scope: MarketplaceScope): Marketplace {
+function entry(scope: Scope): Marketplace {
   return Marketplace.create({
     name: "shared-name",
     source: { kind: "github", repo: "owner/shared" },

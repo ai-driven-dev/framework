@@ -1,9 +1,9 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 
 /** A registered marketplace a removal found: what it is called and which scope holds it. */
 export interface RemovableMarketplace {
   readonly name: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 export interface MarketplaceRemovalResult {

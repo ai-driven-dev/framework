@@ -1,9 +1,9 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 
 /** A registered marketplace, as far as a claim over the shared framework source needs it. */
 export interface ListedMarketplace {
   readonly name: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 /** The marketplaces a project's registry holds. The distribution owns the registry and hands

@@ -10,7 +10,7 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
 
 /** What a setup did: `initialized` when this run created the manifest it works on, `up-to-date`
@@ -25,10 +25,6 @@ export interface SetupResult {
 }
 
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";
-
-/** Same value domain as `MarketplaceScope`, aliased so this field reads about a setup's own scope
- * rather than about the shared type it aliases. */
-export type SetupScope = MarketplaceScope;
 
 export interface SetupFlowParams {
   projectRoot: string;
@@ -51,7 +47,7 @@ export interface SetupFlowParams {
   /** `"project"` (the default) installs into this project alone. `"user"` registers
    * the shared framework source and native activation machine-wide instead, writing
    * nothing under `projectRoot`: see `architecture.md`'s user-scope section. */
-  scope?: SetupScope;
+  scope?: Scope;
 }
 
 export class SetupFlow {
@@ -64,7 +60,7 @@ export class SetupFlow {
   readonly interactive: boolean;
   readonly force: boolean;
   readonly registerDefaultMarketplace: boolean;
-  readonly scope: SetupScope;
+  readonly scope: Scope;
 
   constructor(params: SetupFlowParams) {
     const aiTools = this.registeredAmong(
@@ -114,7 +110,7 @@ export class SetupFlow {
   // silently dropped; named, recommended and all plugins install machine-wide.
   private validateScope(
     supportsUserScopeActivation: (toolId: ToolId) => boolean,
-    scope: SetupScope,
+    scope: Scope,
     aiTools: readonly AiToolId[],
     ideTools: readonly IdeToolId[],
     pluginMode: PluginInstallMode

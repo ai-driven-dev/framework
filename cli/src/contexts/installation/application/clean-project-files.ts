@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
@@ -130,7 +130,7 @@ export class CleanProjectFiles {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined || !this.tools.isAiTool(toolId)) continue;
       const tool = this.tools.aiProfile(toolId);
-      const refScopes = new Map<string, MarketplaceScope>();
+      const refScopes = new Map<string, Scope>();
       for (const plugin of manifest.getPlugins(toolId)) {
         const ref = this.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
         if (ref !== undefined) refScopes.set(ref, plugin.scope);

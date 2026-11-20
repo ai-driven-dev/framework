@@ -1,6 +1,6 @@
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
 import { samePathSegment } from "../../../shared/domain/paths.js";
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
@@ -11,7 +11,7 @@ import type { UserSourceReferences } from "../ports/user-source-references.js";
  * check. The distribution owns the name; the caller hands it over. */
 export function frameworkSourceIsShared(
   name: string,
-  scope: MarketplaceScope,
+  scope: Scope,
   frameworkMarketplaceName: string
 ): boolean {
   return name === frameworkMarketplaceName && scope === "user";

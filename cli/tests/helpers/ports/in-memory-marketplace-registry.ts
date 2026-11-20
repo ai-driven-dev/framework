@@ -1,6 +1,6 @@
 import type { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 
 export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
   private readonly project = new Map<string, Marketplace>();
@@ -18,7 +18,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
     store.set(this.key(projectRoot, marketplace.name, marketplace.scope), marketplace);
   }
 
-  async delete(projectRoot: string, name: string, scope: MarketplaceScope): Promise<void> {
+  async delete(projectRoot: string, name: string, scope: Scope): Promise<void> {
     const store = scope === "project" ? this.project : this.user;
     store.delete(this.key(projectRoot, name, scope));
   }
@@ -26,7 +26,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
   async updateLastFetched(
     projectRoot: string,
     name: string,
-    scope: MarketplaceScope,
+    scope: Scope,
     when: string
   ): Promise<void> {
     const store = scope === "project" ? this.project : this.user;
@@ -40,7 +40,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
   async updateVersion(
     projectRoot: string,
     name: string,
-    scope: MarketplaceScope,
+    scope: Scope,
     version: string
   ): Promise<void> {
     const store = scope === "project" ? this.project : this.user;
@@ -61,7 +61,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
   }
 
   /** A user entry is the machine's, so it is named alone; a project entry is the project's. */
-  private key(projectRoot: string, name: string, scope: MarketplaceScope): string {
+  private key(projectRoot: string, name: string, scope: Scope): string {
     return scope === "user" ? name : `${projectRoot}:${name}`;
   }
 }

@@ -2,7 +2,7 @@ import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
 } from "../../../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
 import type { RemovableMarketplace } from "../../contract/marketplace-removal.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
@@ -10,7 +10,7 @@ import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 export interface FindMarketplaceToRemoveCommand {
   name: string;
   projectRoot: string;
-  scope?: MarketplaceScope;
+  scope?: Scope;
 }
 
 /** The project-scope marketplace a removal targets, or why it cannot be removed. */

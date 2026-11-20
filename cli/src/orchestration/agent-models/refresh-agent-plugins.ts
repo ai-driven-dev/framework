@@ -1,6 +1,6 @@
 import type { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
 import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { UpdateUserPlugin } from "../plugin/update-user-plugin.js";
 import type { SyncSettings } from "../sync/sync-settings.js";
@@ -9,7 +9,7 @@ export interface RefreshAgentPluginsOptions {
   readonly projectRoot: string;
   readonly hosts: readonly AiToolId[];
   /** `"user"` also re-activates what `setup --global` installed. */
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 /**
@@ -58,7 +58,7 @@ export class RefreshAgentPlugins {
   private async activate(
     { projectRoot }: RefreshAgentPluginsOptions,
     toolIds: readonly AiToolId[],
-    scope?: MarketplaceScope
+    scope?: Scope
   ): Promise<void> {
     const { errors } = await this.syncSettings.execute({
       projectRoot,

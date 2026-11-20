@@ -1,6 +1,6 @@
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 
 /** Records native plugin CLI calls instead of shelling out. Two measured shapes: a real
  * `claude` refuses a mismatched-scope uninstall, and a plain `Error` no adapter produces. */
@@ -13,8 +13,8 @@ export class FakeHostActions implements HostActions {
   readonly uninstalledPlugins: string[] = [];
   readonly updatedPlugins: string[] = [];
   /** The scope each call actually carried, in call order, never guessed from the ref. */
-  readonly enabledPluginScopes: MarketplaceScope[] = [];
-  readonly uninstalledPluginScopes: MarketplaceScope[] = [];
+  readonly enabledPluginScopes: Scope[] = [];
+  readonly uninstalledPluginScopes: Scope[] = [];
   upgradeCount = 0;
   private readonly failOnPlugins: ReadonlySet<string>;
   private readonly conflictOnAdd: boolean;
@@ -25,7 +25,7 @@ export class FakeHostActions implements HostActions {
   private readonly failOnUpdate: ReadonlySet<string>;
   private readonly crashOnAddMarketplace: boolean;
   private readonly crashOnUninstall: boolean;
-  private readonly installedAtScope: ReadonlyMap<string, MarketplaceScope>;
+  private readonly installedAtScope: ReadonlyMap<string, Scope>;
 
   constructor(
     options: {
@@ -41,7 +41,7 @@ export class FakeHostActions implements HostActions {
       failOnUpdate?: readonly string[];
       crashOnAddMarketplace?: boolean;
       crashOnUninstall?: boolean;
-      installedAtScope?: ReadonlyMap<string, MarketplaceScope>;
+      installedAtScope?: ReadonlyMap<string, Scope>;
     } = {}
   ) {
     this.available = options.available ?? false;
@@ -95,7 +95,7 @@ export class FakeHostActions implements HostActions {
     this.upgradeCount += 1;
   }
 
-  enablePlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {
+  enablePlugin(pluginRef: string, scope: Scope = "project"): void {
     this.enabledPluginScopes.push(scope);
     if (this.failOnPlugins.has(pluginRef)) {
       throw new NativePluginCliError(`plugin \`${pluginRef}\` was not found in marketplace`);
@@ -103,7 +103,7 @@ export class FakeHostActions implements HostActions {
     this.enabledPlugins.push(pluginRef);
   }
 
-  uninstallPlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {
+  uninstallPlugin(pluginRef: string, scope: Scope = "project"): void {
     if (this.crashOnUninstall) {
       throw new Error("activator crashed uninstalling a plugin");
     }

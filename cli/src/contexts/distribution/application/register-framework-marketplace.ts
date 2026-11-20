@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 import { Marketplace } from "../domain/marketplace.js";
@@ -17,7 +17,7 @@ export interface RegisterFrameworkMarketplaceResult {
   /** The scope this registration actually lives at once `execute` returns: always `"user"`
    * today, since a pre-existing project-scope entry is migrated unconditionally. Carried back
    * rather than hardcoded again by a caller that needs to know. */
-  scope: MarketplaceScope;
+  scope: Scope;
 }
 
 /** Registering the bundled framework marketplace. */

@@ -2,12 +2,12 @@ import type { EnsureFrameworkMarketplace } from "../../contexts/distribution/app
 import type { RefreshMarketplace } from "../../contexts/distribution/application/refresh-marketplace.js";
 import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
 import type { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import type { Environment } from "../../shared/ports/environment.js";
 
 export interface RegisterMarketplaceCommand {
   projectRoot: string;
-  scope?: MarketplaceScope;
+  scope?: Scope;
   /** The source a setup resolved, or `null` when it asked for none. */
   source: FrameworkSource | null;
 }

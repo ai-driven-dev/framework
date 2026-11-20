@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -17,7 +17,7 @@ import type { NativeHostTool } from "../../ports/host-tool.js";
 export interface WithdrawnPlugin {
   readonly name: string;
   readonly marketplace: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 export interface WithdrawFromHostCommand {
@@ -56,7 +56,7 @@ export interface RegisteredTool {
 
 export interface ProjectRegistrationWithdrawal extends RegisteredTool {
   /** The scope this project's own manifest recorded for each plugin ref, by ref. */
-  readonly refScopes: ReadonlyMap<string, MarketplaceScope>;
+  readonly refScopes: ReadonlyMap<string, Scope>;
 }
 
 export interface UserRegistrationWithdrawal extends RegisteredTool {
@@ -82,14 +82,14 @@ export interface WithdrawalDeps {
 export interface ProvenHostRef {
   readonly activator: HostActions;
   readonly ref: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 /** What a project clean depends on that this context may not read itself. */
 export interface ProjectCleanFacts {
   readonly projectRoot: string;
   /** The scope each marketplace is registered at, by this project's own alias. */
-  readonly marketplaceScopes: ReadonlyMap<string, MarketplaceScope>;
+  readonly marketplaceScopes: ReadonlyMap<string, Scope>;
   /** The shared machine-scope source this project references, and who else does; absent when none. */
   readonly sharedSource:
     | { readonly alias: string; readonly otherProjects: readonly string[] }

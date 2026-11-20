@@ -2,7 +2,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { UnreadableMarketplaceRegistryError } from "../../../shared/domain/errors.js";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
@@ -57,7 +57,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     await this.write(path, filtered);
   }
 
-  async delete(projectRoot: string, name: string, scope: MarketplaceScope): Promise<void> {
+  async delete(projectRoot: string, name: string, scope: Scope): Promise<void> {
     const path = this.pathFor(projectRoot, scope);
     const entries = await this.read(path, scope);
     const filtered = entries.filter((m) => m.name !== name);
@@ -67,7 +67,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   async updateLastFetched(
     projectRoot: string,
     name: string,
-    scope: MarketplaceScope,
+    scope: Scope,
     when: string
   ): Promise<void> {
     const path = this.pathFor(projectRoot, scope);
@@ -79,7 +79,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   async updateVersion(
     projectRoot: string,
     name: string,
-    scope: MarketplaceScope,
+    scope: Scope,
     version: string
   ): Promise<void> {
     const path = this.pathFor(projectRoot, scope);
@@ -88,7 +88,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     await this.write(path, updated);
   }
 
-  private pathFor(projectRoot: string, scope: MarketplaceScope): string {
+  private pathFor(projectRoot: string, scope: Scope): string {
     return scope === "project" ? this.projectPath(projectRoot) : this.userPath();
   }
 
@@ -100,7 +100,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     return join(this.userConfigDir(), AIDD_MARKETPLACES_FILENAME);
   }
 
-  private async read(path: string, scope: MarketplaceScope): Promise<Marketplace[]> {
+  private async read(path: string, scope: Scope): Promise<Marketplace[]> {
     let raw: string;
     try {
       raw = await readFile(path, "utf-8");

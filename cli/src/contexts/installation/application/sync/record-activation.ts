@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { FileHash } from "../../../../shared/domain/file.js";
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -85,7 +85,7 @@ export class RecordActivation {
     project: Manifest,
     outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>,
     marketplaces: readonly DeclaredMarketplace[],
-    scope: MarketplaceScope,
+    scope: Scope,
     projectRoot?: string
   ): Promise<void> {
     if (this.userManifestRepo === undefined) return;

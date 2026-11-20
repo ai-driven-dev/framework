@@ -1,5 +1,5 @@
 import { MarketplaceSourceConflictError } from "../../../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -32,7 +32,7 @@ import { inspectNativeMarketplaceSource } from "../native-marketplace-source-pro
 /** A marketplace as the host sees it: aidd's own local name and the scope it lives at. */
 export interface RegistrationSubject {
   readonly name: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 /** One tool's registration as it runs: what the host was asked, what this project holds, and the

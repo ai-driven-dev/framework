@@ -2,7 +2,7 @@ import {
   InvalidPluginManifestError,
   MarketplaceAlreadyRegisteredError,
 } from "../../../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import { assertNotReservedMarketplaceName } from "../../contract/marketplace.js";
 import { Marketplace } from "../../domain/marketplace.js";
@@ -13,7 +13,7 @@ import type { ResolveMarketplace } from "../resolve-marketplace.js";
 export interface PrepareMarketplaceCommand {
   source: PluginSource;
   name: string;
-  scope: MarketplaceScope;
+  scope: Scope;
   projectRoot: string;
   /** Accepts a name already registered, the caller having removed or kept it knowingly. */
   replace?: boolean;

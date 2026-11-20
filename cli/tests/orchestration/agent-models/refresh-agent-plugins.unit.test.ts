@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AgentPluginPlacement } from "../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
@@ -11,7 +11,7 @@ type Placed = Partial<Record<keyof AgentPluginPlacement<AiToolId>, boolean>>;
 
 function refreshOver(placed: Placed, activationErrors: string[] = []) {
   const calls: string[] = [];
-  const activations: { toolIds: readonly ToolId[]; scope?: MarketplaceScope }[] = [];
+  const activations: { toolIds: readonly ToolId[]; scope?: Scope }[] = [];
   const useCase = new RefreshAgentPlugins(
     {
       locate: async <Host extends string>(hosts: readonly Host[]) => ({
@@ -46,7 +46,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
       },
     }
   );
-  const run = (scope: MarketplaceScope) =>
+  const run = (scope: Scope) =>
     useCase.execute({ projectRoot: PROJECT, hosts: [TOOL.claude], scope });
   return { run, calls, activations };
 }

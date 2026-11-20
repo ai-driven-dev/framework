@@ -3,14 +3,14 @@ import type { RemoveMarketplace } from "../../contexts/distribution/application/
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
 import type { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
 import type { DetachPluginClaims } from "../../contexts/installation/contract/plugin-claims.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
 export interface RemoveProjectMarketplaceCommand {
   name: string;
   projectRoot: string;
   autoConfirm: boolean;
-  scope?: MarketplaceScope;
+  scope?: Scope;
 }
 
 /** Removes a project marketplace: finds it, removes the plugins installed from it once the person

@@ -7,7 +7,7 @@ import {
   BUILT_CACHE_SUBDIR,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
@@ -33,7 +33,7 @@ async function sync(options: {
   requestedVersion: string;
   registeredPath?: string;
   registeredVersion?: string;
-  scope?: MarketplaceScope;
+  scope?: Scope;
   name?: string;
   recreateFrameworkIfMissing?: boolean;
   staleCacheFile?: string;

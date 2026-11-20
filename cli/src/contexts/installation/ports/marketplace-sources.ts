@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 
 /** A marketplace a project or the machine registered, as far as an installation needs to know:
@@ -6,7 +6,7 @@ import type { PluginSource } from "../../../shared/domain/source.js";
 export interface DeclaredMarketplace {
   readonly name: string;
   readonly source: PluginSource;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
 }
 
 /** A plugin chosen from a marketplace catalogue, as far as copying it reads it. The distribution
@@ -25,7 +25,7 @@ export interface UserPluginChoice {
  * distribution owns the registry and hands over the real one, which satisfies this shape. */
 export interface InstallationMarketplaceRegistry {
   list(projectRoot: string): Promise<readonly DeclaredMarketplace[]>;
-  delete(projectRoot: string, name: string, scope: MarketplaceScope): Promise<void>;
+  delete(projectRoot: string, name: string, scope: Scope): Promise<void>;
 }
 
 export interface PluginFetchOptions {

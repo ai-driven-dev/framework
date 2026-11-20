@@ -2,7 +2,7 @@ import type { LoadSyncContext } from "../../contexts/installation/application/sy
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
-import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { Scope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { ActivateNativeTools } from "./activate-native-tools.js";
 import { claimsViewOf } from "./claims-view-of.js";
@@ -19,7 +19,7 @@ export interface SyncSettingsOptions {
    * The scope this run enables plugins at, which is a different question than a marketplace's
    * own `scope`. `"user"` also writes nothing under `projectRoot`, so `syncTool` is skipped.
    */
-  scope?: MarketplaceScope;
+  scope?: Scope;
   /**
    * Narrows the settings sync and native activation to the marketplaces named here; absent
    * activates every registered one. A name matching nothing resolves to zero marketplaces,

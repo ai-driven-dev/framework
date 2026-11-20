@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostPluginRegistryEntry } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
@@ -21,7 +21,7 @@ const REF = "test-plugin@aidd-framework";
 async function globalActivation(toolId: AiToolId) {
   const refs = new Map<string, HostPluginRegistryEntry>();
   class StatefulActivator extends FakeHostActions {
-    override enablePlugin(ref: string, scope: MarketplaceScope = "project"): void {
+    override enablePlugin(ref: string, scope: Scope = "project"): void {
       super.enablePlugin(ref, scope);
       refs.set(ref, { enabled: true, scope });
     }

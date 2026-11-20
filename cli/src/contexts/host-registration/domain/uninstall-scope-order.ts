@@ -1,11 +1,11 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 
 export interface UninstallScopeRequest {
   readonly reader: HostPluginRegistry | undefined;
   readonly ref: string;
   readonly projectRoot: string;
-  readonly manifestScope: MarketplaceScope;
+  readonly manifestScope: Scope;
 }
 
 /**
@@ -21,11 +21,11 @@ export interface UninstallScopeRequest {
  */
 export async function resolveUninstallScopeOrder(
   request: UninstallScopeRequest
-): Promise<readonly MarketplaceScope[]> {
+): Promise<readonly Scope[]> {
   const { reader, ref, projectRoot, manifestScope } = request;
   const registryScope = await readRegistryScope(reader, ref, projectRoot);
   if (registryScope !== undefined) return [registryScope];
-  const other: MarketplaceScope = manifestScope === "project" ? "user" : "project";
+  const other: Scope = manifestScope === "project" ? "user" : "project";
   return [manifestScope, other];
 }
 
@@ -33,7 +33,7 @@ async function readRegistryScope(
   reader: HostPluginRegistry | undefined,
   ref: string,
   projectRoot: string
-): Promise<MarketplaceScope | undefined> {
+): Promise<Scope | undefined> {
   if (reader === undefined) return undefined;
   const reading = await reader.read(projectRoot);
   return reading.refs?.get(ref)?.scope;

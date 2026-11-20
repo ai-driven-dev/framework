@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 
 /**
  * Drives a tool's native plugin CLI, so the tool writes its own configuration.
@@ -13,11 +13,11 @@ export interface HostActions {
   /** Returns true when the tool's CLI binary is callable on PATH. Never throws. */
   isAvailable(): boolean;
   /** Registers a marketplace source (local path, `owner/repo[@ref]`, or git URL). Idempotent. */
-  addMarketplace(source: string, scope: MarketplaceScope): void;
+  addMarketplace(source: string, scope: Scope): void;
   /** True when this tool enables plugins through its CLI rather than through a file. */
   enablesPlugins(): boolean;
   /** Unregisters a marketplace by name, in the scope it was added to. May throw when absent. */
-  removeMarketplace(name: string, scope: MarketplaceScope, options?: { force?: boolean }): void;
+  removeMarketplace(name: string, scope: Scope, options?: { force?: boolean }): void;
   /** Whether the registration under this name still resolves to something. `"unknown"` where
    * the tool offers no way to tell, which callers must read as "leave it alone": a registration
    * that might belong to a live project elsewhere is not one to take over. */
@@ -32,7 +32,7 @@ export interface HostActions {
    * machine-wide, whatever scope `aidd` ran at. A tool declaring no `scopeArgs` (codex,
    * copilot) ignores it.
    */
-  enablePlugin(pluginRef: string, scope?: MarketplaceScope): void;
+  enablePlugin(pluginRef: string, scope?: Scope): void;
   updatePlugin(pluginRef: string): void;
   /**
    * Uninstalls a plugin referenced as `<plugin>@<marketplace>`, the counterpart of
@@ -40,5 +40,5 @@ export interface HostActions {
    * registry; callers wrap it best-effort. `scope` must match the scope it was enabled at: a
    * real `claude` binary refuses a mismatched-scope uninstall outright.
    */
-  uninstallPlugin(pluginRef: string, scope?: MarketplaceScope): void;
+  uninstallPlugin(pluginRef: string, scope?: Scope): void;
 }

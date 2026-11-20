@@ -1,6 +1,6 @@
 import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../shared/domain/describe-error.js";
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
@@ -192,7 +192,7 @@ interface ScopedEntry {
 async function scopeForProject(
   entries: readonly ScopedEntry[],
   projectRoot: string
-): Promise<MarketplaceScope | null> {
+): Promise<Scope | null> {
   if (!Array.isArray(entries)) return null;
   if (entries.some((entry) => entry.scope === "user")) return "user";
   for (const entry of entries) {

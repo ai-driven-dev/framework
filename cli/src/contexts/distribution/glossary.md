@@ -7,7 +7,7 @@ The language of the `distribution` context. A name in the code means what this p
 | Marketplace | A named registration of a source plugins are read from, in a scope | `Marketplace`, `MarketplaceData` |
 | Framework source | Whether the framework marketplace is read from a repository or a local path; the same shapes a plugin source takes | `FrameworkSource` |
 | Framework marketplace | The reserved `aidd-framework` entry registered for every project of the machine | `FRAMEWORK_MARKETPLACE_NAME`, `RegisterFrameworkMarketplace` |
-| Scope | Where a registration is kept: one project, or the user for every project | `MarketplaceScope` |
+| Scope | Where a registration is kept: one project, or the user for every project | `Scope` |
 | Registry | The saved list of marketplaces, a project's and the user's | `MarketplaceRegistry` |
 | Trust | The recorded consent to read a source, kept per project | `MarketplaceTrustStore` |
 | Catalog | The list of plugins a marketplace offers, in the shape its host writes | `PluginCatalog`, `parsePluginCatalog`, `catalog-parsers/` |

@@ -5,8 +5,6 @@ import { InvalidInstallScopeError } from "./errors.js";
  * without importing the context that fetches content. */
 export type Scope = "project" | "user";
 
-export type MarketplaceScope = Scope;
-
 const VALID_SCOPES: ReadonlySet<unknown> = new Set<Scope>(["project", "user"]);
 
 export function isScope(value: unknown): value is Scope {

@@ -14,7 +14,7 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
-import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
@@ -45,15 +45,14 @@ const ADD_ERROR = "catalogue already exists";
 const RECLAIM = `Marketplace '${HOST}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`;
 
 class RecoveringActivator extends FakeHostActions {
-  readonly adds: Array<{ source: string; scope: MarketplaceScope | undefined }> = [];
-  readonly removals: Array<{ name: string; scope: MarketplaceScope | undefined; force: boolean }> =
-    [];
+  readonly adds: Array<{ source: string; scope: Scope | undefined }> = [];
+  readonly removals: Array<{ name: string; scope: Scope | undefined; force: boolean }> = [];
 
   constructor(private readonly failure?: "remove" | "retry" | "crash") {
     super({ available: true, registrationState: "dead" });
   }
 
-  override addMarketplace(source: string, scope?: MarketplaceScope): void {
+  override addMarketplace(source: string, scope?: Scope): void {
     this.adds.push({ source, scope });
     if (this.adds.length === 1) throw new NativePluginCliError(ADD_ERROR);
     if (this.failure === "retry") throw new NativePluginCliError("retry denied");
@@ -61,11 +60,7 @@ class RecoveringActivator extends FakeHostActions {
     super.addMarketplace(source, scope);
   }
 
-  override removeMarketplace(
-    name: string,
-    scope?: MarketplaceScope,
-    options?: { force?: boolean }
-  ): void {
+  override removeMarketplace(name: string, scope?: Scope, options?: { force?: boolean }): void {
     this.removals.push({ name, scope, force: options?.force === true });
     if (this.failure === "remove") throw new NativePluginCliError("remove denied");
     super.removeMarketplace(name, scope, options);
@@ -75,7 +70,7 @@ class RecoveringActivator extends FakeHostActions {
 interface RecoveryOptions {
   source?: string;
   userRoot?: string;
-  scope?: MarketplaceScope;
+  scope?: Scope;
   failure?: "remove" | "retry" | "crash";
   state?: "live" | "unknown";
   realpathFails?: readonly string[];

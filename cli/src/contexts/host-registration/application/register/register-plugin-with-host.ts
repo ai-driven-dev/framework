@@ -3,7 +3,7 @@ import {
   UnreadableBuiltCatalogError,
 } from "../../../../shared/domain/errors.js";
 import { samePath } from "../../../../shared/domain/paths.js";
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
@@ -56,7 +56,7 @@ export interface HostRegistrationOutcome {
 export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
   readonly toolId: ToolId;
   readonly projectRoot: string;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
   readonly marketplaces: readonly M[];
   readonly claims: ClaimsView;
   readonly build: BuiltCatalogs<M>;
