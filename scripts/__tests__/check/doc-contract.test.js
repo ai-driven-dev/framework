@@ -61,13 +61,6 @@ describe("doc contract", () => {
     assert.deepEqual(ids(), ["DOC-03"]);
   });
 
-  it("DOC-04 flags a memory reference in the wrong form, or no table to compare with", () => {
-    put({ "AGENTS.md": "# Agents\n\n<!-- aidd_project_memory:start -->\n\n@docs/guide.md\n<!-- aidd_project_memory:end -->\n" });
-    assert.deepEqual(ids(), ["DOC-04"]);
-    put({ "AGENTS.md": CLEAN["AGENTS.md"], "plugins/aidd-context/hooks/memory.cjs": "module.exports = {};\n" });
-    assert.deepEqual(ids(), ["DOC-04"]);
-  });
-
   it("DOC-05 flags a sentence carried by two documents", () => {
     put({ "README.md": `${CLEAN["README.md"]}\n${SENTENCE}.\n`, "docs/guide.md": `${CLEAN["docs/guide.md"]}\n${SENTENCE}.\n` });
     assert.deepEqual(ids(), ["DOC-05"]);

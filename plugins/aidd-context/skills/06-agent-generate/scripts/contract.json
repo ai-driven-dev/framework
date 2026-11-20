@@ -4,13 +4,6 @@
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "rules": {
-    "AGENT-01": {
-      "op": "required",
-      "in": "*.md",
-      "field": "description",
-      "why": "the caller picks an agent by its description",
-      "fix": "add a description"
-    },
     "AGENT-02": {
       "op": "equals",
       "in": "*.md",

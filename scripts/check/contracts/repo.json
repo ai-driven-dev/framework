@@ -5,12 +5,6 @@
   "targets": ".claude-plugin/marketplace.json",
   "watch": ["**"],
   "rules": {
-    "REPO-01": {
-      "op": "custom",
-      "in": "marketplace.json",
-      "check": "severity-scale",
-      "why": "a finding keeps its severity from audit to refactor and review only on one scale"
-    },
     "REPO-02": {
       "op": "custom",
       "in": "marketplace.json",

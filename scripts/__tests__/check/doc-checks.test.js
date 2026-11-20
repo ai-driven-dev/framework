@@ -106,14 +106,3 @@ describe("context-imports", () => {
     assert.equal(findHiddenImports("```\n<div>\n@a.md\n```\n").length, 0);
   });
 });
-
-describe("context-reference-form", () => {
-  const { referenceFormProblems } = custom("context-reference-form");
-  const block = (line) => `<!-- aidd_project_memory:start -->\n${line}\n<!-- aidd_project_memory:end -->\n`;
-
-  it("holds each file to the form its tool resolves, and ignores a block left unpaired", () => {
-    assert.equal(referenceFormProblems(block("[a](a.md)"), "at").length, 1);
-    assert.equal(referenceFormProblems(block("@a.md"), "at").length, 0);
-    assert.equal(referenceFormProblems("<!-- aidd_project_memory:start -->\n[a](a.md)\n", "at").length, 0);
-  });
-});

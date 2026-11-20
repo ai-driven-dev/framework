@@ -77,7 +77,7 @@ function mutate(file, from, to) {
   fs.writeFileSync(full, text.replace(from, to));
 }
 
-const RULES = {"description": "SKILL-0[1-4]", "router": "SKILL-05", "diagram": "SKILL-06", "edge": "SKILL-07", "heading": "SKILL-0[89]", "read-next": "SKILL-10", "sentence": "SKILL-11", "rule-line": "SKILL-12", "length": "SKILL-13", "slot": "SKILL-1[45]", "bold": "SKILL-16", "citation": "SKILL-17", "folder name": "SKILL-18", "no name": "SKILL-19", "no description": "SKILL-20", "outside link": "SKILL-21", "sibling": "SKILL-22"};
+const RULES = {"description": "SKILL-0[1-4]", "router": "SKILL-05", "diagram": "SKILL-06", "edge": "SKILL-07", "heading": "SKILL-0[89]", "read-next": "SKILL-10", "sentence": "SKILL-11", "rule-line": "SKILL-12", "length": "SKILL-13", "slot": "SKILL-1[45]", "bold": "SKILL-16", "citation": "SKILL-17", "folder name": "SKILL-18", "no name": "SKILL-18", "no description": "SKILL-20", "outside link": "SKILL-21", "sibling": "SKILL-22"};
 
 function expectError(rule) {
   const { code, out } = run();

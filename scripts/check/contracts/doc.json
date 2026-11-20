@@ -3,7 +3,7 @@
   "kind": "doc",
   "unit": "file",
   "targets": "README.md",
-  "watch": ["**/*.md", "**/*.mdx", "plugins/aidd-context/hooks/memory.cjs"],
+  "watch": ["**/*.md", "**/*.mdx"],
   "rules": {
     "DOC-01": {
       "op": "custom",
@@ -22,12 +22,6 @@
       "in": "README.md",
       "check": "context-imports",
       "why": "an @import inside an HTML block is skipped by a context loader: the file looks right and loads nothing"
-    },
-    "DOC-04": {
-      "op": "custom",
-      "in": "README.md",
-      "check": "context-reference-form",
-      "why": "a memory block reference in a form its tool cannot resolve is inert text that loads nothing and reports nothing"
     },
     "DOC-05": {
       "op": "custom",

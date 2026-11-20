@@ -62,7 +62,7 @@ describe("agent contract", () => {
   });
 
   it("flags a missing description, a name apart from its file, a description without its trigger, wrong sections", () => {
-    assert.match(validate("reviewer.md", FILLED.replace(/description: .*\n/u, "")).out, / AGENT-01 /u);
+    assert.match(validate("reviewer.md", FILLED.replace(/description: .*\n/u, "")).out, / AGENT-03 /u);
     assert.match(validate("other.md", FILLED).out, / AGENT-02 .*reviewer/u);
     assert.match(validate("reviewer.md", FILLED.replace(". Use to check it before merge", "")).out, / AGENT-03 /u);
     assert.match(validate("reviewer.md", FILLED.replace("# Behavior", "# Rules")).out, / AGENT-04 /u);

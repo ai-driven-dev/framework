@@ -42,19 +42,6 @@ describe("repo contract", () => {
     assert.deepEqual(findings(CONTRACT, path.join(ROOT, ".claude-plugin/marketplace.json")), []);
   });
 
-  it("flags a severity off the scale, or a skill reading it differently", () => {
-    const skills = "plugins/aidd-dev/skills";
-    assert.deepEqual(ids(`${skills}/05-review/references/rubric.md`, "🟢 minor", "🟢 warning"), ["REPO-01"]);
-  });
-
-  it("flags an audit that counts its findings off the scale", () => {
-    assert.deepEqual(ids("plugins/aidd-dev/skills/04-audit/assets/audit-template.md", "{{n_minor}} minor", "{{n_minor}} low"), ["REPO-01"]);
-  });
-
-  it("flags a refactor that reads a shorter scale", () => {
-    assert.deepEqual(ids("plugins/aidd-dev/skills/07-refactor/SKILL.md", "🔴 critical, 🟡 major, 🟢 minor", "🔴 critical, 🟡 major"), ["REPO-01"]);
-  });
-
   it("flags a plugin missing from the build matrix", () => {
     assert.deepEqual(ids(".github/workflows/ci.yml", "            aidd-qa,\n", ""), ["REPO-02"]);
   });

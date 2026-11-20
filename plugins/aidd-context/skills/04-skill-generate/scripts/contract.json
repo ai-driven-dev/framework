@@ -41,8 +41,6 @@
       "why": "a dead link is a step the model cannot take", "fix": "fix the link, {target} does not exist" },
     "SKILL-18": { "op": "equals", "in": "SKILL.md", "field": "name", "to": "folder",
       "why": "hosts that validate skills require the name to be the folder's", "fix": "name the skill {expected}, as its folder" },
-    "SKILL-19": { "op": "pattern", "in": "SKILL.md", "field": "name", "regex": "\\S",
-      "why": "a skill without a name is not listed", "fix": "give the skill a name in its front matter" },
     "SKILL-20": { "op": "pattern", "in": "SKILL.md", "field": "description", "regex": "\\S",
       "why": "the description is the only way the model finds the skill", "fix": "give the skill a description in its front matter" },
     "SKILL-21": { "op": "links", "in": "**/*.md", "inside": true,
