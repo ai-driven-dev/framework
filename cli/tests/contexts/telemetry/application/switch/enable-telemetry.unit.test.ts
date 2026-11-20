@@ -159,11 +159,10 @@ describe("aidd telemetry on", () => {
     ) {
       s.resolutions.resolutions.set(resolutionKey(entry.dir, entry.clone), entry);
       await s.on.execute({ cwd: "/w/repo", choice: "keep" });
-      const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
+      return new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
         caseInsensitiveFileSystem: false,
         now: () => s.clock.now,
-      }).open();
-      return run.resolve(entry.dir, at);
+      }).execute(async (run) => run.resolve(entry.dir, at));
     }
 
     it("stores a deleted linked worktree of the clone that opted in", async () => {

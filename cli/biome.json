@@ -5863,7 +5863,6 @@
         "!src/contexts/installation/application/plugin/update-user-plugin-files.ts",
         "!src/contexts/installation/application/removal/remove-user-plugin.ts",
         "!src/contexts/recipes/domain/recipe-rules.ts",
-        "!src/contexts/telemetry/application/ingest-usage.ts",
         "!src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.ts",
         "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
         "!src/orchestration/sync/sync-settings.ts",
@@ -5902,7 +5901,6 @@
         "!src/contexts/recipes/application/validate-recipes.ts",
         "!src/contexts/recipes/domain/markdown-scan.ts",
         "!src/contexts/recipes/domain/recipe-rules.ts",
-        "!src/contexts/telemetry/application/ingest-usage.ts",
         "!src/contexts/telemetry/application/read-usage.ts",
         "!src/contexts/telemetry/domain/report/period.ts",
         "!src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.ts",
@@ -5929,7 +5927,6 @@
     {
       "includes": [
         "src/**",
-        "!src/contexts/telemetry/application/directory-resolver.ts",
         "!src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
         "!src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.ts",
         "!src/presentation/terminal/prompter-adapter.ts",

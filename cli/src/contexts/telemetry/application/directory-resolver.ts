@@ -1,39 +1,13 @@
-import type { NotStoredReason } from "../contract/repository-resolution.js";
-import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
+import { cloneKey } from "../domain/consent/clone-identity.js";
 import { closeEvent } from "../domain/consent/consent-history.js";
 import { ConsentLog } from "../domain/consent/consent-log.js";
 import { RememberedResolutions } from "../domain/remembered-resolutions.js";
-import { repositoryIdOf } from "../domain/repository-identity.js";
-import { cwdKey, ownerAt, type RepositoryResolution } from "../domain/repository-resolution.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
-
-export type DirectoryOutcome =
-  | {
-      readonly stored: RepositoryResolution;
-      /** Resolved from the directory as it stands, not from what was remembered of it. */
-      readonly live: boolean;
-    }
-  | { readonly skipped: NotStoredReason };
-
-/** What the machine decides for a run: how it spells a directory, and what time it is. */
-export interface ResolutionEnvironment {
-  /** macOS and Windows file systems answer one directory to several spellings. */
-  readonly caseInsensitiveFileSystem: boolean;
-  readonly now: () => Date;
-}
-
-type Directory =
-  | { readonly skipped: NotStoredReason }
-  | {
-      /** Every clone the directory was seen alive in. */
-      readonly owners: readonly [RepositoryResolution, ...RepositoryResolution[]];
-      /** The one it is alive in now, when it is. */
-      readonly current: RepositoryResolution | null;
-    };
+import { type ResolutionEnvironment, ResolutionRun } from "./resolution-run.js";
 
 /** Decides, for a billed call, whether it is stored: the rule is in the usage contract. The
  * directory it was made in must have been seen alive, in a clone, and that clone must have had
@@ -50,153 +24,46 @@ export class DirectoryResolver {
     private readonly environment: ResolutionEnvironment
   ) {}
 
-  /** One run, under the ledger's lock. Every open interval is looked at first, so that a clone
-   * that stopped consenting, or went, is closed whether or not a call of it is read. */
-  async open(): Promise<ResolutionRun> {
-    const run = new ResolutionRun(
-      this.locator,
-      this.consentSource,
-      new RememberedResolutions(await this.store.load()),
-      this.store,
-      new ConsentLog(await this.history.read()),
-      this.history,
-      this.environment
-    );
-    await run.observeOpenConsents();
-    return run;
-  }
-}
-
-export class ResolutionRun {
-  private readonly directories = new Map<string, Directory>();
-  /** Clones whose git config could not be read: their intervals are neither kept nor closed. */
-  private readonly unreadable = new Set<string>();
-
-  constructor(
-    private readonly locator: RepositoryLocator,
-    private readonly consentSource: ConsentSource,
-    private remembered: RememberedResolutions,
-    private readonly store: ResolutionStore,
-    private consents: ConsentLog,
-    private readonly history: ConsentHistory,
-    private readonly environment: ResolutionEnvironment
-  ) {}
-
-  /** The earliest instant a call can be covered at, in milliseconds: a transcript last written
-   * before it holds nothing to store. Everything when the log cannot be trusted, so that each
-   * call is still counted under its reason; nothing when no clone ever opted in. */
-  get coveredFrom(): number {
-    if (this.consents.damaged) return Number.NEGATIVE_INFINITY;
-    return this.consents.firstOpened();
-  }
-
-  /** This run's moment, for what has no time of its own. */
-  get now(): string {
-    return this.environment.now().toISOString();
-  }
-
-  /** Whether a clone remembered at `cwd` consented at `at`: what an unreadable directory could
-   * still turn out to be once it can be read. Never true for a directory no read saw readable,
-   * nor while the consent log cannot be trusted. */
-  mayConsent(cwd: string, at: string): boolean {
-    const owners = this.remembered.ownersOf(
-      cwdKey(cwd, this.environment.caseInsensitiveFileSystem)
-    );
-    return owners.some((owner) => this.consents.covers(owner.clone, Date.parse(at)));
-  }
-
-  /** A line of the consent log was not an event: nothing is stored for any clone. */
-  get consentLogDamaged(): boolean {
-    return this.consents.damaged;
-  }
-
-  /** Keeps what this run learned. */
-  async close(): Promise<void> {
-    if (this.remembered.changed) await this.store.save(this.remembered.sightings);
+  /** One run, under the ledger's lock: `work` asks it for verdicts, and what it learned is kept
+   * once `work` is done. Every open interval is looked at first, so that a clone that stopped
+   * consenting, or went, is closed whether or not a call of it is read. */
+  async execute<T>(work: (run: ResolutionRun) => Promise<T>): Promise<T> {
+    const remembered = new RememberedResolutions(await this.store.load());
+    const { consents, unreadable } = await this.observeOpenConsents();
+    const run = new ResolutionRun(this.locator, this.consentSource, this.environment, {
+      remembered,
+      consents,
+      unreadable,
+    });
+    const done = await work(run);
+    if (run.learned.changed) await this.store.save(run.learned.sightings);
+    return done;
   }
 
   /** Closes, at this moment, the earliest anyone knows, every open interval whose clone is
    * another directory now, or no longer names the interval's token in its key. A clone with
    * nothing at its path is left open: it may only be out of reach, and a directory made at its
-   * path since is seen as another one. */
-  async observeOpenConsents(): Promise<void> {
-    for (const interval of this.consents.openIntervals()) {
+   * path since is seen as another one. A clone whose git config could not be read is neither
+   * kept nor closed. */
+  private async observeOpenConsents(): Promise<{
+    consents: ConsentLog;
+    unreadable: ReadonlySet<string>;
+  }> {
+    let consents = new ConsentLog(await this.history.read());
+    const unreadable = new Set<string>();
+    for (const interval of consents.openIntervals()) {
       const reading = await this.consentSource.readClone(interval.clone);
       if (reading.kind === "unreadable") {
-        this.unreadable.add(cloneKey(interval.clone));
+        unreadable.add(cloneKey(interval.clone));
         continue;
       }
       if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
       if (!named) {
         await this.history.append(closeEvent(interval.token, this.environment.now()));
-        this.consents = new ConsentLog(await this.history.read());
+        consents = new ConsentLog(await this.history.read());
       }
     }
-  }
-
-  /** The verdict on a call made in `cwd` at `at`. */
-  async resolve(cwd: string, at: string): Promise<DirectoryOutcome> {
-    // A consent log that cannot be read says nothing for any clone.
-    if (this.consents.damaged) return { skipped: "unreadable-consent" };
-    const directory = await this.directoryOf(cwd);
-    if ("skipped" in directory) return directory;
-    const instant = Date.parse(at);
-    const owner = ownerAt(directory.owners, instant);
-    if (this.unreadable.has(cloneKey(owner.clone))) return { skipped: "unreadable-consent" };
-    const live = directory.current !== null && sameClone(directory.current.clone, owner.clone);
-    if (!this.consents.covers(owner.clone, instant)) {
-      const closed = live && (await this.keyNamesClosedInterval(owner.clone));
-      return { skipped: closed ? "consent-closed" : "no-consent" };
-    }
-    return { stored: owner, live };
-  }
-
-  /** Whether the clone's own key, as it stands, names an interval of it that was closed: it
-   * opted in once, so the person is told to run `on` again, not that it never did. */
-  private async keyNamesClosedInterval(clone: CloneIdentity): Promise<boolean> {
-    const reading = await this.consentSource.readClone(clone);
-    const token = reading.kind === "value" ? tokenOfKey(reading.value) : null;
-    return token !== null && this.consents.hasClosed(clone, token);
-  }
-
-  private async directoryOf(cwd: string): Promise<Directory> {
-    const held = this.directories.get(cwd);
-    if (held !== undefined) return held;
-    const directory = await this.look(cwd);
-    this.directories.set(cwd, directory);
-    return directory;
-  }
-
-  private async look(cwd: string): Promise<Directory> {
-    const dir = cwdKey(cwd, this.environment.caseInsensitiveFileSystem);
-    const located = await this.locator.locate(cwd);
-    if (located.status === "gone") {
-      const [first, ...others] = this.remembered.ownersOf(dir);
-      return first === undefined
-        ? { skipped: "never-seen-alive" }
-        : { owners: [first, ...others], current: null };
-    }
-    if (located.status === "outside-repository") return { skipped: "outside-repo" };
-    // A directory git or the file system would not answer for may be a clone: not known to be
-    // outside any.
-    if (located.status === "unreadable") return { skipped: "unreadable-consent" };
-    // A repository with no origin and no commit has nothing to be named by.
-    const id = repositoryIdOf(located);
-    if (id === null) return { skipped: "outside-repo" };
-    // A clone the platform cannot identify cannot be told from another: fail closed.
-    if (located.clone === null) return { skipped: "unreadable-consent" };
-    const { seen: current, remembered } = this.remembered.remember({
-      dir,
-      repositoryId: id,
-      root: located.root,
-      clone: located.clone,
-      at: this.environment.now().toISOString(),
-    });
-    this.remembered = remembered;
-    const others = this.remembered
-      .ownersOf(dir)
-      .filter((owner) => !sameClone(owner.clone, current.clone));
-    return { owners: [current, ...others], current };
+    return { consents, unreadable };
   }
 }

@@ -6,11 +6,10 @@ import { deleted, MAIN, setup, T1, T2, T3 } from "../../testing/telemetry-switch
 
 describe("aidd telemetry off, kept as the end of an interval", () => {
   async function resolvedWhenGone(s: ReturnType<typeof setup>, cwd: string, at: string) {
-    const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
+    return new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
       caseInsensitiveFileSystem: false,
       now: () => s.clock.now,
-    }).open();
-    return run.resolve(cwd, at);
+    }).execute(async (run) => run.resolve(cwd, at));
   }
 
   it("closes the consent at its own time, and the clone's calls after it are refused", async () => {

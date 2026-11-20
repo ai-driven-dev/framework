@@ -3,7 +3,7 @@ import { repositoryIdOf } from "../../domain/repository-identity.js";
 import { cwdKey } from "../../domain/repository-resolution.js";
 import type { ResolutionStore } from "../../ports/resolution-store.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
-import type { ResolutionEnvironment } from "../directory-resolver.js";
+import type { ResolutionEnvironment } from "../resolution-run.js";
 import type { Located } from "./clone-consent.js";
 
 /** Remembers the root `on` ran in, seen alive in its clone, so a declaration made there is
