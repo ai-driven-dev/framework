@@ -15,6 +15,7 @@ import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const { claude, cursor, codex } = TOOL;
 
@@ -35,9 +36,7 @@ function plugin(overrides: Partial<PluginEntryData> = {}): InstalledPlugin {
 }
 
 function manifest(): Manifest {
-  const result = Manifest.create();
-  result.addTool(cursor, "1.0.0", []);
-  result.addTool(claude, "1.0.0", []);
+  const result = aManifest().withTool(cursor, []).withTool(claude, []).build();
   return result;
 }
 
@@ -470,10 +469,11 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
   });
 
   it("detaches only this project's exact machine-owned native claim without disabling the shared ref", async () => {
-    const project = Manifest.create();
-    project.addTool(codex, "1.0.0", []);
-    project.addTool(cursor, "1.0.0", []);
-    project.addPlugin(codex, plugin({ scope: "project", marketplace: ALIAS }));
+    const project = aManifest()
+      .withTool(codex, [])
+      .withTool(cursor, [])
+      .withPlugin(codex, plugin({ scope: "project", marketplace: ALIAS }))
+      .build();
     const provenance = {
       kind: "effective-list" as const,
       root: "/host/root",

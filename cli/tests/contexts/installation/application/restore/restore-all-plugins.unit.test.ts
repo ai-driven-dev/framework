@@ -11,6 +11,7 @@ import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js"
 import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const noopFs: FileReader & FileWriter = {
   fileExists: async () => false,
@@ -58,9 +59,10 @@ function nativePlugin(
 
 describe("RestoreAllPlugins — native-activation tools", () => {
   it("names claude in nativeOnlyToolIds when its only installed plugin tracks zero files", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(TOOL.claude, nativePlugin({}));
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(TOOL.claude, nativePlugin({}))
+      .build();
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
       pluginFetcher: stubFetcher,
@@ -79,12 +81,13 @@ describe("RestoreAllPlugins — native-activation tools", () => {
   });
 
   it("does not name a tool whose plugin files are actually tracked", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.cursor,
-      nativePlugin({ "a/one.md": "00000000000000000000000000000000" }, "user")
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        nativePlugin({ "a/one.md": "00000000000000000000000000000000" }, "user")
+      )
+      .build();
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
       pluginFetcher: stubFetcher,
@@ -134,10 +137,11 @@ function trackedPlugin(name: string): InstalledPlugin {
 
 describe("RestoreAllPlugins — restricting to one plugin", () => {
   function claudeWithMixedPlugins(): Manifest {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(TOOL.claude, nativePlugin({}));
-    manifest.addPlugin(TOOL.claude, trackedPlugin("tracked-plugin"));
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(TOOL.claude, nativePlugin({}))
+      .withPlugin(TOOL.claude, trackedPlugin("tracked-plugin"))
+      .build();
     return manifest;
   }
 

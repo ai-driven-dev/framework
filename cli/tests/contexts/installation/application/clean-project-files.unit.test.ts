@@ -12,6 +12,7 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { cursorHookScriptDir } from "../testing/cursor-hook-scripts.js";
+import { aManifest } from "../testing/manifest-builder.js";
 
 const ROOT = "/test-project";
 
@@ -80,9 +81,10 @@ describe("CleanProjectFiles.assertRemovable on a project that installed nothing"
 
 describe("CleanProjectFiles over a tool that is not an AI tool", () => {
   function manifestWithIdePlugin(scope: "project" | "user"): Manifest {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.vscode, "1.0.0", []);
-    manifest.addPlugin(TOOL.vscode, localPlugin("ide-plugin", scope));
+    const manifest = aManifest()
+      .withTool(TOOL.vscode, [])
+      .withPlugin(TOOL.vscode, localPlugin("ide-plugin", scope))
+      .build();
     return manifest;
   }
 
@@ -103,9 +105,10 @@ describe("CleanProjectFiles over a tool that is not an AI tool", () => {
 
 describe("CleanProjectFiles.plan registrations", () => {
   it("keys a ref scope only for a plugin the host registered", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.codex, "1.0.0", []);
-    manifest.addPlugin(TOOL.codex, localPlugin("unregistered"));
+    const manifest = aManifest()
+      .withTool(TOOL.codex, [])
+      .withPlugin(TOOL.codex, localPlugin("unregistered"))
+      .build();
     manifest.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [{ alias: "aidd", hostName: "aidd" }],

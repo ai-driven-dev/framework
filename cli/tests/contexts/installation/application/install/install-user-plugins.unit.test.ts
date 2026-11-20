@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { PluginSourceMatch } from "../../../../../src/contexts/distribution/contract/plugin-source-match.js";
 import { InstallUserPlugins } from "../../../../../src/contexts/installation/application/install/install-user-plugins.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
@@ -10,6 +10,7 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const HASH = "0".repeat(32);
 
@@ -57,9 +58,7 @@ function setup(seed: Manifest | null = defaultManifest()) {
 }
 
 function defaultManifest(): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.opencode, "1.0.0", []);
-  manifest.addTool(TOOL.claude, "1.0.0", []);
+  const manifest = aManifest().withTool(TOOL.opencode, []).withTool(TOOL.claude, []).build();
   return manifest;
 }
 

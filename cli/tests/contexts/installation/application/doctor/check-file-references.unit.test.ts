@@ -8,6 +8,7 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const PROJECT_ROOT = "/project";
 const DOC = ".claude/rules/doc.md";
@@ -22,19 +23,20 @@ function brokenIn(relativePath: string, ref: string) {
 }
 
 function manifestWithPluginDoc(content: string): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.claude,
-    InstalledPlugin.fromJSON({
-      name: "sample",
-      source: { kind: "local", path: "/some/path" },
-      version: "1.0.0",
-      strict: false,
-      files: { [PLUGIN_DOC]: FileHash.of(content).value },
-      scope: "project",
-    })
-  );
+  const manifest = aManifest()
+    .withTool(TOOL.claude, [])
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromJSON({
+        name: "sample",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: { [PLUGIN_DOC]: FileHash.of(content).value },
+        scope: "project",
+      })
+    )
+    .build();
   return manifest;
 }
 

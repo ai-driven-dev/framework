@@ -1,5 +1,6 @@
 /** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs`), removing
  * it in one project must not disable it for another still referencing the shared source. */
+
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -12,6 +13,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 import { FakeUserSourceReferences } from "../../testing/fake-user-source-references.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -45,20 +47,21 @@ function seedManifest(
   marketplaceAlias: string = FRAMEWORK_MARKETPLACE_NAME,
   recordNativeRegistration = true
 ): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.codex, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.codex,
-    InstalledPlugin.fromJSON({
-      name: PLUGIN_NAME,
-      source: { kind: "local", path: "/plugin-source" },
-      version: "1.0.0",
-      strict: true,
-      files: {},
-      scope: "project",
-      marketplace: marketplaceAlias,
-    })
-  );
+  const manifest = aManifest()
+    .withTool(TOOL.codex, [])
+    .withPlugin(
+      TOOL.codex,
+      InstalledPlugin.fromJSON({
+        name: PLUGIN_NAME,
+        source: { kind: "local", path: "/plugin-source" },
+        version: "1.0.0",
+        strict: true,
+        files: {},
+        scope: "project",
+        marketplace: marketplaceAlias,
+      })
+    )
+    .build();
   if (recordNativeRegistration)
     manifest.setNativeRegistrations(TOOL.codex, {
       binary: "codex",

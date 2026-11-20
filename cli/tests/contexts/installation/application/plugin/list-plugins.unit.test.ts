@@ -4,6 +4,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 function makeManifestWithPlugin(): Manifest {
   const manifest = Manifest.create();
@@ -53,9 +54,7 @@ describe("ListPlugins", () => {
     });
 
     it("resolves a request for every tool through the target resolver", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
-      manifest.addTool(TOOL.claude, "1.0.0", []);
+      const manifest = aManifest().withTool(TOOL.cursor, []).withTool(TOOL.claude, []).build();
       const useCase = new ListPlugins(makeManifestRepository(manifest), registeredTools());
       const result = await useCase.execute({ toolIds: "all" });
       expect([...result.keys()]).toEqual([TOOL.claude, TOOL.cursor]);

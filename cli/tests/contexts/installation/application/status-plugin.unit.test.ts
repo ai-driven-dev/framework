@@ -1,31 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { aManifest } from "../testing/manifest-builder.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
 const PLUGIN_FILE = ".claude/plugins/test-plugin/commands/greet.md";
 
 function makeManifest(pluginFileHash: string): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.claude,
-    InstalledPlugin.fromJSON({
-      name: "test-plugin",
-      source: { kind: "local", path: "/some/path" },
-      version: "1.0.0",
-      strict: false,
-      files: { [PLUGIN_FILE]: pluginFileHash },
-      scope: "project",
-    })
-  );
+  const manifest = aManifest()
+    .withTool(TOOL.claude, [])
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromJSON({
+        name: "test-plugin",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: { [PLUGIN_FILE]: pluginFileHash },
+        scope: "project",
+      })
+    )
+    .build();
   return manifest;
 }
 

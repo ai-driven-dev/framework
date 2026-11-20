@@ -18,6 +18,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly deletedPaths: string[] = [];
@@ -88,19 +89,20 @@ function manifestHolding(
   toolId: AiToolId,
   entry: Partial<PluginEntryData> & { name: string }
 ): InMemoryManifestRepository {
-  const manifest = Manifest.create();
-  manifest.addTool(toolId, "1.0.0", []);
-  manifest.addPlugin(
-    toolId,
-    InstalledPlugin.fromJSON({
-      source: { kind: "local", path: "/some/path" },
-      version: "1.0.0",
-      strict: false,
-      files: {},
-      scope: "project",
-      ...entry,
-    })
-  );
+  const manifest = aManifest()
+    .withTool(toolId, [])
+    .withPlugin(
+      toolId,
+      InstalledPlugin.fromJSON({
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        scope: "project",
+        ...entry,
+      })
+    )
+    .build();
   return new InMemoryManifestRepository(manifest, PROJECT_ROOT);
 }
 
@@ -244,36 +246,37 @@ describe("RemovePlugin", () => {
   describe("a tool holding several plugins", () => {
     it("proves removable only the named plugin's hooks, not another plugin's edited ones", async () => {
       const script = `${cursorHookScriptDir("other")}run.js`;
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
-      manifest.addPlugin(
-        TOOL.cursor,
-        InstalledPlugin.withProjectHooks(
+      const manifest = aManifest()
+        .withTool(TOOL.cursor, [])
+        .withPlugin(
+          TOOL.cursor,
+          InstalledPlugin.withProjectHooks(
+            InstalledPlugin.fromJSON({
+              name: "other",
+              source: { kind: "local", path: "/other" },
+              version: "1.0.0",
+              strict: false,
+              files: {},
+              scope: "project",
+            }),
+            {
+              entries: [],
+              scripts: new Map([[script, FileHash.of("// installed").value]]),
+            }
+          )
+        )
+        .withPlugin(
+          TOOL.cursor,
           InstalledPlugin.fromJSON({
-            name: "other",
-            source: { kind: "local", path: "/other" },
+            name: "target",
+            source: { kind: "local", path: "/target" },
             version: "1.0.0",
             strict: false,
             files: {},
             scope: "project",
-          }),
-          {
-            entries: [],
-            scripts: new Map([[script, FileHash.of("// installed").value]]),
-          }
+          })
         )
-      );
-      manifest.addPlugin(
-        TOOL.cursor,
-        InstalledPlugin.fromJSON({
-          name: "target",
-          source: { kind: "local", path: "/target" },
-          version: "1.0.0",
-          strict: false,
-          files: {},
-          scope: "project",
-        })
-      );
+        .build();
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, script), "// edited");
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);

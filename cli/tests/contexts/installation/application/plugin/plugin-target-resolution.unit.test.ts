@@ -8,14 +8,13 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const { cursor } = TOOL;
 
 describe("resolvePluginToolIds()", () => {
   it("resolves 'all' to the AI tools the manifest holds, in registry order", () => {
-    const manifest = Manifest.create();
-    manifest.addTool(cursor, "1.0.0", []);
-    manifest.addTool(TOOL.claude, "1.0.0", []);
+    const manifest = aManifest().withTool(cursor, []).withTool(TOOL.claude, []).build();
 
     expect(resolvePluginToolIds("all", manifest, registeredTools())).toStrictEqual([
       "claude",

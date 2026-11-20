@@ -6,24 +6,26 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";
 const HASH_B = "def456def456def456def456def456de";
 
 function cursorManifestWithFiles(files: Record<string, string>): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.cursor, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.cursor,
-    InstalledPlugin.fromJSON({
-      name: "aidd-test",
-      source: { kind: "local", path: "/some/path" },
-      version: "1.0.0",
-      strict: false,
-      files,
-      scope: "user",
-    })
-  );
+  const manifest = aManifest()
+    .withTool(TOOL.cursor, [])
+    .withPlugin(
+      TOOL.cursor,
+      InstalledPlugin.fromJSON({
+        name: "aidd-test",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files,
+        scope: "user",
+      })
+    )
+    .build();
   return manifest;
 }
 
@@ -79,19 +81,20 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
   });
 
   it("does not collapse an all-missing plugin for a project-scope tool", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.claude,
-      InstalledPlugin.fromJSON({
-        name: "aidd-test",
-        source: { kind: "local", path: "/some/path" },
-        version: "1.0.0",
-        strict: false,
-        files: { "a/one.md": HASH_A, "a/two.md": HASH_B },
-        scope: "project",
-      })
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(
+        TOOL.claude,
+        InstalledPlugin.fromJSON({
+          name: "aidd-test",
+          source: { kind: "local", path: "/some/path" },
+          version: "1.0.0",
+          strict: false,
+          files: { "a/one.md": HASH_A, "a/two.md": HASH_B },
+          scope: "project",
+        })
+      )
+      .build();
     const fs = makeFs(new Set(["one.md", "two.md"]));
     const useCase = new DetectPluginDrift(fs, registeredTools());
 
@@ -153,19 +156,20 @@ describe("DetectPluginDrift — the manifest's recorded scope wins over the prof
   // The `notInstalledOnMachine` collapse exists for a user-scope directory a fresh machine
   // has not populated; what it measures is the manifest's recorded scope, not the profile's.
   it("reports real per-file drift, not a collapsed not-installed entry, for a cursor plugin recorded scope: project", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.cursor,
-      InstalledPlugin.fromJSON({
-        name: "aidd-test",
-        source: { kind: "local", path: "/some/path" },
-        version: "1.0.0",
-        strict: false,
-        files: { "a/one.md": HASH_A, "a/two.md": HASH_B },
-        scope: "project",
-      })
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        InstalledPlugin.fromJSON({
+          name: "aidd-test",
+          source: { kind: "local", path: "/some/path" },
+          version: "1.0.0",
+          strict: false,
+          files: { "a/one.md": HASH_A, "a/two.md": HASH_B },
+          scope: "project",
+        })
+      )
+      .build();
     const fs = makeFs(new Set(["one.md", "two.md"]));
     const useCase = new DetectPluginDrift(fs, registeredTools());
 

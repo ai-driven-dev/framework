@@ -10,6 +10,7 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js"
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const ROOT = "/test-project";
 
@@ -34,12 +35,13 @@ function localPlugin(name: string): InstalledPlugin {
 
 describe("RemoveProjectFiles.remove", () => {
   it("deletes a project-scope plugin's files from the project and counts them", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.claude,
-      localPlugin("aidd-context").withFiles(new Map([["skills/x.md", FileHash.of("x").value]]))
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(
+        TOOL.claude,
+        localPlugin("aidd-context").withFiles(new Map([["skills/x.md", FileHash.of("x").value]]))
+      )
+      .build();
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, "skills", "x.md"), "x");
 
@@ -54,9 +56,10 @@ describe("RemoveProjectFiles.remove", () => {
   });
 
   it("asks no AI profile of a tool that is not an AI tool", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.vscode, "1.0.0", []);
-    manifest.addPlugin(TOOL.vscode, localPlugin("ide-plugin"));
+    const manifest = aManifest()
+      .withTool(TOOL.vscode, [])
+      .withPlugin(TOOL.vscode, localPlugin("ide-plugin"))
+      .build();
 
     await expect(
       removalOver(manifest, new InMemoryFileAdapter()).remove(ROOT, false)
@@ -65,15 +68,16 @@ describe("RemoveProjectFiles.remove", () => {
 
   it("removes a hook script edited after install when forced", async () => {
     const script = `${cursorHookScriptDir("aidd-context")}run.js`;
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.cursor,
-      InstalledPlugin.withProjectHooks(localPlugin("aidd-context"), {
-        entries: [],
-        scripts: new Map([[script, FileHash.of("// installed").value]]),
-      })
-    );
+    const manifest = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        InstalledPlugin.withProjectHooks(localPlugin("aidd-context"), {
+          entries: [],
+          scripts: new Map([[script, FileHash.of("// installed").value]]),
+        })
+      )
+      .build();
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, script), "// edited");
 

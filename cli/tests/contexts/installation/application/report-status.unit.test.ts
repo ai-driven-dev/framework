@@ -14,6 +14,7 @@ import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { aManifest } from "../testing/manifest-builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const TRACKED = ".claude/rules/one.md";
@@ -92,9 +93,10 @@ describe("ReportStatus", () => {
     });
 
     it("reports only the filtered tool", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
-      manifest.addTool(TOOL.vscode, "test", []);
+      const manifest = aManifest()
+        .withTool(TOOL.claude, [], { version: "test" })
+        .withTool(TOOL.vscode, [], { version: "test" })
+        .build();
 
       const report = await statusOver({}, manifest).execute({
         projectRoot: PROJECT_ROOT,
@@ -109,9 +111,10 @@ describe("ReportStatus", () => {
     });
 
     it("reports only the tools of the requested category", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
-      manifest.addTool(TOOL.vscode, "test", []);
+      const manifest = aManifest()
+        .withTool(TOOL.claude, [], { version: "test" })
+        .withTool(TOOL.vscode, [], { version: "test" })
+        .build();
 
       const report = await statusOver({}, manifest).execute({
         projectRoot: PROJECT_ROOT,

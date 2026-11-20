@@ -18,6 +18,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import type { FakeNativeSource } from "../../testing/fake-host-marketplace-sources.js";
 import type { FixedHostRegistry } from "../../testing/fake-host-plugin-registry.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { aManifest } from "../../testing/manifest-builder.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -328,22 +329,23 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
 
 describe("Cursor user plugin boundary", () => {
   it("removes exactly an AIDD-owned file and its canonical user record", async () => {
-    const machine = Manifest.create();
-    machine.addTool(TOOL.cursor, "1.0.0", []);
-    machine.addPlugin(
-      TOOL.cursor,
-      InstalledPlugin.fromJSON({
-        name: "sample-plugin",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: {
-          "sample-plugin/plugin.json": FileHash.of("owned bytes").value,
-        },
-        scope: "user",
-        dependents: [],
-      })
-    );
+    const machine = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        InstalledPlugin.fromJSON({
+          name: "sample-plugin",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {
+            "sample-plugin/plugin.json": FileHash.of("owned bytes").value,
+          },
+          scope: "user",
+          dependents: [],
+        })
+      )
+      .build();
     const repo = new InMemoryManifestRepository(machine);
     const fs = new InMemoryFileAdapter();
     const path = join(homedir(), ".cursor/plugins/local/sample-plugin/plugin.json");
@@ -375,20 +377,21 @@ describe("Cursor user plugin boundary", () => {
 
   it("keeps its canonical record and foreign bytes if a tracked file resolves outside the plugin directory", async () => {
     const relativePath = "sample-plugin/skills/demo/SKILL.md";
-    const machine = Manifest.create();
-    machine.addTool(TOOL.cursor, "1.0.0", []);
-    machine.addPlugin(
-      TOOL.cursor,
-      InstalledPlugin.fromJSON({
-        name: "sample-plugin",
-        source: { kind: "local", path: "/fixture" },
-        version: "1.0.0",
-        strict: false,
-        files: { [relativePath]: "abc" },
-        scope: "user",
-        dependents: [],
-      })
-    );
+    const machine = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        InstalledPlugin.fromJSON({
+          name: "sample-plugin",
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: { [relativePath]: "abc" },
+          scope: "user",
+          dependents: [],
+        })
+      )
+      .build();
     const repo = new InMemoryManifestRepository(machine);
     const fs = new InMemoryFileAdapter();
     const pluginDir = join(homedir(), ".cursor/plugins/local/sample-plugin");
