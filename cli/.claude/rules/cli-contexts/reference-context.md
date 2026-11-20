@@ -70,7 +70,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | Rule | Held by |
 | --- | --- |
 | `ToolId` is opaque and carries no list; only the profiles and `ToolCatalog` lookups mint one | `tool-addition-cost.arch.test.ts`, `scripts/check-cli-type-honesty.mjs` |
-| A caller asks a plugin section a question and never reads its fields | the `answers` rule of `kind-rules.arch.test.ts`, up to the debt |
+| A caller asks a plugin section a question and never reads its fields | the `answers` rule of `kinds.rules.arch.test.ts`, up to the debt |
 | A reader outside `tools` names the profile sections it reads in its own `ports/` | `whole-profile-import.grit` for the import, `profile-readers-name-their-sections.arch.test.ts` for the flow of a catalog profile into a whole-profile parameter |
 | Tests build a synthetic tool profile with `ProfileBuilder` (`tests/contexts/tools/testing/profiles.ts`) and wrap it with `catalogOf` (`tests/contexts/tools/testing/catalog-of.ts`) instead of the real catalog | none |
 | The real catalog and tool ids reach a test only through `registeredTools()` and `TOOL` in `tests/shared/testing/registered-tools.ts` | none |
