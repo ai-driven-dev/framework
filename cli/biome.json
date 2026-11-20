@@ -629,15 +629,15 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only shared, see context-graph.arch.test.ts"
                   },
@@ -816,16 +816,16 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "auth imports only shared, see context-graph.arch.test.ts"
                   },
@@ -851,16 +851,16 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "auth imports only shared, see context-graph.arch.test.ts"
                   },
@@ -894,15 +894,15 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only shared, see context-graph.arch.test.ts"
                   },
@@ -1088,15 +1088,15 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only shared, see context-graph.arch.test.ts"
                   },
@@ -1275,14 +1275,14 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**"
                     ],
                     "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
                   },
@@ -1465,15 +1465,15 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/presentation/**"
                     ],
                     "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
                   },
@@ -1507,15 +1507,15 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/presentation/**"
                     ],
                     "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
                   },
@@ -1553,14 +1553,14 @@
                   },
                   {
                     "group": [
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**"
                     ],
                     "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
                   },
@@ -1743,14 +1743,14 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/auth/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**"
                     ],
                     "message": "recipes imports only shared, see context-graph.arch.test.ts"
@@ -1930,14 +1930,14 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/auth/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
                       "**/presentation/**"
                     ],
@@ -1971,14 +1971,14 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/auth/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
                       "**/presentation/**"
                     ],
@@ -2014,14 +2014,14 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/auth/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**"
                     ],
                     "message": "recipes imports only shared, see context-graph.arch.test.ts"
@@ -2201,14 +2201,14 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
                   },
@@ -2391,14 +2391,14 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
                   },
@@ -2432,15 +2432,15 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/auth/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
                   },
@@ -2470,15 +2470,15 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/auth/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
                   },
@@ -2523,14 +2523,14 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
                   },
@@ -2720,17 +2720,17 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
-                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2911,10 +2911,10 @@
                       "**/distribution/**",
                       "**/host-registration/**",
                       "**/machine-claims/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
                       "**/translate/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
                     "message": "installation may import tools, never telemetry (see context-graph.arch.test.ts)"
                   },
@@ -2952,11 +2952,11 @@
                       "**/distribution/**",
                       "**/host-registration/**",
                       "**/machine-claims/**",
-                      "**/presentation/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
                       "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "installation may import tools, never telemetry or presentation (see context-graph.arch.test.ts)"
                   },
@@ -2990,11 +2990,11 @@
                       "**/distribution/**",
                       "**/host-registration/**",
                       "**/machine-claims/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
                       "**/translate/**",
-                      "**/presentation/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "installation/infrastructure may import tools, never telemetry or presentation (see context-graph.arch.test.ts)"
                   },
@@ -3036,10 +3036,10 @@
                       "**/distribution/**",
                       "**/host-registration/**",
                       "**/machine-claims/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
                       "**/translate/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
                     "message": "installation may import tools, never telemetry (see context-graph.arch.test.ts)"
                   },
@@ -3084,10 +3084,10 @@
                       "**/distribution/**",
                       "**/host-registration/**",
                       "**/machine-claims/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
                       "**/translate/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
                     "message": "installation may import tools, never telemetry (see context-graph.arch.test.ts)"
                   },
@@ -3270,24 +3270,21 @@
                   },
                   {
                     "group": [
-                      "**/installation/**",
+                      "**/auth/**",
                       "**/distribution/**",
+                      "**/host-registration/**",
+                      "**/installation/**",
+                      "**/recipes/**",
+                      "**/telemetry/**",
                       "**/tools/**",
                       "**/translate/**",
-                      "**/host-registration/**",
-                      "**/telemetry/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
                     "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/**"],
-                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -3311,25 +3308,22 @@
                   },
                   {
                     "group": [
-                      "**/installation/**",
+                      "**/auth/**",
                       "**/distribution/**",
+                      "**/host-registration/**",
+                      "**/installation/**",
+                      "**/recipes/**",
+                      "**/telemetry/**",
                       "**/tools/**",
                       "**/translate/**",
-                      "**/host-registration/**",
-                      "**/presentation/**",
-                      "**/telemetry/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "machine-claims imports no other context, nor presentation, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/**"],
-                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -3349,15 +3343,16 @@
                 "patterns": [
                   {
                     "group": [
-                      "**/installation/**",
+                      "**/auth/**",
                       "**/distribution/**",
+                      "**/host-registration/**",
+                      "**/installation/**",
+                      "**/recipes/**",
+                      "**/telemetry/**",
                       "**/tools/**",
                       "**/translate/**",
-                      "**/host-registration/**",
-                      "**/telemetry/**",
-                      "**/presentation/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "machine-claims/infrastructure imports no other context, nor presentation, see context-graph.arch.test.ts"
                   },
@@ -3368,10 +3363,6 @@
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/**"],
-                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -3395,24 +3386,21 @@
                   },
                   {
                     "group": [
-                      "**/installation/**",
+                      "**/auth/**",
                       "**/distribution/**",
+                      "**/host-registration/**",
+                      "**/installation/**",
+                      "**/recipes/**",
+                      "**/telemetry/**",
                       "**/tools/**",
                       "**/translate/**",
-                      "**/host-registration/**",
-                      "**/telemetry/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
                     "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/**"],
-                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -3443,24 +3431,21 @@
                   },
                   {
                     "group": [
-                      "**/installation/**",
+                      "**/auth/**",
                       "**/distribution/**",
+                      "**/host-registration/**",
+                      "**/installation/**",
+                      "**/recipes/**",
+                      "**/telemetry/**",
                       "**/tools/**",
                       "**/translate/**",
-                      "**/host-registration/**",
-                      "**/telemetry/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
                     "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/**"],
-                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -3491,16 +3476,16 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/host-registration/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3681,16 +3666,16 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/host-registration/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3722,16 +3707,16 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/update/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3759,21 +3744,21 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3801,17 +3786,17 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3850,17 +3835,17 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
-                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3899,7 +3884,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3923,22 +3908,22 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
-                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3962,18 +3947,18 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/auth/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
-                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -4012,14 +3997,14 @@
                   },
                   {
                     "group": [
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record: it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
                   },
@@ -4202,17 +4187,17 @@
                   },
                   {
                     "group": [
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/manifest.js",
-                      "**/host-registration/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/manifest.js"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4244,16 +4229,16 @@
                   },
                   {
                     "group": [
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/tools/**",
+                      "**/translate/**",
+                      "**/update/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4281,19 +4266,19 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record (context-graph.arch.test.ts)"
                   },
@@ -4331,15 +4316,15 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/tools/**",
+                      "**/recipes/**",
                       "**/telemetry/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/tools/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (context-graph.arch.test.ts)"
                   },
@@ -4381,17 +4366,17 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/tools/**",
-                      "**/auth/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
-                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4419,17 +4404,17 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/tools/**",
-                      "**/auth/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
-                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4464,15 +4449,15 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/tools/**",
-                      "**/auth/**",
-                      "**/host-registration/**",
-                      "**/update/**",
-                      "**/recipes/**"
+                      "**/translate/**",
+                      "**/update/**"
                     ],
                     "message": "telemetry imports only shared, see context-graph.arch.test.ts"
                   },
@@ -4647,22 +4632,22 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/tools/**",
-                      "**/auth/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
-                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4686,18 +4671,18 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
+                      "**/host-registration/**",
                       "**/installation/**",
                       "**/machine-claims/**",
-                      "**/translate/**",
-                      "**/distribution/**",
+                      "**/recipes/**",
                       "**/tools/**",
-                      "**/auth/**",
-                      "**/presentation/**",
-                      "**/host-registration/**",
+                      "**/translate/**",
                       "**/update/**",
-                      "**/recipes/**"
+                      "**/presentation/**"
                     ],
-                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
