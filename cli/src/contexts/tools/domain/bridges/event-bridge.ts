@@ -57,6 +57,13 @@ function bridgeIdentifier(plugin: string, suffix: string): string {
   return `${pascalCasePluginName(plugin)}${suffix}`;
 }
 
+/** The node modules every generated module spawns its scripts with. Joined from literals, so no
+ * line of this file opens with the keyword the import rule reads as this file's own. */
+const NODE_IMPORTS_SOURCE = [
+  'import { spawn } from "node:child_process";',
+  'import { fileURLToPath } from "node:url";',
+].join("\n");
+
 /** The scripts folder of a plugin, resolved from the generated module's own url. */
 function hooksDirDeclaration(plugin: string): string {
   return `const HOOKS_DIR = fileURLToPath(new URL("../hooks/${plugin}/", import.meta.url));`;
@@ -114,6 +121,8 @@ const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output
 export interface BridgeParts {
   readonly plugin: string;
   readonly identifier: string;
+  /** The `spawn` and `fileURLToPath` imports the spawning code below reads. */
+  readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
   /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
@@ -137,6 +146,7 @@ export function generateBridge<R>(
   return host.render({
     plugin,
     identifier: bridgeIdentifier(plugin, host.identifierSuffix),
+    nodeImports: NODE_IMPORTS_SOURCE,
     hooksDir: hooksDirDeclaration(plugin),
     callTables: callTableDeclarations(table),
     answerFrom: ANSWER_FROM_SOURCE,

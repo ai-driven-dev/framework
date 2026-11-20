@@ -33,8 +33,7 @@ const OPENCODE_HOST = {
 // trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
 // the mapping this generator applies and the measurements behind it.
 import { setupOpencodeEvents } from "../hooks/opencode-events.js";
-import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
+${parts.nodeImports}
 
 // Never process.execPath: OpenCode ships as its own standalone binary - that path names \`opencode\`
 // itself, not a Node runtime able to run this plugin's own hook scripts.
