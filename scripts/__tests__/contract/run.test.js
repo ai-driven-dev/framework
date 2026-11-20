@@ -19,7 +19,7 @@ const write = (rel, text) => {
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), "run-"));
   fs.cpSync(path.join(REPO, path.dirname(path.dirname(AGENT_CONTRACT))), path.join(root, path.dirname(path.dirname(AGENT_CONTRACT))), { recursive: true });
-  write("validate.config.json", JSON.stringify({ contracts: [{ contract: AGENT_CONTRACT, targets: "agents/*.md" }], baseline: {} }));
+  write("validate.config.json", JSON.stringify({ contracts: [{ contract: AGENT_CONTRACT, targets: "agents/*.md" }] }));
   fs.mkdirSync(path.join(root, "agents"));
   fs.cpSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/executor.md"));
 });
@@ -57,11 +57,32 @@ describe("repository run", () => {
 
   it("fails on a stale entry and says how to update", () => {
     baselined("no front matter\n");
-    fs.copyFileSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/b.md"));
+    fs.rmSync(path.join(root, "agents/b.md"));
     const stale = run();
     assert.equal(stale.status, 1);
     assert.match(stale.stdout, /no longer fires, run node scripts\/contract\/run\.cjs --update-baseline/u);
     assert.equal(run("--update-baseline").status, 0);
+    assert.equal(run().status, 0);
+  });
+
+  it("never lets --update-baseline absorb a new finding", () => {
+    baselined("no front matter\n");
+    const before = fs.readFileSync(path.join(root, "validate.config.json"), "utf8");
+    write("agents/c.md", "no front matter\n");
+    const update = run("--update-baseline");
+    assert.equal(update.status, 1);
+    assert.match(update.stdout, /^agents\/c\.md:/mu);
+    assert.equal(fs.readFileSync(path.join(root, "validate.config.json"), "utf8"), before);
+    assert.equal(run().status, 1);
+  });
+
+  it("lowers a count and drops a fixed entry on --update-baseline", () => {
+    baselined("no front matter\n");
+    const entries = () => Object.keys(JSON.parse(fs.readFileSync(path.join(root, "validate.config.json"), "utf8")).baseline).length;
+    const before = entries();
+    fs.rmSync(path.join(root, "agents/b.md"));
+    assert.equal(run("--update-baseline").status, 0);
+    assert.ok(entries() < before);
     assert.equal(run().status, 0);
   });
 

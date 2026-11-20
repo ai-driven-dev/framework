@@ -2,7 +2,8 @@
 "use strict";
 // Usage: node scripts/contract/run.cjs [--update-baseline] [--root <dir>]
 // Checks every artifact mapped in validate.config.json against its contract, and the vendored engine copies.
-// Baseline keys are file, rule, message and excerpt (no line), counted. A finding above its count exits 1, and so does an entry that fires less: the baseline only shrinks. Exit 2 is a usage or contract error.
+// Baseline keys are file, rule, message and excerpt (no line), counted. A finding above its count exits 1, and so does an entry that fires less.
+// --update-baseline records the baseline when the config has none; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
 const path = require("node:path");
 const { check, loadContract, format } = require("./engine.cjs");
@@ -42,19 +43,29 @@ function main(argv) {
 
   const counts = {};
   for (const f of findings) counts[f.key] = (counts[f.key] ?? 0) + 1;
-  if (update) {
-    config.baseline = Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
+  const recorded = config.baseline;
+  const baseline = recorded ?? {};
+  const sorted = (entries) => Object.fromEntries(entries.sort(([x], [y]) => x.localeCompare(y)));
+  if (update && recorded === undefined) {
+    config.baseline = sorted(Object.entries(counts));
     fs.writeFileSync(configFile, `${JSON.stringify(config, null, 2)}\n`);
-    process.stdout.write(`baseline: ${findings.length} findings in ${Object.keys(counts).length} entries\n`);
+    process.stdout.write(`baseline recorded: ${findings.length} findings in ${Object.keys(counts).length} entries\n`);
     return 0;
   }
-
-  const baseline = config.baseline ?? {};
   const fresh = findings.filter((f) => counts[f.key] > (baseline[f.key] ?? 0)).map((f) => f.text);
   const gone = Object.entries(baseline)
     .filter(([key, count]) => (counts[key] ?? 0) < count)
     .map(([key]) => `baseline entry no longer fires, run node scripts/contract/run.cjs --update-baseline: ${key}`);
   const stale = sync({ root }).map((copy) => `${copy} differs from scripts/contract, run node scripts/contract/sync.cjs`);
+  if (update) {
+    const kept = Object.entries(baseline).map(([key, count]) => [key, Math.min(count, counts[key] ?? 0)]).filter(([, count]) => count > 0);
+    config.baseline = sorted(kept);
+    fs.writeFileSync(configFile, `${JSON.stringify(config, null, 2)}\n`);
+    process.stdout.write(`baseline shrunk to ${kept.reduce((n, [, count]) => n + count, 0)} findings in ${kept.length} entries\n`);
+    const open = [...fresh, ...stale];
+    if (open.length) process.stdout.write(`${open.join("\n")}\n`);
+    return open.length ? 1 : 0;
+  }
   const lines = [...fresh, ...gone, ...stale];
   if (lines.length) process.stdout.write(`${lines.join("\n")}\n`);
   return lines.length ? 1 : 0;

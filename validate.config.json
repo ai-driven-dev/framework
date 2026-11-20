@@ -10,7 +10,7 @@
     },
     {
       "contract": "plugins/aidd-context/skills/05-rule-generate/scripts/contract.json",
-      "targets": "aidd_docs/rules/*.md"
+      "targets": "aidd_docs/rules/*/*.md"
     },
     {
       "contract": "plugins/aidd-context/skills/08-hook-generate/scripts/contract.json",
@@ -19,6 +19,10 @@
     {
       "contract": "scripts/contract/repo.json",
       "targets": "plugins/*/.claude-plugin/plugin.json"
+    },
+    {
+      "contract": "plugins/aidd-pm/skills/02-user-stories/scripts/contract.json",
+      "targets": "aidd_docs/backlog/stories/*.md"
     }
   ],
   "baseline": {
