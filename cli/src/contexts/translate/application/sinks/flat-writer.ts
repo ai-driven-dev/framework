@@ -127,7 +127,7 @@ export class FlatWriter implements FlatPluginWriter {
     const srcRelPath = `agents/${relative(agentsSrc, absPath).replace(/\\/g, "/")}`;
     const content = await this.fs.readFile(absPath);
     assertNoToolsPlaceholder(content, pluginName, srcRelPath);
-    const flatRelPath = flatAgentPath({ artifact, pluginName, agentFile: agentBaseName });
+    const flatRelPath = flatAgentPath(artifact, pluginName, agentBaseName);
     const destPath = join(t.outDir, flatRelPath);
     await this.checkCollision(t, destPath, pluginName);
     const outContent = artifact.transform
@@ -151,8 +151,7 @@ export class FlatWriter implements FlatPluginWriter {
     const { frontmatter, body } = parseFrontmatter(content);
     const rewrittenBody = rewriteRelativeLinks(body, {
       currentFilePluginRelative: flatRelPath,
-      resolveTargetPath: (rel) =>
-        flatLinkTarget({ contract: t.contract, pluginName, pluginRelPath: rel }),
+      resolveTargetPath: (rel) => flatLinkTarget(t.contract, pluginName, rel),
     });
     return serializeFrontmatter(frontmatter, rewrittenBody);
   }
@@ -176,8 +175,7 @@ export class FlatWriter implements FlatPluginWriter {
     assertNoToolsPlaceholder(content, pluginName, relFromSkills);
     const rewritten = rewriteRelativeLinks(content, {
       currentFilePluginRelative: flatRelPath,
-      resolveTargetPath: (rel) =>
-        flatLinkTarget({ contract: t.contract, pluginName, pluginRelPath: rel }),
+      resolveTargetPath: (rel) => flatLinkTarget(t.contract, pluginName, rel),
     });
     const outContent =
       artifact.rewriteSkillName && basename(absPath) === "SKILL.md"
@@ -203,8 +201,7 @@ export class FlatWriter implements FlatPluginWriter {
       existing,
       raw,
       pluginName,
-      (pluginPath) =>
-        `./${flatPathOfPluginSuffix({ contract: t.contract, suffix: pluginPath, pluginName })}`
+      (pluginPath) => `./${flatPathOfPluginSuffix(t.contract, pluginPath, pluginName)}`
     );
     for (const w of warnings) this.logger.warn(w);
     await this.fs.writeFile(destPath, content);
@@ -289,7 +286,7 @@ export class FlatWriter implements FlatPluginWriter {
   // reader comparing against the plain outDir string never finds it as a substring.
   private resolvePluginRootAbsolute(t: FlatTarget, suffix: string, pluginName: string): string {
     const normalizedOut = t.outDir.replace(/\\/g, "/");
-    return `${normalizedOut}/${flatPathOfPluginSuffix({ contract: t.contract, suffix, pluginName })}`;
+    return `${normalizedOut}/${flatPathOfPluginSuffix(t.contract, suffix, pluginName)}`;
   }
 
   private async checkCollision(t: FlatTarget, destPath: string, pluginName: string) {

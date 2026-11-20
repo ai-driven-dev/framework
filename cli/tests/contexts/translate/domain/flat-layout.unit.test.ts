@@ -87,9 +87,7 @@ describe("flatHooksBridgeFile", () => {
 
 describe("flatAgentPath", () => {
   it("drops the folders under agents/ so every nesting lands at one path", () => {
-    expect(
-      flatAgentPath({ artifact: AGENTS, pluginName: "p", agentFile: "agents/team/a.md" })
-    ).toBe("A/p-agents/a.md");
+    expect(flatAgentPath(AGENTS, "p", "agents/team/a.md")).toBe("A/p-agents/a.md");
   });
 });
 
@@ -102,13 +100,11 @@ describe("flatPathOfPluginSuffix", () => {
     ["hooks/run.js", "H/p-hooks/run.js"],
     ["README.md", "README.md"],
   ])("moves %s to %s", (suffix, expected) => {
-    expect(flatPathOfPluginSuffix({ contract, suffix, pluginName: "p" })).toBe(expected);
+    expect(flatPathOfPluginSuffix(contract, suffix, "p")).toBe(expected);
   });
 
   it("leaves a path where it is when its artifact is unsupported", () => {
-    expect(
-      flatPathOfPluginSuffix({ contract: contractWith(), suffix: "skills/x/a.md", pluginName: "p" })
-    ).toBe("skills/x/a.md");
+    expect(flatPathOfPluginSuffix(contractWith(), "skills/x/a.md", "p")).toBe("skills/x/a.md");
   });
 });
 
@@ -116,8 +112,7 @@ describe("flatLinkTarget", () => {
   const contract = contractWith({ agents: AGENTS, skills: SKILLS, hooks: HOOKS });
 
   it("moves an agent and a skill, and nothing else", () => {
-    const at = (pluginRelPath: string) =>
-      flatLinkTarget({ contract, pluginName: "p", pluginRelPath });
+    const at = (pluginRelPath: string) => flatLinkTarget(contract, "p", pluginRelPath);
     expect(at("agents/team/a.md")).toBe("A/p-agents/a.md");
     expect(at("skills/x/SKILL.md")).toBe("S/p-skills/x/SKILL.md");
     expect(at("hooks/run.js")).toBe("hooks/run.js");

@@ -32,32 +32,24 @@ export function flatHooksBridgeFile({
 
 /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer, a
  * command naming it and a link to it all resolve to. */
-export function flatAgentPath({
-  artifact,
-  pluginName,
-  agentFile,
-}: {
-  artifact: SupportedArtifact;
-  pluginName: string;
-  agentFile: string;
-}): string {
+export function flatAgentPath(
+  artifact: SupportedArtifact,
+  pluginName: string,
+  agentFile: string
+): string {
   return artifact.path(pluginName, `agents/${basename(agentFile)}`);
 }
 
 /** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
  * else stays where it is. */
-export function flatPathOfPluginSuffix({
-  contract,
-  suffix,
-  pluginName,
-}: {
-  contract: ToolBuildContract;
-  suffix: string;
-  pluginName: string;
-}): string {
+export function flatPathOfPluginSuffix(
+  contract: ToolBuildContract,
+  suffix: string,
+  pluginName: string
+): string {
   const art = contract.artifacts;
   if (suffix.startsWith("agents/") && art.agents.supported) {
-    return flatAgentPath({ artifact: art.agents, pluginName, agentFile: suffix });
+    return flatAgentPath(art.agents, pluginName, suffix);
   }
   if (suffix.startsWith("skills/") && art.skills.supported) {
     return art.skills.path(pluginName, suffix);
@@ -69,13 +61,12 @@ export function flatPathOfPluginSuffix({
 }
 
 /** Where a markdown link's target lands in the flat layout: only agents and skills move. */
-export function flatLinkTarget(path: {
-  contract: ToolBuildContract;
-  pluginName: string;
-  pluginRelPath: string;
-}): string {
-  const { contract, pluginName, pluginRelPath: suffix } = path;
-  return suffix.startsWith("hooks/")
-    ? suffix
-    : flatPathOfPluginSuffix({ contract, suffix, pluginName });
+export function flatLinkTarget(
+  contract: ToolBuildContract,
+  pluginName: string,
+  pluginRelPath: string
+): string {
+  return pluginRelPath.startsWith("hooks/")
+    ? pluginRelPath
+    : flatPathOfPluginSuffix(contract, pluginRelPath, pluginName);
 }
