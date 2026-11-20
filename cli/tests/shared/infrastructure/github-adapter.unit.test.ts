@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { GitHubAdapter } from "../../../../src/contexts/auth/infrastructure/github-adapter.js";
-import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
-import type {
-  HttpGet,
-  HttpGetOptions,
-  HttpResponse,
-} from "../../../../src/shared/ports/http-get.js";
+import { AuthenticationError } from "../../../src/shared/domain/errors.js";
+import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
+import type { HttpGet, HttpGetOptions, HttpResponse } from "../../../src/shared/ports/http-get.js";
 
 function http(
   body: unknown,
@@ -38,7 +34,7 @@ describe("GitHubAdapter", () => {
   it("asks the base it was given", async () => {
     const client = http({ login: "octocat" });
 
-    await new GitHubAdapter(client, "http://127.0.0.1:9").verifyToken("ghp_x");
+    await new GitHubAdapter(client, { apiBase: "http://127.0.0.1:9" }).verifyToken("ghp_x");
 
     expect(client.calls.map((call) => call.url)).toEqual(["http://127.0.0.1:9/user"]);
   });

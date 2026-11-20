@@ -75,7 +75,9 @@ function declaredBy(portText: string): string[] {
 /**
  * Every file under `src/shared/` that is not earned. Domain and ports are earned by two
  * contexts. An infrastructure file is earned when it implements an earned port, when an earned
- * infrastructure file imports it, or when two compositions wire it: no context reaches it.
+ * infrastructure file imports it, or when two compositions wire it: no context reaches it. A
+ * port is also earned when an earned infrastructure file reads it: that adapter is the second
+ * caller its contexts no longer are.
  */
 function unearnedShared(
   files: readonly string[],
@@ -103,9 +105,19 @@ function unearnedShared(
     [...(importers.get(file) ?? [])].filter((i) => i.startsWith("src/composition/")).length >= 2;
   const reachedByEarned = (file: string): boolean =>
     [...(importers.get(file) ?? [])].some((i) => earned.has(i));
+  const readByEarnedAdapter = (file: string): boolean =>
+    [...(importers.get(file) ?? [])].some(
+      (i) => i.startsWith("src/shared/infrastructure/") && earned.has(i)
+    );
+  const ports = shared.filter((file) => file.startsWith("src/shared/ports/"));
 
   for (let grew = true; grew; ) {
     grew = false;
+    for (const file of ports) {
+      if (earned.has(file) || !readByEarnedAdapter(file)) continue;
+      earned.add(file);
+      grew = true;
+    }
     for (const file of infrastructure) {
       if (earned.has(file)) continue;
       if (implemented(file) || wiredTwice(file) || reachedByEarned(file)) {
@@ -198,6 +210,21 @@ describe("the guard itself", () => {
       "src/shared/domain/lonely.ts",
       "src/shared/infrastructure/lonely.ts",
     ]);
+  });
+
+  it("clears a port one context imports when an earned adapter in shared infrastructure reads it", () => {
+    const A = "src/contexts/framework/domain/x.ts";
+    const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
+    const read = "src/shared/ports/read.ts";
+    const lonely = "src/shared/ports/lonely.ts";
+    const adapter = "src/shared/infrastructure/adapter.ts";
+    const importers = new Map([
+      [read, new Set([A, adapter])],
+      [lonely, new Set([A, C1])],
+      [adapter, new Set([C1, C2])],
+    ]);
+
+    expect(unearnedShared([read, lonely, adapter], importers, () => "")).toEqual([lonely]);
   });
 
   it("names an area for every place a caller lives, so two callers are not both 'other'", () => {

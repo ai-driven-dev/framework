@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { GitHubAdapter } from "../../../../src/contexts/auth/infrastructure/github-adapter.js";
+import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";
 import {
@@ -42,7 +42,7 @@ describeIdentityVerifierContract(
     const server = await serveUser();
     const { port } = server.address() as AddressInfo;
     return {
-      verifier: new GitHubAdapter(new HttpClient(), `http://127.0.0.1:${port}`),
+      verifier: new GitHubAdapter(new HttpClient(), { apiBase: `http://127.0.0.1:${port}` }),
       knownToken: KNOWN,
       login: LOGIN,
       refusedToken: REFUSED,

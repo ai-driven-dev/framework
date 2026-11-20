@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { GitHubReleaseAdapter } from "../../../../src/contexts/distribution/infrastructure/github-release-adapter.js";
 import {
   AuthenticationError,
   CatalogFetchAuthError,
   CatalogFetchError,
   HttpNotFoundError,
-} from "../../../../src/shared/domain/errors.js";
-import type { HttpGet } from "../../../../src/shared/ports/http-get.js";
+} from "../../../src/shared/domain/errors.js";
+import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
+import type { HttpGet } from "../../../src/shared/ports/http-get.js";
 
 const REPO = "owner/repo";
 
@@ -22,7 +22,7 @@ function makeHttpThrowing(err: Error) {
   return { get } satisfies HttpGet;
 }
 
-describe("GitHubReleaseAdapter", () => {
+describe("GitHubAdapter", () => {
   describe("listReleaseTags", () => {
     it("lists every tag, component tags included, and leaves the root rule to the domain", async () => {
       const http = makeHttp([
@@ -32,7 +32,7 @@ describe("GitHubReleaseAdapter", () => {
         { tag_name: "v3.9.1" },
         { tag_name: "v3.7.3-pm.1" },
       ]);
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       const result = await adapter.listReleaseTags(REPO);
       expect(result).toEqual([
         "aidd-refine-v1.0.0",
@@ -45,7 +45,7 @@ describe("GitHubReleaseAdapter", () => {
 
     it("requests per_page=100 so root tags are not buried", async () => {
       const http = makeHttp([{ tag_name: "v1.0.0" }]);
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       await adapter.listReleaseTags(REPO);
       expect(http.get).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/releases?per_page=100",
@@ -57,20 +57,20 @@ describe("GitHubReleaseAdapter", () => {
       const http = makeHttpThrowing(
         new HttpNotFoundError("https://api.github.com/repos/owner/repo/releases")
       );
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       const result = await adapter.listReleaseTags(REPO);
       expect(result).toEqual([]);
     });
 
     it("throws CatalogFetchAuthError on HTTP 401/403", async () => {
       const http = makeHttpThrowing(new AuthenticationError("HTTP 401"));
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       await expect(adapter.listReleaseTags(REPO)).rejects.toThrow(CatalogFetchAuthError);
     });
 
     it("throws CatalogFetchError on network error", async () => {
       const http = makeHttpThrowing(new Error("ECONNREFUSED"));
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       await expect(adapter.listReleaseTags(REPO)).rejects.toThrow(CatalogFetchError);
     });
   });
@@ -78,7 +78,7 @@ describe("GitHubReleaseAdapter", () => {
   describe("isRepoPublic", () => {
     it("returns true when the unauthenticated repo request succeeds (public)", async () => {
       const http = makeHttp({ full_name: REPO, private: false });
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       expect(await adapter.isRepoPublic(REPO)).toBe(true);
       expect(http.get).toHaveBeenCalledWith("https://api.github.com/repos/owner/repo");
     });
@@ -87,13 +87,13 @@ describe("GitHubReleaseAdapter", () => {
       const http = makeHttpThrowing(
         new HttpNotFoundError("https://api.github.com/repos/owner/repo")
       );
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       expect(await adapter.isRepoPublic(REPO)).toBe(false);
     });
 
     it("returns true on non-404 errors so a rate-limited public user is not gated", async () => {
       const http = makeHttpThrowing(new AuthenticationError("HTTP 403 rate limit"));
-      const adapter = new GitHubReleaseAdapter(http);
+      const adapter = new GitHubAdapter(http);
       expect(await adapter.isRepoPublic(REPO)).toBe(true);
     });
   });

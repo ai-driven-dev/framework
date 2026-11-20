@@ -4,8 +4,6 @@ import { ListMarketplaces } from "../contexts/distribution/application/list-mark
 import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
 import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.js";
-import { GitHubRawFetcherAdapter } from "../contexts/distribution/infrastructure/github-raw-fetcher-adapter.js";
-import { GitHubReleaseAdapter } from "../contexts/distribution/infrastructure/github-release-adapter.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "../contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
@@ -18,6 +16,7 @@ import type { PluginFetcher } from "../contexts/distribution/ports/plugin-fetche
 import type { ReleaseLister } from "../contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../contexts/distribution/ports/repository-visibility.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
+import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -50,8 +49,9 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter();
   const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
-  const releaseResolver = new GitHubReleaseAdapter(shared.http, shared.tokenProvider);
-  const rawCatalogFetcher = new GitHubRawFetcherAdapter(shared.http, shared.tokenProvider);
+  const github = new GitHubAdapter(shared.http, { tokenProvider: shared.tokenProvider });
+  const releaseResolver = github;
+  const rawCatalogFetcher = github;
   const fetchMarketplaceSource = new FetchMarketplaceSource(
     pluginFetcher,
     rawCatalogFetcher,
