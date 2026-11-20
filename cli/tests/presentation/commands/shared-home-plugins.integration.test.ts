@@ -3,8 +3,8 @@ import { mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises"
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { copyFixtureTree, createTestEnv } from "../../e2e/helpers.js";
-import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.js";
-import { runInProcess } from "../testing/in-process-cli.js";
+import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
+import { runInProcess } from "../testing/in-process-cli.builder.js";
 
 let first: string;
 let second: string;

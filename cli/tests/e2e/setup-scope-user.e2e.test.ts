@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
-import { gitStatusPorcelain } from "../presentation/testing/project-state.js";
+import { gitStatusPorcelain } from "../presentation/testing/project-state.builder.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 
 // CI runners carry no git identity; a commit made by a test brings its own.

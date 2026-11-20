@@ -2,7 +2,7 @@ import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it, vi } from "vitest";
-import { runInProcess } from "./in-process-cli.js";
+import { runInProcess } from "./in-process-cli.builder.js";
 
 // A worker thread is what Stryker runs tests on; the substituted home does not hold there.
 vi.mock("node:worker_threads", () => ({ isMainThread: false }));

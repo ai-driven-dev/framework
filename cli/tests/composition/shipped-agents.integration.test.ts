@@ -5,7 +5,7 @@ import { parseToml } from "../../src/contexts/tools/domain/formats/toml.js";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
 import { createTestEnv } from "../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { runInProcess } from "../presentation/testing/in-process-cli.js";
+import { runInProcess } from "../presentation/testing/in-process-cli.builder.js";
 
 const PLUGIN = "aidd-orchestrator";
 const SOURCE_DIR = join(REPOSITORY_ROOT, "plugins", PLUGIN, "agents");

@@ -12,7 +12,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
 import { runCli } from "../e2e/helpers.js";
 import { expectGolden } from "./expect-golden.js";
-import { twoCaptures } from "./two-captures.js";
+import { twoCaptures } from "./testing/two-captures.builder.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const FRAMEWORK_FIXTURE = join(ROOT, "tests/fixtures/framework-real");

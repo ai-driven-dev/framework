@@ -48,7 +48,6 @@
     "tests/e2e/helpers.ts",
     "tests/e2e/telemetry-report-sandbox.ts",
     "tests/golden/expect-golden.ts",
-    "tests/golden/two-captures.ts",
     "tests/helpers/git-sandbox.ts",
     "tests/helpers/host-record-reading.ts",
     "tests/helpers/install-harness.ts",
@@ -60,10 +59,6 @@
     "tests/helpers/vitest-text-loader.ts",
     "tests/orchestration/testing/build-check-registration.ts",
     "tests/orchestration/testing/build-doctor.ts",
-    "tests/presentation/testing/fixture-setup.ts",
-    "tests/presentation/testing/in-process-cli.ts",
-    "tests/presentation/testing/project-state.ts",
-    "tests/presentation/testing/recipe-fixture.ts",
     "tests/shared/testing/present.ts"
   ],
   "imports": [

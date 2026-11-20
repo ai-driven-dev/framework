@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { seedEmptyManifest } from "../presentation/testing/project-state.js";
+import { seedEmptyManifest } from "../presentation/testing/project-state.builder.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const AIDD_DIR = ".aidd";

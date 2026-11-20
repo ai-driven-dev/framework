@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { seedEmptyManifest } from "../presentation/testing/project-state.js";
+import { seedEmptyManifest } from "../presentation/testing/project-state.builder.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");

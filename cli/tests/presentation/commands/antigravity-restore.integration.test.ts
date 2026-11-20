@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../src/shared/domain/markdown.js";
 import { createTestEnv } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
-import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.js";
-import { runInProcess } from "../testing/in-process-cli.js";
-import { readJson, seedEmptyManifest } from "../testing/project-state.js";
+import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
+import { runInProcess } from "../testing/in-process-cli.builder.js";
+import { readJson, seedEmptyManifest } from "../testing/project-state.builder.js";
 
 const PLUGIN_FIXTURE = join(
   REPOSITORY_ROOT,

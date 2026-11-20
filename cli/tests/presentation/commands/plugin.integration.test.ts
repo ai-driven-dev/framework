@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createTestEnv } from "../../e2e/helpers.js";
-import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.js";
-import { runInProcess } from "../testing/in-process-cli.js";
-import { readJson, seedEmptyManifest } from "../testing/project-state.js";
+import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
+import { runInProcess } from "../testing/in-process-cli.builder.js";
+import { readJson, seedEmptyManifest } from "../testing/project-state.builder.js";
 
 let project: string;
 let home: string;

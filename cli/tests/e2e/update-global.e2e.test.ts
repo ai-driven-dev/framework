@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { seedEmptyManifest } from "../presentation/testing/project-state.js";
+import { seedEmptyManifest } from "../presentation/testing/project-state.builder.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 describe.concurrent("aidd framework update", () => {

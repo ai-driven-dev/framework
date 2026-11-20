@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Scope } from "../../../src/shared/domain/scope.js";
-import { runInProcess } from "../testing/in-process-cli.js";
+import { runInProcess } from "../testing/in-process-cli.builder.js";
 
 let root: string;
 let project: string;

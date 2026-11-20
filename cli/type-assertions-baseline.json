@@ -134,8 +134,8 @@
   "tests/presentation/commands/telemetry-wiring.integration.test.ts": 5,
   "tests/presentation/commands/tool-config.integration.test.ts": 1,
   "tests/presentation/hooks/update-notice-hooks.unit.test.ts": 1,
-  "tests/presentation/testing/in-process-cli.ts": 2,
-  "tests/presentation/testing/project-state.ts": 3,
+  "tests/presentation/testing/in-process-cli.builder.ts": 2,
+  "tests/presentation/testing/project-state.builder.ts": 3,
   "tests/scripts/mutation-shards.integration.test.ts": 2,
   "tests/scripts/profile-copies.integration.test.ts": 1
 }

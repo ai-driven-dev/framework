@@ -9,7 +9,7 @@ import {
   gitStatusPorcelain,
   listFilesUnder,
   readJson,
-} from "../presentation/testing/project-state.js";
+} from "../presentation/testing/project-state.builder.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 
 interface MarketplacesFile {
