@@ -18,6 +18,7 @@ import {
   strykerArgs,
   survivorsOf,
 } from "../../scripts/run-mutation.mjs";
+import mutationConfig from "../../vitest.mutation.config.js";
 import { mutationScopes } from "../shared/testing/json-value.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
@@ -164,6 +165,14 @@ describe("the mutation scripts", () => {
     ]);
     expect(scopesToRun([], withCanary, { all: true })).toEqual(["shared", "canary"]);
     expect(declaration().scopes.canary?.harnessOnly).toBe(true);
+  });
+
+  it("keeps a test that drives the CLI in process out of the worker-thread projects", () => {
+    const unit = mutationConfig.test?.projects?.find(
+      (project) => typeof project === "object" && "test" in project && project.test?.name === "unit"
+    );
+    const excluded = typeof unit === "object" && "test" in unit ? unit.test?.exclude : undefined;
+    expect(excluded).toContain("tests/presentation/commands/unknown-commands.integration.test.ts");
   });
 
   it("names a harness of exactly the three files that reshape every scope", () => {

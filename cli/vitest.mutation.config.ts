@@ -19,11 +19,13 @@ function inProcessCliTests(): string[] {
     .map((path) => path.split("\\").join("/"))
     .filter((path) => path.endsWith(".ts"));
   const imports = (path: string, module: string): boolean =>
-    new RegExp(`from "[^"]*/${module}\\.js"`).test(readFileSync(join(testsDir, path), "utf8"));
+    new RegExp(`from "[^"]*/${module.replaceAll(".", "\\.")}\\.js"`).test(
+      readFileSync(join(testsDir, path), "utf8")
+    );
   const isTest = (path: string): boolean => /\.(unit|integration)\.test\.ts$/.test(path);
-  const drivers = ["in-process-cli"];
+  const drivers = ["in-process-cli.builder"];
   for (const path of files) {
-    if (!isTest(path) && imports(path, "in-process-cli")) {
+    if (!isTest(path) && imports(path, "in-process-cli.builder")) {
       drivers.push(path.replace(/^.*\//, "").replace(/\.ts$/, ""));
     }
   }
