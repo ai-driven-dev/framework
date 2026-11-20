@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { main } = require("../../check/run.cjs");
+const catalogs = require("../../check/generators/catalogs.cjs");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const REPO = path.resolve(__dirname, "../../..");
@@ -25,6 +26,7 @@ beforeEach(() => {
   fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace("plugins/*/agents/*.md", "agents/*.md"));
   fs.mkdirSync(path.join(root, "agents"));
   fs.cpSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/executor.md"));
+  catalogs.run({ root, write: true });
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 
@@ -150,7 +152,7 @@ describe("repository run", () => {
   });
 
   describe("generators", () => {
-    const generator = { name: "fake", run: ({ root: at, write: on }) => {
+    const generator = { name: "fake", watch: ["docs/**"], run: ({ root: at, write: on }) => {
       const file = path.join(at, "generated.txt");
       if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === "fresh\n") return [];
       if (on) fs.writeFileSync(file, "fresh\n");
@@ -172,6 +174,11 @@ describe("repository run", () => {
       assert.equal(fixed.text, "");
       assert.equal(fs.readFileSync(path.join(root, "generated.txt"), "utf8"), "fresh\n");
       assert.equal(call().status, 0);
+    });
+
+    it("runs on a scoped run only when a given file matches its watch", () => {
+      assert.equal(call("agents/executor.md").status, 0);
+      assert.equal(call("docs/a/b.md").status, 1);
     });
   });
 });

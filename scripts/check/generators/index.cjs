@@ -1,4 +1,5 @@
 "use strict";
-// Registered generators: { name, run({ root, write }) => paths of generated files that are stale }.
+// Registered generators: { name, watch, run({ root, write }) => paths of generated files that are stale }.
 // With write false, run changes nothing; with write true it rewrites each stale file and still returns its path.
-module.exports = [];
+// `watch` lists the globs of the files a generator reads or writes: a scoped run runs it only when a given file matches.
+module.exports = [require("./catalogs.cjs"), require("./readme.cjs")];
