@@ -1,6 +1,6 @@
 ---
-objective: "{What must be true when done. One sentence.}"
-success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
+objective: "{{What must be true when done. One sentence.}}"
+success_condition: "{{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}}"
 iteration: 0
 status: pending
 ---
@@ -9,7 +9,7 @@ status: pending
 
 - ENGLISH ONLY
 - Text is straight to the point, no emojis, no style, use bullet points.
-- Replace placeholders (`{variables}`) with actual user inputs.
+- Replace placeholders (`{{variables}}`) with actual user inputs.
 - Define flow of the feature, from start to end.
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
@@ -19,17 +19,17 @@ status: pending
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
 
-# Instruction: {title}
+# Instruction: {{title}}
 
 ## Feature
 
-- **Summary**: {Summarize feature based plan, goal oriented}
+- **Summary**: {{Summarize feature based plan, goal oriented}}
 - **Stack**: `[TECH_STACK_WITH_VERSIONS]` <!-- Output all stacks that will be used! -->
-- **Branch name**: `{suggested-branch-name}`
-- **Parent Plan**: `{master-file}` or `none`
-- **Sequence**: `{N of M}` or `standalone`
-- Confidence: {Confidence}
-- Time to implement: {Time to implement}
+- **Branch name**: `{{suggested-branch-name}}`
+- **Parent Plan**: `{{master-file}}` or `none`
+- **Sequence**: `{{N of M}}` or `standalone`
+- Confidence: {{Confidence}}
+- Time to implement: {{Time to implement}}
 
 ## Architecture projection
 
@@ -37,15 +37,15 @@ status: pending
 
 ### Files to modify
 
-- `path/to/file.ts` - {one-line reason}
+- `path/to/file.ts` - {{one-line reason}}
 
 ### Files to create
 
-- `path/to/new-file.ts` - {one-line purpose}
+- `path/to/new-file.ts` - {{one-line purpose}}
 
 ### Files to delete
 
-- `path/to/dead.ts` - {one-line reason}
+- `path/to/dead.ts` - {{one-line reason}}
 
 ## Applicable rules
 
@@ -53,7 +53,7 @@ status: pending
 
 | Tool   | Name   | Path                                  | Why it applies |
 | ------ | ------ | ------------------------------------- | -------------- |
-| {tool} | {slug} | `<tool rules root>/<cat>/<slug>.<ext>` | {short reason} |
+| {{tool}} | {{slug}} | `{{tool rules root}}/{{cat}}/{{slug}}.{{ext}}` | {{short reason}} |
 
 ## User Journey
 
@@ -68,24 +68,24 @@ flowchart TD
 
 | Risk     | Impact                        | Mitigation                            |
 | -------- | ----------------------------- | ------------------------------------- |
-| {risk 1} | {what breaks if this happens} | {how the plan prevents or handles it} |
+| {{risk 1}} | {{what breaks if this happens}} | {{how the plan prevents or handles it}} |
 
 ## Implementation phases
 
-### Phase {n}: {name}
+### Phase {{n}}: {{name}}
 
-> {straight to point goal}
+> {{straight to point goal}}
 
 #### Tasks
 
-1. {ultra concise task1, with logical ordering}
-2. {...}
-3. {...}
+1. {{ultra concise task1, with logical ordering}}
+2. {{...}}
+3. {{...}}
 
 #### Acceptance criteria
 
-- [ ] {verifiable boolean condition 1}
-- [ ] {verifiable boolean condition 2}
+- [ ] {{verifiable boolean condition 1}}
+- [ ] {{verifiable boolean condition 2}}
 
 ## Amendments
 
@@ -103,4 +103,4 @@ flowchart TD
 
 <!-- A short demo showing the feature works end-to-end, what a REAL user would do to 100% validate the feature. -->
 
-1. {Step 1...}
+1. {{Step 1...}}

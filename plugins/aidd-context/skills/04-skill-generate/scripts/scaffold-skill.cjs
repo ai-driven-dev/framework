@@ -11,8 +11,8 @@ const path = require("node:path");
 
 const ASSETS = path.join(__dirname, "../assets");
 const USAGE = "usage: scaffold-skill.cjs <plan.json> <skill-folder>\n";
-const SKILL_SLOTS = ["<skill-name>", "<description>", "<Skill Name>", "<diagram from the plan>"];
-const ACTION_SLOTS = ["<NN>", "<title>", "<read-next step>"];
+const SKILL_SLOTS = ["{{skill-name}}", "{{description}}", "{{Skill Name}}", "{{diagram from the plan}}"];
+const ACTION_SLOTS = ["{{NN}}", "{{title}}", "{{read-next step}}"];
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 function template(name, slots) {
@@ -67,17 +67,17 @@ function render(plan, skillText, actionText) {
   const files = new Map(plan.actions.map((action, index) => [action.slug, `${number(index)}-${action.slug}.md`]));
   const title = plan.name.split("-").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ");
   const router = skillText
-    .replace("<skill-name>", () => plan.name)
-    .replace("<description>", () => plan.description)
-    .replace("<Skill Name>", () => title)
-    .replace("<diagram from the plan>", () => diagram(plan, files));
+    .replace("{{skill-name}}", () => plan.name)
+    .replace("{{description}}", () => plan.description)
+    .replace("{{Skill Name}}", () => title)
+    .replace("{{diagram from the plan}}", () => diagram(plan, files));
   const out = new Map([["SKILL.md", router]]);
   plan.actions.forEach((action, index) => {
     const next = readNext(action, files);
     const text = actionText
-      .replace("<NN>", () => number(index))
-      .replace("<title>", () => action.title)
-      .replace(/^(\d+\. )<read-next step>\n/mu, (_, step) => (next ? `${step}${next}\n` : ""));
+      .replace("{{NN}}", () => number(index))
+      .replace("{{title}}", () => action.title)
+      .replace(/^(\d+\. )\{\{read-next step\}\}\n/mu, (_, step) => (next ? `${step}${next}\n` : ""));
     out.set(`actions/${files.get(action.slug)}`, text);
   });
   return out;

@@ -119,14 +119,14 @@ describe("skill scaffold", () => {
     const explore = read("actions/02-explore.md");
     assert.match(explore, /^# 02 - Explore\n/u);
     assert.match(explore, /\[conclude\]\(03-conclude\.md\)/u);
-    assert.match(explore, /<result sentence>/u);
-    assert.match(explore, /<step>/u);
-    assert.doesNotMatch(explore, /<NN>|<title>|<read-next step>/u);
+    assert.match(explore, /\{\{result sentence\}\}/u);
+    assert.match(explore, /\{\{step\}\}/u);
+    assert.doesNotMatch(explore, /\{\{NN\}\}|\{\{title\}\}|\{\{read-next step\}\}/u);
   });
 
   it("writes no read-next step in an action that only ends", () => {
     run(withPlan((plan) => (plan.actions[2].next = [{ end: "done" }])));
-    assert.doesNotMatch(read("actions/03-conclude.md"), /\]\(\d\d-|<read-next step>/u);
+    assert.doesNotMatch(read("actions/03-conclude.md"), /\]\(\d\d-|\{\{read-next step\}\}/u);
   });
 
   it("refuses a next action the plan does not hold", () => {
@@ -162,12 +162,12 @@ describe("skill scaffold", () => {
     const copy = path.join(root, "copy");
     fs.cpSync(SKILL, copy, { recursive: true });
     const template = path.join(copy, "assets/action-template.md");
-    fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace("<read-next step>", "<next>"));
+    fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace("{{read-next step}}", "{{next}}"));
     const file = path.join(root, "plan.json");
     fs.writeFileSync(file, JSON.stringify(PLAN));
     const result = spawnSync(process.execPath, [path.join(copy, "scripts/scaffold-skill.cjs"), file, target], { encoding: "utf8" });
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /<read-next step>/u);
+    assert.match(result.stderr, /\{\{read-next step\}\}/u);
   });
 
   it("links every next action in one sentence, so an action with several branches passes the check", () => {
@@ -212,7 +212,7 @@ describe("skill scaffold", () => {
     const result = spawnSync(process.execPath, [path.join(copy, "scripts/scaffold-skill.cjs"), file, target], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
     const explore = read("actions/02-explore.md");
-    assert.doesNotMatch(explore, /<read-next step>|\r/u);
+    assert.doesNotMatch(explore, /\{\{read-next step\}\}|\r/u);
     assert.match(explore, /\[conclude\]\(03-conclude\.md\)/u);
   });
 

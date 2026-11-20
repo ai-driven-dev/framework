@@ -2,7 +2,7 @@
 
 > Fill the transcript and report paths, adapt the report fields to recorded evidence, remove this title and instruction, and pass the remaining brief as the reader's prompt. Replace placeholders and omit empty sections in the produced report.
 
-Read the whole transcript at `<transcript path>` in order, then write your report to `<report path>`. Report only what the instructions the model read, the brief it received, or the environment made it lose: time, tokens, or correctness. Application defects are out of scope.
+Read the whole transcript at `{{transcript path}}` in order, then write your report to `{{report path}}`. Report only what the instructions the model read, the brief it received, or the environment made it lose: time, tokens, or correctness. Application defects are out of scope.
 
 Use these areas to spot relevant issues, without forcing a numbered category:
 
@@ -18,13 +18,13 @@ Use these areas to spot relevant issues, without forcing a numbered category:
 Report format:
 
 ```markdown
-# <session title> (<id>)
+# {{session title}} ({{id}})
 Duration, messages, interventions, compactions, delegations, tool errors.
 
 ## Timeline (relevant events only)
 
 ## Findings, by observed impact
-### F1 - <title>
+### F1 - {{title}}
 - Evidence: [sequence] and a quote of three lines at most
 - Instruction involved: file and passage, when identifiable
 - Cause: established, hypothesis, or unknown; distinguish the observed failure from its explanation

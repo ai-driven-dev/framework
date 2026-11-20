@@ -108,7 +108,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
 | `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<description>` |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `{{description}}` |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
 | `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
@@ -143,7 +143,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-frame.md](skills/06-agent-generate/actions/01-frame.md) | - |
 | `actions` | [02-plan.md](skills/06-agent-generate/actions/02-plan.md) | - |
 | `actions` | [03-write.md](skills/06-agent-generate/actions/03-write.md) | - |
-| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does>. Use to <when to call it>.` |
+| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `{{what it does}}. Use to {{when to call it}}.` |
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
 | `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/06-agent-generate/references/writer.md) | - |

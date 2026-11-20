@@ -1,5 +1,5 @@
-# <title>
+# {{title}}
 
-- <requirement>
+- {{requirement}}
 
-> Fill every `<...>` and delete this line.
+> Fill every `{{...}}` and delete this line.

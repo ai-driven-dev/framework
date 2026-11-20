@@ -26,7 +26,7 @@ Welcome to the [Project Name] contribution guide! We appreciate your interest in
 - ... 
 -->
 
-### <action>
+### {{action}}
 
 1. ...
 
@@ -38,7 +38,7 @@ Welcome to the [Project Name] contribution guide! We appreciate your interest in
 
 ### Documentation links
 
-- [<filename>](./)
+- [{{filename}}](./)
 
 ### Pre-requisites environment setup (optional)
 
