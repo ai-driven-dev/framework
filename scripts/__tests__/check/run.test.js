@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { main } = require("../../check/run.cjs");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const REPO = path.resolve(__dirname, "../../..");
@@ -118,5 +119,59 @@ describe("repository run", () => {
     fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace(/ *"targets": .*\n/u, ""));
     write("agents/b.md", "no front matter\n");
     assert.equal(run().status, 0);
+  });
+
+  it("checks only the artifacts of the given files", () => {
+    assert.equal(run("agents/executor.md").status, 0);
+    write("agents/b.md", "no front matter\n");
+    assert.equal(run("agents/executor.md", "README.md").status, 0);
+    const bad = run(path.join(root, "agents/b.md"));
+    assert.equal(bad.status, 1);
+    assert.match(bad.stdout, /^agents\/b\.md:/mu);
+  });
+
+  it("does not report a baselined finding as stale when its file is not given", () => {
+    baselined("no front matter\n");
+    fs.copyFileSync(path.join(root, "agents/executor.md"), path.join(root, "agents/b.md"));
+    assert.equal(run("agents/executor.md").status, 0);
+    assert.match(run("agents/b.md").stdout, /no longer fires/u);
+    assert.equal(run().status, 1);
+  });
+
+  it("checks engine copies only when an engine file is given", () => {
+    const skill = "plugins/aidd-context/skills/06-agent-generate/scripts/lib/engine.cjs";
+    write(skill, "// edited\n");
+    assert.equal(run("agents/executor.md").status, 0);
+    assert.equal(run(skill).status, 1);
+  });
+
+  it("exits 2 on --update-baseline with files", () => {
+    assert.equal(run("--update-baseline", "agents/executor.md").status, 2);
+  });
+
+  describe("generators", () => {
+    const generator = { name: "fake", run: ({ root: at, write: on }) => {
+      const file = path.join(at, "generated.txt");
+      if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === "fresh\n") return [];
+      if (on) fs.writeFileSync(file, "fresh\n");
+      return ["generated.txt"];
+    } };
+    const call = (...args) => {
+      let text = "";
+      const status = main(["--root", root, ...args], { generators: [generator], out: (t) => (text += t) });
+      return { status, text };
+    };
+
+    it("reports a stale file without --fix, and writes it with --fix", () => {
+      const stale = call();
+      assert.equal(stale.status, 1);
+      assert.match(stale.text, /generated\.txt is stale, run node scripts\/check\/run\.cjs --fix/u);
+      assert.equal(fs.existsSync(path.join(root, "generated.txt")), false);
+      const fixed = call("--fix");
+      assert.equal(fixed.status, 0);
+      assert.equal(fixed.text, "");
+      assert.equal(fs.readFileSync(path.join(root, "generated.txt"), "utf8"), "fresh\n");
+      assert.equal(call().status, 0);
+    });
   });
 });

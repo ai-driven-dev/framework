@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node scripts/check/run.cjs [--update-baseline] [--root <dir>]
+// Usage: node scripts/check/run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]
 // Checks every artifact each contract names in its `targets` (scripts/check/contracts/*.json and plugins/*/skills/*/scripts/contract.json), and the vendored engine copies.
+// With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts, and engine copies are checked only if a file is under scripts/check/engine/ or a skill's scripts/lib/. --update-baseline takes no files.
+// Each generator of scripts/check/generators runs on every run: a stale generated file is a finding, and --fix rewrites it first.
 // Baseline keys are file, rule, message and excerpt (no line), counted. A finding above its count exits 1, and so does an entry that fires less.
 // --update-baseline records the baseline when scripts/check/baseline.json is missing; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
@@ -26,16 +28,24 @@ function expand(root, pattern) {
   return found;
 }
 
-function main(argv) {
+const USAGE = "usage: run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]";
+const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/scripts\/lib\/)/u;
+
+function main(argv, { generators = require("./generators/index.cjs"), out = (text) => process.stdout.write(text) } = {}) {
   const at = argv.indexOf("--root");
-  if (at >= 0 && !argv[at + 1]) throw new ContractError("usage: run.cjs [--update-baseline] [--root <dir>]");
+  if (at >= 0 && !argv[at + 1]) throw new ContractError(USAGE);
   const root = at >= 0 ? path.resolve(argv[at + 1]) : path.resolve(__dirname, "..", "..");
   const update = argv.includes("--update-baseline");
+  const fix = argv.includes("--fix");
+  const given = argv.filter((a, i) => !a.startsWith("--") && (at < 0 || i !== at + 1)).map((a) => path.relative(root, path.resolve(root, a)).split(path.sep).join("/"));
+  if (update && given.length) throw new ContractError(`--update-baseline takes no files. ${USAGE}`);
+  const scoped = given.length > 0;
   const baselineFile = path.join(root, BASELINE);
   const recorded = fs.existsSync(baselineFile) ? JSON.parse(fs.readFileSync(baselineFile, "utf8")) : undefined;
   const rel = (file) => path.relative(root, file).split(path.sep).join("/");
 
   const findings = [];
+  const checked = [];
   const files = [...(fs.existsSync(path.join(root, CONTRACTS)) ? fs.readdirSync(path.join(root, CONTRACTS)).sort().filter((n) => n.endsWith(".json")).map((n) => path.join(root, CONTRACTS, n)) : []), ...expand(root, SKILL_CONTRACTS)];
   for (const file of files) {
     const loaded = loadContract(file);
@@ -44,6 +54,9 @@ function main(argv) {
     const matched = expand(root, targets);
     if (matched.length === 0) throw new ContractError(`${targets}: matches no file`);
     for (const target of matched) {
+      const owned = rel(target);
+      if (scoped && !given.some((g) => (loaded.unit === "file" ? g === owned : g.startsWith(`${owned}/`)))) continue;
+      checked.push(owned);
       for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id} ${f.message} ${f.excerpt ?? ""}`, text: format({ ...f, path: rel(f.path) }) });
     }
   }
@@ -55,24 +68,29 @@ function main(argv) {
   if (update && recorded === undefined) {
     fs.mkdirSync(path.dirname(baselineFile), { recursive: true });
     fs.writeFileSync(baselineFile, `${JSON.stringify(sorted(Object.entries(counts)), null, 2)}\n`);
-    process.stdout.write(`baseline recorded: ${findings.length} findings in ${Object.keys(counts).length} entries\n`);
+    out(`baseline recorded: ${findings.length} findings in ${Object.keys(counts).length} entries\n`);
     return 0;
   }
   const fresh = findings.filter((f) => counts[f.key] > (baseline[f.key] ?? 0)).map((f) => f.text);
+  const inScope = (key) => !scoped || checked.some((t) => key.startsWith(`${t} `) || key.startsWith(`${t}/`));
   const gone = Object.entries(baseline)
-    .filter(([key, count]) => (counts[key] ?? 0) < count)
+    .filter(([key, count]) => inScope(key) && (counts[key] ?? 0) < count)
     .map(([key]) => `baseline entry no longer fires, run node scripts/check/run.cjs --update-baseline: ${key}`);
-  const stale = sync({ root }).map((copy) => `${copy} differs from scripts/check/engine, run node scripts/check/engine/sync.cjs`);
+  const outdated = !scoped || given.some((g) => ENGINE_PATH.test(g));
+  const stale = (outdated ? sync({ root }) : []).map((copy) => `${copy} differs from scripts/check/engine, run node scripts/check/engine/sync.cjs`);
+  for (const generator of generators) {
+    for (const file of generator.run({ root, write: fix })) if (!fix) stale.push(`${file} is stale, run node scripts/check/run.cjs --fix`);
+  }
   if (update) {
     const kept = Object.entries(baseline).map(([key, count]) => [key, Math.min(count, counts[key] ?? 0)]).filter(([, count]) => count > 0);
     fs.writeFileSync(baselineFile, `${JSON.stringify(sorted(kept), null, 2)}\n`);
-    process.stdout.write(`baseline shrunk to ${kept.reduce((n, [, count]) => n + count, 0)} findings in ${kept.length} entries\n`);
+    out(`baseline shrunk to ${kept.reduce((n, [, count]) => n + count, 0)} findings in ${kept.length} entries\n`);
     const open = [...fresh, ...stale];
-    if (open.length) process.stdout.write(`${open.join("\n")}\n`);
+    if (open.length) out(`${open.join("\n")}\n`);
     return open.length ? 1 : 0;
   }
   const lines = [...fresh, ...gone, ...stale];
-  if (lines.length) process.stdout.write(`${lines.join("\n")}\n`);
+  if (lines.length) out(`${lines.join("\n")}\n`);
   return lines.length ? 1 : 0;
 }
 
