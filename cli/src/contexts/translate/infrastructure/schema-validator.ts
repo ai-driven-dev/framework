@@ -5,9 +5,9 @@ import type { JsonSchemaValidator } from "../ports/json-schema-validator.js";
 // CJS interop: ajv v8 + ajv-formats are CommonJS; NodeNext requires createRequire.
 // require("ajv") returns a module where the constructor is at .default.
 const require = createRequire(import.meta.url);
-const ajvModule: { default: new (opts?: unknown) => AjvInstance } = require("ajv");
+const ajvModule = require("ajv") as { default: new (opts?: unknown) => AjvInstance };
 const AjvClass = ajvModule.default;
-const addFormats: (ajv: AjvInstance) => void = require("ajv-formats");
+const addFormats = require("ajv-formats") as (ajv: AjvInstance) => void;
 
 interface ValidateFunction {
   (data: unknown): boolean;

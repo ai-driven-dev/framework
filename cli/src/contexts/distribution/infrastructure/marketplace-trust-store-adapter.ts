@@ -48,7 +48,9 @@ export class MarketplaceTrustStoreAdapter implements MarketplaceTrustStore {
       return [];
     }
     const trusted = asPlainObject(JSON.parse(raw))?.trusted;
-    return Array.isArray(trusted) ? trusted.filter((key) => typeof key === "string") : [];
+    return Array.isArray(trusted)
+      ? trusted.filter((key): key is string => typeof key === "string")
+      : [];
   }
 
   private async write(projectRoot: string, trusted: readonly string[]): Promise<void> {

@@ -43,30 +43,34 @@ export function removeEntriesFromJson(
   sectionKey: string | null,
   keysToRemove: string[]
 ): string {
-  const parsed = asPlainObject(JSON.parse(content)) ?? {};
+  const value: unknown = JSON.parse(content);
+  const parsed = asPlainObject(value);
+  // A root that is not an object holds none of the keys we track: it is written back as it is.
+  if (parsed === null) return JSON.stringify(value, null, 2);
   if (sectionKey === null) {
     for (const key of keysToRemove) delete parsed[key];
     return JSON.stringify(parsed, null, 2);
   }
-  const container = asPlainObject(parsed[sectionKey]) ?? {};
-  for (const key of keysToRemove) delete container[key];
+  const section = parsed[sectionKey] ?? {};
+  const container = asPlainObject(section);
+  if (container !== null) for (const key of keysToRemove) delete container[key];
   // An emptied section must vanish, not linger as `{}`: a settings file sharing its top
   // level with unrelated keys must come back byte-identical once every key we own is gone.
-  if (Object.keys(container).length === 0) delete parsed[sectionKey];
+  if (Object.keys(section).length === 0) delete parsed[sectionKey];
   return JSON.stringify(parsed, null, 2);
 }
 
 export function isMergeContentEmpty(content: string, sectionKey: string | null): boolean {
   try {
     const parsed = asPlainObject(JSON.parse(content));
+    // Limit: a root that is not an object is never empty here, not even `[]`; no merge file
+    // with such a root has been seen.
     if (parsed === null) return false;
     if (sectionKey === null) return Object.keys(parsed).length === 0;
     const otherKeys = Object.keys(parsed).filter((k) => k !== sectionKey);
     if (otherKeys.length > 0) return false;
     const section = parsed[sectionKey];
-    if (!section) return true;
-    const entries = asPlainObject(section);
-    return entries !== null && Object.keys(entries).length === 0;
+    return !section || Object.keys(section).length === 0;
   } catch {
     return false;
   }

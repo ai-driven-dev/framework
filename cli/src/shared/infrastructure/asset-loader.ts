@@ -54,7 +54,7 @@ export class BundledAssetProviderAdapter implements AssetProvider {
     for (const url of candidates) {
       const p = fileURLToPath(url);
       if (existsSync(p)) {
-        return JSON.parse(readFileSync(p, "utf8"));
+        return JSON.parse(readFileSync(p, "utf8")) as object;
       }
     }
     throw new AssetNotFoundError(fileName);

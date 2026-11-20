@@ -25,6 +25,10 @@ describe("isMergeContentEmpty", () => {
       expect(isMergeContentEmpty('{"mcpServers":{"a":{}}}', "mcpServers")).toBe(false);
     });
 
+    it("is empty when the section is the only key and is an empty list", () => {
+      expect(isMergeContentEmpty('{"hooks":[]}', "hooks")).toBe(true);
+    });
+
     it("is not empty when another key sits beside the section", () => {
       expect(isMergeContentEmpty('{"mcpServers":{},"other":1}', "mcpServers")).toBe(false);
     });

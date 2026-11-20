@@ -1,5 +1,6 @@
 {
   "src/contexts/auth/domain/credential-record.ts": 1,
+  "src/contexts/distribution/infrastructure/marketplace-registry-adapter.ts": 1,
   "src/contexts/host-registration/application/read-marketplace-catalog-identity.ts": 2,
   "src/contexts/host-registration/infrastructure/host-cli-adapter.ts": 1,
   "src/contexts/host-registration/infrastructure/marketplace-list-parsers.ts": 2,
@@ -54,9 +55,11 @@
   "src/contexts/tools/domain/sections/models-section.ts": 1,
   "src/contexts/tools/domain/sections/skills-section.ts": 1,
   "src/contexts/translate/application/build-native-tree.ts": 2,
+  "src/contexts/translate/infrastructure/schema-validator.ts": 2,
   "src/contexts/update/infrastructure/npm-registry-release-adapter.ts": 1,
   "src/contexts/update/infrastructure/package-manager-installer-adapter.ts": 2,
   "src/contexts/update/infrastructure/update-check-cache-adapter.ts": 1,
+  "src/shared/infrastructure/asset-loader.ts": 1,
   "tests/composition/runtime-wiring.integration.test.ts": 14,
   "tests/contexts/auth/infrastructure/gh-cli-adapter.integration.test.ts": 1,
   "tests/contexts/auth/ports/identity-verifier.contract.test.ts": 1,

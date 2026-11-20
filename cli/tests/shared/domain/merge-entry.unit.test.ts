@@ -139,6 +139,14 @@ describe("removeEntriesFromJson", () => {
       env: { MY_OWN_VAR: "keep-me" },
     });
   });
+
+  it("writes back a root or a section that is not an object, since none of our keys are in it", () => {
+    expect(JSON.parse(removeEntriesFromJson('["user"]', null, ["playwright"]))).toEqual(["user"]);
+    const section = JSON.stringify({ mcpServers: ["user"] });
+    expect(JSON.parse(removeEntriesFromJson(section, "mcpServers", ["playwright"]))).toEqual({
+      mcpServers: ["user"],
+    });
+  });
 });
 
 describe("hashJsonEntries", () => {

@@ -33,7 +33,7 @@ function registryEntries(raw: string, path: string): MarketplaceData[] {
   }
   const entries = asPlainObject(parsed)?.marketplaces;
   if (!Array.isArray(entries)) unreadable(path, "it carries no `marketplaces` list");
-  return entries;
+  return entries as MarketplaceData[];
 }
 
 export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
