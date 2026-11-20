@@ -74,6 +74,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | A reader outside `tools` names the profile sections it reads in its own `ports/` | `profile-readers-name-their-sections.arch.test.ts`, shrink-only |
 | Tests build a synthetic tool profile with `ProfileBuilder` (`tests/contexts/tools/testing/profiles.ts`) and wrap it with `catalogOf` (`tests/contexts/tools/testing/catalog-of.ts`) instead of the real catalog | none |
 | The real catalog and tool ids reach a test only through `registeredTools()` and `TOOL` in `tests/shared/testing/registered-tools.ts` | none |
+| A GitHub API URL is written in `shared/infrastructure/github-adapter.ts` only | `biome-plugins/one-github-api-url.grit`, `biome-guards-bite.arch.test.ts` |
 
 ### Exceptions
 | Deviation | Why | Closes when |
@@ -85,7 +86,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `src/presentation/deps.ts` imports application interiors to type `Deps`, an `import type` only (`isDrivingPortEdge` in `context-boundary.arch.test.ts`) | the container's shape is the members the commands read; the types erase at build | `createContainer(options)` and `orchestration/` exist and `deps.ts` types with `contract/` types only |
 | The native activation classes stay in `tools` as data (`domain/native-registration/`, spec types in `contract/native-registration-spec.ts`) | moving them to `host-registration` needs a `tools` to `host-registration` edge the graph forbids | the classes move to `host-registration` and profiles move to composition |
 | `tools/domain/formats/toml.ts` imports `smol-toml`, the only domain file that imports a package | one wrapper keeps the package behind one file and `biome.json` denies it elsewhere in the domain | a `TomlCodec` port with an infrastructure adapter replaces it |
-| `shared/domain/` imports `node:path` (`paths.ts`, `source.ts`, `layout/aidd-layout.ts`, `materialization/relative-link-rewrite.ts`) | section 4 allows `node:path` in every pure folder and the target's way out is undecided | no file under `shared/domain` imports `node:path` |
+| `shared/domain/` imports `node:path` (`paths.ts`, `source.ts`, `layout/aidd-layout.ts`) | section 4 allows `node:path` in every pure folder and the target's way out is undecided | no file under `shared/domain` imports `node:path` |
 | The host adapters' `EVENTS` tables (`assets/hooks-runtime/host-*.cjs`) are a second copy of the event fact | the adapters are plain Node and import nothing from the CLI; `profile-file-conformance.ts` holds them equal to the descriptor | the adapters are generated from the descriptor at build time |
 | Each hooks bridge keeps its own `runHook`, `stopReasonOf` and `answerOf` text, and opencode's exports `stopCallsFor` and `postToolUseCallsFor` unread (`kilo-hooks-bridge.ts`, `opencode-hooks-bridge.ts`) | the modules differ in bytes and behaviour (kilo reports a failed hook, opencode ignores it) and the golden freezes them | a PR changes the bridges on purpose and updates their golden |
 | Profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files, and `foreign-suffix-filter.ts` keeps `TOOL_FILE_SUFFIXES`, the suffix vocabulary of the AI tools | the merge into profile data lands with the move of profiles to `composition/tool-profiles/`, and the filter has no catalog to ask (`registeredSuffixesMatchVocabulary` holds it equal to the profiles) | the profiles move to composition and the filter takes its suffixes from them |
@@ -120,7 +121,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `COMMAND_SHAPE_BASELINE` in `command-shape.arch.test.ts`: application classes that answer several questions, implement no port or contract and have no `execute` | each entry becomes a command, or the code map reclassifies it |
 | `HELPERS_BY_DESIGN` in `command-shape.arch.test.ts`: classes the code map keeps as helpers, which answer several questions and have no `execute` | none, deliberate: a design fact, not a debt |
 | `shared/domain/errors.ts` exceeds the file-length cap | the messages that name a command move to the presentation error table |
-| `host-registration/application/withdraw/withdraw-from-host.ts` keeps thin delegating methods to its steps | the project and user flows are called as steps by their orchestrators and the class stops delegating (HR-13) |
 
 ## 10. Checklist for a context's migration PR
 
