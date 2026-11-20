@@ -267,6 +267,15 @@ describe("skill check", () => {
     expectError("sibling");
   });
 
+  it("sibling: a user's skill outside plugins/ may name any plugin's skill", () => {
+    const user = path.join(base, ".claude/skills/demo");
+    fs.cpSync(root, user, { recursive: true });
+    fs.writeFileSync(path.join(user, "references/rubric.md"), "# Rubric\n\n| Case | Answer |\n| --- | --- |\n| any | /aidd-dev:01-plan |\n");
+    assert.deepEqual(run(user), { code: 0, out: "", err: "" });
+    mutate("references/rubric.md", "| any | yes |", "| any | /aidd-dev:01-plan |");
+    expectError("sibling");
+  });
+
   it("a second link to the same file is no finding", () => {
     mutate("actions/01-first.md", "1. Read", "1. Check [the rubric](../references/rubric.md).\n2. Read");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });

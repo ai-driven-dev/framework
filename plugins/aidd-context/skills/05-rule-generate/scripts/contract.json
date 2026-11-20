@@ -2,6 +2,7 @@
   "version": 1,
   "kind": "rule",
   "unit": "file",
+  "scope": ["aidd_docs/rules/*/*.md"],
   "rules": {
     "RULE-01": {
       "op": "template",

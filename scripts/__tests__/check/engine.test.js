@@ -62,6 +62,18 @@ describe("engine", () => {
     assert.match(validate("a.md").err, /unknown key extra/u);
   });
 
+  it("keeps a valid scope and rejects a malformed one", () => {
+    contract({ "DEMO-01": { op: "links", in: "*.md", why: "w", fix: "f" } }, { scope: [".claude/agents/*.md"] });
+    write("a.md", "x\n");
+    assert.equal(validate("a.md").status, 0);
+    for (const scope of [".claude/agents/*.md", [1], ["/abs/*.md"], ["a/../b"], [""]]) {
+      contract({ "DEMO-01": { op: "links", in: "*.md", why: "w", fix: "f" } }, { scope });
+      const bad = validate("a.md");
+      assert.equal(bad.status, 2);
+      assert.match(bad.err, /scope must be/u);
+    }
+  });
+
   it("exits 2 when a rule id does not follow the kind or the contract is not JSON", () => {
     contract({ "OTHER-01": { op: "links", in: "*.md", why: "w", fix: "f" } });
     write("a.md", "x\n");

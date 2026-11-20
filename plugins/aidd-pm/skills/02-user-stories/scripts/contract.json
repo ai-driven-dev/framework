@@ -2,6 +2,7 @@
   "version": 1,
   "kind": "story",
   "unit": "file",
+  "scope": ["aidd_docs/backlog/stories/*.md"],
   "rules": {
     "STORY-01": {
       "op": "template",
