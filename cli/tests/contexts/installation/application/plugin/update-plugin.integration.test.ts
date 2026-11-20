@@ -9,8 +9,8 @@ import type { PluginFetchOptions } from "../../../../../src/contexts/installatio
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import {
   fakeBuildSources,

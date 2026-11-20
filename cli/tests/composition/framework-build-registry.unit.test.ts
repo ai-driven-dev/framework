@@ -8,8 +8,8 @@ import {
 } from "../../src/contexts/translate/contract/build-targets.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
-import { CapturingLogger } from "../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
 
 const ALL_TARGETS: readonly FrameworkBuildTarget[] = catalogOf().idsInCanonicalOrder("ai");
 const ALL_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];

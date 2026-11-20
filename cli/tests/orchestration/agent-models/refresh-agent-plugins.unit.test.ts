@@ -3,7 +3,7 @@ import type { AgentPluginPlacement } from "../../../src/contexts/installation/ap
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT = "/project";
 

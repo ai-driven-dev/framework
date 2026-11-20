@@ -6,7 +6,7 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/orchestration/plugin/install-from-marketplace.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,

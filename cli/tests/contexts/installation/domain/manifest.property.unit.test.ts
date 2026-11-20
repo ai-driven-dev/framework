@@ -6,7 +6,7 @@ import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import {
   registeredTools,
   resolveRegisteredToolId,
-} from "../../../shared/testing/registered-tools.js";
+} from "../../../shared/testing/registered-tools.builder.js";
 
 /** 32-char lowercase hex → valid MD5. fast-check v4 removed hexaString; use stringMatching. */
 const md5Arb = fc.stringMatching(/^[0-9a-f]{32}$/);

@@ -7,10 +7,10 @@ import type {
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const HOST_NAME = "aidd-framework";
 const REF = `plugin@${HOST_NAME}`;

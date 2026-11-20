@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toInstalledRule } from "../../../../src/contexts/installation/domain/installed-rule.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("toInstalledRule — one installed file, read as a rule", () => {
   it("names the rule from its own file, never from the frontmatter", () => {

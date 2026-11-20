@@ -11,10 +11,10 @@ import { InMemoryManifestRepository } from "../../contexts/installation/testing/
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const REF = "test-plugin@aidd-framework";
 

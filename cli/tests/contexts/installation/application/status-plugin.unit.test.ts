@@ -6,7 +6,7 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../testing/manifest-builder.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";

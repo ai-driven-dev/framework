@@ -8,9 +8,9 @@ import type { IsWithinUserScope } from "../../../../../src/contexts/machine-clai
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import { userScopeFileGuard } from "../../testing/user-scope-file-guard.js";
 

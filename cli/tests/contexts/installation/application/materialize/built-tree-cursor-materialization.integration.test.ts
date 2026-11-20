@@ -3,8 +3,8 @@ import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 

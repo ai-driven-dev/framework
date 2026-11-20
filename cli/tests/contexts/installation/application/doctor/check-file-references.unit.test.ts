@@ -5,8 +5,8 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../testing/manifest-builder.js";
 

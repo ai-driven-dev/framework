@@ -10,7 +10,7 @@ import {
   type HookEventRoute,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import type { HooksInvariant } from "../../../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';
 const OWNER = { toolId: TOOL.claude, directory: ".claude/", adapter: UNSTAMPED };

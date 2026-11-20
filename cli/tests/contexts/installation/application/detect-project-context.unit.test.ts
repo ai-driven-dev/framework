@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const PROJECT_ROOT = "/proj";
 

@@ -11,8 +11,8 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();

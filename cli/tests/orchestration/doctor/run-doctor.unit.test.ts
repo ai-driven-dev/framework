@@ -14,7 +14,7 @@ import {
   initAndInstall,
 } from "../../contexts/installation/testing/installation-deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

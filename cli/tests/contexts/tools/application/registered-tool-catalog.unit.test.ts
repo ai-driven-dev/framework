@@ -9,7 +9,7 @@ import {
   ToolListMismatchError,
   UnregisteredToolError,
 } from "../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { catalogOf } from "../testing/catalog-of.js";
 
 describe("the registered tool catalog", () => {

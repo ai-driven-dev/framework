@@ -7,8 +7,11 @@ import {
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
 } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../../shared/testing/faulting-file-adapter.fake.js";
 
 const BASE = {
   enablementIsMachineGlobal: true,

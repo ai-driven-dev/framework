@@ -2,7 +2,7 @@ import type { BuiltMaterializationDeps } from "../../../../src/contexts/installa
 import { TranslateDistribution } from "../../../../src/contexts/translate/application/translate-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.js";
+import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.builder.js";
 
 /** The real translation: pure, so a test needs no fake of it. */
 export const translateDistribution = new TranslateDistribution(registeredManifestProbes());

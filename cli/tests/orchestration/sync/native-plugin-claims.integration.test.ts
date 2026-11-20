@@ -28,11 +28,11 @@ import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.js";
 

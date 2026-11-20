@@ -9,8 +9,8 @@ import {
   printRefreshResults,
   printRegisteredMarketplaces,
 } from "../../../src/presentation/display/marketplace-display.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 function marketplace(name: string, version?: string): Marketplace {
   return Marketplace.fromJSON({

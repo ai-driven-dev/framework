@@ -8,13 +8,13 @@ import {
   registeredTools,
   resolveRegisteredToolId,
   TOOL,
-} from "../../../../shared/testing/registered-tools.js";
+} from "../../../../shared/testing/registered-tools.builder.js";
 import {
   KeepPrompter,
   OverwritePrompter,
   ScriptedPrompter,
-} from "../../../../shared/testing/scripted-prompter.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+} from "../../../../shared/testing/scripted-prompter.fake.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";

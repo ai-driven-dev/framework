@@ -1,4 +1,4 @@
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 /** The registered profiles, as the contract answers them: what a test hands the code that asks a
  * tool what it declares. */

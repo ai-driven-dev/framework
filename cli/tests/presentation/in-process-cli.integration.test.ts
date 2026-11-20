@@ -164,7 +164,7 @@ describe("running a command in process", () => {
         program.command("clean").action(async () => {
           const { bindContainer } = await import("../../src/composition/container.js");
           const { CLIOutput } = await import("../../src/presentation/output.js");
-          const { registeredTools } = await import("../shared/testing/registered-tools.js");
+          const { registeredTools } = await import("../shared/testing/registered-tools.builder.js");
           built.push(
             await bindContainer(registeredTools())(
               process.cwd(),

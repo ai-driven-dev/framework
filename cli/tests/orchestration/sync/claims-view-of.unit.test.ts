@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const tool = TOOL.copilot;
 const other = TOOL.codex;

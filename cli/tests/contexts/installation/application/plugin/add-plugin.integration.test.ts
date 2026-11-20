@@ -13,9 +13,9 @@ import {
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 import {
   installViaModeA,

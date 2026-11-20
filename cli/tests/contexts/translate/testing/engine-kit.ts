@@ -9,8 +9,8 @@ import {
   type PluginComponents,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const manifestPaths = registeredManifestPaths();
 

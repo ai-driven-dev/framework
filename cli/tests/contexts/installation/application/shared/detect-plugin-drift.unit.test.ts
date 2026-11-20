@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest-builder.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";

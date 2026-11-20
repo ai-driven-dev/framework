@@ -6,8 +6,8 @@ import {
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
 } from "../../../src/presentation/display/sync-display.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 describe("printRestoreOutcome", () => {
   it("says nothing was modified when nothing errored, restored or resisted restoration", () => {

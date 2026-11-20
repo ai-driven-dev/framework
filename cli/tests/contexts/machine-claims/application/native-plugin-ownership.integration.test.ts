@@ -3,8 +3,8 @@ import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
 } from "../../../../src/contexts/machine-claims/application/native-plugin-ownership.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import {
   InMemoryMachineManifest,
   InMemoryMachineManifestRepository,

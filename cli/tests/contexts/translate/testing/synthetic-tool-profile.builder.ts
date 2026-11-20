@@ -1,6 +1,6 @@
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { contractToolProfile, type ProfileAnswers } from "./contract-tool-profile.builder.js";
 import { flatPluginsStub } from "./flat-plugins-stub.builder.js";
 

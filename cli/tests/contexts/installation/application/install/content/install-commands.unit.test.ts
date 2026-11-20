@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { InstallCommands } from "../../../../../../src/contexts/installation/application/install/content/install-commands.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
 import { FileHash, GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
-import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const antigravity = registeredTools().aiProfile(TOOL.antigravity);
 const claude = registeredTools().aiProfile(TOOL.claude);

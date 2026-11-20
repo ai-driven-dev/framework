@@ -1,13 +1,13 @@
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
  * .opencode/hooks/<plugin>/ like .claude/ and .cursor/ already are. Never .opencode/plugin/,
  * which OpenCode's own loader imports in-process, where a plain hook script kills the host. */
 
 import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 let home: string;
 

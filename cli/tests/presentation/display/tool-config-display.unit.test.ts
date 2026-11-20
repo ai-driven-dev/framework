@@ -5,8 +5,8 @@ import {
   printToolRemoved,
   printUpdateResult,
 } from "../../../src/presentation/display/tool-config-display.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 describe("printToolAlreadyInstalled", () => {
   it("warns that the tool is there and names the flag that reinstalls it", () => {

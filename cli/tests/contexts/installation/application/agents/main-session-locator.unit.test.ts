@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MainSessionLocator } from "../../../../../src/contexts/installation/application/agents/main-session-locator.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const HOME = "/home/me";
 const JSONC = join(HOME, ".config", "opencode", "opencode.jsonc");

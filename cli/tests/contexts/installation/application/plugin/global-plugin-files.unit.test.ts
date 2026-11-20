@@ -8,8 +8,8 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
 const insideUserScope: IsWithinUserScope = () => true;

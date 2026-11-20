@@ -8,7 +8,7 @@ import {
 } from "../../../src/orchestration/setup/run-setup.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
+import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 /** The setup scenario as composition wires it: the steps and the questions as two bundles, the
  * manifest initialization as a third. */

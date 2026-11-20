@@ -14,8 +14,8 @@ import {
   type ActivationMarketplace,
 } from "../../src/orchestration/sync/activate-native-tools.js";
 import { SyncSettings } from "../../src/orchestration/sync/sync-settings.js";
-import { FakeCurrentVersion } from "../shared/testing/fake-current-version.js";
-import { registeredTools } from "../shared/testing/registered-tools.js";
+import { FakeCurrentVersion } from "../shared/testing/fake-current-version.fake.js";
+import { registeredTools } from "../shared/testing/registered-tools.builder.js";
 
 type Hosts = ConstructorParameters<typeof RegisterPluginWithHost>;
 type Loader = ConstructorParameters<typeof LoadSyncContext>;

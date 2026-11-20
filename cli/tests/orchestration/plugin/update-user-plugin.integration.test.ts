@@ -18,11 +18,11 @@ import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-so
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const { copilot, cursor } = TOOL;
 

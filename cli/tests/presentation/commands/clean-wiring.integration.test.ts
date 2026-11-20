@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();

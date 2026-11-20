@@ -6,10 +6,13 @@ import {
   withoutMissingFiles,
 } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { MachinePlugin } from "../testing/machine-plugin.fake.js";
 
 const HOME = "/home/u";

@@ -15,8 +15,8 @@ import type { LayoutSection } from "../../../../src/contexts/tools/domain/sectio
 import type { ManifestSection } from "../../../../src/contexts/tools/domain/sections/manifest-section.js";
 import type { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
-import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { flatPlugins, type PluginSet } from "./plugin-mode.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */

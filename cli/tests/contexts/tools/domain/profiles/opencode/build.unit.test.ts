@@ -5,7 +5,7 @@ import type {
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
 import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.

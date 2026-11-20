@@ -6,8 +6,8 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import { buildInstallationDeps } from "../../testing/installation-deps.js";

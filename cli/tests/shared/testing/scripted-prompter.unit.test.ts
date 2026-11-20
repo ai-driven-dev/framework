@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ScriptedPrompter } from "./scripted-prompter.js";
+import { ScriptedPrompter } from "./scripted-prompter.fake.js";
 
 describe("ScriptedPrompter", () => {
   it("refuses a queued answer of another kind than the prompt asked", async () => {

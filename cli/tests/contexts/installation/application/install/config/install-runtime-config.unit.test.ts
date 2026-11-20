@@ -5,8 +5,8 @@ import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../../../src/shared/domain/file.js";
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
-import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
-import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.fake.js";
 import {
   buildInstallationDeps,
   initProject,

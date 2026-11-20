@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { translatePlugin } from "./translate-plugin.js";
 
 const BARE_MANIFEST = "plugin.json";

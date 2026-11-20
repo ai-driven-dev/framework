@@ -1,7 +1,7 @@
 import { expect } from "vitest";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   PLUGIN_RELATIVE_PATHS,
   PLUGIN_TREE_SOURCES,

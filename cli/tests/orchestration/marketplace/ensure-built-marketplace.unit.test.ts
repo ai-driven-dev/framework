@@ -12,7 +12,7 @@ import type {
   ResolvedMarketplace,
 } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { EnsureBuiltMarketplace } from "../../../src/orchestration/marketplace/ensure-built-marketplace.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 type RegisteredCommand = Parameters<EnsureBuiltMarketplace["execute"]>[0];
 

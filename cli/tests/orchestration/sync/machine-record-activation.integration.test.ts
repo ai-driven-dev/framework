@@ -4,8 +4,8 @@ import { RecordActivation } from "../../../src/contexts/installation/application
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const { claude, codex } = TOOL;
 

@@ -13,7 +13,7 @@ import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
+import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 /** The user marketplace removal as composition wires it. */
 export function userMarketplaceRemover(

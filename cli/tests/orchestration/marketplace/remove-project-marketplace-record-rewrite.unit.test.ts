@@ -9,9 +9,9 @@ import {
   spiedRecordRules,
 } from "../../contexts/installation/testing/spy-record-rules.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
-import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.js";
 
 const PROJECT_ROOT = "/test-project";

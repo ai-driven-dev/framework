@@ -1,7 +1,10 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { errnoError, FaultingFileAdapter } from "../../shared/testing/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 
 vi.mock("node:path", async (importOriginal) => {
   const path = await importOriginal<typeof import("node:path")>();

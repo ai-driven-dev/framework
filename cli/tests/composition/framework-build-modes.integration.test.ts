@@ -7,10 +7,10 @@ import { createFrameworkBuildUseCase } from "../../src/composition/translate.js"
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { CapturingLogger } from "../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../shared/testing/seed-from-directory.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 

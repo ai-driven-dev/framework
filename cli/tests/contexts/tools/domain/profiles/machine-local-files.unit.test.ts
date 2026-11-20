@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { registeredAiProfile, registeredProfile } from "../../testing/catalog-of.js";
 
 describe("ToolProfile.machineLocalFiles()", () => {

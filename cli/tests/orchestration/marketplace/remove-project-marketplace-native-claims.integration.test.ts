@@ -11,10 +11,13 @@ import { FileHash } from "../../../src/shared/domain/file.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { errnoError, FaultingFileAdapter } from "../../shared/testing/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
-import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.js";
 
 const { cursor, codex } = TOOL;

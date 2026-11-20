@@ -8,7 +8,7 @@ import {
   requireAgentHosts,
 } from "../../../src/presentation/commands/setup.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
 function refuseByThrowing() {
   return vi.spyOn(process, "exit").mockImplementation(() => {

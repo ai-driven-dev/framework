@@ -16,11 +16,11 @@ import type { AiToolId, IdeToolId } from "../../../../src/shared/domain/tool.js"
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");

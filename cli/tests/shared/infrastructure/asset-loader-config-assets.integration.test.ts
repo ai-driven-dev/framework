@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { AssetNotFoundError } from "../../../src/shared/domain/errors.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
-import { registeredTools, TOOL } from "../testing/registered-tools.js";
+import { registeredTools, TOOL } from "../testing/registered-tools.builder.js";
 
 const CONFIGS = fileURLToPath(new URL("../../../assets/configs/", import.meta.url));
 const catalog = wireTools();

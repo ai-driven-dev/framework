@@ -16,11 +16,11 @@ import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { RecordingPrompter } from "../../shared/testing/recording-prompter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";

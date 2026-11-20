@@ -7,8 +7,8 @@ import type {
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
-import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const { copilot, codex } = TOOL;
 

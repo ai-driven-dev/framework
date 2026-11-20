@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../testing/engine-kit.js";
 import { codex, cursor, opencode } from "../testing/registered-profiles.js";
 

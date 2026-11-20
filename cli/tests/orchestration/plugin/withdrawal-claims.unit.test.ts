@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginRemovalClaims } from "../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import { withdrawalClaimsOf } from "../../../src/orchestration/plugin/withdrawal-claims.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 function machineClaims(overrides: Partial<PluginRemovalClaims> = {}): PluginRemovalClaims {
   return {

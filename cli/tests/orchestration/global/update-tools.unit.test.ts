@@ -9,8 +9,8 @@ import {
   initProject,
   installTool,
 } from "../../contexts/installation/testing/installation-deps.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const CURRENT_VERSION = new FakeCurrentVersion();
 

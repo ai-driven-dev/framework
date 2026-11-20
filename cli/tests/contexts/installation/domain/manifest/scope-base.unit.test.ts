@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveScopeBase } from "../../../../../src/contexts/installation/domain/manifest/scope-base.js";
 import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_BASE = "/home/u/.tool/plugins";

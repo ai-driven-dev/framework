@@ -1,8 +1,8 @@
 import { wireTools } from "../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
-import { TOOL } from "../testing/registered-tools.js";
-import { describeAssetProviderContract } from "../testing/run-asset-provider-contract.js";
-import { StubAssetProvider } from "../testing/stub-asset-provider.js";
+import { TOOL } from "../testing/registered-tools.builder.js";
+import { describeAssetProviderContract } from "../testing/run-asset-provider.contract.js";
+import { StubAssetProvider } from "../testing/stub-asset-provider.fake.js";
 
 const heldAsset = { toolId: TOOL.claude, fileName: "settings.json" };
 

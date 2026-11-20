@@ -4,13 +4,13 @@ import "../../../../../src/composition/translate.js";
 import { DiskSink } from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   buildContractOf,
   declaredBuildContract,
-} from "../../../../shared/testing/registered-build-contracts.js";
-import { registeredTools } from "../../../../shared/testing/registered-tools.js";
+} from "../../../../shared/testing/registered-build-contracts.builder.js";
+import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-agent-path");

@@ -8,7 +8,7 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
+import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 /** The project marketplace removal as composition wires it, over a given cleanup. */
 export function projectMarketplaceRemover(

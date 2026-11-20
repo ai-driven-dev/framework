@@ -2,8 +2,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { UserManifestRepositoryAdapter } from "../../../src/contexts/installation/infrastructure/user-manifest-repository-adapter.js";
-import { InMemoryRepository } from "../testing/in-memory-repository.js";
-import { describeLockContract, type LockSubject } from "../testing/run-lock-contract.js";
+import { InMemoryRepository } from "../testing/in-memory-repository.fake.js";
+import { describeLockContract, type LockSubject } from "../testing/run-lock.contract.js";
 
 describeLockContract(
   "the in-memory repository",

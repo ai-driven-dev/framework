@@ -7,10 +7,10 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   FakeHostPluginRegistry,
   type FixedHostRegistry,

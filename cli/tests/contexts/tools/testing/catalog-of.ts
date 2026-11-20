@@ -15,7 +15,7 @@ import type { AiToolId, ToolId, ToolIdResolver } from "../../../../src/shared/do
 import {
   TOOL as REGISTERED_TOOL_IDS,
   resolveRegisteredToolId as registeredToolIdResolver,
-} from "../../../shared/testing/registered-tools.js";
+} from "../../../shared/testing/registered-tools.builder.js";
 
 /** A catalog over the given profiles, the registered ones when none is given, canonical order
  * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a

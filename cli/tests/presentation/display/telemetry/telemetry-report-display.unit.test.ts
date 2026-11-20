@@ -14,8 +14,8 @@ import {
 } from "../../../../src/contexts/telemetry/contract/usage-report.js";
 import { selectorsOf } from "../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { printUsageReport } from "../../../../src/presentation/display/telemetry/telemetry-report-display.js";
-import { CapturingOutput } from "../../../shared/testing/capturing-output.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const sum = (known: number, unknownRecords = 0) => ({ known, unknownRecords });
 /** `unknown` calls of `records` did not report their cache read. */

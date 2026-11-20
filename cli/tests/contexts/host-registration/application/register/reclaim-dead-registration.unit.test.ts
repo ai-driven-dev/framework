@@ -9,10 +9,10 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../../../src/shared/domain/layout/aidd-layout.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";

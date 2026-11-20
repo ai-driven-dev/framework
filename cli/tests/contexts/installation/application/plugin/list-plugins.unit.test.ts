@@ -3,7 +3,7 @@ import { ListPlugins } from "../../../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest-builder.js";
 
 function makeManifestWithPlugin(): Manifest {

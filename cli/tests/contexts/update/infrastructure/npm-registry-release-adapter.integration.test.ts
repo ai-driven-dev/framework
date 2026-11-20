@@ -3,7 +3,7 @@ import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infra
 import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
 import type { HttpGet, HttpGetOptions } from "../../../../src/shared/ports/http-get.js";
 import type { ReleaseLister } from "../../../../src/shared/ports/release-lister.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 
 const NPM_URL = "https://registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags";
 

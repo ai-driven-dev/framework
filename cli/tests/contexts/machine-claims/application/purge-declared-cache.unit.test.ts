@@ -1,9 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const CACHE_ROOT = "/cache";
 const CANDIDATE = join(CACHE_ROOT, "mkt");

@@ -11,7 +11,7 @@ import { ReleaseClaims } from "../../../src/contexts/machine-claims/application/
 import { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
+import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 type Constructed = ConstructorParameters<typeof CleanProject>;
 type Files = ConstructorParameters<typeof RemoveProjectFiles>;

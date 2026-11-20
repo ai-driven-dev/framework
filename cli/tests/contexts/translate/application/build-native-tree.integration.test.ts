@@ -10,11 +10,11 @@ import {
   JsonSchemaValidationError,
 } from "../../../../src/shared/domain/errors.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");

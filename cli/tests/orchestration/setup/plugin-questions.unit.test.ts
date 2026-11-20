@@ -6,7 +6,7 @@ import {
 } from "../../../src/orchestration/setup/plugin-questions.js";
 import { AmbiguousPluginMatchError } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
+import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 
 function match(marketplaceName: string): PluginSourceMatch {
   return {

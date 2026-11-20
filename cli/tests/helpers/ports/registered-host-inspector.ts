@@ -1,6 +1,6 @@
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
+import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 /** The host registration inspection wired over the registered tools, as composition wires it. */
 export function registeredHostInspector(

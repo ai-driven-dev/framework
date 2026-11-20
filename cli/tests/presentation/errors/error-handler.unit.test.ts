@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { failCommand } from "../../../src/presentation/errors/error-translator.js";
 import { AuthenticationError, InputRequiredError } from "../../../src/shared/domain/errors.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
 /**
  * `process.exit` returns `never`, and so does `failCommand`: a double that returns

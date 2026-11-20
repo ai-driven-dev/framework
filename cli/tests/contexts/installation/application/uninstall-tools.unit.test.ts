@@ -21,9 +21,9 @@ import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.js";
 import { buildInstallationDeps, initProject, installTool } from "../testing/installation-deps.js";
 

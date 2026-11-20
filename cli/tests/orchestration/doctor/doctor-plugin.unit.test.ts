@@ -19,7 +19,7 @@ import { aManifest } from "../../contexts/installation/testing/manifest-builder.
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "../testing/build-check-registration.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";

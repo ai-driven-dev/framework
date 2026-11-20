@@ -6,8 +6,8 @@ import {
   buildCodexMarketplace,
   buildCodexMarketplaceEntry,
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.js";
 
 const HOOKS_JSON = JSON.stringify({

@@ -7,7 +7,7 @@ import {
   printPluginsUpdated,
   printSearchHits,
 } from "../../../src/presentation/display/plugin-display.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
 function marketplace(name: string): Marketplace {
   return Marketplace.create({

@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
-import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import {

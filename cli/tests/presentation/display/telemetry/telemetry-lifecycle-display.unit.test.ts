@@ -6,7 +6,7 @@ import {
   printOffResult,
   printOnResult,
 } from "../../../../src/presentation/display/telemetry/telemetry-lifecycle-display.js";
-import { CapturingOutput } from "../../../shared/testing/capturing-output.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 
 const ON: Extract<EnableTelemetryResult, { status: "on" }> = {
   status: "on",

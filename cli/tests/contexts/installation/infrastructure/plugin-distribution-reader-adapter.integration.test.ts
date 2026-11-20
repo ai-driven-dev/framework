@@ -12,8 +12,8 @@ import type {
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { MANIFEST_PROBES } from "../testing/manifest-probes.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");

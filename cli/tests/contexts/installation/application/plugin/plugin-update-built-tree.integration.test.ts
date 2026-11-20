@@ -11,9 +11,9 @@ import type { IsWithinUserScope } from "../../../../../src/contexts/machine-clai
 import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";

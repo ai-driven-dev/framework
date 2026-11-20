@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 describe("ConfigSection", () => {
   describe("constructor", () => {

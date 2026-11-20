@@ -8,7 +8,7 @@ import {
   flatPlacement,
   nativeLayout,
 } from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
-import { nativeOf } from "../../../../shared/testing/native-plugin-answers.js";
+import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import {
   answersOf,
   flatOf,

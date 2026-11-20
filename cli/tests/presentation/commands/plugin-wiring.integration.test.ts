@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const pluginRemove = vi.fn();
 const userPluginRemove = vi.fn();

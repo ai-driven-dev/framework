@@ -4,8 +4,8 @@ import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
 import { pluginRemover } from "../../testing/plugin-remover.js";

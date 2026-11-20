@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { TrackedSettingsFile } from "../../../../../src/contexts/installation/application/sync/tracked-settings-file.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const ROOT = "/project";
 const SETTINGS = ".claude/settings.json";

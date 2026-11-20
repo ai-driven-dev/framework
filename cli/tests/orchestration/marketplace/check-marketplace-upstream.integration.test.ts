@@ -12,9 +12,9 @@ import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../shared/testing/seed-from-directory.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";

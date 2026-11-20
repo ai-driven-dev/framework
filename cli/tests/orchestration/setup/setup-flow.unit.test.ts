@@ -8,7 +8,7 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../src/shared/domain/errors.js";
-import { flowTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
 

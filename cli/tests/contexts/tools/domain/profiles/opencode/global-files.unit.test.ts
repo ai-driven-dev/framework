@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { opencodeGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-paths.js";
-import { TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { registeredAiConfig } from "../../../testing/catalog-of.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };

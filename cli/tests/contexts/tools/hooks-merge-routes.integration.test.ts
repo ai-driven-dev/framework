@@ -12,9 +12,9 @@ import {
   PluginDistribution,
 } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { registeredAiProfile } from "./testing/catalog-of.js";
 
 /**

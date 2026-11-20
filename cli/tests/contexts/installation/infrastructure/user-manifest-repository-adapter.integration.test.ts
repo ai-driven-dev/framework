@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
-import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.js";
+import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;

@@ -30,5 +30,5 @@ paths:
 
 - `tests/contexts/tools/` mirrors the source, except the `hooks-*.integration.test.ts` suites at its root, which run each tool's hook runtime end to end; `profile-conformance.ts` and `profile-file-conformance.ts` in `testing/` hold what every profile must pass.
 - A profile's declared data gets no test of its own; a rule over it is a conformance check, proven against a profile built to break it.
-- `aProfile()` in `testing/profiles.ts` builds a synthetic profile; `registeredTools()` and `TOOL` in `tests/shared/testing/registered-tools.ts` give the registered catalog and ids.
+- `aProfile()` in `testing/profiles.ts` builds a synthetic profile; `registeredTools()` and `TOOL` in `tests/shared/testing/registered-tools.builder.ts` give the registered catalog and ids.
 - New tests take tools from the shared kit `registeredTools()`; one over every tool walks `REGISTERED_PROFILES`.

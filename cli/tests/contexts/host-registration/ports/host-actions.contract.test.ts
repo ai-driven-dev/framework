@@ -2,7 +2,7 @@ import { chmod, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe } from "vitest";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import {
   describeHostActionsContract,
   type HostActionsScenario,

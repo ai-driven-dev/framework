@@ -13,12 +13,12 @@ import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.js";
-import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { flowTools } from "../../shared/testing/registered-tools.js";
-import { KeepPrompter } from "../../shared/testing/scripted-prompter.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
+import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { flowTools } from "../../shared/testing/registered-tools.builder.js";
+import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
-import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
+import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
 import {
   distOf,

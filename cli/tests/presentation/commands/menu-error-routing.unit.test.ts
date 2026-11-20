@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { routeMenuError } from "../../../src/presentation/commands/menu.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
 /** Makes the `never` return observable: both routing branches call process.exit. */
 class ProcessExited extends Error {

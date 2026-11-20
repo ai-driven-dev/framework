@@ -12,9 +12,9 @@ import {
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../shared/testing/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";

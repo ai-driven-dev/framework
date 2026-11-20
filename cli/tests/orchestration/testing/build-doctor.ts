@@ -10,7 +10,7 @@ import { DetectPluginDrift } from "../../../src/contexts/installation/applicatio
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import type { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "./build-check-registration.js";
 
 export function buildDoctorUseCase(

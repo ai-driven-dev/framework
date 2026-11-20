@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { resolveTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 
 function buildDeps(homedir = "/stub-home") {

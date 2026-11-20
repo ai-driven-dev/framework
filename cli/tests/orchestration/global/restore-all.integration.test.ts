@@ -28,11 +28,14 @@ import {
   installTool,
 } from "../../contexts/installation/testing/installation-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
-import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
-import { OverwritePrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
-import { seedFromDirectory } from "../../shared/testing/seed-from-directory.js";
+import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  OverwritePrompter,
+  ScriptedPrompter,
+} from "../../shared/testing/scripted-prompter.fake.js";
+import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

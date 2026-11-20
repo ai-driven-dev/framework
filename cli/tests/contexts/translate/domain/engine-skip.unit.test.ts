@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../testing/engine-kit.js";
 import { cursor, opencode } from "../testing/registered-profiles.js";
 

@@ -6,10 +6,10 @@ import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";

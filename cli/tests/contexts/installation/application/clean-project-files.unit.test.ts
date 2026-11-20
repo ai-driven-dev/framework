@@ -8,9 +8,9 @@ import { Manifest } from "../../../../src/contexts/installation/domain/manifest.
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { cursorHookScriptDir } from "../testing/cursor-hook-scripts.js";
 import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.js";
 import { aManifest } from "../testing/manifest-builder.js";

@@ -19,8 +19,8 @@ import { FakeHostMarketplaceSources } from "../contexts/host-registration/testin
 import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../helpers/host-record-reading.js";
-import { FakeHostActions } from "../shared/testing/fake-host-actions.js";
-import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../shared/testing/fake-host-actions.fake.js";
+import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 
 const graphOf = (
   projectRoot: string,

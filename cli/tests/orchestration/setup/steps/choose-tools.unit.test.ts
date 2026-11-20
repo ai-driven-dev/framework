@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ChooseTools } from "../../../../src/orchestration/setup/steps/choose-tools.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { ScriptedPrompter } from "../../../shared/testing/scripted-prompter.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { ScriptedPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 
 describe("ChooseTools", () => {
   describe("non-interactive mode", () => {

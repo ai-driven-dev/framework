@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
-import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
 import {
   distOf,

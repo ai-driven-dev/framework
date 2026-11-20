@@ -10,9 +10,9 @@ import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing
 import { catalogOf, registeredAiProfile } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.js";
 
 const { copilot } = TOOL;

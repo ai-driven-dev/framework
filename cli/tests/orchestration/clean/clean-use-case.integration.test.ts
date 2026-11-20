@@ -7,8 +7,8 @@ import type { CleanProject } from "../../../src/orchestration/clean/clean-projec
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { projectCleaner } from "../testing/project-cleaner.js";
 
 let projectRoot: string;

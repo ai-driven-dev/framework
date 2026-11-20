@@ -6,8 +6,8 @@ import {
   PurgeMachineState,
 } from "../../../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeDeclaredCache } from "../../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const CONFIG = "/fake-home/.config/aidd";

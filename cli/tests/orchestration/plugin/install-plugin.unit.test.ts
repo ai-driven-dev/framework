@@ -17,7 +17,7 @@ import {
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";

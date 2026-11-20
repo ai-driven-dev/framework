@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { answeredRegistry } from "../../../../../src/contexts/host-registration/domain/reading/host-registration-answers.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const { claude } = TOOL;
 

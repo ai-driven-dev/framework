@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { detachUserPlugin } from "../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import {
   InMemoryMachineManifest,
   InMemoryMachineManifestRepository,

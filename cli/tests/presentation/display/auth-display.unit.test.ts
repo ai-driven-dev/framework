@@ -4,7 +4,7 @@ import {
   printAuthStatus,
   printLogoutResult,
 } from "../../../src/presentation/display/auth-display.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
 describe("printAuthenticated", () => {
   it("names the login and the level it was stored at", () => {

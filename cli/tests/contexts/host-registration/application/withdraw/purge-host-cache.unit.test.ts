@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { purgeMarketplaceCaches } from "../../../../../src/contexts/host-registration/application/withdraw/purge-host-cache.js";
 import { readRegistrationRecord } from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostMarketplaceRegistry } from "../../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.js";
 
 const CACHE_ROOT = "/cache";

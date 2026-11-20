@@ -11,7 +11,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../contexts/installation/testing/installation-deps.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildDoctorUseCase } from "../testing/build-doctor.js";
 
 const PROJECT_ROOT = "/test-project";

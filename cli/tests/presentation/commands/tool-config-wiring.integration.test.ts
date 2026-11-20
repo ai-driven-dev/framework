@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();

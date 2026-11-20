@@ -5,8 +5,8 @@ import { DetectPluginDrift } from "../../../../../src/contexts/installation/appl
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");

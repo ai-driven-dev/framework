@@ -3,8 +3,8 @@ import {
   rewritePluginRootToken,
   SOURCE_PLUGIN_ROOT_TOKEN,
 } from "../../../../src/contexts/tools/contract/plugin-root-token.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 // Avoid biome noTemplateCurlyInString: split literals
 const CLAUDE_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";

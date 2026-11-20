@@ -20,9 +20,9 @@ import {
 } from "../../contexts/installation/testing/spy-record-rules.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.js";
 
 const ALIAS = "project-alias";

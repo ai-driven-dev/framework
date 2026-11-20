@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../../testing/fake-build-sources.js";
 import { buildInstallationDeps } from "../../../testing/installation-deps.js";
 

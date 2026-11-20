@@ -5,7 +5,7 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const LOCAL_PATH = "/local/marketplace";

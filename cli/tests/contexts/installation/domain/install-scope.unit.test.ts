@@ -4,7 +4,7 @@ import {
   getToolSupportedScope,
 } from "../../../../src/contexts/installation/domain/install-scope.js";
 import { InvalidPluginScopeError } from "../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("install-scope tool support", () => {
   describe("getToolSupportedScope", () => {

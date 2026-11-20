@@ -12,9 +12,9 @@ import { ToolNotInManifestError } from "../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../src/shared/domain/tool.js";
 import { InMemoryMachineManifest } from "../contexts/machine-claims/testing/in-memory-machine-manifest.fake.js";
 import { MachinePlugin } from "../contexts/machine-claims/testing/machine-plugin.fake.js";
-import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.js";
-import { InMemoryRepository } from "../shared/testing/in-memory-repository.js";
-import { TOOL } from "../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryRepository } from "../shared/testing/in-memory-repository.fake.js";
+import { TOOL } from "../shared/testing/registered-tools.builder.js";
 
 /** The machine-wide record as machine-claims reads it, seeded with plugins. */
 interface SeedableMachineManifest extends MachineManifest {

@@ -5,8 +5,8 @@ import { ReplacePluginFiles } from "../../../../../src/contexts/installation/app
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import { buildInstallationDeps, initProject } from "../../testing/installation-deps.js";

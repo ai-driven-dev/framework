@@ -3,11 +3,11 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
-import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
 import { translator } from "../testing/engine-kit.js";
 

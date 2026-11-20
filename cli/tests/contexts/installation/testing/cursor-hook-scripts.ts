@@ -1,4 +1,4 @@
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 /** The folder Cursor's profile keeps one plugin's copied hook scripts in, as it answers it. */
 export function cursorHookScriptDir(plugin: string): string {

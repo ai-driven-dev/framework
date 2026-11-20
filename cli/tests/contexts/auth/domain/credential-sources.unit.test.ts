@@ -6,7 +6,7 @@ import {
   type SuppliedTokens,
   sourcesInOrder,
 } from "../../../../src/contexts/auth/domain/credential-sources.js";
-import { InMemoryEnvironment } from "../../../shared/testing/in-memory-environment.js";
+import { InMemoryEnvironment } from "../../../shared/testing/in-memory-environment.fake.js";
 import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
 import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 

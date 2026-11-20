@@ -10,7 +10,7 @@ import type { Lock } from "../../../../src/shared/ports/lock.js";
 import {
   InMemoryRepository,
   loadsOnlyUnderLock,
-} from "../../../shared/testing/in-memory-repository.js";
+} from "../../../shared/testing/in-memory-repository.fake.js";
 
 /** A registration as the record keeps it: the fields a claim reads, plus whatever else travels
  * through a rewrite untouched. */

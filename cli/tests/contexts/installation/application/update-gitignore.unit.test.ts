@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const ROOT = "/project";
 const GITIGNORE = "/project/.gitignore";

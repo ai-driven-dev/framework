@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "./in-memory-file-adapter.fake.js";
 
 type FaultableMethod = "readFile" | "writeFile" | "realpath" | "listDirectory" | "deleteDirectory";
 

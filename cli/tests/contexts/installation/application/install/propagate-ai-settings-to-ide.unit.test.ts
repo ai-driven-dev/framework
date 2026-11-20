@@ -6,8 +6,8 @@ import type { ToolCatalog } from "../../../../../src/contexts/tools/contract/too
 import type { SettingsFileAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,

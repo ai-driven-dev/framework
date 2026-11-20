@@ -5,7 +5,7 @@ import {
   NativeMarketplaceSourceReaderAdapter,
 } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
 import { listContractOf } from "../../../helpers/list-command-contract.js";
-import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 vi.mock("node:child_process", () => ({ spawnSync: vi.fn() }));
 const spawn = vi.mocked(spawnSync);

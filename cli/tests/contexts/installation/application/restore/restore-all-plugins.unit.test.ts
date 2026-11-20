@@ -9,7 +9,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { restoreAllPluginsOf } from "../../testing/build-restore.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
 import { aManifest } from "../../testing/manifest-builder.js";

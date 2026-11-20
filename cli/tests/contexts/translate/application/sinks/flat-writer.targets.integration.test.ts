@@ -12,8 +12,8 @@ import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastru
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { FRAMEWORK_REAL } from "../../../../presentation/testing/fixture-setup.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 // Avoid biome noTemplateCurlyInString: split literal for the placeholder.

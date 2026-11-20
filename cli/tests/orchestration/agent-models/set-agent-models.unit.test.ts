@@ -15,8 +15,8 @@ import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-s
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT = "/p";
 const HOME = "/home/me";

@@ -1,4 +1,4 @@
-import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "./in-memory-file-adapter.fake.js";
 
 /**
  * An in-memory tree that lists the way a Windows host does: every separator below the listed

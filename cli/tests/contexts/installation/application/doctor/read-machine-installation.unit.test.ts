@@ -4,7 +4,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { manifestRepositoryLoading } from "../../../../helpers/ports/index.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const pluginAt = (scope: Scope) =>
   InstalledPlugin.fromJSON({

@@ -14,11 +14,11 @@ import {
   FrameworkPlaceholderInPluginError,
 } from "../../../../../src/shared/domain/errors.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
-import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.builder.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.fake.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-edges-out");

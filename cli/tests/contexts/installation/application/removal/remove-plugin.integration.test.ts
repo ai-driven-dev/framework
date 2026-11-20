@@ -9,9 +9,9 @@ import {
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.js";

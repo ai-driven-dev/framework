@@ -4,9 +4,9 @@ import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../../src/shared/domain/file.js";
 import { extractMergeEntries } from "../../../../../../src/shared/domain/merge.js";
-import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.js";
-import { TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
 

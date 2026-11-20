@@ -1,7 +1,7 @@
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { registeredTools } from "./registered-tools.js";
+import { registeredTools } from "./registered-tools.builder.js";
 
 /** The build contract a registered tool declares for a mode, or null for an editor or a tool
  * that declares none. */

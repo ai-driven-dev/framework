@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UpdateCheckCacheAdapter } from "../../../../src/contexts/update/infrastructure/update-check-cache-adapter.js";
-import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 describe("UpdateCheckCacheAdapter", () => {
   it("writes the entry as JSON under cache/ in the config directory, creating it", async () => {

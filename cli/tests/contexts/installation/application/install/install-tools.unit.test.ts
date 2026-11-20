@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
 import type { AiToolId, IdeToolId } from "../../../../../src/shared/domain/tool.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   buildInstallationDeps,
   initProject,

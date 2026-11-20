@@ -4,7 +4,7 @@ import {
   ProjectPluginWithdrawal,
 } from "../../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import type { HostWithdrawal } from "../../../../../src/contexts/installation/ports/native-host.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 describe("ProjectPluginWithdrawal.canDetachRef", () => {
   it("keeps an unconfirmed ref of a machine-wide tool that no machine claim owns", async () => {

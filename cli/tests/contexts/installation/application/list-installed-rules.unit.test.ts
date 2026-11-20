@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ListInstalledRules } from "../../../../src/contexts/installation/application/list-installed-rules.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
 

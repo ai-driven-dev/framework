@@ -2,8 +2,8 @@ import { mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.js";
-import { describeFileContract, type FileSubject } from "../testing/run-file-contract.js";
+import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.fake.js";
+import { describeFileContract, type FileSubject } from "../testing/run-file.contract.js";
 
 describeFileContract("the in-memory double", async (): Promise<FileSubject> => {
   const files = new InMemoryFileAdapter({});
