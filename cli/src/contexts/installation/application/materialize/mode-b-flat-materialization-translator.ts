@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { CursorProjectScopeUnsupportedError } from "../../../../shared/domain/errors.js";
+import { ProjectScopeUnsupportedError } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
@@ -103,7 +103,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     const pluginsCap = tool.plugins();
     if (pluginsCap === null) return null;
     if (pluginsCap.kind === "native" && !pluginsCap.materializesFromBuiltTree()) {
-      throw new CursorProjectScopeUnsupportedError();
+      throw new ProjectScopeUnsupportedError();
     }
     const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;
     const translated = this.translate.execute({ distribution: distForNative, tool });

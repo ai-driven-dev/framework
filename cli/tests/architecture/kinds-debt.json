@@ -38,16 +38,10 @@
     "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts"
   ],
   "mirror": [
-    "src/contexts/installation/application/agents/agent-plugin-hosts.ts",
     "src/contexts/installation/application/agents/agent-providers.ts",
-    "src/contexts/installation/application/doctor/check-plugin-drift.ts",
-    "src/contexts/installation/application/doctor/list-registered-plugins.ts",
-    "src/contexts/installation/application/doctor/load-manifest-for-doctor.ts",
     "src/contexts/installation/application/install/content/install-content-section.ts",
     "src/contexts/installation/application/install/install-config.ts",
-    "src/contexts/installation/application/list-installed-tools.ts",
     "src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
-    "src/contexts/installation/application/marketplace/list-plugin-sources.ts",
     "src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
     "src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.ts",
     "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
@@ -72,8 +66,6 @@
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
     "src/contexts/installation/application/update/update-tool.ts",
-    "src/contexts/installation/contract/plugin-spec.ts",
-    "src/contexts/installation/domain/manifest/merge-files.ts",
     "src/contexts/installation/infrastructure/agent-model-store-adapter.ts",
     "src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "src/contexts/installation/infrastructure/manifest-file-io.ts",
@@ -295,9 +287,7 @@
     "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts: codex",
     "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts: codex"
   ],
-  "toolIdentifiers": [
-    "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts: 1"
-  ],
+  "toolIdentifiers": [],
   "exemptProcessExit": ["src/presentation/exit.ts"],
   "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],
   "exemptDefaultExport": ["**/*.d.ts"],

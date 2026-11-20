@@ -97,8 +97,8 @@ describe("every error in the catalog", () => {
       message: "cap broke",
     },
     {
-      build: () => new errors.CursorProjectScopeUnsupportedError(),
-      name: "CursorProjectScopeUnsupportedError",
+      build: () => new errors.ProjectScopeUnsupportedError(),
+      name: "ProjectScopeUnsupportedError",
       message:
         "Cursor plugins only support user-scope install (~/.cursor/plugins/local/). Project-scope is not auto-loaded by Cursor.",
     },
