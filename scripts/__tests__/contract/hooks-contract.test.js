@@ -6,7 +6,13 @@ const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const ROOT = path.resolve(__dirname, "../../..");
-const SCRIPT = path.join(ROOT, "plugins/aidd-context/skills/08-hook-generate/scripts/validate-hooks.cjs");
+const CONTRACT = path.join(ROOT, "scripts/contract/hooks.json");
+const RUN = "const { run } = require(process.argv[1]); process.exitCode = run(process.argv[2], [process.argv[3]]);";
+
+const lint = (file) => {
+  const out = spawnSync(process.execPath, ["-e", RUN, path.join(ROOT, "scripts/contract/engine.cjs"), CONTRACT, file], { encoding: "utf8" });
+  return { code: out.status, out: out.stdout };
+};
 
 const entry = (hook = {}) => ({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/guard.cjs", timeout: 5, ...hook }] }] },
@@ -23,8 +29,7 @@ afterEach(() => fs.rmSync(plugin, { recursive: true, force: true }));
 function validate(config) {
   const file = path.join(plugin, "hooks/hooks.json");
   fs.writeFileSync(file, typeof config === "string" ? config : JSON.stringify(config, null, 2));
-  const run = spawnSync(process.execPath, [SCRIPT, file], { encoding: "utf8" });
-  return { code: run.status, out: run.stdout };
+  return lint(file);
 }
 
 describe("hooks contract", () => {
@@ -32,8 +37,7 @@ describe("hooks contract", () => {
     for (const name of fs.readdirSync(path.join(ROOT, "plugins"))) {
       const file = path.join(ROOT, "plugins", name, "hooks/hooks.json");
       if (!fs.existsSync(file)) continue;
-      const run = spawnSync(process.execPath, [SCRIPT, file], { encoding: "utf8" });
-      assert.deepEqual({ name, code: run.status, out: run.stdout }, { name, code: 0, out: "" });
+      assert.deepEqual({ name, ...lint(file) }, { name, code: 0, out: "" });
     }
   });
 

@@ -1,6 +1,6 @@
 # Writer
 
-`scripts/write-hook.cjs` writes the hook to each host. Nothing in this skill checks the files it writes; `scripts/validate-hooks.cjs` only checks a plugin's own `hooks/hooks.json`, in the repository's CI.
+`scripts/write-hook.cjs` writes the hook to each host. Nothing in this skill checks the files it writes.
 
 ```sh
 node "$writer" --project "$project_root" --input "$hook_json"

@@ -183,9 +183,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
 | `references` | [hosts.md](skills/08-hook-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/08-hook-generate/references/writer.md) | - |
-| `scripts` | [contract.json](skills/08-hook-generate/scripts/contract.json) | - |
-| `scripts` | [hooks-schema.json](skills/08-hook-generate/scripts/hooks-schema.json) | - |
-| `scripts` | [validate-hooks.cjs](skills/08-hook-generate/scripts/validate-hooks.cjs) | - |
 | `scripts` | [write-hook.cjs](skills/08-hook-generate/scripts/write-hook.cjs) | - |
 | `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.` |
 
