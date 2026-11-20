@@ -54,6 +54,15 @@
       "in": "phase-*.md",
       "check": "tasks",
       "why": "each criterion must point at a task"
+    },
+    "PLAN-08": {
+      "op": "sections",
+      "in": "phase-*.md",
+      "required": [
+        "Test Scope"
+      ],
+      "why": "implement checks each criterion from the phase's Test Scope",
+      "fix": "add the section {allowed}"
     }
   }
 }

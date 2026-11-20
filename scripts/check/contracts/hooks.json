@@ -16,6 +16,13 @@
       "in": "hooks.json",
       "check": "handlers",
       "why": "a missing or broken handler fails at the event, not at install"
+    },
+    "HOOKS-03": {
+      "op": "json",
+      "in": "hooks.json",
+      "schema": "schemas/hooks-status-schema.json",
+      "why": "the status line names the plugin whose hook runs",
+      "fix": "{problem}"
     }
   }
 }

@@ -13,7 +13,7 @@ const lint = (file) => {
 };
 
 const entry = (hook = {}) => ({
-  hooks: { Stop: [{ hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/guard.cjs", timeout: 5, ...hook }] }] },
+  hooks: { Stop: [{ hooks: [{ type: "command", command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/guard.cjs", timeout: 5, statusMessage: "AIDD Demo: guard", ...hook }] }] },
 });
 
 let plugin;
@@ -56,6 +56,12 @@ describe("hooks contract", () => {
   it("flags a handler with a syntax error", () => {
     fs.writeFileSync(path.join(plugin, "hooks/guard.cjs"), "const = ;\n");
     assert.match(validate(entry()).out, / HOOKS-02 hooks\/guard\.cjs does not parse/u);
+  });
+
+  it("flags a handler with no status message, an empty one, or one not naming its plugin", () => {
+    const { statusMessage, ...bare } = entry().hooks.Stop[0].hooks[0];
+    assert.match(validate({ hooks: { Stop: [{ hooks: [bare] }] } }).out, / HOOKS-03 .*misses statusMessage/u);
+    for (const message of ["  ", "", "guard", "AIDD Demo:"]) assert.match(validate(entry({ statusMessage: message })).out, / HOOKS-03 /u, message);
   });
 
   it("flags a file that is not JSON", () => {
