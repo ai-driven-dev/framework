@@ -5,7 +5,7 @@
 // With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts, and engine copies are checked only if a file is under scripts/check/engine/ or a skill's scripts/lib/. --update-baseline takes no files.
 // Each generator of scripts/check/generators runs on every full run, and on a scoped run when a given file matches its `watch` globs: a stale generated file is a finding, and --fix rewrites it first.
 // A contract may name `watch` globs: its anchor unit stands for repo-wide rules, so a scoped run also runs it when a given file matches.
-// Baseline keys are file, rule, message and excerpt (no line), counted. A finding above its count exits 1, and so does an entry that fires less.
+// Baseline keys are file and rule (no line, message or excerpt), counted. A finding above its count exits 1, and so does an entry that fires less.
 // --update-baseline records the baseline when scripts/check/baseline.json is missing; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -65,7 +65,7 @@ function main(argv, { generators = require("./generators/index.cjs"), out = (tex
       const owned = rel(target);
       if (scoped && !watches(loaded.watch, given) && !given.some((g) => (loaded.unit === "file" ? g === owned : g.startsWith(`${owned}/`)))) continue;
       checked.push(owned);
-      for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id} ${f.message} ${f.excerpt ?? ""}`, text: format({ ...f, path: rel(f.path) }) });
+      for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id}`, text: format({ ...f, path: rel(f.path) }) });
     }
   }
 

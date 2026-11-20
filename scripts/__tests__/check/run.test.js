@@ -52,12 +52,11 @@ describe("repository run", () => {
     assert.equal(run().status, 1);
   });
 
-  it("fails on a swap: one finding fixed, another added in the same file and rule", () => {
-    baselined("---\nname: b\n---\n\n# Role\n");
+  it("lets a baselined finding be reworded, since its key is the file and the rule", () => {
+    baselined("no front matter\n");
+    write("agents/b.md", "another first line, still no front matter\n");
     assert.equal(run().status, 0);
-    write("agents/b.md", "---\nname: b\ndescription: changed\n---\n\n# Role\n");
-    const swapped = run();
-    assert.equal(swapped.status, 1);
+    assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync(path.join(root, BASELINE), "utf8"))).every((key) => /^\S+ [A-Z]+-\d{2}$/u.test(key)), true);
   });
 
   it("fails on a stale entry and says how to update", () => {

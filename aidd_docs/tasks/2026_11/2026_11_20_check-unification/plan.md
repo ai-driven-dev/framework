@@ -26,5 +26,4 @@ Source: [`spec.md`](./spec.md) (#1149 rest, #1165)
 | Repo-wide rules use `unit: "file"` on an anchor file plus a custom check | `walk()` has no ignore list; no new unit kind |
 | A script whose rule does not fit a contract stays a script, listed in the spec | no forced port |
 | Old scripts stay wired through #1149 | no check disappears between the two PRs |
-| Rule `fix` texts are not edited during the move | the baseline keys on them |
 | YAML, COMPATIBILITY, recipes stay outside `run.cjs` | dependency or CLI coupling |
