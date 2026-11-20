@@ -8,6 +8,15 @@ type PromptAnswer =
   | { type: "select"; value: string }
   | { type: "checkbox"; value: string[] };
 
+type AnswerOf<K extends PromptAnswer["type"]> = Extract<PromptAnswer, { type: K }>;
+
+function isAnswerOf<K extends PromptAnswer["type"]>(
+  answer: PromptAnswer,
+  type: K
+): answer is AnswerOf<K> {
+  return answer.type === type;
+}
+
 /** Returns pre-defined answers in order, throwing once the queue is exhausted. */
 export class ScriptedPrompter implements Prompter {
   readonly askedSelects: Array<{ message: string; names: string[] }> = [];
@@ -24,7 +33,7 @@ export class ScriptedPrompter implements Prompter {
     _reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite"> {
     const answer = this.next("conflict", relativePath);
-    return answer.value as "keep" | "overwrite";
+    return answer.value;
   }
 
   async resolveConflictBulk(
@@ -32,7 +41,7 @@ export class ScriptedPrompter implements Prompter {
     _reason: "deleted" | "modified"
   ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
     const answer = this.next("conflict-bulk", relativePath);
-    return answer.value as "keep" | "overwrite" | "overwrite-all" | "skip-all";
+    return answer.value;
   }
 
   async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
@@ -40,7 +49,7 @@ export class ScriptedPrompter implements Prompter {
       return defaultValue ?? false;
     }
     const answer = this.next("confirm", message);
-    return answer.value as boolean;
+    return answer.value;
   }
 
   async input(message: string, defaultValue?: string): Promise<string> {
@@ -49,7 +58,7 @@ export class ScriptedPrompter implements Prompter {
       return defaultValue ?? "";
     }
     const answer = this.next("input", message);
-    return answer.value as string;
+    return answer.value;
   }
 
   async select<T>(
@@ -58,7 +67,7 @@ export class ScriptedPrompter implements Prompter {
   ): Promise<T> {
     this.askedSelects.push({ message, names: choices.map((c) => c.name) });
     const answer = this.next("select", message);
-    const stringValue = answer.value as string;
+    const stringValue = answer.value;
     const match = choices.find((c) => !c.disabled && String(c.value) === stringValue);
     if (match === undefined) {
       throw new Error(
@@ -76,13 +85,13 @@ export class ScriptedPrompter implements Prompter {
       return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
     }
     const answer = this.next("checkbox", message);
-    const selectedValues = new Set(answer.value as string[]);
+    const selectedValues = new Set(answer.value);
     return choices
       .filter((c) => !c.disabled && selectedValues.has(String(c.value)))
       .map((c) => c.value);
   }
 
-  private next(type: string, context: string): PromptAnswer {
+  private next<K extends PromptAnswer["type"]>(type: K, context: string): AnswerOf<K> {
     if (this.index >= this.queue.length) {
       throw new Error(
         `ScriptedPrompter: unexpected prompt call (type="${type}", context="${context}") — queue exhausted`
@@ -91,6 +100,11 @@ export class ScriptedPrompter implements Prompter {
     const answer = this.queue[this.index++];
     if (answer === undefined) {
       throw new Error(`ScriptedPrompter: answer at index ${this.index - 1} is undefined`);
+    }
+    if (!isAnswerOf(answer, type)) {
+      throw new Error(
+        `ScriptedPrompter: expected a "${type}" answer for "${context}", the queue holds a "${answer.type}"`
+      );
     }
     return answer;
   }
