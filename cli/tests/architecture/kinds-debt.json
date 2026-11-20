@@ -56,14 +56,6 @@
     "src/shared/domain/merge.ts -> src/shared/ports/file-writer.ts"
   ],
   "mirror": [
-    "src/contexts/distribution/application/add/prepare-marketplace.ts",
-    "src/contexts/distribution/application/check-marketplaces.ts",
-    "src/contexts/distribution/application/ensure-framework-marketplace.ts",
-    "src/contexts/distribution/application/plugin-source/resolve-plugin-source.ts",
-    "src/contexts/distribution/application/refresh-marketplace.ts",
-    "src/contexts/distribution/application/remove/remove-marketplace.ts",
-    "src/contexts/distribution/application/resolve-built-marketplaces.ts",
-    "src/contexts/distribution/contract/marketplace.ts",
     "src/contexts/distribution/infrastructure/inject-token.ts",
     "src/contexts/host-registration/application/host-marketplace-source-conflict.ts",
     "src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.ts",
