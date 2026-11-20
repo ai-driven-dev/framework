@@ -101,9 +101,9 @@ describe("ops", () => {
     assert.equal(findings(rule, "{}", "d.json").length, 1);
   });
 
-  it("custom runs the named check of the contract's checks folder", () => {
-    fs.mkdirSync(path.join(dir, "checks"));
-    fs.writeFileSync(path.join(dir, "checks", "always.cjs"), "module.exports = () => [{ line: 2, offending: 'x' }];\n");
+  it("custom runs the named check of the contract's custom folder", () => {
+    fs.mkdirSync(path.join(dir, "custom"));
+    fs.writeFileSync(path.join(dir, "custom", "always.cjs"), "module.exports = () => [{ line: 2, offending: 'x' }];\n");
     assert.deepEqual(lines(findings({ op: "custom", check: "always" }, "a\n")), [2]);
   });
 });

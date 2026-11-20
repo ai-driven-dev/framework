@@ -2,11 +2,12 @@
   "version": 1,
   "kind": "hooks",
   "unit": "file",
+  "targets": "plugins/*/hooks/hooks.json",
   "rules": {
     "HOOKS-01": {
       "op": "json",
       "in": "hooks.json",
-      "schema": "hooks-schema.json",
+      "schema": "schemas/hooks-schema.json",
       "why": "a wrong key is silently ignored by the host",
       "fix": "{problem}"
     },

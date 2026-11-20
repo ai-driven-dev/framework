@@ -4,9 +4,9 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { ENGINE_FILES } = require("../../contract/sync.cjs");
+const { ENGINE_FILES } = require("../../check/engine/sync.cjs");
 
-const SYNC = path.resolve(__dirname, "../../contract/sync.cjs");
+const SYNC = path.resolve(__dirname, "../../check/engine/sync.cjs");
 
 /** The vendored engine copies: sync writes them, --check reads only and names the stale ones. */
 
@@ -34,7 +34,7 @@ describe("contract sync", () => {
 
   it("copies the engine into each skill holding a contract and nowhere else", () => {
     assert.equal(sync().status, 0);
-    for (const name of ENGINE_FILES) assert.ok(fs.readFileSync(copy("b", name)).equals(fs.readFileSync(path.resolve(__dirname, "../../contract", name))));
+    for (const name of ENGINE_FILES) assert.ok(fs.readFileSync(copy("b", name)).equals(fs.readFileSync(path.resolve(__dirname, "../../check/engine", name))));
     assert.equal(fs.existsSync(path.join(root, "plugins", "p", "skills", "none", "scripts")), false);
     assert.equal(sync("--check").status, 0);
   });

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node scripts/contract/sync.cjs [--check] [--root <dir>]
+// Usage: node scripts/check/engine/sync.cjs [--check] [--root <dir>]
 // Copies the engine files of this folder into the scripts/lib folder of every skill holding scripts/contract.json.
 // With --check it writes nothing and names each copy that differs or is missing; exit 1 when any does.
 const fs = require("node:fs");
 const path = require("node:path");
 
 const ENGINE_FILES = ["engine.cjs", "ops.cjs", "markdown.cjs"];
-const ROOT = path.resolve(__dirname, "..", "..");
+const ROOT = path.resolve(__dirname, "..", "..", "..");
 
 /** Every plugin skill folder that holds a contract. */
 function contractSkills(root = ROOT) {
@@ -51,7 +51,7 @@ if (require.main === module) {
   }
   const stale = sync({ root: at >= 0 ? path.resolve(args[at + 1]) : ROOT, write: !check });
   if (check) {
-    for (const copy of stale) process.stdout.write(`${copy} differs from scripts/contract, run node scripts/contract/sync.cjs\n`);
+    for (const copy of stale) process.stdout.write(`${copy} differs from scripts/check/engine, run node scripts/check/engine/sync.cjs\n`);
     process.exitCode = stale.length ? 1 : 0;
   } else {
     for (const copy of stale) process.stdout.write(`synced ${copy}\n`);

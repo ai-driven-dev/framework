@@ -5,7 +5,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { findings } = require("./helpers.js");
 
-const CONTRACT = path.resolve(__dirname, "../../contract/plugin-contract.json");
+const CONTRACT = path.resolve(__dirname, "../../check/contracts/plugin.json");
 const MARKET = { plugins: [{ name: "aidd-demo", description: "Demo." }] };
 const MANIFEST = { name: "aidd-demo", version: "1.0.0", description: "Demo.", skills: ["./skills/01-a"] };
 

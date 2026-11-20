@@ -154,7 +154,7 @@ const ops = {
     return conform(data, schema, "$").map((problem) => ({ line: lineOf(ctx.lines, problem.at), offending: problem.at, values: { problem: problem.say } }));
   },
   custom(ctx, rule) {
-    return require(path.join(ctx.checksDir, `${rule.check}.cjs`))(ctx, rule);
+    return require(path.join(ctx.customDir, `${rule.check}.cjs`))(ctx, rule);
   },
 };
 

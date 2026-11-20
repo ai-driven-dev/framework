@@ -6,7 +6,8 @@ const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const REPO = path.resolve(__dirname, "../../..");
-const RUN = path.join(REPO, "scripts/contract/run.cjs");
+const RUN = path.join(REPO, "scripts/check/run.cjs");
+const BASELINE = "scripts/check/baseline.json";
 const AGENT_CONTRACT = "plugins/aidd-context/skills/06-agent-generate/scripts/contract.json";
 
 let root;
@@ -19,7 +20,8 @@ const write = (rel, text) => {
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), "run-"));
   fs.cpSync(path.join(REPO, path.dirname(path.dirname(AGENT_CONTRACT))), path.join(root, path.dirname(path.dirname(AGENT_CONTRACT))), { recursive: true });
-  write("validate.config.json", JSON.stringify({ contracts: [{ contract: AGENT_CONTRACT, targets: "agents/*.md" }] }));
+  const contractFile = path.join(root, AGENT_CONTRACT);
+  fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace("plugins/*/agents/*.md", "agents/*.md"));
   fs.mkdirSync(path.join(root, "agents"));
   fs.cpSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/executor.md"));
 });
@@ -60,25 +62,25 @@ describe("repository run", () => {
     fs.rmSync(path.join(root, "agents/b.md"));
     const stale = run();
     assert.equal(stale.status, 1);
-    assert.match(stale.stdout, /no longer fires, run node scripts\/contract\/run\.cjs --update-baseline/u);
+    assert.match(stale.stdout, /no longer fires, run node scripts\/check\/run\.cjs --update-baseline/u);
     assert.equal(run("--update-baseline").status, 0);
     assert.equal(run().status, 0);
   });
 
   it("never lets --update-baseline absorb a new finding", () => {
     baselined("no front matter\n");
-    const before = fs.readFileSync(path.join(root, "validate.config.json"), "utf8");
+    const before = fs.readFileSync(path.join(root, BASELINE), "utf8");
     write("agents/c.md", "no front matter\n");
     const update = run("--update-baseline");
     assert.equal(update.status, 1);
     assert.match(update.stdout, /^agents\/c\.md:/mu);
-    assert.equal(fs.readFileSync(path.join(root, "validate.config.json"), "utf8"), before);
+    assert.equal(fs.readFileSync(path.join(root, BASELINE), "utf8"), before);
     assert.equal(run().status, 1);
   });
 
   it("lowers a count and drops a fixed entry on --update-baseline", () => {
     baselined("no front matter\n");
-    const entries = () => Object.keys(JSON.parse(fs.readFileSync(path.join(root, "validate.config.json"), "utf8")).baseline).length;
+    const entries = () => Object.keys(JSON.parse(fs.readFileSync(path.join(root, BASELINE), "utf8"))).length;
     const before = entries();
     fs.rmSync(path.join(root, "agents/b.md"));
     assert.equal(run("--update-baseline").status, 0);
@@ -96,7 +98,7 @@ describe("repository run", () => {
     const skill = path.join(root, "plugins/aidd-context/skills/06-agent-generate/scripts");
     fs.rmSync(path.join(skill, "lib"), { recursive: true, force: true });
     write("plugins/aidd-context/skills/06-agent-generate/scripts/lib/engine.cjs", "// edited\n");
-    assert.match(run().stdout, /lib\/engine\.cjs differs from scripts\/contract/u);
+    assert.match(run().stdout, /lib\/engine\.cjs differs from scripts\/check\/engine/u);
   });
 
   it("exits 2 when a mapping matches no file", () => {
@@ -108,11 +110,13 @@ describe("repository run", () => {
 
   it("exits 2 when --root has no value", () => {
     assert.equal(spawnSync(process.execPath, [RUN, "--root"], { encoding: "utf8" }).status, 2);
-    assert.equal(spawnSync(process.execPath, [path.join(REPO, "scripts/contract/sync.cjs"), "--root"], { encoding: "utf8" }).status, 2);
+    assert.equal(spawnSync(process.execPath, [path.join(REPO, "scripts/check/engine/sync.cjs"), "--root"], { encoding: "utf8" }).status, 2);
   });
 
-  it("exits 2 on a missing config", () => {
-    fs.rmSync(path.join(root, "validate.config.json"));
-    assert.equal(run().status, 2);
+  it("skips a contract that names no targets", () => {
+    const contractFile = path.join(root, AGENT_CONTRACT);
+    fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace(/ *"targets": .*\n/u, ""));
+    write("agents/b.md", "no front matter\n");
+    assert.equal(run().status, 0);
   });
 });

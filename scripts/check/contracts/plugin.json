@@ -2,11 +2,12 @@
   "version": 1,
   "kind": "plugin",
   "unit": "file",
+  "targets": "plugins/*/.claude-plugin/plugin.json",
   "rules": {
     "PLUGIN-01": {
       "op": "json",
       "in": "plugin.json",
-      "schema": "plugin-schema.json",
+      "schema": "schemas/plugin-schema.json",
       "why": "hosts read the manifest before anything else",
       "fix": "{problem}"
     },

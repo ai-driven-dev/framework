@@ -2,6 +2,7 @@
   "version": 1,
   "kind": "agent",
   "unit": "file",
+  "targets": "plugins/*/agents/*.md",
   "rules": {
     "AGENT-01": {
       "op": "required",

@@ -6,7 +6,7 @@ const helpers = require("./helpers.js");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const ROOT = path.resolve(__dirname, "../../..");
-const CONTRACT = path.join(ROOT, "scripts/contract/hooks-contract.json");
+const CONTRACT = path.join(ROOT, "scripts/check/contracts/hooks.json");
 const lint = (file) => {
   const { status, out } = helpers.lint(CONTRACT, file);
   return { code: status, out };

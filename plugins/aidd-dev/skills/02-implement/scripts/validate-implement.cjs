@@ -4,7 +4,7 @@
 // When clean, prints a NEXT line saying what follows; that line is navigation, not validation.
 const path = require("node:path");
 const { run } = require("./lib/engine.cjs");
-const { readState, nextStep } = require("./checks/state.cjs");
+const { readState, nextStep } = require("./custom/state.cjs");
 
 const targets = process.argv.slice(2);
 const code = run(path.join(__dirname, "contract.json"), targets);

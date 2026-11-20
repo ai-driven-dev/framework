@@ -7,7 +7,7 @@ const { readText, frontmatter, proseLines } = require("./markdown.cjs");
 const { ops, OPTIONS } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
-const TOP_KEYS = ["version", "kind", "unit", "marker", "rules", "retired"];
+const TOP_KEYS = ["version", "kind", "unit", "targets", "marker", "rules", "retired"];
 const RULE_KEYS = ["op", "in", "notIn", "why", "fix"];
 const EXCERPT_LIMIT = 40;
 
@@ -48,6 +48,7 @@ function loadContract(file) {
     throw new ContractError(`${file}: ${message}`);
   };
   for (const key of Object.keys(contract)) if (!TOP_KEYS.includes(key)) fail(`unknown key ${key}`);
+  if (contract.targets !== undefined && typeof contract.targets !== "string") fail("targets must be a glob string");
   if (contract.version !== 1) fail("version must be 1");
   if (typeof contract.kind !== "string") fail("kind is required");
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
@@ -100,7 +101,7 @@ function check(contract, target) {
       const text = readText(abs);
       const fm = frontmatter(text);
       const prose = proseLines(text).map((line, index) => (index < fm.span ? "" : line));
-      views.set(file, { file, abs, root, text, lines: text.split("\n"), prose, fm, files, view, contractDir: contract.dir, checksDir: path.join(contract.dir, "checks") });
+      views.set(file, { file, abs, root, text, lines: text.split("\n"), prose, fm, files, view, contractDir: contract.dir, customDir: path.join(contract.dir, "custom") });
     }
     return views.get(file);
   };

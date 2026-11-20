@@ -2,6 +2,7 @@
   "version": 1,
   "kind": "skill",
   "unit": "folder",
+  "targets": "plugins/*/skills/*",
   "marker": "SKILL.md",
   "rules": {
     "SKILL-01": { "op": "max", "measure": "chars", "in": "SKILL.md", "field": "description", "max": 150,

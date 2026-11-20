@@ -2,9 +2,9 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const engine = require("../../contract/engine.cjs");
+const engine = require("../../check/engine/engine.cjs");
 
-const ENGINE = path.resolve(__dirname, "../../contract/engine.cjs");
+const ENGINE = path.resolve(__dirname, "../../check/engine/engine.cjs");
 const RUN = "process.exitCode = require(process.argv[1]).run(process.argv[2], process.argv.slice(3));";
 
 /** A template filled the way a model fills it: comments and the closing note dropped, every slot given a value. */

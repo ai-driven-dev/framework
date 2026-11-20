@@ -73,6 +73,6 @@ jobs:
         with:
           node-version: "22"
 
-      # Fails on a finding absent from the baseline in validate.config.json, or on an engine copy that drifted.
+      # Fails on a finding absent from the baseline in scripts/check/baseline.json, or on an engine copy that drifted.
       - name: Validate artifacts against their contracts
-        run: node scripts/contract/run.cjs
+        run: node scripts/check/run.cjs

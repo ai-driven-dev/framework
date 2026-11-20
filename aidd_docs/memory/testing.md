@@ -8,7 +8,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills, agents, hook configs, plugin manifests | the contract of each kind, run over the tree by `node scripts/contract/run.cjs` (CI job `contracts`): only findings absent from the baseline in `validate.config.json` fail. Skills and agents are also read by the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
+| Skills, agents, hook configs, plugin manifests | the contract of each kind, run over the tree by `node scripts/check/run.cjs` (CI job `contracts`): only findings absent from the baseline in `scripts/check/baseline.json` fail. Skills and agents are also read by the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
 | Plans, runs, rules, commands, stories | the contract beside the skill that writes them, run by its `validate-<kind>.cjs`; archived plans are not validated in CI |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
@@ -16,7 +16,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
 | Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
 
-Baseline keys in `validate.config.json` start with the file path. On a skill rename, rewrite that path prefix in its keys in the same commit, or `run.cjs` reports the old findings as fresh and the old keys as gone.
+Baseline keys in `scripts/check/baseline.json` start with the file path. On a skill rename, rewrite that path prefix in its keys in the same commit, or `run.cjs` reports the old findings as fresh and the old keys as gone.
 
 ## Tools
 

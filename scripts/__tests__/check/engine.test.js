@@ -40,7 +40,7 @@ describe("engine", () => {
 
   it("lets a crash in a custom check show its stack instead of exit 2", () => {
     contract({ "DEMO-01": { op: "custom", in: "*.md", check: "boom", why: "w" } });
-    write("checks/boom.cjs", "module.exports = () => null.crash;\n");
+    write("custom/boom.cjs", "module.exports = () => null.crash;\n");
     write("a.md", "x\n");
     const out = validate("a.md");
     assert.notEqual(out.status, 2);
