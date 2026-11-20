@@ -1,6 +1,6 @@
 "use strict";
 // docs/CATALOG.md, from plugins/*/agents/ and plugins/*/hooks/hooks.json: the agents and hooks block each plugin holds between its own markers.
-// Same bytes as scripts/sync-generated-docs.mjs, which still writes them until the pre-commit entry moves to run.cjs.
+// Written by `run.cjs --fix`, from the pre-commit hook.
 const fs = require("node:fs");
 const path = require("node:path");
 
