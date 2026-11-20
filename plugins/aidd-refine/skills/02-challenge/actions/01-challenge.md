@@ -1,23 +1,29 @@
 # 01 - Challenge
 
-Rethink prior work against an agreed reference and report the findings, so the user knows whether to ship, iterate or rework.
+Attack the work and report what breaks its aim, so the caller knows whether it holds.
 
 ## Input
 
-- The work: the last answer, specific files, a plan or a commit range.
-- The agreed reference: a plan, a spec or stated requirements, else the user's stated intent.
+- The work: an answer, files, a plan, a doc, a decision or a commit range.
+- What it was asked to do: a plan, a spec or a request, else the user's stated intent.
+- Optional techniques from [techniques.md](../references/techniques.md), all of them when none is named.
 
 ## Process
 
-1. Read the work and line it up against the agreed reference.
-2. Challenge your own assumptions and the user's decisions.
-3. Answer internally each trust question of [confidence-rubric.md](../references/confidence-rubric.md).
-   - Negative or uncertain answer: record it as a deal breaker.
-4. Scan the work for edge cases, errors, gaps, duplications and inconsistencies.
-5. Classify each finding as Correctness, Deal breaker or Suggestion.
-6. Score confidence per `confidence-rubric.md`.
-7. Fill [report-template.md](../assets/report-template.md) verbatim and emit it.
+1. State the aim the work serves, in its strongest reading.
+2. Run the work when it can run, and keep each command with its output as evidence.
+3. Apply each selected technique of `techniques.md`, in its table order, to the work and to what it was asked to do.
+   - Techniques named: apply only those.
+4. Classify each finding with the first question of the `techniques.md` decision that answers yes.
+5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
+6. Fill [report-template.md](../assets/report-template.md) and emit it, with nothing before or after it.
 
 ## Output
 
-The filled findings report.
+The filled report: its aim, deal breakers, what to decide, suggestions and the attacks the work survived.
+
+## Rules
+
+- Give every finding a concrete scenario and the evidence that makes it real.
+- Keep the template's headings and order, and write `- None` in an empty section.
+- List under Holds only attacks the work survived, never a restated requirement.
