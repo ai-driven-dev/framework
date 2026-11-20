@@ -4,15 +4,15 @@ import { InstallIdeConfig } from "../../../../../../src/contexts/installation/ap
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
-import { buildUnitDeps, initProject } from "../../../../../helpers/ports/build-unit-deps.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.js";
+import { buildInstallationDeps, initProject } from "../../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
 
 function buildUseCase(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   assets: AssetProvider = deps.assetProvider
 ) {
   return new InstallIdeConfig(
@@ -25,7 +25,7 @@ function buildUseCase(
 
 describe("InstallIdeConfig", () => {
   it("writes settings files on fresh install", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -47,7 +47,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("answers an empty skipped result for an installed IDE", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
@@ -76,7 +76,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("writes an asset answered as text verbatim", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const text = '[\n  // user comment\n  {"key": "ctrl+k"}\n]';
@@ -94,7 +94,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("returns skipped without writing when already installed and no force", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -120,7 +120,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("re-runs install when force is true and preserves user-prime keys", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -151,7 +151,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("leaves a user-owned untracked settings file out of the files it installs", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.writeFile(settingsPath, '{"user": true}');

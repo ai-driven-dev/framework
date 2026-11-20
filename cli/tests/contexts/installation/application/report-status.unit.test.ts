@@ -10,10 +10,10 @@ import {
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { buildInstallationDeps } from "../testing/installation-deps.js";
 import { aManifest } from "../testing/manifest-builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -289,7 +289,7 @@ describe("ReportStatus", () => {
 
 describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await new InitProject(
       deps.fs,
       deps.manifestRepo,
@@ -314,7 +314,7 @@ describe("status", () => {
   });
 
   it("does not call a machine-local file an addition, whatever the profile declares", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await new InitProject(
       deps.fs,
       deps.manifestRepo,

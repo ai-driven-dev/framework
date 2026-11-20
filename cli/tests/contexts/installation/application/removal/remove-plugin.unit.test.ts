@@ -10,7 +10,6 @@ import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js"
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -18,6 +17,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 import { aManifest } from "../../testing/manifest-builder.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
@@ -59,7 +59,7 @@ const PROJECT_ROOT = "/test-project";
 const OPENCODE_JSON = join(PROJECT_ROOT, "opencode.json");
 
 async function installPlugin(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   fixture = PLUGIN_FIXTURE
 ): Promise<void> {
   await seedFromDirectory(deps.fs, fixture, { useAbsolutePaths: true });
@@ -116,7 +116,7 @@ function removeUseCaseOver(
 describe("RemovePlugin", () => {
   describe("remove installed plugin", () => {
     it("deletes plugin files and updates manifest", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
 
@@ -143,7 +143,7 @@ describe("RemovePlugin", () => {
 
   describe("remove missing plugin", () => {
     it("throws PluginNotFoundError", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const removeUseCase = pluginRemover({
@@ -198,7 +198,7 @@ describe("RemovePlugin", () => {
 
   describe("only the named plugin", () => {
     it("deletes only the named plugin's files when another plugin is installed", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
       await installPlugin(deps, EXTRA_PLUGIN_FIXTURE);

@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { DuplicatePluginError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -23,7 +23,7 @@ async function addedOnceWithTheFetchDown(
   builtSkill: string,
   version: string | undefined
 ) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, tool);
   deps.fs.setFile(builtSkill, "# Demo");
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });

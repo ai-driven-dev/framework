@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_SOURCE_PATH = "/plugin-source/sample-plugin";
 const PROJECT_ROOT = "/test-project";
@@ -33,7 +33,7 @@ function greetDistribution(): PluginDistribution {
 }
 
 async function replaceOnClaude(marketplace: string | undefined) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   deps.fs.setFile(join(PROJECT_ROOT, STALE_FILE), "old");
   const manifest = await deps.manifestRepo.load();

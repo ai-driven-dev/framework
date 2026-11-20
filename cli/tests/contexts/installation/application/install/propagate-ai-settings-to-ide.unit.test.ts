@@ -6,18 +6,18 @@ import type { ToolCatalog } from "../../../../../src/contexts/tools/contract/too
 import type { SettingsFileAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-  initProject,
-} from "../../../../helpers/ports/build-unit-deps.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+  initProject,
+} from "../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function propagate(
   deps: Deps,
@@ -49,7 +49,7 @@ function parsed(deps: Deps, relativePath: string) {
 
 describe("PropagateAiSettingsToIde", () => {
   it("merges under the strategy the capability declares", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
     const merge = vi.spyOn(deps.fs, "mergeJsonFile");
 
@@ -63,7 +63,7 @@ describe("PropagateAiSettingsToIde", () => {
   });
 
   it("runs the post-install pipeline over the manifest after merging the file", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
     const pipeline = vi.spyOn(deps.runPostInstallPipeline, "execute");
 
@@ -76,7 +76,7 @@ describe("PropagateAiSettingsToIde", () => {
   });
 
   it("merges nothing for an AI tool that is not installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     await propagate(deps);
@@ -86,7 +86,7 @@ describe("PropagateAiSettingsToIde", () => {
   });
 
   it("merges only the settings an AI tool requires of this IDE, not those it requires of another", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
     const tools = registeredTools();
     const profile = tools.aiProfile(TOOL.copilot);
@@ -112,7 +112,7 @@ describe("PropagateAiSettingsToIde", () => {
   });
 
   it("does nothing when no manifest exists", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
 
     await propagate(deps);
 
@@ -120,7 +120,7 @@ describe("PropagateAiSettingsToIde", () => {
   });
 
   it("keeps the tool's other merge entries and replaces a stale one for the same file", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const mcpEntry = { relativePath: ".vscode/mcp.json", sectionKey: null, entries: {} };
     const stale = {
@@ -141,7 +141,7 @@ describe("PropagateAiSettingsToIde", () => {
   });
 
   it("merges nothing of an asset-backed capability when no asset provider was given", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     await withCopilotRegistered(deps);
 

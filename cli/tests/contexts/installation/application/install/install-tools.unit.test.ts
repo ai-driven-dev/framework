@@ -2,18 +2,18 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
 import type { AiToolId, IdeToolId } from "../../../../../src/shared/domain/tool.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import {
-  buildUnitDeps,
+  buildInstallationDeps,
   initProject,
   installTool,
-} from "../../../../helpers/ports/build-unit-deps.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
 
 async function build() {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   const useCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,

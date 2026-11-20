@@ -6,12 +6,12 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/orchestration/plugin/install-from-marketplace.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import {
-  buildUnitDeps,
+  buildInstallationDeps,
   initAndInstall,
   installTool,
-} from "../../../../helpers/ports/build-unit-deps.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -40,7 +40,7 @@ function makeMockOrphanPlugin(name: string): InstalledPlugin {
 }
 
 function buildUseCase(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   pluginInstall: Partial<PluginInstallFromMarketplace> = {},
   syncSettings: Partial<ActivatePropagatedPlugins> = {}
 ) {
@@ -66,7 +66,7 @@ function buildUseCase(
 }
 
 async function addPlugin(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
+  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   toolId: string,
   plugin: InstalledPlugin
 ): Promise<void> {
@@ -78,7 +78,7 @@ async function addPlugin(
 describe("InstallAiTool", () => {
   describe("empty manifest — no prior tools", () => {
     it("installs the tool and returns no propagation when no plugins exist on other tools", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       const { useCase } = buildUseCase(deps);
 
       const result = await useCase.execute({
@@ -97,7 +97,7 @@ describe("InstallAiTool", () => {
 
   describe("installed tools without plugins", () => {
     it("runs no activation when nothing was propagated", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { useCase, syncSettingsMock } = buildUseCase(deps);
 
@@ -119,7 +119,7 @@ describe("InstallAiTool", () => {
     });
 
     it("propagates nothing when the manifest vanished right after the install", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const loaded = await deps.manifestRepo.load();
       vi.spyOn(deps.manifestRepo, "load").mockResolvedValueOnce(loaded).mockResolvedValueOnce(null);
@@ -143,7 +143,7 @@ describe("InstallAiTool", () => {
 
   describe("manifest with plugins on another tool", () => {
     it("propagates with the exact non-interactive replace request", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
       const { useCase, pluginInstallMock } = buildUseCase(deps);
@@ -170,7 +170,7 @@ describe("InstallAiTool", () => {
     });
 
     it("does not propagate the tool's own plugins back onto it on a forced reinstall", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installTool(deps, PROJECT_ROOT, TOOL.opencode);
       await addPlugin(deps, "opencode", makeMockPlugin("own-plugin"));
@@ -189,7 +189,7 @@ describe("InstallAiTool", () => {
     });
 
     it("propagates plugins from existing tools onto the new tool", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
@@ -216,7 +216,7 @@ describe("InstallAiTool", () => {
     });
 
     it("runs settings sync after propagation", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
@@ -236,7 +236,7 @@ describe("InstallAiTool", () => {
     });
 
     it("surfaces the sync's own errors in its result rather than discarding them", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
@@ -266,7 +266,7 @@ describe("InstallAiTool", () => {
     });
 
     it("skips propagation and sync when --no-plugins flag is set", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
@@ -285,7 +285,7 @@ describe("InstallAiTool", () => {
     });
 
     it("deduplicates plugins appearing on multiple source tools", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
@@ -310,7 +310,7 @@ describe("InstallAiTool", () => {
 
   describe("tool already installed (skipped)", () => {
     it("returns skipped without propagation when tool is already installed", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("some-plugin"));
 
@@ -332,7 +332,7 @@ describe("InstallAiTool", () => {
     });
 
     it("answers the skipped install alone, with nothing propagated and no warning", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
       const { useCase } = buildUseCase(deps);
 
@@ -360,7 +360,7 @@ describe("InstallAiTool", () => {
 
   describe("orphaned plugin (no marketplace)", () => {
     it("emits a warning and does not throw when plugin has no marketplace", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockOrphanPlugin("orphan-plugin"));
 
@@ -383,7 +383,7 @@ describe("InstallAiTool", () => {
 
   describe("propagation version policy", () => {
     it("passes prefer-catalog policy to pluginInstallFromMarketplace on propagation", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
@@ -405,7 +405,7 @@ describe("InstallAiTool", () => {
 
   describe("propagation failure", () => {
     it("records a warning and continues when plugin installation fails", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("fail-plugin"));
       await addPlugin(deps, "claude", makeMockPlugin("ok-plugin"));

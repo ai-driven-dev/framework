@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
   translateDistribution,
@@ -13,6 +12,7 @@ import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -28,7 +28,7 @@ const GIT_SUBDIR_SOURCE = {
 
 const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
   const registry = new FakeMarketplaceRegistry();
@@ -84,7 +84,7 @@ async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry
 
 describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)", () => {
   it("cleans up files a pre-fix update/restore materialized, leaving the manifest entry empty", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
@@ -120,7 +120,7 @@ describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)"
   });
 
   it("leaves a file the manifest never tracked untouched, even inside the plugin's own directory", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
@@ -149,7 +149,7 @@ describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)"
   });
 
   it("restores a github-sourced marketplace plugin on claude without materializing any files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);

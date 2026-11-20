@@ -5,12 +5,12 @@ import { PlacePlugin } from "../../../../../../src/contexts/installation/applica
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { buildUnitDeps, initAndInstall } from "../../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-registry.js";
+import { buildInstallationDeps, initAndInstall } from "../../../testing/installation-deps.js";
 
 const { cursor } = TOOL;
 const PROJECT_ROOT = "/test-project";
@@ -24,7 +24,7 @@ const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
 const FOUND_DIR = join(homedir(), ".cursor/plugins/local", "sample-plugin");
 
 async function placeForCursor(foundFile: string | undefined) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, cursor);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);

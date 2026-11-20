@@ -2,14 +2,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
-import {
-  buildUnitDeps,
-  FIXTURE_DIR,
-  initAndInstall,
-} from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.js";
+import {
+  buildInstallationDeps,
+  FIXTURE_DIR,
+  initAndInstall,
+} from "../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -33,7 +33,7 @@ describe("restore reads every config artifact a profile consumes", () => {
 });
 
 async function installedThenDeleted(toolId: ToolId, relativePath: string) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, toolId);
   const target = join(PROJECT_ROOT, relativePath);
   expect(deps.fs.has(target)).toBe(true);
@@ -41,7 +41,7 @@ async function installedThenDeleted(toolId: ToolId, relativePath: string) {
   return { deps, target };
 }
 
-async function restore(deps: Awaited<ReturnType<typeof buildUnitDeps>>, toolId: ToolId) {
+async function restore(deps: Awaited<ReturnType<typeof buildInstallationDeps>>, toolId: ToolId) {
   await restoreOf({
     ...deps,
     prompter: new OverwritePrompter(),

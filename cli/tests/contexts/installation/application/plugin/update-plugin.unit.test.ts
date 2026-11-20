@@ -7,7 +7,6 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { PluginFetchOptions } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
@@ -18,6 +17,7 @@ import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-f
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -27,7 +27,7 @@ const EXTRA_PLUGIN_FIXTURE = join(
 const PROJECT_ROOT = "/test-project";
 const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 class RecordingFetcher extends FixturePluginFetcher {
   readonly fetchOptions: Array<PluginFetchOptions | undefined> = [];
@@ -95,7 +95,7 @@ function installed(deps: Deps, name: string) {
 
 describe("UpdatePlugin", () => {
   it("skips machine-owned Cursor plugins in an unnamed project sweep", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
@@ -116,7 +116,7 @@ describe("UpdatePlugin", () => {
   });
 
   it("refuses an explicitly named Cursor plugin at project scope", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
@@ -137,7 +137,7 @@ describe("UpdatePlugin", () => {
 
   describe("same version", () => {
     it("does not re-write files when version is equal", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
 
@@ -164,7 +164,7 @@ describe("UpdatePlugin", () => {
 
   describe("newer version available", () => {
     it("re-writes files and updates manifest version", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
 
@@ -199,7 +199,7 @@ describe("UpdatePlugin", () => {
 
   describe("what it reports", () => {
     it("reports nothing when the installed version is current", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
       await addLocal(addUseCase);
@@ -213,7 +213,7 @@ describe("UpdatePlugin", () => {
     });
 
     it("reports exactly the plugin it updated", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
       await addLocal(addUseCase);
@@ -228,7 +228,7 @@ describe("UpdatePlugin", () => {
     });
 
     it("updates only the plugins named", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -253,7 +253,7 @@ describe("UpdatePlugin", () => {
 
   describe("how it fetches", () => {
     it("fetches the plugin source with a forced refresh", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const fetcher = new RecordingFetcher();
       const { addUseCase, updateUseCase } = await setup(deps, { fetcher });
@@ -270,7 +270,7 @@ describe("UpdatePlugin", () => {
 
   describe("a plugin installed from a local path", () => {
     it("re-writes its files on disk even when built-tree deps are wired", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
         builtDeps: {

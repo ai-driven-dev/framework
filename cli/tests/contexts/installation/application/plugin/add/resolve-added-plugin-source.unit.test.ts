@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { buildUnitDeps } from "../../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuiltDeps } from "../../../../../helpers/ports/fake-build-sources.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
+import { buildInstallationDeps } from "../../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 const SOURCE = { kind: "local" as const, path: "/plugin" };
@@ -13,7 +13,7 @@ const INPUT = { source: SOURCE, projectRoot: PROJECT_ROOT, toolIds: [TOOL.claude
 const fetch = vi.fn(async () => "/fetched");
 
 async function resolver() {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   fetch.mockClear();
   const reader = {
     read: async () =>

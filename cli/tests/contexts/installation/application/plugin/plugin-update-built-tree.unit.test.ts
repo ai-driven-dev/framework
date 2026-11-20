@@ -10,7 +10,6 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
   translateDistribution,
@@ -22,6 +21,7 @@ import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
 const insideUserScope: IsWithinUserScope = () => true;
@@ -43,7 +43,7 @@ const GIT_SUBDIR_SOURCE = {
 };
 const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   const registry = new FakeMarketplaceRegistry();
@@ -179,7 +179,7 @@ function attachFutureSupportedNativeClaim(deps: Deps) {
 
 describe("UpdatePlugin — built-tree materialization", () => {
   it("refuses an absent machine manifest before touching user files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const registry = await makeRegistry();
     await deps.userManifestRepo.delete();
     const path = join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md");
@@ -200,7 +200,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("checks current user bytes inside the machine repository's exclusive-access boundary", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -233,7 +233,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   it.each([{ dependents: [] }, { dependents: [PROJECT_ROOT, "/B"] }])(
     "warns only for actual dependent projects when updating shared native and file plugins: $dependents",
     async ({ dependents }) => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, cursor);
       const registry = await makeRegistry();
       await installStalePlugin(deps, registry);
@@ -284,7 +284,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   );
 
   it("updates only the selected user plugin and exact native ref, preserving unrelated claims and project records", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -348,7 +348,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("refuses one ambiguous native name among several selected plugins before any file or host update", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -387,7 +387,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("excludes built Cursor hooks from the updated user plugin and leaves both projects' hooks unchanged", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -432,7 +432,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("uses the plugin's named marketplace build rather than the first registered catalogue", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = new FakeMarketplaceRegistry();
     registry.seed(PROJECT_ROOT, {
@@ -470,7 +470,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("re-materializes from the built tree for a marketplace plugin", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -494,7 +494,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("writes the updated plugin under the user-scope base dir, not the project root", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -516,7 +516,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("does not rewrite or advance a plugin already at the fetched version", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -537,7 +537,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("refuses an escaped old user file before writing a fetched build or changing its claim", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -557,7 +557,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("refuses to overwrite a user-edited Cursor plugin file and retains its installed digest", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -579,7 +579,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("refuses a new built file that the user created after v1 without changing bytes or claims", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -605,7 +605,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("refuses an untracked identical file without changing its bytes or claiming it", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -629,7 +629,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("preflights a Cursor user-file collision before any selected native host update", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -656,7 +656,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("refuses a tracked old path redirected outside the user boundary between plan and apply", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -707,7 +707,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("reports manual reconciliation when user-file I/O fails after an irreversible native update", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -742,7 +742,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("prunes only old owned paths and keeps dependent roots when replacing the user files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -772,7 +772,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
   });
 
   it("translates a local user plugin without taking an unrelated marketplace's built tree", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });

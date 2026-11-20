@@ -4,7 +4,6 @@ import { ReplacePluginFiles } from "../../../../../src/contexts/installation/app
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
   translateDistribution,
@@ -14,6 +13,7 @@ import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -31,7 +31,7 @@ const GIT_SUBDIR_SOURCE = {
 
 const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
   const registry = new FakeMarketplaceRegistry();
@@ -104,7 +104,7 @@ async function installStaleGithubPlugin(
 
 describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () => {
   it("updates a github-sourced marketplace plugin on claude without materializing any files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
@@ -130,7 +130,7 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
   });
 
   it("keeps the manifest's single entry for the plugin after update (no duplicate registration)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
@@ -151,7 +151,7 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
 
 describe("UpdatePlugin — flat-mode tools are unaffected (regression guard)", () => {
   it("still re-materializes opencode's flat files from the built tree on update", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
     const registry = await makeGithubRegistry();
     await installStaleGithubPlugin(deps, registry, TOOL.opencode);

@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
   translateDistribution,
@@ -14,6 +13,7 @@ import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -28,7 +28,7 @@ const GIT_SUBDIR_SOURCE = {
 
 const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   const registry = new FakeMarketplaceRegistry();
@@ -87,7 +87,7 @@ async function installMarketplacePlugin(
 
 describe("RestoreAllPlugins — built-tree materialization", () => {
   it("does not re-materialize a shared user plugin during project restore", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
@@ -127,7 +127,7 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
   });
 
   it("reports zero files restored when a built-tree restore finds nothing drifted", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
@@ -161,7 +161,7 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
   });
 
   it("keeps the manifest's single entry for the plugin after restore (no duplicate registration)", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);

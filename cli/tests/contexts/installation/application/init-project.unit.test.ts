@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InitProject } from "../../../../src/contexts/installation/application/init-project.js";
-import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { buildInstallationDeps, initProject, installTool } from "../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
-function initOf(deps: Awaited<ReturnType<typeof buildUnitDeps>>): InitProject {
+function initOf(deps: Awaited<ReturnType<typeof buildInstallationDeps>>): InitProject {
   return new InitProject(deps.fs, deps.manifestRepo, deps.updateGitignore, registeredTools());
 }
 
@@ -22,7 +22,7 @@ function countingLoads(repo: { load: () => Promise<unknown> }): () => number {
 
 describe("init", () => {
   it("reads the manifest once, whether it initializes or refuses", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const reads = countingLoads(deps.manifestRepo);
     const init = initOf(deps);
     const command = { projectRoot: PROJECT_ROOT };
@@ -35,7 +35,7 @@ describe("init", () => {
   });
 
   it("reads the manifest once when it initializes only if absent", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const reads = countingLoads(deps.manifestRepo);
 
     await initOf(deps).initializeIfAbsent({
@@ -46,7 +46,7 @@ describe("init", () => {
   });
 
   it("creates a v5 manifest with no tools", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const result = await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -62,7 +62,7 @@ describe("init", () => {
   });
 
   it("does not create an aidd_docs directory", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -72,7 +72,7 @@ describe("init", () => {
   });
 
   it("does not overwrite a pre-existing user file", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const docFile = join(PROJECT_ROOT, ".claude", "CLAUDE.md");
     await deps.fs.writeFile(docFile, "custom content");
 
@@ -85,7 +85,7 @@ describe("init", () => {
 
   describe("initializeIfAbsent", () => {
     it("creates the manifest and answers true when none exists", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
 
       const created = await initOf(deps).initializeIfAbsent({
         projectRoot: PROJECT_ROOT,
@@ -96,7 +96,7 @@ describe("init", () => {
     });
 
     it("leaves an existing manifest alone and answers false", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initProject(deps, PROJECT_ROOT);
       const before = deps.manifestRepo.saveCount;
 
@@ -111,7 +111,7 @@ describe("init", () => {
 
   describe("execute refuses a project that cannot be initialized", () => {
     it("aborts with guidance when .claude/ contains AIDD frontmatter", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".claude", "commands", "aidd", "02", "brainstorm.md"),
         "---\nname: aidd:02:brainstorm\ndescription: test\n---\nbody"
@@ -125,7 +125,7 @@ describe("init", () => {
     });
 
     it("passes when .claude/ exists without AIDD frontmatter", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".claude", "commands", "my-command.md"),
         "---\nname: my-command\ndescription: custom\n---\nbody"
@@ -139,7 +139,7 @@ describe("init", () => {
     });
 
     it("aborts when already initialized without --force", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -153,7 +153,7 @@ describe("init", () => {
     // `aidd init` is not a command this CLI exposes (see the surface in cli.md) — telling
     // a user to run `aidd init --force` points them at something that does not exist.
     it("names a real recovery path, not the nonexistent `aidd init --force`", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -170,7 +170,7 @@ describe("init", () => {
     });
 
     it("--force: fails with guidance when no manifest exists", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await expect(
         initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
@@ -180,7 +180,7 @@ describe("init", () => {
     });
 
     it("--force: passes when manifest exists", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -195,7 +195,7 @@ describe("init", () => {
 
   describe("--force", () => {
     it("does not create or alter gitignore while reusing an existing manifest", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initProject(deps, PROJECT_ROOT);
       await deps.fs.writeFile(join(PROJECT_ROOT, ".gitignore"), "# User-owned\n");
       const before = (await deps.manifestRepo.load())?.toJSON();
@@ -208,7 +208,7 @@ describe("init", () => {
     });
 
     it("preserves existing manifest tools when --force reinitializes", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
+      const deps = await buildInstallationDeps();
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.claude);
 

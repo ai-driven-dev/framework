@@ -4,17 +4,17 @@ import { restoreMergeFiles } from "../../../../../src/contexts/installation/appl
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
-import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   KeepPrompter,
   OverwritePrompter,
   ScriptedPrompter,
 } from "../../../../shared/testing/scripted-prompter.js";
+import { buildInstallationDeps } from "../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
 async function buildDeps() {
-  return buildUnitDeps(PROJECT_ROOT);
+  return buildInstallationDeps();
 }
 
 describe("restoreMergeFiles", () => {

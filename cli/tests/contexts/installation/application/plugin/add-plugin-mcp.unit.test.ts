@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-  installTool,
-} from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+  installTool,
+} from "../../testing/installation-deps.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(
   process.cwd(),
@@ -23,7 +23,7 @@ const PROJECT_ROOT = "/test-project";
 const MCP_PLUGIN_DIR = "/plugins/mcp-plugin";
 const OPENCODE_JSON = join(PROJECT_ROOT, "opencode.json");
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 async function buildOpencodeProject(): Promise<{
   deps: Deps;
@@ -31,7 +31,7 @@ async function buildOpencodeProject(): Promise<{
   logger: CapturingLogger;
   useCase: AddPlugin;
 }> {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
   deps.fs.setFile(
     join(MCP_PLUGIN_DIR, ".claude-plugin/plugin.json"),

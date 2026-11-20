@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { InstallIdeTool } from "../../../../../src/contexts/installation/application/install/install-ide-tool.js";
 import { PropagateAiSettingsToIde } from "../../../../../src/contexts/installation/application/install/propagate-ai-settings-to-ide.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import {
-  buildUnitDeps,
+  buildInstallationDeps,
   initProject,
   installTool,
-} from "../../../../helpers/ports/build-unit-deps.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../testing/installation-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 
-type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function propagateAnswering(deps: Deps, answer: PropagateAiSettingsToIde["execute"]) {
   const propagate = new PropagateAiSettingsToIde(
@@ -34,7 +34,7 @@ async function installVscode(deps: Deps, propagate: PropagateAiSettingsToIde) {
 
 describe("InstallIdeTool", () => {
   it("propagates the AI tools' settings once the IDE config is installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     const installedWhenPropagating: boolean[] = [];
     const { propagate, execute } = propagateAnswering(deps, async () => {
@@ -54,7 +54,7 @@ describe("InstallIdeTool", () => {
   });
 
   it("has propagated by the time the install resolves", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     let propagated = false;
     const { propagate } = propagateAnswering(deps, async () => {
@@ -68,7 +68,7 @@ describe("InstallIdeTool", () => {
   });
 
   it("returns skipped and does not propagate when the IDE is already installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     const { propagate, execute } = propagateAnswering(deps, async () => {});
@@ -80,7 +80,7 @@ describe("InstallIdeTool", () => {
   });
 
   it("installs on a fresh manifest when the project has none yet", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     const { propagate } = propagateAnswering(deps, async () => {});
     expect(await deps.manifestRepo.load()).toBeNull();
 
