@@ -3,7 +3,7 @@ import type { UpdateTool } from "../../contexts/installation/application/update/
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
-import { BulkConflictState } from "./bulk-conflict-state.js";
+import { BulkConflictState } from "../domain/bulk-conflict-state.js";
 import type { ResolveUpdateDecision } from "./resolve-update-decision.js";
 
 const CATEGORIES: readonly ToolCategory[] = ["ai", "ide"];

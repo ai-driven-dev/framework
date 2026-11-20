@@ -174,7 +174,6 @@
     "src/contexts/translate/infrastructure/schema-validator.ts",
     "src/orchestration/clean/clean-project.ts",
     "src/orchestration/clean/clean-user-scope.ts",
-    "src/orchestration/global/bulk-conflict-state.ts",
     "src/orchestration/global/restore-all.ts",
     "src/orchestration/marketplace/add-marketplace.ts",
     "src/orchestration/marketplace/check-marketplace-upstream.ts",
@@ -219,7 +218,6 @@
     "src/contexts/telemetry/application/switch/consent-switch.ts",
     "src/contexts/translate/application/sinks/disk-sink.ts",
     "src/contexts/translate/application/sinks/flat-writer.ts",
-    "src/orchestration/global/bulk-conflict-state.ts",
     "src/orchestration/setup/setup-marketplace-registration.ts"
   ],
   "thrown": [],
