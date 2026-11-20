@@ -2,8 +2,8 @@ import { mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { describeFileContract, type FileSubject } from "../../helpers/ports/file-port-contract.js";
 import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.js";
+import { describeFileContract, type FileSubject } from "../testing/run-file-contract.js";
 
 const inMemorySubject = (rejectMissingRealpath: boolean) => async (): Promise<FileSubject> => {
   const files = new InMemoryFileAdapter({});
