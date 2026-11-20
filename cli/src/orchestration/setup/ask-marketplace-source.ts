@@ -1,5 +1,11 @@
-import type { ChooseMarketplaceSource } from "../../contexts/distribution/application/choose-marketplace-source.js";
-import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
+import { resolve } from "node:path";
+import type { ListFrameworkReleases } from "../../contexts/distribution/application/list-framework-releases.js";
+import type { PinNewestFrameworkSource } from "../../contexts/distribution/application/pin-newest-framework-source.js";
+import {
+  type FrameworkSource,
+  localFrameworkSource,
+  remoteFrameworkSource,
+} from "../../contexts/distribution/contract/framework-source.js";
 import { InputRequiredError } from "../../shared/domain/errors.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
@@ -17,7 +23,8 @@ export interface AskMarketplaceSourceOptions {
 export class AskMarketplaceSource {
   constructor(
     private readonly prompter: Prompter,
-    private readonly choose: ChooseMarketplaceSource
+    private readonly listReleases: Pick<ListFrameworkReleases, "execute">,
+    private readonly pinNewest: Pick<PinNewestFrameworkSource, "execute">
   ) {}
 
   async execute(options: AskMarketplaceSourceOptions): Promise<FrameworkSource> {
@@ -26,7 +33,7 @@ export class AskMarketplaceSource {
       if (options.interactive && given.kind === "github" && given.ref === undefined) {
         return this.askVersion(given.repo);
       }
-      return this.choose.pinNewest(given);
+      return this.pinNewest.execute(given);
     }
     if (options.interactive) return this.askSource();
     throw new InputRequiredError(
@@ -39,13 +46,13 @@ export class AskMarketplaceSource {
       { name: "remote (fetch from GitHub marketplace — recommended)", value: "remote" },
       { name: "local (copy from local framework directory)", value: "local" },
     ]);
-    if (kind === "remote") return this.askVersion(this.choose.remote().repo);
+    if (kind === "remote") return this.askVersion(remoteFrameworkSource().repo);
     const path = await this.prompter.input("Path to local framework directory:", "");
-    return this.choose.local(path);
+    return localFrameworkSource(resolve(path));
   }
 
   private async askVersion(repo: string): Promise<FrameworkSource> {
-    const releases = await this.choose.releases(repo);
+    const releases = await this.listReleases.execute(repo);
     const choices = [
       ...releases.map((tag, i) => ({
         name: i === 0 ? `${tag} (latest)` : tag,
@@ -57,6 +64,6 @@ export class AskMarketplaceSource {
       "Select framework release to install:",
       choices
     );
-    return this.choose.remote(repo, picked === HEAD_CHOICE ? undefined : picked);
+    return remoteFrameworkSource(repo, picked === HEAD_CHOICE ? undefined : picked);
   }
 }

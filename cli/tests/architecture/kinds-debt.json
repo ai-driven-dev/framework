@@ -49,7 +49,6 @@
     "src/contexts/tools/domain/profiles/registered-profiles.ts -> src/contexts/tools/domain/profiles/kilo/profile.ts",
     "src/contexts/tools/domain/profiles/registered-profiles.ts -> src/contexts/tools/domain/profiles/opencode/profile.ts",
     "src/contexts/tools/domain/profiles/registered-profiles.ts -> src/contexts/tools/domain/profiles/vscode/profile.ts",
-    "src/contexts/translate/domain/engine.ts -> src/contexts/translate/ports/translate-profile.ts",
     "src/presentation/commands/auth.ts -> src/shared/ports/prompter.ts",
     "src/presentation/commands/marketplace.ts -> src/presentation/terminal/child-command.ts",
     "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts",
@@ -232,7 +231,6 @@
     "src/shared/infrastructure/user-config-dir.ts"
   ],
   "shape": [
-    "src/contexts/distribution/application/choose-marketplace-source.ts",
     "src/contexts/installation/application/agents/agent-providers.ts",
     "src/contexts/installation/application/agents/main-session-models.ts",
     "src/contexts/installation/application/clean-project-files.ts",

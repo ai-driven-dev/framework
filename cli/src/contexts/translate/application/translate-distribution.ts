@@ -4,7 +4,7 @@ import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-not
 import { flatHookPaths, translateWithComponentPaths } from "../domain/engine.js";
 import type { OutputFile } from "../domain/output-file.js";
 import type { DistributionProbe } from "../domain/plugin-format.js";
-import type { TranslateProfile } from "../ports/translate-profile.js";
+import type { TranslateProfile } from "../domain/translate-profile.js";
 
 export interface TranslateDistributionCommand {
   readonly distribution: PluginDistribution;

@@ -20,9 +20,9 @@ import type {
   PluginAnswers,
   SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
-import type { TranslatedAiTool, TranslateProfile } from "../ports/translate-profile.js";
 import { flatHooksBridgeFile } from "./flat-layout.js";
 import type { OutputFile } from "./output-file.js";
+import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
 
 interface TranslatedFile {
   relativePath: string;
