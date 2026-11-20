@@ -113,6 +113,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ### Migration state
 | Deviation | Closes when |
 | --- | --- |
+| orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED` in `profile-readers-name-their-sections.arch.test.ts`) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |
 | `COMMAND_SHAPE_BASELINE` in `command-shape.arch.test.ts`: application classes that answer several questions, implement no port or contract and have no `execute` | each entry becomes a command, or the code map reclassifies it |
