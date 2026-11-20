@@ -49,4 +49,4 @@ Source: `aidd_docs/tasks/2026_11/2026_11_20_contract-validation/spec.md` (issue 
 | Engine vendored per skill in `scripts/lib/`, source in `scripts/contract/` | a require across skill folders breaks on flat-mode hosts |
 | `verify-hook.cjs` deleted, its per-host run check not replaced | user decision: the contract holds form only |
 | Writers keep their input refusals | they guard the input before writing, the contract guards the written file |
-| CI job in `validate.yml`, not in lefthook | git hooks belong to #1165 |
+| CI job in `validate.yml`, not in lefthook | git hooks belong to PR #1316 |

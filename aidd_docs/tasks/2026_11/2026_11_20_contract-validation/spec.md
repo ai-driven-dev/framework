@@ -24,7 +24,7 @@ Every artifact the framework generates or ships is checked against its own decla
 - The weighted spec rubric graded by a model.
 - HTML, CSS and JavaScript assets beyond a parse check of hook handlers.
 - Validating archived plans in CI.
-- Wiring checks into git hooks, which #1165 owns.
+- Wiring checks into git hooks, which PR #1316 owns.
 - Changes to how commits are made during implementation.
 
 ## Done-when
@@ -46,4 +46,4 @@ None.
 ## Context
 
 - Issue: https://github.com/ai-driven-dev/framework/issues/1149
-- Hooks gating: https://github.com/ai-driven-dev/framework/issues/1165
+- Hooks gating: https://github.com/ai-driven-dev/framework/pull/1316

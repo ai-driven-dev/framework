@@ -1,6 +1,6 @@
 # Framework checks unified behind contracts
 
-Addendum to the locked spec `aidd_docs/tasks/2026_11/2026_11_20_contract-validation/spec.md` (#1149), which stays unchanged; covers #1149 (rest) and #1165.
+Addendum to the locked spec `aidd_docs/tasks/2026_11/2026_11_20_contract-validation/spec.md` (#1149), which stays unchanged; covers #1149 (rest) and PR #1316.
 
 ## Target
 
@@ -59,4 +59,4 @@ scripts/__tests__/       code tests only
 ## Context
 
 - https://github.com/ai-driven-dev/framework/issues/1149
-- https://github.com/ai-driven-dev/framework/issues/1165
+- https://github.com/ai-driven-dev/framework/pull/1316
