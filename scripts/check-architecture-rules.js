@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * The two architecture rules of issue #250, at commit time. The write-time hook only ever sees
- * Claude Code; this sees every edit that reaches a commit, whichever tool or person made it.
+ * Router coherence (issue #250), at commit time: a SKILL.md with no preamble Mermaid flowchart must
+ * cite every action file in a "## Actions" section. Everything else is `scripts/check/run.cjs`'s
+ * (SKILL-06, SKILL-22); this goes once no SKILL-06 no-flowchart finding is baselined.
  *
  * Paths given as arguments are checked; with none, the whole governed tree is.
  * `--root <dir>` moves both, so the refusal can be exercised against another tree.
