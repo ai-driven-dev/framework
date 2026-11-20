@@ -1,15 +1,44 @@
 /**
- * The rules that live in biome rather than in a test: `process.exit` outside the exit function
- * through the GritQL plugin, `export default` under src/ and tests/, the `process` global in a
- * context's domain and application. A rule biome silently stops applying is invisible, so each is
- * planted; the rules that hold a test or a catch are in `biome-plants.arch.test.ts`.
+ * The rules Biome holds, planted and linted once. A rule Biome silently stops applying is
+ * invisible, so each row of `PLANTS` names a file, what it holds, the rule that must fire and how
+ * many times; a `times` of 0 is a file the rule must spare, and a file two overrides could both
+ * match must draw both diagnostics, since Biome keeps only the last matching override's options.
+ * The rest checks the shape of `biome.json` itself: the carriers of each rule, and the context
+ * boundary overrides, which `scripts/generate-biome-boundaries.mjs` writes from the edge table in
+ * `allowed-edges.ts`. Biome replaces a rule's whole `options` with the LAST override matching a
+ * file rather than merging pattern arrays, so each file must carry exactly one
+ * `noRestrictedImports` override.
  */
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { builtinModules } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { biomeFindings, CLI_ROOT, read, reportedFile } from "./helpers.js";
+import {
+  type BiomeConfig,
+  type BiomeOverride,
+  type BoundaryInputs,
+  boundaryInputs,
+  boundaryOverrides,
+  interiorGroupsOf,
+  overrideIncludes,
+  type RestrictedPattern,
+  restrictedImportOptions,
+} from "../../scripts/generate-biome-boundaries.mjs";
+import { isRecord, parseJsonRecord } from "../shared/testing/json-value.builder.js";
+import { ALLOWED, HELD_BY_BIOME } from "./allowed-edges.js";
+import { PLANTS } from "./biome-plants.js";
+import {
+  biomeFindings,
+  CLI_ROOT,
+  matchesGlob,
+  read,
+  reportedFile,
+  SRC,
+  sourceFiles,
+  tsFilesUnder,
+} from "./helpers.js";
 
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 const GITHUB_PLUGIN = "biome-plugins/one-github-api-url.grit";
@@ -27,13 +56,61 @@ const PURE_FOLDERS = [
 ] as const;
 const PURE_BUILTINS: ReadonlySet<string> = new Set(["path", "crypto"]);
 
-const BARE_NODE_MODULES = ["fs", "fs/promises", "node:fs/promises", "child_process"];
+interface Override extends BiomeOverride {
+  plugins?: string[];
+  linter?: NonNullable<BiomeOverride["linter"]> & {
+    rules?: { style?: { noRestrictedGlobals?: { options?: unknown } } };
+  };
+}
+interface BiomeFile extends BiomeConfig {
+  overrides?: Override[];
+}
+
+const isBiomeFile = (value: unknown): value is BiomeFile =>
+  isRecord(value) && (value.overrides === undefined || Array.isArray(value.overrides));
+
+function biomeConfig(): BiomeFile {
+  const value: unknown = JSON.parse(read("biome.json"));
+  if (!isBiomeFile(value)) throw new Error("biome.json: expected `overrides` to be a list");
+  return value;
+}
+
+describe("every rule Biome holds is planted and fires, once per breach", () => {
+  let findings: string[];
+  let root: string;
+
+  beforeAll(() => {
+    root = mkdtempSync(join(tmpdir(), "aidd-biome-bite-"));
+    cpSync(join(CLI_ROOT, "biome.json"), join(root, "biome.json"));
+    cpSync(join(CLI_ROOT, "biome-plugins"), join(root, "biome-plugins"), { recursive: true });
+    for (const [path, source] of PLANTS) {
+      mkdirSync(join(root, dirname(path)), { recursive: true });
+      writeFileSync(join(root, path), source.endsWith("\n") ? source : `${source}\n`);
+    }
+    findings = biomeFindings(root);
+  });
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it.each(PLANTS)("%s draws its diagnostics", (path, _source, rule, times) => {
+    expect(findings.filter((found) => found === `${path}:${rule}`)).toHaveLength(times);
+  });
+
+  it("draws nothing at all on a clean module", () => {
+    expect(findings.filter((found) => found.startsWith("src/shared/domain/clean.ts"))).toEqual([]);
+  });
+
+  it("reads a file the GitHub reporter escaped, as on Windows", () => {
+    expect(reportedFile("C%3A\\tmp\\a%2Cb%25.ts")).toBe("C:\\tmp\\a,b%.ts");
+  });
+
+  it("fails when biome does not run, rather than reading as no findings", () => {
+    expect(() => biomeFindings(root, join(root, "missing-biome"))).toThrow(/biome did not run/);
+  });
+});
 
 describe("biome carries the exit and default-export rules", () => {
   it("scopes the process.exit plugin to the layers that throw, and to nothing else", () => {
-    const config = JSON.parse(read("biome.json")) as {
-      overrides?: { includes?: string[]; plugins?: string[] }[];
-    };
+    const config = biomeConfig();
     const carrier = (config.overrides ?? []).find((o) => o.plugins?.includes(`./${PLUGIN}`));
     expect(carrier?.includes, `no override applies ${PLUGIN}`).toEqual([
       "src/shared/**",
@@ -44,9 +121,7 @@ describe("biome carries the exit and default-export rules", () => {
   });
 
   it("scopes the GitHub API URL plugin to the source, and spares the one adapter that writes it", () => {
-    const config: { overrides?: { includes?: string[]; plugins?: string[] }[] } = JSON.parse(
-      read("biome.json")
-    );
+    const config = biomeConfig();
     const carrier = (config.overrides ?? []).find((o) => o.plugins?.includes(`./${GITHUB_PLUGIN}`));
     expect(carrier?.includes, `no override applies ${GITHUB_PLUGIN}`).toEqual([
       "src/**",
@@ -55,12 +130,7 @@ describe("biome carries the exit and default-export rules", () => {
   });
 
   it("bans the process global across every context's domain and application", () => {
-    const config = JSON.parse(read("biome.json")) as {
-      overrides?: {
-        includes?: string[];
-        linter?: { rules?: { style?: { noRestrictedGlobals?: { options?: unknown } } } };
-      }[];
-    };
+    const config = biomeConfig();
     const carrier = (config.overrides ?? []).find(
       (o) => o.linter?.rules?.style?.noRestrictedGlobals !== undefined
     );
@@ -79,19 +149,12 @@ describe("biome carries the exit and default-export rules", () => {
   });
 
   it("denies a pure folder every package and every Node builtin but path and crypto", () => {
-    const config = JSON.parse(read("biome.json")) as {
-      overrides?: {
-        includes?: string[];
-        linter?: {
-          rules?: { style?: { noRestrictedImports?: { options?: { paths?: object } } } };
-        };
-      }[];
-    };
+    const config = biomeConfig();
     const deniedBy = (includes: string): string[] => {
       const override = (config.overrides ?? []).find((o) => o.includes?.[0] === includes);
       return Object.keys(override?.linter?.rules?.style?.noRestrictedImports?.options?.paths ?? {});
     };
-    const pkg = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
+    const { dependencies } = parseJsonRecord(read("package.json"));
     const builtins = [...new Set(builtinModules.map((name) => name.replace(/^node:/, "")))]
       .filter((name) => !PURE_BUILTINS.has(name))
       .flatMap((name) => [name, `node:${name}`]);
@@ -108,21 +171,16 @@ describe("biome carries the exit and default-export rules", () => {
         expect(denied, `${includes} denies node:${allowed}`).not.toContain(`node:${allowed}`);
       }
       expect(
-        Object.keys(pkg.dependencies).filter((name) => !denied.includes(name)),
+        Object.keys(isRecord(dependencies) ? dependencies : {}).filter(
+          (name) => !denied.includes(name)
+        ),
         `${includes} lets through a dependency of package.json`
       ).toEqual([]);
     }
   });
 
   it("bans the filesystem and child processes in a unit test, and in nothing else", () => {
-    const config = JSON.parse(read("biome.json")) as {
-      overrides?: {
-        includes?: string[];
-        linter?: {
-          rules?: { style?: { noRestrictedImports?: { options?: { paths?: unknown } } } };
-        };
-      }[];
-    };
+    const config = biomeConfig();
     const carrier = (config.overrides ?? []).find(
       (o) =>
         o.linter?.rules?.style?.noRestrictedImports?.options?.paths !== undefined &&
@@ -137,590 +195,258 @@ describe("biome carries the exit and default-export rules", () => {
   });
 });
 
-/** What distribution's layers must not import, and the layers that try it. */
-const LAYERS = ["contract", "domain", "ports", "application", "infrastructure"] as const;
-const DISTRIBUTION_REACHES = [["installation", LAYERS]] as const;
-const distributionReaches = (): string[] =>
-  DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
-    layers.map((layer) => `src/contexts/distribution/${layer}/reaches-${target}.ts`)
+const committed = biomeConfig();
+const input = boundaryInputs(
+  SRC,
+  { allowed: ALLOWED, heldByBiome: HELD_BY_BIOME },
+  join(CLI_ROOT, "tests")
+);
+
+function restrictedGroups(override: BiomeOverride): string[] | undefined {
+  return restrictedImportOptions(override)?.patterns?.flatMap((pattern) => pattern.group ?? []);
+}
+
+/** A glob as biome reads it: a trailing `/**` takes everything beneath, which `matchesGlob` does not. */
+const biomeGlob = (glob: string) => (glob.endsWith("/**") ? `${glob}/*` : glob);
+
+function filesMatchedTwice(
+  files: readonly string[],
+  includes: readonly (readonly string[])[]
+): string[] {
+  return files.filter(
+    (file) =>
+      includes.filter(
+        (globs) =>
+          globs.some((glob) => !glob.startsWith("!") && matchesGlob(biomeGlob(glob), file)) &&
+          !globs.some((glob) => glob.startsWith("!") && matchesGlob(biomeGlob(glob.slice(1)), file))
+      ).length > 1
   );
-/** Where distribution asks a question it must return as a result. */
-const DISTRIBUTION_ASKS_IN = ["application", "infrastructure"] as const;
-describe("the guard itself", () => {
-  let planted: string;
-  const readsEnvSource = "export const home = (): string | undefined => process.env.HOME;\n";
+}
 
-  beforeAll(() => {
-    planted = mkdtempSync(join(tmpdir(), "aidd-biome-bite-"));
-    cpSync(join(CLI_ROOT, "biome.json"), join(planted, "biome.json"));
-    cpSync(join(CLI_ROOT, "biome-plugins"), join(planted, "biome-plugins"), { recursive: true });
-    for (const dir of [
-      "src/shared/domain",
-      "src/presentation",
-      "tests/shared/domain",
-      "src/contexts/installation/domain",
-      "src/contexts/installation/application",
-      "src/contexts/installation/infrastructure",
-      "src/contexts/tools/infrastructure",
-      "src/presentation/commands",
-      "src/presentation/display",
-      "src/presentation/terminal",
-      "src/shared/ports",
-      "src/shared/infrastructure",
-      "src/contexts/tools/domain",
-      "src/contexts/auth/contract",
-      "src/contexts/auth/domain",
-      "src/contexts/auth/application",
-      "src/contexts/auth/infrastructure",
-      "src/contexts/auth/ports",
-      "src/contexts/update/application",
-      "src/contexts/update/infrastructure",
-      "src/contexts/recipes/domain",
-      "src/contexts/recipes/ports",
-      "src/contexts/recipes/application",
-      "src/contexts/recipes/infrastructure",
-      "src/contexts/distribution/contract",
-      "src/contexts/distribution/domain",
-      "src/contexts/distribution/ports",
-      "src/contexts/distribution/application",
-      "src/contexts/distribution/infrastructure",
-      "src/composition",
-      "src/orchestration/setup",
-    ]) {
-      mkdirSync(join(planted, dir), { recursive: true });
-    }
-    for (const [name, specifier] of Object.entries({
-      "reaches-fs": "node:fs",
-      "reaches-process": "node:child_process",
-      "reaches-domain": "../../contexts/auth/domain/credential-record.js",
-      "reaches-infrastructure": "../../contexts/auth/infrastructure/gh-cli-adapter.js",
-      "reaches-contract": "../../contexts/auth/contract/credential.js",
-      "reaches-application": "../../contexts/auth/application/log-in.js",
-      "reaches-tools-application": "../../contexts/tools/application/x.js",
-      "reaches-shared-infrastructure": "../../shared/infrastructure/http-client.js",
-      "reaches-composition": "../../composition/auth.js",
-      "reaches-presentation": "../../presentation/deps.js",
-    })) {
-      writeFileSync(
-        join(planted, `src/orchestration/setup/${name}.ts`),
-        `import "${specifier}";\n`
-      );
-    }
-    writeFileSync(
-      join(planted, "src/orchestration/setup/reaches-bare.ts"),
-      BARE_NODE_MODULES.map((specifier) => `import "${specifier}";\n`).join("")
-    );
-    writeFileSync(
-      join(planted, "src/shared/domain/exit.ts"),
-      "export const stop = (): never => process.exit(1);\n"
-    );
-    writeFileSync(
-      join(planted, "src/presentation/exit.ts"),
-      "export const stop = (): never => process.exit(1);\n"
-    );
-    for (const file of [
-      "src/presentation/commands/exit.ts",
-      "src/presentation/project-root.ts",
-      "src/presentation/terminal/prompter-adapter.ts",
-    ]) {
-      writeFileSync(join(planted, file), "export const stop = (): never => process.exit(1);\n");
-    }
-    writeFileSync(
-      join(planted, "src/shared/domain/default.ts"),
-      "const value = 1;\nexport default value;\n"
-    );
-    writeFileSync(
-      join(planted, "tests/shared/domain/default.ts"),
-      "const value = 1;\nexport default value;\n"
-    );
-    for (const file of [
-      "src/contexts/update/infrastructure/builds-github-url.ts",
-      "src/shared/infrastructure/github-adapter.ts",
-    ]) {
-      writeFileSync(
-        join(planted, file),
-        'export const url = "https://api.github.com/repos/a/b/releases";\n'
-      );
-    }
-    writeFileSync(join(planted, "src/shared/domain/clean.ts"), "export const one = 1;\n");
-    writeFileSync(
-      join(planted, "tests/shared/domain/reads.unit.test.ts"),
-      'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
-    );
-    writeFileSync(
-      join(planted, "tests/shared/domain/awaits.unit.test.ts"),
-      'import { readFile } from "node:fs/promises";\nexport const read = readFile;\n'
-    );
-    writeFileSync(
-      join(planted, "tests/shared/domain/spawns.unit.test.ts"),
-      'export const load = () => import("node:child_process");\n'
-    );
-    writeFileSync(
-      join(planted, "tests/shared/domain/reads.integration.test.ts"),
-      'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
-    );
-    writeFileSync(
-      join(planted, "src/shared/infrastructure/http-client.ts"),
-      "export type HttpClient = number;\n"
-    );
-    writeFileSync(
-      join(planted, "src/contexts/tools/domain/registry.ts"),
-      "export type Registry = number;\n"
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/contract/token-provider.ts"),
-      "export type TokenProvider = number;\n"
-    );
-    const reachesAuth = (up: string): string =>
-      `import type { TokenProvider } from "${up}auth/contract/token-provider.js";\nexport type Provider = TokenProvider;\n`;
-    writeFileSync(
-      join(planted, "src/contexts/tools/domain/reaches-auth.ts"),
-      reachesAuth("../../")
-    );
-    writeFileSync(
-      join(planted, "src/contexts/distribution/infrastructure/reaches-auth.ts"),
-      reachesAuth("../../")
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/domain/reaches-tools.ts"),
-      'import type { Registry } from "../../tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/contract/credential.ts"),
-      "export type Credential = number;\n"
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/domain/credential-record.ts"),
-      "export type CredentialRecord = number;\n"
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/ports/identity-verifier.ts"),
-      "export type IdentityVerifier = number;\n"
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/application/log-in.ts"),
-      "export type LogIn = number;\n"
-    );
-    writeFileSync(
-      join(planted, "src/contexts/auth/infrastructure/gh-cli-adapter.ts"),
-      "export type GhCliAdapter = number;\n"
-    );
-    const reachesAuthFolder = (up: string, folder: string, file: string, name: string): string =>
-      `import type { ${name} } from "${up}auth/${folder}/${file}.js";\nexport type Reached = ${name};\n`;
-    const authFolders = [
-      ["domain", "credential-record", "CredentialRecord"],
-      ["ports", "identity-verifier", "IdentityVerifier"],
-      ["application", "log-in", "LogIn"],
-      ["infrastructure", "gh-cli-adapter", "GhCliAdapter"],
-      ["contract", "credential", "Credential"],
-    ] as const;
-    for (const [folder, file, name] of authFolders) {
-      for (const [dir, up] of [
-        ["src/presentation/display", "../../contexts/"],
-        ["src/composition", "../contexts/"],
-        ["src/contexts/distribution/infrastructure", "../../"],
-        ["src/contexts/update/application", "../../"],
-      ] as const) {
-        writeFileSync(
-          join(planted, dir, `reaches-auth-${folder}.ts`),
-          reachesAuthFolder(up, folder, file, name)
-        );
-      }
-    }
-    const imports = (specifier: string): string =>
-      `import * as mod from "${specifier}";\nexport const used = mod;\n`;
-    mkdirSync(join(planted, "src/contexts/auth/domain/pure"), { recursive: true });
-    for (const [name, specifier] of [
-      ["fs", "node:fs"],
-      ["os", "node:os"],
-      ["commander", "commander"],
-      ["bare-fs", "fs"],
-      ["path", "node:path"],
-      ["crypto", "node:crypto"],
-    ] as const) {
-      writeFileSync(
-        join(planted, `src/contexts/auth/domain/pure/imports-${name}.ts`),
-        imports(specifier)
-      );
-    }
-    writeFileSync(join(planted, "src/contexts/auth/ports/imports-fs.ts"), imports("node:fs"));
-    writeFileSync(join(planted, "src/contexts/auth/contract/imports-fs.ts"), imports("node:fs"));
-    writeFileSync(join(planted, "src/shared/domain/imports-fs.ts"), imports("node:fs"));
-    writeFileSync(join(planted, "src/shared/domain/imports-path.ts"), imports("node:path"));
-    writeFileSync(join(planted, "src/shared/ports/imports-fs.ts"), imports("node:fs"));
-    writeFileSync(join(planted, "src/shared/ports/imports-path.ts"), imports("node:path"));
-    writeFileSync(join(planted, "src/contexts/auth/ports/env.ts"), readsEnvSource);
-    writeFileSync(join(planted, "src/contexts/auth/contract/env.ts"), readsEnvSource);
-    for (const folder of ["application", "infrastructure"]) {
-      writeFileSync(
-        join(planted, `src/contexts/update/${folder}/spawns.ts`),
-        'import { execSync } from "node:child_process";\nexport const run = execSync;\n'
-      );
-    }
-    for (const folder of ["application", "infrastructure"]) {
-      writeFileSync(join(planted, `src/contexts/recipes/${folder}/reads.ts`), imports("node:fs"));
-    }
-    writeFileSync(join(planted, "src/contexts/recipes/domain/imports-fs.ts"), imports("node:fs"));
-    writeFileSync(join(planted, "src/contexts/recipes/ports/imports-fs.ts"), imports("node:fs"));
-    writeFileSync(
-      join(planted, "src/contexts/recipes/domain/reaches-installation.ts"),
-      'import type { Registry } from "../../installation/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
-    writeFileSync(
-      join(planted, "src/contexts/installation/application/reaches-recipes.ts"),
-      'import type { Run } from "../../recipes/application/validate-recipes.js";\nexport type Reached = Run;\n'
-    );
-    for (const folder of ["domain", "application"]) {
-      writeFileSync(
-        join(planted, `src/presentation/display/reaches-recipes-${folder}.ts`),
-        `import type { Reached } from "../../contexts/recipes/${folder}/x.js";\nexport type Used = Reached;\n`
-      );
-    }
-    for (const file of distributionReaches()) {
-      const target = "installation";
-      writeFileSync(
-        join(planted, file),
-        `import type { X } from "../../../${target}/x.js";\nexport type Z = X;\n`
-      );
-    }
-    for (const layer of DISTRIBUTION_ASKS_IN) {
-      writeFileSync(
-        join(planted, `src/contexts/distribution/${layer}/plant-prompter.ts`),
-        'import type { Prompter } from "../../../shared/ports/prompter.js";\nexport type Z = Prompter;\n'
-      );
-    }
-    writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
-    const reachesComposition = (up: string): string =>
-      `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
-    for (const [file, up] of [
-      ["src/contexts/tools/domain/reaches-composition.ts", "../../../"],
-      ["src/shared/domain/reaches-composition.ts", "../../"],
-      ["src/shared/infrastructure/reaches-composition.ts", "../../"],
-      ["src/presentation/display/reaches-composition.ts", "../../"],
-      ["src/composition/reaches-composition.ts", "../"],
-    ] as const) {
-      writeFileSync(join(planted, file), reachesComposition(up));
-    }
-    const reachesSharedInfrastructure = (up: string): string =>
-      `import type { HttpClient } from "${up}shared/infrastructure/http-client.js";\nexport type Client = HttpClient;\n`;
-    for (const [file, up] of [
-      ["src/contexts/tools/infrastructure/reaches-shared.ts", "../../../"],
-      ["src/presentation/display/reaches-shared.ts", "../../"],
-      ["src/composition/reaches-shared.ts", "../"],
-      ["src/cli.ts", "./"],
-    ] as const) {
-      writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
-    }
-    for (const folder of ["ports", "infrastructure", "domain"]) {
-      writeFileSync(
-        join(planted, `src/shared/${folder}/reaches-context.ts`),
-        'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-      );
-    }
-    writeFileSync(
-      join(planted, "src/shared/ports/env.ts"),
-      "export const home = (): string | undefined => process.env.HOME;\n"
-    );
-    writeFileSync(join(planted, "src/shared/domain/env.ts"), readsEnvSource);
-    writeFileSync(
-      join(planted, "src/shared/infrastructure/exit.ts"),
-      "export const stop = (): never => process.exit(1);\n"
-    );
-    for (const file of [
-      "src/contexts/installation/domain/env.ts",
-      "src/contexts/installation/application/env.ts",
-      "src/contexts/installation/infrastructure/env.ts",
-    ]) {
-      writeFileSync(join(planted, file), readsEnvSource);
-    }
-  });
+/** The scopes of the overrides whose groups differ from what the table generates. */
+function drifted(config: BiomeConfig, table: BoundaryInputs): string[] {
+  const generated = boundaryOverrides(config, table).overrides ?? [];
+  return (config.overrides ?? [])
+    .filter((override, index) => !isDeepStrictEqual(override, generated[index]))
+    .map((override) => (override.includes ?? []).join(", "));
+}
 
-  afterAll(() => {
-    rmSync(planted, { recursive: true, force: true });
-  });
+describe("cli/biome.json holds exactly the edges the table admits", () => {
+  const overrides = (committed.overrides ?? []).filter(restrictedGroups);
 
-  it("flags process.exit under shared/, contexts/ and presentation/, and leaves presentation's exit function alone", () => {
-    const findings = biomeFindings(planted);
-    expect(findings, findings.join(", ")).toContain("src/shared/domain/exit.ts:plugin");
+  it("finds context and layer overrides to check, so this rule cannot pass by selecting nothing", () => {
     expect(
-      findings.filter((f) => f.startsWith("src/presentation/") && f.endsWith(":plugin")).sort()
-    ).toEqual([
-      "src/presentation/commands/exit.ts:plugin",
-      "src/presentation/project-root.ts:plugin",
-      "src/presentation/terminal/prompter-adapter.ts:plugin",
-    ]);
+      overrides.length,
+      "no noRestrictedImports override found: the scope is stale"
+    ).toBeGreaterThan(10);
+    expect(input.contexts.length, "no context found under src/contexts/").toBeGreaterThan(3);
   });
 
-  it("flags the process global in a context's domain and application, and not in its infrastructure", () => {
-    const findings = biomeFindings(planted);
-
-    expect(findings, findings.join(", ")).toContain(
-      "src/contexts/installation/domain/env.ts:lint/style/noRestrictedGlobals"
-    );
-    expect(findings, findings.join(", ")).toContain(
-      "src/contexts/installation/application/env.ts:lint/style/noRestrictedGlobals"
-    );
+  it("at most one noRestrictedImports override matches any source file", () => {
     expect(
-      findings.filter((f) => f.startsWith("src/contexts/installation/infrastructure/"))
+      filesMatchedTwice(
+        sourceFiles(),
+        overrides.map((override) => override.includes ?? [])
+      ),
+      "a file matched by two noRestrictedImports overrides silently loses the first"
     ).toEqual([]);
   });
 
-  it("flags shared/ports and shared/infrastructure reaching a context, and shared/domain reaching a context", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    for (const file of [
-      "src/shared/ports/reaches-context.ts",
-      "src/shared/infrastructure/reaches-context.ts",
-      "src/shared/domain/reaches-context.ts",
-    ]) {
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
-    }
-  });
-
-  it("flags a context's infrastructure and presentation reaching shared/infrastructure, never the composition root", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    for (const file of [
-      "src/contexts/tools/infrastructure/reaches-shared.ts",
-      "src/presentation/display/reaches-shared.ts",
-    ]) {
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
-    }
-    expect(findings).not.toContain(`src/composition/reaches-shared.ts:${rule}`);
-  });
-
-  it("flags the entry point reaching shared/infrastructure, which the composition root wires for it", () => {
-    const findings = biomeFindings(planted);
-
-    expect(findings, findings.join(", ")).toContain("src/cli.ts:lint/style/noRestrictedImports");
-  });
-
-  it("flags a context nothing admits reaching auth, and auth reaching a context, and not distribution reaching auth", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    expect(findings, findings.join(", ")).toContain(
-      `src/contexts/tools/domain/reaches-auth.ts:${rule}`
-    );
-    expect(findings, findings.join(", ")).toContain(
-      `src/contexts/auth/domain/reaches-tools.ts:${rule}`
-    );
-    expect(findings).not.toContain(
-      `src/contexts/distribution/infrastructure/reaches-auth.ts:${rule}`
-    );
-  });
-
-  it("flags presentation and an admitted context reaching auth's domain, ports or infrastructure, and clears the contract and the commands", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-    const importers = [
-      "src/presentation/display",
-      "src/contexts/distribution/infrastructure",
-      "src/contexts/update/application",
-    ];
-
-    for (const dir of importers) {
-      for (const folder of ["domain", "ports", "infrastructure"]) {
-        expect(findings, findings.join(", ")).toContain(`${dir}/reaches-auth-${folder}.ts:${rule}`);
-      }
-      for (const folder of ["contract", "application"]) {
-        expect(findings).not.toContain(`${dir}/reaches-auth-${folder}.ts:${rule}`);
-      }
-    }
-    for (const folder of ["domain", "ports", "application", "infrastructure", "contract"]) {
-      expect(findings, "the composition root imports every folder of auth").not.toContain(
-        `src/composition/reaches-auth-${folder}.ts:${rule}`
-      );
-    }
-  });
-
-  it("flags the update context's application running a process, and not its infrastructure", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    expect(findings, findings.join(", ")).toContain(
-      `src/contexts/update/application/spawns.ts:${rule}`
-    );
-    expect(findings).not.toContain(`src/contexts/update/infrastructure/spawns.ts:${rule}`);
-  });
-
-  it("flags the recipes context's application reading the disk, and not its infrastructure", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    expect(findings, findings.join(", ")).toContain(
-      `src/contexts/recipes/application/reads.ts:${rule}`
-    );
-    expect(findings).not.toContain(`src/contexts/recipes/infrastructure/reads.ts:${rule}`);
-  });
-
-  it("flags recipes reaching installation, installation reaching recipes, and presentation reaching recipes beyond its commands", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    for (const file of [
-      "src/contexts/recipes/domain/reaches-installation.ts",
-      "src/contexts/installation/application/reaches-recipes.ts",
-      "src/presentation/display/reaches-recipes-domain.ts",
-    ]) {
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
-    }
-    expect(findings).not.toContain(
-      `src/presentation/display/reaches-recipes-application.ts:${rule}`
-    );
-  });
-
-  it("flags every distribution layer reaching installation", () => {
-    const findings = biomeFindings(planted);
-    for (const file of distributionReaches()) {
-      expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
-    }
-  });
-
-  it("flags distribution importing the prompter in its application and its infrastructure", () => {
-    const findings = biomeFindings(planted);
-    for (const layer of DISTRIBUTION_ASKS_IN) {
-      expect(findings, findings.join(", ")).toContain(
-        `src/contexts/distribution/${layer}/plant-prompter.ts:lint/style/noRestrictedImports`
-      );
-    }
-  });
-
-  it("flags orchestration reaching the disk, a process, a context's interior or a layer above it, and clears its contract and application", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    for (const name of [
-      "fs",
-      "process",
-      "domain",
-      "infrastructure",
-      "tools-application",
-      "shared-infrastructure",
-      "composition",
-      "presentation",
-    ]) {
-      expect(findings, findings.join(", ")).toContain(
-        `src/orchestration/setup/reaches-${name}.ts:${rule}`
-      );
-    }
+  it("at most one noRestrictedImports override matches any test file", () => {
     expect(
-      findings.filter((f) => f === `src/orchestration/setup/reaches-bare.ts:${rule}`),
-      "one finding per bare or prefixed fs and child_process module"
-    ).toHaveLength(BARE_NODE_MODULES.length);
-    for (const name of ["contract", "application"]) {
-      expect(findings).not.toContain(`src/orchestration/setup/reaches-${name}.ts:${rule}`);
-    }
+      filesMatchedTwice(
+        tsFilesUnder("tests"),
+        overrides.map((override) => override.includes ?? [])
+      ),
+      "a file matched by two noRestrictedImports overrides silently loses the first"
+    ).toEqual([]);
   });
 
-  it("flags a context, shared and presentation reaching the composition, and not the composition root", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    for (const file of [
-      "src/contexts/tools/domain/reaches-composition.ts",
-      "src/shared/domain/reaches-composition.ts",
-      "src/shared/infrastructure/reaches-composition.ts",
-      "src/presentation/display/reaches-composition.ts",
-    ]) {
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
-    }
-    expect(findings).not.toContain(`src/composition/reaches-composition.ts:${rule}`);
+  it("every context layer override equals the one generated from the table", () => {
+    expect(
+      drifted(committed, input),
+      "regenerate with `pnpm biome:boundaries`: biome.json differs from the edge table"
+    ).toEqual([]);
   });
 
-  it("flags a package or a Node builtin in a pure folder, and clears path and crypto", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
+  it.each([
+    {
+      includes: "src/shared/domain/**/*.ts",
+      forbids: ["contexts", "presentation", "infrastructure", "composition"],
+    },
+    {
+      includes: "src/shared/ports/**/*.ts",
+      forbids: ["contexts", "presentation", "infrastructure", "composition"],
+    },
+    {
+      includes: "src/shared/infrastructure/**/*.ts",
+      forbids: ["contexts", "presentation", "composition"],
+    },
+    {
+      includes: "src/presentation/**/*.ts",
+      forbids: [
+        "**/shared/infrastructure/**",
+        "composition",
+        ...HELD_BY_BIOME.flatMap((held) => interiorGroupsOf(held, `${SRC}/contexts`)),
+      ],
+    },
+  ])("$includes forbids exactly its groups", ({ includes, forbids }) => {
+    const override = overrides.find((candidate) => candidate.includes?.includes(includes));
+    if (!override) throw new Error(`no override at ${includes}`);
 
-    for (const file of [
-      "src/contexts/auth/domain/pure/imports-fs.ts",
-      "src/contexts/auth/domain/pure/imports-os.ts",
-      "src/contexts/auth/domain/pure/imports-commander.ts",
-      "src/contexts/auth/domain/pure/imports-bare-fs.ts",
-      "src/contexts/auth/ports/imports-fs.ts",
-      "src/contexts/auth/contract/imports-fs.ts",
-      "src/contexts/recipes/domain/imports-fs.ts",
-      "src/contexts/recipes/ports/imports-fs.ts",
-      "src/shared/domain/imports-fs.ts",
-      "src/shared/ports/imports-fs.ts",
-    ]) {
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
-    }
-    for (const file of [
-      "src/contexts/auth/domain/pure/imports-path.ts",
-      "src/contexts/auth/domain/pure/imports-crypto.ts",
-      "src/shared/domain/imports-path.ts",
-      "src/shared/ports/imports-path.ts",
-    ]) {
-      expect(findings).not.toContain(`${file}:${rule}`);
-    }
+    const tokens = (restrictedGroups(override) ?? []).map((group) =>
+      /^\*\*\/([^/]+)\/\*\*$/.test(group) ? group.slice(3, -3) : group
+    );
+    expect(new Set(tokens)).toEqual(new Set(forbids));
+  });
+});
+
+describe("the generator", () => {
+  const table: BoundaryInputs = {
+    contexts: ["auth", "installation", "tools"],
+    allowed: new Set(["installation->tools"]),
+    heldByBiome: ["tools"],
+    layersOf: () => ["domain"],
+    interiorGroupsOf: () => ["**/tools/domain/**"],
+  };
+  const pattern = (group: string[], message: string) => ({ group, message });
+  const override = (context: string, patterns: RestrictedPattern[]): BiomeOverride => ({
+    includes: [overrideIncludes(context, "domain")],
+    linter: { rules: { style: { noRestrictedImports: { options: { patterns } } } } },
+  });
+  // Built fresh each time: a clone keeps the sharing between two overrides, so one edit would reach both.
+  const layer = () =>
+    pattern(["**/application/**", "**/infrastructure/**", "**/presentation/**"], "l");
+  const composition = () => pattern(["**/composition/**"], "c");
+  const build = (): BiomeConfig => ({
+    overrides: [
+      override("auth", [
+        layer(),
+        pattern(["**/installation/**", "**/tools/**"], "e"),
+        composition(),
+      ]),
+      override("installation", [
+        layer(),
+        pattern(["**/auth/**"], "e"),
+        composition(),
+        pattern(["**/tools/domain/**"], "i"),
+      ]),
+      override("tools", [
+        layer(),
+        pattern(["**/auth/**", "**/installation/**"], "e"),
+        composition(),
+      ]),
+    ],
+  });
+  const INSTALLATION = "src/contexts/installation/domain/**/*.ts";
+
+  /** The patterns of the override at `index`. */
+  function patternsAt(config: BiomeConfig, index: number): RestrictedPattern[] {
+    const found = config.overrides?.[index];
+    const patterns = found && restrictedImportOptions(found)?.patterns;
+    if (!patterns) throw new Error(`no restricted patterns at override ${index}`);
+    return patterns;
+  }
+
+  /** A table-true config with one group list replaced. */
+  function edited(index: number, patternIndex: number, group: string[]): BiomeConfig {
+    const config = build();
+    const found = patternsAt(config, index)[patternIndex];
+    if (!found) throw new Error(`no pattern ${patternIndex} at override ${index}`);
+    found.group = group;
+    return config;
+  }
+
+  it("holds a table-true config as it is", () => {
+    expect(drifted(build(), table)).toEqual([]);
   });
 
-  it("flags the process global in a context's ports and contract", () => {
-    const findings = biomeFindings(planted);
+  it("names the override a hand edit of one of its groups leaves different", () => {
+    const edge = edited(1, 1, ["**/auth/**", "**/tools/**"]);
+    const interior = edited(1, 3, ["**/tools/domain/**", "**/tools/ports/**"]);
+    const direction = edited(1, 0, ["**/application/**"]);
 
-    for (const file of ["src/contexts/auth/ports/env.ts", "src/contexts/auth/contract/env.ts"]) {
-      expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedGlobals`);
-    }
+    expect(drifted(edge, table)).toEqual([INSTALLATION]);
+    expect(drifted(interior, table)).toEqual([INSTALLATION]);
+    expect(drifted(direction, table)).toEqual([INSTALLATION]);
   });
 
-  it("flags the process global in shared/ports and shared/domain, and process.exit in shared/infrastructure", () => {
-    const findings = biomeFindings(planted);
+  it("refuses a second layer pattern, which a hand edit of the composition group makes", () => {
+    const widened = edited(1, 2, ["**/composition/**", "**/shared/**"]);
 
-    expect(findings, findings.join(", ")).toContain(
-      "src/shared/ports/env.ts:lint/style/noRestrictedGlobals"
-    );
-    expect(findings, findings.join(", ")).toContain(
-      "src/shared/domain/env.ts:lint/style/noRestrictedGlobals"
-    );
-    expect(findings, findings.join(", ")).toContain("src/shared/infrastructure/exit.ts:plugin");
+    expect(() => drifted(widened, table)).toThrow("2 layer patterns");
   });
 
-  it("flags a GitHub API URL written outside the GitHub adapter, and clears the adapter", () => {
-    const findings = biomeFindings(planted);
-
-    expect(findings, findings.join(", ")).toContain(
-      "src/contexts/update/infrastructure/builds-github-url.ts:plugin"
-    );
-    expect(findings).not.toContain("src/shared/infrastructure/github-adapter.ts:plugin");
-  });
-
-  it("reads a file the GitHub reporter escaped, as on Windows", () => {
-    expect(reportedFile("C%3A\\tmp\\a%2Cb%25.ts")).toBe("C:\\tmp\\a,b%.ts");
-  });
-
-  it("fails when biome does not run, rather than reading as no findings", () => {
-    expect(() => biomeFindings(planted, join(planted, "missing-biome"))).toThrow(
-      /biome did not run/
+  it("refuses a layer with no override, rather than invent its rationale", () => {
+    expect(() => boundaryOverrides(build(), { ...table, layersOf: () => ["contract"] })).toThrow(
+      "no override at src/contexts/auth/contract/**/*.ts"
     );
   });
 
-  it("flags the filesystem and child processes in a unit test, and not in an integration test", () => {
-    const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
+  it("refuses an admitted edge whose interior has no pattern to carry its message", () => {
+    const missing = build();
+    patternsAt(missing, 1).pop();
 
-    expect(findings, findings.join(", ")).toContain(
-      `tests/shared/domain/reads.unit.test.ts:${rule}`
-    );
-    expect(findings, findings.join(", ")).toContain(
-      `tests/shared/domain/awaits.unit.test.ts:${rule}`
-    );
-    expect(findings, findings.join(", ")).toContain(
-      `tests/shared/domain/spawns.unit.test.ts:${rule}`
-    );
-    expect(findings).not.toContain(`tests/shared/domain/reads.integration.test.ts:${rule}`);
+    expect(() => boundaryOverrides(missing, table)).toThrow("0 interior patterns");
   });
 
-  it("flags a default export under src/ and tests/ alike, and a clean module not at all", () => {
-    const findings = biomeFindings(planted);
-    expect(findings, findings.join(", ")).toContain(
-      "src/shared/domain/default.ts:lint/style/noDefaultExport"
-    );
-    expect(findings, findings.join(", ")).toContain(
-      "tests/shared/domain/default.ts:lint/style/noDefaultExport"
-    );
-    expect(findings.filter((f) => f.startsWith("src/shared/domain/clean.ts"))).toEqual([]);
+  it("folds a second edge pattern into the first", () => {
+    const split = build();
+    patternsAt(split, 2).push(pattern(["**/auth/**"], "split"));
+
+    const generated = patternsAt(boundaryOverrides(split, table), 2);
+    expect(drifted(split, table)).toEqual(["src/contexts/tools/domain/**/*.ts"]);
+    expect(generated).toHaveLength(3);
+  });
+
+  describe("for the tests of a context", () => {
+    const withTests: BoundaryInputs = { ...table, testContexts: ["auth", "installation"] };
+    const base = (): BiomeConfig => ({
+      overrides: [
+        ...(build().overrides ?? []),
+        {
+          includes: ["tests/**/*.unit.test.ts", "!tests/contexts/**"],
+          linter: {
+            rules: { style: { noRestrictedImports: { options: { paths: { "node:fs": "x" } } } } },
+          },
+        },
+      ],
+    });
+    const generated = () => boundaryOverrides(base(), withTests).overrides ?? [];
+    const tested = () =>
+      generated().filter((found) => found.includes?.[0]?.startsWith("tests/contexts/"));
+    const groupsOf = (index: number) => restrictedGroups(tested()[index] ?? {});
+
+    it("adds a unit and a non-unit override per test context, after the unit base", () => {
+      const scopes = generated().map((found) => found.includes?.[0]);
+      expect(scopes.slice(scopes.indexOf("tests/**/*.unit.test.ts"))).toEqual([
+        "tests/**/*.unit.test.ts",
+        "tests/contexts/auth/**/*.unit.test.ts",
+        "tests/contexts/auth/**/*.ts",
+        "tests/contexts/installation/**/*.unit.test.ts",
+        "tests/contexts/installation/**/*.ts",
+      ]);
+    });
+
+    it("bars every other context's interior and spares its application and contract", () => {
+      expect(groupsOf(1)).toEqual([
+        "**/contexts/installation/**",
+        "!**/contexts/installation/application/**",
+        "!**/contexts/installation/contract/**",
+        "**/contexts/tools/**",
+        "!**/contexts/tools/application/**",
+        "!**/contexts/tools/contract/**",
+      ]);
+    });
+
+    it("keeps the unit base's disk bans on the unit override", () => {
+      const unit = tested()[0];
+      expect(unit && restrictedImportOptions(unit)?.paths).toEqual({ "node:fs": "x" });
+    });
+
+    it("regenerates the same override whatever it held before", () => {
+      const once = boundaryOverrides(base(), withTests);
+      expect(boundaryOverrides(once, withTests)).toEqual(once);
+    });
   });
 });
