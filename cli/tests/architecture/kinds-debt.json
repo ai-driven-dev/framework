@@ -70,7 +70,6 @@
     "src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "src/contexts/installation/infrastructure/manifest-file-io.ts",
     "src/contexts/installation/infrastructure/platform-adapter.ts",
-    "src/contexts/telemetry/infrastructure/sources/transcript-files.ts",
     "src/orchestration/clean/clean-project.ts",
     "src/orchestration/clean/clean-user-scope.ts",
     "src/orchestration/global/restore-all.ts",
