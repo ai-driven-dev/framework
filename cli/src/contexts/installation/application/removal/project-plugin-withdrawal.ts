@@ -11,13 +11,13 @@ import type { RemovalClaims } from "./remove-project-plugin.js";
 export interface PluginRemovalClaims extends RemovalClaims {
   readonly home: string;
   readonly isMachineOwned: (toolId: ToolId, ref: string) => Promise<boolean>;
-  readonly guardMessage: (
-    binary: string,
-    tool: PluginEnablementReach,
-    ref: string,
-    marketplaceAlias: string,
-    projectRoot: string
-  ) => Promise<string | undefined>;
+  readonly guardMessage: (query: {
+    readonly binary: string;
+    readonly tool: PluginEnablementReach;
+    readonly ref: string;
+    readonly marketplaceAlias: string;
+    readonly projectRoot: string;
+  }) => Promise<string | undefined>;
   readonly resolveCacheCandidate: (
     cacheRoot: string,
     relativeSegments: string,

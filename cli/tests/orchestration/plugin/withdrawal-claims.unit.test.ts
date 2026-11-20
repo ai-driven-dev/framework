@@ -41,7 +41,13 @@ describe("the claims a host withdrawal is checked against", () => {
     });
 
     expect(await view.guardMessage("claude", "a@catalog", "framework")).toBe("kept for /other");
-    expect(guardMessage).toHaveBeenCalledWith("claude", claude, "a@catalog", "framework", "/p");
+    expect(guardMessage).toHaveBeenCalledWith({
+      binary: "claude",
+      tool: claude,
+      ref: "a@catalog",
+      marketplaceAlias: "framework",
+      projectRoot: "/p",
+    });
   });
 
   it("proves a cache path through the machine's containment check", async () => {

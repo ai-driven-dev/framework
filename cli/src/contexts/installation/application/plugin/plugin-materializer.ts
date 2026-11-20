@@ -37,24 +37,19 @@ export interface PlannedUserPluginFileUpdate {
 /** The machine-scope file safety checks, supplied by the composition root so installation never reaches machine claims. */
 export interface UserScopeFileGuard {
   safeToDelete(
-    fs: FileReader,
-    logger: Logger,
+    reach: { readonly fs: FileReader; readonly logger: Logger; readonly home: string },
     plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    homedir: string
+    tool: AiToolProfile
   ): Promise<ReadonlyMap<string, string>>;
   withoutMissing(
-    fs: FileReader,
+    reach: { readonly fs: FileReader; readonly home: string },
     plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    homedir: string
+    tool: AiToolProfile
   ): Promise<InstalledPlugin>;
   assertWriteBoundary(
-    fs: FileReader,
+    reach: { readonly fs: FileReader; readonly home: string },
     tool: AiToolProfile,
-    pluginName: string,
-    files: readonly InstallationFile[],
-    homedir: string
+    write: { readonly pluginName: string; readonly files: readonly InstallationFile[] }
   ): Promise<void>;
 }
 
@@ -106,8 +101,8 @@ export class PluginMaterializer {
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await this.materializeFiles(dist, tool, plugin, projectRoot);
     const home = this.builtDeps.homedir();
-    const present = await this.guard.withoutMissing(this.fs, plugin, tool, home);
-    const oldSafe = await this.guard.safeToDelete(this.fs, logger, present, tool, home);
+    const present = await this.guard.withoutMissing({ fs: this.fs, home }, plugin, tool);
+    const oldSafe = await this.guard.safeToDelete({ fs: this.fs, logger, home }, present, tool);
     if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
@@ -142,8 +137,13 @@ export class PluginMaterializer {
     logger: Logger,
     isWithinUserScope: ContainmentCheck
   ): Promise<InstalledPlugin> {
-    const present = await this.guard.withoutMissing(this.fs, plan.plugin, plan.tool, plan.home);
-    const oldSafe = await this.guard.safeToDelete(this.fs, logger, present, plan.tool, plan.home);
+    const { home } = plan;
+    const present = await this.guard.withoutMissing({ fs: this.fs, home }, plan.plugin, plan.tool);
+    const oldSafe = await this.guard.safeToDelete(
+      { fs: this.fs, logger, home },
+      present,
+      plan.tool
+    );
     if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
       throw new Error(
         `${plan.tool.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
@@ -187,7 +187,10 @@ export class PluginMaterializer {
     if (PLUGIN_NAME_REGEX.test(plugin.name)) {
       await this.fs.createDirectory(join(baseDir, plugin.name));
     }
-    await this.guard.assertWriteBoundary(this.fs, tool, plugin.name, [...files], home);
+    await this.guard.assertWriteBoundary({ fs: this.fs, home }, tool, {
+      pluginName: plugin.name,
+      files: [...files],
+    });
     await this.assertNewFilesDoNotCollide(plugin, tool.toolId, baseDir, files);
   }
 

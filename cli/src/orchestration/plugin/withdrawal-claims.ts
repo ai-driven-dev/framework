@@ -10,15 +10,15 @@ export function withdrawalClaimsOf(
   claims: PluginRemovalClaims,
   target: {
     toolId: AiToolId;
-    tool: Parameters<PluginRemovalClaims["guardMessage"]>[1];
+    tool: Parameters<PluginRemovalClaims["guardMessage"]>[0]["tool"];
     projectRoot: string;
   }
 ): WithdrawalClaimsView {
   const { toolId, tool, projectRoot } = target;
   return {
     isMachineOwned: (ref) => claims.isMachineOwned(toolId, ref),
-    guardMessage: (binary, ref, alias) =>
-      claims.guardMessage(binary, tool, ref, alias, projectRoot),
+    guardMessage: (binary, ref, marketplaceAlias) =>
+      claims.guardMessage({ binary, tool, ref, marketplaceAlias, projectRoot }),
     resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
       claims.resolveCacheCandidate(cacheRoot, relativeSegments, label),
   };

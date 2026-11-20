@@ -166,7 +166,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       claimedRefWithdrawal(withdrawFromHost),
       registrationRecordRules,
       new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
       ),
       tools
     )

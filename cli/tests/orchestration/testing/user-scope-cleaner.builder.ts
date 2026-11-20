@@ -51,7 +51,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       ),
       homeDir,
       new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
       ),
       registeredTools()
     ),

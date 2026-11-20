@@ -37,6 +37,15 @@ export interface PluginRemovalClaimsDeps {
   ) => Promise<string | null>;
 }
 
+/** The plugin ref a removal is about to disable, and the project it is removed from. */
+export interface PluginRefGuardQuery {
+  readonly binary: string;
+  readonly tool: PluginEnablementReach;
+  readonly ref: string;
+  readonly marketplaceAlias: string;
+  readonly projectRoot: string;
+}
+
 /**
  * Everything a plugin removal asks the machine scope, bound to the machine manifest and registry.
  *
@@ -50,13 +59,13 @@ export interface PluginRemovalClaimsDeps {
  */
 export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
   const { repo, fs, logger, userSourceReferences } = deps;
-  const guardMessage = async (
-    binary: string,
-    tool: PluginEnablementReach,
-    ref: string,
-    marketplaceAlias: string,
-    projectRoot: string
-  ): Promise<string | undefined> => {
+  const guardMessage = async ({
+    binary,
+    tool,
+    ref,
+    marketplaceAlias,
+    projectRoot,
+  }: PluginRefGuardQuery): Promise<string | undefined> => {
     if (userSourceReferences === undefined) return undefined;
     const marketplaces = (await deps.marketplaceRegistry?.list(projectRoot)) ?? [];
     const marketplace = marketplaces.find((m) => m.name === marketplaceAlias);
