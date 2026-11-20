@@ -20,7 +20,7 @@ paths:
 - The registry case "keeps one user entry for every project" has no one-line break to plant in the adapter arm: `userPath()` takes no project argument.
 - `MarketplaceRemover`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.
 - `MarketplaceRemover` is answered by `src/composition/orchestration/marketplace.ts`, which hands it to the add command.
-- Outside importers reach only the modules listed for distribution in `context-boundary.arch.test.ts`.
+- Outside importers reach only the `contract/` of distribution: the `imports` rule of `kinds.arch.test.ts`.
 
 ## Suppliers
 

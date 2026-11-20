@@ -9,7 +9,7 @@ paths:
 
 ## 1. Purpose and status
 
-- `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`) lists the contexts Biome closes to everything but the composition root. It holds every context, so `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) is empty.
+- `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`) lists the contexts Biome closes to everything but the composition root. It holds every context, so no public-surface list exists: the kind gate holds every context to the `contract/` of the others.
 - A deviation is a row of section 9 or a change to this page, in the PR that needs it; an exception deviates from the target architecture.
 
 ## 2. Folder layout
@@ -45,8 +45,8 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 - A type a non-context needs lives in `contract/` (`contract/credential.ts`), never reached through `domain/` or a re-export.
 - Only the composition root imports a held context's `domain/`, `ports/` or `infrastructure/`; presentation may also import `application/`, except of `tools`.
 - An implementation of a contract port that is not a command lives in `application/`; an adapter outside the context matches a port by shape and the composition root hands it in.
-- Another context imports a `contract/` only, edge by edge from `ALLOWED`: `context-graph.arch.test.ts`. A context that needs more declares the narrow input in its own `ports/` and receives the real object by shape.
-- `src/composition/` is a known area only the composition root imports: `context-graph.arch.test.ts`.
+- Another context imports a `contract/` only, edge by edge from `ALLOWED`: the `imports` rule of `kinds.arch.test.ts`. A context that needs more declares the narrow input in its own `ports/` and receives the real object by shape.
+- `src/composition/` is a known area only the composition root imports: Biome (`biome.json`) and the `imports` rule of `kinds.arch.test.ts`.
 
 ## 6. Kit template
 
@@ -83,7 +83,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `CachedTokenProvider`, not a command, sits in `application/` | the published `TokenProvider` needs memo and logs, which the domain may not hold | the target names a home for a contract implementation |
 | A contract file counts any outside importer, presentation included | presentation consumes the credential types | the target counts presentation as a reader |
 | auth keeps its own permission code (`credential-record-file-adapter.ts`) | telemetry's `PrivateStorage` has no read and no delete and grants a directory where auth grants the file | private storage gains read and delete with identical modes |
-| `src/presentation/deps.ts` imports application interiors to type `Deps`, an `import type` only (`isDrivingPortEdge` in `context-boundary.arch.test.ts`) | the container's shape is the members the commands read; the types erase at build | `createContainer(options)` and `orchestration/` exist and `deps.ts` types with `contract/` types only |
+| `src/presentation/deps.ts` imports application interiors to type `Deps`, an `import type` only (`drivingPortViolations` in `kinds.rules.arch.test.ts`) | the container's shape is the members the commands read; the types erase at build | `createContainer(options)` and `orchestration/` exist and `deps.ts` types with `contract/` types only |
 | The native activation classes stay in `tools` as data (`domain/native-registration/`, spec types in `contract/native-registration-spec.ts`) | moving them to `host-registration` needs a `tools` to `host-registration` edge the graph forbids | the classes move to `host-registration` and profiles move to composition |
 | `tools/domain/formats/toml.ts` imports `smol-toml`, the only domain file that imports a package | one wrapper keeps the package behind one file and `biome.json` denies it elsewhere in the domain | a `TomlCodec` port with an infrastructure adapter replaces it |
 | `shared/domain/` imports `node:path` (`paths.ts`, `source.ts`, `layout/aidd-layout.ts`) | section 4 allows `node:path` in every pure folder and the target's way out is undecided | no file under `shared/domain` imports `node:path` |
@@ -110,7 +110,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ### Migration state
 | Deviation | Closes when |
 | --- | --- |
-| orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
+| orchestration reads `machine-claims` beyond its `contract/` | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (each carries a `biome-ignore lint/plugin` above its import) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |
 | the `shape` list of `tests/architecture/kinds-debt.json`: application classes that answer several questions, implement no port or contract and have no `execute`, `consent-log.ts` and `directory-resolver.ts` kept as helpers by design | each entry becomes a command, or the code map reclassifies it |
@@ -120,5 +120,5 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 - Freeze behaviour with characterization tests, each seen red; move before rename, rename before logic change.
 - Update the files that name paths: `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, the repository root's `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
-- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), `PUBLIC_MODULES`, then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`.
+- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`.
 - Move memory and rules with the code: a `cli-contexts/<ctx>.md` page, `aidd_docs/memory/internal/<ctx>.md`, the `glossary.md`.

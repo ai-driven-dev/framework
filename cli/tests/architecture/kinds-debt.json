@@ -17,8 +17,7 @@
     "toolNames": "the file reads the tool from its profile instead of naming it",
     "toolSites": "the registration moves into the profile or the composition list is rewritten",
     "toolOwn": "the file stops naming its own tool",
-    "toolIdentifiers": "the file stops carrying a tool name in an identifier",
-    "transitional": "the import under the transitional edge goes, or the edge becomes stable"
+    "toolIdentifiers": "the file stops carrying a tool name in an identifier"
   },
   "classification": [
     "src/presentation/deps.ts",
@@ -663,6 +662,5 @@
     "src/contexts/distribution/application/fetch-marketplace-source.ts: 1",
     "src/contexts/distribution/application/refresh-marketplace.ts: 1",
     "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts: 1"
-  ],
-  "transitional": []
+  ]
 }

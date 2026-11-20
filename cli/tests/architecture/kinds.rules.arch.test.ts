@@ -10,11 +10,14 @@ import { CLI_ROOT, contextNames, declaredCommands, tsFilesUnder } from "./helper
 import {
   answerViolations,
   compositionViolations,
+  contractReaderViolations,
+  drivingPortViolations,
   errorViolations,
   instructionViolations,
   isPortFile,
   portViolations,
   repositoryViolations,
+  scopeViolations,
   sectionViolations,
   sizeViolations,
   translateViolations,
@@ -27,6 +30,13 @@ function expectUpToDebt(found: readonly Violation[], rule: Rule): void {
   const { unlisted, stale } = debtVerdict(found, loadDebt(), [rule]);
   expect(unlisted.map((violation) => violation.message)).toEqual([]);
   expect(stale).toEqual([]);
+}
+
+/** The `imports` debt is held entry by entry by the import test of `kinds.arch.test.ts`; a rule
+ * beside it owes only that nothing it finds is unlisted, and the debt lists none of its own. */
+function expectNoneBeyondDebt(found: readonly Violation[]): void {
+  const { unlisted } = debtVerdict(found, loadDebt(), ["imports"]);
+  expect(unlisted.map((violation) => violation.message)).toEqual([]);
 }
 
 const textsOf = (paths: readonly string[]): Record<string, string> =>
@@ -306,5 +316,106 @@ describe("a test file stays small enough to hold in mind", () => {
     const paths = tsFilesUnder("tests").filter((path) => path.endsWith(".test.ts"));
     expect(paths.length, "the scope is stale").toBeGreaterThan(300);
     expectUpToDebt(sizeViolations(textsOf(paths)), "size");
+  });
+});
+
+describe("the driving port names context types only", () => {
+  const port = "src/presentation/deps.ts";
+  const found = (text: string) => entries(drivingPortViolations({ [port]: text }));
+
+  it("reports a value import and an import type of an interior file", () => {
+    expect(
+      found(
+        'import { A } from "../contexts/a/application/a.use-case.js";\nimport type { B } from "../contexts/b/domain/b.model.js";'
+      )
+    ).toEqual([
+      `${port} -> ../contexts/a/application/a.use-case.js`,
+      `${port} -> ../contexts/b/domain/b.model.js`,
+    ]);
+  });
+
+  it("clears an import type of an application or a contract file", () => {
+    expect(
+      found(
+        'import type { A } from "../contexts/a/application/a.use-case.js";\nimport type { C } from "../contexts/c/contract/c.model.js";\nimport { s } from "../shared/s.js";'
+      )
+    ).toEqual([]);
+  });
+
+  it("holds the tree", () => {
+    expect(src()[port], "the driving port moved").toBeDefined();
+    expectNoneBeyondDebt(drivingPortViolations(src()));
+  });
+});
+
+describe("a contract file is read from outside its context", () => {
+  const contract = "src/contexts/a/contract/c.model.ts";
+  const found = (files: Record<string, string>) => entries(contractReaderViolations(files));
+
+  it("reports one only its context, the composition root or the driving port imports", () => {
+    expect(
+      found({
+        [contract]: "export const C = 1;",
+        "src/contexts/a/application/x.use-case.ts": 'import { C } from "../contract/c.model.js";',
+        "src/composition/a.ts": 'import { C } from "../contexts/a/contract/c.model.js";',
+        "src/presentation/deps.ts": 'import type { C } from "../contexts/a/contract/c.model.js";',
+      })
+    ).toEqual([contract]);
+  });
+
+  it("clears one another context or presentation imports", () => {
+    expect(
+      found({
+        [contract]: "export const C = 1;",
+        "src/contexts/b/application/x.use-case.ts":
+          'import { C } from "../../a/contract/c.model.js";',
+      })
+    ).toEqual([]);
+    expect(
+      found({
+        [contract]: "export const C = 1;",
+        "src/presentation/p.presenter.ts": 'import { C } from "../contexts/a/contract/c.model.js";',
+      })
+    ).toEqual([]);
+  });
+
+  it("holds the tree", () => {
+    const files = src();
+    expect(Object.keys(files).filter((path) => path.includes("/contract/")).length).toBeGreaterThan(
+      0
+    );
+    expectNoneBeyondDebt(contractReaderViolations(files));
+  });
+});
+
+describe("the project-or-user union has one spelling", () => {
+  const union = ['"project"', '"user"'];
+  const found = (text: string) => entries(scopeViolations({ "src/a.ts": text }));
+
+  it("matches the union in either order and clears a lone literal", () => {
+    expect(found(`let a: ${union.join(" | ")};`)).toEqual(["src/a.ts"]);
+    expect(found(`let a: ${union.reverse().join("|")} | undefined;`)).toEqual(["src/a.ts"]);
+    expect(found('const a = "project";')).toEqual([]);
+  });
+
+  it("exempts the scope module and the credential level", () => {
+    const text = 'type T = "project" | "user";';
+    expect(
+      entries(
+        scopeViolations({
+          "src/shared/domain/scope.ts": text,
+          "src/contexts/auth/contract/credential.ts": text,
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("holds the tree", () => {
+    const files = textsOf(
+      [...tsFilesUnder("src"), ...tsFilesUnder("tests")].filter(
+        (path) => !path.startsWith("tests/architecture/")
+      )
+    );
+    expectUpToDebt(scopeViolations(files), "scope");
   });
 });

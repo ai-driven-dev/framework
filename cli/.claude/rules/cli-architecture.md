@@ -9,9 +9,9 @@ paths:
 ## Import rules
 
 Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`.
-1. A context reads another through its `contract/` only, and `application/` is for presentation and orchestration: `context-graph.arch.test.ts`, `biome.json`.
-2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `presentation/deps.ts` do not count: `context-boundary.arch.test.ts`.
-3. An edge absent from `ALLOWED` is an error: `context-graph.arch.test.ts`, `biome-guards-bite.arch.test.ts`.
+1. A context reads another through its `contract/` only, and `application/` is for presentation and orchestration: the `imports` rule of `kinds.arch.test.ts`, `biome.json`.
+2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `presentation/deps.ts` do not count: `contractReaderViolations`, in `kinds.rules.arch.test.ts`.
+3. An edge absent from `ALLOWED` is an error: the `imports` rule of `kinds.arch.test.ts` and `biome-guards-bite.arch.test.ts`.
 4. No import cycle: Biome `noImportCycles`.
 5. Pure folders import no package and no Node builtin but `node:path` and `node:crypto`. Biome holds it for the `PURE_FOLDERS` of `biome-guards-bite.arch.test.ts`; in every other `domain/`, the kind gate (`kinds.ts`) holds it: a model imports models and `node:path` and `node:crypto` only, an inline `import("node:…")` included.
 6. Orchestration imports the `application/` and `contract/` of contexts only, reads no file and starts no process: `biome.json`.

@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-Inter-context edges are exactly `ALLOWED` in `tests/architecture/allowed-edges.ts`, held by `context-graph.arch.test.ts`.
+Inter-context edges are exactly `ALLOWED` in `tests/architecture/allowed-edges.ts`, held by the `imports` rule of `kinds.arch.test.ts`.
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
 
 | Decision | Why |
 | --- | --- |
-| Another context is read through its `contract/` only | its `domain/`, `ports/` and `infrastructure/` stay its own; `context-graph.arch.test.ts` holds it, and Biome for the `HELD_BY_BIOME` contexts |
+| Another context is read through its `contract/` only | its `domain/`, `ports/` and `infrastructure/` stay its own; the `imports` rule of `kinds.arch.test.ts` holds it, and Biome for the `HELD_BY_BIOME` contexts |
 | A module is shared only with callers in two contexts | `earned-sharing.arch.test.ts`; one caller means the code belongs to it |
 | Record placement: the host record's shape lives in `host-registration/domain/`, the manifest stores it opaque | only host registration knows what it means; the manifest keeps its own claims on refs |
 | Claude registers at `--scope local` | the hashed settings file keeps one writer (`profiles/claude/profile.ts`) |

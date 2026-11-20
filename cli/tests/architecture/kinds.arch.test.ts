@@ -18,6 +18,7 @@ import {
 } from "typescript/unstable/ast";
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.js";
+import { ALLOWED } from "./allowed-edges.js";
 import { CLI_ROOT, canonicalPath, matchesGlob } from "./helpers.js";
 import {
   classificationViolations,
@@ -252,19 +253,76 @@ describe("a file imports only the kinds its kind allows", () => {
   it("flags a context that reaches into another context past its contract", () => {
     expect(
       importsOf({
-        "src/contexts/a/application/x.use-case.ts":
-          'import { M } from "../../b/domain/m.model.js";',
-        "src/contexts/b/domain/m.model.ts": "export const M = 1;",
+        "src/contexts/translate/application/x.use-case.ts":
+          'import { M } from "../../tools/domain/m.model.js";',
+        "src/contexts/tools/domain/m.model.ts": "export const M = 1;",
       })
-    ).toEqual(["src/contexts/a/application/x.use-case.ts -> src/contexts/b/domain/m.model.ts"]);
+    ).toEqual([
+      "src/contexts/translate/application/x.use-case.ts -> src/contexts/tools/domain/m.model.ts",
+    ]);
+  });
+
+  it("flags an edge the context map does not admit, even through a contract", () => {
+    expect(
+      importsOf({
+        "src/contexts/tools/application/x.use-case.ts":
+          'import { M } from "../../translate/contract/m.model.js";',
+        "src/contexts/translate/contract/m.model.ts": "export const M = 1;",
+      })
+    ).toEqual([
+      "src/contexts/tools/application/x.use-case.ts -> src/contexts/translate/contract/m.model.ts",
+    ]);
+  });
+
+  it("flags a context that reaches presentation, and shared that reaches a context", () => {
+    expect(
+      importsOf({
+        "src/contexts/tools/application/x.use-case.ts":
+          'import { P } from "../../../presentation/p.presenter.js";',
+        "src/presentation/p.presenter.ts": "export const P = 1;",
+        "src/shared/domain/s.model.ts":
+          'import { M } from "../../contexts/tools/contract/m.model.js";',
+        "src/contexts/tools/contract/m.model.ts": "export const M = 1;",
+      })
+    ).toEqual([
+      "src/contexts/tools/application/x.use-case.ts -> src/presentation/p.presenter.ts",
+      "src/shared/domain/s.model.ts -> src/contexts/tools/contract/m.model.ts",
+    ]);
+  });
+
+  it("lets presentation reach a context and every layer reach shared", () => {
+    expect(
+      importsOf({
+        "src/presentation/p.presenter.ts":
+          'import { M } from "../contexts/tools/contract/m.model.js";',
+        "src/contexts/tools/contract/m.model.ts":
+          'import { S } from "../../../shared/domain/s.model.js";',
+        "src/shared/domain/s.model.ts": "export const S = 1;",
+      })
+    ).toEqual([]);
+  });
+
+  it("holds the context map to a graph without a cycle", () => {
+    const reaches = (from: string, seen = new Set<string>()): Set<string> => {
+      for (const edge of ALLOWED) {
+        const [source = "", target = ""] = edge.split("->");
+        if (source === from && !seen.has(target)) reaches(target, seen.add(target));
+      }
+      return seen;
+    };
+    const cyclic = [...ALLOWED].filter((edge) => {
+      const [source = "", target = ""] = edge.split("->");
+      return reaches(target).has(source);
+    });
+    expect(cyclic, "a context map edge that closes a cycle").toEqual([]);
   });
 
   it("passes a context that reaches into another through its contract", () => {
     expect(
       importsOf({
-        "src/contexts/a/application/x.use-case.ts":
-          'import { M } from "../../b/contract/m.model.js";',
-        "src/contexts/b/contract/m.model.ts": "export const M = 1;",
+        "src/contexts/translate/application/x.use-case.ts":
+          'import { M } from "../../tools/contract/m.model.js";',
+        "src/contexts/tools/contract/m.model.ts": "export const M = 1;",
       })
     ).toEqual([]);
   });

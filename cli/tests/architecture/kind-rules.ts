@@ -26,7 +26,7 @@ import {
   SyntaxKind,
 } from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.js";
-import { unresolvedCommandMentions } from "./helpers.js";
+import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./helpers.js";
 import type { Rule, Violation } from "./kinds.js";
 import { walk, withVirtualProject } from "./ts-project.js";
 
@@ -473,6 +473,93 @@ export function sizeViolations(files: Readonly<Record<string, string>>): Violati
         `carries more than ${MAX_TEST_LINES} lines`,
         `a test file holds at most ${MAX_TEST_LINES} lines`,
         "split it by situation"
+      )
+    );
+}
+
+const DRIVING_PORT = "src/presentation/deps.ts";
+
+/** The context imports of the driving port that are not an `import type` of an application or a
+ * contract file. */
+export function drivingPortViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const text = files[DRIVING_PORT];
+  if (text === undefined) return [];
+  const out: Violation[] = [];
+  for (const match of text.matchAll(/^import\s+(type\s+)?[^;]*?from\s+"([^"]+)"/gms)) {
+    const specifier = present(match[2]);
+    if (!specifier.startsWith("../contexts/")) continue;
+    const problem =
+      match[1] === undefined
+        ? "is a value import"
+        : /\/(?:application|contract)\//.test(specifier)
+          ? undefined
+          : "is neither application nor contract";
+    if (problem)
+      out.push(
+        violation(
+          "imports",
+          `${DRIVING_PORT} -> ${specifier}`,
+          `${specifier} ${problem}`,
+          "the driving port names context types only, by import type, from application or contract",
+          "import type the application or contract type it needs"
+        )
+      );
+  }
+  return out;
+}
+
+const contextOfFile = (path: string): string | undefined =>
+  /^src\/contexts\/([^/]+)\//.exec(path)?.[1];
+
+/** A `contract/` file nobody outside its context reads. The composition root and the driving port
+ * do not count: they wire everything. Such a file is an interior file in the wrong folder, or a
+ * surface nobody asked for. */
+export function contractReaderViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const readFromOutside = new Set<string>();
+  for (const [importer, text] of Object.entries(files)) {
+    if (importer.startsWith("src/composition/") || importer === DRIVING_PORT) continue;
+    for (const match of text.matchAll(INTERNAL_IMPORT)) {
+      const target = resolveImportTarget(importer, present(match[1]));
+      if (contextOfFile(target) !== contextOfFile(importer)) readFromOutside.add(target);
+    }
+  }
+  return Object.keys(files)
+    .filter((path) => /^src\/contexts\/[^/]+\/contract\//.test(path) && !readFromOutside.has(path))
+    .sort()
+    .map((path) =>
+      violation(
+        "imports",
+        path,
+        "no file outside its context reads this contract file",
+        "what a context publishes in contract/ exists for a reader outside it",
+        "move it to the interior folder it belongs to, or delete it"
+      )
+    );
+}
+
+/** Where a registration lives, project or user, is `Scope` of `shared/domain/scope.ts`. A credential
+ * level names who may use a token, a different notion carrying the same two words. */
+const SCOPE_HOMES: readonly string[] = [
+  "src/shared/domain/scope.ts",
+  "src/contexts/auth/contract/credential.ts",
+];
+
+/** The two members side by side, across a line break or not. One with another member between them
+ * goes unseen: none exists in the code today. */
+const INLINE_UNION = /"project"\s*\|\s*"user"|"user"\s*\|\s*"project"/;
+
+/** A file other than the scope module that spells the project-or-user union inline. A second
+ * spelling drifts the day a third scope is added, and the compiler cannot say so. */
+export function scopeViolations(files: Readonly<Record<string, string>>): Violation[] {
+  return Object.entries(files)
+    .filter(([path, text]) => !SCOPE_HOMES.includes(path) && INLINE_UNION.test(text))
+    .map(([path]) =>
+      violation(
+        "scope",
+        path,
+        'spells the union "project" | "user" inline',
+        "the project-or-user union is the Scope type",
+        "write Scope from shared/domain/scope.js"
       )
     );
 }

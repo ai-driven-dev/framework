@@ -12,6 +12,7 @@ import { readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import { parseJsonRecord, stringList } from "../shared/testing/json-value.builder.js";
 import { present } from "../shared/testing/present.js";
+import { ALLOWED } from "./allowed-edges.js";
 import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./helpers.js";
 
 export type KindId =
@@ -266,6 +267,7 @@ export type Rule =
   | "answers"
   | "repository"
   | "translate"
+  | "scope"
   | "size";
 
 export interface Violation {
@@ -407,6 +409,29 @@ function contextOfSource(path: string): string | undefined {
   return /^src\/contexts\/([^/]+)\//.exec(path)?.[1];
 }
 
+/** The layer a source file belongs to: a context by name, `shared`, or one of the three layers a
+ * context never reaches back into. */
+function layerOf(path: string): string | undefined {
+  const inContext = contextOfSource(path);
+  if (inContext) return inContext;
+  if (path.startsWith("src/shared/")) return "shared";
+  return ["presentation", "composition", "orchestration"].find((layer) =>
+    path.startsWith(`src/${layer}/`)
+  );
+}
+
+/** The edge an import draws from a context or `shared` to another layer, when the context map
+ * (`ALLOWED`) does not admit it. Presentation, composition and orchestration may reach down, and
+ * everything may reach `shared`. */
+function forbiddenEdge(file: string, target: string): string | undefined {
+  const from = layerOf(file);
+  const to = layerOf(target);
+  if (!from || !to || from === to || to === "shared") return undefined;
+  if (from !== "shared" && !contextOfSource(file)) return undefined;
+  const edge = `${from}->${to}`;
+  return ALLOWED.has(edge) ? undefined : edge;
+}
+
 export function importViolations(
   files: Readonly<Record<string, string>>,
   kinds: readonly Kind[] = KINDS
@@ -446,6 +471,15 @@ export function importViolations(
           target,
           `a ${from.id} may import only ${from.within.join(", ")}`,
           "import it through tools/contract or move the shared part to shared/domain"
+        );
+        continue;
+      }
+      const edge = forbiddenEdge(file, target);
+      if (edge) {
+        report(
+          target,
+          `the edge ${edge} is not in the context map`,
+          "add the row to ALLOWED in allowed-edges.ts if the target context map admits it, else depend on shared or a contract"
         );
         continue;
       }
@@ -538,16 +572,9 @@ const escapeRegExp = (literal: string): string => literal.replace(/[.*+?^${}()|[
 
 /**
  * The lists the debt file holds beside the kind rules. Each is read by the test that owns the data:
- * size-limit exclusions by `code-size`, tool names outside a profile by `tool-addition-cost`, the
- * transitional context imports by `context-graph`.
+ * size-limit exclusions by `code-size`, tool names outside a profile by `tool-addition-cost`.
  */
-export type ListedDebt =
-  | "limits"
-  | "toolNames"
-  | "toolSites"
-  | "toolOwn"
-  | "toolIdentifiers"
-  | "transitional";
+export type ListedDebt = "limits" | "toolNames" | "toolSites" | "toolOwn" | "toolIdentifiers";
 
 export type Debt = Readonly<Record<Rule | ListedDebt, readonly string[]>>;
 
@@ -564,6 +591,7 @@ const RULES: readonly Rule[] = [
   "answers",
   "repository",
   "translate",
+  "scope",
   "size",
 ];
 
@@ -581,13 +609,13 @@ export const noDebt = (): Debt => ({
   answers: [],
   repository: [],
   translate: [],
+  scope: [],
   size: [],
   limits: [],
   toolNames: [],
   toolSites: [],
   toolOwn: [],
   toolIdentifiers: [],
-  transitional: [],
 });
 
 /** The debt file, a rule it does not name counting as none. */

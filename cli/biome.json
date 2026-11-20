@@ -83,7 +83,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -256,7 +256,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -429,7 +429,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -473,11 +473,11 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -485,7 +485,7 @@
                       "**/distribution/ports/**",
                       "**/distribution/infrastructure/**"
                     ],
-                    "message": "distribution publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "distribution publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -493,7 +493,7 @@
                       "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -501,7 +501,7 @@
                       "**/installation/ports/**",
                       "**/installation/infrastructure/**"
                     ],
-                    "message": "installation publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "installation publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -509,7 +509,7 @@
                       "**/machine-claims/ports/**",
                       "**/machine-claims/infrastructure/**"
                     ],
-                    "message": "machine-claims publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "machine-claims publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -517,11 +517,11 @@
                       "**/telemetry/ports/**",
                       "**/telemetry/infrastructure/**"
                     ],
-                    "message": "telemetry publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "telemetry publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -529,7 +529,7 @@
                       "**/translate/ports/**",
                       "**/translate/infrastructure/**"
                     ],
-                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -537,7 +537,7 @@
                       "**/update/ports/**",
                       "**/update/infrastructure/**"
                     ],
-                    "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
@@ -545,7 +545,7 @@
                       "**/recipes/ports/**",
                       "**/recipes/infrastructure/**"
                     ],
-                    "message": "recipes publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "recipes publishes its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -577,7 +577,7 @@
                   },
                   {
                     "group": ["**/tools/application/**"],
-                    "message": "tools publishes its contract only: its application belongs to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its application belongs to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -585,7 +585,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/presentation/**"],
@@ -639,11 +639,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "auth imports only shared, see context-graph.arch.test.ts"
+                    "message": "auth imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -827,11 +827,11 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "auth imports only shared, see context-graph.arch.test.ts"
+                    "message": "auth imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -862,7 +862,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "auth imports only shared, see context-graph.arch.test.ts"
+                    "message": "auth imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -870,7 +870,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -904,11 +904,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "auth imports only shared, see context-graph.arch.test.ts"
+                    "message": "auth imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1098,11 +1098,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "auth imports only shared, see context-graph.arch.test.ts"
+                    "message": "auth imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1284,15 +1284,15 @@
                       "**/tools/**",
                       "**/translate/**"
                     ],
-                    "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
+                    "message": "update imports only shared and the contract of auth, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1475,15 +1475,15 @@
                       "**/translate/**",
                       "**/presentation/**"
                     ],
-                    "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
+                    "message": "update imports only shared and the contract of auth, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1517,7 +1517,7 @@
                       "**/translate/**",
                       "**/presentation/**"
                     ],
-                    "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
+                    "message": "update imports only shared and the contract of auth, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -1525,11 +1525,11 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -1562,15 +1562,15 @@
                       "**/tools/**",
                       "**/translate/**"
                     ],
-                    "message": "update imports only shared and the contract of auth, see context-graph.arch.test.ts"
+                    "message": "update imports only shared and the contract of auth, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1753,11 +1753,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "recipes imports only shared, see context-graph.arch.test.ts"
+                    "message": "recipes imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1941,11 +1941,11 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "recipes imports only shared, see context-graph.arch.test.ts"
+                    "message": "recipes imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1982,7 +1982,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "recipes imports only shared, see context-graph.arch.test.ts"
+                    "message": "recipes imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -1990,7 +1990,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -2024,11 +2024,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "recipes imports only shared, see context-graph.arch.test.ts"
+                    "message": "recipes imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -2210,15 +2210,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                    "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -2400,15 +2400,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                    "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -2442,15 +2442,15 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                    "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -2480,11 +2480,11 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                    "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -2492,7 +2492,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -2532,15 +2532,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                    "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -2730,11 +2730,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -2916,15 +2916,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "installation may import tools, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, never telemetry (see kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -2958,15 +2958,15 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "installation may import tools, never telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, never telemetry or presentation (see kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -2996,7 +2996,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "installation/infrastructure may import tools, never telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation/infrastructure may import tools, never telemetry or presentation (see kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3004,11 +3004,11 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3041,15 +3041,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "installation may import tools, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, never telemetry (see kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3089,15 +3089,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "installation may import tools, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, never telemetry (see kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -3280,11 +3280,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3319,11 +3319,11 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "machine-claims imports no other context, nor presentation, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, nor presentation, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3354,7 +3354,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "machine-claims/infrastructure imports no other context, nor presentation, see context-graph.arch.test.ts"
+                    "message": "machine-claims/infrastructure imports no other context, nor presentation, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3362,7 +3362,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3396,11 +3396,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3441,11 +3441,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3485,15 +3485,15 @@
                       "**/telemetry/**",
                       "**/update/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -3675,15 +3675,15 @@
                       "**/telemetry/**",
                       "**/update/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3716,15 +3716,15 @@
                       "**/telemetry/**",
                       "**/update/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3758,15 +3758,15 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3796,7 +3796,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3804,11 +3804,11 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3845,11 +3845,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -3884,11 +3884,11 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3923,11 +3923,11 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -3958,7 +3958,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3966,7 +3966,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -4006,15 +4006,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record: it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record: it says where content comes from, not what is done with it (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -4197,15 +4197,15 @@
                       "**/update/**",
                       "**/manifest.js"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -4238,15 +4238,15 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -4280,19 +4280,19 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/manifest.js"],
-                    "message": "distribution reads a marketplace, never the installation record, manifest.js included (context-graph.arch.test.ts)"
+                    "message": "distribution reads a marketplace, never the installation record, manifest.js included (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/ports/prompter.js"],
@@ -4326,7 +4326,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (kinds.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -4334,11 +4334,11 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/ports/prompter.js"],
@@ -4376,11 +4376,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -4414,11 +4414,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -4459,11 +4459,11 @@
                       "**/translate/**",
                       "**/update/**"
                     ],
-                    "message": "telemetry imports only shared, see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared, see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -4647,11 +4647,11 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
@@ -4682,7 +4682,7 @@
                       "**/update/**",
                       "**/presentation/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared — see kinds.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -4690,7 +4690,7 @@
                   },
                   {
                     "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                    "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   }
                 ]
               }
