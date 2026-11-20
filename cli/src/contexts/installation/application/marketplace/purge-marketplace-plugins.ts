@@ -92,8 +92,7 @@ export class PurgeMarketplacePlugins {
         ...(await this.nativeHost.planMarketplaceRemoval(
           this.tools.aiProfile(toolId),
           registrations,
-          registration,
-          projectRoot
+          { registration, projectRoot }
         )),
       }))
     );

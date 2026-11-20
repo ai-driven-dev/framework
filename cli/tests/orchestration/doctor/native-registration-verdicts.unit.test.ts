@@ -156,12 +156,10 @@ describe("registration verdicts across intents", () => {
       const gate = new NativeHostRegistrationGate(
         ...hostOver(row.registry, ownedSource(provenance))
       );
-      const attempt = gate.planMarketplaceRemoval(
-        registeredAiProfile(copilot),
-        registrations,
-        registrations.marketplaces[0],
-        "/A"
-      );
+      const attempt = gate.planMarketplaceRemoval(registeredAiProfile(copilot), registrations, {
+        registration: registrations.marketplaces[0],
+        projectRoot: "/A",
+      });
       expect(await outcomeOf(attempt)).toBe(row.removal);
     });
   });
@@ -183,12 +181,10 @@ describe("registration verdicts across intents", () => {
           ? refreshOf(registry, ownedSource(entry))
           : new NativeHostRegistrationGate(
               ...hostOver(registry, ownedSource(entry))
-            ).planMarketplaceRemoval(
-              registeredAiProfile(copilot),
-              registrations,
-              registrations.marketplaces[0],
-              "/A"
-            );
+            ).planMarketplaceRemoval(registeredAiProfile(copilot), registrations, {
+              registration: registrations.marketplaces[0],
+              projectRoot: "/A",
+            });
       expect(await outcomeOf(attempt)).toBe(refused);
     });
   });

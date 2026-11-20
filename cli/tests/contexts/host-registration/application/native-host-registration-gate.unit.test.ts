@@ -44,12 +44,10 @@ describe("native host registration gate", () => {
       new Map([[copilot, { read: async () => ({ location: "/catalogue", entries: new Map() }) }]])
     );
     await expect(
-      gate.planMarketplaceRemoval(
-        registeredTools().aiProfile(copilot),
-        registrations,
-        registrations.marketplaces[0],
-        "/A"
-      )
+      gate.planMarketplaceRemoval(registeredTools().aiProfile(copilot), registrations, {
+        registration: registrations.marketplaces[0],
+        projectRoot: "/A",
+      })
     ).rejects.toThrow("copilot: catalogue source unproven.");
     expect(activator.removedMarketplaces).toEqual([]);
   });
@@ -79,8 +77,7 @@ describe("native host registration gate", () => {
     const plan = await gate.planMarketplaceRemoval(
       registeredTools().aiProfile(copilot),
       { binary: "copilot", marketplaces: [registration], pluginRefs: [] },
-      registration,
-      "/A"
+      { registration: registration, projectRoot: "/A" }
     );
     expect(plan.refs).toEqual([]);
     expect(plan.scopes).toEqual(new Map());
@@ -125,12 +122,10 @@ describe("native host registration gate", () => {
     );
 
     await expect(
-      gate.planMarketplaceRemoval(
-        registeredTools().aiProfile(codex),
-        provenCodex,
-        provenCodex.marketplaces[0],
-        "/project-b"
-      )
+      gate.planMarketplaceRemoval(registeredTools().aiProfile(codex), provenCodex, {
+        registration: provenCodex.marketplaces[0],
+        projectRoot: "/project-b",
+      })
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -148,8 +143,7 @@ describe("native host registration gate", () => {
       gate.planMarketplaceRemoval(
         registeredTools().aiProfile(codex),
         { ...provenCodex, marketplaces: [{ alias: "alias", hostName: HOST }] },
-        { alias: "alias", hostName: HOST },
-        "/project-b"
+        { registration: { alias: "alias", hostName: HOST }, projectRoot: "/project-b" }
       )
     ).rejects.toThrow(/legacy claim has no source proof/);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -167,12 +161,10 @@ describe("native host registration gate", () => {
       new NativeHostRegistrationGate(new Map([[copilot, activator]]), new Map()),
     ]) {
       await expect(
-        gate.planMarketplaceRemoval(
-          registeredTools().aiProfile(copilot),
-          registrations,
-          registration,
-          "/A"
-        )
+        gate.planMarketplaceRemoval(registeredTools().aiProfile(copilot), registrations, {
+          registration: registration,
+          projectRoot: "/A",
+        })
       ).rejects.toThrow(/CLI or host registry unavailable/);
     }
   });
@@ -187,12 +179,10 @@ describe("native host registration gate", () => {
       new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
     await expect(
-      gate.planMarketplaceRemoval(
-        registeredTools().aiProfile(codex),
-        provenCodex,
-        provenCodex.marketplaces[0],
-        "/A"
-      )
+      gate.planMarketplaceRemoval(registeredTools().aiProfile(codex), provenCodex, {
+        registration: provenCodex.marketplaces[0],
+        projectRoot: "/A",
+      })
     ).rejects.toThrow(/foreign host ref 'foreign@real-catalog'/);
     const safe = new NativeHostRegistrationGate(
       new Map([[codex, activator]]),
@@ -200,18 +190,15 @@ describe("native host registration gate", () => {
       new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
     expect(
-      await safe.planMarketplaceRemoval(
-        registeredTools().aiProfile(codex),
-        provenCodex,
-        provenCodex.marketplaces[0],
-        "/A"
-      )
+      await safe.planMarketplaceRemoval(registeredTools().aiProfile(codex), provenCodex, {
+        registration: provenCodex.marketplaces[0],
+        projectRoot: "/A",
+      })
     ).toMatchObject({ activator, refs: [claim] });
     const plan = await safe.planMarketplaceRemoval(
       registeredTools().aiProfile(codex),
       provenCodex,
-      provenCodex.marketplaces[0],
-      "/A"
+      { registration: provenCodex.marketplaces[0], projectRoot: "/A" }
     );
     expect(plan.scopes.get(REF)).toBe("user");
   });

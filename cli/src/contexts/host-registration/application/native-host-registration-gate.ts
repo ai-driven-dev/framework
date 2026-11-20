@@ -28,14 +28,17 @@ export class NativeHostRegistrationGate {
   async planMarketplaceRemoval<Claim extends { readonly ref: string }>(
     tool: HostedTool & HostRefCounter,
     registrations: RegistrationRecordData & { readonly pluginClaims?: readonly Claim[] },
-    registration: NativeMarketplaceRegistration,
-    projectRoot: string
+    removal: {
+      readonly registration: NativeMarketplaceRegistration;
+      readonly projectRoot: string;
+    }
   ): Promise<{
     activator: HostActions;
     refs: readonly Claim[];
     scopes: ReadonlyMap<string, Scope | undefined>;
   }> {
     const { toolId } = tool;
+    const { registration, projectRoot } = removal;
     const binary = readRegistrationRecord(registrations)?.binary;
     const activator = binary === undefined ? undefined : this.activators.get(binary);
     const reader = this.registries.get(toolId);

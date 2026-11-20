@@ -89,8 +89,7 @@ export interface RegistrationRecordRules {
   readonly afterActivation: <Claim extends RecordedClaim>(
     existing: ClaimedRecord<Claim> | undefined,
     outcome: Pick<HostRegistrationOutcome, "marketplaces" | "preservedMarketplaces" | "pluginRefs">,
-    binary: string,
-    narrowed: boolean
+    run: { readonly binary: string; readonly narrowed: boolean }
   ) => ClaimedRecord<Claim> | undefined;
   /** A machine's record with the claims of one run merged in. */
   readonly mergeCatalogueClaims: (
@@ -128,8 +127,7 @@ export interface MarketplaceRemovalPlanner {
   readonly planMarketplaceRemoval: <Claim extends { readonly ref: string }>(
     tool: HostRefCountingTool,
     registrations: ClaimedRecord<Claim>,
-    registration: RegisteredMarketplace,
-    projectRoot: string
+    removal: { readonly registration: RegisteredMarketplace; readonly projectRoot: string }
   ) => Promise<{
     activator: MarketplaceRemovalActions;
     refs: readonly Claim[];

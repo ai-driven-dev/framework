@@ -19,6 +19,12 @@ interface ActivationOutcome {
   readonly pluginRefs: readonly string[];
 }
 
+/** The host binary an activation ran, and whether the run was narrowed to some marketplaces. */
+export interface ActivationRun {
+  readonly binary: string;
+  readonly narrowed: boolean;
+}
+
 /** What a run claims on a machine's record, and for which project. */
 interface CatalogueClaims {
   readonly marketplaces: readonly NativeMarketplaceRegistration[];
@@ -45,8 +51,7 @@ interface MergedClaims {
 export function afterActivation<Claim extends RecordedClaim>(
   existing: ClaimedRegistrationRecord<Claim> | undefined,
   outcome: ActivationOutcome,
-  binary: string,
-  narrowed: boolean
+  { binary, narrowed }: ActivationRun
 ): ClaimedRegistrationRecord<Claim> | undefined {
   const recorded = readRegistrationRecord(existing);
   const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
