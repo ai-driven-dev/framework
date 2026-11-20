@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "kind": "plugin",
+  "unit": "file",
+  "rules": {
+    "PLUGIN-01": {
+      "op": "json",
+      "in": "plugin.json",
+      "schema": "plugin-schema.json",
+      "why": "hosts read the manifest before anything else",
+      "fix": "{problem}"
+    },
+    "PLUGIN-02": {
+      "op": "custom",
+      "in": "plugin.json",
+      "check": "coherence",
+      "why": "an unlisted skill never installs, a listed missing one breaks the install",
+      "fix": "{problem}"
+    }
+  }
+}
