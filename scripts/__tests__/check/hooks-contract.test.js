@@ -60,8 +60,8 @@ describe("hooks contract", () => {
 
   it("flags a handler with no status message, an empty one, or one not naming its plugin", () => {
     const { statusMessage, ...bare } = entry().hooks.Stop[0].hooks[0];
-    assert.match(validate({ hooks: { Stop: [{ hooks: [bare] }] } }).out, / HOOKS-03 .*misses statusMessage/u);
-    for (const message of ["  ", "", "guard", "AIDD Demo:"]) assert.match(validate(entry({ statusMessage: message })).out, / HOOKS-03 /u, message);
+    assert.match(validate({ hooks: { Stop: [{ hooks: [bare] }] } }).out, / HOOKS-01 .*misses statusMessage/u);
+    for (const message of ["  ", "", "guard", "AIDD Demo:"]) assert.match(validate(entry({ statusMessage: message })).out, / HOOKS-01 /u, message);
   });
 
   it("flags a file that is not JSON", () => {

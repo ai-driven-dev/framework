@@ -1,10 +1,71 @@
 {
   "type": "object",
-  "required": ["name", "version", "description", "skills"],
+  "required": [
+    "name",
+    "version",
+    "description",
+    "author",
+    "repository",
+    "homepage",
+    "license"
+  ],
   "properties": {
-    "name": { "type": "string", "pattern": "^aidd-[a-z]+$" },
-    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
-    "description": { "type": "string", "pattern": "\\S" },
-    "skills": { "type": "array", "items": { "type": "string", "pattern": "^\\./skills/\\d\\d-[a-z-]+$" } }
+    "name": {
+      "type": "string",
+      "pattern": "^aidd-[a-z]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "author": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "homepage": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "license": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "\\S"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\./skills/\\d\\d-[a-z-]+$"
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\./agents/[a-z-]+\\.md$"
+      }
+    }
   }
 }

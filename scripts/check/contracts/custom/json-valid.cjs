@@ -1,5 +1,5 @@
 "use strict";
-// Every tracked JSON file parses, and the plugin manifests, the marketplace and Claude settings hold the fields and paths the host reads. Anchor: marketplace.json.
+// Every tracked JSON file parses, and the marketplace and Claude settings hold the fields and paths the host reads. Plugin manifests are PLUGIN-01's. Anchor: marketplace.json.
 // The local checks only: no network. The published schemas at schemastore.org stay with scripts/validate-json.mjs.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -12,7 +12,6 @@ const isObject = (value) => value !== null && typeof value === "object" && !Arra
 const blank = (value) => typeof value !== "string" || value.trim() === "";
 
 function kindOf(file) {
-  if (file.endsWith(".claude-plugin/plugin.json")) return "plugin";
   if (file.endsWith(".claude-plugin/marketplace.json")) return "marketplace";
   if (file.endsWith(".claude/settings.json") || file.endsWith(".claude/settings.local.json") || file.includes("/.claude/settings.")) return "settings";
   return null;
@@ -23,22 +22,9 @@ function problemsOf(root, file, data) {
   const out = [];
   const fail = (message) => out.push(message);
   const string = (object, key) => blank(object[key]) && fail(`missing or invalid string field '${key}'`);
-  const strings = (object, key) => (!Array.isArray(object[key]) || object[key].some(blank)) && fail(`missing or invalid string array '${key}'`);
   const exists = (rel, label, base) => fs.existsSync(path.resolve(base, rel)) || fail(`${label} does not exist: ${rel}`);
   const kind = kindOf(file);
-  if (kind === "plugin") {
-    for (const key of ["name", "version", "description", "repository", "homepage", "license"]) string(data, key);
-    if (!isObject(data.author)) fail("missing or invalid object field 'author'");
-    else string(data.author, "name");
-    const pluginRoot = path.dirname(path.dirname(path.join(root, file)));
-    // Absent means the host's default `./skills`, so only a declared list is checked.
-    for (const key of ["skills", "agents"]) {
-      if (data[key] === undefined) continue;
-      strings(data, key);
-      for (const rel of data[key] ?? []) exists(rel, `${key === "skills" ? "skill" : "agent"} path`, pluginRoot);
-    }
-    if (data.keywords !== undefined) strings(data, "keywords");
-  } else if (kind === "marketplace") {
+  if (kind === "marketplace") {
     for (const key of ["name", "version", "description"]) string(data, key);
     if (!isObject(data.owner)) fail("missing or invalid object field 'owner'");
     else string(data.owner, "name");

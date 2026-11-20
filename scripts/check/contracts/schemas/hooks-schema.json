@@ -31,7 +31,8 @@
                 "type": "object",
                 "required": [
                   "type",
-                  "command"
+                  "command",
+                  "statusMessage"
                 ],
                 "additionalProperties": false,
                 "properties": {
@@ -46,7 +47,8 @@
                     "type": "integer"
                   },
                   "statusMessage": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^AIDD [A-Za-z]+: \\S"
                   },
                   "async": {
                     "type": "boolean"

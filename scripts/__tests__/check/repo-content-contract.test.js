@@ -80,8 +80,8 @@ describe("repo content rules", () => {
     assert.deepEqual(ids({ "data.json": "{" }), ["REPO-05"]);
   });
 
-  it("REPO-05 flags a plugin manifest missing a field, and a marketplace source that does not exist", () => {
-    assert.deepEqual(ids({ "plugins/a/.claude-plugin/plugin.json": "{}" }), ["REPO-05"]);
+  it("REPO-05 leaves plugin manifests to PLUGIN-01, and flags a marketplace source that does not exist", () => {
+    assert.deepEqual(ids({ "plugins/a/.claude-plugin/plugin.json": "{}" }), []);
     const marketplace = { name: "m", version: "1", description: "d", owner: { name: "o" }, plugins: [{ name: "a", source: "./nowhere", description: "d", strict: true, metadata: { recommended: true } }] };
     assert.deepEqual(ids({ ".claude-plugin/marketplace.json": JSON.stringify(marketplace), }), ["REPO-05"]);
   });
