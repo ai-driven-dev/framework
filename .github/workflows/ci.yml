@@ -245,7 +245,7 @@ jobs:
       fail-fast: false
       matrix:
         # Every plugin `marketplace.json` lists, and nothing else — asserted by
-        # scripts/__tests__/release-covers-every-plugin.test.js, since a plugin missing here
+        # scripts/check/contracts/repo.json (REPO-02), since a plugin missing here
         # is tagged with no archive and nothing else notices.
         plugin:
           [

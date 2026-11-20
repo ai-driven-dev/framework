@@ -5,57 +5,62 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { findings } = require("./helpers.js");
 
-const CONTRACT = path.resolve(__dirname, "../../check/contracts/plugin.json");
-const MARKET = { plugins: [{ name: "aidd-demo", description: "Demo." }] };
-const MANIFEST = { name: "aidd-demo", version: "1.0.0", description: "Demo.", skills: ["./skills/01-a"] };
+const ROOT = path.resolve(__dirname, "../../..");
+const CONTRACT = path.join(ROOT, "scripts/check/contracts/repo.json");
+const PIECES = ["plugins", "docs", "README.md", ".claude-plugin", "release-please-config.json", ".github/workflows/ci.yml"];
 
-let root;
+/** A copy of the repository's anchor files, mutated per test. */
+let copy;
 beforeEach(() => {
-  root = fs.mkdtempSync(path.join(os.tmpdir(), "repo-contract-"));
-  fs.mkdirSync(path.join(root, ".claude-plugin"));
-  fs.writeFileSync(path.join(root, ".claude-plugin/marketplace.json"), JSON.stringify(MARKET));
-  fs.mkdirSync(path.join(root, "plugins/aidd-demo/.claude-plugin"), { recursive: true });
-  fs.mkdirSync(path.join(root, "plugins/aidd-demo/skills/01-a"), { recursive: true });
-  fs.writeFileSync(path.join(root, "plugins/aidd-demo/skills/01-a/SKILL.md"), "x\n");
+  copy = fs.mkdtempSync(path.join(os.tmpdir(), "repo-contract-"));
+  for (const piece of PIECES) {
+    fs.mkdirSync(path.dirname(path.join(copy, piece)), { recursive: true });
+    fs.cpSync(path.join(ROOT, piece), path.join(copy, piece), { recursive: true });
+  }
 });
-afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+afterEach(() => fs.rmSync(copy, { recursive: true, force: true }));
 
-function ids(manifest) {
-  const file = path.join(root, "plugins/aidd-demo/.claude-plugin/plugin.json");
-  fs.writeFileSync(file, typeof manifest === "string" ? manifest : JSON.stringify(manifest, null, 2));
-  return findings(CONTRACT, file).map((f) => `${f.id} ${f.message}`);
+/** Ids found after one replacement in one file of the copy. */
+function ids(file, from, to) {
+  const target = path.join(copy, file);
+  const text = fs.readFileSync(target, "utf8");
+  assert.ok(text.includes(from), `${file} no longer holds ${from}`);
+  fs.writeFileSync(target, text.replace(from, to));
+  return [...new Set(findings(CONTRACT, path.join(copy, ".claude-plugin/marketplace.json")).map((f) => f.id))];
 }
 
-describe("plugin contract", () => {
-  it("accepts a coherent manifest, whatever the description length", () => {
-    assert.deepEqual(ids(MANIFEST), []);
-    const long = "x".repeat(300);
-    MARKET.plugins[0].description = long;
-    fs.writeFileSync(path.join(root, ".claude-plugin/marketplace.json"), JSON.stringify(MARKET));
-    MARKET.plugins[0].description = "Demo.";
-    assert.deepEqual(ids({ ...MANIFEST, description: long }), []);
+describe("repo contract", () => {
+  it("accepts the real repository", () => {
+    assert.deepEqual(findings(CONTRACT, path.join(ROOT, ".claude-plugin/marketplace.json")), []);
   });
 
-  it("flags a skill folder missing from the manifest", () => {
-    fs.mkdirSync(path.join(root, "plugins/aidd-demo/skills/02-b"));
-    fs.writeFileSync(path.join(root, "plugins/aidd-demo/skills/02-b/SKILL.md"), "x\n");
-    assert.deepEqual(ids(MANIFEST), ["PLUGIN-02 ./skills/02-b is not listed in skills"]);
+  it("flags a severity off the scale, or a skill reading it differently", () => {
+    const skills = "plugins/aidd-dev/skills";
+    assert.deepEqual(ids(`${skills}/05-review/references/rubric.md`, "🟢 minor", "🟢 warning"), ["REPO-01"]);
   });
 
-  it("flags a listed skill that does not exist", () => {
-    assert.deepEqual(ids({ ...MANIFEST, skills: ["./skills/01-a", "./skills/09-z"] }), ["PLUGIN-02 ./skills/09-z is listed but has no SKILL.md"]);
+  it("flags an audit that counts its findings off the scale", () => {
+    assert.deepEqual(ids("plugins/aidd-dev/skills/04-audit/assets/audit-template.md", "{{n_minor}} minor", "{{n_minor}} low"), ["REPO-01"]);
   });
 
-  it("flags a description that differs from the marketplace", () => {
-    assert.deepEqual(ids({ ...MANIFEST, description: "Other." }), ["PLUGIN-02 description differs from marketplace.json"]);
+  it("flags a refactor that reads a shorter scale", () => {
+    assert.deepEqual(ids("plugins/aidd-dev/skills/07-refactor/SKILL.md", "🔴 critical, 🟡 major, 🟢 minor", "🔴 critical, 🟡 major"), ["REPO-01"]);
   });
 
-  it("flags a raw skeleton, then accepts the filled manifest", () => {
-    assert.ok(ids({ name: "{{name}}", version: "0.0.0", description: "", skills: [] }).some((m) => m.startsWith("PLUGIN-01")));
-    assert.deepEqual(ids(MANIFEST), []);
+  it("flags a plugin missing from the build matrix", () => {
+    assert.deepEqual(ids(".github/workflows/ci.yml", "            aidd-qa,\n", ""), ["REPO-02"]);
   });
 
-  it("flags a blank description", () => {
-    assert.ok(ids({ ...MANIFEST, description: "   " }).some((m) => m.startsWith("PLUGIN-01")));
+  it("flags a plugin release-please does not version", () => {
+    assert.deepEqual(ids("release-please-config.json", '"plugins/aidd-ui"', '"plugins/aidd-uix"'), ["REPO-02"]);
+  });
+
+  it("flags an animation or a document naming a skill that does not exist", () => {
+    assert.deepEqual(ids("docs/assets/sdlc-demo/scenes.json", "/aidd-dev:03-assert", "/aidd-dev:03-asserts"), ["REPO-03"]);
+    assert.deepEqual(ids("README.md", "/aidd-dev:01-plan", "/aidd-dev:01-planx"), ["REPO-03"]);
+  });
+
+  it("flags a chain diagram drawing a skill that does not exist", () => {
+    assert.deepEqual(ids("docs/GUIDES.md", "/aidd-dev:03-assert", "/aidd-dev:03-assertx"), ["REPO-03"]);
   });
 });

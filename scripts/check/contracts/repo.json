@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "kind": "repo",
+  "unit": "file",
+  "targets": ".claude-plugin/marketplace.json",
+  "rules": {
+    "REPO-01": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "severity-scale",
+      "why": "a finding keeps its severity from audit to refactor and review only on one scale"
+    },
+    "REPO-02": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "release-coverage",
+      "why": "a plugin missing from the release matrix is tagged with no archive, in silence"
+    },
+    "REPO-03": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "sdlc-demo",
+      "why": "the animation and the guides must show the skills that exist, in the order the chain draws"
+    }
+  }
+}
