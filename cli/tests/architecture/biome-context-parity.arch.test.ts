@@ -4,11 +4,10 @@
  * one's restriction. Every override checked here is scoped to one context's one layer.
  */
 import { describe, expect, it } from "vitest";
+import { ALLOWED, HELD_BY_BIOME } from "./allowed-edges.js";
 import {
-  ALLOWED,
   baselineLayers,
   contextNames,
-  HELD_BY_BIOME,
   interiorGroupsOf,
   matchesGlob,
   read,

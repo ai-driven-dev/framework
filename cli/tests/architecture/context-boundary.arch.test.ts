@@ -4,7 +4,8 @@
  * The list is the fence, not a description of what happens to be used.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, HELD_BY_BIOME, importersByFile, read, sourceFiles } from "./helpers.js";
+import { HELD_BY_BIOME } from "./allowed-edges.js";
+import { expectRatchet, importersByFile, read, sourceFiles } from "./helpers.js";
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {

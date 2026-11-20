@@ -2,11 +2,11 @@
  * The context chain as a graph rather than a paragraph. A per-file biome override cannot see
  * it: an override matches the text of a specifier, not the path it resolves to, and answers
  * one file at a time. `presentation` and `composition` may depend on anything below them, so a
- * context reaching back into either is an edge recorded here. Data lives in `helpers.ts`.
+ * context reaching back into either is an edge recorded here. Data lives in `allowed-edges.ts`.
  */
 import { describe, expect, it } from "vitest";
+import { ALLOWED, TRANSITIONAL_PAIRS } from "./allowed-edges.js";
 import {
-  ALLOWED,
   BASELINE,
   contextImportPairs,
   contextOf,
@@ -15,7 +15,6 @@ import {
   isContext,
   isCrossing,
   sourceFiles,
-  TRANSITIONAL_PAIRS,
   weighedEdges,
 } from "./helpers.js";
 

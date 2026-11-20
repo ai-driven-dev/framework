@@ -28,7 +28,7 @@ paths:
 ## Suppliers
 
 - `shared/`: `Environment`, errors and the JSON readers of `domain/reading/`.
-- Outside callers import `telemetry/contract/` and `telemetry/application/`, and the composition root reaches the rest: Biome denies `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
+- Outside callers import `telemetry/contract/` and `telemetry/application/`, and the composition root reaches the rest: Biome denies `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/allowed-edges.ts`).
 
 ## Never
 

@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-Inter-context edges are exactly `ALLOWED` in `tests/architecture/helpers.ts`, held by `context-graph.arch.test.ts`.
+Inter-context edges are exactly `ALLOWED` in `tests/architecture/allowed-edges.ts`, held by `context-graph.arch.test.ts`.
 
 ```mermaid
 flowchart LR

@@ -8,7 +8,7 @@ paths:
 
 ## Import rules
 
-Allowed edges are the rows of `ALLOWED` in `tests/architecture/helpers.ts`.
+Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`.
 1. A context reads another through its `contract/` only, and `application/` is for presentation and orchestration: `context-graph.arch.test.ts`, `biome.json`.
 2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `presentation/deps.ts` do not count: `context-boundary.arch.test.ts`.
 3. An edge absent from `ALLOWED` is an error: `context-graph.arch.test.ts`, `biome-context-parity.arch.test.ts`.

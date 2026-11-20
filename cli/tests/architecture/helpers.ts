@@ -160,9 +160,8 @@ export function matchesGlob(glob: string, path: string): boolean {
   return scopeGlob(glob, path);
 }
 
-// The context graph: single source of truth for which context may import which. It lives here
-// so `biome-context-parity.arch.test.ts` compares biome's own per-context `noRestrictedImports`
-// overrides against this same data rather than a hand-copied list that only looks like it agrees.
+// The context graph. The edge table is `allowed-edges.ts`, so `biome-context-parity.arch.test.ts`
+// compares biome's own per-context `noRestrictedImports` overrides against that same data.
 
 export function contextNames(): string[] {
   return readdirSync(join(SRC, "contexts"), { withFileTypes: true })
@@ -170,47 +169,6 @@ export function contextNames(): string[] {
     .map((entry) => entry.name)
     .sort();
 }
-
-/** Exactly these edges between contexts, plus every context to shared. Every row is a row of the
- * target context map (target/00-overview.md, section 4); a row that is debt goes in
- * `TRANSITIONAL_PAIRS`. */
-export const ALLOWED = new Set([
-  "translate->tools",
-  // The token a fetch carries (`contract/token-provider.ts`).
-  "distribution->auth",
-  // The token the changelog fetch carries (`contract/token-provider.ts`).
-  "update->auth",
-  // Installation reads the installed tools' profiles.
-  "installation->tools",
-  // The target context map gives host-registration the contract of tools
-  // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
-  // contract/"). Biome keeps tools' domain and application out of reach.
-  "host-registration->tools",
-]);
-
-/**
- * The ALLOWED rows that are debt rather than the target context map, each with the exact
- * `importer -> target` pairs that justify it. A stable row stays edge-level; a transitional one
- * admits these imports and no other, so a new import under an existing row fails instead of
- * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
- */
-export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {};
-
-/**
- * The contexts whose interior is held by Biome's folder groups instead of the public-surface
- * list in `context-boundary.arch.test.ts`: they publish `contract/` and `application/` and
- * keep the three folders below to themselves and the composition root. The list is data for
- * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
- */
-export const HELD_BY_BIOME: readonly string[] = [
-  "auth",
-  "host-registration",
-  "recipes",
-  "telemetry",
-  "tools",
-  "translate",
-  "update",
-];
 
 const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
 
