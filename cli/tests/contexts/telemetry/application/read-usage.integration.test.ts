@@ -29,7 +29,7 @@ afterEach(async () => {
 function decodedBy(source: UsageSource, decode: UsageSource["decode"]): UsageSource {
   return {
     list: () => source.list(),
-    read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
+    read: (request, each) => source.read(request, each),
     decode,
   };
 }
@@ -37,7 +37,7 @@ function decodedBy(source: UsageSource, decode: UsageSource["decode"]): UsageSou
 function reversed(source: UsageSource): UsageSource {
   return {
     list: async () => [...(await source.list())].reverse(),
-    read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
+    read: (request, each) => source.read(request, each),
     decode: (line, context) => source.decode(line, context),
   };
 }

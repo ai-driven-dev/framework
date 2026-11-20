@@ -50,7 +50,13 @@ export class SnapshotBindings {
       const created = needsReflog(previous, binding)
         ? await this.source.createdAt(root, binding.branch)
         : null;
-      const next = nextSnapshot(repositoryId, previous, binding, created, this.now().toISOString());
+      const next = nextSnapshot({
+        repositoryId,
+        latest: previous,
+        observed: binding,
+        reflogCreatedAt: created,
+        now: this.now().toISOString(),
+      });
       if (next !== null) taken.push(next);
     }
     if (taken.length > 0) await this.store.append(taken);

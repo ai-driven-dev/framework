@@ -269,13 +269,18 @@ describe("a report on a bounded period", () => {
         if (bounded.status !== "reported") throw new Error(bounded.status);
         const { facts, person } = await declared.read();
         const selected = kept.filter((record) =>
-          matchesFilter(resolved, record, attribute(record, facts), person)
+          matchesFilter({
+            filters: resolved,
+            record,
+            attribution: attribute(record, facts),
+            person,
+          })
         );
         const reference = reportEnvelopeOf({
           status: "reported",
           period,
           filters: resolved,
-          report: buildReport(selected, facts, person, axis),
+          report: buildReport({ records: selected, facts, person, axis }),
           coverage: { records: kept.length, leftOut: await fullLedger.leftOut.counts() },
           run: {
             filesRead: NOTHING_NEW.filesRead,

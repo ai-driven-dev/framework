@@ -219,7 +219,12 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
     forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
         root,
-        legacyLocations(process.env, homedir(), process.platform, root)
+        legacyLocations({
+          env: process.env,
+          home: homedir(),
+          platform: process.platform,
+          telemetryDir: root,
+        })
       ),
       new RepositoryDeclarationsAdapter(gitEnv),
       new RememberedClones(resolutionStore, consentHistory, snapshotStore),

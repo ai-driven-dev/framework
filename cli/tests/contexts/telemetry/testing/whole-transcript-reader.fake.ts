@@ -1,11 +1,12 @@
 import { constants, type Stats } from "node:fs";
 import { open } from "node:fs/promises";
-import {
-  resumeOffset,
-  type TranscriptPosition,
-} from "../../../../src/contexts/telemetry/domain/transcript-position.js";
+import { resumeOffset } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import type { TranscriptRead } from "../../../../src/contexts/telemetry/ports/usage-source.js";
+import type {
+  EachTranscriptLine,
+  TranscriptRead,
+  TranscriptRequest,
+} from "../../../../src/contexts/telemetry/ports/usage-source.js";
 
 /** The oracle: how a transcript's unread tail was read before it was read as a stream, the
  * whole tail in one buffer and one string. Copied from before the stream; only the lines
@@ -13,17 +14,16 @@ import type { TranscriptRead } from "../../../../src/contexts/telemetry/ports/us
  * is old, are the adapter's own. */
 export class WholeTranscriptReader extends ClaudeTranscriptSourceAdapter {
   override async read(
-    path: string,
-    since: TranscriptPosition | null,
-    writtenFrom: number,
-    each: (line: string, counted: boolean) => void
+    request: TranscriptRequest,
+    each: EachTranscriptLine
   ): Promise<TranscriptRead> {
+    const { path, since, writtenFrom } = request;
     const handle = await open(path, constants.O_RDONLY).catch(() => null);
-    if (handle === null) return super.read(path, since, writtenFrom, each);
+    if (handle === null) return super.read(request, each);
     try {
       const stats = await handle.stat();
       if (!stats.isFile() || stats.mtimeMs < writtenFrom) {
-        return super.read(path, since, writtenFrom, each);
+        return super.read(request, each);
       }
       const now = { size: stats.size, identity: identityOf(stats) };
       const { offset, restarted } = resumeOffset(since, now);

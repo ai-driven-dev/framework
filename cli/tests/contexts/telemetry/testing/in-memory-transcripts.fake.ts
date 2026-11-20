@@ -1,7 +1,8 @@
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
-import type { TranscriptPosition } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import type {
+  EachTranscriptLine,
   TranscriptRead,
+  TranscriptRequest,
   UsageSource,
 } from "../../../../src/contexts/telemetry/ports/usage-source.js";
 
@@ -21,10 +22,8 @@ export class InMemoryTranscripts implements UsageSource {
   }
 
   async read(
-    path: string,
-    since: TranscriptPosition | null,
-    writtenFrom: number,
-    each: (line: string, counted: boolean) => void
+    { path, since, writtenFrom }: TranscriptRequest,
+    each: EachTranscriptLine
   ): Promise<TranscriptRead> {
     const all = this.files.get(path) ?? [];
     const modified = this.modified.get(path);

@@ -247,7 +247,13 @@ describe("a snapshot is taken only when the binding differs from the latest one"
   };
 
   it("takes the first one", () => {
-    const next = nextSnapshot("r", undefined, observed, "2026-10-06T00:00:00.000Z", now);
+    const next = nextSnapshot({
+      repositoryId: "r",
+      latest: undefined,
+      observed,
+      reflogCreatedAt: "2026-10-06T00:00:00.000Z",
+      now,
+    });
     expect(next).toEqual({
       repository_id: "r",
       ...observed,
@@ -257,12 +263,26 @@ describe("a snapshot is taken only when the binding differs from the latest one"
   });
 
   it("takes one when only the task became none", () => {
-    const next = nextSnapshot("r", latest, { ...observed, none: true }, null, now);
+    const next = nextSnapshot({
+      repositoryId: "r",
+      latest,
+      observed: { ...observed, none: true },
+      reflogCreatedAt: null,
+      now,
+    });
     expect(next).toMatchObject({ none: true, task: "t" });
   });
 
   it("takes none when nothing changed", () => {
-    expect(nextSnapshot("r", latest, observed, "2026-10-06T00:00:00.000Z", now)).toBeNull();
+    expect(
+      nextSnapshot({
+        repositoryId: "r",
+        latest,
+        observed,
+        reflogCreatedAt: "2026-10-06T00:00:00.000Z",
+        now,
+      })
+    ).toBeNull();
   });
 
   it.each([
@@ -271,40 +291,56 @@ describe("a snapshot is taken only when the binding differs from the latest one"
     ["none", { none: true, task: null }],
     ["declaration time", { declared_at: "2026-10-08T10:00:00.000Z" }],
   ])("takes one when the %s changed", (_name, change) => {
-    const next = nextSnapshot(
-      "r",
+    const next = nextSnapshot({
+      repositoryId: "r",
       latest,
-      { ...observed, ...change },
-      "2026-10-06T00:00:00.000Z",
-      now
-    );
+      observed: { ...observed, ...change },
+      reflogCreatedAt: "2026-10-06T00:00:00.000Z",
+      now,
+    });
     expect(next).toMatchObject({ ...change, snapshot_at: now });
   });
 
   it("takes one when the creation time changed under a new declaration", () => {
-    const next = nextSnapshot(
-      "r",
+    const next = nextSnapshot({
+      repositoryId: "r",
       latest,
-      { ...observed, declared_at: "2026-10-08T10:00:00.000Z" },
-      "2026-10-08T09:00:00.000Z",
-      now
-    );
+      observed: { ...observed, declared_at: "2026-10-08T10:00:00.000Z" },
+      reflogCreatedAt: "2026-10-08T09:00:00.000Z",
+      now,
+    });
     expect(next?.branch_created_at).toBe("2026-10-08T09:00:00.000Z");
   });
 
   it("keeps the earlier creation time when the reflog now says a later one for the same declaration", () => {
-    expect(nextSnapshot("r", latest, observed, "2026-10-08T00:00:00.000Z", now)).toBeNull();
+    expect(
+      nextSnapshot({
+        repositoryId: "r",
+        latest,
+        observed,
+        reflogCreatedAt: "2026-10-08T00:00:00.000Z",
+        now,
+      })
+    ).toBeNull();
   });
 
   it("fills a creation time that was unknown", () => {
     const unknown = { ...latest, branch_created_at: null };
-    const next = nextSnapshot("r", unknown, observed, "2026-10-06T00:00:00.000Z", now);
+    const next = nextSnapshot({
+      repositoryId: "r",
+      latest: unknown,
+      observed,
+      reflogCreatedAt: "2026-10-06T00:00:00.000Z",
+      now,
+    });
     expect(next?.branch_created_at).toBe("2026-10-06T00:00:00.000Z");
   });
 
   it("keeps a creation time unknown while the reflog cannot say", () => {
     const unknown = { ...latest, branch_created_at: null };
-    expect(nextSnapshot("r", unknown, observed, null, now)).toBeNull();
+    expect(
+      nextSnapshot({ repositoryId: "r", latest: unknown, observed, reflogCreatedAt: null, now })
+    ).toBeNull();
   });
 
   it("keys a snapshot by repository and branch", () => {

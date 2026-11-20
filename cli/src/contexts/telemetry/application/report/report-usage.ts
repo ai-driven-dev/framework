@@ -133,13 +133,13 @@ export class ReportUsage {
     const filters: ReportFilters = { ...asked, session: session.id, repository: repository.id };
     const { facts, person } = await this.declared.read();
     const selected = records.filter((record) =>
-      matchesFilter(filters, record, attribute(record, facts), person)
+      matchesFilter({ filters, record, attribution: attribute(record, facts), person })
     );
     return {
       status: "reported",
       period: request.period,
       filters,
-      report: buildReport(selected, facts, person, request.axis),
+      report: buildReport({ records: selected, facts, person, axis: request.axis }),
       coverage: { records: records.length, leftOut },
       run: {
         filesRead,

@@ -37,7 +37,7 @@ const content = fc.array(piece, { maxLength: 40 }).map((pieces) => Buffer.concat
 
 async function readLines(source: UsageSource, path: string, since: TranscriptPosition | null) {
   const lines: string[] = [];
-  const read = await source.read(path, since, EVERYTHING, (line) => {
+  const read = await source.read({ path, since, writtenFrom: EVERYTHING }, (line) => {
     lines.push(line);
   });
   const { position } = read;

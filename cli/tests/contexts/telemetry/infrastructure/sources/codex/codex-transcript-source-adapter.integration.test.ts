@@ -40,7 +40,7 @@ async function readLines(
   writtenFrom = EVERYTHING
 ) {
   const lines: [string, boolean][] = [];
-  const read = await adapter.read(path, since, writtenFrom, (line, counted) => {
+  const read = await adapter.read({ path, since, writtenFrom }, (line, counted) => {
     lines.push([line, counted]);
   });
   return { lines, read };
@@ -81,9 +81,14 @@ describe("listing Codex session files", () => {
         new Date("2026-09-01T00:00:00.000Z"),
         new Date("2026-09-01T00:00:00.000Z")
       );
-      expect((await source().read(path, null, Number.NEGATIVE_INFINITY, () => {})).modifiedAt).toBe(
-        Date.parse("2026-09-01T00:00:00.000Z")
-      );
+      expect(
+        (
+          await source().read(
+            { path, since: null, writtenFrom: Number.NEGATIVE_INFINITY },
+            () => {}
+          )
+        ).modifiedAt
+      ).toBe(Date.parse("2026-09-01T00:00:00.000Z"));
     }
   });
 });

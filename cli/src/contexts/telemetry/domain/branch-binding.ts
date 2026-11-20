@@ -162,13 +162,19 @@ function same(a: BranchSnapshot, b: BranchSnapshot): boolean {
 
 /** The snapshot to append, or `null` when the latest one already says the same. Reflog entries
  * expire, so under one declaration an earlier known creation time is kept over a later reading. */
-export function nextSnapshot(
-  repositoryId: string,
-  latest: BranchSnapshot | undefined,
-  observed: BranchConfigBinding,
-  reflogCreatedAt: string | null,
-  now: string
-): BranchSnapshot | null {
+export function nextSnapshot({
+  repositoryId,
+  latest,
+  observed,
+  reflogCreatedAt,
+  now,
+}: {
+  readonly repositoryId: string;
+  readonly latest: BranchSnapshot | undefined;
+  readonly observed: BranchConfigBinding;
+  readonly reflogCreatedAt: string | null;
+  readonly now: string;
+}): BranchSnapshot | null {
   const next: BranchSnapshot = {
     repository_id: repositoryId,
     ...observed,

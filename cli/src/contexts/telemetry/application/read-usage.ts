@@ -54,9 +54,7 @@ export class ReadUsage {
       const reasons: string[] = [];
       let context: unknown;
       const read = await this.source.read(
-        path,
-        since.get(path) ?? null,
-        writtenFrom,
+        { path, since: since.get(path) ?? null, writtenFrom },
         (line, counted) => {
           const outcome = this.source.decode(line, context);
           if ("context" in outcome) context = outcome.context;

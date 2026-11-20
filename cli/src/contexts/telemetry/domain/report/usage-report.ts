@@ -50,12 +50,17 @@ function unattributedValue(
 }
 
 /** What a call is on one axis: the row it lands on, and what a filter on that axis compares. */
-export function axisValueOf(
-  axis: ReportAxis,
-  record: StoredUsage,
-  attribution: Attribution,
-  person: string | null
-): AxisValue {
+export function axisValueOf({
+  axis,
+  record,
+  attribution,
+  person,
+}: {
+  readonly axis: ReportAxis;
+  readonly record: StoredUsage;
+  readonly attribution: Attribution;
+  readonly person: string | null;
+}): AxisValue {
   const value = (text: string | null): AxisValue =>
     text === null ? ABSENT : { kind: "value", value: text };
   switch (axis) {
@@ -107,16 +112,21 @@ function compareRows(axis: ReportAxis, a: ReportRow, b: ReportRow): number {
 
 /** What the calls cost, split along one axis. Every axis is a partition of the same calls, so
  * every axis adds up to the same totals: a call lands on exactly one row. */
-export function buildReport(
-  records: readonly StoredUsage[],
-  facts: AttributionFacts,
-  person: string | null,
-  axis: ReportAxis
-): UsageReport {
+export function buildReport({
+  records,
+  facts,
+  person,
+  axis,
+}: {
+  readonly records: readonly StoredUsage[];
+  readonly facts: AttributionFacts;
+  readonly person: string | null;
+  readonly axis: ReportAxis;
+}): UsageReport {
   const rows = new Map<string, ReportRow>();
   let totals = EMPTY_TALLY;
   for (const record of records) {
-    const value = axisValueOf(axis, record, attribute(record, facts), person);
+    const value = axisValueOf({ axis, record, attribution: attribute(record, facts), person });
     const key = JSON.stringify(value);
     rows.set(key, { value, ...tally(rows.get(key) ?? EMPTY_TALLY, record) });
     totals = tally(totals, record);

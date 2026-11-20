@@ -7,7 +7,11 @@ import {
   type TranscriptPosition,
   type TranscriptStat,
 } from "../../domain/transcript-position.js";
-import type { TranscriptRead } from "../../ports/usage-source.js";
+import type {
+  EachTranscriptLine,
+  TranscriptRead,
+  TranscriptRequest,
+} from "../../ports/usage-source.js";
 import { modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;
@@ -15,9 +19,6 @@ const NEWLINE = 0x0a;
 const TAIL_BYTES = 1 << 16;
 /** Where a file that cannot be read stands: no position a real file could match. */
 export const NOWHERE: TranscriptPosition = { offset: 0, size: 0, identity: "" };
-
-/** One complete line, and whether it starts at or past the offset lines are counted from. */
-export type EachLine = (line: string, counted: boolean) => void;
 
 function absentIsNothing(error: unknown): null {
   if (isErrnoException(error) && error.code === "ENOENT") return null;
@@ -55,7 +56,7 @@ export class LineSplitter {
   constructor(
     from: number,
     private readonly countFrom: number,
-    private readonly each: EachLine
+    private readonly each: EachTranscriptLine
   ) {
     this.at = from;
     this.consumed = from;
@@ -80,16 +81,23 @@ export class LineSplitter {
   }
 }
 
+/** What `eachLine` reads: the bytes from `from` to `size`, in blocks, counting the lines that
+ * end after `countFrom`. */
+export interface LineRange {
+  readonly from: number;
+  readonly countFrom: number;
+  readonly size: number;
+  readonly blockBytes: number;
+}
+
 /** Hands `each` every complete line between `from` and `size`, a block at a time, and returns
  * the end of the last one. Memory is a block and what the splitter keeps, whatever the range. */
 export async function eachLine(
   handle: FileHandle,
-  from: number,
-  countFrom: number,
-  size: number,
-  blockBytes: number,
-  each: EachLine
+  range: LineRange,
+  each: EachTranscriptLine
 ): Promise<number> {
+  const { from, countFrom, size, blockBytes } = range;
   const block = Buffer.alloc(Math.min(blockBytes, Math.max(0, size - from)));
   const splitter = new LineSplitter(from, countFrom, each);
   for (let at = from; at < size; ) {
@@ -147,9 +155,7 @@ export interface TranscriptReading {
 
 /** Opens a transcript and reads it as `reading` says, from where `since` left it. */
 export async function readTranscript(
-  path: string,
-  since: TranscriptPosition | null,
-  writtenFrom: number,
+  { path, since, writtenFrom }: TranscriptRequest,
   reading: TranscriptReading
 ): Promise<LinesRead> {
   const handle = await open(path, constants.O_RDONLY).catch(absentIsNothing);

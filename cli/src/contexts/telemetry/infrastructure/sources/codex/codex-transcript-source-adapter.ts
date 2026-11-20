@@ -10,9 +10,14 @@ import {
   FRAME_HEADER_BYTES,
   FrameSizeMismatch,
 } from "../../../domain/zstd-frame.js";
-import type { LineUsage, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
+import type {
+  EachTranscriptLine,
+  LineUsage,
+  TranscriptRead,
+  TranscriptRequest,
+  UsageSource,
+} from "../../../ports/usage-source.js";
 import {
-  type EachLine,
   eachLine,
   LineSplitter,
   type LinesRead,
@@ -62,27 +67,25 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
     return listTranscripts(this.roots, SESSION_FILE);
   }
 
-  read(
-    path: string,
-    since: TranscriptPosition | null,
-    writtenFrom: number,
-    each: EachLine
-  ): Promise<TranscriptRead> {
-    return withModifiedAt(path, this.readLines(path, since, writtenFrom, each));
+  read(request: TranscriptRequest, each: EachTranscriptLine): Promise<TranscriptRead> {
+    return withModifiedAt(request.path, this.readLines(request, each));
   }
 
   private async readLines(
-    path: string,
-    since: TranscriptPosition | null,
-    writtenFrom: number,
-    each: EachLine
+    request: TranscriptRequest,
+    each: EachTranscriptLine
   ): Promise<LinesRead> {
+    const { path, since } = request;
     if (!path.endsWith(COMPRESSED)) {
-      return readTranscript(path, since, writtenFrom, {
+      return readTranscript(request, {
         skippedEnd: lastLineEnd,
         lines: (handle, now, { offset }) => {
           const from = since?.size === now.size ? offset : 0;
-          return eachLine(handle, from, offset, now.size, this.blockBytes, each);
+          return eachLine(
+            handle,
+            { from, countFrom: offset, size: now.size, blockBytes: this.blockBytes },
+            each
+          );
         },
       });
     }
@@ -91,7 +94,7 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
       return unread(since, "a compressed session file is not read: this Node has no zstd");
     }
     // Its offset is its size: it does not change, so its size and identity keep it read.
-    return readTranscript(path, since, writtenFrom, {
+    return readTranscript(request, {
       skippedEnd: async (_handle, size) => size,
       lines: async (handle, now, { restarted }) => {
         if (!restarted && since?.size === now.size) return now.size;
