@@ -69,7 +69,9 @@ function readAll(lines: readonly string[]) {
 function only(lines: readonly string[]): UsageRecord {
   const records = readAll(lines).flatMap((outcome) => outcome.records);
   expect(records).toHaveLength(1);
-  return records[0] as UsageRecord;
+  const [record] = records;
+  if (record === undefined) throw new Error("no record");
+  return record;
 }
 
 describe("a Codex session file to usage records", () => {

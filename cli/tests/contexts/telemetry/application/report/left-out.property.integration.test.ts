@@ -83,7 +83,7 @@ const transcriptLine = fc.oneof(
       // A call is made in one place, at one kind of time, with or without a request id: only
       // its snapshots differ.
       .map(({ id, output, time }) => {
-        const times = TIMES[Math.floor((id % CALLS) / PLACES.length)] as string[];
+        const times = TIMES[Math.floor((id % CALLS) / PLACES.length)] ?? [];
         const place = PLACES[id % PLACES.length];
         return { id, output, place, at: times[time % times.length], requestless: id >= CALLS };
       })

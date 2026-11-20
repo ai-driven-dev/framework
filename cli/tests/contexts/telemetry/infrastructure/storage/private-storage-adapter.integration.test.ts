@@ -123,7 +123,8 @@ describe("a private directory on Windows", () => {
 });
 
 describe("a private directory on the machine itself, as Windows", () => {
-  const platform = Object.getOwnPropertyDescriptor(process, "platform") as PropertyDescriptor;
+  const platform = Object.getOwnPropertyDescriptor(process, "platform");
+  if (platform === undefined) throw new Error("process has no platform");
 
   afterEach(() => {
     Object.defineProperty(process, "platform", platform);

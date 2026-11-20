@@ -246,12 +246,11 @@ describe("reporting usage", () => {
     ]);
     s.bindings.creation.set("feat/a", "2026-10-20T08:00:00.000Z");
     s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 5, "2026-10-21T10:00:00.000Z"));
-    expect(await rows(s, "task")).toEqual(
-      [
-        [{ kind: "value", value: "task-b" }, 6],
-        [{ kind: "value", value: "task-a" }, 11],
-      ].sort((x, y) => (y[1] as number) - (x[1] as number))
-    );
+    const wanted: [{ kind: "value"; value: string }, number][] = [
+      [{ kind: "value", value: "task-b" }, 6],
+      [{ kind: "value", value: "task-a" }, 11],
+    ];
+    expect(await rows(s, "task")).toEqual(wanted.sort((x, y) => y[1] - x[1]));
   });
 
   it("follows a carry across a /clear", async () => {
@@ -307,11 +306,14 @@ describe("reporting usage", () => {
 
 const SESSION_A = "a1b2c3d4-0000-4000-8000-000000000001";
 const SESSION_B = "a1b2ffff-0000-4000-8000-000000000002";
-const widgets = () =>
-  repositoryIdOf({
+const widgets = (): string => {
+  const id = repositoryIdOf({
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
-  }) as string;
+  });
+  if (id === null) throw new Error("the widgets repository has no identity");
+  return id;
+};
 const filtered = (over: Partial<ReportFilters>): RequestedFilters => ({ ...NO_FILTERS, ...over });
 /** `--repository .`, run in `dir`. */
 const atHere = (dir: string, over: Partial<ReportFilters> = {}): RequestedFilters => ({

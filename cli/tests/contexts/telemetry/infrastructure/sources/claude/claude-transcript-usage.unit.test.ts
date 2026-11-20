@@ -29,7 +29,9 @@ function line(
 function only(text: string) {
   const { records } = readClaudeUsageLine(text);
   expect(records).toHaveLength(1);
-  return records[0] as (typeof records)[number];
+  const [record] = records;
+  if (record === undefined) throw new Error("no record");
+  return record;
 }
 
 describe("one transcript line to usage records", () => {

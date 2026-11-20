@@ -28,7 +28,8 @@ afterEach(async () => {
 function livingProcess(): number {
   const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60000)"], { stdio: "ignore" });
   sleepers.push(child);
-  return child.pid as number;
+  if (child.pid === undefined) throw new Error("the sleeper did not start");
+  return child.pid;
 }
 
 function deadProcess(): number {

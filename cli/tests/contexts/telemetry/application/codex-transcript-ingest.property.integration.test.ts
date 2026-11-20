@@ -105,7 +105,7 @@ function counts(results: readonly IngestUsageResult[]) {
       Object.keys(results[0]?.notStored ?? {}).map((reason) => [
         reason,
         results.reduce(
-          (all, r) => all + r.notStored[reason as keyof IngestUsageResult["notStored"]],
+          (all, r) => all + (Object.entries(r.notStored).find(([key]) => key === reason)?.[1] ?? 0),
           0
         ),
       ])

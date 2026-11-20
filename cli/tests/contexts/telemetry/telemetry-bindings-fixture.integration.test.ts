@@ -80,7 +80,7 @@ interface HookToolCase {
   env_session_id: string | null;
   transcript_path: string | null;
 }
-const cases = JSON.parse(text("cases.json")) as {
+const cases: {
   gitConfig: Record<string, GitConfigCase>;
   binding: Record<string, BindingCase>;
   branchRole: Record<string, { head: string | null; originHead: string | null }>;
@@ -91,8 +91,8 @@ const cases = JSON.parse(text("cases.json")) as {
   environmentRefusal: Record<string, NodeJS.ProcessEnv>;
   telemetryDir: Record<string, DirCase>;
   hookTool: Record<string, HookToolCase>;
-};
-const expected = JSON.parse(text("expected.json")) as Record<string, Record<string, unknown>>;
+} = JSON.parse(text("cases.json"));
+const expected: Record<string, Record<string, unknown>> = JSON.parse(text("expected.json"));
 
 function logText(logLines: readonly LogLine[], tail = ""): string {
   return `${logLines
@@ -115,7 +115,7 @@ describe("the shared fixture of task bindings", () => {
   it("has an answer for every case and a case for every answer", () => {
     for (const section of Object.keys(expected)) {
       expect(Object.keys(expected[section] ?? {}).sort(), section).toEqual(
-        Object.keys((cases as Record<string, object>)[section] ?? {}).sort()
+        Object.keys(Object.fromEntries(Object.entries(cases))[section] ?? {}).sort()
       );
     }
     expect(Object.keys(expected).sort()).toEqual(Object.keys(cases).sort());

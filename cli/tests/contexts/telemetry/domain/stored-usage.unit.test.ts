@@ -162,7 +162,7 @@ describe("upserting records into what is held", () => {
       stored({ key: "d", at: "2026-10-05T00:00:00.000Z" }),
     ]);
     expect([...result.days].sort()).toEqual(["2026-09-30", "2026-10-01", "2026-10-05"]);
-    expect(upsertUsage(held, [held[0] as StoredUsage]).days.size).toBe(0);
+    expect(upsertUsage(held, held.slice(0, 1)).days.size).toBe(0);
   });
 
   it("adds a key not yet held", () => {

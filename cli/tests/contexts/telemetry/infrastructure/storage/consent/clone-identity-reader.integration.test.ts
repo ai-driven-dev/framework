@@ -21,7 +21,9 @@ describe("reading what a directory is", () => {
     if (first === null || first === "unidentified") throw new Error(String(first));
     expect(first.path).toBe(dir);
     expect(first.ino).toMatch(/^[1-9]\d*$/u);
-    expect(sameClone(first, (await readCloneIdentity(dir)) as typeof first)).toBe(true);
+    const second = await readCloneIdentity(dir);
+    if (second === null || second === "unidentified") throw new Error(String(second));
+    expect(sameClone(first, second)).toBe(true);
   });
 
   it("keeps its identity once an entry is added, its change time moving past its birth", async () => {

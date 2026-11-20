@@ -119,10 +119,7 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
   /** The same ingest, with readers that read every transcript whatever its age. */
   const ingestReadingAll = () =>
     new IngestUsage(
-      [transcripts, other].map((source) => {
-        const reader = new ReadUsage(source);
-        return { execute: (since) => reader.execute(since) } as ReadUsage;
-      }),
+      [transcripts, other].map((source) => new ReadUsage(source)),
       ledger,
       new DirectoryResolver(locator, consents, resolutions, history, {
         caseInsensitiveFileSystem: options.caseInsensitive ?? false,

@@ -31,14 +31,14 @@ interface Config {
   branch: string;
   keys: Record<string, string>;
 }
-const cases = JSON.parse(text("cases.json")) as {
+const cases: {
   gitConfig: Record<string, Config>;
   binding: Record<string, Case>;
-};
-const expected = JSON.parse(text("expected.json")).binding as Record<
+} = JSON.parse(text("cases.json"));
+const expected: Record<
   string,
   { state: string; task?: string | null; ticket?: string | null; none?: boolean }
->;
+> = JSON.parse(text("expected.json")).binding;
 const declarations = () =>
   lines("sessions.jsonl").flatMap((line) => parseSessionDeclaration(line) ?? []);
 const carries = () => lines("carries.jsonl").flatMap((line) => parseSessionCarry(line) ?? []);
@@ -110,6 +110,8 @@ describe("the report agrees with the hook's fixture", () => {
   );
 
   it.each(Object.entries(DIVERGES))("knows more than the hook for %s", (name, answer) => {
-    expect(reportAnswer(cases.binding[name] as Case)).toEqual(answer);
+    const input = cases.binding[name];
+    if (input === undefined) throw new Error(`no binding case named ${name}`);
+    expect(reportAnswer(input)).toEqual(answer);
   });
 });

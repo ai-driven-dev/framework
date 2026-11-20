@@ -218,9 +218,15 @@ function ingestResultOf(facts: Run): IngestUsageResult {
     unrecognised: facts.unrecognised,
     skippedLedgerLines: 0,
     snapshots: 0,
-    notStored: Object.fromEntries(
-      NOT_STORED_REASONS.map((reason, n) => [reason, facts.notStored[n]])
-    ) as IngestUsageResult["notStored"],
+    notStored: {
+      "outside-repo": facts.notStored[0],
+      "never-seen-alive": facts.notStored[1],
+      "no-consent": facts.notStored[2],
+      "consent-closed": facts.notStored[3],
+      "unreadable-consent": facts.notStored[4],
+      "no-cwd": facts.notStored[5],
+      undated: facts.notStored[6],
+    },
     consentLogDamaged: facts.consentLogDamaged,
     oldestTranscriptAt: facts.oldestTranscriptAt,
   };
@@ -282,7 +288,7 @@ async function report(
 
 /** The figures' bytes: the envelope as printed, but its `run`. */
 function figuresOf(envelope: object): string {
-  const { run: _run, ...figures } = envelope as Record<string, unknown>;
+  const figures = Object.fromEntries(Object.entries(envelope).filter(([key]) => key !== "run"));
   return JSON.stringify(figures, null, 2);
 }
 
@@ -306,7 +312,7 @@ describe("the figures of a report", () => {
         // the clock in another zone.
         const batched = await ledgerWith(held.damaged, earlier);
         const { batchOf, order, noOps } = held.history;
-        const nth = (n: number) => batchOf[n % batchOf.length] as number;
+        const nth = (n: number) => batchOf[n % batchOf.length] ?? 0;
         const [first, second] = held.zones;
         await inZone(first, async () => {
           for (const batch of order) {
@@ -342,7 +348,8 @@ describe("the figures of a report", () => {
   }, 120_000);
 
   it("leave out the ledger lines that are no record, whose count changes once a report has settled them", async () => {
-    const held = fc.sample(scenario, { numRuns: 1, seed: 1 })[0] as Scenario;
+    const [held] = fc.sample(scenario, { numRuns: 1, seed: 1 });
+    if (held === undefined) throw new Error("the scenario drew nothing");
     const quiet: Run = {
       filesRead: 0,
       unrecognised: 0,

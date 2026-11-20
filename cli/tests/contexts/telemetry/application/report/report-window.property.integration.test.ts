@@ -144,7 +144,7 @@ function filesOf(calls: readonly Call[]): Map<string, string> {
     files.set(name, `${files.get(name) ?? ""}${JSON.stringify(record)}\n`);
   calls.forEach(({ anchor, tool, keyed, copies }, index) => {
     for (const { offset, output, session, model, agent, repository } of copies) {
-      const at = new Date((ANCHORS[anchor] as number) + offset).toISOString();
+      const at = new Date((ANCHORS[anchor] ?? 0) + offset).toISOString();
       const requestless = tool === "claude-code" && keyed !== "request";
       const record: StoredUsage = {
         tool,
@@ -338,7 +338,7 @@ describe("calls stored by ingests, beside lines of calls with no request id any 
                 .filter((c) => c.ingest === ingest)
                 .map(({ days, offset, output, timestamped }) => {
                   const at = new Date(
-                    (ANCHORS[anchor] as number) + (requestless ? days * DAY_MS : 0) + offset
+                    (ANCHORS[anchor] ?? 0) + (requestless ? days * DAY_MS : 0) + offset
                   ).toISOString();
                   const key = requestless ? `msg_${index}:s-1` : `msg_${index}:req_${index}`;
                   const record: StoredUsage = {

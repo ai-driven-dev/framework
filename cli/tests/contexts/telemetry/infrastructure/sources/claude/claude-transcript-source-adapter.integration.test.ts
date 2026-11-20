@@ -263,7 +263,7 @@ describe("reading a transcript a block at a time", () => {
     await writeFile(path, `${"x".repeat(1023)}\n`.repeat(3 * 1024));
     const reads = await spyOnReads();
     const read = await readLines(adapter, path, null, EVERYTHING);
-    const asked = reads.mock.calls.map((call) => call[2] as number);
+    const asked = reads.mock.calls.map((call) => Number(call[2]));
     expect(Math.max(...asked)).toBeLessThanOrEqual(BLOCK);
     expect(read.lines).toHaveLength(3 * 1024);
     expect(read.position.offset).toBe(3 * BLOCK);

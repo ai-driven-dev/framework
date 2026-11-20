@@ -1,6 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
+  ABSENT_AXES,
   NO_FILTERS,
   type ReportFilters,
 } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
@@ -246,7 +247,11 @@ const facts = fc
 
 /** The flags a person types to select one row: the row's own value, as the contract lists it. */
 function filtersOfRow(axis: ReportAxis, value: AxisValue): ReportFilters {
-  if (value.kind === "absent") return only({ absent: axis as ReportFilters["absent"] });
+  if (value.kind === "absent") {
+    const absent = ABSENT_AXES.find((candidate) => candidate === axis);
+    if (absent === undefined) throw new Error(`${axis} has no absent selector`);
+    return only({ absent });
+  }
   if (value.kind === "unattributed") return only({ unattributed: value.reason });
   return only({ [axis]: value.value });
 }

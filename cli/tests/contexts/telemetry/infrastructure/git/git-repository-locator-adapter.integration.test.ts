@@ -12,10 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  type CloneIdentity,
-  sameClone,
-} from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import { sameClone } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { GitRepositoryLocatorAdapter } from "../../../../../src/contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { git, initRepository, sandboxGitEnv } from "../../../../helpers/git-sandbox.js";
 
@@ -118,7 +115,8 @@ describe("locating a working directory", () => {
     const after = await locator.locate(repo);
     if (before.status !== "repository" || after.status !== "repository") throw new Error("lost");
     expect(after.clone?.path).toBe(before.clone?.path);
-    expect(sameClone(before.clone as CloneIdentity, after.clone as CloneIdentity)).toBe(false);
+    if (!before.clone || !after.clone) throw new Error("lost its clone");
+    expect(sameClone(before.clone, after.clone)).toBe(false);
   });
 
   it("has no clone, rather than a guess, when the file system gives the git dir no identity", async () => {
