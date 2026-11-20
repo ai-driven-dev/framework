@@ -6121,6 +6121,10 @@
     {
       "includes": ["src/**", "!src/contexts/tools/**", "!src/presentation/**"],
       "plugins": ["./biome-plugins/no-profile-list.grit"]
+    },
+    {
+      "includes": ["**/*.port.ts"],
+      "plugins": ["./biome-plugins/port-types-only.grit"]
     }
   ]
 }

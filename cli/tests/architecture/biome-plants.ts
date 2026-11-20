@@ -36,6 +36,20 @@ const ASKS_FOR_THE_PROMPTER = ["application", "infrastructure"];
 
 /** `times` is how many diagnostics of `rule` the planted file must draw; 0 is a file the rule spares. */
 export const PLANTS: readonly Plant[] = [
+  ["src/contexts/auth/ports/token-reader.port.ts", "export class TokenReader {}\n", "plugin", 1],
+  [
+    "src/contexts/auth/ports/token-name.port.ts",
+    'export const TOKEN_NAME = "token";\n',
+    "plugin",
+    1,
+  ],
+  [
+    "src/contexts/auth/ports/token-source.port.ts",
+    "export interface TokenSource {\n  read(): string;\n}\nexport type TokenKind = string;\n",
+    "plugin",
+    0,
+  ],
+  ["src/contexts/auth/ports/token-store.ts", "export class TokenStore {}\n", "plugin", 0],
   ["src/shared/domain/swallows.ts", "try { f(); } catch {}", "plugin", 1],
   ["tests/shared/domain/swallows.ts", "try { f(); } catch (e) { /* later */ }", "plugin", 1],
   [
