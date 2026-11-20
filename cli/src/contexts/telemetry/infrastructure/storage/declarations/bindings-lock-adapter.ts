@@ -1,7 +1,8 @@
 import type { LockWait } from "../../../domain/declaration/task-declaration.js";
 import type { BindingsLock } from "../../../ports/bindings/bindings-lock.js";
 import type { PrivateStorage } from "../../../ports/private-storage.js";
-import { DirectoryLock, type LockOptions } from "../ledger/ledger-lock.js";
+import { DirectoryLock } from "../ledger/directory-lock.js";
+import type { LockOptions } from "../ledger/ledger-lock.js";
 
 /** `.lock` in the bindings directory: the same lock as the ledger's, on its own file. */
 export class BindingsLockAdapter implements BindingsLock {

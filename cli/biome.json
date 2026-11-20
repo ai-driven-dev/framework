@@ -5925,7 +5925,6 @@
     {
       "includes": [
         "src/**",
-        "!src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.ts",
         "!src/presentation/terminal/prompter-adapter.ts",
         "!src/shared/domain/errors.ts",
         "!src/shared/domain/file.ts"
