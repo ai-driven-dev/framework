@@ -12,7 +12,7 @@ import { sandboxedEnv } from "../e2e/helpers.js";
 const NO_TERMINAL = { runner: { run: async () => 0 }, pause: { untilEnter: async () => {} } };
 
 /**
- * Drives the real Commander tree and the real `createDeps` inside the test process, under a
+ * Drives the real Commander tree and the real container inside the test process, under a
  * substituted environment (HOME, PATH, cwd) and nothing else. It never calls `process.chdir`,
  * which throws on worker threads: the working directory is a spy on `process.cwd`, so a child
  * process the command spawns must be given its `cwd` explicitly.
@@ -182,14 +182,14 @@ export async function runInProcess(
     Object.defineProperty(process.stdout, "isTTY", { value: false, configurable: true });
     process.exitCode = undefined;
 
-    // A new process starts with an empty deps cache and an empty profile registry.
+    // A new process starts with an empty profile registry.
     vi.resetModules();
     const { wireTools } = await import("../../src/composition/tools.js");
     const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    const { bindCatalog, createContainer } = await import("../../src/composition/container.js");
-    const depsFactory: DepsFactory = bindCatalog(tools);
+    const { bindContainer, createContainer } = await import("../../src/composition/container.js");
+    const depsFactory: DepsFactory = bindContainer(tools);
     for (const load of REGISTRATIONS)
       (await load())(program, tools, depsFactory, (projectRoot) =>
         createContainer({ projectRoot, verbose: false, tools }).menu(NO_TERMINAL)

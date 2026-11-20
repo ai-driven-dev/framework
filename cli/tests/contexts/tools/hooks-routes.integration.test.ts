@@ -106,8 +106,8 @@ async function writeSource(source: string): Promise<void> {
 type Deps = Awaited<ReturnType<typeof deps>>;
 
 async function deps(project: string) {
-  const { createDeps } = await import("../../../src/composition/container.js");
-  return createDeps(project, { verbose: false }, new CLIOutput(false), catalogOf());
+  const { bindContainer } = await import("../../../src/composition/container.js");
+  return bindContainer(catalogOf())(project, { verbose: false }, new CLIOutput(false));
 }
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {

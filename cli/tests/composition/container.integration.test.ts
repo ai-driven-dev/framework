@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promi
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bindCatalog, createContainer, createDeps } from "../../src/composition/container.js";
+import { bindContainer, createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
 import { wireBase } from "../../src/composition/shared.js";
@@ -21,7 +21,14 @@ import { hostRecord } from "../helpers/host-record-reading.js";
 import { FakeHostActions } from "../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
 
-describe("createDeps", () => {
+const graphOf = (
+  projectRoot: string,
+  options: Parameters<ReturnType<typeof bindContainer>>[1],
+  output: CLIOutput | undefined,
+  tools: ReturnType<typeof catalogOf>
+) => bindContainer(tools)(projectRoot, options, output);
+
+describe("the graph a container hands the commands", () => {
   const tools = catalogOf();
   let root: string;
 
@@ -33,63 +40,17 @@ describe("createDeps", () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it("builds the graph once per project root", async () => {
-    const first = await createDeps(root, { verbose: false }, undefined, tools);
+  it("builds a new graph on every call, as a new process would", async () => {
+    const first = await graphOf(root, { verbose: false }, undefined, tools);
 
-    expect(await createDeps(root, { verbose: false }, undefined, tools)).toBe(first);
-  });
-
-  it("builds a separate graph for another project root", async () => {
-    const other = await mkdtemp(join(tmpdir(), "aidd-create-deps-other-"));
-    try {
-      expect(await createDeps(other, { verbose: false }, undefined, tools)).not.toBe(
-        await createDeps(root, { verbose: false }, undefined, tools)
-      );
-    } finally {
-      await rm(other, { recursive: true, force: true });
-    }
-  });
-
-  it("builds a separate graph when a token is given on the command line", async () => {
-    expect(await createDeps(root, { verbose: false, token: "ghp_x" }, undefined, tools)).not.toBe(
-      await createDeps(root, { verbose: false }, undefined, tools)
-    );
-  });
-
-  it("shares one graph between a missing token and an empty one", async () => {
-    expect(await createDeps(root, { verbose: false, token: "" }, undefined, tools)).toBe(
-      await createDeps(root, { verbose: false }, undefined, tools)
-    );
-  });
-
-  it("builds a separate graph per token", async () => {
-    expect(await createDeps(root, { verbose: false, token: "ghp_a" }, undefined, tools)).not.toBe(
-      await createDeps(root, { verbose: false, token: "ghp_b" }, undefined, tools)
-    );
-  });
-
-  it("builds a separate graph for another catalog, and reuses the one for the same catalog", async () => {
-    const first = catalogOf();
-
-    const graph = await createDeps(root, { verbose: false }, undefined, first);
-
-    expect(await createDeps(root, { verbose: false }, undefined, first)).toBe(graph);
-    expect(await createDeps(root, { verbose: false }, undefined, catalogOf())).not.toBe(graph);
-  });
-
-  it("binds the catalog the commands were registered with to the graph it builds", async () => {
-    const bound = catalogOf();
-    const graph = await bindCatalog(bound)(root, { verbose: false }, undefined);
-
-    expect(await createDeps(root, { verbose: false }, undefined, bound)).toBe(graph);
-    expect(await createDeps(root, { verbose: false }, undefined, catalogOf())).not.toBe(graph);
+    expect(await graphOf(root, { verbose: false }, undefined, tools)).not.toBe(first);
   });
 
   it("logs through the output it was handed", async () => {
     const output = new CLIOutput(false);
     const withOutput = await mkdtemp(join(tmpdir(), "aidd-create-deps-output-"));
     try {
-      expect((await createDeps(withOutput, { verbose: false }, output, tools)).logger).toBe(output);
+      expect((await graphOf(withOutput, { verbose: false }, output, tools)).logger).toBe(output);
     } finally {
       await rm(withOutput, { recursive: true, force: true });
     }
@@ -99,7 +60,8 @@ describe("createDeps", () => {
     const handed = catalogOf();
     const walked = vi.spyOn(handed, "inHelpOrder");
 
-    await createDeps(root, { verbose: false }, undefined, handed);
+    const graph = await graphOf(root, { verbose: false }, undefined, handed);
+    graph.doctorRegistrationUseCase;
 
     expect(walked).toHaveBeenCalled();
   });
@@ -116,7 +78,7 @@ describe("createDeps", () => {
 
     async function registerThenOverwrite(scope: "project" | "user") {
       vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
-      const { addMarketplace } = await createDeps(root, { verbose: false }, undefined, tools);
+      const { addMarketplace } = await graphOf(root, { verbose: false }, undefined, tools);
       const command = { source, name: "awesome", scope, projectRoot: root, autoTrust: true };
       await addMarketplace.execute(command);
       return addMarketplace.execute({ ...command, overwrite: true });
@@ -171,7 +133,7 @@ describe("createDeps", () => {
       });
 
     it("checks every category of an installed project and reports no category it could not check", async () => {
-      const { manifestRepo, doctorAllUseCase } = await createDeps(
+      const { manifestRepo, doctorAllUseCase } = await graphOf(
         root,
         { verbose: false },
         undefined,
@@ -190,7 +152,7 @@ describe("createDeps", () => {
     });
 
     it("counts the token given on the command line as authenticated", async () => {
-      const { manifestRepo, doctorUseCase } = await createDeps(
+      const { manifestRepo, doctorUseCase } = await graphOf(
         root,
         { verbose: false, token: "ghp_given" },
         undefined,
@@ -209,7 +171,7 @@ describe("createDeps", () => {
       const builtCache = join(root, "user-config", "cache", "built");
       await mkdir(join(builtCache, "1.0.0"), { recursive: true });
       await writeFile(join(builtCache, "1.0.0", "marker"), "");
-      const { userManifestRepo, cleanUserScopeUseCase } = await createDeps(
+      const { userManifestRepo, cleanUserScopeUseCase } = await graphOf(
         root,
         { verbose: false },
         undefined,
@@ -226,7 +188,7 @@ describe("createDeps", () => {
     });
 
     it("refuses a user clean whose host binary cannot be found, naming why", async () => {
-      const { userManifestRepo, cleanUserScopeUseCase } = await createDeps(
+      const { userManifestRepo, cleanUserScopeUseCase } = await graphOf(
         root,
         { verbose: false },
         undefined,
@@ -251,12 +213,7 @@ describe("createDeps", () => {
       await mkdir(join(sources, FRAMEWORK_MARKETPLACE_NAME), { recursive: true });
       await mkdir(join(sources, "awesome"), { recursive: true });
       await writeFile(join(sources, "awesome", "source"), "another marketplace's clone");
-      const { cleanUserScopeUseCase } = await createDeps(
-        root,
-        { verbose: false },
-        undefined,
-        tools
-      );
+      const { cleanUserScopeUseCase } = await graphOf(root, { verbose: false }, undefined, tools);
 
       await cleanUserScopeUseCase.execute({ projectRoot: root, force: true });
 
@@ -266,12 +223,7 @@ describe("createDeps", () => {
 
     it("names the framework's shared source when a user clean asks before removing it", async () => {
       const asked = vi.spyOn(SilentPrompterAdapter.prototype, "confirm").mockResolvedValue(false);
-      const { cleanUserScopeUseCase } = await createDeps(
-        root,
-        { verbose: false },
-        undefined,
-        tools
-      );
+      const { cleanUserScopeUseCase } = await graphOf(root, { verbose: false }, undefined, tools);
 
       await cleanUserScopeUseCase.execute({
         projectRoot: root,
@@ -286,7 +238,7 @@ describe("createDeps", () => {
 
     it("tells a project clean which other projects still reference the framework's shared source, and drops only its own claim", async () => {
       const { registerFrameworkMarketplace, manifestRepo, userSourceReferences, cleanUseCase } =
-        await createDeps(root, { verbose: false }, undefined, tools);
+        await graphOf(root, { verbose: false }, undefined, tools);
       await registerFrameworkMarketplace.execute({
         projectRoot: root,
         pluginSource: {
@@ -311,7 +263,7 @@ describe("createDeps", () => {
     });
 
     it("purges this project's pre-migration copy once sync finds the framework at user scope", async () => {
-      const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await createDeps(
+      const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await graphOf(
         root,
         { verbose: false },
         undefined,
@@ -337,7 +289,7 @@ describe("createDeps", () => {
     });
 
     it("moves a project-scope framework entry to the machine when sync recreates the framework", async () => {
-      const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await createDeps(
+      const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await graphOf(
         root,
         { verbose: false },
         undefined,
@@ -478,7 +430,7 @@ describe("createDeps", () => {
     });
 
     it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {
-      const { manifestRepo, cleanUseCase } = await createDeps(
+      const { manifestRepo, cleanUseCase } = await graphOf(
         root,
         { verbose: false },
         undefined,
@@ -499,7 +451,7 @@ describe("createDeps", () => {
 
   it("builds a flat distribution through the graph's own files and assets", async () => {
     const fixture = join(process.cwd(), "tests/fixtures/framework");
-    const { frameworkBuild } = await createDeps(root, { verbose: false }, undefined, tools);
+    const { frameworkBuild } = await graphOf(root, { verbose: false }, undefined, tools);
 
     await frameworkBuild({ target: "copilot", mode: "flat", outDir: root, force: false })?.execute({
       sourceDir: fixture,

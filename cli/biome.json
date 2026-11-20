@@ -4895,7 +4895,6 @@
     {
       "includes": [
         "src/**",
-        "!src/composition/container.ts",
         "!src/composition/installation.ts",
         "!src/composition/orchestration/global.ts",
         "!src/composition/orchestration/plugin.ts",

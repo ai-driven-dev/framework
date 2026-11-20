@@ -31,7 +31,7 @@ const version = createContainer({ projectRoot: process.cwd(), verbose: false, to
   .version;
 const createSlice = bindContainer(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
-const createMenuDeps: MenuDepsFactory = (projectRoot) =>
+const menuOfProject: MenuDepsFactory = (projectRoot) =>
   createContainer({ projectRoot, verbose: false, tools }).menu(terminal);
 
 const program = new Command();
@@ -45,8 +45,8 @@ program
 registerSetupCommand(program, tools, createSlice);
 registerToolConfigCommand(program, tools, createSlice);
 registerTranslateCommand(program, tools, createSlice);
-registerPluginCommand(program, tools, createSlice, createMenuDeps);
-registerMarketplaceCommand(program, createSlice, createMenuDeps);
+registerPluginCommand(program, tools, createSlice, menuOfProject);
+registerMarketplaceCommand(program, createSlice, menuOfProject);
 registerAuthCommand(program, createSlice);
 registerSyncCommand(program, tools, createSlice);
 registerUpdateCommand(program, createSlice);
@@ -65,7 +65,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop(createMenuDeps);
+  runMenuLoop(menuOfProject);
 } else {
   program.parse(process.argv);
 }

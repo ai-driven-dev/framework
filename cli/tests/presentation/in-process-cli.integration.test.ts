@@ -162,15 +162,14 @@ describe("running a command in process", () => {
     vi.doMock("../../src/presentation/commands/clean.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(async () => {
-          const { createDeps } = await import("../../src/composition/container.js");
+          const { bindContainer } = await import("../../src/composition/container.js");
           const { CLIOutput } = await import("../../src/presentation/output.js");
           const { registeredTools } = await import("../shared/testing/registered-tools.js");
           built.push(
-            await createDeps(
+            await bindContainer(registeredTools())(
               process.cwd(),
               { verbose: false },
-              new CLIOutput(false),
-              registeredTools()
+              new CLIOutput(false)
             )
           );
         });

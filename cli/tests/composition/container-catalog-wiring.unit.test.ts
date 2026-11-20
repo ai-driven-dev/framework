@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createDeps } from "../../src/composition/container.js";
+import { bindContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { wireGlobal } from "../../src/composition/orchestration/global.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
@@ -13,13 +13,13 @@ import { ScriptedPrompter } from "../shared/testing/scripted-prompter.js";
 const ROOT = "/aidd-catalog-wiring-unopened";
 
 describe("the catalog the deps wire", () => {
-  it("is the one createDeps was handed, for the use case that builds a framework", async () => {
+  it("is the one the container was handed, for the use case that builds a framework", async () => {
     const catalogA = registeredTools();
     const catalogB = registeredTools();
     const askedA = vi.spyOn(catalogA, "aiToolId");
     const askedB = vi.spyOn(catalogB, "aiToolId");
-    const depsA = await createDeps(ROOT, { verbose: false }, undefined, catalogA);
-    await createDeps(ROOT, { verbose: false }, undefined, catalogB);
+    const depsA = await bindContainer(catalogA)(ROOT, { verbose: false }, undefined);
+    await bindContainer(catalogB)(ROOT, { verbose: false }, undefined);
     askedA.mockClear();
     askedB.mockClear();
 

@@ -13,7 +13,7 @@ import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
-import { createDeps } from "../../src/composition/container.js";
+import { bindContainer } from "../../src/composition/container.js";
 import { InitProject } from "../../src/contexts/installation/application/init-project.js";
 import { UpdateGitignore } from "../../src/contexts/installation/application/update-gitignore.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
@@ -325,7 +325,7 @@ export async function runCliFast(
 
 export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
-  const deps = await createDeps(projectDir, { verbose: false }, output, catalogOf());
+  const deps = await bindContainer(catalogOf())(projectDir, { verbose: false }, output);
   await new InitProject(
     deps.fs,
     deps.manifestRepo,

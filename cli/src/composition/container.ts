@@ -3,7 +3,7 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
-import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";
+import type { Deps, FactoryOptions, MenuDeps } from "../presentation/deps.js";
 import type { CLIOutput } from "../presentation/output.js";
 import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";
@@ -19,7 +19,6 @@ import { createFrameworkBuildUseCase } from "./translate.js";
 import { wireUpdate } from "./update.js";
 
 /** One graph per catalog, then per project root and token: two catalogs never share a graph. */
-const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
 
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
 export interface ContainerOptions extends FactoryOptions {
@@ -288,25 +287,4 @@ export function bindContainer(tools: ToolCatalog) {
       },
     };
   };
-}
-
-/** The factory the commands receive: it binds the catalog the commands were registered with. */
-export function bindCatalog(tools: ToolCatalog): DepsFactory {
-  return (projectRoot, options, output) => createDeps(projectRoot, options, output, tools);
-}
-
-export async function createDeps(
-  projectRoot: string,
-  options: FactoryOptions,
-  output: CLIOutput | undefined,
-  tools: ToolCatalog
-): Promise<Deps> {
-  const cacheKey = `${projectRoot}\u0000${options.token ?? ""}`;
-  const graphs = _cache.get(tools) ?? new Map<string, Deps>();
-  _cache.set(tools, graphs);
-  const cached = graphs.get(cacheKey);
-  if (cached !== undefined) return cached;
-  const deps: Deps = { ...(await bindContainer(tools)(projectRoot, options, output)) };
-  graphs.set(cacheKey, deps);
-  return deps;
 }
