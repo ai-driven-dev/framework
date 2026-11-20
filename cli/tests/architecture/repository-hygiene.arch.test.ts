@@ -8,13 +8,19 @@
  * - A rule loads only for the files its `paths:` globs match, so a glob left behind by a move
  *   silently turns the rule off. Every glob under `.claude/rules` must match at least one file.
  * - Architecture paths select the same files on every platform.
+ * - No source comment holds an em dash: one printed to a user is a string and stays, one in a
+ *   comment is prose that drifted from the writing rule.
+ * - No test resolves a path into the shared `dist/`: the build cleans it, so a second concurrent
+ *   run rewrites the binary a first run is reading. `tests/e2e/global-setup.ts` builds a private
+ *   binary per run.
  */
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import config from "../../vitest.config.js";
 import mutation from "../../vitest.mutation.config.js";
 import { present } from "../shared/testing/present.js";
+import { commentRanges } from "./comment-ranges.js";
 import {
   CLI_ROOT,
   canonicalPath,
@@ -171,5 +177,81 @@ describe("architecture paths select the same files on every platform", () => {
     expect(importersByFile().get("src/shared/domain/file.ts")).toContain(
       "src/shared/ports/file-reader.ts"
     );
+  });
+});
+
+const EM_DASH = "\u2014";
+
+/** The comments of `source` that hold an em dash. */
+function dashedComments(source: string): string[] {
+  return commentRanges(source)
+    .map(({ start, end }) => source.slice(start, end))
+    .filter((comment) => comment.includes(EM_DASH));
+}
+
+describe("no source comment holds an em dash", () => {
+  it("writes each comment without one", () => {
+    const offenders = sourceFiles().filter((file) => dashedComments(read(file)).length > 0);
+    expect(offenders, "an em dash in a comment: use a colon, a comma or a hyphen").toEqual([]);
+  });
+});
+
+describe("the em dash guard itself", () => {
+  it("flags a line comment and a block comment holding one", () => {
+    expect(dashedComments(`const a = 1; // one ${EM_DASH} two`)).toHaveLength(1);
+    expect(dashedComments(`/** one ${EM_DASH} two */\nconst a = 1;`)).toHaveLength(1);
+  });
+
+  it("clears an em dash printed by a string or a template literal", () => {
+    expect(dashedComments(`const a = "x ${EM_DASH} y";`)).toEqual([]);
+    expect(dashedComments(`const a = \`x ${EM_DASH} \${b} ${EM_DASH} y\`;`)).toEqual([]);
+  });
+
+  it("reads a // inside a string, a template literal or a regex as text, and the comment after it", () => {
+    expect(dashedComments(`const u = "http://a"; // ${EM_DASH}`)).toHaveLength(1);
+    expect(dashedComments(`const u = \`http://\${a}/${EM_DASH}\`;`)).toEqual([]);
+    expect(dashedComments(`const r = /\\/\\/${EM_DASH}/;`)).toEqual([]);
+  });
+});
+
+const TESTS_ROOT = join(CLI_ROOT, "tests");
+
+/** `resolve(process.cwd(), "dist...")` or `join(process.cwd(), "dist...")` — the bug. */
+const CWD_INTO_DIST = /(?:resolve|join)\(\s*process\.cwd\(\)\s*,\s*["'`]dist(?:\/|["'`])/;
+
+function testFiles(): string[] {
+  const out: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (entry.endsWith(".ts")) out.push(full);
+    }
+  };
+  walk(TESTS_ROOT);
+  return out;
+}
+
+describe("no test resolves a path into the shared dist/ build output", () => {
+  it("every file under tests/ reads the e2e run's own binary, not dist/cli.js", () => {
+    const violations = testFiles()
+      .filter((file) => CWD_INTO_DIST.test(readFileSync(file, "utf8")))
+      .map((file) => canonicalPath(relative(CLI_ROOT, file)));
+
+    expect(
+      violations,
+      "resolves into the shared dist/ — read cliPath() from tests/e2e/helpers.ts instead"
+    ).toEqual([]);
+  });
+});
+
+describe("the shared binary guard itself", () => {
+  it("flags process.cwd() resolved into dist/, not an unrelated temp dist dir", () => {
+    // Built from two pieces so this file's own text never carries the literal the rule
+    // above forbids, which would trip it on itself.
+    const violation = `resolve(process.cwd(), "di${""}st/cli.js")`;
+    expect(CWD_INTO_DIST.test(violation)).toBe(true);
+    expect(CWD_INTO_DIST.test('join(tempDir, "dist")')).toBe(false);
+    expect(CWD_INTO_DIST.test('expect(content).toContain("dist/")')).toBe(false);
   });
 });
