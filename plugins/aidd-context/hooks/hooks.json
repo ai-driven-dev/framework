@@ -8,6 +8,25 @@
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs load",
             "timeout": 5,
             "statusMessage": "AIDD Context: refresh project memory"
+          },
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs start",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: note turn start"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs mark",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check written artifacts"
           }
         ]
       }

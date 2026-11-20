@@ -197,6 +197,23 @@ test("Stop says which context file misses a bank file it could not sync, and lea
   assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), TEAM_BLOCK);
 });
 
+test("Stop answers once: a written artifact's findings and memory's own text together", () => {
+  const root = project({ "CLAUDE.md": TEAM_BLOCK, [VCS]: BANK });
+  write(root, `${MEMORY}/internal/new.md`, "# New\n");
+  write(root, ".claude/agents/a.md", "# nope\n");
+  const tmp = tempDir("memory-hook-state-");
+  const session = captured("claude-PostToolUse.json", 0, root);
+  session.tool_input.file_path = path.join(root, ".claude/agents/a.md");
+  const marked = spawnSync(process.execPath, [path.join(path.dirname(hookFor("claude")), "artifacts.cjs"), "mark"], { input: JSON.stringify(session), encoding: "utf8", cwd: os.tmpdir(), env: { ...ENV, ...tempEnv(tmp) } });
+  assert.equal(marked.status, 0, marked.stderr);
+  const result = run("claude", stopPayload("claude", root), { tmp });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim().split("\n").length, 1);
+  const lines = JSON.parse(result.stdout).reason.split("\n");
+  assert.ok(lines.some((line) => /^\.claude\/agents\/a\.md:\d+ AGENT-\d\d /u.test(line)));
+  assert.ok(lines.some((line) => NOT_SYNCED.test(line)));
+});
+
 test("Stop is silent on a context file it could not sync that already names every bank file", () => {
   const root = project({ [VCS]: BANK }, { always: [] });
   write(root, "CLAUDE.md", TEAM_BLOCK.replace("- Answer in French.\n", "@aidd_docs/memory/vcs.md\n- Answer in French.\n"));
@@ -278,7 +295,11 @@ test("the hook's markdown reader is the skill's, byte for byte: each ships on it
 test("hooks.json names each event's goal, loads at session start and syncs at the turn end, within 5 s", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const goals = { SessionStart: "load", Stop: "sync" };
-  assert.deepEqual(Object.keys(hooks).sort(), ["SessionStart", "Stop"]);
+  assert.deepEqual(Object.keys(hooks).sort(), ["PostToolUse", "SessionStart", "Stop"]);
+  assert.equal(hooks.Stop.length, 1, "one Stop entry: a second one is silenced by the OpenCode and Kilo bridges");
+  assert.equal(hooks.Stop[0].hooks.length, 1);
+  assert.equal(hooks.SessionStart[0].hooks[1].command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs start");
+  assert.equal(hooks.PostToolUse[0].hooks[0].command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs mark");
   for (const event of ["SessionStart", "Stop"]) {
     assert.equal(hooks[event][0].hooks[0].command, `node \${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs ${goals[event]}`, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);

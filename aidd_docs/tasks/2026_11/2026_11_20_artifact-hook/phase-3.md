@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: aidd-context wired through its one Stop entry, docs, full checks

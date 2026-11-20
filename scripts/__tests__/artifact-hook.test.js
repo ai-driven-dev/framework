@@ -87,7 +87,9 @@ function stopPayload(host, root, { active = false } = {}) {
 
 /** One hook run in its own system temp folder: nothing a run leaves there may reach another. */
 function run(plugin, host, goal, payload, { tmp, cwd = os.tmpdir() }) {
-  const result = spawnSync(process.execPath, [path.join(hookFor(plugin, host), "artifacts.cjs"), goal], {
+  // aidd-context has one Stop entry: memory.cjs answers the turn end and carries the artifacts' findings.
+  const args = plugin === "aidd-context" && goal === "check" ? ["memory.cjs", "sync"] : ["artifacts.cjs", goal];
+  const result = spawnSync(process.execPath, [path.join(hookFor(plugin, host), args[0]), args[1]], {
     input: typeof payload === "string" ? payload : JSON.stringify(payload),
     encoding: "utf8",
     cwd,
@@ -319,4 +321,63 @@ test("a turn end with no write creates no state folder", () => {
   const s = session("aidd-pm", "claude");
   assert.equal(s.stop(), "");
   assert.deepEqual(fs.readdirSync(s.tmp), []);
+});
+
+// ---- aidd-context: artifacts ride memory's single Stop entry -------------------------------------------
+
+const MEMORY_FILES = ["project-brief.md", "architecture.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
+const CONTEXT = {
+  "aidd_docs/rules/x/r.md": "# nope\n",
+  ".claude/agents/a.md": "# nope\n",
+  ".claude/commands/c.md": "# nope\n",
+  ".claude/skills/s/SKILL.md": "# nope\n",
+};
+const contextFiles = (extra = {}) => ({ ...Object.fromEntries(MEMORY_FILES.map((name) => [`aidd_docs/memory/${name}`, "# T\n\nShort.\n"])), ...extra });
+
+for (const host of HOSTS) {
+  test(`${host}: aidd-context answers the four context artifacts in one answer`, () => {
+    const s = session("aidd-context", host, contextFiles(CONTEXT));
+    s.start();
+    for (const rel of Object.keys(CONTEXT)) s.wrote(rel);
+    const found = lines(s.stop());
+    for (const id of ["AGENT", "COMMAND", "RULE", "SKILL"]) assert.ok(found.some((line) => line.includes(` ${id}-`)), id);
+  });
+
+  test(`${host}: aidd-context stays silent on a continuation and consumes the mark`, () => {
+    const s = session("aidd-context", host, contextFiles(CONTEXT));
+    s.start();
+    s.wrote(".claude/agents/a.md");
+    assert.equal(s.stop({ active: true }), "");
+    assert.equal(s.stop(), "");
+  });
+}
+
+test("aidd-context: the shell turn answers the rule modified after the reference, not the older one", () => {
+  const s = session("aidd-context", "claude", contextFiles({ "aidd_docs/rules/x/r.md": "# nope\n", "aidd_docs/rules/x/old.md": "# nope\n" }));
+  past(path.join(s.root, "aidd_docs/rules/x/old.md"), 3600);
+  s.start();
+  past(path.join(s.root, "aidd_docs/rules/x/r.md"), -60);
+  s.shell();
+  const found = lines(s.stop());
+  assert.ok(found.length > 0);
+  assert.ok(found.every((line) => line.startsWith("aidd_docs/rules/x/r.md:")));
+});
+
+test("aidd-context: one answer holds the artifact findings and memory's own text, never two", () => {
+  const team = "# P\n\n<!-- aidd_project_memory:start -->\n- Answer in French.\n<!-- aidd_project_memory:end -->\n";
+  const s = session("aidd-context", "claude", contextFiles({ "CLAUDE.md": team, ".claude/agents/a.md": "# nope\n" }));
+  s.put("aidd_docs/memory/internal/new.md", "# New\n");
+  s.start();
+  s.wrote(".claude/agents/a.md");
+  const found = lines(s.stop());
+  assert.ok(found.some((line) => line.startsWith(".claude/agents/a.md:")));
+  assert.ok(found.some((line) => line.startsWith("aidd-context: CLAUDE.md holds a line")));
+});
+
+test("aidd-context: other hosts' own artifact folders are never judged", () => {
+  const files = { ".cursor/rules/x.mdc": "# nope\n", ".github/agents/a.agent.md": "# nope\n", ".codex/prompts/p.toml": "nope\n" };
+  const s = session("aidd-context", "claude", contextFiles(files));
+  s.start();
+  for (const rel of Object.keys(files)) s.wrote(rel);
+  assert.equal(s.stop(), "");
 });
