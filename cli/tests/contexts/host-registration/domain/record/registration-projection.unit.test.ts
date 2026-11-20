@@ -3,7 +3,7 @@ import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-r
 import {
   afterActivation,
   mergeCatalogueClaims,
-} from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
+} from "../../../../../src/contexts/host-registration/domain/record/registration-projection.js";
 
 const registry = (source: string): NativeMarketplaceSource => ({ kind: "registry", source });
 

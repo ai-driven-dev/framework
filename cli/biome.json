@@ -4906,7 +4906,7 @@
         "!src/contexts/host-registration/application/native-marketplace-source-proof.ts",
         "!src/contexts/host-registration/application/register/register-plugin-with-host.ts",
         "!src/contexts/host-registration/domain/policy/cache-purge-policy.ts",
-        "!src/contexts/host-registration/domain/record/registration-record.ts",
+        "!src/contexts/host-registration/domain/record/registration-projection.ts",
         "!src/contexts/host-registration/domain/source/marketplace-source-conflict.ts",
         "!src/contexts/installation/application/install/config/install-runtime-config.ts",
         "!src/contexts/installation/application/install/content/install-content-section.ts",

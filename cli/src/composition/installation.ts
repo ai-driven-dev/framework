@@ -5,10 +5,12 @@ import {
 } from "../contexts/host-registration/domain/record/host-ref.js";
 import {
   afterActivation,
+  mergeCatalogueClaims,
+} from "../contexts/host-registration/domain/record/registration-projection.js";
+import {
   claimsOnMarketplace,
   isQualifiedRef,
   marketplaceOf,
-  mergeCatalogueClaims,
   pluginRefsOf,
   refOf,
   refSelectedBy,
