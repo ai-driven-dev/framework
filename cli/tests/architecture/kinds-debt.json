@@ -489,8 +489,7 @@
   ],
   "toolIdentifiers": [
     "src/contexts/distribution/application/fetch-marketplace-source.ts: 1",
-    "src/contexts/distribution/application/refresh-marketplace.ts: 1",
-    "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts: 1"
+    "src/contexts/distribution/application/refresh-marketplace.ts: 1"
   ],
   "exemptProcessExit": ["src/presentation/exit.ts"],
   "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],

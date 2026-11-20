@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { CursorProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors.js";
+import { ProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import {
   errnoError,
@@ -114,7 +114,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
   });
 
   describe("when tool has native mode and project-scope (not user-scope)", () => {
-    it("throws CursorProjectScopeUnsupportedError", async () => {
+    it("throws ProjectScopeUnsupportedError", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
@@ -128,7 +128,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
           manifest,
           undefined
         )
-      ).rejects.toThrow(CursorProjectScopeUnsupportedError);
+      ).rejects.toThrow(ProjectScopeUnsupportedError);
     });
   });
 
