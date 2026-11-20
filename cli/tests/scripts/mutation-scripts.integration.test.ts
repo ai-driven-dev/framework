@@ -12,28 +12,20 @@ import {
   canarySelectionVerdict,
   changedArgs,
   changedRanges,
+  type MutationScope,
   pruneIncremental,
   scoreOf,
   strykerArgs,
   survivorsOf,
 } from "../../scripts/run-mutation.mjs";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { mutationScopes } from "../shared/testing/json-value.builder.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const REPO_ROOT = REPOSITORY_ROOT;
 
-interface Scope {
-  readonly mutate: string | readonly string[];
-  readonly break?: number;
-  readonly tests?: readonly string[];
-  readonly harnessOnly?: boolean;
-}
-
-function declaration(): { scopes: Readonly<Record<string, Scope>> } {
-  const parsed: { scopes: Readonly<Record<string, Scope>> } = JSON.parse(
-    readFileSync(join(CLI_ROOT, "mutation-scopes.json"), "utf8")
-  );
-  return parsed;
+function declaration(): { scopes: Readonly<Record<string, MutationScope>> } {
+  return { scopes: mutationScopes(readFileSync(join(CLI_ROOT, "mutation-scopes.json"), "utf8")) };
 }
 
 describe("the mutation scripts", () => {

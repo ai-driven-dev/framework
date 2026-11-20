@@ -45,7 +45,10 @@ const REGISTRATION_SITES = counted(DEBT.toolSites);
  * The list is `toolOwn` in `kinds-debt.json`.
  */
 const OWN_TOOL_FILES: Readonly<Record<string, string>> = Object.fromEntries(
-  DEBT.toolOwn.map((entry) => entry.split(": "))
+  DEBT.toolOwn.map((entry): [string, string] => {
+    const [file = "", tool = ""] = entry.split(": ");
+    return [file, tool];
+  })
 );
 
 function namesOnlyItsOwnTool(file: string, named: readonly string[]): boolean {

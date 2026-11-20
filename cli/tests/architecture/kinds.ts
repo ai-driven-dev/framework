@@ -10,6 +10,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join, posix } from "node:path";
+import { parseJsonRecord, stringList } from "../shared/testing/json-value.builder.js";
 import { present } from "../shared/testing/present.js";
 import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./helpers.js";
 
@@ -591,10 +592,12 @@ export const noDebt = (): Debt => ({
 
 /** The debt file, a rule it does not name counting as none. */
 export function loadDebt(): Debt {
-  const raw: Partial<Debt> = JSON.parse(
-    readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8")
-  );
-  return { ...noDebt(), ...raw };
+  const raw = parseJsonRecord(readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8"));
+  const none = noDebt();
+  const named = Object.keys(none)
+    .filter((key) => raw[key] !== undefined)
+    .map((key) => [key, stringList(raw[key], key)]);
+  return { ...none, ...Object.fromEntries(named) };
 }
 
 /** `unlisted`: violations the debt does not hold. `stale`: debt entries that no longer violate.

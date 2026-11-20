@@ -1,6 +1,7 @@
 /** The context edge table: which context may import which, and which contexts Biome holds. */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseJsonRecord, stringList } from "../shared/testing/json-value.builder.js";
 
 /** Exactly these edges between contexts, plus every context to shared. Every row is a row of the
  * target context map (target/00-overview.md, section 4); a row that is debt goes in
@@ -29,11 +30,9 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = t
 
 /** `transitional` of the debt file, `<edge> | <importer> -> <target>` each, grouped by edge. */
 function transitionalPairs(): Record<string, string[]> {
-  const debt: { transitional?: string[] } = JSON.parse(
-    readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8")
-  );
+  const debt = parseJsonRecord(readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8"));
   const byEdge: Record<string, string[]> = {};
-  for (const entry of debt.transitional ?? []) {
+  for (const entry of stringList(debt.transitional ?? [], "transitional")) {
     const [edge = "", pair = ""] = entry.split(" | ");
     byEdge[edge] = [...(byEdge[edge] ?? []), pair];
   }

@@ -487,7 +487,6 @@
     "cognitive complexity :: src/contexts/installation/application/shared/remove-project-hooks.ts",
     "cognitive complexity :: src/contexts/installation/application/sync/record-activation.ts",
     "cognitive complexity :: src/contexts/installation/domain/manifest.ts",
-    "cognitive complexity :: src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts",
     "cognitive complexity :: src/contexts/machine-claims/application/user-scope-plugin-files.ts",
     "cognitive complexity :: src/contexts/recipes/application/validate-recipes.ts",
     "cognitive complexity :: src/contexts/recipes/domain/markdown-scan.ts",
