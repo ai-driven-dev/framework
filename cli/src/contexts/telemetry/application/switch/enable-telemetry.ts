@@ -1,7 +1,7 @@
 import { personIdOf } from "../../domain/identity/person-identity.js";
 import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
 import type { ConsentSwitch, NewInterval } from "./consent-switch.js";
-import type { OwnRoots } from "./remember-own-root.js";
+import type { RememberOwnRoot } from "./remember-own-root.js";
 
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
 export type IdentityChoice = "keep" | "none" | { readonly set: string };
@@ -45,7 +45,7 @@ export type EnableTelemetryResult =
 export class EnableTelemetry {
   constructor(
     private readonly consent: ConsentSwitch,
-    private readonly roots: OwnRoots,
+    private readonly roots: RememberOwnRoot,
     /** A fresh token and its moment for each interval. */
     private readonly newInterval: NewInterval,
     private readonly identities: PersonIdentityStore
@@ -67,7 +67,7 @@ export class EnableTelemetry {
     if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
     // Written only once the clone is on: a refused `on` leaves the identity as it was.
     if (chosen !== null) await this.identities.write(chosen);
-    await this.roots.remember(located);
+    await this.roots.execute(located);
 
     return {
       status: "on",

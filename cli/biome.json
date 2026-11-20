@@ -6040,8 +6040,6 @@
         "!src/contexts/machine-claims/application/user-scope-plugin-files.ts",
         "!src/contexts/recipes/domain/markdown-scan.ts",
         "!src/contexts/recipes/domain/recipe-rules.ts",
-        "!src/contexts/telemetry/application/remembered-resolutions.ts",
-        "!src/contexts/telemetry/application/switch/remember-own-root.ts",
         "!src/contexts/telemetry/domain/branch-binding.ts",
         "!src/contexts/telemetry/domain/declaration/binding-resolution.ts",
         "!src/contexts/telemetry/domain/legacy/legacy-locations.ts",

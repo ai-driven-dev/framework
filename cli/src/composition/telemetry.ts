@@ -26,7 +26,7 @@ import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
-import { OwnRoots } from "../contexts/telemetry/application/switch/remember-own-root.js";
+import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
@@ -189,7 +189,7 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
     readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
     enableTelemetry: new EnableTelemetry(
       consentSwitch,
-      new OwnRoots(ledger, resolutionStore, environment),
+      new RememberOwnRoot(ledger, resolutionStore, environment),
       () => ({ token: randomUUID(), at: environment.now() }),
       identity
     ),

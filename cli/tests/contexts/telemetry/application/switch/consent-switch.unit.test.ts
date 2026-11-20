@@ -3,10 +3,7 @@ import { DirectoryResolver } from "../../../../../src/contexts/telemetry/applica
 import { ConsentSwitch } from "../../../../../src/contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../../../../../src/contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../../../../../src/contexts/telemetry/application/switch/enable-telemetry.js";
-import {
-  OwnRoots,
-  rememberOwnRoot,
-} from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.js";
+import { RememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   type RepositoryResolution,
@@ -71,7 +68,10 @@ function setup() {
   const consent = new ConsentSwitch(locator, consents, writer, history, ledger);
   const on = new EnableTelemetry(
     consent,
-    new OwnRoots(ledger, resolutions, { caseInsensitiveFileSystem: false, now: () => clock.now }),
+    new RememberOwnRoot(ledger, resolutions, {
+      caseInsensitiveFileSystem: false,
+      now: () => clock.now,
+    }),
     () => ({ token: `tok-${++minted}`, at: clock.now }),
     identities
   );
@@ -195,12 +195,10 @@ describe("aidd telemetry on", () => {
   it("remembers nothing of a clone the file system gives no identity", async () => {
     // `on` refuses such a clone before it remembers anything: the resolution is guarded too.
     const s = setup();
-    await rememberOwnRoot(
-      s.resolutions,
-      { ...repository("/w/repo", "/w/main"), clone: null },
-      false,
-      new Date(T1)
-    );
+    await new RememberOwnRoot(s.ledger, s.resolutions, {
+      caseInsensitiveFileSystem: false,
+      now: () => new Date(T1),
+    }).execute({ ...repository("/w/repo", "/w/main"), clone: null });
     expect(s.resolutions.saves).toBe(0);
   });
 

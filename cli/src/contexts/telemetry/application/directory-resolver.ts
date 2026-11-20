@@ -2,6 +2,7 @@ import type { NotStoredReason } from "../contract/repository-resolution.js";
 import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
 import { closeEvent } from "../domain/consent/consent-history.js";
 import { ConsentLog } from "../domain/consent/consent-log.js";
+import { RememberedResolutions } from "../domain/remembered-resolutions.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import { cwdKey, ownerAt, type RepositoryResolution } from "../domain/repository-resolution.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
@@ -9,7 +10,6 @@ import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
-import { RememberedResolutions } from "./remembered-resolutions.js";
 
 export type DirectoryOutcome =
   | {
@@ -56,7 +56,8 @@ export class DirectoryResolver {
     const run = new ResolutionRun(
       this.locator,
       this.consentSource,
-      await RememberedResolutions.load(this.store, this.environment.now),
+      new RememberedResolutions(await this.store.load()),
+      this.store,
       new ConsentLog(await this.history.read()),
       this.history,
       this.environment
@@ -74,7 +75,8 @@ export class ResolutionRun {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consentSource: ConsentSource,
-    private readonly remembered: RememberedResolutions,
+    private remembered: RememberedResolutions,
+    private readonly store: ResolutionStore,
     private consents: ConsentLog,
     private readonly history: ConsentHistory,
     private readonly environment: ResolutionEnvironment
@@ -110,7 +112,7 @@ export class ResolutionRun {
 
   /** Keeps what this run learned. */
   async close(): Promise<void> {
-    await this.remembered.save();
+    if (this.remembered.changed) await this.store.save(this.remembered.sightings);
   }
 
   /** Closes, at this moment, the earliest anyone knows, every open interval whose clone is
@@ -185,7 +187,14 @@ export class ResolutionRun {
     if (id === null) return { skipped: "outside-repo" };
     // A clone the platform cannot identify cannot be told from another: fail closed.
     if (located.clone === null) return { skipped: "unreadable-consent" };
-    const current = this.remembered.remember(dir, id, located.root, located.clone);
+    const { seen: current, remembered } = this.remembered.remember({
+      dir,
+      repositoryId: id,
+      root: located.root,
+      clone: located.clone,
+      at: this.environment.now().toISOString(),
+    });
+    this.remembered = remembered;
     const others = this.remembered
       .ownersOf(dir)
       .filter((owner) => !sameClone(owner.clone, current.clone));
