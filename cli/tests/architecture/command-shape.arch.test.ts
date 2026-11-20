@@ -23,7 +23,7 @@ const COMMAND_SHAPE_BASELINE: readonly string[] = [
   "src/contexts/distribution/application/choose-marketplace-source.ts",
   "src/contexts/installation/application/agents/agent-providers.ts",
   "src/contexts/installation/application/agents/main-session-models.ts",
-  "src/contexts/installation/application/clean-project.ts",
+  "src/contexts/installation/application/clean-project-files.ts",
   "src/contexts/installation/application/install/config/tracked-config-files.ts",
   "src/contexts/installation/application/install/configure-machine-scope.ts",
   "src/contexts/installation/application/materialize/project-hooks-materializer.ts",

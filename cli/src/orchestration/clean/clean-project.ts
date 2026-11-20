@@ -3,8 +3,8 @@ import type { WithdrawFromHost } from "../../contexts/host-registration/applicat
 import type { ProjectCleanFacts } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import type {
   CleanNativeRegistrationPreview,
-  CleanProject as CleanProjectFiles,
-} from "../../contexts/installation/application/clean-project.js";
+  CleanProjectFiles,
+} from "../../contexts/installation/application/clean-project-files.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
-import { CleanProject } from "../../../../src/contexts/installation/application/clean-project.js";
+import { CleanProjectFiles } from "../../../../src/contexts/installation/application/clean-project-files.js";
 import { RemoveProjectFiles } from "../../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
@@ -15,9 +15,9 @@ import { cursorHookScriptDir } from "../testing/cursor-hook-scripts.js";
 
 const ROOT = "/test-project";
 
-function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanProject {
+function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanProjectFiles {
   const repo = new InMemoryManifestRepository(manifest, ROOT);
-  return new CleanProject(
+  return new CleanProjectFiles(
     fs,
     repo,
     {
@@ -40,7 +40,7 @@ function localPlugin(name: string, scope: "project" | "user" = "project"): Insta
   return InstalledPlugin.fromMetadata(name, "1.0.0", { kind: "local", path: "/p" }, false, scope);
 }
 
-describe("CleanProject.assertRemovable", () => {
+describe("CleanProjectFiles.assertRemovable", () => {
   it("refuses a hook script edited after install unless forced", async () => {
     const script = `${cursorHookScriptDir("aidd-context")}run.js`;
     const installed = FileHash.of("// installed").value;
@@ -69,7 +69,7 @@ describe("CleanProject.assertRemovable", () => {
   });
 });
 
-describe("CleanProject.assertRemovable on a project that installed nothing", () => {
+describe("CleanProjectFiles.assertRemovable on a project that installed nothing", () => {
   it("proves nothing removable", async () => {
     const fs = new InMemoryFileAdapter();
     const clean = cleanOver(null, fs);
@@ -78,7 +78,7 @@ describe("CleanProject.assertRemovable on a project that installed nothing", () 
   });
 });
 
-describe("CleanProject over a tool that is not an AI tool", () => {
+describe("CleanProjectFiles over a tool that is not an AI tool", () => {
   function manifestWithIdePlugin(scope: "project" | "user"): Manifest {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.vscode, "1.0.0", []);
@@ -101,7 +101,7 @@ describe("CleanProject over a tool that is not an AI tool", () => {
   });
 });
 
-describe("CleanProject.plan registrations", () => {
+describe("CleanProjectFiles.plan registrations", () => {
   it("keys a ref scope only for a plugin the host registered", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.codex, "1.0.0", []);

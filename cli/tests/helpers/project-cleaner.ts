@@ -3,7 +3,7 @@ import { ListMarketplaces } from "../../src/contexts/distribution/application/li
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
-import { CleanProject as CleanProjectFiles } from "../../src/contexts/installation/application/clean-project.js";
+import { CleanProjectFiles } from "../../src/contexts/installation/application/clean-project-files.js";
 import { RemoveProjectFiles } from "../../src/contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";

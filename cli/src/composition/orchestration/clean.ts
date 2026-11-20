@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { CleanProject as CleanProjectFiles } from "../../contexts/installation/application/clean-project.js";
+import { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";

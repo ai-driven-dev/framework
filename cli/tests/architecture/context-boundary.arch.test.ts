@@ -97,7 +97,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/plugin/update-plugin.ts",
     "src/contexts/installation/application/plugin/update-user-plugin-files.ts",
     "src/contexts/installation/application/restore/project/restore-tool.ts",
-    "src/contexts/installation/application/clean-project.ts",
+    "src/contexts/installation/application/clean-project-files.ts",
     "src/contexts/installation/application/purge-user-scope-files.ts",
     "src/contexts/installation/application/report-status.ts",
     // the sync run's steps, which the sync scenario chains

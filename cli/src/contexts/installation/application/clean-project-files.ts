@@ -54,7 +54,7 @@ export interface ProjectCleanPlan {
  * removable, then deletes the files, the merged keys and AIDD's own state. Undoing the host's
  * registration and releasing the machine claims sit around those and are the caller's.
  */
-export class CleanProject {
+export class CleanProjectFiles {
   constructor(
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
