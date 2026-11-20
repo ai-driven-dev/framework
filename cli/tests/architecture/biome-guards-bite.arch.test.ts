@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { biomeFindings, CLI_ROOT, read, reportedFile } from "./helpers.js";
 
 const PLUGIN = "biome-plugins/no-process-exit.grit";
+const GITHUB_PLUGIN = "biome-plugins/one-github-api-url.grit";
 
 /** The folders that import nothing from the platform or a package but the two modules that
  * hold no I/O. */
@@ -38,6 +39,17 @@ describe("biome carries the exit and default-export rules", () => {
       "src/contexts/**",
       "src/presentation/**",
       "!src/presentation/exit.ts",
+    ]);
+  });
+
+  it("scopes the GitHub API URL plugin to the source, and spares the one adapter that writes it", () => {
+    const config: { overrides?: { includes?: string[]; plugins?: string[] }[] } = JSON.parse(
+      read("biome.json")
+    );
+    const carrier = (config.overrides ?? []).find((o) => o.plugins?.includes(`./${GITHUB_PLUGIN}`));
+    expect(carrier?.includes, `no override applies ${GITHUB_PLUGIN}`).toEqual([
+      "src/**",
+      "!src/shared/infrastructure/github-adapter.ts",
     ]);
   });
 
@@ -219,6 +231,15 @@ describe("the guard itself", () => {
       join(planted, "tests/shared/domain/default.ts"),
       "const value = 1;\nexport default value;\n"
     );
+    for (const file of [
+      "src/contexts/update/infrastructure/builds-github-url.ts",
+      "src/shared/infrastructure/github-adapter.ts",
+    ]) {
+      writeFileSync(
+        join(planted, file),
+        'export const url = "https://api.github.com/repos/a/b/releases";\n'
+      );
+    }
     writeFileSync(join(planted, "src/shared/domain/clean.ts"), "export const one = 1;\n");
     writeFileSync(
       join(planted, "tests/shared/domain/reads.unit.test.ts"),
@@ -653,6 +674,15 @@ describe("the guard itself", () => {
       "src/shared/domain/env.ts:lint/style/noRestrictedGlobals"
     );
     expect(findings, findings.join(", ")).toContain("src/shared/infrastructure/exit.ts:plugin");
+  });
+
+  it("flags a GitHub API URL written outside the GitHub adapter, and clears the adapter", () => {
+    const findings = biomeFindings(planted);
+
+    expect(findings, findings.join(", ")).toContain(
+      "src/contexts/update/infrastructure/builds-github-url.ts:plugin"
+    );
+    expect(findings).not.toContain("src/shared/infrastructure/github-adapter.ts:plugin");
   });
 
   it("reads a file the GitHub reporter escaped, as on Windows", () => {

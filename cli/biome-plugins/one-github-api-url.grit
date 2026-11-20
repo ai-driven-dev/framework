@@ -1,0 +1,7 @@
+language js
+
+// The GitHub API base is written once, in shared/infrastructure/github-adapter.ts.
+JsStringLiteralExpression() as $url where {
+  $url <: r".*api\.github\.com.*",
+  register_diagnostic(span=$url, message="The GitHub API base belongs to shared/infrastructure/github-adapter.ts: read GitHub through GitHubAdapter instead of building a URL", severity="error")
+}
