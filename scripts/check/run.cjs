@@ -3,7 +3,8 @@
 // Usage: node scripts/check/run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]
 // Checks every artifact each contract names in its `targets` (scripts/check/contracts/*.json and plugins/*/skills/*/scripts/contract.json), and the vendored engine copies.
 // With files (relative to root or absolute), checks only the artifacts owning them: the folder holding the file, or the file itself. Files no contract owns are ignored. Baseline staleness is judged only for those artifacts, and engine copies are checked only if a file is under scripts/check/engine/ or a skill's scripts/lib/. --update-baseline takes no files.
-// Each generator of scripts/check/generators runs on every run: a stale generated file is a finding, and --fix rewrites it first.
+// Each generator of scripts/check/generators runs on every full run, and on a scoped run when a given file matches its `watch` globs: a stale generated file is a finding, and --fix rewrites it first.
+// A contract may name `watch` globs: its anchor unit stands for repo-wide rules, so a scoped run also runs it when a given file matches.
 // Baseline keys are file, rule, message and excerpt (no line), counted. A finding above its count exits 1, and so does an entry that fires less.
 // --update-baseline records the baseline when scripts/check/baseline.json is missing; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
@@ -27,6 +28,13 @@ function expand(root, pattern) {
   }
   return found;
 }
+
+/** Whether a slash glob matches a path: `*` stays inside a segment, `**` crosses them. */
+function globMatch(glob, file) {
+  const source = glob.replace(/[.+?^${}()|[\]\\]/gu, "\\$&").replace(/\*\*\//gu, "\0").replace(/\*\*/gu, "\u0001").replace(/\*/gu, "[^/]*").replace(/\0/gu, "(?:.*/)?").replace(/\u0001/gu, ".*");
+  return new RegExp(`^${source}$`, "u").test(file);
+}
+const watches = (globs, given) => given.some((g) => (globs ?? []).some((glob) => globMatch(glob, g)));
 
 const USAGE = "usage: run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]";
 const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/scripts\/lib\/)/u;
@@ -55,7 +63,7 @@ function main(argv, { generators = require("./generators/index.cjs"), out = (tex
     if (matched.length === 0) throw new ContractError(`${targets}: matches no file`);
     for (const target of matched) {
       const owned = rel(target);
-      if (scoped && !given.some((g) => (loaded.unit === "file" ? g === owned : g.startsWith(`${owned}/`)))) continue;
+      if (scoped && !watches(loaded.watch, given) && !given.some((g) => (loaded.unit === "file" ? g === owned : g.startsWith(`${owned}/`)))) continue;
       checked.push(owned);
       for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id} ${f.message} ${f.excerpt ?? ""}`, text: format({ ...f, path: rel(f.path) }) });
     }
@@ -79,6 +87,7 @@ function main(argv, { generators = require("./generators/index.cjs"), out = (tex
   const outdated = !scoped || given.some((g) => ENGINE_PATH.test(g));
   const stale = (outdated ? sync({ root }) : []).map((copy) => `${copy} differs from scripts/check/engine, run node scripts/check/engine/sync.cjs`);
   for (const generator of generators) {
+    if (scoped && !watches(generator.watch, given)) continue;
     for (const file of generator.run({ root, write: fix })) if (!fix) stale.push(`${file} is stale, run node scripts/check/run.cjs --fix`);
   }
   if (update) {

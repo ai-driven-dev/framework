@@ -3,6 +3,7 @@
   "kind": "repo",
   "unit": "file",
   "targets": ".claude-plugin/marketplace.json",
+  "watch": ["**"],
   "rules": {
     "REPO-01": {
       "op": "custom",

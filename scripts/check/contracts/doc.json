@@ -3,6 +3,7 @@
   "kind": "doc",
   "unit": "file",
   "targets": "README.md",
+  "watch": ["**/*.md", "**/*.mdx", "plugins/aidd-context/hooks/memory.cjs"],
   "rules": {
     "DOC-01": {
       "op": "custom",

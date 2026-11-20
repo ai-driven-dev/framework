@@ -7,7 +7,7 @@ const { readText, frontmatter, proseLines } = require("./markdown.cjs");
 const { ops, OPTIONS } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
-const TOP_KEYS = ["version", "kind", "unit", "targets", "marker", "rules", "retired"];
+const TOP_KEYS = ["version", "kind", "unit", "targets", "marker", "watch", "rules", "retired"];
 const RULE_KEYS = ["op", "in", "notIn", "why", "fix"];
 const EXCERPT_LIMIT = 40;
 
@@ -49,6 +49,7 @@ function loadContract(file) {
   };
   for (const key of Object.keys(contract)) if (!TOP_KEYS.includes(key)) fail(`unknown key ${key}`);
   if (contract.targets !== undefined && typeof contract.targets !== "string") fail("targets must be a glob string");
+  if (contract.watch !== undefined && !(Array.isArray(contract.watch) && contract.watch.every((g) => typeof g === "string"))) fail("watch must be an array of glob strings");
   if (contract.version !== 1) fail("version must be 1");
   if (typeof contract.kind !== "string") fail("kind is required");
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
