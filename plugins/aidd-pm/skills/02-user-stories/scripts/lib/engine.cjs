@@ -13,6 +13,9 @@ const EXCERPT_LIMIT = 40;
 
 class ContractError extends Error {}
 
+/** A broken contract or an unreadable target is a usage error; anything else is a crash worth its stack. */
+const isUsage = (error) => error instanceof ContractError || error.code === "ENOENT";
+
 /** Glob with `*`, `**` and `{a,b}` as an anchored regex over a slash path. */
 function globRegex(glob) {
   let out = "";
@@ -46,16 +49,17 @@ function loadContract(file) {
   };
   for (const key of Object.keys(contract)) if (!TOP_KEYS.includes(key)) fail(`unknown key ${key}`);
   if (contract.version !== 1) fail("version must be 1");
+  if (typeof contract.kind !== "string") fail("kind is required");
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
   if (contract.unit === "folder" && !contract.marker) fail("marker is required when unit is folder");
-  const prefix = `${String(contract.kind).toUpperCase()}-`;
+  const prefix = `${contract.kind.toUpperCase()}-`;
   const retired = contract.retired ?? [];
   for (const [id, rule] of Object.entries(contract.rules ?? {})) {
     if (!id.startsWith(prefix) || !/-\d{2}$/u.test(id)) fail(`rule id ${id} must look like ${prefix}NN`);
     if (retired.includes(id)) fail(`rule id ${id} is retired`);
     if (!(rule.op in ops)) fail(`${id}: unknown op ${rule.op}`);
     for (const key of Object.keys(rule)) if (![...RULE_KEYS, ...OPTIONS[rule.op]].includes(key)) fail(`${id}: unknown key ${key} for op ${rule.op}`);
-    for (const key of ["in", "why", "fix"]) if (!rule[key]) fail(`${id}: ${key} is required`);
+    for (const key of rule.op === "custom" ? ["in", "why"] : ["in", "why", "fix"]) if (!rule[key]) fail(`${id}: ${key} is required`);
     if (rule.op === "max" && !["chars", "lines"].includes(rule.measure)) fail(`${id}: measure must be chars or lines`);
     rule.match = asList(rule.in).map(globRegex);
     rule.skip = asList(rule.notIn).map(globRegex);
@@ -96,7 +100,7 @@ function check(contract, target) {
       const text = readText(abs);
       const fm = frontmatter(text);
       const prose = proseLines(text).map((line, index) => (index < fm.span ? "" : line));
-      views.set(file, { file, abs, root, text, lines: text.split("\n"), prose, fm, files, view, contractDir: contract.dir, checksDir: path.join(contract.dir, "checks"), shared: {} });
+      views.set(file, { file, abs, root, text, lines: text.split("\n"), prose, fm, files, view, contractDir: contract.dir, checksDir: path.join(contract.dir, "checks") });
     }
     return views.get(file);
   };
@@ -104,7 +108,9 @@ function check(contract, target) {
     for (const [id, rule] of Object.entries(contract.rules)) {
       if (!rule.match.some((r) => r.test(file)) || rule.skip.some((r) => r.test(file))) continue;
       for (const hit of ops[rule.op](view(file), rule)) {
-        findings.push({ file: hit.file ?? file, line: hit.line, id, message: fill(hit.fix ?? rule.fix, hit.values ?? {}), excerpt: hit.offending === undefined ? undefined : excerpt(hit.offending) });
+        const fix = hit.fix ?? rule.fix;
+        if (fix === undefined) throw new ContractError(`${id}: check ${rule.check} returned a finding without fix`);
+        findings.push({ file: hit.file ?? file, line: hit.line, id, message: fill(fix, hit.values ?? {}), excerpt: hit.offending === undefined ? undefined : excerpt(hit.offending) });
       }
     }
   }
@@ -127,9 +133,10 @@ function run(contractFile, targets) {
     if (findings.length) process.stdout.write(`${findings.map(format).join("\n")}\n`);
     return findings.length ? EXIT.FINDINGS : EXIT.OK;
   } catch (error) {
+    if (!isUsage(error)) throw error;
     process.stderr.write(`${error.message}\n`);
     return EXIT.USAGE;
   }
 }
 
-module.exports = { run, check, loadContract, format, ContractError };
+module.exports = { run, check, loadContract, format, ContractError, isUsage };

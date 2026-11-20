@@ -6,7 +6,7 @@
 // --update-baseline records the baseline when the config has none; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
 const path = require("node:path");
-const { check, loadContract, format } = require("./engine.cjs");
+const { check, loadContract, format, ContractError, isUsage } = require("./engine.cjs");
 const { sync } = require("./sync.cjs");
 
 const CONFIG = "validate.config.json";
@@ -26,10 +26,11 @@ function expand(root, pattern) {
 
 function main(argv) {
   const at = argv.indexOf("--root");
+  if (at >= 0 && !argv[at + 1]) throw new ContractError("usage: run.cjs [--update-baseline] [--root <dir>]");
   const root = at >= 0 ? path.resolve(argv[at + 1]) : path.resolve(__dirname, "..", "..");
   const update = argv.includes("--update-baseline");
   const configFile = path.join(root, CONFIG);
-  if (!fs.existsSync(configFile)) throw new Error(`${configFile}: missing`);
+  if (!fs.existsSync(configFile)) throw new ContractError(`${configFile}: missing`);
   const config = JSON.parse(fs.readFileSync(configFile, "utf8"));
   const rel = (file) => path.relative(root, file).split(path.sep).join("/");
 
@@ -37,7 +38,7 @@ function main(argv) {
   for (const { contract, targets } of config.contracts) {
     const loaded = loadContract(path.join(root, contract));
     const matched = expand(root, targets);
-    if (matched.length === 0) throw new Error(`${targets}: matches no file`);
+    if (matched.length === 0) throw new ContractError(`${targets}: matches no file`);
     for (const target of matched) {
       for (const f of check(loaded, target)) findings.push({ ...f, key: `${rel(f.path)} ${f.id} ${f.message} ${f.excerpt ?? ""}`, text: format({ ...f, path: rel(f.path) }) });
     }
@@ -77,6 +78,7 @@ if (require.main === module) {
   try {
     process.exitCode = main(process.argv.slice(2));
   } catch (error) {
+    if (!isUsage(error)) throw error;
     process.stderr.write(`${error.message}\n`);
     process.exitCode = 2;
   }

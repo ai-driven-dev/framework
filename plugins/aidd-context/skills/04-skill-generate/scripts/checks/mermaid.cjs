@@ -1,6 +1,5 @@
 "use strict";
 // Mermaid flowchart reading for the router checks. Not a check itself.
-const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
 const BOX = /([\w-]+)\["([^"]*)"\]/gu;
 const ARROWS = ["-->", "-.->", "==>"];
 
@@ -45,4 +44,4 @@ function edges(flow) {
 
 const actionBoxes = (flow) => new Map([...flow.matchAll(BOX)].filter(([, , label]) => /^actions\/[^"]+\.md$/u.test(label)).map(([, id, label]) => [id, label]));
 
-module.exports = { flowOf, lineOf, splitArrows, nodeIds, edges, actionBoxes, ACTION_NODE, BOX };
+module.exports = { flowOf, lineOf, splitArrows, nodeIds, edges, actionBoxes, BOX };

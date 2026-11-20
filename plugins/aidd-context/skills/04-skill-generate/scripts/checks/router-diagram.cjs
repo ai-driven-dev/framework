@@ -1,6 +1,6 @@
 "use strict";
 // The router diagram is a flowchart LR whose boxes are exactly the action files, named by plain ids.
-const { flowOf, lineOf, splitArrows, nodeIds, ACTION_NODE, BOX } = require("./mermaid.cjs");
+const { flowOf, lineOf, splitArrows, nodeIds, actionBoxes, BOX } = require("./mermaid.cjs");
 
 module.exports = function routerDiagram(ctx) {
   const flow = flowOf(ctx.text);
@@ -8,7 +8,7 @@ module.exports = function routerDiagram(ctx) {
   const hits = [];
   const at = (needle) => lineOf(ctx.text, needle);
   if (!/^\s*flowchart LR\b/mu.test(flow)) hits.push({ line: at("```mermaid") + 1, offending: flow.split("\n")[0], fix: "start the diagram with flowchart LR" });
-  const drawn = new Set([...flow.matchAll(ACTION_NODE)].map((m) => m[1]));
+  const drawn = new Set(actionBoxes(flow).values());
   const present = ctx.files.filter((f) => /^actions\/[^/]+\.md$/u.test(f));
   for (const action of present) if (!drawn.has(action)) hits.push({ line: at("```mermaid"), offending: action, fix: `draw a node labeled ${action}` });
   for (const action of drawn) if (!present.includes(action)) hits.push({ line: at(action), offending: action, fix: "remove the node or write its action file" });

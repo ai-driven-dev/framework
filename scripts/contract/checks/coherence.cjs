@@ -16,13 +16,13 @@ module.exports = (ctx) => {
   const listed = manifest.skills ?? [];
   const lineOf = (key) => ctx.lines.findIndex((l) => l.includes(`"${key}"`)) + 1 || 1;
   const found = [];
-  for (const s of onDisk) if (!listed.includes(s)) found.push({ line: lineOf("skills"), offending: s, values: { problem: `${s} is not listed in skills` } });
-  for (const s of listed) if (!onDisk.includes(s)) found.push({ line: lineOf("skills"), offending: s, values: { problem: `${s} is listed but has no SKILL.md` } });
+  for (const s of onDisk) if (!listed.includes(s)) found.push({ line: lineOf("skills"), offending: s, fix: `${s} is not listed in skills` });
+  for (const s of listed) if (!onDisk.includes(s)) found.push({ line: lineOf("skills"), offending: s, fix: `${s} is listed but has no SKILL.md` });
   const market = path.resolve(plugin, "../../.claude-plugin/marketplace.json");
   if (fs.existsSync(market)) {
     const entry = JSON.parse(fs.readFileSync(market, "utf8")).plugins?.find((p) => p.name === manifest.name);
-    if (!entry) found.push({ line: lineOf("name"), offending: manifest.name, values: { problem: "not in marketplace.json" } });
-    else if (entry.description !== manifest.description) found.push({ line: lineOf("description"), offending: manifest.description, values: { problem: "description differs from marketplace.json" } });
+    if (!entry) found.push({ line: lineOf("name"), offending: manifest.name, fix: "not in marketplace.json" });
+    else if (entry.description !== manifest.description) found.push({ line: lineOf("description"), offending: manifest.description, fix: "description differs from marketplace.json" });
   }
   return found;
 };

@@ -14,8 +14,7 @@
       "op": "custom",
       "in": "hooks.json",
       "check": "handlers",
-      "why": "a missing or broken handler fails at the event, not at install",
-      "fix": "{problem}"
+      "why": "a missing or broken handler fails at the event, not at install"
     }
   }
 }

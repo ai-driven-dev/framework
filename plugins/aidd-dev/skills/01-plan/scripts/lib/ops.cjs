@@ -116,24 +116,14 @@ const ops = {
     const model = parseTemplate(path.resolve(ctx.contractDir, rule.template));
     const doc = shape(ctx.text, ctx.prose, ctx.fm);
     const found = [];
-    const say = (line, offending, fix) => found.push({ line, offending, values: {}, fix });
+    const say = (line, offending, fix) => found.push({ line, offending, fix });
     const comment = ctx.text.search(/<!--/u);
     if (comment >= 0) say(ctx.text.slice(0, comment).split("\n").length, undefined, "comment left, delete every comment");
-    const slotRe = SLOT;
     const noComment = ctx.text.replace(COMMENT, (c) => c.replace(/[^\n]/gu, " ")).split("\n");
     // A slot left in prose, or one of the template's own slots left verbatim anywhere (code included).
-    const slot = noComment.findIndex((line, i) => i >= ctx.fm.span && (slotRe.test(ctx.prose[i]) || model.slots.some((s) => line.includes(s))));
+    const slot = noComment.findIndex((line, i) => i >= ctx.fm.span && (SLOT.test(ctx.prose[i]) || model.slots.some((s) => line.includes(s))));
     if (slot >= 0) say(slot + 1, ctx.lines[slot], "placeholder left, fill it or omit its section");
-    for (const [key, value] of Object.entries(model.fm)) {
-      const line = ctx.fm.fieldLine[key] ?? 1;
-      const allowed = rule.values?.[key];
-      if (!(key in ctx.fm.fields)) { if (!(rule.optional ?? []).includes(key)) say(1, undefined, `front matter key "${key}" missing`); }
-      else if (slotRe.test(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}": placeholder left, fill it`);
-      else if (allowed) { if (!allowed.includes(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}" must be one of ${allowed.join(", ")}`); }
-      else if (value !== "" && !slotRe.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);
-      else if (slotRe.test(value) && !unquote(ctx.fm.fields[key]).trim()) say(line, undefined, `front matter "${key}" empty`);
-    }
-    for (const key of Object.keys(ctx.fm.fields)) if (!(key in model.fm)) say(ctx.fm.fieldLine[key], key, `front matter key "${key}" is not in the template`);
+    frontMatterIssues(ctx, model, rule, say);
     if (model.hasTitle && (!doc.title.text || !doc.title.text.startsWith(model.titlePrefix))) say(doc.title.line, doc.title.text, `title must start with "${model.titlePrefix}"`);
     const rankOf = (name) => model.sections.findIndex((s) => s.match.test(name));
     let last = -1;
@@ -158,7 +148,7 @@ const ops = {
     try {
       data = JSON.parse(ctx.text);
     } catch (error) {
-      return [at(1, undefined, { error: error.message })].map((f) => ({ ...f, fix: `invalid JSON: ${error.message}` }));
+      return [{ line: 1, fix: `invalid JSON: ${error.message}` }];
     }
     const schema = JSON.parse(fs.readFileSync(path.resolve(ctx.contractDir, rule.schema), "utf8"));
     return conform(data, schema, "$").map((problem) => ({ line: lineOf(ctx.lines, problem.at), offending: problem.at, values: { problem: problem.say } }));
@@ -167,6 +157,20 @@ const ops = {
     return require(path.join(ctx.checksDir, `${rule.check}.cjs`))(ctx, rule);
   },
 };
+
+/** Front matter keys and values the template expects, as `say(line, offending, fix)` calls. */
+function frontMatterIssues(ctx, model, rule, say) {
+  for (const [key, value] of Object.entries(model.fm)) {
+    const line = ctx.fm.fieldLine[key] ?? 1;
+    const allowed = rule.values?.[key];
+    if (!(key in ctx.fm.fields)) { if (!(rule.optional ?? []).includes(key)) say(1, undefined, `front matter key "${key}" missing`); }
+    else if (SLOT.test(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}": placeholder left, fill it`);
+    else if (allowed) { if (!allowed.includes(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}" must be one of ${allowed.join(", ")}`); }
+    else if (value !== "" && !SLOT.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);
+    else if (SLOT.test(value) && !unquote(ctx.fm.fields[key]).trim()) say(line, undefined, `front matter "${key}" empty`);
+  }
+  for (const key of Object.keys(ctx.fm.fields)) if (!(key in model.fm)) say(ctx.fm.fieldLine[key], key, `front matter key "${key}" is not in the template`);
+}
 
 /** JSON Schema subset: type, enum, const, pattern, required, properties, additionalProperties, items, minItems. */
 function conform(value, schema, at) {
@@ -235,4 +239,4 @@ function parseTemplate(file) {
   return templates.get(file);
 }
 
-module.exports = { ops, OPTIONS, shape, cells };
+module.exports = { ops, OPTIONS, shape, cells, LINK };

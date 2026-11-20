@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { loadContract, check } = require("../../contract/engine.cjs");
+const { findings: apply } = require("./helpers.js");
 
 /** Each op has one fixture that passes and one that fails; findings come back as rule ids with lines. */
 
@@ -17,7 +17,7 @@ afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 function findings(rule, text, file = "a.md") {
   fs.writeFileSync(path.join(dir, file), text);
   fs.writeFileSync(path.join(dir, "contract.json"), JSON.stringify({ version: 1, kind: "demo", unit: "file", rules: { "DEMO-01": { in: file, why: "w", fix: "f {actual}", ...rule } } }));
-  return check(loadContract(path.join(dir, "contract.json")), path.join(dir, file));
+  return apply(path.join(dir, "contract.json"), path.join(dir, file));
 }
 const lines = (list) => list.map((f) => f.line);
 

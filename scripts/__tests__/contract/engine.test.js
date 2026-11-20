@@ -2,17 +2,15 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
-const CONTRACT_DIR = path.resolve(__dirname, "../../contract");
+const { lint } = require("./helpers.js");
 
 /** The generic engine on fixture contracts: findings carry path, line, rule and fix; a broken contract stops the run. */
 
 let dir;
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), "contract-engine-"));
-  fs.writeFileSync(path.join(dir, "run.cjs"), `process.exitCode = require(${JSON.stringify(path.join(CONTRACT_DIR, "engine.cjs"))}).run(process.argv[2], process.argv.slice(3));\n`);
 });
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
@@ -21,10 +19,7 @@ const write = (file, text) => {
   fs.writeFileSync(path.join(dir, file), text);
 };
 const contract = (rules, extra = {}) => write("contract.json", JSON.stringify({ version: 1, kind: "demo", unit: "file", rules, ...extra }));
-const validate = (...targets) => {
-  const run = spawnSync(process.execPath, [path.join(dir, "run.cjs"), path.join(dir, "contract.json"), ...targets.map((t) => path.join(dir, t))], { encoding: "utf8" });
-  return { status: run.status, out: run.stdout, err: run.stderr };
-};
+const validate = (...targets) => lint(path.join(dir, "contract.json"), ...targets.map((t) => path.join(dir, t)));
 const snapshot = () => fs.readdirSync(dir, { recursive: true }).sort().map((f) => `${f}:${fs.statSync(path.join(dir, f)).isFile() ? fs.readFileSync(path.join(dir, f), "utf8") : ""}`);
 
 describe("engine", () => {
@@ -41,6 +36,20 @@ describe("engine", () => {
     assert.equal(first.status, 1);
     assert.equal(first.out, `${path.join(dir, "a.md")}:3 DEMO-01 remove the marker "TODO later"\n`);
     assert.deepEqual(validate("a.md"), first);
+  });
+
+  it("lets a crash in a custom check show its stack instead of exit 2", () => {
+    contract({ "DEMO-01": { op: "custom", in: "*.md", check: "boom", why: "w" } });
+    write("checks/boom.cjs", "module.exports = () => null.crash;\n");
+    write("a.md", "x\n");
+    const out = validate("a.md");
+    assert.notEqual(out.status, 2);
+    assert.match(out.err, /TypeError/u);
+  });
+
+  it("exits 2 on a target that does not exist", () => {
+    contract({ "DEMO-01": { op: "pattern", in: "*.md", line: 1, regex: "^# ", why: "w", fix: "f" } });
+    assert.equal(validate("missing.md").status, 2);
   });
 
   it("exits 2 on an unknown op or key", () => {

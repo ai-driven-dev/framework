@@ -3,9 +3,9 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { check, loadContract } = require("../../contract/engine.cjs");
+const { findings } = require("./helpers.js");
 
-const CONTRACT = path.resolve(__dirname, "../../contract/repo.json");
+const CONTRACT = path.resolve(__dirname, "../../contract/plugin-contract.json");
 const MARKET = { plugins: [{ name: "aidd-demo", description: "Demo." }] };
 const MANIFEST = { name: "aidd-demo", version: "1.0.0", description: "Demo.", skills: ["./skills/01-a"] };
 
@@ -23,7 +23,7 @@ afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 function ids(manifest) {
   const file = path.join(root, "plugins/aidd-demo/.claude-plugin/plugin.json");
   fs.writeFileSync(file, typeof manifest === "string" ? manifest : JSON.stringify(manifest, null, 2));
-  return check(loadContract(CONTRACT), file).map((f) => `${f.id} ${f.message}`);
+  return findings(CONTRACT, file).map((f) => `${f.id} ${f.message}`);
 }
 
 describe("plugin contract", () => {

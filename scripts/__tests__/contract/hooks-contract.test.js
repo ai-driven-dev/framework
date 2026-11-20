@@ -2,16 +2,14 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+const helpers = require("./helpers.js");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const ROOT = path.resolve(__dirname, "../../..");
-const CONTRACT = path.join(ROOT, "scripts/contract/hooks.json");
-const RUN = "const { run } = require(process.argv[1]); process.exitCode = run(process.argv[2], [process.argv[3]]);";
-
+const CONTRACT = path.join(ROOT, "scripts/contract/hooks-contract.json");
 const lint = (file) => {
-  const out = spawnSync(process.execPath, ["-e", RUN, path.join(ROOT, "scripts/contract/engine.cjs"), CONTRACT, file], { encoding: "utf8" });
-  return { code: out.status, out: out.stdout };
+  const { status, out } = helpers.lint(CONTRACT, file);
+  return { code: status, out };
 };
 
 const entry = (hook = {}) => ({
@@ -58,10 +56,6 @@ describe("hooks contract", () => {
   it("flags a handler with a syntax error", () => {
     fs.writeFileSync(path.join(plugin, "hooks/guard.cjs"), "const = ;\n");
     assert.match(validate(entry()).out, / HOOKS-02 hooks\/guard\.cjs does not parse/u);
-  });
-
-  it("does not ask a Stop handler to read stop_hook_active", () => {
-    assert.deepEqual(validate(entry()), { code: 0, out: "" });
   });
 
   it("flags a file that is not JSON", () => {

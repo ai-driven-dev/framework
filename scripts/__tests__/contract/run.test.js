@@ -106,6 +106,11 @@ describe("repository run", () => {
     assert.match(out.stderr, /agents\/\*\.md: matches no file/u);
   });
 
+  it("exits 2 when --root has no value", () => {
+    assert.equal(spawnSync(process.execPath, [RUN, "--root"], { encoding: "utf8" }).status, 2);
+    assert.equal(spawnSync(process.execPath, [path.join(REPO, "scripts/contract/sync.cjs"), "--root"], { encoding: "utf8" }).status, 2);
+  });
+
   it("exits 2 on a missing config", () => {
     fs.rmSync(path.join(root, "validate.config.json"));
     assert.equal(run().status, 2);

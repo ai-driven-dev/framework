@@ -7,18 +7,18 @@ const { phaseRows } = require("./plan-model.cjs");
 module.exports = (ctx) => {
   const { listed, rows, line } = phaseRows(ctx);
   const found = [];
-  if (!listed) found.push({ line, values: {}, fix: "no row in ## Phases" });
+  if (!listed) found.push({ line, fix: "no row in ## Phases" });
   for (const c of rows) {
     const cell = c.at(-1).replace(/`/gu, "");
     const ok = cell === "none" || cell.split(/\s*,\s*/u).every((p) => /^\d+$/u.test(p) && Number(p) < Number(c[0]));
-    if (!ok) found.push({ line, offending: cell, values: {}, fix: `phase ${c[0]} "Depends on" must be "none" or earlier phase numbers` });
+    if (!ok) found.push({ line, offending: cell, fix: `phase ${c[0]} "Depends on" must be "none" or earlier phase numbers` });
   }
   for (let n = 1; n <= listed; n += 1) {
-    if (!fs.existsSync(path.join(ctx.root, `phase-${n}.md`))) found.push({ file: `phase-${n}.md`, line: 1, values: {}, fix: "listed in plan.md, file missing" });
+    if (!fs.existsSync(path.join(ctx.root, `phase-${n}.md`))) found.push({ file: `phase-${n}.md`, line: 1, fix: "listed in plan.md, file missing" });
   }
   for (const name of ctx.files) {
     const m = /^phase-(\d+)\.md$/u.exec(name);
-    if (m && Number(m[1]) > listed) found.push({ file: name, line: 1, values: {}, fix: "not listed in plan.md" });
+    if (m && Number(m[1]) > listed) found.push({ file: name, line: 1, fix: "not listed in plan.md" });
   }
   return found;
 };

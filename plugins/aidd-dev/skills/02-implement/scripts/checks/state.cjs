@@ -1,4 +1,5 @@
 "use strict";
+// Mirrors the phase-table parsing of 01-plan scripts/checks/plan-model.cjs on purpose: skills stay self-contained.
 // Reads a plan folder once: the plan status, and per listed phase its status, dependencies and task numbers.
 const fs = require("node:fs");
 const path = require("node:path");

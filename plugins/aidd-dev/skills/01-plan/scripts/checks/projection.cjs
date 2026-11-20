@@ -31,7 +31,7 @@ module.exports = (ctx) => {
       folders = name.endsWith("/") ? [...parents, { indent: indent.length, name: name.replace(/\/$/u, "") }] : parents;
       const present = (fs.existsSync(path.resolve(rel)) || created.includes(rel)) && !deleted.includes(rel);
       if ((mark === "✏" || mark === "❌") && !present) {
-        found.push({ file, line: s.line, offending: rel, values: {}, fix: `${rel} is marked ${mark === "✏" ? "modify" : "delete"} but does not exist` });
+        found.push({ file, line: s.line, offending: rel, fix: `${rel} is marked ${mark === "✏" ? "modify" : "delete"} but does not exist` });
       }
       if (mark === "✅") made.push(rel);
       if (mark === "❌") gone.push(rel);

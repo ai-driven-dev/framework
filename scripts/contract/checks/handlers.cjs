@@ -21,13 +21,13 @@ module.exports = (ctx) => {
     const line = ctx.lines.findIndex((l) => l.includes(rel)) + 1 || 1;
     const file = path.resolve(path.dirname(ctx.abs), "..", rel);
     if (!fs.existsSync(file)) {
-      found.push({ line, offending: rel, values: { problem: `${rel} does not exist` } });
+      found.push({ line, offending: rel, fix: `${rel} does not exist` });
       continue;
     }
     try {
       execFileSync(process.execPath, ["--check", file], { stdio: "pipe" });
     } catch {
-      found.push({ line, offending: rel, values: { problem: `${rel} does not parse` } });
+      found.push({ line, offending: rel, fix: `${rel} does not parse` });
     }
   }
   return found;

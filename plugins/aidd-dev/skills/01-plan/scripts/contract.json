@@ -29,36 +29,31 @@
       "op": "custom",
       "in": "plan.md",
       "check": "phases",
-      "why": "the phase table is the order the implementer runs",
-      "fix": "fix the phase table"
+      "why": "the phase table is the order the implementer runs"
     },
     "PLAN-04": {
       "op": "custom",
       "in": "plan.md",
       "check": "sources",
-      "why": "a source without a URL cannot be re-read",
-      "fix": "give each source its URL"
+      "why": "a source without a URL cannot be re-read"
     },
     "PLAN-05": {
       "op": "custom",
       "in": "plan.md",
       "check": "projection",
-      "why": "a phase that modifies a missing file cannot run",
-      "fix": "fix the projection"
+      "why": "a phase that modifies a missing file cannot run"
     },
     "PLAN-06": {
       "op": "custom",
       "in": "phase-*.md",
       "check": "wireframe",
-      "why": "an unnumbered wireframe cannot be referred to",
-      "fix": "number the wireframe regions"
+      "why": "an unnumbered wireframe cannot be referred to"
     },
     "PLAN-07": {
       "op": "custom",
       "in": "phase-*.md",
       "check": "tasks",
-      "why": "each criterion must point at a task",
-      "fix": "fix the task numbers"
+      "why": "each criterion must point at a task"
     }
   }
 }

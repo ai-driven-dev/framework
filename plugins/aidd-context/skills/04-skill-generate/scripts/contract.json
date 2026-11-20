@@ -15,7 +15,7 @@
     "SKILL-05": { "op": "sections", "in": "SKILL.md", "allowed": ["Transversal rules"],
       "why": "the router loads on every call; detail belongs in actions", "fix": "keep only the diagram and the transversal rules after the title" },
     "SKILL-06": { "op": "custom", "in": "SKILL.md", "check": "router-diagram",
-      "why": "the diagram is the only route to an action", "fix": "draw every action file, and only them" },
+      "why": "the diagram is the only route to an action" },
     "SKILL-07": { "op": "custom", "in": "SKILL.md", "check": "router-edges",
       "why": "an edge the model cannot follow is a dead route", "fix": "link the target action from the source step" },
     "SKILL-08": { "op": "pattern", "in": "actions/*.md", "line": 1, "regex": "^# \\d\\d - \\S",

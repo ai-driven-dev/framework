@@ -14,8 +14,7 @@
       "op": "custom",
       "in": "plugin.json",
       "check": "coherence",
-      "why": "an unlisted skill never installs, a listed missing one breaks the install",
-      "fix": "{problem}"
+      "why": "an unlisted skill never installs, a listed missing one breaks the install"
     }
   }
 }

@@ -9,11 +9,11 @@
       "targets": "plugins/*/agents/*.md"
     },
     {
-      "contract": "scripts/contract/hooks.json",
+      "contract": "scripts/contract/hooks-contract.json",
       "targets": "plugins/*/hooks/hooks.json"
     },
     {
-      "contract": "scripts/contract/repo.json",
+      "contract": "scripts/contract/plugin-contract.json",
       "targets": "plugins/*/.claude-plugin/plugin.json"
     }
   ],

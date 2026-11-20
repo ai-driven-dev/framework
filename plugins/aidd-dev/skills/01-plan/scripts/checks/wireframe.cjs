@@ -6,5 +6,5 @@ module.exports = (ctx) => {
   const s = section(ctx, "Wireframe");
   if (!s) return [];
   const body = s.body.join("\n");
-  return /\(1\)/u.test(body) && /^1\. /mu.test(body) ? [] : [{ line: s.line, values: {}, fix: 'section "Wireframe" needs a frame with region (1) and a legend "1. ...", or omit the section' }];
+  return /\(1\)/u.test(body) && /^1\. /mu.test(body) ? [] : [{ line: s.line, fix: 'section "Wireframe" needs a frame with region (1) and a legend "1. ...", or omit the section' }];
 };

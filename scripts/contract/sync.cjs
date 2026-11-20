@@ -45,6 +45,10 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const check = args.includes("--check");
   const at = args.indexOf("--root");
+  if (at >= 0 && !args[at + 1]) {
+    process.stderr.write("usage: sync.cjs [--check] [--root <dir>]\n");
+    process.exit(2);
+  }
   const stale = sync({ root: at >= 0 ? path.resolve(args[at + 1]) : ROOT, write: !check });
   if (check) {
     for (const copy of stale) process.stdout.write(`${copy} differs from scripts/contract, run node scripts/contract/sync.cjs\n`);

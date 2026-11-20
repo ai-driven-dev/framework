@@ -2,6 +2,10 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const engine = require("../../contract/engine.cjs");
+
+const ENGINE = path.resolve(__dirname, "../../contract/engine.cjs");
+const RUN = "process.exitCode = require(process.argv[1]).run(process.argv[2], process.argv.slice(3));";
 
 /** A template filled the way a model fills it: comments and the closing note dropped, every slot given a value. */
 function fill(template) {
@@ -10,6 +14,15 @@ function fill(template) {
     .replace(/^> Fill every.*\n?/mu, "")
     .replace(/\{\{[^}\n]*\}\}/gu, "x");
 }
+
+/** The engine's CLI on a contract and its targets, as a process: exit status, stdout and stderr. */
+function lint(contractFile, ...targets) {
+  const run = spawnSync(process.execPath, ["-e", RUN, ENGINE, contractFile, ...targets], { encoding: "utf8" });
+  return { status: run.status, out: run.stdout, err: run.stderr };
+}
+
+/** The engine's findings on one target, in process. */
+const findings = (contractFile, target) => engine.check(engine.loadContract(contractFile), target);
 
 /** Runs a validate-<kind>.cjs on one file written under a scratch folder; returns exit code and stdout. */
 function validate(script, name, text) {
@@ -42,4 +55,4 @@ function writeThenValidate(writer, validator, request, tools, produced) {
   }
 }
 
-module.exports = { fill, validate, writeThenValidate };
+module.exports = { fill, validate, lint, findings, writeThenValidate };
