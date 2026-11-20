@@ -28,7 +28,7 @@ Foundations — step {{n}} of {{total}}
   {{deliverable}}     {{what}}
                     ({{why}})
 
-  {{each remaining step, one line: step number, deliverable, what}}
+  step {{i}}   {{deliverable}} — {{what}}
 
 👉  Type [1] to start.   skip [s]
 ```

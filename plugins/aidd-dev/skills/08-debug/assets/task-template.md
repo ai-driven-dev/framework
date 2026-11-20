@@ -9,7 +9,7 @@ description: Task tracking system to ensure all tasks are categorized and addres
 
 ## Main step 1
 
-- [ ] {Task 1}
-- [ ] {Task 2}
-- [ ] {Task 3}
+- [ ] {{task 1}}
+- [ ] {{task 2}}
+- [ ] {{task 3}}
 - ...

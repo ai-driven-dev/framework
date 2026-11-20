@@ -25,7 +25,7 @@ Duration, messages, interventions, compactions, delegations, tool errors.
 
 ## Findings, by observed impact
 ### F1 - {{title}}
-- Evidence: [sequence] and a quote of three lines at most
+- Evidence: {{sequence}} and a quote of three lines at most
 - Instruction involved: file and passage, when identifiable
 - Cause: established, hypothesis, or unknown; distinguish the observed failure from its explanation
 - Impact: measured consequence and unit, or unavailable
