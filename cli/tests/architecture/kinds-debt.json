@@ -55,7 +55,6 @@
     "src/contexts/installation/application/removal/remove-plugin.ts",
     "src/contexts/installation/application/removal/remove-project-plugin.ts",
     "src/contexts/installation/application/removal/remove-user-plugin.ts",
-    "src/contexts/installation/application/restore/restore.ts",
     "src/contexts/installation/application/sync/load-sync-context.ts",
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
