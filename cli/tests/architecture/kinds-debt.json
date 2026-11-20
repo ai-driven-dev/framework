@@ -17,7 +17,12 @@
     "toolNames": "the file reads the tool from its profile instead of naming it",
     "toolSites": "the registration moves into the profile or the composition list is rewritten",
     "toolOwn": "the file stops naming its own tool",
-    "toolIdentifiers": "the file stops carrying a tool name in an identifier"
+    "toolIdentifiers": "the file stops carrying a tool name in an identifier",
+    "exemptProcessExit": "the file stops exiting the process and leaves its exclusion in biome.json",
+    "exemptGithubUrl": "the file stops writing the GitHub API URL, or the adapter is the only one that ever did",
+    "exemptDefaultExport": "no declaration file needs a default export",
+    "exemptProfileImport": "the folder stops importing a whole profile",
+    "exemptProfileList": "the folder stops listing profiles"
   },
   "classification": [
     "src/presentation/deps.ts",
@@ -662,5 +667,10 @@
     "src/contexts/distribution/application/fetch-marketplace-source.ts: 1",
     "src/contexts/distribution/application/refresh-marketplace.ts: 1",
     "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts: 1"
-  ]
+  ],
+  "exemptProcessExit": ["src/presentation/exit.ts"],
+  "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],
+  "exemptDefaultExport": ["**/*.d.ts"],
+  "exemptProfileImport": ["src/contexts/tools/**", "src/composition/**"],
+  "exemptProfileList": ["src/contexts/tools/**", "src/presentation/**"]
 }

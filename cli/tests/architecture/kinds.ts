@@ -572,9 +572,20 @@ const escapeRegExp = (literal: string): string => literal.replace(/[.*+?^${}()|[
 
 /**
  * The lists the debt file holds beside the kind rules. Each is read by the test that owns the data:
- * size-limit exclusions by `code-size`, tool names outside a profile by `tool-addition-cost`.
+ * size-limit and rule exclusions by `biome-guards-bite`, tool names outside a profile by
+ * `tool-addition-cost`.
  */
-export type ListedDebt = "limits" | "toolNames" | "toolSites" | "toolOwn" | "toolIdentifiers";
+export type ListedDebt =
+  | "limits"
+  | "exemptProcessExit"
+  | "exemptGithubUrl"
+  | "exemptDefaultExport"
+  | "exemptProfileImport"
+  | "exemptProfileList"
+  | "toolNames"
+  | "toolSites"
+  | "toolOwn"
+  | "toolIdentifiers";
 
 export type Debt = Readonly<Record<Rule | ListedDebt, readonly string[]>>;
 
@@ -612,6 +623,11 @@ export const noDebt = (): Debt => ({
   scope: [],
   size: [],
   limits: [],
+  exemptProcessExit: [],
+  exemptGithubUrl: [],
+  exemptDefaultExport: [],
+  exemptProfileImport: [],
+  exemptProfileList: [],
   toolNames: [],
   toolSites: [],
   toolOwn: [],
