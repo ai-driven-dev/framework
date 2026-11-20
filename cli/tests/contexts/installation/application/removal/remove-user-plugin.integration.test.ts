@@ -6,6 +6,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { RegistrationRecordRules } from "../../../../../src/contexts/installation/ports/native-host.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
@@ -40,7 +41,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
       options: {
         refs?: readonly string[];
         dependents?: readonly string[];
-        hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: "user" | "project" }>;
+        hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>;
         available?: boolean;
         failOnUninstall?: boolean;
         sourceMismatch?: boolean;

@@ -12,6 +12,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import {
   REWRITTEN_BINARY,
@@ -57,7 +58,7 @@ function sourceReader(): HostMarketplaceSources {
 for (const toolId of [TOOL.codex]) {
   describe(`${toolId} targeted user marketplace removal`, () => {
     async function fixture(
-      refs: ReadonlyMap<string, { enabled: boolean; scope?: "project" | "user" }>,
+      refs: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>,
       options: {
         dependents?: readonly string[];
         available?: boolean;

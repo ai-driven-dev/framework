@@ -133,7 +133,7 @@ export interface MarketplaceRemovalPlanner {
   ) => Promise<{
     activator: MarketplaceRemovalActions;
     refs: readonly Claim[];
-    scopes: ReadonlyMap<string, "project" | "user" | undefined>;
+    scopes: ReadonlyMap<string, Scope | undefined>;
   }>;
 }
 

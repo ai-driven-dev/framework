@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { ReadMachineInstallation } from "../../../../../src/contexts/installation/application/doctor/read-machine-installation.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { manifestRepositoryLoading } from "../../../../helpers/ports/index.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
-const pluginAt = (scope: "project" | "user") =>
+const pluginAt = (scope: Scope) =>
   InstalledPlugin.fromJSON({
     name: "my-plugin",
     source: { kind: "github", repo: "owner/my-plugin" },

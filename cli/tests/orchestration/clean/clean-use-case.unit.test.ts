@@ -13,6 +13,7 @@ import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-
 import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.js";
 import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
@@ -403,9 +404,7 @@ describe("clean", () => {
     }
 
     /** Explicit host ref evidence for Claude positives, separate from the AIDD manifest. */
-    function claudeRefOnHost(
-      scope?: "project" | "user"
-    ): ReadonlyMap<AiToolId, HostPluginRegistry> {
+    function claudeRefOnHost(scope?: Scope): ReadonlyMap<AiToolId, HostPluginRegistry> {
       return new Map([
         [
           TOOL.claude,
@@ -894,7 +893,7 @@ describe("clean", () => {
       const CLAUDE_MARKETPLACE = "aidd-framework";
       const CLAUDE_REF = "aidd-context@aidd-framework";
 
-      function seedClaudeManifest(pluginScope: "project" | "user"): Manifest {
+      function seedClaudeManifest(pluginScope: Scope): Manifest {
         const manifest = Manifest.create();
         manifest.addTool(TOOL.claude, "1.0.0", []);
         manifest.addPlugin(
@@ -1841,7 +1840,7 @@ describe("clean", () => {
 
       function seedClaudeScopeManifest(
         marketplaces: ReadonlyArray<{ alias: string; hostName: string }>,
-        plugins: ReadonlyArray<{ name: string; scope: "project" | "user"; marketplace: string }>
+        plugins: ReadonlyArray<{ name: string; scope: Scope; marketplace: string }>
       ): Manifest {
         const manifest = Manifest.create();
         manifest.addTool(TOOL.claude, "1.0.0", []);

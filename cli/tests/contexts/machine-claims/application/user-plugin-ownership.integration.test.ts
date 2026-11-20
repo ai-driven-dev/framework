@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { detachUserPlugin } from "../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import {
@@ -9,7 +10,7 @@ import {
 } from "../testing/in-memory-machine-manifest.js";
 import { MachinePlugin } from "../testing/machine-plugin.js";
 
-function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
+function fixture(scope: Scope = "user", dependents: readonly string[] = ["/A", "/B"]) {
   const manifest = new InMemoryMachineManifest(TOOL.cursor);
   manifest.addPlugin(TOOL.cursor, new MachinePlugin({ name: "sample-plugin", scope, dependents }));
   return {

@@ -15,6 +15,7 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
@@ -165,10 +166,7 @@ function seedManifest(toolId: AiToolId, hostName: string, alias: string): Manife
   return manifest;
 }
 
-function seedAiddMarketplaceRegistry(
-  alias: string,
-  scope: "project" | "user" = "project"
-): InMemoryMarketplaceRegistry {
+function seedAiddMarketplaceRegistry(alias: string, scope: Scope = "project") {
   const registry = new InMemoryMarketplaceRegistry();
   registry.save(
     PROJECT_ROOT,

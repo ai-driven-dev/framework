@@ -6,6 +6,7 @@ import type {
 } from "../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
@@ -109,7 +110,7 @@ describe("native host registration gate", () => {
       entries: new Map([[HOST, { ...provenCodex.marketplaces[0].provenance, source }]]),
     }),
   });
-  const reader = (refs?: ReadonlyMap<string, { enabled: boolean; scope?: "user" | "project" }>) =>
+  const reader = (refs?: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>) =>
     ({
       read: async () => ({ location: "/host/registry", refs }),
     }) satisfies HostPluginRegistry;
@@ -178,7 +179,7 @@ describe("native host registration gate", () => {
 
   it("does not adopt a foreign same-catalogue ref, and returns only exact owned host scopes", async () => {
     const activator = new FakeHostActions({ available: true });
-    const host = new Map<string, { enabled: boolean; scope?: "project" | "user" }>(enabled());
+    const host = new Map<string, { enabled: boolean; scope?: Scope }>(enabled());
     host.set("foreign@real-catalog", { enabled: true, scope: "project" });
     const gate = new NativeHostRegistrationGate(
       new Map([[codex, activator]]),

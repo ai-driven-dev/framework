@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { proveClaimedRef } from "../../../../../src/contexts/host-registration/application/withdraw/prove-claimed-ref.js";
 import type { WithdrawalDeps } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -19,7 +20,7 @@ const RECORD = {
 
 interface Host {
   readonly available?: boolean;
-  readonly refs?: ReadonlyMap<string, { enabled: boolean; scope: "project" | "user" }>;
+  readonly refs?: ReadonlyMap<string, { enabled: boolean; scope: Scope }>;
   readonly catalogue?: ReadonlyMap<string, NativeMarketplaceSource>;
 }
 

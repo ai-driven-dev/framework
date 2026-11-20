@@ -14,6 +14,7 @@ import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infra
 import { CLIOutput } from "../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
+import type { Scope } from "../../src/shared/domain/scope.js";
 import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
@@ -70,7 +71,7 @@ describe("the graph a container hands the commands", () => {
       vi.unstubAllEnvs();
     });
 
-    async function registerThenOverwrite(scope: "project" | "user") {
+    async function registerThenOverwrite(scope: Scope) {
       vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
       const { addMarketplace } = await graphOf(root, { verbose: false }, undefined, tools);
       const command = { source, name: "awesome", scope, projectRoot: root, autoTrust: true };
@@ -112,10 +113,7 @@ describe("the graph a container hands the commands", () => {
       vi.restoreAllMocks();
     });
 
-    const aPlugin = (
-      scope: "project" | "user",
-      extra: { mcpEntries?: Record<string, string> } = {}
-    ) =>
+    const aPlugin = (scope: Scope, extra: { mcpEntries?: Record<string, string> } = {}) =>
       InstalledPlugin.fromJSON({
         name: "aidd-dev",
         source: { kind: "github", repo: "ai-driven-dev/framework" },

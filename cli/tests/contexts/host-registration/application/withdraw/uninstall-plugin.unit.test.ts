@@ -5,6 +5,7 @@ import type {
   WithdrawFromHostCommand,
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -17,7 +18,7 @@ const SOURCE: NativeMarketplaceSource = { kind: "registry", source: "/project/.a
 function depsOf(
   activator: FakeHostActions,
   logger: CapturingLogger,
-  onHost: { readonly ref: string; readonly scope: "project" | "user" } = {
+  onHost: { readonly ref: string; readonly scope: Scope } = {
     ref: REF,
     scope: "project",
   }

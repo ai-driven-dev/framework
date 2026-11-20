@@ -5,6 +5,7 @@ import type { HostPluginRegistryReading } from "../../../src/contexts/host-regis
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
@@ -28,7 +29,7 @@ describe("native catalogue source provenance", () => {
     options: {
       toolId?: AiToolId;
       catalogue?: HostMarketplaceRegistryReading;
-      marketplaceScope?: "project" | "user";
+      marketplaceScope?: Scope;
       plugin?: boolean;
     } = {}
   ) {

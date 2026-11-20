@@ -12,6 +12,7 @@ import { jsoncMainSessionSettings } from "../../../src/contexts/installation/inf
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
 import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
@@ -24,7 +25,7 @@ const CLAUDE_SETTINGS = join(HOME, ".claude", "settings.json");
 const OPENCODE_SETTINGS = join(HOME, ".config", "opencode", "opencode.jsonc");
 const OPENCODE_SCHEMA = '"$schema": "https://opencode.ai/config.json"';
 
-function plugin(scope: "project" | "user"): InstalledPlugin {
+function plugin(scope: Scope): InstalledPlugin {
   return InstalledPlugin.fromJSON({
     name: "aidd-orchestrator",
     source: { kind: "local", path: "./orchestrator" },

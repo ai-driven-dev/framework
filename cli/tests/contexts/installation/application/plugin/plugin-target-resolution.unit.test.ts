@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import { aManifest } from "../../testing/manifest-builder.js";
 
@@ -48,7 +49,7 @@ describe("resolvePluginToolIds() order", () => {
 
 describe("scopeBaseOf()", () => {
   const home = "/home/u";
-  const query = (scope: "project" | "user") => ({
+  const query = (scope: Scope) => ({
     scope,
     projectRoot: "/proj",
     homedir: () => home,

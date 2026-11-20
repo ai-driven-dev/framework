@@ -1,3 +1,4 @@
+import type { Scope } from "./scope.js";
 import type { ToolCategory } from "./tool.js";
 
 /** A catalogue error carries a stable kebab-case `code`, the key a presentation table maps to words. */
@@ -25,7 +26,7 @@ export class CursorProjectScopeUnsupportedError extends AiddError {
 
 export class InvalidPluginScopeError extends AiddError {
   readonly code = "invalid-plugin-scope";
-  constructor(toolId: string, requested: "project" | "user", supported: "project" | "user") {
+  constructor(toolId: string, requested: Scope, supported: Scope) {
     super(
       `Tool '${toolId}' does not support scope '${requested}'. Supported scope: '${supported}'. ` +
         `Re-run with --scope ${supported} or omit the flag.`

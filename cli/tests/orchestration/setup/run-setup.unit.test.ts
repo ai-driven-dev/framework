@@ -26,6 +26,7 @@ import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plu
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
@@ -216,7 +217,7 @@ function remoteFlow(
   opts: Partial<{
     aiTools: ToolId[];
     ideTools: ToolId[];
-    scope: "project" | "user";
+    scope: Scope;
     pluginMode: "all" | "named";
     pluginNames: string[];
   }> = {}

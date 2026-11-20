@@ -1,3 +1,4 @@
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { EnvironmentReader } from "./tool-profile.js";
 import type { MarketplaceSettingsInput } from "./tool-vocabulary.js";
 
@@ -46,7 +47,7 @@ export interface NativeActivationSpec {
    * Claude's declaration from every scope at once. A project-scoped marketplace maps to
    * Claude's *local* scope: the registration names an absolute path, wrong for everyone
    * else in the shared project settings. Omit where the registry has no scopes. */
-  scopeArgs?: Readonly<Record<"project" | "user", readonly string[]>>;
+  scopeArgs?: Readonly<Record<Scope, readonly string[]>>;
   /** Scope arguments `plugin marketplace remove` takes at user scope instead of
    * `scopeArgs.user` when no project uses the marketplace, run from the home directory.
    * Measured on Claude 2.1.318: `remove --scope user` drops the settings declaration and keeps

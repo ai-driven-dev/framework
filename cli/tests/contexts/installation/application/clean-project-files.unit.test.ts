@@ -7,6 +7,7 @@ import { UpdateGitignore } from "../../../../src/contexts/installation/applicati
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
@@ -37,7 +38,7 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
   );
 }
 
-function localPlugin(name: string, scope: "project" | "user" = "project"): InstalledPlugin {
+function localPlugin(name: string, scope: Scope = "project"): InstalledPlugin {
   return InstalledPlugin.fromMetadata(name, "1.0.0", { kind: "local", path: "/p" }, false, scope);
 }
 
@@ -80,7 +81,7 @@ describe("CleanProjectFiles.assertRemovable on a project that installed nothing"
 });
 
 describe("CleanProjectFiles over a tool that is not an AI tool", () => {
-  function manifestWithIdePlugin(scope: "project" | "user"): Manifest {
+  function manifestWithIdePlugin(scope: Scope): Manifest {
     const manifest = aManifest()
       .withTool(TOOL.vscode, [])
       .withPlugin(TOOL.vscode, localPlugin("ide-plugin", scope))

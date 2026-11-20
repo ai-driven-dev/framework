@@ -1,4 +1,5 @@
 import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type {
   MarketplaceSettings,
   NativeActivationSpec,
@@ -29,7 +30,7 @@ export function flatGlobalFilePath(directory: string): GlobalFiles["map"] {
 export interface NativeLayout {
   readonly mode: "native";
   readonly pluginsDir: string;
-  readonly installScope: "project" | "user";
+  readonly installScope: Scope;
   readonly userPluginsDir?: (homedir: string) => string;
   readonly globalFiles?: GlobalFiles;
   /** The tool's own plugin CLI, when it drives the activation. */
@@ -57,7 +58,7 @@ export type LayoutSection = NativeLayout | FlatPlacement | UnsupportedLayout;
 export interface NativeLayoutParams {
   pluginsDir: string;
   /** `"user"` installs plugins relative to the home directory and requires `userPluginsDir`. */
-  installScope?: "project" | "user";
+  installScope?: Scope;
   userPluginsDir?: (homedir: string) => string;
   globalFiles?: GlobalFiles;
   nativeActivation?: NativeActivationSpec;

@@ -16,6 +16,7 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
@@ -222,7 +223,7 @@ describe("UninstallTools — a project's tools", () => {
       for (const toolId of [TOOL.cursor, TOOL.codex]) await installTool(deps, PROJECT_ROOT, toolId);
       const project = deps.manifestRepo.getCurrent();
       if (project === null) throw new Error("fixture missing project");
-      const record = (name: string, scope: "user" | "project") =>
+      const record = (name: string, scope: Scope) =>
         InstalledPlugin.fromMetadata(
           name,
           "1.0.0",

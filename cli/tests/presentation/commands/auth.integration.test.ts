@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import { runInProcess } from "../../helpers/in-process-cli.js";
 
 let root: string;
@@ -32,7 +33,7 @@ function aidd(args: string[]) {
   });
 }
 
-async function seed(file: string, level: "project" | "user"): Promise<void> {
+async function seed(file: string, level: Scope): Promise<void> {
   await mkdir(join(file, ".."), { recursive: true });
   await writeFile(
     file,

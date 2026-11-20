@@ -6,6 +6,7 @@ import type {
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -19,7 +20,7 @@ function depsOf(
   options: {
     available?: boolean;
     sourceEntries?: Map<string, NativeMarketplaceSource>;
-    refs?: Map<string, { enabled: boolean; scope?: "project" | "user" }>;
+    refs?: Map<string, { enabled: boolean; scope?: Scope }>;
   } = {}
 ): WithdrawalDeps {
   const registry: HostPluginRegistry = {

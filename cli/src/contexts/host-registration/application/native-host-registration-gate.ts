@@ -1,3 +1,4 @@
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
@@ -32,7 +33,7 @@ export class NativeHostRegistrationGate {
   ): Promise<{
     activator: HostActions;
     refs: readonly Claim[];
-    scopes: ReadonlyMap<string, "project" | "user" | undefined>;
+    scopes: ReadonlyMap<string, Scope | undefined>;
   }> {
     const { toolId } = tool;
     const binary = readRegistrationRecord(registrations)?.binary;

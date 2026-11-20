@@ -12,6 +12,7 @@ import { PluginDistributionReaderAdapter } from "../../../src/contexts/installat
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
@@ -34,7 +35,7 @@ function fixture(
     refs?: readonly string[];
     dependents?: readonly string[];
     available?: boolean;
-    hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: "project" | "user" }>;
+    hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>;
     failOnUpdate?: boolean;
     installed?: InstalledPlugin;
     distribution?: PluginDistribution;

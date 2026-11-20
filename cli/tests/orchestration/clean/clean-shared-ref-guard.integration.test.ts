@@ -11,6 +11,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
@@ -175,7 +176,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       const registration = provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework");
       const project = seedManifest(TOOL.codex, [registration], [ref]);
       project.addTool(TOOL.cursor, "1.0.0", []);
-      const record = (name: string, scope: "project" | "user" = "user") =>
+      const record = (name: string, scope: Scope = "user") =>
         InstalledPlugin.fromJSON({
           name,
           source: { kind: "local", path: "/shared/plugins" },

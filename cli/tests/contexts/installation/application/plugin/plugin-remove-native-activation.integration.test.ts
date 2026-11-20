@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.js";
@@ -33,7 +34,7 @@ const PROJECT_ROOT = "/test-project";
 function buildRemoveUseCase(
   activator: FakeHostActions,
   logger: CapturingLogger,
-  hostScope: "project" | "user" = "project"
+  hostScope: Scope = "project"
 ): { removeUseCase: ReturnType<typeof pluginRemover>; manifestRepo: InMemoryManifestRepository } {
   const fs = new InMemoryFileAdapter();
   const manifestRepo = new InMemoryManifestRepository();

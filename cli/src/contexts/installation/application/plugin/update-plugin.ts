@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { InvalidPluginScopeError } from "../../../../shared/domain/errors.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
@@ -18,7 +19,7 @@ export interface UpdatePluginCommand {
   pluginNames?: string[];
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  scope?: "project" | "user";
+  scope?: Scope;
   /** Re-materialize at the same version: the source or the build changed, not the plugin's
    * version, as a new agent provider changes it. `sync --global` drives the machine-scope one. */
   rebuild?: boolean;

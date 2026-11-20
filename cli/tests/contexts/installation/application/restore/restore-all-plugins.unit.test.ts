@@ -6,6 +6,7 @@ import type { PluginFetcher } from "../../../../../src/contexts/installation/por
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -45,7 +46,7 @@ const emptyDistributionReader: PluginDistributionReader = {
 
 function nativePlugin(
   files: Record<string, string> = {},
-  scope: "project" | "user" = "project"
+  scope: Scope = "project"
 ): InstalledPlugin {
   return InstalledPlugin.fromJSON({
     name: "aidd-test",

@@ -46,7 +46,7 @@ export async function deletePluginFilesForTool(
   tool: PluginPlacement,
   projectRoot: string,
   fs: FileWriter,
-  ownerScope: "project" | "user" = "project"
+  ownerScope: Scope = "project"
 ): Promise<string[]> {
   if (scope === "user" && ownerScope !== "user") return [];
   const baseDir = scopeBaseOf(tool, {

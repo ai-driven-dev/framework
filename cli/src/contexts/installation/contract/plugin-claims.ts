@@ -1,9 +1,10 @@
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 
 /** A plugin the installation removed, as far as a claim over it needs to know. */
 export interface RemovedPlugin {
   readonly toolId: AiToolId;
-  readonly plugin: { readonly name: string; readonly scope: "project" | "user" };
+  readonly plugin: { readonly name: string; readonly scope: Scope };
 }
 
 /** What removed plugins left claimed outside the installation record: the host's plugin
