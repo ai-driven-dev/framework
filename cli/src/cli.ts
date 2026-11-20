@@ -1,11 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
-import {
-  bindCatalog,
-  bindContainer,
-  createMenuDeps as createCatalogMenuDeps,
-  createContainer,
-} from "./composition/container.js";
+import { bindContainer, createContainer } from "./composition/container.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
@@ -20,7 +15,7 @@ import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
 import { registerToolConfigCommand } from "./presentation/commands/tool-config.js";
 import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
-import type { DepsFactory, MenuDepsFactory } from "./presentation/deps.js";
+import type { MenuDepsFactory } from "./presentation/deps.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
@@ -34,11 +29,10 @@ const tools = wireTools();
 // The composition edge: commands receive these factories and never import the wiring.
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
   .version;
-const createDeps: DepsFactory = bindCatalog(tools);
 const createSlice = bindContainer(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
 const createMenuDeps: MenuDepsFactory = (projectRoot) =>
-  createCatalogMenuDeps(projectRoot, tools, terminal);
+  createContainer({ projectRoot, verbose: false, tools }).menu(terminal);
 
 const program = new Command();
 
@@ -49,16 +43,16 @@ program
   .option("--verbose", "Show detailed diagnostic output", false);
 
 registerSetupCommand(program, tools, createSlice);
-registerToolConfigCommand(program, tools, createDeps);
+registerToolConfigCommand(program, tools, createSlice);
 registerTranslateCommand(program, tools, createSlice);
 registerPluginCommand(program, tools, createSlice, createMenuDeps);
 registerMarketplaceCommand(program, createSlice, createMenuDeps);
 registerAuthCommand(program, createSlice);
 registerSyncCommand(program, tools, createSlice);
 registerUpdateCommand(program, createSlice);
-registerDoctorCommand(program, tools, createDeps);
-registerCleanCommand(program, createDeps);
-registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
+registerDoctorCommand(program, tools, createSlice);
+registerCleanCommand(program, createSlice);
+registerTelemetryCommand(program, createSlice, wireTelemetryRequests());
 
 registerUpdateNoticeHooks(program, createSlice);
 

@@ -1,15 +1,10 @@
 import { homedir } from "node:os";
-import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
 import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";
 import type { CLIOutput } from "../presentation/output.js";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../presentation/terminal/prompter-adapter.js";
 import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";
 import { wireDoctor } from "./orchestration/doctor.js";
@@ -25,22 +20,6 @@ import { wireUpdate } from "./update.js";
 
 /** One graph per catalog, then per project root and token: two catalogs never share a graph. */
 const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
-
-/** The menu loop and the prompter of a project, given the terminal the loop runs commands on. */
-export function createMenuDeps(
-  projectRoot: string,
-  tools: ToolCatalog,
-  terminal: { runner: CommandRunner; pause: Pause }
-): MenuDeps {
-  const prompter = process.stdout.isTTY
-    ? new InquirerPrompterAdapter()
-    : new SilentPrompterAdapter();
-  const projectSetup = projectSetupOf(
-    new ManifestRepositoryAdapter(projectRoot, (raw) => tools.toolId(raw))
-  );
-  const menu = new BuildMenu(projectSetup, prompter, tools);
-  return { menuLoop: new MenuLoop(menu, terminal.runner, terminal.pause), prompter };
-}
 
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
 export interface ContainerOptions extends FactoryOptions {
@@ -81,6 +60,10 @@ export function createContainer(options: ContainerOptions) {
   const setup = memoized(() =>
     wireSetup(shared(), installation(), plugin(), marketplace(), global())
   );
+  const doctor = memoized(() => wireDoctor(shared(), installation()));
+  const clean = memoized(() => wireClean(shared(), installation()));
+  const recipes = memoized(() => wireRecipes());
+  const telemetry = memoized(() => wireTelemetry(homedir, shared().prompter));
   const agentModels = memoized(() => ({
     setAgentModels: wireAgentModels(shared(), installation(), plugin(), marketplace()),
   }));
@@ -109,42 +92,26 @@ export function createContainer(options: ContainerOptions) {
     get agentModels() {
       return agentModels();
     },
+    get doctor() {
+      return doctor();
+    },
+    get clean() {
+      return clean();
+    },
+    get telemetry() {
+      return telemetry();
+    },
+    get recipes() {
+      return recipes();
+    },
+    /** The menu loop of this project, given the terminal the loop runs commands on. */
+    menu(terminal: { runner: CommandRunner; pause: Pause }): MenuDeps {
+      const { prompter, manifestRepo } = shared();
+      const menu = new BuildMenu(projectSetupOf(manifestRepo), prompter, tools);
+      return { menuLoop: new MenuLoop(menu, terminal.runner, terminal.pause), prompter };
+    },
   };
 }
-
-/** The contexts the commands and the update notice read. */
-type ContainerSlice = Pick<
-  Deps,
-  | "selfUpdate"
-  | "printUpdateNotice"
-  | "refreshUpdateCheck"
-  | "logger"
-  | "prompter"
-  | "logIn"
-  | "logOut"
-  | "checkStatus"
-  | "frameworkBuild"
-  | "userManifestRepo"
-  | "restoreAllUseCase"
-  | "restoreToolUseCase"
-  | "syncSettingsUseCase"
-  | "syncNativeActivation"
-  | "runSetup"
-  | "setAgentModels"
-  | "pluginRemoveUseCase"
-  | "userPluginRemove"
-  | "pluginListUseCase"
-  | "pluginInstallUseCase"
-  | "searchPlugins"
-  | "userPluginUpdateUseCase"
-  | "pluginUpdateUseCase"
-  | "addMarketplace"
-  | "listMarketplaces"
-  | "userMarketplaceRemoveUseCase"
-  | "marketplaceRemoveUseCase"
-  | "refreshMarketplace"
-  | "marketplaceCheckUseCase"
->;
 
 /** The factory those commands receive: each call builds one container, and a member wires its
  * context when the command first reads it. */
@@ -153,7 +120,7 @@ export function bindContainer(tools: ToolCatalog) {
     projectRoot: string,
     options: FactoryOptions,
     output: CLIOutput | undefined
-  ): Promise<ContainerSlice> => {
+  ): Promise<Deps> => {
     const container = createContainer({ projectRoot, ...options, output, tools });
     return {
       get selfUpdate() {
@@ -179,6 +146,24 @@ export function bindContainer(tools: ToolCatalog) {
       },
       get checkStatus() {
         return container.shared.checkStatus;
+      },
+      get fs() {
+        return container.shared.fs;
+      },
+      get userSourceReferences() {
+        return container.shared.userSourceReferences;
+      },
+      get assetProvider() {
+        return container.installation.assetProvider;
+      },
+      get registerFrameworkMarketplace() {
+        return container.shared.registerFrameworkMarketplace;
+      },
+      get askMarketplaceSource() {
+        return container.marketplace.askMarketplaceSource;
+      },
+      get choosePlugins() {
+        return container.setup.choosePlugins;
       },
       get userManifestRepo() {
         return container.shared.userManifestRepo;
@@ -240,6 +225,60 @@ export function bindContainer(tools: ToolCatalog) {
       get marketplaceCheckUseCase() {
         return container.marketplace.marketplaceCheckUseCase;
       },
+      get doctorAllUseCase() {
+        return container.doctor.doctorAllUseCase;
+      },
+      get statusAllUseCase() {
+        return container.global.statusAllUseCase;
+      },
+      get doctorUseCase() {
+        return container.doctor.doctorUseCase;
+      },
+      get statusUseCase() {
+        return container.global.statusUseCase;
+      },
+      get homedir() {
+        return homedir;
+      },
+      get environment() {
+        return container.shared.environment;
+      },
+      get doctorRegistrationUseCase() {
+        return container.doctor.doctorRegistrationUseCase;
+      },
+      get cleanUseCase() {
+        return container.clean.cleanUseCase;
+      },
+      get cleanUserScopeUseCase() {
+        return container.clean.cleanUserScopeUseCase;
+      },
+      get currentVersionProvider() {
+        return container.shared.currentVersionProvider;
+      },
+      get installAiToolUseCase() {
+        return container.global.installAiToolUseCase;
+      },
+      get manifestRepo() {
+        return container.shared.manifestRepo;
+      },
+      get installIdeToolUseCase() {
+        return container.global.installIdeToolUseCase;
+      },
+      get uninstallTools() {
+        return container.clean.uninstallTools;
+      },
+      get updateToolsUseCase() {
+        return container.global.updateToolsUseCase;
+      },
+      get listInstalledRulesUseCase() {
+        return container.installation.listInstalledRulesUseCase;
+      },
+      get validateRecipes() {
+        return container.recipes.validateRecipes;
+      },
+      get telemetry() {
+        return container.telemetry;
+      },
       get frameworkBuild() {
         const { fs, logger } = container.shared;
         const { assetProvider } = container.installation;
@@ -267,118 +306,7 @@ export async function createDeps(
   _cache.set(tools, graphs);
   const cached = graphs.get(cacheKey);
   if (cached !== undefined) return cached;
-  const container = createContainer({ projectRoot, ...options, output, tools });
-  const base = container.shared;
-  const inst = container.installation;
-  const marketplace = wireMarketplace(base, inst);
-  const plugin = wirePlugin(base, inst);
-  const global = wireGlobal(base, inst, marketplace, plugin);
-  const setup = wireSetup(base, inst, plugin, marketplace, global);
-  const doctor = wireDoctor(base, inst);
-  const clean = wireClean(base, inst);
-  const setAgentModels = wireAgentModels(base, inst, plugin, marketplace);
-  const {
-    fs,
-    logger,
-    manifestRepo,
-    userManifestRepo,
-    prompter,
-    logIn,
-    logOut,
-    checkStatus,
-    userSourceReferences,
-    listMarketplaces,
-    refreshMarketplace,
-    registerFrameworkMarketplace,
-    currentVersionProvider,
-    environment,
-  } = base;
-  const update = container.update;
-  const { pluginListUseCase, assetProvider, listInstalledRulesUseCase } = inst;
-  const {
-    addMarketplace,
-    marketplaceRemoveUseCase,
-    userMarketplaceRemoveUseCase,
-    marketplaceCheckUseCase,
-    syncSettingsUseCase,
-    syncNativeActivation,
-    askMarketplaceSource,
-  } = marketplace;
-  const {
-    pluginRemoveUseCase,
-    userPluginRemove,
-    pluginUpdateUseCase,
-    userPluginUpdateUseCase,
-    searchPlugins,
-    pluginInstallUseCase,
-  } = plugin;
-  const {
-    installAiToolUseCase,
-    installIdeToolUseCase,
-    statusUseCase,
-    restoreToolUseCase,
-    statusAllUseCase,
-    restoreAllUseCase,
-    updateToolsUseCase,
-  } = global;
-  const { choosePlugins, runSetup } = setup;
-  const { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase } = doctor;
-  const { uninstallTools, cleanUseCase, cleanUserScopeUseCase } = clean;
-  const deps: Deps = {
-    validateRecipes: wireRecipes().validateRecipes,
-    fs,
-    manifestRepo,
-    userManifestRepo,
-    homedir,
-    environment,
-    logger,
-    currentVersionProvider,
-    prompter,
-    logIn,
-    logOut,
-    checkStatus,
-    pluginRemoveUseCase,
-    userPluginRemove,
-    pluginListUseCase,
-    pluginUpdateUseCase,
-    userPluginUpdateUseCase,
-    addMarketplace,
-    listMarketplaces,
-    marketplaceRemoveUseCase,
-    userMarketplaceRemoveUseCase,
-    refreshMarketplace,
-    marketplaceCheckUseCase,
-    userSourceReferences,
-    installAiToolUseCase,
-    installIdeToolUseCase,
-    uninstallTools,
-    assetProvider,
-    searchPlugins,
-    registerFrameworkMarketplace,
-    pluginInstallUseCase,
-    syncSettingsUseCase,
-    syncNativeActivation,
-    doctorUseCase,
-    doctorRegistrationUseCase,
-    askMarketplaceSource,
-    choosePlugins,
-    runSetup,
-    setAgentModels,
-    selfUpdate: update.selfUpdate,
-    statusUseCase,
-    restoreToolUseCase,
-    statusAllUseCase,
-    restoreAllUseCase,
-    updateToolsUseCase,
-    cleanUseCase,
-    cleanUserScopeUseCase,
-    doctorAllUseCase,
-    listInstalledRulesUseCase,
-    printUpdateNotice: update.printUpdateNotice,
-    refreshUpdateCheck: update.refreshUpdateCheck,
-    telemetry: wireTelemetry(homedir, prompter),
-    frameworkBuild: (ctx) => createFrameworkBuildUseCase(tools, { fs, assetProvider, logger }, ctx),
-  };
+  const deps: Deps = { ...(await bindContainer(tools)(projectRoot, options, output)) };
   graphs.set(cacheKey, deps);
   return deps;
 }

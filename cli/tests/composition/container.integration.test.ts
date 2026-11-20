@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promi
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/container.js";
+import { bindCatalog, createContainer, createDeps } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
 import { wireBase } from "../../src/composition/shared.js";
@@ -537,10 +537,11 @@ describe("createDeps", () => {
       },
     };
 
-    const { menuLoop } = createMenuDeps(root, catalogOf(), {
-      runner,
-      pause: { untilEnter: async () => {} },
-    });
+    const { menuLoop } = createContainer({
+      projectRoot: root,
+      verbose: false,
+      tools: catalogOf(),
+    }).menu({ runner, pause: { untilEnter: async () => {} } });
 
     expect(await menuLoop.execute()).toBe(1);
     expect(ran).toEqual([["setup"]]);
@@ -558,10 +559,11 @@ describe("createDeps", () => {
       },
     };
 
-    const { menuLoop } = createMenuDeps(root, catalogOf(), {
-      runner,
-      pause: { untilEnter: async () => {} },
-    });
+    const { menuLoop } = createContainer({
+      projectRoot: root,
+      verbose: false,
+      tools: catalogOf(),
+    }).menu({ runner, pause: { untilEnter: async () => {} } });
 
     await expect(menuLoop.execute()).rejects.toThrow("stop");
     expect(ran[0]).not.toEqual(["setup"]);

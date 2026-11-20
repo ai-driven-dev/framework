@@ -92,6 +92,33 @@ describe("createContainer", () => {
     expect(slice.userManifestRepo.load).toBeTypeOf("function");
   });
 
+  it("hands doctor, clean, tool configuration, recipes and telemetry their use cases", async () => {
+    const slice = await bindContainer(tools)(root, { verbose: false }, new CLIOutput(false));
+
+    for (const member of [
+      slice.doctorAllUseCase,
+      slice.statusAllUseCase,
+      slice.doctorRegistrationUseCase,
+      slice.cleanUseCase,
+      slice.cleanUserScopeUseCase,
+      slice.installAiToolUseCase,
+      slice.uninstallTools,
+      slice.listInstalledRulesUseCase,
+      slice.validateRecipes,
+      slice.telemetry.declareTask,
+    ])
+      expect(member.execute).toBeTypeOf("function");
+    expect(slice.homedir()).toEqual(expect.any(String));
+  });
+
+  it("wires telemetry and recipes without wiring installation", async () => {
+    const slice = await bindContainer(tools)(root, { verbose: false }, new CLIOutput(false));
+
+    slice.telemetry;
+    slice.validateRecipes;
+    expect(wireInstallation).not.toHaveBeenCalled();
+  });
+
   it("builds one container per call", async () => {
     const forContainer = bindContainer(tools);
     const first = await forContainer(root, { verbose: false }, new CLIOutput(false));
