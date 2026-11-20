@@ -3,18 +3,8 @@ import { Command } from "commander";
 import { bindContainer, createContainer } from "./composition/container.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
-import { registerAuthCommand } from "./presentation/commands/auth.js";
-import { registerCleanCommand } from "./presentation/commands/clean.js";
-import { registerDoctorCommand } from "./presentation/commands/doctor.js";
-import { registerMarketplaceCommand } from "./presentation/commands/marketplace.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
-import { registerPluginCommand } from "./presentation/commands/plugin.js";
-import { registerSetupCommand } from "./presentation/commands/setup.js";
-import { registerSyncCommand } from "./presentation/commands/sync.js";
-import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
-import { registerToolConfigCommand } from "./presentation/commands/tool-config.js";
-import { registerTranslateCommand } from "./presentation/commands/translate.js";
-import { registerUpdateCommand } from "./presentation/commands/update.js";
+import { registerCommands } from "./presentation/commands/register-commands.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
@@ -41,18 +31,7 @@ program
   .version(formatVersion(version), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerSetupCommand(program, tools, createSlice);
-registerToolConfigCommand(program, tools, createSlice);
-registerTranslateCommand(program, tools, createSlice);
-registerPluginCommand(program, tools, createSlice);
-registerMarketplaceCommand(program, createSlice);
-registerAuthCommand(program, createSlice);
-registerSyncCommand(program, tools, createSlice);
-registerUpdateCommand(program, createSlice);
-registerDoctorCommand(program, tools, createSlice);
-registerCleanCommand(program, createSlice);
-registerTelemetryCommand(program, createSlice, wireTelemetryRequests());
-
+registerCommands(program, { tools, createSlice, telemetryRequests: wireTelemetryRequests() });
 registerUpdateNoticeHooks(program, createSlice);
 
 // A reader that stops reading (`aidd … | head -1`) closes stdout under the run: what is left to

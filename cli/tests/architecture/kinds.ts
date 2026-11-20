@@ -3,7 +3,7 @@
  * it lives, what it may import and which test it owes. `kinds.arch.test.ts` holds the tree to it;
  * `kinds-debt.json` lists what the tree still gets wrong.
  *
- * A file is recognised by its suffix (`log-in.use-case.ts`). A file with no kind suffix falls back
+ * A file is recognised by its suffix (`<name>.use-case.ts`). A file with no kind suffix falls back
  * to the folder that owns a kind today, so the suffix rollout is not a violation of its own.
  * Written limits: an import is read by the one extractor in `helpers.ts`, so a specifier quoted in
  * a comment counts; an import that resolves to no file of the tree is not judged.

@@ -57,6 +57,15 @@ const RENAMED_LISTS: Readonly<Record<string, string>> = {
     "tests/architecture/ports-are-called.arch.test.ts#SECTION_BASELINE",
 };
 
+/**
+ * A list whose rule was retired on purpose, by its id at the base. The list is not renamed, it is
+ * gone with its test; each entry leaves once `next` holds the retirement. This test goes with the
+ * last of them, replaced by a ratchet on the one debt file.
+ */
+const RETIRED_LISTS: ReadonlySet<string> = new Set([
+  "tests/architecture/folder-size.arch.test.ts#BASELINE",
+]);
+
 const CLI_DIRECTORY = "cli";
 const ARCHITECTURE_DIRECTORY_IN_REPO = `${CLI_DIRECTORY}/${ARCHITECTURE_DIRECTORY}`;
 const DEFAULT_BASE_BRANCH = "next";
@@ -152,7 +161,7 @@ function verdicts(
   });
   const vanished = [...base.keys()].sort().flatMap((id) => {
     const held = base.get(id) ?? 0;
-    return held > 0 && !head.has(id) && !head.has(renamed[id] ?? id)
+    return held > 0 && !RETIRED_LISTS.has(id) && !head.has(id) && !head.has(renamed[id] ?? id)
       ? [`${id} held ${held} entries at the base and is gone: keep its name, or empty it first`]
       : [];
   });

@@ -40,7 +40,6 @@
   "tests/architecture/code-size.arch.test.ts": 1,
   "tests/architecture/edge-table.arch.test.ts": 1,
   "tests/architecture/hooks-install-from-the-root.arch.test.ts": 1,
-  "tests/architecture/import-rules-bite.arch.test.ts": 1,
   "tests/architecture/mutation-covers-source.arch.test.ts": 3,
   "tests/architecture/mutation-shards.arch.test.ts": 2,
   "tests/architecture/profile-copies.arch.test.ts": 1,

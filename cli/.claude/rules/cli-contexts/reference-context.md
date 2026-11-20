@@ -46,7 +46,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 - Only the composition root imports a held context's `domain/`, `ports/` or `infrastructure/`; presentation may also import `application/`, except of `tools`.
 - An implementation of a contract port that is not a command lives in `application/`; an adapter outside the context matches a port by shape and the composition root hands it in.
 - Another context imports a `contract/` only, edge by edge from `ALLOWED`: `context-graph.arch.test.ts`. A context that needs more declares the narrow input in its own `ports/` and receives the real object by shape.
-- `src/composition/` is a known area only the composition root imports: `old-layout-count.arch.test.ts`, `context-graph.arch.test.ts`.
+- `src/composition/` is a known area only the composition root imports: `context-graph.arch.test.ts`.
 
 ## 6. Kit template
 
@@ -101,7 +101,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `BASELINE` in `unit-tests-reading-disk.arch.test.ts` lists unit files that import `seed-from-directory`, a real directory read past the biome `node:fs` guard | those files seed their ports from a directory of fixtures | each file is renamed `.integration` or stops importing the helper |
 | `STORED_ANSWERS_ALLOWED` in `plugins-are-asked-not-read.arch.test.ts` lists the stored values a plugin variant still answers verbatim | each has a caller that needs the value itself, recorded beside its entry | a caller asks a plugin question instead of reading the stored value, or the variant stops answering it, and the entry leaves |
 | `MAX_BASELINE` in `code-size.arch.test.ts` counts the files each biome size ceiling excuses in its override of `biome.json` (function length, cognitive complexity, one class per file, file length, function parameters) | the violators predate the ceilings and biome cannot say a list only shrinks | each file comes under the ceiling and leaves the override; a new violator is fixed, never listed |
-| `BASELINE` in `folder-size.arch.test.ts` lists folders over the file-count limit, each with its reason | the command and display folders map the CLI's surface one file per command | `presentation/commands` and `presentation/display` are grouped into subfolders of at most 10 files each |
 | `BASELINE` in `test-file-size.arch.test.ts` lists test files over the line cap, each with the lines it carries | the files were over the cap when it was introduced | each file is split under the cap and a shorter one lowers its count |
 | `BASELINE` in `catches-that-swallow.arch.test.ts` lists the empty catches that remain, each with its reason | each is a best-effort cleanup or a hook bridge that must not throw inside its host, so an unreadable entry is skipped | an entry's catch handles the error it ignores and the entry leaves |
 | `SECTION_BASELINE` in `ports-are-called.arch.test.ts` lists section methods no `src` file calls | each is called only by its own unit test or a profile test, a declared behaviour nothing in the product uses | the product calls the method or it is deleted, and the entry leaves |
@@ -123,6 +122,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ## 10. Checklist for a context's migration PR
 
 - Freeze behaviour with characterization tests, each seen red; move before rename, rename before logic change.
-- Update the files that name paths: `old-layout-count.arch.test.ts`, `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, the repository root's `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
-- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), `PUBLIC_MODULES`, then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`; `import-rules-bite.arch.test.ts` fails a pattern naming a vanished directory.
+- Update the files that name paths: `mutation-scopes.json` and its script, `vitest.config.ts` coverage excludes, the repository root's `scripts/sweep-stale-test-dirs.cjs`, `aidd_docs/memory/codebase-map.md`.
+- Update `ALLOWED`, `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`), `BASELINE` (`tests/architecture/helpers.ts`), `PUBLIC_MODULES`, then regenerate the `biome.json` context overrides with `pnpm biome:boundaries`.
 - Move memory and rules with the code: a `cli-contexts/<ctx>.md` page, `aidd_docs/memory/internal/<ctx>.md`, the `glossary.md`.

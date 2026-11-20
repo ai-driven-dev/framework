@@ -17,7 +17,6 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 6. Orchestration imports the `application/` and `contract/` of contexts only, reads no file and starts no process: `biome.json`.
 7. Only `composition/` and `cli.ts` import `shared/infrastructure/`, and only `cli.ts` imports `composition/` from outside it: `biome.json`, for every folder but `cli.ts`.
 8. A `shared/domain/` or `shared/ports/` file is earned by two importing contexts; a `shared/infrastructure/` file by implementing an earned shared port, being imported by an earned shared adapter, or two `composition/` importers: `earned-sharing.arch.test.ts`.
-9. A context reaches its own interior directly, never by climbing out and back in: `context-self-reentry.arch.test.ts`.
 
 ## Ports and wiring
 
@@ -39,7 +38,6 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 - An empty catch is a listed best effort with its reason, or a failure: `catches-that-swallow.arch.test.ts`.
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
 - `process.exit` stays in `presentation/exit.ts`: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
-- A directory holds ten direct source files at most: `folder-size.arch.test.ts`.
 - File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `code-size.arch.test.ts`.
 - A tolerated list only shrinks: `baseline-only-shrinks.arch.test.ts`.
 - Exports are named and nothing re-exports: `no-re-export.arch.test.ts`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.

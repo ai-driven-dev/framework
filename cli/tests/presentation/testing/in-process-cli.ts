@@ -4,7 +4,6 @@ import { relative, sep } from "node:path";
 import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { sandboxedEnv } from "../../e2e/helpers.js";
 
@@ -22,8 +21,8 @@ import { sandboxedEnv } from "../../e2e/helpers.js";
  * It restores what it changed and nothing else: a spy or an environment stub the caller made
  * before the call is still in place after it.
  *
- * It is not a copy of `src/cli.ts`, which parses at import: it registers the same commands, in
- * the same order, and leaves out the update-check hooks, which stay an end-to-end concern.
+ * It is not a copy of `src/cli.ts`, which parses at import: it registers the same commands through
+ * the same `registerCommands`, and leaves out the update-check hooks, which stay an end-to-end concern.
  */
 export interface InProcessResult {
   readonly exitCode: number;
@@ -44,46 +43,6 @@ class ExitSignal extends Error {
     super(`exit ${String(code)}`);
   }
 }
-
-type Register = (program: Command, tools: ToolCatalog, createDeps: DepsFactory) => void;
-
-/** The order `src/cli.ts` registers them in. Literal specifiers, so the bundler resolves them. */
-const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
-  async () => (await import("../../../src/presentation/commands/setup.js")).registerSetupCommand,
-  async () =>
-    (await import("../../../src/presentation/commands/tool-config.js")).registerToolConfigCommand,
-  async () =>
-    (await import("../../../src/presentation/commands/translate.js")).registerTranslateCommand,
-  async () => (await import("../../../src/presentation/commands/plugin.js")).registerPluginCommand,
-  async () => {
-    const { registerMarketplaceCommand } = await import(
-      "../../../src/presentation/commands/marketplace.js"
-    );
-    return (program, _tools, deps) => registerMarketplaceCommand(program, deps);
-  },
-  async () => {
-    const { registerAuthCommand } = await import("../../../src/presentation/commands/auth.js");
-    return (program, _tools, createDeps) => registerAuthCommand(program, createDeps);
-  },
-  async () => (await import("../../../src/presentation/commands/sync.js")).registerSyncCommand,
-  async () => {
-    const { registerUpdateCommand } = await import("../../../src/presentation/commands/update.js");
-    return (program, _tools, createDeps) => registerUpdateCommand(program, createDeps);
-  },
-  async () => (await import("../../../src/presentation/commands/doctor.js")).registerDoctorCommand,
-  async () => {
-    const { registerCleanCommand } = await import("../../../src/presentation/commands/clean.js");
-    return (program, _tools, createDeps) => registerCleanCommand(program, createDeps);
-  },
-  async () => {
-    const { registerTelemetryCommand } = await import(
-      "../../../src/presentation/commands/telemetry.js"
-    );
-    const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
-    return (program, _tools, createDeps) =>
-      registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
-  },
-];
 
 let inFlight = false;
 
@@ -182,7 +141,15 @@ export async function runInProcess(
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
     const { bindContainer } = await import("../../../src/composition/container.js");
     const depsFactory: DepsFactory = bindContainer(tools);
-    for (const load of REGISTRATIONS) (await load())(program, tools, depsFactory);
+    const { registerCommands } = await import(
+      "../../../src/presentation/commands/register-commands.js"
+    );
+    const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
+    registerCommands(program, {
+      tools,
+      createSlice: depsFactory,
+      telemetryRequests: wireTelemetryRequests(),
+    });
 
     try {
       await program.parseAsync(["node", "aidd", ...args]);
