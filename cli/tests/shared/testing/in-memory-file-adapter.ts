@@ -161,10 +161,13 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   /** On Windows, product code resolves a virtual `/project` to `D:\project` (the working drive)
-   * before asking `realpath`; the tree was seeded drive-free, so a drive-qualified path also
-   * matches its drive-free spelling. */
+   * before asking `realpath`; a tree seeded either way matches a path spelled either way. */
   private async existsIgnoringDrive(path: string): Promise<boolean> {
-    return (await this.fileExists(path)) || (await this.fileExists(path.replace(DRIVE_PREFIX, "")));
+    return (
+      (await this.fileExists(path)) ||
+      (await this.fileExists(path.replace(DRIVE_PREFIX, ""))) ||
+      (await this.fileExists(resolve(path)))
+    );
   }
 
   private registerAncestors(key: string): void {
