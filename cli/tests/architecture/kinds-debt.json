@@ -56,7 +56,6 @@
     "src/shared/domain/merge.ts -> src/shared/ports/file-writer.ts"
   ],
   "mirror": [
-    "src/contexts/distribution/infrastructure/inject-token.ts",
     "src/contexts/host-registration/application/host-marketplace-source-conflict.ts",
     "src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.ts",
     "src/contexts/host-registration/application/inspect/inspect-host-registration.ts",
@@ -155,12 +154,6 @@
     "src/contexts/tools/domain/profiles/opencode/opencode-agent.ts",
     "src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts",
     "src/contexts/tools/domain/sections/models-section.ts",
-    "src/contexts/translate/application/build-native-tree.ts",
-    "src/contexts/translate/application/shared-plugin-helpers.ts",
-    "src/contexts/translate/application/translate-distribution.ts",
-    "src/contexts/translate/contract/build-targets.ts",
-    "src/contexts/translate/domain/canon-format.ts",
-    "src/contexts/translate/infrastructure/schema-validator.ts",
     "src/orchestration/clean/clean-project.ts",
     "src/orchestration/clean/clean-user-scope.ts",
     "src/orchestration/global/bulk-conflict-state.ts",
