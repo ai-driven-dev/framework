@@ -4,7 +4,6 @@ import type { LogOut } from "../contexts/auth/application/log-out.js";
 import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
 import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
@@ -15,9 +14,7 @@ import type { UserPluginRemoveOptions } from "../contexts/installation/applicati
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
-import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
-import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
 import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
@@ -56,15 +53,10 @@ import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remo
 import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user-marketplace.js";
 import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
-import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
 import type { RunSetup } from "../orchestration/setup/run-setup.js";
-import type { ChoosePlugins } from "../orchestration/setup/steps/choose-plugins.js";
 import type { SyncNativeActivation } from "../orchestration/sync/sync-native-activation.js";
 import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
-import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
-import type { FileReader } from "../shared/ports/file-reader.js";
-import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Lock } from "../shared/ports/lock.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
@@ -100,7 +92,6 @@ export interface TelemetryRequests {
 }
 
 export interface Deps {
-  fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
    * under a project's `.aidd/`. */
@@ -127,21 +118,16 @@ export interface Deps {
   userMarketplaceRemoveUseCase: Pick<RemoveUserMarketplace, "execute">;
   refreshMarketplace: Pick<RefreshMarketplace, "execute">;
   marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;
-  userSourceReferences: UserSourceReferences;
   installAiToolUseCase: Pick<InstallAiTool, "execute">;
   installIdeToolUseCase: Pick<InstallIdeTool, "execute">;
   uninstallTools: Pick<UninstallTools, "execute">;
-  assetProvider: AssetProvider;
   searchPlugins: Pick<SearchPlugins, "execute">;
-  registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
   pluginInstallUseCase: Pick<InstallPlugin, "execute">;
   syncSettingsUseCase: Pick<SyncSettings, "execute">;
   syncNativeActivation: Pick<SyncNativeActivation, "execute">;
   doctorUseCase: Pick<RunDoctor, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;
-  askMarketplaceSource: Pick<AskMarketplaceSource, "execute">;
-  choosePlugins: Pick<ChoosePlugins, "execute">;
   runSetup: Pick<RunSetup, "execute">;
   /** The agents' provider and the main session's model: set by `setup`, forgotten by `clean`. */
   setAgentModels: Pick<SetAgentModels, "execute" | "reset">;

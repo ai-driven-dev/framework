@@ -110,6 +110,16 @@ export function createContainer(options: ContainerOptions) {
   };
 }
 
+type Container = ReturnType<typeof createContainer>;
+
+/** What the composition hands out: the members a command reads, plus the ones only wiring and
+ * its tests read, which the presentation's `Deps` leaves out. */
+export type Graph = Deps &
+  Pick<Container["shared"], "fs" | "userSourceReferences" | "registerFrameworkMarketplace"> &
+  Pick<Container["installation"], "assetProvider"> &
+  Pick<Container["marketplace"], "askMarketplaceSource"> &
+  Pick<Container["setup"], "choosePlugins">;
+
 /** The factory those commands receive: each call builds one container, and a member wires its
  * context when the command first reads it. */
 export function bindContainer(tools: ToolCatalog) {
@@ -117,7 +127,7 @@ export function bindContainer(tools: ToolCatalog) {
     projectRoot: string,
     options: FactoryOptions,
     output: CLIOutput | undefined
-  ): Promise<Deps> => {
+  ): Promise<Graph> => {
     const container = createContainer({ projectRoot, ...options, output, tools });
     return {
       get selfUpdate() {
