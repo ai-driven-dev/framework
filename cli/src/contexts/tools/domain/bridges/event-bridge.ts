@@ -57,12 +57,10 @@ function bridgeIdentifier(plugin: string, suffix: string): string {
   return `${pascalCasePluginName(plugin)}${suffix}`;
 }
 
-/** The node modules every generated module spawns its scripts with. Joined from literals, so no
+/** The node modules every generated module spawns its scripts with. One string literal, so no
  * line of this file opens with the keyword the import rule reads as this file's own. */
-const NODE_IMPORTS_SOURCE = [
-  'import { spawn } from "node:child_process";',
-  'import { fileURLToPath } from "node:url";',
-].join("\n");
+const NODE_IMPORTS_SOURCE =
+  'import { spawn } from "node:child_process";\nimport { fileURLToPath } from "node:url";';
 
 /** The scripts folder of a plugin, resolved from the generated module's own url. */
 function hooksDirDeclaration(plugin: string): string {

@@ -57,7 +57,7 @@ function namesOnlyItsOwnTool(file: string, named: readonly string[]): boolean {
 }
 
 function isAllowed(file: string, ids: readonly string[]): boolean {
-  if (file === "src/contexts/tools/domain/profiles/registered-profiles.ts") return true;
+  if (file === "src/composition/tools.ts") return true;
   if (REGISTRATION_SITES.some((site) => site.path === file)) return true;
   return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
 }

@@ -89,10 +89,8 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return idsOf(this.#canonical, category);
   }
 
-  sortedById(): readonly ToolProfile[] {
-    return [...this.#byId.values()].sort((a, b) =>
-      a.toolId < b.toolId ? -1 : a.toolId > b.toolId ? 1 : 0
-    );
+  sortedIds(): readonly ToolId[] {
+    return [...this.#byId.values()].map((profile) => profile.toolId).sort();
   }
 
   agentProviders(): readonly string[] {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { REGISTERED_PROFILES } from "../../../src/composition/tools.js";
 import type { ProjectSetupState } from "../../../src/contexts/installation/contract/project-setup-state.js";
-import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";

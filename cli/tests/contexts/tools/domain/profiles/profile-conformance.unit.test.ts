@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tools.js";
 import {
   describeProfileConformance,
   registeredSuffixesMatchVocabulary,

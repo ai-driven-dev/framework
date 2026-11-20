@@ -29,8 +29,8 @@ export interface ToolCatalog {
   idsInCanonicalOrder(category: "ai"): readonly AiToolId[];
   idsInCanonicalOrder(category: "ide"): readonly IdeToolId[];
   idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[];
-  /** Every profile sorted by id: the order the setup and doctor flows walk them. */
-  sortedById(): readonly ToolProfile[];
+  /** Every id sorted: the order the setup and doctor flows walk the tools. */
+  sortedIds(): readonly ToolId[];
   /** Every provider some registered tool runs the framework's agents on, in the order the
    * framework's model table lists them. */
   agentProviders(): readonly string[];

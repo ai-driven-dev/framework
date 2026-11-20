@@ -6112,14 +6112,14 @@
       "plugins": ["./biome-plugins/no-laundered-test-interior.grit"]
     },
     {
-      "includes": ["src/**", "!src/contexts/tools/**", "!src/composition/**"],
+      "includes": ["src/**", "!src/composition/**"],
       "plugins": [
         "./biome-plugins/whole-profile-import.grit",
         "./biome-plugins/whole-profile-namespace-import.grit"
       ]
     },
     {
-      "includes": ["src/**", "!src/contexts/tools/**", "!src/presentation/**"],
+      "includes": ["src/**", "!src/presentation/**"],
       "plugins": ["./biome-plugins/no-profile-list.grit"]
     },
     {

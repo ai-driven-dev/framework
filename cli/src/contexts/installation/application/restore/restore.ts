@@ -17,7 +17,8 @@ import type { RestoreToolFiles, RestoreToolFilesResult } from "./restore-tool-fi
  */
 function configRefsOf(tools: ToolCatalog): readonly ConfigRef[] {
   const byName = new Map<string, ConfigRef>();
-  for (const profile of tools.sortedById()) {
+  for (const id of tools.sortedIds()) {
+    const profile = tools.profile(id);
     for (const write of profile.configWrites()) {
       if (write.kind === "hooks") continue;
       for (const ref of write.capability.consumedRefs()) byName.set(ref.name, ref);
