@@ -58,20 +58,16 @@ describe("an agent a flat target hosts without a section of its own", () => {
   const hostsAgents = hostingAgents((plugin, rel) => `.fake/hosted/${plugin}-${rel}`);
   const declaringAgents = { agents: markdownSectionInstalling() };
 
-  it("is carried as the plugin wrote it when the contract rewrites nothing", () => {
-    expect(treeOf(syntheticToolProfile({ flatContract: hostsAgents }), agentDist)).toEqual({
-      ".fake/hosted/sample-plugin-agents/rev.md": agents[0].content,
-    });
-  });
-
   it("is carried as the plugin wrote it, declared or not, by a contract that rewrites nothing", () => {
+    const carried = { ".fake/hosted/sample-plugin-agents/rev.md": agents[0].content };
+    const undeclared = syntheticToolProfile({ flatContract: hostsAgents });
     const declared = syntheticToolProfile({
       flatContract: hostsAgents,
       sections: declaringAgents,
     });
-    expect(Object.keys(treeOf(declared, agentDist))).toEqual([
-      ".fake/hosted/sample-plugin-agents/rev.md",
-    ]);
+
+    expect(treeOf(undeclared, agentDist)).toEqual(carried);
+    expect(treeOf(declared, agentDist)).toEqual(carried);
   });
 
   it("is dropped by a contract that hosts no agent", () => {
