@@ -1,4 +1,5 @@
 import { basename, dirname, join, relative } from "node:path";
+import { describeError } from "../../../../shared/domain/describe-error.js";
 import {
   FlatMergeTargetNotJsonError,
   FlatTargetExistsError,
@@ -8,6 +9,7 @@ import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domai
 import { flatMcpKeyPrefix } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/relative-link-rewrite.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -270,12 +272,11 @@ export class FlatWriter {
     pluginName: string,
     mcpSrc: string
   ): Promise<number> {
-    const parsed = JSON.parse(await this.fs.readFile(mcpSrc)) as {
-      mcpServers?: Record<string, unknown>;
-    };
+    const parsed = asPlainObject(JSON.parse(await this.fs.readFile(mcpSrc)));
+    const servers = asPlainObject(parsed?.mcpServers) ?? {};
     const prefix = flatMcpKeyPrefix(pluginName);
     const prefixed: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(parsed.mcpServers ?? {})) {
+    for (const [key, value] of Object.entries(servers)) {
       prefixed[`${prefix}${key}`] = rewritePluginRootInJson(value, (suffix) =>
         this.resolvePluginRootAbsolute(t, suffix, pluginName)
       );
@@ -316,7 +317,7 @@ function assertParsableJson(content: string, outDir: string, destPath: string): 
     JSON.parse(content);
   } catch (err) {
     const shown = relative(outDir, destPath).replace(/\\/g, "/");
-    throw new FlatMergeTargetNotJsonError(shown, (err as Error).message);
+    throw new FlatMergeTargetNotJsonError(shown, describeError(err));
   }
 }
 

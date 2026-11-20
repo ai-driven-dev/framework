@@ -3,12 +3,12 @@ import {
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
 } from "../../../../shared/domain/errors.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type {
-  PluginPresence,
   SourceMarketplaceRef,
   ToolBuildContract,
 } from "../../../tools/contract/build-contract.js";
@@ -106,7 +106,7 @@ export class DiskSink {
     const raw = await this.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
     this.jsonSchemaValidator.validate(
       this.assetProvider.loadSchema("plugin-manifest"),
-      JSON.parse(raw) as unknown
+      JSON.parse(raw)
     );
   }
 
@@ -114,9 +114,9 @@ export class DiskSink {
     const { contract } = t;
     if (!contract.synthesizeManifest || !contract.manifestFileRelative) return 0;
     const raw = await this.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
-    const source = JSON.parse(raw) as Record<string, unknown>;
+    const source = asPlainObject(JSON.parse(raw)) ?? {};
     const presence = await detectPluginPresenceFlags(this.fs, pluginSrc);
-    const synthesized = contract.synthesizeManifest(source, presence as PluginPresence);
+    const synthesized = contract.synthesizeManifest(source, presence);
     if (contract.manifestSchemaName) {
       this.jsonSchemaValidator.validate(
         this.assetProvider.loadSchema(contract.manifestSchemaName),

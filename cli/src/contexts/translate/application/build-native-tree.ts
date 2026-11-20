@@ -1,9 +1,11 @@
 import { join, resolve } from "node:path";
+import { describeError } from "../../../shared/domain/describe-error.js";
 import {
   InvalidBuildPathsError,
   InvalidSourceMarketplaceError,
 } from "../../../shared/domain/errors.js";
 import { pathsOverlap } from "../../../shared/domain/paths.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
@@ -73,21 +75,21 @@ export class BuildNativeTree {
     try {
       parsed = JSON.parse(raw);
     } catch (err) {
-      throw new InvalidSourceMarketplaceError(`malformed JSON: ${(err as Error).message}`);
+      throw new InvalidSourceMarketplaceError(`malformed JSON: ${describeError(err)}`);
     }
     return this.validateSourceMarketplace(parsed);
   }
 
   private validateSourceMarketplace(parsed: unknown): SourceMarketplaceRef {
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    const obj = asPlainObject(parsed);
+    if (obj === null) {
       throw new InvalidSourceMarketplaceError("root must be an object");
     }
-    const obj = parsed as Record<string, unknown>;
     if (!Array.isArray(obj.plugins)) {
       throw new InvalidSourceMarketplaceError("missing 'plugins' array");
     }
-    for (const entry of obj.plugins as unknown[]) {
-      if (!entry || typeof (entry as Record<string, unknown>).name !== "string") {
+    for (const entry of obj.plugins) {
+      if (typeof asPlainObject(entry)?.name !== "string") {
         throw new InvalidSourceMarketplaceError("each plugin entry must have a 'name' string");
       }
     }
