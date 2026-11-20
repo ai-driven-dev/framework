@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 /** The real-shaped framework a command reads as a local source. */
-export const FRAMEWORK_REAL = join(import.meta.dirname, "..", "fixtures", "framework-real");
+export const FRAMEWORK_REAL = join(import.meta.dirname, "..", "..", "fixtures", "framework-real");
 
 /** `setup` from the local framework fixture, answering every question. */
 export function setupFromFixture(

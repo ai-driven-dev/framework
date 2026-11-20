@@ -2,9 +2,9 @@ import { cp, mkdir, readdir, readFile, realpath, rm, stat, writeFile } from "nod
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createTestEnv } from "../../e2e/helpers.js";
-import { FRAMEWORK_REAL, setupFromFixture } from "../../helpers/fixture-setup.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
-import { readJson } from "../../helpers/project-state.js";
+import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.js";
+import { runInProcess } from "../testing/in-process-cli.js";
+import { readJson } from "../testing/project-state.js";
 
 type Machine = Awaited<ReturnType<typeof createTestEnv>>;
 

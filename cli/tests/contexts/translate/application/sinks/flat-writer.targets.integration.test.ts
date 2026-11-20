@@ -10,8 +10,8 @@ import {
 } from "../../../../../src/shared/domain/errors.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
-import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { FRAMEWORK_REAL } from "../../../../presentation/testing/fixture-setup.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 

@@ -7,7 +7,7 @@ import {
   type TelemetrySandbox,
 } from "../../contexts/telemetry/testing/telemetry-sandbox.js";
 import { git } from "../../helpers/git-sandbox.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
+import { runInProcess } from "../testing/in-process-cli.js";
 
 let box: TelemetrySandbox;
 let repo: string;

@@ -4,9 +4,9 @@ import { relative, sep } from "node:path";
 import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
-import type { ToolCatalog } from "../../src/contexts/tools/contract/tool-catalog.js";
-import type { DepsFactory } from "../../src/presentation/deps.js";
-import { sandboxedEnv } from "../e2e/helpers.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
+import { sandboxedEnv } from "../../e2e/helpers.js";
 
 /**
  * Drives the real Commander tree and the real container inside the test process, under a
@@ -49,37 +49,37 @@ type Register = (program: Command, tools: ToolCatalog, createDeps: DepsFactory) 
 
 /** The order `src/cli.ts` registers them in. Literal specifiers, so the bundler resolves them. */
 const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
-  async () => (await import("../../src/presentation/commands/setup.js")).registerSetupCommand,
+  async () => (await import("../../../src/presentation/commands/setup.js")).registerSetupCommand,
   async () =>
-    (await import("../../src/presentation/commands/tool-config.js")).registerToolConfigCommand,
+    (await import("../../../src/presentation/commands/tool-config.js")).registerToolConfigCommand,
   async () =>
-    (await import("../../src/presentation/commands/translate.js")).registerTranslateCommand,
-  async () => (await import("../../src/presentation/commands/plugin.js")).registerPluginCommand,
+    (await import("../../../src/presentation/commands/translate.js")).registerTranslateCommand,
+  async () => (await import("../../../src/presentation/commands/plugin.js")).registerPluginCommand,
   async () => {
     const { registerMarketplaceCommand } = await import(
-      "../../src/presentation/commands/marketplace.js"
+      "../../../src/presentation/commands/marketplace.js"
     );
     return (program, _tools, deps) => registerMarketplaceCommand(program, deps);
   },
   async () => {
-    const { registerAuthCommand } = await import("../../src/presentation/commands/auth.js");
+    const { registerAuthCommand } = await import("../../../src/presentation/commands/auth.js");
     return (program, _tools, createDeps) => registerAuthCommand(program, createDeps);
   },
-  async () => (await import("../../src/presentation/commands/sync.js")).registerSyncCommand,
+  async () => (await import("../../../src/presentation/commands/sync.js")).registerSyncCommand,
   async () => {
-    const { registerUpdateCommand } = await import("../../src/presentation/commands/update.js");
+    const { registerUpdateCommand } = await import("../../../src/presentation/commands/update.js");
     return (program, _tools, createDeps) => registerUpdateCommand(program, createDeps);
   },
-  async () => (await import("../../src/presentation/commands/doctor.js")).registerDoctorCommand,
+  async () => (await import("../../../src/presentation/commands/doctor.js")).registerDoctorCommand,
   async () => {
-    const { registerCleanCommand } = await import("../../src/presentation/commands/clean.js");
+    const { registerCleanCommand } = await import("../../../src/presentation/commands/clean.js");
     return (program, _tools, createDeps) => registerCleanCommand(program, createDeps);
   },
   async () => {
     const { registerTelemetryCommand } = await import(
-      "../../src/presentation/commands/telemetry.js"
+      "../../../src/presentation/commands/telemetry.js"
     );
-    const { wireTelemetryRequests } = await import("../../src/composition/telemetry.js");
+    const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
     return (program, _tools, createDeps) =>
       registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
   },
@@ -176,11 +176,11 @@ export async function runInProcess(
 
     // A new process starts with an empty profile registry.
     vi.resetModules();
-    const { wireTools } = await import("../../src/composition/tools.js");
+    const { wireTools } = await import("../../../src/composition/tools.js");
     const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    const { bindContainer } = await import("../../src/composition/container.js");
+    const { bindContainer } = await import("../../../src/composition/container.js");
     const depsFactory: DepsFactory = bindContainer(tools);
     for (const load of REGISTRATIONS) (await load())(program, tools, depsFactory);
 

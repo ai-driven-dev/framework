@@ -8,7 +8,7 @@ import {
 } from "../../contexts/telemetry/testing/telemetry-sandbox.js";
 import { backdateConsent } from "../../e2e/helpers.js";
 import { git } from "../../helpers/git-sandbox.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
+import { runInProcess } from "../testing/in-process-cli.js";
 
 const FIXTURES = join(import.meta.dirname, "..", "..", "fixtures", "claude-usage", "projects");
 

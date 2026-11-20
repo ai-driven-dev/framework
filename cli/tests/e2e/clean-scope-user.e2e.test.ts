@@ -9,7 +9,7 @@ import {
   gitStatusPorcelain,
   listFilesUnder,
   readJson,
-} from "../helpers/project-state.js";
+} from "../presentation/testing/project-state.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 
 // CI runners carry no git identity; a commit made by a test brings its own.

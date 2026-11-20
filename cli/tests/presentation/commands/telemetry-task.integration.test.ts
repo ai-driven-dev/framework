@@ -6,7 +6,7 @@ import {
   type TelemetrySandbox,
 } from "../../contexts/telemetry/testing/telemetry-sandbox.js";
 import { git } from "../../helpers/git-sandbox.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
+import { runInProcess } from "../testing/in-process-cli.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 

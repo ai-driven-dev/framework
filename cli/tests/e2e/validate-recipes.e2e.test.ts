@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RECIPE } from "../helpers/recipe-fixture.js";
+import { RECIPE } from "../presentation/testing/recipe-fixture.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 describe("recipe validation through the built CLI", () => {

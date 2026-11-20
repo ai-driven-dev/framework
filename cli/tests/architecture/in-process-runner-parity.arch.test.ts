@@ -12,7 +12,7 @@ describe("the in-process runner", () => {
   it("registers the same commands as the binary, in the same order", () => {
     const binary = calls(read("src/cli.ts"), /^(register\w+Command)\(program(?:, \w+)*\);$/gm);
     const runner = calls(
-      read("tests/helpers/in-process-cli.ts"),
+      read("tests/presentation/testing/in-process-cli.ts"),
       /(?:\)\)\.|=> )(register\w+Command)/gm
     );
 
