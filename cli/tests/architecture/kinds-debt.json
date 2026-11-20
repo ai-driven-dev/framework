@@ -135,9 +135,7 @@
     "tests/orchestration/clean/clean-use-case.unit.test.ts",
     "tests/orchestration/clean/clean-user-scope.integration.test.ts",
     "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts",
-    "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts",
-    "tests/contexts/installation/application/plugin/add-plugin.integration.test.ts",
-    "tests/contexts/installation/application/plugin/plugin-update-built-tree.integration.test.ts"
+    "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts"
   ],
   "limits": [
     "cognitive complexity :: src/contexts/installation/application/agents/main-session-models.ts",
