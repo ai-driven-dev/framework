@@ -39,13 +39,16 @@ export function resumeOffset(
 
 function isPosition(value: unknown): value is TranscriptPosition {
   const object = asPlainObject(value);
+  if (object === null) return false;
+  const { offset, size, identity } = object;
   return (
-    object !== null &&
-    Number.isInteger(object.offset) &&
-    (object.offset as number) >= 0 &&
-    Number.isInteger(object.size) &&
-    (object.size as number) >= 0 &&
-    typeof object.identity === "string"
+    typeof offset === "number" &&
+    Number.isInteger(offset) &&
+    offset >= 0 &&
+    typeof size === "number" &&
+    Number.isInteger(size) &&
+    size >= 0 &&
+    typeof identity === "string"
   );
 }
 

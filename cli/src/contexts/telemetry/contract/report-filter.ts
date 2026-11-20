@@ -44,7 +44,8 @@ export const NO_FILTERS: ReportFilters = {
   tool: null,
 };
 
-export const FILTER_FLAGS = Object.keys(NO_FILTERS) as FilterFlag[];
+const isFilterFlag = (key: string): key is FilterFlag => Object.hasOwn(NO_FILTERS, key);
+export const FILTER_FLAGS = Object.keys(NO_FILTERS).filter(isFilterFlag);
 
 /** What a flag asks an axis to be: a row's value, or work with no task for either reason. */
 export type Selector = AxisValue | { readonly kind: "unattributed-any" };

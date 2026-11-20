@@ -11,7 +11,10 @@ export function parseRepositoryAliases(text: string | null): ReadonlyMap<string,
   const object = parsed.ok ? asPlainObject(parsed.value) : null;
   const aliases = asPlainObject(object?.aliases);
   if (object?.version !== FORMAT || aliases === null) return null;
-  const entries = Object.entries(aliases);
-  if (entries.some(([, id]) => typeof id !== "string" || id === "")) return null;
-  return new Map(entries as [string, string][]);
+  const renamed = new Map<string, string>();
+  for (const [from, to] of Object.entries(aliases)) {
+    if (typeof to !== "string" || to === "") return null;
+    renamed.set(from, to);
+  }
+  return renamed;
 }

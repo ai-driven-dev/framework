@@ -58,7 +58,7 @@ export function ownerAt(
     (a, b) =>
       answeringFrom(a) - answeringFrom(b) || compareText(resolutionKeyOf(a), resolutionKeyOf(b))
   );
-  let owner = first as RepositoryResolution;
+  let owner = first;
   for (const candidate of later) if (answeringFrom(candidate) <= at) owner = candidate;
   return owner;
 }

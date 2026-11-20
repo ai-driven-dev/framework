@@ -21,6 +21,16 @@ export type ReportAxis = (typeof REPORT_AXES)[number];
 export const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
 export type Counter = (typeof COUNTERS)[number];
 
+/** One value per counter, in the order the counters are printed. */
+export function byCounter<T>(of: (counter: Counter) => T): Record<Counter, T> {
+  return {
+    input: of("input"),
+    output: of("output"),
+    cache_read: of("cache_read"),
+    cache_write: of("cache_write"),
+  };
+}
+
 export interface CounterSum {
   readonly known: number;
   readonly unknownRecords: number;

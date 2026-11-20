@@ -1,5 +1,6 @@
 import {
   type AxisValue,
+  byCounter,
   COUNTERS,
   type CounterSum,
   type ReportAxis,
@@ -24,16 +25,12 @@ function addCounter(sum: CounterSum, value: number | null): CounterSum {
 const EMPTY_SUM: CounterSum = { known: 0, unknownRecords: 0 };
 const EMPTY_TALLY: Tally = {
   records: 0,
-  counters: Object.fromEntries(
-    COUNTERS.map((counter) => [counter, EMPTY_SUM])
-  ) as Tally["counters"],
+  counters: byCounter(() => EMPTY_SUM),
   total: EMPTY_SUM,
 };
 
 function tally(held: Tally, record: StoredUsage): Tally {
-  const counters = Object.fromEntries(
-    COUNTERS.map((counter) => [counter, addCounter(held.counters[counter], record[counter])])
-  ) as Tally["counters"];
+  const counters = byCounter((counter) => addCounter(held.counters[counter], record[counter]));
   const known = COUNTERS.reduce((sum, counter) => sum + (record[counter] ?? 0), 0);
   const unknown = COUNTERS.some((counter) => record[counter] === null);
   return {

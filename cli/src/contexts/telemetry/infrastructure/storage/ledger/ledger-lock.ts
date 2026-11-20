@@ -51,8 +51,9 @@ function holderIn(text: string): Holder | null {
   const parsed = tryParseJson(text);
   const lock = parsed.ok ? asPlainObject(parsed.value) : null;
   const createdAt = Date.parse(String(lock?.created_at));
-  return Number.isInteger(lock?.pid) && !Number.isNaN(createdAt)
-    ? { pid: lock?.pid as number, createdAt }
+  const pid = lock?.pid;
+  return typeof pid === "number" && Number.isInteger(pid) && !Number.isNaN(createdAt)
+    ? { pid, createdAt }
     : null;
 }
 

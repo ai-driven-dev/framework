@@ -29,12 +29,12 @@ export function snapshotKey(repositoryId: string, branch: string): string {
 
 const PREFIX = "branch.";
 /** git lists the variable part of a key in lower case; the branch name keeps its case. */
-const FIELDS = {
-  task: ".aiddtask",
-  ticket: ".aiddticket",
-  declared_for: ".aidddeclaredfor",
-  declared_at: ".aidddeclaredat",
-} as const;
+const FIELDS: readonly (readonly ["task" | "ticket" | "declared_for" | "declared_at", string])[] = [
+  ["task", ".aiddtask"],
+  ["ticket", ".aiddticket"],
+  ["declared_for", ".aidddeclaredfor"],
+  ["declared_at", ".aidddeclaredat"],
+];
 
 interface DeclaredFields {
   task: string | null;
@@ -74,7 +74,7 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
     const key = newline === -1 ? entry : entry.slice(0, newline);
     const value = newline === -1 ? "" : entry.slice(newline + 1);
     const lower = key.toLowerCase();
-    for (const [field, suffix] of Object.entries(FIELDS) as [keyof typeof FIELDS, string][]) {
+    for (const [field, suffix] of FIELDS) {
       if (!lower.endsWith(suffix)) continue;
       const branch = key.slice(PREFIX.length, key.length - suffix.length);
       const held = branches.get(branch) ?? {

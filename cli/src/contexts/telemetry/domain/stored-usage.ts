@@ -114,17 +114,19 @@ export function upsertUsage(
 export function partitionByDay(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {
-  const dated: { readonly record: StoredUsage; readonly instant: number; readonly id: string }[] =
-    [];
+  const dated: {
+    readonly record: StoredUsage;
+    readonly day: string;
+    readonly instant: number;
+    readonly id: string;
+  }[] = [];
   for (const record of records) {
-    if (dayOf(record.at) !== null) {
-      dated.push({ record, instant: Date.parse(record.at), id: id(record) });
-    }
+    const day = dayOf(record.at);
+    if (day !== null) dated.push({ record, day, instant: Date.parse(record.at), id: id(record) });
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
   const days = new Map<string, StoredUsage[]>();
-  for (const { record } of dated) {
-    const day = dayOf(record.at) as string;
+  for (const { record, day } of dated) {
     const held = days.get(day);
     if (held === undefined) days.set(day, [record]);
     else held.push(record);
@@ -134,6 +136,10 @@ export function partitionByDay(
 
 function isText(value: unknown): value is string {
   return typeof value === "string" && value !== "";
+}
+
+function isListed<T>(list: readonly T[], value: unknown): value is T {
+  return list.some((member) => member === value);
 }
 
 function isCounter(value: unknown): boolean {
@@ -148,8 +154,8 @@ function isStoredUsage(
   object: Record<string, unknown>
 ): object is Record<string, unknown> & StoredUsage {
   return (
-    (USAGE_TOOLS as readonly unknown[]).includes(object.tool) &&
-    (USAGE_AGENTS as readonly unknown[]).includes(object.agent) &&
+    isListed(USAGE_TOOLS, object.tool) &&
+    isListed(USAGE_AGENTS, object.agent) &&
     isText(object.key) &&
     isText(object.session_id) &&
     typeof object.at === "string" &&

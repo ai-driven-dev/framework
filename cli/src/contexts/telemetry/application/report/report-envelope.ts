@@ -2,8 +2,7 @@ import type { Period } from "../../contract/period.js";
 import type { ReportFilters } from "../../contract/report-filter.js";
 import type { NotStoredReason } from "../../contract/repository-resolution.js";
 import {
-  COUNTERS,
-  type Counter,
+  byCounter,
   type CounterSum,
   type ReportAxis,
   type ReportRow,
@@ -71,10 +70,9 @@ function counterOf(sum: CounterSum): EnvelopeCounter {
 }
 
 function tallyOf(tally: Tally): EnvelopeTally {
-  const counters = COUNTERS.map((counter) => [counter, counterOf(tally.counters[counter])]);
   return {
     records: tally.records,
-    ...(Object.fromEntries(counters) as Record<Counter, EnvelopeCounter>),
+    ...byCounter((counter) => counterOf(tally.counters[counter])),
     total: counterOf(tally.total),
   };
 }
