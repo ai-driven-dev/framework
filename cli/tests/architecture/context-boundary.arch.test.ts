@@ -7,84 +7,10 @@ import { describe, expect, it } from "vitest";
 import { HELD_BY_BIOME } from "./allowed-edges.js";
 import { expectRatchet, importersByFile, read, sourceFiles } from "./helpers.js";
 
-/** Each context's declared public surface, one entry per context. */
-const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
-  // Measured with the composition root excluded, and not one entry is an adapter: the
-  // adapters are wired from `composition/` alone, so they stay internal.
-  installation: [
-    // what installation reports about a project and what a display reads of it
-    "src/contexts/installation/contract/doctor-issue.ts",
-    "src/contexts/installation/contract/installed-rule.ts",
-    "src/contexts/installation/contract/installed-tools-view.ts",
-    "src/contexts/installation/contract/project-context.ts",
-    "src/contexts/installation/contract/project-setup-state.ts",
-    // the installation record, which is what this context owns
-    "src/contexts/installation/ports/manifest-repository.ts",
-    // Transitional: the flows still in framework build on these,
-    // and leave this list as each one moves behind an installation command.
-    "src/contexts/installation/application/doctor/check-file-references.ts",
-    "src/contexts/installation/application/doctor/check-merge-files.ts",
-    "src/contexts/installation/application/doctor/check-plugin-drift.ts",
-    "src/contexts/installation/application/doctor/check-project-layout.ts",
-    "src/contexts/installation/application/doctor/load-manifest-for-doctor.ts",
-    "src/contexts/installation/application/doctor/list-registered-plugins.ts",
-    "src/contexts/installation/contract/registered-plugins.ts",
-    // removing the plugins installed from a marketplace, and what they left claimed elsewhere
-    "src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.ts",
-    "src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
-    "src/contexts/installation/contract/plugin-claims.ts",
-    // the installed plugins that name a marketplace, held against its catalog
-    "src/contexts/installation/application/marketplace/list-plugin-sources.ts",
-    // the disk half of the built marketplace cache, which the orchestration wraps
-    "src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
-    // what the native-host activation builds per tool
-    "src/contexts/installation/application/sync/build-marketplace-for-tool.ts",
-    "src/contexts/installation/contract/plugin-sources.ts",
-    "src/contexts/installation/application/doctor/check-tracked-files.ts",
-    "src/contexts/installation/application/init-project.ts",
-    "src/contexts/installation/application/list-installed-tools.ts",
-    "src/contexts/installation/application/update/update-tool.ts",
-    "src/contexts/installation/application/install/install-tools.ts",
-    "src/contexts/installation/application/install/install-ai-tool.ts",
-    "src/contexts/installation/application/install/configure-machine-scope.ts",
-    "src/contexts/installation/application/install/install-user-plugins.ts",
-    "src/contexts/installation/application/detect-project-context.ts",
-    "src/contexts/installation/application/restore/project/restore-global.ts",
-    "src/contexts/installation/application/plugin/add-plugin.ts",
-    "src/contexts/installation/application/plugin/plan-plugin-install.ts",
-    "src/contexts/installation/contract/plugin-spec.ts",
-    "src/contexts/installation/contract/built-marketplace.ts",
-    "src/contexts/installation/application/removal/remove-plugin.ts",
-    "src/contexts/installation/application/plugin/update-plugin.ts",
-    "src/contexts/installation/application/plugin/update-user-plugin-files.ts",
-    "src/contexts/installation/application/restore/project/restore-tool.ts",
-    "src/contexts/installation/application/clean-project-files.ts",
-    "src/contexts/installation/application/purge-user-scope-files.ts",
-    "src/contexts/installation/application/report-status.ts",
-    // the sync run's steps, which the sync scenario chains
-    "src/contexts/installation/application/sync/load-sync-context.ts",
-    "src/contexts/installation/application/sync/record-activation.ts",
-    "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
-    // what a provider change records and rebuilds, which the agent-models scenario chains
-    "src/contexts/installation/application/agents/agent-plugin-hosts.ts",
-    "src/contexts/installation/application/agents/agent-providers.ts",
-    "src/contexts/installation/application/agents/main-session-models.ts",
-  ],
-  "machine-claims": [
-    // Transitional (reference-context.md, M-C1): framework's orchestrators read the claims and
-    // the user source references that moved here, and leave this list as each one moves into
-    // orchestration behind a claims port.
-    "src/contexts/machine-claims/contract/user-scope-containment.ts",
-    "src/contexts/machine-claims/application/record-source-reference.ts",
-    "src/contexts/machine-claims/application/purge-declared-cache.ts",
-    "src/contexts/machine-claims/application/release-claims.ts",
-    // what a project removal asks the machine scope, narrowed per tool by the orchestration
-    "src/contexts/machine-claims/application/plugin-removal-claims.ts",
-    "src/contexts/machine-claims/application/shared-source-reference-support.ts",
-    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts",
-    "src/contexts/machine-claims/ports/user-source-references.ts",
-  ],
-};
+/** A context's declared public surface, one entry per context. Every context is held by Biome
+ * today (`HELD_BY_BIOME`), so the table is empty and a context that cannot be held that way
+ * declares its surface here. */
+const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {};
 
 function contextsOnDisk(files: readonly string[]): string[] {
   const names = new Set<string>();

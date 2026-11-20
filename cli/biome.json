@@ -497,6 +497,22 @@
                   },
                   {
                     "group": [
+                      "**/installation/domain/**",
+                      "**/installation/ports/**",
+                      "**/installation/infrastructure/**"
+                    ],
+                    "message": "installation publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/machine-claims/domain/**",
+                      "**/machine-claims/ports/**",
+                      "**/machine-claims/infrastructure/**"
+                    ],
+                    "message": "machine-claims publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
                       "**/telemetry/domain/**",
                       "**/telemetry/ports/**",
                       "**/telemetry/infrastructure/**"

@@ -9,7 +9,7 @@ paths:
 
 ## 1. Purpose and status
 
-- `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`) lists the contexts Biome closes to everything but the composition root; `installation` and `machine-claims` still publish through `PUBLIC_MODULES` (`context-boundary.arch.test.ts`).
+- `HELD_BY_BIOME` (`tests/architecture/allowed-edges.ts`) lists the contexts Biome closes to everything but the composition root. It holds every context, so `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) is empty.
 - A deviation is a row of section 9 or a change to this page, in the PR that needs it; an exception deviates from the target architecture.
 
 ## 2. Folder layout

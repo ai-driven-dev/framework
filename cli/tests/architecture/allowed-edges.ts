@@ -35,6 +35,8 @@ export const HELD_BY_BIOME: readonly string[] = [
   "auth",
   "distribution",
   "host-registration",
+  "installation",
+  "machine-claims",
   "recipes",
   "telemetry",
   "tools",
