@@ -9,7 +9,7 @@ import { LoadManifestForDoctor } from "../../../src/contexts/installation/applic
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import type { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.builder.js";
-import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "./build-check-registration.js";
 

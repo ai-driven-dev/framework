@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { wireTools } from "../../../src/composition/tools.js";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
 import { MenuLoop } from "../../../src/orchestration/menu/menu-loop.js";
-import { prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const loadManifest = vi.fn();
 const promptSelect = vi.fn();

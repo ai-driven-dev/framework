@@ -8,8 +8,8 @@ import {
   REWRITTEN_BINARY,
   spiedRecordRules,
 } from "../../contexts/installation/testing/spy-record-rules.fake.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";

@@ -3,7 +3,7 @@ import { CheckIdentity } from "../../../../../src/contexts/telemetry/application
 import { ChooseIdentity } from "../../../../../src/contexts/telemetry/application/identity/choose-identity.js";
 import type { ManageIdentityResult } from "../../../../../src/contexts/telemetry/application/identity/manage-identity.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
-import { prompterAnswering } from "../../../../helpers/ports/index.js";
+import { prompterAnswering } from "../../../../shared/testing/partial-ports.builder.js";
 
 const NAMED: ManageIdentityResult = { status: "set", personId: "Ada Example" };
 const UNSET: ManageIdentityResult = { status: "unset" };

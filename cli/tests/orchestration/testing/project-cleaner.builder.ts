@@ -10,7 +10,7 @@ import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/applica
 import { ReleaseClaims } from "../../../src/contexts/machine-claims/application/release-claims.js";
 import { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 type Constructed = ConstructorParameters<typeof CleanProject>;

@@ -5,7 +5,7 @@ import { ResolveMarketplace } from "../../../../src/contexts/distribution/applic
 import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/ports/plugin-catalog-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 
 const SAMPLE_MARKETPLACE = Marketplace.create({
   name: "awesome",

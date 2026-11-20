@@ -15,10 +15,10 @@ import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/te
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";

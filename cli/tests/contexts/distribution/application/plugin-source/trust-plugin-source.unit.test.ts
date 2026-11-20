@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TrustPluginSource } from "../../../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.js";
-import { InMemoryMarketplaceTrustStore } from "../../../../helpers/ports/in-memory-marketplace-trust-store.js";
+import { InMemoryMarketplaceTrustStore } from "../../../../shared/testing/in-memory-marketplace-trust-store.fake.js";
 
 const ROOT = "/project";
 const SOURCE = { kind: "local" as const, path: "/plugins/one" };

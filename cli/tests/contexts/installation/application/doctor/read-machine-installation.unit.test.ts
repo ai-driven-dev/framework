@@ -3,7 +3,7 @@ import { ReadMachineInstallation } from "../../../../../src/contexts/installatio
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
-import { manifestRepositoryLoading } from "../../../../helpers/ports/index.js";
+import { manifestRepositoryLoading } from "../../../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const pluginAt = (scope: Scope) =>

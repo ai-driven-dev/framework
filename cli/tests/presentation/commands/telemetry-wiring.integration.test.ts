@@ -7,7 +7,7 @@ import { ChooseIdentity } from "../../../src/contexts/telemetry/application/iden
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.js";
 import type { ReportFilters } from "../../../src/contexts/telemetry/contract/report-filter.js";
 import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
-import { prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();

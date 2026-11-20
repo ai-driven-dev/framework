@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
 import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.builder.js";
-import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
+import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const doctorAll = vi.fn();

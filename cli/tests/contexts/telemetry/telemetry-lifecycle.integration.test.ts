@@ -19,7 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTelemetry } from "../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../src/presentation/deps.js";
 import { git } from "../../helpers/git-sandbox.js";
-import { prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,

@@ -20,9 +20,9 @@ import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.builder.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { flowTools } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";

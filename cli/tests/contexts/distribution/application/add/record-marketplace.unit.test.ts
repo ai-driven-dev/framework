@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { RecordMarketplace } from "../../../../../src/contexts/distribution/application/add/record-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { InMemoryMarketplaceTrustStore } from "../../../../helpers/ports/in-memory-marketplace-trust-store.js";
+import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { InMemoryMarketplaceTrustStore } from "../../../../shared/testing/in-memory-marketplace-trust-store.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const SOURCE = { kind: "local" as const, path: "/marketplace" };

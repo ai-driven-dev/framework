@@ -17,8 +17,8 @@ import { FileHash } from "../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "../testing/build-check-registration.js";
 

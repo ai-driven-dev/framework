@@ -9,7 +9,7 @@ import {
   synthesizeSharedManifest,
 } from "../../../../src/contexts/tools/domain/marketplace-catalog.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/errors.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const EMPTY_PRESENCE: PluginPresence = {
   hasAgents: false,

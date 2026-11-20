@@ -15,8 +15,8 @@ import { expect, vi } from "vitest";
 import { wireTelemetry } from "../../../../src/composition/telemetry.js";
 import type { TelemetryDeps } from "../../../../src/presentation/deps.js";
 import { git, initRepository } from "../../../helpers/git-sandbox.js";
-import { prompterAnswering } from "../../../helpers/ports/index.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
+import { prompterAnswering } from "../../../shared/testing/partial-ports.builder.js";
 import { createTelemetrySandbox, type TelemetrySandbox } from "./telemetry-sandbox.js";
 
 /** One predicate, one table: a call is stored only if its directory was seen alive belonging to

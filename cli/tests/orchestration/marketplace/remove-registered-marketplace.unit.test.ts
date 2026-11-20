@@ -5,7 +5,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.js";
 import { InvalidMarketplaceNameError } from "../../../src/shared/domain/errors.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const OUTCOME = { marketplace: { name: "awesome" }, removedPluginCount: 0, orphanCount: 0 };

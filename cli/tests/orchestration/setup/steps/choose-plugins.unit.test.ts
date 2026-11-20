@@ -18,7 +18,7 @@ import type {
   PluginPick,
 } from "../../../../src/orchestration/plugin/pick-plugins.js";
 import { ChoosePlugins } from "../../../../src/orchestration/setup/steps/choose-plugins.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 

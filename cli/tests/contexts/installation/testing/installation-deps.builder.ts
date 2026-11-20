@@ -14,10 +14,10 @@ import { PluginDistributionReaderAdapter } from "../../../../src/contexts/instal
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import type { AiToolId, IdeToolId } from "../../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";

@@ -7,11 +7,11 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { marketplaceSync } from "../../../../shared/testing/marketplace-sync.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";

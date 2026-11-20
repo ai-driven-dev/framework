@@ -6,7 +6,7 @@ import {
   UnregisteredToolError,
 } from "../../../src/shared/domain/errors.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
-import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
+import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const restoreAll = vi.fn();

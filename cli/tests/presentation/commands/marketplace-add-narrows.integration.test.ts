@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import { describe, expect, it, vi } from "vitest";
 
-import { prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const marketplaceSyncExecute = vi
   .fn()

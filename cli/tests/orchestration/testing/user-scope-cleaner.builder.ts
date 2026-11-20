@@ -9,9 +9,9 @@ import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/applica
 import { ReleaseClaims } from "../../../src/contexts/machine-claims/application/release-claims.js";
 import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CleanUserScope } from "../../../src/orchestration/clean/clean-user-scope.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 type Purge = ConstructorParameters<typeof PurgeUserScopeFiles>;

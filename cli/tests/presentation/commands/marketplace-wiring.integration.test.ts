@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/shared/domain/source.js";
-import { prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();

@@ -22,10 +22,10 @@ import {
   initAndInstall,
 } from "../../contexts/installation/testing/installation-deps.builder.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
-import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {

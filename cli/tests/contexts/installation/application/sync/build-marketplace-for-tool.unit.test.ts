@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { BuildMarketplaceForTool } from "../../../../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const MARKETPLACE: DeclaredMarketplace = {

@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
-import { prompterAnswering } from "../../helpers/ports/index.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const login = vi.fn();
 const status = vi.fn();
