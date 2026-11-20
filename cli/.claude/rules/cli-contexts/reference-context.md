@@ -113,7 +113,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ### Migration state
 | Deviation | Closes when |
 | --- | --- |
-| `composition/container.ts` imports the per-context composition modules, where the target has nobody import `composition/` | `container.ts` stops composing them by import, and `createContainer(options)` replaces `createDeps` (module-level `WeakMap`) and `createMenuDeps` |
 | `distribution` is outside `HELD_BY_BIOME` and its `contract/` is thin | `distribution` joins `HELD_BY_BIOME` and its published types are the only thing outside reads |
 | orchestration reads `machine-claims` beyond its `contract/`, listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`) | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (`PROFILE_READERS_ALLOWED` in `profile-readers-name-their-sections.arch.test.ts`) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
