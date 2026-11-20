@@ -76,11 +76,16 @@ function deliveryOf(
   };
 }
 
+interface DeliverySections {
+  readonly manifest: ManifestSection | null;
+  readonly hooks: HooksSection;
+  readonly mcp: McpSection | null;
+}
+
 function nativeAnswers(
   layout: NativeLayout,
   manifest: ManifestSection,
-  hooks: HooksSection,
-  mcp: McpSection | null
+  { hooks, mcp }: DeliverySections
 ): NativePluginAnswers {
   const { delivery } = hooks;
   const plugin = mcp?.plugin ?? { accepts: false, relativePath: DEFAULT_PLUGIN_MCP_PATH };
@@ -136,15 +141,11 @@ function flatAnswers(layout: FlatPlacement, hooks: HooksSection): FlatPluginAnsw
 /** What a tool answers about how a plugin is delivered, composed from the sections it declares.
  * The caller has checked that they agree (a native layout holds a manifest, a delivery suits
  * its layout). */
-export function pluginAnswers(
-  layout: LayoutSection,
-  manifest: ManifestSection | null,
-  hooks: HooksSection,
-  mcp: McpSection | null
-): PluginAnswers {
+export function pluginAnswers(layout: LayoutSection, sections: DeliverySections): PluginAnswers {
+  const { manifest, hooks } = sections;
   if (layout.mode === "native") {
     if (manifest === null) throw new CapabilityConfigError("a native layout requires a manifest.");
-    return nativeAnswers(layout, manifest, hooks, mcp);
+    return nativeAnswers(layout, manifest, sections);
   }
   if (layout.mode === "flat") return flatAnswers(layout, hooks);
   const unsupported: UnsupportedPluginAnswers = {

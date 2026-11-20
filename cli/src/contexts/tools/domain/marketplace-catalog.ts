@@ -71,12 +71,17 @@ export function buildSharedMarketplace(
   return obj;
 }
 
-export function buildSharedCatalogEntry(
-  name: string,
-  description: string,
-  version: string,
-  srcEntry: Record<string, unknown> | undefined
-): Record<string, unknown> {
+export function buildSharedCatalogEntry({
+  name,
+  description,
+  version,
+  srcEntry,
+}: {
+  name: string;
+  description: string;
+  version: string;
+  srcEntry: Record<string, unknown> | undefined;
+}): Record<string, unknown> {
   const entry: Record<string, unknown> = {
     name,
     source: `./plugins/${name}`,
@@ -90,13 +95,22 @@ export function buildSharedCatalogEntry(
   return entry;
 }
 
-export async function resolveVersion(
-  fs: BuildFileReader,
-  name: string,
-  srcEntry: { version?: string } | undefined,
-  outDir: string,
-  outputManifestRelative: string
-): Promise<string> {
+/** What a marketplace entry is resolved from: the source entry, else the plugin's built manifest. */
+export interface EntrySource {
+  readonly fs: BuildFileReader;
+  readonly name: string;
+  readonly srcEntry: SrcEntry;
+  readonly outDir: string;
+  readonly outputManifestRelative: string;
+}
+
+export async function resolveVersion({
+  fs,
+  name,
+  srcEntry,
+  outDir,
+  outputManifestRelative,
+}: EntrySource): Promise<string> {
   if (srcEntry?.version) return srcEntry.version;
   const manifestPath = join(outDir, "plugins", name, outputManifestRelative);
   const raw = await fs.readFile(manifestPath);
@@ -107,13 +121,13 @@ export async function resolveVersion(
   );
 }
 
-export async function resolveDescription(
-  fs: BuildFileReader,
-  name: string,
-  srcEntry: { description?: string } | undefined,
-  outDir: string,
-  outputManifestRelative: string
-): Promise<string> {
+export async function resolveDescription({
+  fs,
+  name,
+  srcEntry,
+  outDir,
+  outputManifestRelative,
+}: EntrySource): Promise<string> {
   if (srcEntry?.description) return srcEntry.description;
   const manifestPath = join(outDir, "plugins", name, outputManifestRelative);
   const raw = await fs.readFile(manifestPath);
@@ -128,20 +142,13 @@ export async function resolveDescription(
 
 /** Resolve version and description, then shape the catalog entry: the marketplace-entry
  * builder claude and cursor both hand to `ToolBuildContract.buildMarketplaceEntry`. */
-export async function buildSharedEntry(
-  name: string,
-  outDir: string,
-  srcEntry: SrcEntry,
-  manifestRelative: string,
-  fs: BuildFileReader
-): Promise<Record<string, unknown>> {
-  const args = [fs, name, srcEntry, outDir, manifestRelative] as const;
-  const version = await resolveVersion(...args);
-  const description = await resolveDescription(...args);
-  return buildSharedCatalogEntry(
-    name,
+export async function buildSharedEntry(source: EntrySource): Promise<Record<string, unknown>> {
+  const version = await resolveVersion(source);
+  const description = await resolveDescription(source);
+  return buildSharedCatalogEntry({
+    name: source.name,
     description,
     version,
-    srcEntry as Record<string, unknown> | undefined
-  );
+    srcEntry: source.srcEntry as Record<string, unknown> | undefined,
+  });
 }

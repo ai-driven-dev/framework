@@ -4,6 +4,7 @@ import {
   buildSharedCatalogEntry,
   buildSharedEntry,
   buildSharedMarketplace,
+  type EntrySource,
   resolveDescription,
   resolveVersion,
   synthesizeSharedManifest,
@@ -239,7 +240,12 @@ describe("buildSharedMarketplace", () => {
 
 describe("buildSharedCatalogEntry", () => {
   it("builds entry with name, source, description, version", () => {
-    const entry = buildSharedCatalogEntry("aidd-dev", "AI Dev plugin", "1.0.0", undefined);
+    const entry = buildSharedCatalogEntry({
+      name: "aidd-dev",
+      description: "AI Dev plugin",
+      version: "1.0.0",
+      srcEntry: undefined,
+    });
     expect(entry.name).toBe("aidd-dev");
     expect(entry.source).toBe("./plugins/aidd-dev");
     expect(entry.description).toBe("AI Dev plugin");
@@ -247,9 +253,14 @@ describe("buildSharedCatalogEntry", () => {
   });
 
   it("passes strict through, and recommended under metadata, where Claude Code does not warn", () => {
-    const entry = buildSharedCatalogEntry("aidd-dev", "desc", "1.0.0", {
-      strict: true,
-      metadata: { recommended: false },
+    const entry = buildSharedCatalogEntry({
+      name: "aidd-dev",
+      description: "desc",
+      version: "1.0.0",
+      srcEntry: {
+        strict: true,
+        metadata: { recommended: false },
+      },
     });
     expect(entry.strict).toBe(true);
     expect(entry.metadata).toStrictEqual({ recommended: false });
@@ -257,13 +268,23 @@ describe("buildSharedCatalogEntry", () => {
   });
 
   it("omits strict and metadata when absent", () => {
-    const entry = buildSharedCatalogEntry("aidd-dev", "desc", "1.0.0", undefined);
+    const entry = buildSharedCatalogEntry({
+      name: "aidd-dev",
+      description: "desc",
+      version: "1.0.0",
+      srcEntry: undefined,
+    });
     expect(entry.strict).toBeUndefined();
     expect(entry.metadata).toBeUndefined();
   });
 
   it("only includes strict when it is boolean (not string/number)", () => {
-    const entry = buildSharedCatalogEntry("aidd-dev", "desc", "1.0.0", { strict: true });
+    const entry = buildSharedCatalogEntry({
+      name: "aidd-dev",
+      description: "desc",
+      version: "1.0.0",
+      srcEntry: { strict: true },
+    });
     expect(typeof entry.strict).toBe("boolean");
   });
 });
@@ -303,22 +324,19 @@ describe("buildSharedMarketplace, field by field", () => {
 
 describe("resolving a catalog entry's version and description", () => {
   const MANIFEST = "/out/plugins/p/.claude-plugin/plugin.json";
+  const source = (fs: InMemoryFileAdapter, srcEntry: EntrySource["srcEntry"]): EntrySource => ({
+    fs,
+    name: "p",
+    srcEntry,
+    outDir: "/out",
+    outputManifestRelative: ".claude-plugin/plugin.json",
+  });
 
   it("takes the marketplace entry's own version and description without opening the manifest", async () => {
     const fs = new InMemoryFileAdapter();
 
-    expect(
-      await resolveVersion(fs, "p", { version: "9.9.9" }, "/out", ".claude-plugin/plugin.json")
-    ).toBe("9.9.9");
-    expect(
-      await resolveDescription(
-        fs,
-        "p",
-        { description: "from entry" },
-        "/out",
-        ".claude-plugin/plugin.json"
-      )
-    ).toBe("from entry");
+    expect(await resolveVersion(source(fs, { version: "9.9.9" }))).toBe("9.9.9");
+    expect(await resolveDescription(source(fs, { description: "from entry" }))).toBe("from entry");
   });
 
   it("falls back to the built manifest, and names what is missing when neither side has it", async () => {
@@ -326,24 +344,14 @@ describe("resolving a catalog entry's version and description", () => {
       [MANIFEST]: JSON.stringify({ version: "1.0.0", description: "" }),
     });
 
-    expect(await resolveVersion(fs, "p", undefined, "/out", ".claude-plugin/plugin.json")).toBe(
-      "1.0.0"
-    );
-    await expect(
-      resolveDescription(fs, "p", {}, "/out", ".claude-plugin/plugin.json")
-    ).rejects.toThrow(
+    expect(await resolveVersion(source(fs, undefined))).toBe("1.0.0");
+    await expect(resolveDescription(source(fs, {}))).rejects.toThrow(
       new InvalidSourceMarketplaceError(
         "plugin 'p' has no description in marketplace entry or plugin.json"
       )
     );
     await expect(
-      resolveVersion(
-        new InMemoryFileAdapter({ [MANIFEST]: "{}" }),
-        "p",
-        {},
-        "/out",
-        ".claude-plugin/plugin.json"
-      )
+      resolveVersion(source(new InMemoryFileAdapter({ [MANIFEST]: "{}" }), {}))
     ).rejects.toThrow(
       new InvalidSourceMarketplaceError(
         "plugin 'p' has no version in marketplace entry or plugin.json"
@@ -356,9 +364,7 @@ describe("resolving a catalog entry's version and description", () => {
       [MANIFEST]: JSON.stringify({ version: "1.0.0", description: "built" }),
     });
 
-    expect(
-      await buildSharedEntry("p", "/out", { strict: true }, ".claude-plugin/plugin.json", fs)
-    ).toStrictEqual({
+    expect(await buildSharedEntry(source(fs, { strict: true }))).toStrictEqual({
       name: "p",
       source: "./plugins/p",
       description: "built",

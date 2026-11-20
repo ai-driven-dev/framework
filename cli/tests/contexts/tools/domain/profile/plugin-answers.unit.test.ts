@@ -130,7 +130,7 @@ describe("what a native tool answers", () => {
   it("refuses a native layout with no manifest", () => {
     const { layout, hooks } = nativePlugins();
 
-    expect(() => pluginAnswers(layout, null, hooks, null)).toThrow(
+    expect(() => pluginAnswers(layout, { manifest: null, hooks, mcp: null })).toThrow(
       "a native layout requires a manifest."
     );
   });
@@ -162,12 +162,11 @@ describe("what any tool answers about hooks it does not run", () => {
 describe("a layout composed by hand", () => {
   it("answers the user directory its global files map to when no user resolver exists", () => {
     const globalFiles = { dir: (home: string) => `${home}/.g`, map: () => null };
-    const answers = pluginAnswers(
-      nativeLayout({ pluginsDir: ".x/", globalFiles }),
-      nativePlugins().manifest,
-      nativePlugins().hooks,
-      null
-    );
+    const answers = pluginAnswers(nativeLayout({ pluginsDir: ".x/", globalFiles }), {
+      manifest: nativePlugins().manifest,
+      hooks: nativePlugins().hooks,
+      mcp: null,
+    });
 
     expect([answers.userPluginsBaseDir("/h"), answers.copiesFilesGlobally()]).toEqual([
       "/h/.g",

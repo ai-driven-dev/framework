@@ -88,7 +88,7 @@ export function unsupportedPlugins(reason = "synthetic"): PluginSet {
 
 /** What a tool declaring this set answers about its plugins. */
 export function answersOf(set: PluginSet): PluginAnswers {
-  return pluginAnswers(set.layout, set.manifest, set.hooks, null);
+  return pluginAnswers(set.layout, { manifest: set.manifest, hooks: set.hooks, mcp: null });
 }
 
 /** A plugin set as the sections a profile declares: no manifest section when it has none. */

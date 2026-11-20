@@ -67,7 +67,7 @@ export function buildClaudeContract(): ToolBuildContract {
       destRelPath: marketplaceRelative,
     }),
     buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) =>
-      buildSharedEntry(name, outDir, srcEntry, manifestRelative, fs),
+      buildSharedEntry({ fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative }),
   };
 }
 

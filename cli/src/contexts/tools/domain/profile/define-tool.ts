@@ -207,7 +207,11 @@ function refuseDisagreeingPlugin(toolId: string, sections: ProfileSections): voi
 function pluginsOf(sections: ProfileSections): PluginAnswers | null {
   const { layout, hooks } = sections;
   if (layout === undefined || hooks === undefined) return null;
-  return pluginAnswers(layout, sections.manifest ?? null, hooks, sections.mcp ?? null);
+  return pluginAnswers(layout, {
+    manifest: sections.manifest ?? null,
+    hooks,
+    mcp: sections.mcp ?? null,
+  });
 }
 
 function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | undefined {
@@ -297,9 +301,20 @@ export function defineAiTool<C extends ProfileSections>(
     distributionPaths: (kind: "manifest" | "marketplace") =>
       fields.distributionProbes?.[kind] ?? [],
     flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
-      flatInstallPath(spec.directory, skillLayoutOf(capabilities), section, pluginName, fileName),
+      flatInstallPath({
+        directory: spec.directory,
+        skillLayout: skillLayoutOf(capabilities),
+        section,
+        pluginName,
+        fileName,
+      }),
     ownsFlatPath: (relativePath: string, pluginName: string) =>
-      ownsFlatPath(spec.directory, skillLayoutOf(capabilities), relativePath, pluginName),
+      ownsFlatPath({
+        directory: spec.directory,
+        skillLayout: skillLayoutOf(capabilities),
+        relativePath,
+        pluginName,
+      }),
     configWrites: () => aiConfigWrites(capabilities),
     plugins: () => plugins,
     supportsUserScopeActivation: () => plugins?.supportsUserScopeActivation() ?? false,
