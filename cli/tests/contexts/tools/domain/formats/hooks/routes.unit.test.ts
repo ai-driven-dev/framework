@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
+import type {
+  ArtifactContract,
+  ShippedHooks,
+} from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import type { HooksBrand } from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import {
   flatHooksArtifact,
@@ -135,7 +138,9 @@ describe("a flat build's hooks artifact", () => {
       true,
     ]);
     expect(
-      JSON.parse(artifact.hooksFile?.merge(null, SHIPPED, "p", locate).content ?? "")
+      JSON.parse(
+        artifact.hooksFile?.merge(null, { json: SHIPPED, plugin: "p", locate }).content ?? ""
+      )
     ).toStrictEqual({
       version: 1,
       hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs flat/skills/s" }] },
@@ -159,7 +164,9 @@ describe("a flat build's hooks artifact", () => {
     });
 
     expect(
-      JSON.parse(artifact.hooksFile?.merge(existing, "{}", "p", locate).content ?? "")
+      JSON.parse(
+        artifact.hooksFile?.merge(existing, { json: "{}", plugin: "p", locate }).content ?? ""
+      )
     ).toStrictEqual({ version: 1 });
   });
 
@@ -175,7 +182,9 @@ describe("a flat build's hooks artifact", () => {
       false,
     ]);
     expect(
-      JSON.parse(artifact.hooksFile?.merge(null, SHIPPED, "p", locate).content ?? "")
+      JSON.parse(
+        artifact.hooksFile?.merge(null, { json: SHIPPED, plugin: "p", locate }).content ?? ""
+      )
     ).toStrictEqual({
       version: 1,
       hooks: { Start: [{ command: "node ./.tool/hooks/p/a.cjs flat/skills/s" }] },
@@ -183,8 +192,8 @@ describe("a flat build's hooks artifact", () => {
   });
 
   it("merges through a tool's own merge where no file format describes its hooks file", () => {
-    const ownMerge = (existing: string | null, pluginHooks: string, plugin: string) => ({
-      content: `${existing ?? ""}+${pluginHooks}@${plugin}`,
+    const ownMerge = (existing: string | null, { json, plugin }: ShippedHooks) => ({
+      content: `${existing ?? ""}+${json}@${plugin}`,
       warnings: [],
     });
     const artifact = supported(
@@ -199,7 +208,9 @@ describe("a flat build's hooks artifact", () => {
       ".tool/hooks.json",
       true,
     ]);
-    expect(artifact.hooksFile?.merge(null, "h", "p", locate).content).toBe("+h@p");
+    expect(artifact.hooksFile?.merge(null, { json: "h", plugin: "p", locate }).content).toBe(
+      "+h@p"
+    );
   });
 
   it("refuses, by its type, a bridge for a descriptor that declares a hooks file", () => {

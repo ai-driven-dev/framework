@@ -165,7 +165,7 @@ describe("tolerates a JSONC user-owned opencode.json", () => {
     const incoming = { "aidd-context__server": LOCAL_SERVER };
     let merged = "";
     expect(() => {
-      merged = buildTypedMcpFlatConfig(base, JSONC_EXISTING, incoming);
+      merged = buildTypedMcpFlatConfig({ baseConfig: base, existing: JSONC_EXISTING, incoming });
     }).not.toThrow();
     const parsed = JSON.parse(merged) as {
       $schema: string;
@@ -191,7 +191,9 @@ describe("buildTypedMcpFlatConfig", () => {
   });
 
   it("emits the base ($schema + instructions) with no mcp key when there are zero servers", () => {
-    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, null, {})) as Record<string, unknown>;
+    const config = JSON.parse(
+      buildTypedMcpFlatConfig({ baseConfig: BASE, existing: null, incoming: {} })
+    ) as Record<string, unknown>;
     expect(config).toEqual({
       $schema: "https://opencode.ai/config.json",
       instructions: [".opencode/rules/**/*.md"],
@@ -201,7 +203,11 @@ describe("buildTypedMcpFlatConfig", () => {
 
   it("includes the mcp key only when servers are contributed", () => {
     const config = JSON.parse(
-      buildTypedMcpFlatConfig(BASE, null, { "aidd-dev-server": LOCAL_SERVER })
+      buildTypedMcpFlatConfig({
+        baseConfig: BASE,
+        existing: null,
+        incoming: { "aidd-dev-server": LOCAL_SERVER },
+      })
     ) as { $schema: string; instructions: string[]; mcp: Record<string, unknown> };
     expect(config.$schema).toBe("https://opencode.ai/config.json");
     expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
@@ -215,7 +221,9 @@ describe("buildTypedMcpFlatConfig", () => {
       theme: "dark",
       mcp: { user: REMOTE_SERVER },
     });
-    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, existing, {})) as {
+    const config = JSON.parse(
+      buildTypedMcpFlatConfig({ baseConfig: BASE, existing, incoming: {} })
+    ) as {
       $schema: string;
       instructions: string[];
       theme: string;
@@ -231,7 +239,14 @@ describe("buildTypedMcpFlatConfig", () => {
     const existing = JSON.stringify({
       instructions: ["user.md", "user.md", ".opencode/rules/**/*.md"],
     });
-    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, existing, {}, ["instructions"])) as {
+    const config = JSON.parse(
+      buildTypedMcpFlatConfig({
+        baseConfig: BASE,
+        existing,
+        incoming: {},
+        mergedKeys: ["instructions"],
+      })
+    ) as {
       instructions: string[];
     };
     expect(config.instructions).toEqual(["user.md", "user.md", ".opencode/rules/**/*.md"]);
@@ -243,12 +258,12 @@ describe("buildTypedMcpFlatConfig merged list keys", () => {
 
   it("appends the generated entries the existing list lacks, after the user's own", () => {
     const config = JSON.parse(
-      buildTypedMcpFlatConfig(
-        base,
-        JSON.stringify({ instructions: ["rules/a.md", "mine.md"] }),
-        {},
-        ["instructions"]
-      )
+      buildTypedMcpFlatConfig({
+        baseConfig: base,
+        existing: JSON.stringify({ instructions: ["rules/a.md", "mine.md"] }),
+        incoming: {},
+        mergedKeys: ["instructions"],
+      })
     ) as { instructions: string[] };
 
     expect(config.instructions).toEqual(["rules/a.md", "mine.md", "rules/b.md"]);
@@ -257,7 +272,14 @@ describe("buildTypedMcpFlatConfig merged list keys", () => {
   it("writes the generated entries alone when no existing config has the list", () => {
     const merged = (existing: string | null) =>
       (
-        JSON.parse(buildTypedMcpFlatConfig(base, existing, {}, ["instructions"])) as {
+        JSON.parse(
+          buildTypedMcpFlatConfig({
+            baseConfig: base,
+            existing,
+            incoming: {},
+            mergedKeys: ["instructions"],
+          })
+        ) as {
           instructions: string[];
         }
       ).instructions;

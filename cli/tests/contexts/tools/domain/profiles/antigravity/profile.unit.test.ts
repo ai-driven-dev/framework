@@ -51,7 +51,10 @@ describe("antigravity", () => {
       deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    expect(antigravity.projectHooksDelivery()?.format.merge).toBe(mergeAntigravityHooks);
+    const hooks = JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ command: "a" }] }] } });
+    expect(antigravity.projectHooksDelivery()?.format.merge(null, hooks, "p")).toStrictEqual(
+      mergeAntigravityHooks(null, { json: hooks, plugin: "p" })
+    );
     expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
       "hooks",
       "layout",

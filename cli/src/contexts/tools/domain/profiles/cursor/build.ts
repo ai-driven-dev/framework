@@ -136,7 +136,7 @@ export function buildCursorFlatContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".cursor/mcp.json",
         merge: (existing, incoming, force) =>
-          mergeAdditiveMcp(existing, incoming, force, "mcpServers"),
+          mergeAdditiveMcp(existing, incoming, { force, serversKey: "mcpServers" }),
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },

@@ -1,3 +1,4 @@
+import type { ShippedHooks } from "../../../contract/build-contract.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import {
   isWrappedCommandHooksFileEmpty,
@@ -14,17 +15,15 @@ const TARGET: WrappedCommandHooksTarget = { label: "Antigravity", descriptor: AN
 
 export function mergeAntigravityHooks(
   existingJson: string | null,
-  pluginHooksJson: string,
-  pluginName: string,
-  locate?: (pluginPath: string) => string
+  shipped: ShippedHooks
 ): { content: string; warnings: readonly string[] } {
-  return mergeWrappedCommandHooks(TARGET, existingJson, pluginHooksJson, pluginName, locate);
+  return mergeWrappedCommandHooks(TARGET, existingJson, shipped);
 }
 
 /** How `agy`'s `.agents/hooks.json` holds a plugin's entries. */
 export function antigravityHooksFormat(): ProjectHooksFormat {
   return {
-    merge: mergeAntigravityHooks,
+    merge: (existing, json, plugin) => mergeAntigravityHooks(existing, { json, plugin }),
     unmerge: unmergeWrappedCommandHooks,
     contributedEntries: (content, name) => wrappedCommandHookEntries(TARGET, content, name),
     isEmpty: isWrappedCommandHooksFileEmpty,

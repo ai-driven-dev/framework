@@ -153,7 +153,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => FLAT_VSCODE_MCP_PATH,
-        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, force),
+        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, { force }),
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },

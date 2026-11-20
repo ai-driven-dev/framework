@@ -85,7 +85,11 @@ function emitOpencodeConfig({
   const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
   const config = {
     path: configPath,
-    content: buildTypedMcpFlatConfig(base, existing.get(configPath) ?? null, incoming),
+    content: buildTypedMcpFlatConfig({
+      baseConfig: base,
+      existing: existing.get(configPath) ?? null,
+      incoming,
+    }),
   };
   const runsHooks = builtPlugins.some((plugin) =>
     pluginLoaders(plugin).some((loader) => present.has(loader))

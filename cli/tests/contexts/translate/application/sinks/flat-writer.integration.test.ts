@@ -411,8 +411,8 @@ describe("the hooks a flat layout writes", () => {
       hooksFile: {
         path: (plugin) => (shared ? ".stub/settings.json" : `.stub/hooks/${plugin}.hooks.json`),
         shared,
-        merge: (existing, pluginHooks, plugin) => ({
-          content: `${existing ?? "none"}+${plugin}:${pluginHooks}`,
+        merge: (existing, { json, plugin }) => ({
+          content: `${existing ?? "none"}+${plugin}:${json}`,
           warnings: ["one event has no equivalent"],
         }),
       },

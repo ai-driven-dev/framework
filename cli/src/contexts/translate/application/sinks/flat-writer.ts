@@ -202,12 +202,11 @@ export class FlatWriter {
     if (!file.shared) await this.checkCollision(t, destPath, pluginName);
     const existing = file.shared ? await this.readSharedHooksTarget(t.outDir, destPath) : null;
     const raw = await this.fs.readFile(hooksSrc);
-    const { content, warnings } = file.merge(
-      existing,
-      raw,
-      pluginName,
-      (pluginPath) => `./${resolveSuffixToFlatPath(t.contract, pluginPath, pluginName)}`
-    );
+    const { content, warnings } = file.merge(existing, {
+      json: raw,
+      plugin: pluginName,
+      locate: (pluginPath) => `./${resolveSuffixToFlatPath(t.contract, pluginPath, pluginName)}`,
+    });
     for (const w of warnings) this.logger.warn(w);
     await this.fs.writeFile(destPath, content);
     return 1;

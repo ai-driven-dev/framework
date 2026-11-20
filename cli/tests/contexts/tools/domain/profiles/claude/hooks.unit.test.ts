@@ -5,7 +5,9 @@ import { buildClaudeFlatContract } from "../../../../../../src/contexts/tools/do
 function merge(pluginHooks: string): unknown {
   const hooks: ArtifactContract = buildClaudeFlatContract().artifacts.hooks;
   if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
-  return JSON.parse(hooks.hooksFile.merge(null, pluginHooks, "p", (path) => path).content);
+  return JSON.parse(
+    hooks.hooksFile.merge(null, { json: pluginHooks, plugin: "p", locate: (path) => path }).content
+  );
 }
 
 describe("what a plugin ships, merged into .claude/settings.json", () => {

@@ -160,7 +160,10 @@ describe("buildCopilotFlatContract()", () => {
       ".github/hooks/aidd-dev.hooks.json",
       false,
     ]);
-    expect(hooks.hooksFile?.merge(null, HOOKS_JSON, "aidd-dev", (path) => path).content).toBe(
+    expect(
+      hooks.hooksFile?.merge(null, { json: HOOKS_JSON, plugin: "aidd-dev", locate: (path) => path })
+        .content
+    ).toBe(
       `${JSON.stringify(
         {
           version: 1,
@@ -228,7 +231,8 @@ describe("buildCopilotFlatContract()", () => {
     });
 
     const written = JSON.parse(
-      hooks.hooksFile?.merge(null, incoming, "aidd-dev", (path) => path).content ?? ""
+      hooks.hooksFile?.merge(null, { json: incoming, plugin: "aidd-dev", locate: (path) => path })
+        .content ?? ""
     );
 
     expect(written.hooks.PostToolUse).toStrictEqual([

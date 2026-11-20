@@ -6,13 +6,16 @@ import {
   flatHooksPathWithLoaderEntry,
   genericFlatHooksFile,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import type { ArtifactContract, FlatHooksBridge } from "../../../contract/build-contract.js";
+import type {
+  ArtifactContract,
+  FlatHooksBridge,
+  ShippedHooks,
+} from "../../../contract/build-contract.js";
 import type { HookScript, ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import {
   type HooksFileFormat,
   type HooksMergeTarget,
   isHooksFileEmpty,
-  type LocatePluginPath,
   mergeHooks,
   pluginEntries,
   pluginScriptDir,
@@ -95,8 +98,7 @@ export function flatHooksArtifact(
     ownMerge ??
     (file === undefined
       ? undefined
-      : (existing, pluginHooks, plugin, locate) =>
-          mergeHooks(existing, pluginHooks, plugin, mergeTarget(descriptor, file, route), locate));
+      : (existing, shipped) => mergeHooks(existing, shipped, mergeTarget(descriptor, file, route)));
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
@@ -108,13 +110,8 @@ export function flatHooksArtifact(
           hooksFile: {
             path: (plugin: string) => sharedFile ?? genericFlatHooksFile(route.scriptsDir, plugin),
             shared: sharedFile !== undefined,
-            merge: (
-              existing: string | null,
-              pluginHooks: string,
-              plugin: string,
-              locate: LocatePluginPath
-            ) => {
-              const merged = merge(existing, pluginHooks, plugin, locate);
+            merge: (existing: string | null, shipped: ShippedHooks) => {
+              const merged = merge(existing, shipped);
               return { ...merged, warnings: merged.warnings.map((w) => `${tool}: ${w}`) };
             },
           },
@@ -227,7 +224,7 @@ export function projectHooksSupport(
     project: {
       relativePath: route.sharedFile,
       format: {
-        merge: (existing, pluginHooks, plugin) => mergeHooks(existing, pluginHooks, plugin, target),
+        merge: (existing, json, plugin) => mergeHooks(existing, { json, plugin }, target),
         unmerge: (existing, plugin) => unmergeHooks(existing, plugin, target),
         contributedEntries: (content, plugin) => pluginEntries(content, plugin, target),
         isEmpty: isHooksFileEmpty,

@@ -6,6 +6,7 @@
 
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import type { ShippedHooks } from "../../contract/build-contract.js";
 import type { PluginHooksShape, PluginMatcherGroup } from "./plugin-hooks-shape.js";
 
 /** A field a flat entry can carry, each read from the plugin's item or its matcher group. */
@@ -64,16 +65,15 @@ export type LocatePluginPath = (pluginPath: string) => string;
  * An event the tool does not fire is skipped and reported. */
 export function mergeHooks(
   existing: string | null,
-  pluginHooks: string,
-  plugin: string,
-  target: HooksMergeTarget,
-  locate: LocatePluginPath = (pluginPath) => pluginPath
+  shipped: ShippedHooks,
+  target: HooksMergeTarget
 ): { content: string; warnings: readonly string[] } {
+  const { plugin } = shipped;
   const file = stripPlugin(parseFile(existing), plugin, target);
   const hooks = file.hooks ?? {};
   const warnings: string[] = [];
-  const shipped = rewriteRoot(pluginHooks, plugin, target.scriptsDir, locate).hooks ?? {};
-  for (const [event, groups] of Object.entries(shipped)) {
+  const rewritten = rewriteRoot(shipped, target.scriptsDir).hooks ?? {};
+  for (const [event, groups] of Object.entries(rewritten)) {
     const toolEvents = target.eventMap === undefined ? [event] : target.eventMap[event];
     if (toolEvents === undefined) {
       warnings.push(`unmapped event '${event}' skipped`);
@@ -103,7 +103,7 @@ export function pluginEntries(
     entries
       .flatMap((entry) => (Array.isArray(entry.hooks) ? (entry.hooks as Entry[]) : [entry]))
       .filter((item): item is Entry & { command: string } =>
-        runsPluginScript(String(item.command), target.scriptsDir, plugin, target.rootToken)
+        runsPluginScript(String(item.command), plugin, target)
       )
       .map((entry) => ({ event, entry }))
   );
@@ -126,12 +126,10 @@ function serialize(file: HooksFile, hooks: Record<string, Entry[]>, format: Hook
 }
 
 function rewriteRoot(
-  pluginHooks: string,
-  plugin: string,
-  scriptsDir: string,
-  locate: LocatePluginPath
+  { json, plugin, locate = (pluginPath) => pluginPath }: ShippedHooks,
+  scriptsDir: string
 ): PluginHooksShape {
-  return rewritePluginRootInJson(JSON.parse(pluginHooks), (suffix) =>
+  return rewritePluginRootInJson(JSON.parse(json), (suffix) =>
     suffix.startsWith(SCRIPTS)
       ? `./${pluginScriptPath(scriptsDir, plugin, suffix)}`
       : locate(suffix)
@@ -146,9 +144,8 @@ function escaped(text: string): string {
  * of the command or after a space or a quote, bare, after `./` or after the tool's root token. */
 function runsPluginScript(
   command: string,
-  scriptsDir: string,
   plugin: string,
-  rootToken?: string
+  { scriptsDir, rootToken }: HooksMergeTarget
 ): boolean {
   const dir = escaped(pluginScriptDir(scriptsDir, plugin));
   const prefix = rootToken === undefined ? "\\./" : `\\./|${escaped(rootToken)}/`;
@@ -158,8 +155,7 @@ function runsPluginScript(
 /** The file without the plugin's entries: an event, or a matcher group, left with none of its
  * own is dropped, one that never had any is kept. */
 function stripPlugin(file: HooksFile, plugin: string, target: HooksMergeTarget): HooksFile {
-  const ours = (item: Entry) =>
-    runsPluginScript(String(item.command), target.scriptsDir, plugin, target.rootToken);
+  const ours = (item: Entry) => runsPluginScript(String(item.command), plugin, target);
   const hooks: Record<string, Entry[]> = {};
   for (const [event, entries] of Object.entries(file.hooks ?? {})) {
     const kept = entries.flatMap((entry) => {

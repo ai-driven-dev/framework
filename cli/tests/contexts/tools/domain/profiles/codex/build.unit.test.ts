@@ -218,7 +218,11 @@ describe("buildCodexFlatContract()", () => {
     expect({
       script: hooks.path("aidd-dev", "hooks/journal.cjs"),
       file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
-      merged: hooks.hooksFile?.merge(null, HOOKS_JSON, "aidd-dev", (path) => path),
+      merged: hooks.hooksFile?.merge(null, {
+        json: HOOKS_JSON,
+        plugin: "aidd-dev",
+        locate: (path) => path,
+      }),
     }).toStrictEqual({
       script: ".codex/hooks/aidd-dev/journal.cjs",
       file: [".codex/hooks.json", true],

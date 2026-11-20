@@ -337,8 +337,8 @@ describe("a flat hooks file that names a script the plugin ships", () => {
         hooksFile: {
           path: () => "hooks-out.json",
           shared: false,
-          merge: (_existing, _raw, _plugin, locate) => ({
-            content: locate("hooks/run.js"),
+          merge: (_existing, { locate }) => ({
+            content: locate?.("hooks/run.js") ?? "",
             warnings: [],
           }),
         },
