@@ -35,7 +35,7 @@ function inProcessCliTests(): string[] {
 const IN_PROCESS_CLI_TESTS = inProcessCliTests();
 
 /**
- * The projects a mutation run may use: the two that measure behaviour.
+ * The projects a mutation run may use: the ones that measure behaviour, the presenters' golden tests among them.
  *
  * The architecture ratchets read the source tree as text — folder sizes, cited paths,
  * the import graph. Stryker works on a copy of that tree with a mutant injected, so those
@@ -98,6 +98,16 @@ export default defineConfig({
           globalSetup: ["./tests/setup/throwaway-profile.ts"],
           testTimeout: 60000,
           hookTimeout: 60000,
+        },
+      },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
+          name: "golden",
+          include: ["tests/presentation/**/*.golden.test.ts"],
+          globals: false,
+          environment: "node",
         },
       },
     ],

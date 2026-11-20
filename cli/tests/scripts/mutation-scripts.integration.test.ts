@@ -120,7 +120,7 @@ describe("the mutation scripts", () => {
     ).toEqual(["telemetry"]);
     expect(
       scopesToRun(
-        ["cli/tests/presentation/display/telemetry/telemetry-report-display.unit.test.ts"],
+        ["cli/tests/presentation/display/telemetry/telemetry-report-display.golden.test.ts"],
         scopes
       )
     ).toEqual(["telemetry"]);
