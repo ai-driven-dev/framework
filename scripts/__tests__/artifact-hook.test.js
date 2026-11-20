@@ -271,6 +271,32 @@ test("a file written, then touched by the same turn's shell, is reported once", 
   assert.equal(new Set(found).size, found.length);
 });
 
+test("a shell turn reads each in-scope file once, however deep, though two contracts share the scope", () => {
+  const s = session("aidd-dev", "claude");
+  const files = 200;
+  for (let i = 0; i < files; i += 1) s.put(`aidd_docs/tasks/a/b/c${i % 10}/f${i}.md`, "x");
+  s.start();
+  s.shell();
+  const { atStop } = require(path.join(hookFor("aidd-dev", "claude"), "artifacts.cjs"));
+  const statSync = fs.statSync;
+  const before = process.env.TMPDIR;
+  let stats = 0;
+  fs.statSync = (...args) => {
+    stats += 1;
+    return statSync(...args);
+  };
+  process.env.TMPDIR = s.tmp;
+  try {
+    assert.equal(atStop({ sessionId: stopPayload("claude", s.root).session_id, cwd: s.root, stopActive: false }), "");
+  } finally {
+    fs.statSync = statSync;
+    if (before === undefined) delete process.env.TMPDIR;
+    else process.env.TMPDIR = before;
+  }
+  assert.ok(stats >= files, `the scan ran: ${stats} stats`);
+  assert.ok(stats < files + 50, `${stats} stats for ${files} files`);
+});
+
 test("a shell turn with no session start has no reference: silent, nothing walked", () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
   s.shell();

@@ -144,11 +144,13 @@ function foldersBelow(dir) {
 /** The files a scope glob names or holds, expanded segment by segment from its static prefix: `*` reads one folder, `**` walks below its prefix. */
 function expand(root, glob, globRegex) {
   let found = [root];
-  for (const segment of glob.split("/")) {
+  const segments = glob.split("/");
+  for (const [index, segment] of segments.entries()) {
     const next = [];
     for (const dir of found) {
       if (!fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) continue;
-      if (segment === "**") next.push(...foldersBelow(dir));
+      // a trailing `**` is the folder itself: the final walk lists every file below it
+      if (segment === "**") next.push(...(index === segments.length - 1 ? [dir] : foldersBelow(dir)));
       else if (!WILDCARD.test(segment)) next.push(path.join(dir, segment));
       else {
         const match = globRegex(segment);
@@ -157,25 +159,37 @@ function expand(root, glob, globRegex) {
     }
     found = next;
   }
-  return found.flatMap((entry) => {
+  const files = [];
+  const dirs = [];
+  for (const entry of found) {
     const stat = fs.statSync(entry, { throwIfNoEntry: false });
-    if (!stat) return [];
-    return stat.isDirectory() ? filesBelow(entry) : [entry];
-  });
+    if (stat?.isDirectory()) dirs.push(entry);
+    else if (stat) files.push(entry);
+  }
+  // `**` yields a folder and all its subfolders: walk only the outermost ones, so each file is listed once.
+  const outer = [];
+  for (const dir of dirs.sort()) if (!outer.some((top) => dir.startsWith(top + path.sep))) outer.push(dir);
+  return [...files, ...outer.flatMap(filesBelow)];
 }
 
-/** The files under the contracts' scope whose mtime is after `since`. */
+/** The files under the contracts' scope whose mtime is after `since`; each scope glob walked and each file read once. */
 function modifiedSince(cwd, entries, since) {
-  const found = new Set();
+  const globs = new Set();
+  const seen = new Set();
+  const found = [];
   for (const entry of entries) {
     if (entry.broken) continue;
     for (const glob of entry.scope) {
+      if (globs.has(glob)) continue;
+      globs.add(glob);
       for (const file of expand(cwd, glob, entry.engine.globRegex)) {
-        if (fs.statSync(file).mtimeMs > since) found.add(file);
+        if (seen.has(file)) continue;
+        seen.add(file);
+        if (fs.statSync(file).mtimeMs > since) found.push(file);
       }
     }
   }
-  return [...found];
+  return found;
 }
 
 // ---- goals --------------------------------------------------------------------------------------------
