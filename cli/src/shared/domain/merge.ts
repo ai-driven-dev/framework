@@ -82,6 +82,7 @@ export async function mergeIntoJsonFile(
   content: string,
   strategy: MergeStrategy
 ): Promise<void> {
+  // Limit: a file whose root is not an object merges as an empty one; no such file has been seen.
   let existing: Record<string, unknown> = {};
 
   try {
