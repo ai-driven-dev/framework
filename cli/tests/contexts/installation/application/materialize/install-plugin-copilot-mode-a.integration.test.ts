@@ -90,7 +90,7 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 
 describe("install copilot plugin via Mode A (integration)", () => {
   it("does not auto-install an unproven plugin or rewrite a foreign marketplace overlay", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     await seedCopilotPlugin(manifestRepo, registry);
@@ -114,7 +114,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
   });
 
   it("projects only a plugin ref whose marketplace source a future host reader verifies", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
@@ -150,7 +150,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
   });
 
   it("refuses force takeover of a claimed Copilot name without host source proof", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
@@ -184,7 +184,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
   });
 
   it("refuses force takeover of a dead name without a canonical owner", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
@@ -211,7 +211,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
   });
 
   it("leaves a name alone while it still resolves, whoever holds it", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
@@ -241,7 +241,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
   });
 
   it("says nothing about taking a name back when it cannot tell who holds it", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();

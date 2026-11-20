@@ -39,7 +39,7 @@ async function sync(options: {
   staleCacheFile?: string;
 }) {
   const name = options.name ?? MARKETPLACE_NAME;
-  const fs = new InMemoryFileAdapter();
+  const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const logger = new CapturingLogger();

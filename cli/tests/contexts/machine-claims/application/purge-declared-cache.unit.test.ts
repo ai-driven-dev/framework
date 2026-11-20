@@ -43,7 +43,7 @@ describe("PurgeDeclaredCache.resolveCandidate", () => {
 
 describe("PurgeDeclaredCache.resolveCandidate on a filesystem that rejects a missing path", () => {
   it("answers nothing, silently, when the cache root does not exist", async () => {
-    const fs = new InMemoryFileAdapter().rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter();
     const logger = new CapturingLogger();
 
     const candidate = await new PurgeDeclaredCache(fs, logger).resolveCandidate(
@@ -59,7 +59,7 @@ describe("PurgeDeclaredCache.resolveCandidate on a filesystem that rejects a mis
   it("answers nothing, silently, when only the candidate is missing", async () => {
     const fs = new InMemoryFileAdapter({
       [join(CACHE_ROOT, "other", "f")]: "x",
-    }).rejectMissingRealpath();
+    });
     const logger = new CapturingLogger();
 
     const candidate = await new PurgeDeclaredCache(fs, logger).resolveCandidate(
@@ -73,7 +73,7 @@ describe("PurgeDeclaredCache.resolveCandidate on a filesystem that rejects a mis
   });
 
   it("answers the candidate when it exists inside the root", async () => {
-    const fs = new InMemoryFileAdapter({ [join(CANDIDATE, "f")]: "x" }).rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter({ [join(CANDIDATE, "f")]: "x" });
 
     expect(
       await new PurgeDeclaredCache(fs, new CapturingLogger()).resolveCandidate(

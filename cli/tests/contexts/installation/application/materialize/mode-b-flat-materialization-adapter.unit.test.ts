@@ -35,7 +35,7 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 }
 
 function buildAdapter(homedir = "/stub-home") {
-  const fs = new InMemoryFileAdapter();
+  const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
   return {
     adapter: new ModeBFlatMaterializationTranslator(fs, () => homedir, translateDistribution),
     fs,

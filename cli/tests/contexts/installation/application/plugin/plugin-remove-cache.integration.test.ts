@@ -111,7 +111,7 @@ function verifiedClaudeRemoval(
 
 describe("RemovePlugin purges the plugin's own cache subtree", () => {
   it("purges cache/<hostName>/<plugin>/ once the host confirms it uninstalled, even with content still inside", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     const foreignCacheEntry = join(
       CLAUDE_CACHE_ROOT,
@@ -139,7 +139,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
   });
 
   it("leaves the plugin's cache in place, and names it, when the host CLI is not on PATH", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
@@ -160,7 +160,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
   });
 
   it("leaves the plugin's cache in place when the host CLI reports the plugin already absent", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
@@ -179,7 +179,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
 
   it("refuses a '..' segment in a manifest's own hostName, never purging outside the declared cache root", async () => {
     const evilHostName = "../../../evil";
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT, CLAUDE_CACHE_ROOT]);
     const witness = join(CLAUDE_CACHE_ROOT, evilHostName, PLUGIN_NAME, "keep-me.txt");
     await fs.writeFile(witness, "still here");
     const manifest = Manifest.create();
@@ -219,7 +219,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
   });
 
   it("names the purged cache directory", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     await fs.writeFile(
       join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json"),
       "{}"
@@ -245,7 +245,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
   });
 
   it("leaves the cache alone, silently, when no activator drives this tool", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
@@ -263,7 +263,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
   });
 
   it("refuses Copilot removal without current source proof, preserving its manifest and files", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.copilot, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(

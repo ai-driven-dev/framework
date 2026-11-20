@@ -77,7 +77,7 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
 }
 
 function buildUseCase() {
-  const fs = new RecordingFileAdapter({});
+  const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const useCase = projectMarketplaceRemover(
@@ -361,7 +361,9 @@ describe("which plugins a removal orphans", () => {
     const command = "node ./.cursor/hooks/sample/pre.js";
     const entry = { command };
     const content = JSON.stringify({ version: 1, hooks: { preToolUse: [entry] } });
-    const fs = new InMemoryFileAdapter({ [hooksPath]: content, [foreignPath]: content });
+    const fs = new InMemoryFileAdapter({ [hooksPath]: content, [foreignPath]: content }, [
+      PROJECT_ROOT,
+    ]);
     fs.setSymlink(hooksPath, foreignPath);
     const plugin = InstalledPlugin.fromJSON({
       name: "sample",
@@ -424,7 +426,9 @@ describe("which plugins a removal orphans", () => {
     const content = JSON.stringify({
       mcp: { mine: { type: "local" }, theirs: { type: "remote" } },
     });
-    const fs = new InMemoryFileAdapter({ [mcpPath]: content, [foreignPath]: content });
+    const fs = new InMemoryFileAdapter({ [mcpPath]: content, [foreignPath]: content }, [
+      PROJECT_ROOT,
+    ]);
     fs.setSymlink(mcpPath, foreignPath);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "1.0.0", []);

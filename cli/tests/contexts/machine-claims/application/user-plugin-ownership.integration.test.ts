@@ -12,7 +12,10 @@ import { MachinePlugin } from "../testing/machine-plugin.js";
 function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
   const manifest = new InMemoryMachineManifest(TOOL.cursor);
   manifest.addPlugin(TOOL.cursor, new MachinePlugin({ name: "sample-plugin", scope, dependents }));
-  return { repo: new InMemoryMachineManifestRepository(manifest), fs: new InMemoryFileAdapter() };
+  return {
+    repo: new InMemoryMachineManifestRepository(manifest),
+    fs: new InMemoryFileAdapter({}, ["/A", "/B", "/C"]),
+  };
 }
 
 describe("one project's canonical user plugin claim", () => {
@@ -45,7 +48,7 @@ describe("one project's canonical user plugin claim", () => {
   });
 
   it("ignores a missing repo or manifest without inventing ownership", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, ["/A", "/B", "/C"]);
     await detachUserPlugin(undefined, fs, TOOL.cursor, "sample-plugin", "/A");
     const repo = new InMemoryMachineManifestRepository();
     await detachUserPlugin(repo, fs, TOOL.cursor, "sample-plugin", "/A");

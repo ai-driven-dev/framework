@@ -59,13 +59,16 @@ describe("native catalogue source provenance", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const fs = new InMemoryFileAdapter({
-      [`${builtDir}/${toolId === "codex" ? ".agents/plugins" : ".claude-plugin"}/marketplace.json`]:
-        JSON.stringify({
-          name: "same-name",
-          plugins: [{ name: "test-plugin" }],
-        }),
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        [`${builtDir}/${toolId === "codex" ? ".agents/plugins" : ".claude-plugin"}/marketplace.json`]:
+          JSON.stringify({
+            name: "same-name",
+            plugins: [{ name: "test-plugin" }],
+          }),
+      },
+      ["/A", "/B", "/foreign"]
+    );
     fs.setFile("/foreign/cache/marker.json", "foreign bytes");
     const activator = new FakeHostActions({ available: true });
     const sync = marketplaceSync({
@@ -399,12 +402,15 @@ describe("native catalogue source provenance", () => {
           addedAt: "2026-09-15T00:00:00Z",
         })
       );
-      const fs = new InMemoryFileAdapter({
-        "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
-          name: "same-name",
-          plugins: [{ name: "test-plugin" }],
-        }),
-      });
+      const fs = new InMemoryFileAdapter(
+        {
+          "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
+            name: "same-name",
+            plugins: [{ name: "test-plugin" }],
+          }),
+        },
+        ["/A", "/B", "/foreign"]
+      );
       fs.setFile("/foreign/cache/marker.json", "foreign bytes");
       const activator = new FakeHostActions({ available: true });
       const source: HostMarketplaceSources = {
@@ -523,12 +529,15 @@ describe("native catalogue source provenance", () => {
           addedAt: "2026-09-15T00:00:00Z",
         })
       );
-      const fs = new InMemoryFileAdapter({
-        "/built/copilot/.plugin/marketplace.json": JSON.stringify({
-          name: "same-name",
-          plugins: [{ name: "test-plugin" }],
-        }),
-      });
+      const fs = new InMemoryFileAdapter(
+        {
+          "/built/copilot/.plugin/marketplace.json": JSON.stringify({
+            name: "same-name",
+            plugins: [{ name: "test-plugin" }],
+          }),
+        },
+        ["/A", "/B", "/foreign"]
+      );
       const settingsPath = `${projectRoot}/.github/copilot/settings.json`;
       const foreignSettings = JSON.stringify({
         enabledPlugins: { "foreign@foreign-catalog": true },
@@ -588,12 +597,15 @@ describe("native catalogue source provenance", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const fs = new InMemoryFileAdapter({
-      "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
-        name: "same-name",
-        plugins: [{ name: "test-plugin" }],
-      }),
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
+          name: "same-name",
+          plugins: [{ name: "test-plugin" }],
+        }),
+      },
+      ["/A", "/B", "/foreign"]
+    );
     const activator = new FakeHostActions({ available: true });
     const source: HostMarketplaceSources = {
       read: async () => ({

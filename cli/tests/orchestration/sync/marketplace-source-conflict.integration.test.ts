@@ -49,7 +49,7 @@ interface Setup {
 
 class RealpathRefusingFileAdapter extends InMemoryFileAdapter {
   constructor(private readonly refused: string) {
-    super();
+    super({}, [PROJECT_ROOT]);
   }
 
   override async realpath(path: string): Promise<string> {
@@ -62,7 +62,7 @@ async function sync(setup: Setup = {}) {
   const toolId = setup.toolId ?? TOOL.claude;
   const aiddName = setup.aiddName ?? "probe-mkt";
   const catalogName = setup.catalogName ?? aiddName;
-  const fs = setup.fs ?? new InMemoryFileAdapter();
+  const fs = setup.fs ?? new InMemoryFileAdapter({}, [PROJECT_ROOT]);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const logger = new CapturingLogger();

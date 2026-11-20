@@ -108,7 +108,7 @@ async function installPlugin(
 
 describe("Cursor plugin.files tracking enables uninstall of mcp.json; hooks.json is out-of-band (Phase 6)", () => {
   it("Plugin.files keys join to the exact written absolute paths (uninstall can find the files)", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -136,7 +136,7 @@ describe("Cursor plugin.files tracking enables uninstall of mcp.json; hooks.json
 
 describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => {
   it("removes what an install merged and copied, leaving every other plugin's entries untouched", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -166,7 +166,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   it("installing the same plugin twice leaves one copy in .cursor/hooks.json", async () => {
     // Mirrors `aidd plugin install --replace`: the manifest entry is dropped before re-adding,
     // but the .cursor/hooks.json this plugin already merged into is untouched by that drop.
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -181,7 +181,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("refuses reinstall if the previous hook script was edited", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -193,7 +193,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("removes verified prior project hooks when a replacement no longer carries hooks", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -221,7 +221,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("refuses to remove an edited project hook script without detaching the plugin record", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -245,7 +245,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("refuses to strip an edited hook command entry and preserves other plugins", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -270,7 +270,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("does not delete an untracked user script just because it shares a plugin directory", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);

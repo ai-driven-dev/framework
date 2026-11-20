@@ -61,7 +61,7 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
 
 describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase 7)", () => {
   it("merges hooks into the project's .cursor/hooks.json, not the plugin-scoped built tree", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
@@ -91,7 +91,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
   });
 
   it("writes no hooks/ path under the plugin-scoped built-tree destination", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
@@ -121,7 +121,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
 describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 2)", () => {
   async function installViaLocal(): Promise<InMemoryFileAdapter> {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator: PluginTranslator = new ModeBFlatMaterializationTranslator(
@@ -141,7 +141,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
   }
 
   async function installViaMarketplace(): Promise<InMemoryFileAdapter> {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();

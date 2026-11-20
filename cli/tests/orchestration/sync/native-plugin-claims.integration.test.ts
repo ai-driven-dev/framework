@@ -76,9 +76,15 @@ for (const [toolId, catalogPath] of [
         pluginClaims: [{ ref, dependents: ["/B"] }],
       });
       const repo = new InMemoryManifestRepository(machine);
-      const fs = new InMemoryFileAdapter({
-        [`/built/${toolId}/${catalogPath}`]: JSON.stringify({ name: "real-catalog", plugins: [] }),
-      });
+      const fs = new InMemoryFileAdapter(
+        {
+          [`/built/${toolId}/${catalogPath}`]: JSON.stringify({
+            name: "real-catalog",
+            plugins: [],
+          }),
+        },
+        ["/A", "/B"]
+      );
       const registry = new InMemoryMarketplaceRegistry();
       const failing = new FakeHostActions({ available: true, failOnUninstall: [ref] });
       const sources = effectiveSource("real-catalog", `/built/${toolId}`);
@@ -204,13 +210,16 @@ for (const [toolId, catalogPath] of [
       };
       const syncOf = (manifestRepo: InMemoryManifestRepository) =>
         marketplaceSync({
-          fs: new InMemoryFileAdapter({
-            [`${builtDir}/${catalogPath}`]: JSON.stringify({
-              name: hostName,
-              version: "1.0.0",
-              plugins: [],
-            }),
-          }),
+          fs: new InMemoryFileAdapter(
+            {
+              [`${builtDir}/${catalogPath}`]: JSON.stringify({
+                name: hostName,
+                version: "1.0.0",
+                plugins: [],
+              }),
+            },
+            ["/A", "/B"]
+          ),
           manifestRepo,
           marketplaceRegistry: registry,
           logger: new CapturingLogger(),
@@ -235,7 +244,7 @@ for (const [toolId, catalogPath] of [
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: ["/A", "/B"] },
       ]);
-      const updateFs = new InMemoryFileAdapter();
+      const updateFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
       const update = new UpdateUserPlugin(
         new UpdateUserPluginFiles(
           user,
@@ -316,7 +325,7 @@ for (const [toolId, catalogPath] of [
         expect(activator.updatedPlugins).toEqual([]);
       }
       const removeMarketplace = userMarketplaceRemover(
-        new InMemoryFileAdapter(),
+        new InMemoryFileAdapter({}, ["/A", "/B"]),
         user,
         registry,
         new NativeHostRegistrationGate(
@@ -336,13 +345,16 @@ for (const [toolId, catalogPath] of [
 
       const foreignUser = new InMemoryManifestRepository(Manifest.create());
       const foreignUseCase = marketplaceSync({
-        fs: new InMemoryFileAdapter({
-          [`${builtDir}/${catalogPath}`]: JSON.stringify({
-            name: hostName,
-            version: "1.0.0",
-            plugins: [],
-          }),
-        }),
+        fs: new InMemoryFileAdapter(
+          {
+            [`${builtDir}/${catalogPath}`]: JSON.stringify({
+              name: hostName,
+              version: "1.0.0",
+              plugins: [],
+            }),
+          },
+          ["/A", "/B", "/foreign"]
+        ),
         manifestRepo: foreign,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
@@ -361,7 +373,7 @@ for (const [toolId, catalogPath] of [
       expect(foreignUser.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims ?? []).toEqual(
         []
       );
-      const removeFs = new InMemoryFileAdapter();
+      const removeFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
       const cacheRoot = registeredTools()
         .aiProfile(toolId)
         .nativeActivation()

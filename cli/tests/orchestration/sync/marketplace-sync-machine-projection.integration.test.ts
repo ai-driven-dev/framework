@@ -19,6 +19,10 @@ import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const { claude, codex } = TOOL;
 
+/** The projects these cases sync from exist on disk before anything is installed into them. */
+const fsWithProjects = (seed: Record<string, string>) =>
+  new InMemoryFileAdapter(seed, ["/project", "/B", "/codex-project", "/resolved-codex-project"]);
+
 describe("native plugin ownership follows the host's activation scope", () => {
   const freshNativeSources = (
     toolId: AiToolId,
@@ -129,7 +133,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         })
       );
       const activator = new FakeHostActions({ available: true });
-      const fs = new InMemoryFileAdapter({
+      const fs = fsWithProjects({
         "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
           name: hostName,
           version: "1.0.0",
@@ -241,7 +245,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       })
     );
     const activator = new FakeHostActions({ available: true });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
         name: "real-catalog",
         version: "1.0.0",
@@ -307,7 +311,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         })
       );
     }
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/user-alias/.claude-plugin/marketplace.json": JSON.stringify({
         name: "real-user",
         version: "1.0.0",
@@ -428,7 +432,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       })
     );
     const activator = new FakeHostActions({ available: true });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
         version: "1.0.0",
@@ -514,7 +518,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         })
       );
     }
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/market-a/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-a",
         version: "1.0.0",
@@ -613,7 +617,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       })
     );
     const activator = new FakeHostActions(failure);
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
         version: "1.0.0",
@@ -681,7 +685,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       })
     );
     const activator = new FakeHostActions({ available: true });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
         version: "1.0.0",
@@ -751,7 +755,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       })
     );
     const activator = new FakeHostActions({ available: true });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsWithProjects({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
         version: "1.0.0",

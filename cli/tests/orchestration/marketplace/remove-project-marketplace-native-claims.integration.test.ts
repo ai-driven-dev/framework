@@ -80,7 +80,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
       addedAt: "2026-09-01T00:00:00.000Z",
     })
   );
-  const fs = new InMemoryFileAdapter();
+  const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
   const useCase = projectMarketplaceRemover(
     new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
     projectRepo,
@@ -127,7 +127,7 @@ describe("project marketplace removal against machine native claims", () => {
       version: 1,
       hooks: { preToolUse: [{ command: "node ./.cursor/hooks/sample-plugin/pre.js" }] },
     });
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, ["/A", "/B"]);
     fs.setFile(hooksPath, hooks);
     fs.setFile(join("/A", ".cursor/hooks/sample-plugin/pre.js"), "A's hook");
     fs.setFile(join("/B", ".cursor/hooks.json"), hooks);
@@ -355,12 +355,16 @@ describe("project marketplace removal against machine native claims", () => {
     const bHooks = join("/B", ".cursor/hooks.json");
     const aScript = join("/A", ".cursor/hooks/sample-plugin/pre.js");
     const bScript = join("/B", ".cursor/hooks/sample-plugin/pre.js");
-    const fs = new InMemoryFileAdapter({
-      [aHooks]: hooks,
-      [bHooks]: hooks,
-      [aScript]: "A's hook",
-      [bScript]: "B's hook",
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        [aHooks]: hooks,
+        [bHooks]: hooks,
+        [aScript]: "A's hook",
+        [bScript]: "B's hook",
+        "/A/package.json": "{}",
+      },
+      ["/A", "/B"]
+    );
     const ownedPath = join(homedir(), ".cursor/plugins/local/sample-plugin/skills/demo.md");
     const ownedMcp = join(homedir(), ".cursor/plugins/local/sample-plugin/mcp.json");
     fs.setFile(ownedPath, "B's bytes");

@@ -484,10 +484,10 @@ describe("AddPlugin", () => {
         const warningsBeforeB = logger.warnMessages.length;
         const ownedPath = cursorSkillAt();
         deps.fs.setFile(ownedPath, "A's own bytes");
+        deps.fs.setFile("/B/package.json", "{}");
         const projectB = Manifest.create();
         projectB.addTool(cursor, "1.0.0", []);
         const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
-        const registryB = await makeGithubRegistry("/B");
         await buildAddPlugin(
           { fs: deps.fs, logger: logger },
           { project: projectBRepo, user: deps.userManifestRepo },
@@ -496,7 +496,7 @@ describe("AddPlugin", () => {
               deps.pluginFetcher,
               deps.pluginDistributionReader
             ),
-            marketplaceRegistry: registryB,
+            marketplaceRegistry: await makeGithubRegistry("/B"),
             ...fakeBuildSources(),
           },
           registeredTools()

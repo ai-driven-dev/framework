@@ -309,7 +309,7 @@ describe("clean", () => {
       })
     );
 
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const useCase = new CleanWithKnownHostSource(
       fs,
@@ -341,7 +341,7 @@ describe("clean", () => {
       })
     );
 
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const useCase = new CleanWithKnownHostSource(
       fs,
@@ -452,7 +452,7 @@ describe("clean", () => {
           ],
           pluginRefs: [REF, "unclaimed@other-host"],
         });
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const roots = [PROJECT_ROOT, "/project-b", "/project-c"];
         for (const root of roots) fs.setFile(join(root, "marker"), "project");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
@@ -508,7 +508,7 @@ describe("clean", () => {
         const others = ["/project-b", "/project-c"];
         const suffix = " Still needed by /project-b, /project-c.";
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(PROJECT_ROOT, "marker"), "project");
         const cachePath = "/fake-home/.codex/plugins/cache/aidd-framework/plugin.json";
         fs.setFile(cachePath, "cache");
@@ -576,7 +576,7 @@ describe("clean", () => {
           machine.addTool(TOOL.codex, "1.0.0", []);
           if (machineRegistrations !== undefined)
             machine.setNativeRegistrations(TOOL.codex, machineRegistrations);
-          const fs = new InMemoryFileAdapter();
+          const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
           const logger = new CapturingLogger();
           const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
@@ -626,7 +626,7 @@ describe("clean", () => {
           marketplaces: manifest.getNativeRegistrations(TOOL.claude)?.marketplaces ?? [],
           pluginRefs: ["orphan@unrecorded"],
         });
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
@@ -650,7 +650,7 @@ describe("clean", () => {
         "only uninstalls when all other host refs have canonical machine claims: %s",
         async (claimed) => {
           const extraRef = "machine-plugin@aidd-framework";
-          const fs = new InMemoryFileAdapter();
+          const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
           fs.setFile(join(PROJECT_ROOT, "marker"), "project");
           const machine = Manifest.create();
           machine.addTool(TOOL.claude, "1.0.0", []);
@@ -719,7 +719,7 @@ describe("clean", () => {
         ],
         pluginRefs: [REF],
       });
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, "marker"), "keep");
       fs.setFile("/other-project/marker", "keep");
       const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
@@ -786,7 +786,7 @@ describe("clean", () => {
         ],
         pluginRefs: [REF],
       });
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, "marker"), "keep");
       fs.setFile("/other-project/marker", "keep");
       const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
@@ -825,7 +825,7 @@ describe("clean", () => {
 
     it("leaves an unclaimed machine-global ref enabled while removing its empty project catalogue", async () => {
       const manifest = seedManifestWithNativeRegistrations();
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
@@ -846,7 +846,7 @@ describe("clean", () => {
 
     it("leaves both an unclaimed machine-global ref and its shared catalogue registered", async () => {
       const manifest = seedManifestWithNativeRegistrations();
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
@@ -939,7 +939,7 @@ describe("clean", () => {
       // manifest recorded, so a `"project"`-only uninstall left the plugin behind silently.
       it("falls back to the other scope when the manifest's own scope does not match what was actually registered, with no host registry to ask", async () => {
         const manifest = seedClaudeManifest("project");
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({
           available: true,
@@ -974,7 +974,7 @@ describe("clean", () => {
 
       it("drops its own claim but leaves the shared marketplace registered — the other project still sees it", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
@@ -1018,7 +1018,7 @@ describe("clean", () => {
 
       it("keeps its shared source claim when gitignore cleanup fails", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1073,7 +1073,7 @@ describe("clean", () => {
       // question for either count, so only the plural case can pin it.
       it("names the other project still referencing the shared source in a dry-run, without dropping anything", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
@@ -1116,7 +1116,7 @@ describe("clean", () => {
       // different keys, so only a read across every key sees the other project's.
       it("names the other project in a dry-run even when the two projects were recorded under different CLI versions", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
@@ -1155,7 +1155,7 @@ describe("clean", () => {
       // have moved past; `CleanUseCase` has no version reader and must still find it.
       it("drops this project's reference even though it was recorded under an older CLI version", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
@@ -1202,7 +1202,7 @@ describe("clean", () => {
       // the destructive command that does not depend on it.
       it("warns and still previews a dry-run when references.json is corrupted", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
@@ -1243,7 +1243,7 @@ describe("clean", () => {
 
       it("warns and still drops the rest when --force runs against a corrupted references.json", async () => {
         const manifest = seedManifestWithNativeRegistrations();
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
@@ -1284,7 +1284,7 @@ describe("clean", () => {
 
     it("warns and leaves the registration in place when the tool's CLI is not on PATH", async () => {
       const manifest = seedManifestWithNativeRegistrations();
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: false });
       const logger = new CapturingLogger();
@@ -1307,7 +1307,7 @@ describe("clean", () => {
 
     it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
       const manifest = seedClaudeNativeRegistrations();
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const calls: string[] = [];
       const activator = new OrderRecordingActivator(calls);
@@ -1332,7 +1332,7 @@ describe("clean", () => {
 
     it("undoes the native registration before the built marketplace tree it points at is deleted", async () => {
       const manifest = seedManifestWithNativeRegistrations();
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const builtPath = join(
         PROJECT_ROOT,
         ".aidd",
@@ -1364,7 +1364,7 @@ describe("clean", () => {
 
     it("names the native registration a dry-run preview will undo, without touching it", async () => {
       const manifest = seedManifestWithNativeRegistrations();
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
@@ -1413,7 +1413,7 @@ describe("clean", () => {
         ],
         pluginRefs: [],
       });
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
@@ -1475,7 +1475,7 @@ describe("clean", () => {
       }
 
       it("leaves a lost-alias registration and its unclaimed machine-global ref untouched", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
@@ -1509,7 +1509,7 @@ describe("clean", () => {
       });
 
       it("leaves a registration in place when no marketplace registry is wired in at all", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT, join(CODEX_CACHE, MARKETPLACE)]);
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
         const useCase = buildUseCase({
@@ -1532,7 +1532,7 @@ describe("clean", () => {
       });
 
       it("names a refused plugin uninstall by the host's own words, after trying both scopes", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({
           available: true,
@@ -1556,7 +1556,7 @@ describe("clean", () => {
       });
 
       it("propagates an activator failure that is not the host refusing", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildUseCase({
           manifest: seedClaudeNativeRegistrations(),
           fs,
@@ -1608,7 +1608,7 @@ describe("clean", () => {
       }
 
       it("names no cache for a shared marketplace at a host whose profile declares no cache directory (copilot)", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
           manifest: seedRegistrations(TOOL.copilot, "copilot"),
@@ -1626,7 +1626,7 @@ describe("clean", () => {
       });
 
       it("detaches project A without host mutation when a shared Copilot source is unreadable", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         fs.setFile(join("/other-project", "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
@@ -1658,7 +1658,7 @@ describe("clean", () => {
       });
 
       it("does not uninstall an unclaimed shared ref when its current source is unreadable", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
@@ -1693,7 +1693,7 @@ describe("clean", () => {
       });
 
       it("leaves a machine-global ref enabled without a canonical claim even when host source is proven", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
@@ -1735,7 +1735,7 @@ describe("clean", () => {
       });
 
       it("names no cache for a shared marketplace at a tool that drives no native CLI (cursor)", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
           manifest: seedRegistrations(TOOL.cursor, "cursor"),
@@ -1753,7 +1753,7 @@ describe("clean", () => {
       });
 
       it("never treats a shared marketplace it left registered as one the host forgot, so its cache stays", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
@@ -1774,7 +1774,7 @@ describe("clean", () => {
       });
 
       it("names no surviving cache when the absent binary's profile declares no cache directory (copilot)", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
           manifest: seedRegistrations(TOOL.copilot, "copilot"),
@@ -1792,7 +1792,7 @@ describe("clean", () => {
       });
 
       it("names no surviving cache when the absent binary belongs to a tool that drives no native CLI (cursor)", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
           manifest: seedRegistrations(TOOL.cursor, "cursor"),
@@ -1817,7 +1817,7 @@ describe("clean", () => {
           marketplaces: [],
           pluginRefs: [REF],
         });
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
           manifest,
@@ -1870,7 +1870,7 @@ describe("clean", () => {
       }
 
       async function uninstallScopesFor(manifest: Manifest): Promise<readonly string[]> {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const activator = new FakeHostActions({
           available: true,
           installedAtScope: new Map([[CLAUDE_REF, "user"]]),
@@ -1925,7 +1925,7 @@ describe("clean", () => {
     });
 
     it("previews no shared-source fact when the references port is wired in but no marketplace registry is", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(seedManifestWithNativeRegistrations(), PROJECT_ROOT),
@@ -2003,7 +2003,7 @@ describe("clean", () => {
           },
         })
       );
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
       await fs.writeFile(
         hooksPath,
@@ -2050,7 +2050,7 @@ describe("clean", () => {
           },
         })
       );
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
       const otherScriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, otherPluginName);
       await fs.writeFile(
@@ -2135,7 +2135,7 @@ describe("clean", () => {
         ],
         pluginRefs: ["aidd-context@aidd-framework"],
       });
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
       await fs.writeFile(
         hooksPath,
@@ -2234,7 +2234,7 @@ describe("clean", () => {
       ],
       pluginRefs: ["aidd-context@aidd-framework"],
     });
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const configPath = join(PROJECT_ROOT, "opencode.json");
     await fs.writeFile(configPath, editedConfig);
     fs.setFile(join(PROJECT_ROOT, "marker"), "");
@@ -2283,7 +2283,7 @@ describe("clean", () => {
           scope: "user",
         })
       );
-      const fs = new RecordingFileAdapter();
+      const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(
@@ -2316,7 +2316,7 @@ describe("clean", () => {
           scope: "user",
         })
       );
-      const fs = new RecordingFileAdapter();
+      const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
       const boundary = join(homedir(), ".cursor", "plugins", "local");
       fs.setSymlink(join(boundary, "aidd-context"), "/tmp/evil-aidd-context");
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
@@ -2340,7 +2340,7 @@ describe("clean", () => {
 
   describe("without a manifest", () => {
     it("reports nothing found and nothing to preview", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(null, PROJECT_ROOT),
@@ -2376,7 +2376,7 @@ describe("clean", () => {
     }
 
     it("asks its one question, word for word, and removes everything on yes", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const prompter = new RecordingPrompter(true);
       const useCase = buildConfirmingUseCase(fs, prompter);
 
@@ -2393,7 +2393,7 @@ describe("clean", () => {
     });
 
     it("removes nothing on no and answers with the dry-run preview", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = buildConfirmingUseCase(fs, new RecordingPrompter(false));
 
       const result = await useCase.execute({ ...AT_PROJECT, force: false, interactive: true });
@@ -2408,7 +2408,7 @@ describe("clean", () => {
     });
 
     it("never asks outside an interactive run, even with a prompter wired in", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const prompter = new RecordingPrompter(true);
       const useCase = buildConfirmingUseCase(fs, prompter);
 
@@ -2424,7 +2424,7 @@ describe("clean", () => {
     });
 
     it("stays a dry-run in an interactive run with no prompter wired in", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = buildConfirmingUseCase(fs, undefined);
 
       const result = await useCase.execute({ ...AT_PROJECT, force: false, interactive: true });
@@ -2436,7 +2436,7 @@ describe("clean", () => {
 
   describe("what a dry-run previews", () => {
     it("counts each tool's tracked and merged files, and totals them", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifest = seedTrackedFiles(fs, ["a.md", "b.md"]);
       manifest.addTool(
         TOOL.claude,
@@ -2473,7 +2473,7 @@ describe("clean", () => {
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
         pluginRefs: ["aidd-context@aidd-framework"],
       });
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
@@ -2502,7 +2502,7 @@ describe("clean", () => {
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
         pluginRefs: [],
       });
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
@@ -2539,7 +2539,7 @@ describe("clean", () => {
     }
 
     it("counts every tracked file and names the tool being removed", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const logger = new CapturingLogger();
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md", "b.md"]), logger);
 
@@ -2552,7 +2552,7 @@ describe("clean", () => {
     });
 
     it("counts the machine-local settings file a tool wrote outside the manifest", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, ".claude", "settings.local.json"), "{}");
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
 
@@ -2562,7 +2562,7 @@ describe("clean", () => {
     });
 
     it("does not count a machine-local settings file that was never written", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2591,7 +2591,7 @@ describe("clean", () => {
           },
         })
       );
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(
         join(PROJECT_ROOT, ".cursor", "hooks.json"),
         JSON.stringify({
@@ -2628,7 +2628,7 @@ describe("clean", () => {
       }
 
       it("takes back only its own keys, leaving the project's, and counts the file once", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildCountingUseCase(
           fs,
           seedMerged(fs, '{"owned":1,"theirs":2}', ["owned"])
@@ -2641,7 +2641,7 @@ describe("clean", () => {
       });
 
       it("deletes the file once nothing but its own keys was in it", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildCountingUseCase(fs, seedMerged(fs, '{"owned":1}', ["owned"]));
 
         const result = await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2651,7 +2651,7 @@ describe("clean", () => {
       });
 
       it("deletes a file it recorded whole, one with no keys of its own", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildCountingUseCase(fs, seedMerged(fs, '{"theirs":2}', []));
 
         const result = await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2661,7 +2661,7 @@ describe("clean", () => {
       });
 
       it("skips a merged file already gone, without counting it", async () => {
-        const fs = new InMemoryFileAdapter();
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildCountingUseCase(fs, seedMerged(fs, null, ["owned"]));
 
         const result = await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2673,7 +2673,7 @@ describe("clean", () => {
 
   describe("what stays under .aidd/", () => {
     it("says it kept config.json, by its path", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, ".aidd", "config.json"), "{}");
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(
@@ -2692,7 +2692,7 @@ describe("clean", () => {
     });
 
     it("says nothing about config.json when another file is what keeps .aidd/ alive", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, ".aidd", "auth.json"), "{}");
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(

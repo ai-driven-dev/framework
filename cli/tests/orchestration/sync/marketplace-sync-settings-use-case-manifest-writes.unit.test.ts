@@ -73,7 +73,7 @@ function buildPerMarketplace(failing: readonly string[]): BuiltMarketplaceEnsure
 async function build(setup: Setup = {}) {
   const names = setup.marketplaceNames ?? [MARKETPLACE];
   const toolIds = setup.toolIds ?? [TOOL.claude];
-  const fs = new InMemoryFileAdapter({});
+  const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
   for (const name of names) {
     for (const toolId of toolIds) {
       fs.setFile(

@@ -34,13 +34,16 @@ function manifestWithTool(): InMemoryManifestRepository {
 }
 
 function seededBuiltCatalog(): InMemoryFileAdapter {
-  return new InMemoryFileAdapter({
-    "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
-      name: MARKETPLACE,
-      version: "1.0.0",
-      plugins: [],
-    }),
-  });
+  return new InMemoryFileAdapter(
+    {
+      "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+        name: MARKETPLACE,
+        version: "1.0.0",
+        plugins: [],
+      }),
+    },
+    [PROJECT_ROOT]
+  );
 }
 
 function freshHostProof(activator: FakeHostActions) {
@@ -205,13 +208,16 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
         MARKETPLACE
       )
     );
-    const catalog = new InMemoryFileAdapter({
-      "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
-        name: MARKETPLACE,
-        version: "1.0.0",
-        plugins: [{ name: "aidd-telemetry" }],
-      }),
-    });
+    const catalog = new InMemoryFileAdapter(
+      {
+        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+          name: MARKETPLACE,
+          version: "1.0.0",
+          plugins: [{ name: "aidd-telemetry" }],
+        }),
+      },
+      [PROJECT_ROOT]
+    );
     const proof = freshHostProof(activator);
     const useCase = marketplaceSync({
       fs: catalog,
@@ -254,13 +260,16 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
         MARKETPLACE
       )
     );
-    const fs = new InMemoryFileAdapter({
-      "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
-        name: MARKETPLACE,
-        version: "1.0.0",
-        plugins: [{ name: "aidd-telemetry" }],
-      }),
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+          name: MARKETPLACE,
+          version: "1.0.0",
+          plugins: [{ name: "aidd-telemetry" }],
+        }),
+      },
+      [PROJECT_ROOT]
+    );
     return { fs, manifestRepo: new InMemoryManifestRepository(manifest) };
   }
 
@@ -294,13 +303,16 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const manifest = Manifest.create();
     manifest.addTool(TOOL.copilot, "test", []);
-    const fs = new InMemoryFileAdapter({
-      "/built/copilot/.plugin/marketplace.json": JSON.stringify({
-        name: MARKETPLACE,
-        version: "1.0.0",
-        plugins: [{ name: "aidd-telemetry" }],
-      }),
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        "/built/copilot/.plugin/marketplace.json": JSON.stringify({
+          name: MARKETPLACE,
+          version: "1.0.0",
+          plugins: [{ name: "aidd-telemetry" }],
+        }),
+      },
+      [PROJECT_ROOT]
+    );
     const useCase = marketplaceSync({
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),

@@ -51,7 +51,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
         machine.addPlugin(toolId, plugin({ name, dependents: [ROOT, OTHER] }));
       }
     }
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [ROOT, OTHER]);
     const witness = join(homedir(), ".cursor", "plugins", "local", NAME, "keep.md");
     fs.setFile(witness, "machine bytes");
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
@@ -87,10 +87,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     machine.addPlugin(cursor, plugin({ dependents: [ROOT, OTHER] }));
     machine.addPlugin(cursor, plugin({ name: "other-plugin", dependents: [ROOT, OTHER] }));
     const before = machine.toJSON();
-    const fs = new InMemoryFileAdapter({
-      [join(ROOT, "owned.md")]: "owned",
-      [join(ROOT, "foreign.md")]: "foreign",
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        [join(ROOT, "owned.md")]: "owned",
+        [join(ROOT, "foreign.md")]: "foreign",
+      },
+      [ROOT, OTHER]
+    );
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = pluginRemover({
       fs,
@@ -156,7 +159,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const content = "installed machine bytes";
     const machine = manifest();
     machine.addPlugin(cursor, plugin({ files: { [relative]: FileHash.of(content).value } }));
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [ROOT, OTHER]);
     const userPath = join(homedir(), ".cursor", "plugins", "local", relative);
     const projectPath = join(ROOT, relative);
     fs.setFile(userPath, content);
@@ -187,10 +190,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     machine.addPlugin(cursor, plugin({ files: { [relative]: hash, "../outside.md": hash } }));
     const before = machine.toJSON();
     const base = join(homedir(), ".cursor", "plugins", "local");
-    const fs = new InMemoryFileAdapter({
-      [join(base, relative)]: content,
-      [join(base, "../outside.md")]: content,
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        [join(base, relative)]: content,
+        [join(base, "../outside.md")]: content,
+      },
+      [ROOT, OTHER]
+    );
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = userPluginRemover({
       fs,
@@ -219,10 +225,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const before = project.toJSON();
     const script = join(ROOT, ".cursor", "hooks", NAME, "edited.sh");
     const file = join(ROOT, "owned.md");
-    const fs = new InMemoryFileAdapter({
-      [script]: "unproven hook bytes",
-      [file]: "installed plugin bytes",
-    });
+    const fs = new InMemoryFileAdapter(
+      {
+        [script]: "unproven hook bytes",
+        [file]: "installed plugin bytes",
+      },
+      [ROOT, OTHER]
+    );
     const repo = new InMemoryManifestRepository(project, ROOT);
     const remove = pluginRemover({ fs, manifestRepo: repo });
 
@@ -255,7 +264,11 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     machine.setNativeRegistrations(claude, registrations);
     const repo = new InMemoryManifestRepository(project, ROOT);
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = pluginRemover({ manifestRepo: repo, userManifestRepo: userRepo });
+    const remove = pluginRemover({
+      fs: new InMemoryFileAdapter({}, [ROOT, OTHER]),
+      manifestRepo: repo,
+      userManifestRepo: userRepo,
+    });
 
     await remove.execute({
       pluginName: NAME,
@@ -485,6 +498,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const remove = pluginRemover({
+      fs: new InMemoryFileAdapter({}, [ROOT, OTHER]),
       manifestRepo: projectRepo,
       logger,
       activators: new Map([[codex, activator]]),

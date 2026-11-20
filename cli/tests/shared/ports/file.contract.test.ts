@@ -5,24 +5,14 @@ import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js"
 import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.js";
 import { describeFileContract, type FileSubject } from "../testing/run-file-contract.js";
 
-const inMemorySubject = (rejectMissingRealpath: boolean) => async (): Promise<FileSubject> => {
+describeFileContract("the in-memory double", async (): Promise<FileSubject> => {
   const files = new InMemoryFileAdapter({});
-  if (rejectMissingRealpath) files.rejectMissingRealpath();
   return {
     files,
     root: join(sep, "contract-root"),
     link: async (target, path) => files.setSymlink(path, target),
     dispose: async () => undefined,
   };
-};
-
-describeFileContract(
-  "the in-memory double, realpath rejecting a missing path",
-  inMemorySubject(true)
-);
-
-describeFileContract("the in-memory double", inMemorySubject(false), {
-  C19: "realpath of a missing path answers the path instead of rejecting with ENOENT",
 });
 
 describeFileContract("the real adapter on a temp dir", async (): Promise<FileSubject> => {

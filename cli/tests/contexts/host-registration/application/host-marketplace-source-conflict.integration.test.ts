@@ -18,7 +18,7 @@ const LOCATION = "/home/.claude/plugins/known_marketplaces.json";
  */
 describe("hostMarketplaceSourceConflict — resolving every path through the same realpath", () => {
   it("still decides a version-behind drift when userCacheRoot is reached through a symlink", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, ["/private/var-home/.config/aidd"]);
     fs.setSymlink("/var-home", "/private/var-home");
     const rawUserCacheRoot = "/var-home/.config/aidd";
     const resolvedUserCacheRoot = "/private/var-home/.config/aidd";

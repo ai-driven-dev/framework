@@ -22,12 +22,16 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** Path → what it resolves to, for a test proving `realpath`-based containment
    * without a real filesystem — see `setSymlink`. */
   private readonly symlinks = new Map<string, string>();
-  /** Off by default: see `rejectMissingRealpath`. */
-  private missingRealpathRejects = false;
 
-  constructor(seed: Record<string, string> = {}) {
+  /** `directories` exist empty, as a project root does before anything is installed into it. */
+  constructor(seed: Record<string, string> = {}, directories: readonly string[] = []) {
     for (const [path, content] of Object.entries(seed)) {
       this.setFile(path, content);
+    }
+    for (const path of directories) {
+      const key = dirKey(path);
+      this.directories.add(key);
+      this.registerAncestors(key);
     }
   }
 
@@ -90,7 +94,8 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   /** Resolves through the longest matching registered symlink, like a real `fs.realpath`
-   * walking a symlinked ancestor; identity when none was declared for the path. */
+   * walking a symlinked ancestor; identity when none was declared, and `ENOENT` for a path that is
+   * neither a file nor a known directory. */
   async realpath(path: string): Promise<string> {
     const key = norm(resolve(path));
     let bestMatch: { link: string; target: string } | undefined;
@@ -106,18 +111,10 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
       bestMatch === undefined
         ? posix.normalize(norm(path))
         : bestMatch.target + key.slice(bestMatch.link.length);
-    if (this.missingRealpathRejects && !(await this.existsIgnoringDrive(resolved))) {
+    if (!(await this.existsIgnoringDrive(resolved))) {
       throw enoent("realpath", norm(path));
     }
     return resolved;
-  }
-
-  /** Opt-in: `realpath` of a path that is neither a file nor a known directory rejects with
-   * `ENOENT`, as the real adapter does. Off by default, where it answers the path: the importers
-   * that never seed their project roots rely on that until each context's kit seeds them. */
-  rejectMissingRealpath(): this {
-    this.missingRealpathRejects = true;
-    return this;
   }
 
   /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
@@ -219,6 +216,12 @@ function norm(path: string): string {
 function dirKey(path: string): string {
   const key = norm(path);
   return key.length > 1 && key.endsWith("/") ? key.replace(/\/+$/, "") || "/" : key;
+}
+
+/** An in-memory file system whose `root` exists empty, as a project does before anything is
+ * installed into it. */
+export function fsAt(root: string, seed: Record<string, string> = {}): InMemoryFileAdapter {
+  return new InMemoryFileAdapter(seed, [root]);
 }
 
 function enoent(syscall: string, path: string): Error {

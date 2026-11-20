@@ -10,7 +10,7 @@ const MAX_LINES = 800;
 // Test files over the cap, each with the lines it carries. An entry leaves when its file is
 // split under the cap, and a shorter file lowers its count.
 const BASELINE: Readonly<Record<string, number>> = {
-  "tests/orchestration/clean/clean-native-cache.integration.test.ts": 960,
+  "tests/orchestration/clean/clean-native-cache.integration.test.ts": 953,
   "tests/orchestration/clean/clean-use-case.unit.test.ts": 2804,
   "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1736,
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1008,

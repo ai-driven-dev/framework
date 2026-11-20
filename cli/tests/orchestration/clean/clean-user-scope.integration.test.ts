@@ -39,14 +39,14 @@ const WHITELIST_PURGE_MESSAGES = [
 ];
 
 /** Creates every entry the user-scope whitelist names, so each purge has something to remove. */
-async function seedWhitelist(fs: InMemoryFileAdapter): Promise<void> {
-  const cache = join(USER_CONFIG_DIR, "cache");
+async function seedWhitelist(fs: InMemoryFileAdapter, root = USER_CONFIG_DIR): Promise<void> {
+  const cache = join(root, "cache");
   await fs.createDirectory(join(cache, "built"));
   await fs.createDirectory(join(cache, "marketplaces", FRAMEWORK_MARKETPLACE_NAME));
   await fs.createDirectory(join(cache, "plugin-cache"));
   fs.setFile(join(cache, "update-check.json"), "{}");
-  fs.setFile(join(USER_CONFIG_DIR, "update-check.json"), "{}");
-  fs.setFile(join(USER_CONFIG_DIR, "references.json"), "{}");
+  fs.setFile(join(root, "update-check.json"), "{}");
+  fs.setFile(join(root, "references.json"), "{}");
 }
 
 /** Records every delete in order, so an ordering constraint can be proved without reading
@@ -54,8 +54,8 @@ async function seedWhitelist(fs: InMemoryFileAdapter): Promise<void> {
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly order: string[];
 
-  constructor(order: string[] = []) {
-    super();
+  constructor(order: string[] = [], directories: readonly string[] = []) {
+    super({}, directories);
     this.order = order;
   }
 
@@ -704,7 +704,7 @@ describe("clean --scope user", () => {
     it.each(["cache/marketplaces/aidd-framework", "cache/plugin-cache"])(
       "preserves a fetched source resolving outside user config through %s",
       async (relativePath) => {
-        const fs = new RecordingFileAdapter();
+        const fs = new RecordingFileAdapter([], ["/elsewhere/clone"]);
         const cache = join(USER_CONFIG_DIR, relativePath);
         const marker = join(cache, "source");
         fs.setFile(marker, "external clone");
@@ -837,7 +837,7 @@ describe("clean --scope user", () => {
     });
 
     it("leaves a cursor plugin file in place when it resolves outside the user plugins boundary through a symlink", async () => {
-      const fs = new RecordingFileAdapter();
+      const fs = new RecordingFileAdapter([], [join(HOME, ".cursor", "plugins", "local")]);
       const boundary = join(HOME, ".cursor", "plugins", "local");
       // A sibling sharing `boundary`'s name as a string prefix, not a path under it: a raw
       // `startsWith` would call it contained, where `relative()` sees the leading `..`.
@@ -1683,9 +1683,9 @@ describe("clean --scope user", () => {
     });
 
     it("leaves cache/ and everything under it in place, naming each, once cache/ resolves outside userConfigDir()", async () => {
-      const fs = new RecordingFileAdapter();
+      const fs = new RecordingFileAdapter([], [USER_CONFIG_DIR]);
       const cacheDir = join(USER_CONFIG_DIR, "cache");
-      fs.setFile(join(cacheDir, "built", "1.0.0", "aidd-framework", "x"), "1");
+      await seedWhitelist(fs, "/elsewhere");
       fs.setSymlink(cacheDir, "/elsewhere/cache");
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
@@ -1699,7 +1699,7 @@ describe("clean --scope user", () => {
         force: true,
       });
 
-      expect(fs.has(join(cacheDir, "built", "1.0.0", "aidd-framework", "x"))).toBe(true);
+      expect(fs.has("/elsewhere/cache/update-check.json")).toBe(true);
       expect(logger.warnMessages).toStrictEqual([
         `user scope: cache/built does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "built")}`,
         `user scope: cache/marketplaces/aidd-framework does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "marketplaces", FRAMEWORK_MARKETPLACE_NAME)}`,

@@ -30,7 +30,10 @@ function fixture() {
       { ref: OTHER, dependents: ["/A", "/C"] },
     ],
   });
-  return { repo: new InMemoryMachineManifestRepository(machine), fs: new InMemoryFileAdapter() };
+  return {
+    repo: new InMemoryMachineManifestRepository(machine),
+    fs: new InMemoryFileAdapter({}, ["/A", "/B", "/C"]),
+  };
 }
 
 describe("one project's exact native host ref claim", () => {
@@ -86,7 +89,7 @@ describe("one project's exact native host ref claim", () => {
   });
 
   it("does not act with no repo, no refs, no manifest, or no host claim record", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, ["/A", "/B", "/C"]);
     await detachNativePluginRefs(undefined, fs, "/A", new Map([[codex, [TARGET]]]));
     const f = fixture();
     await detachNativePluginRefs(f.repo, fs, "/A", new Map());

@@ -719,16 +719,19 @@ describe("shared framework references follow any successful native tool outcome"
           addedAt: "2026-09-15T00:00:00Z",
         })
       );
-      const fs = new InMemoryFileAdapter({
-        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
-          name: "aidd-framework",
-          plugins: [],
-        }),
-        "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
-          name: "aidd-framework",
-          plugins: [],
-        }),
-      });
+      const fs = new InMemoryFileAdapter(
+        {
+          "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+            name: "aidd-framework",
+            plugins: [],
+          }),
+          "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
+            name: "aidd-framework",
+            plugins: [],
+          }),
+        },
+        ["/real/project"]
+      );
       fs.setSymlink(ROOT, "/real/project");
       const claude = new FakeHostActions({ available: true, enablesPlugins: false });
       const codex = new FakeHostActions({ available: true, enablesPlugins: false });

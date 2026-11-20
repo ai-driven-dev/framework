@@ -13,14 +13,14 @@ vi.mock("node:path", async (importOriginal) => {
 
 describe("Windows realpath fixtures", () => {
   it("resolves a rooted fixture's symlink after the caller adds the current drive", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({ "/foreign/file": "x" });
     fs.setSymlink("/project/link", "/foreign");
 
     expect(await fs.realpath(resolve("/project/link/file"))).toBe("/foreign/file");
   });
 
   it("keeps unsymlinked virtual path identities stable for seeded project claims", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({ "/project/file": "x" });
 
     expect(await fs.realpath("/project/file")).toBe("/project/file");
   });

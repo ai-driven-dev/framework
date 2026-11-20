@@ -32,6 +32,12 @@ const PROJECT_ROOT = "/test-project";
 const HOME = homedir();
 const CLAUDE_CACHE_ROOT = join(HOME, ".claude", "plugins", "cache");
 const CODEX_CACHE_ROOT = join(HOME, ".codex", "plugins", "cache");
+const EXISTING_DIRECTORIES = [
+  PROJECT_ROOT,
+  CLAUDE_CACHE_ROOT,
+  CODEX_CACHE_ROOT,
+  "/outside/evil-target",
+];
 const MARKETPLACE = "probe-mkt";
 const REF = "plugin-a@probe-mkt";
 
@@ -63,22 +69,6 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
   override async deleteDirectory(path: string): Promise<void> {
     this.deletedDirectories.push(path);
     return super.deleteDirectory(path);
-  }
-}
-
-/** In-memory files have implicit directories; expose one real empty cache directory to prove
- * a skipped host unregister cannot still make clean delete its cache shell. */
-class EmptyNativeCacheFileAdapter extends RecordingFileAdapter {
-  constructor(private readonly emptyCacheDir: string) {
-    super();
-  }
-
-  override async fileExists(path: string): Promise<boolean> {
-    return path === this.emptyCacheDir || super.fileExists(path);
-  }
-
-  override async listDirectory(path: string): Promise<string[]> {
-    return path === this.emptyCacheDir ? [] : super.listDirectory(path);
   }
 }
 
@@ -236,7 +226,7 @@ function buildUseCase(deps: {
 
 describe("clean purges a host's own plugin cache", () => {
   it("project A clean keeps a non-framework Codex catalogue cache and B's exact native claim", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CODEX_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     fs.setFile(cacheEntry, "B still uses these bytes");
     const registry = new InMemoryMarketplaceRegistry();
@@ -305,7 +295,7 @@ describe("clean purges a host's own plugin cache", () => {
     const userRepo = new InMemoryManifestRepository(machine);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
-      fs: new RecordingFileAdapter(),
+      fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: TOOL.codex,
@@ -347,7 +337,7 @@ describe("clean purges a host's own plugin cache", () => {
     const userRepo = new LockTrackingManifestRepository(machine);
     const activator = new LockAwareActivator(userRepo);
     const useCase = buildUseCase({
-      fs: new RecordingFileAdapter(),
+      fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: project,
       activator,
       binary: TOOL.codex,
@@ -379,7 +369,7 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
-    const fs = new EmptyNativeCacheFileAdapter(emptyCache);
+    const fs = new RecordingFileAdapter({}, [...EXISTING_DIRECTORIES, emptyCache]);
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
@@ -402,7 +392,7 @@ describe("clean purges a host's own plugin cache", () => {
 
     const noRepoActivator = new FakeHostActions({ available: true });
     const noRepoLogger = new CapturingLogger();
-    const noRepoFs = new EmptyNativeCacheFileAdapter(emptyCache);
+    const noRepoFs = new RecordingFileAdapter({}, [...EXISTING_DIRECTORIES, emptyCache]);
     const noRepoUseCase = buildUseCase({
       fs: noRepoFs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
@@ -439,7 +429,7 @@ describe("clean purges a host's own plugin cache", () => {
     const userRepo = new InMemoryManifestRepository(machine);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
-      fs: new RecordingFileAdapter(),
+      fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: project,
       activator,
       binary: TOOL.codex,
@@ -459,7 +449,7 @@ describe("clean purges a host's own plugin cache", () => {
     ]);
   });
   it("project A clean never unregisters a project-labelled Codex catalogue still carrying B's machine ref", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CODEX_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     fs.setFile(cacheEntry, "B still uses these bytes");
     const registry = new InMemoryMarketplaceRegistry();
@@ -506,7 +496,7 @@ describe("clean purges a host's own plugin cache", () => {
   });
   it("does not purge B's empty Codex cache shell when a machine claim blocked host unregister", async () => {
     const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
-    const fs = new EmptyNativeCacheFileAdapter(emptyCache);
+    const fs = new RecordingFileAdapter({}, [...EXISTING_DIRECTORIES, emptyCache]);
     const machine = Manifest.create();
     machine.addTool(TOOL.codex, "1.0.0", []);
     machine.setNativeRegistrations(TOOL.codex, {
@@ -538,7 +528,7 @@ describe("clean purges a host's own plugin cache", () => {
     ]);
   });
   it("leaves claude's cache in place, and names it, when the claude CLI is not on PATH", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
@@ -578,7 +568,7 @@ describe("clean purges a host's own plugin cache", () => {
   it("leaves claude's cache in place without trusting a registry read after host removal fails", async () => {
     // `removeMarketplace` throws (host refused, or the call failed for any other
     // reason `bestEffort` swallows), so the registry mirror never drops the name.
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
@@ -611,7 +601,7 @@ describe("clean purges a host's own plugin cache", () => {
   });
 
   it("refuses project clean when Claude's current registry does not exist", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
@@ -640,7 +630,7 @@ describe("clean purges a host's own plugin cache", () => {
   });
 
   it("refuses project clean without deleting cache when Claude's registry is unreadable", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
@@ -674,7 +664,7 @@ describe("clean purges a host's own plugin cache", () => {
     // A sentinel, never this machine's real home: a cache root composed from `os.homedir()`
     // directly ignores the injected `homeDir` and looks under the real home instead.
     const SENTINEL_HOME = "/sentinel-home-clean-cache-parity";
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(
       SENTINEL_HOME,
       ".claude",
@@ -718,7 +708,7 @@ describe("clean purges a host's own plugin cache", () => {
 
   it("refuses a '..' cache path after proving the current host source", async () => {
     const hostName = "../../../evil";
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const witness = join(CLAUDE_CACHE_ROOT, hostName);
     // Written exactly where an unresolved join lands — so the guard is proven against the
     // collapse `path.join` already performs, not a path this test invents.
@@ -753,7 +743,7 @@ describe("clean purges a host's own plugin cache", () => {
   });
 
   it("refuses a cache entry that resolves outside the declared cache root through a symlink", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const candidate = join(CLAUDE_CACHE_ROOT, MARKETPLACE);
     fs.setSymlink(candidate, "/outside/evil-target");
 
@@ -819,7 +809,7 @@ describe("clean purges a host's own plugin cache", () => {
   });
 
   it("detaches a shared Copilot claim locally without a host source reader or HOME deletion", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const activator = new FakeHostActions({ available: true });
     const manifest = Manifest.create();
     manifest.addTool(TOOL.copilot, "1.0.0", []);
@@ -850,7 +840,7 @@ describe("clean purges a host's own plugin cache", () => {
   it("purges under the catalog's own hostName, never the project's local alias", async () => {
     const alias = "my-local-alias";
     const hostName = "upstream-catalog-name";
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, hostName, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
@@ -882,7 +872,7 @@ describe("clean purges a host's own plugin cache", () => {
   it("purges codex's empty cache shell once its own CLI has removed the marketplace", async () => {
     // No reader registered for codex — its profile declares `pluginCacheDir` alone, no
     // `marketplaceRegistry`, so `purgeOneMarketplaceCache` proves emptiness instead.
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     await fs.createDirectory(join(CODEX_CACHE_ROOT, MARKETPLACE));
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
@@ -906,7 +896,10 @@ describe("clean purges a host's own plugin cache", () => {
   it("leaves codex's cache in place, even empty, when marketplace removal was not confirmed", async () => {
     // Nothing under the cache directory — the shape `purgeCacheIfEmpty` reads as safe — while
     // `removeMarketplace` throws, so the host was never confirmed to have forgotten the name.
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, [
+      ...EXISTING_DIRECTORIES,
+      join(CODEX_CACHE_ROOT, MARKETPLACE),
+    ]);
 
     const activator = new FakeHostActions({ available: true, throwOnRemove: true });
     const logger = new CapturingLogger();
@@ -932,7 +925,7 @@ describe("clean purges a host's own plugin cache", () => {
   });
 
   it("leaves codex's cache in place, and names it, when it still holds content", async () => {
-    const fs = new RecordingFileAdapter();
+    const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const leftover = join(CODEX_CACHE_ROOT, MARKETPLACE, "leftover.txt");
     await fs.writeFile(leftover, "still here");
 

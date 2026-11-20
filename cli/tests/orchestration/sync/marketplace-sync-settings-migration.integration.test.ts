@@ -28,7 +28,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
+import { fsAt, type InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/project";
@@ -128,7 +128,7 @@ describe("SyncSettings — sync migrates a project installed before the shared s
     );
     const manifest = Manifest.create();
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
@@ -156,7 +156,7 @@ describe("SyncSettings — sync migrates a project installed before the shared s
     await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "/some/path" }));
     const manifest = Manifest.create();
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
@@ -194,7 +194,7 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
       enablesPlugins: false,
       conflictOnAdd: true,
     });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${CODEX_BUILT_DIR}/.agents/plugins/marketplace.json`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: "1.0.0",
@@ -238,7 +238,7 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
       enablesPlugins: false,
       conflictOnAdd: true,
     });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${CODEX_BUILT_DIR}/.agents/plugins/marketplace.json`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: "1.0.0",
@@ -286,7 +286,7 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
       conflictOnAdd: true,
     });
     const builtDir = "/shared/built/other/codex";
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${builtDir}/.agents/plugins/marketplace.json`]: JSON.stringify({
         name: "someones-plugins",
         version: "1.0.0",
@@ -320,7 +320,7 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
       enablesPlugins: false,
       conflictOnAdd: true,
     });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${CLAUDE_BUILT_DIR}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: "1.0.0",
@@ -389,7 +389,7 @@ describe("SyncSettings — fresh Claude host provenance", () => {
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const logger = new CapturingLogger();
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger,
@@ -471,7 +471,7 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: CURRENT_VERSION,
@@ -538,7 +538,7 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     // Nothing is seeded under `foreignProjectCache` at all — the directory a real
     // `rm -rf` would have removed after the fact.
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: CURRENT_VERSION,
@@ -600,7 +600,7 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: CURRENT_VERSION,
@@ -706,7 +706,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [OLD_CACHE_FILE]: "stale content",
       [`${CLAUDE_BUILT_DIR}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
@@ -748,7 +748,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: false });
-    const fs = new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" });
+    const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const logger = new CapturingLogger();
     const useCase = marketplaceSync({
       fs,
@@ -789,7 +789,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: true });
-    const fs = new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" });
+    const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const logger = new CapturingLogger();
     const failingBuild = {
       execute: async () => {
@@ -830,7 +830,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
     // No catalog seeded at the built dir, so `registerMarketplace` throws
     // `UnreadableBuiltCatalogError`, which `activateNativeTools` collects as a genuine error.
-    const fs = new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" });
+    const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const useCase = marketplaceSync({
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
@@ -856,7 +856,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const escapedFile = "/etc/evil/still-here.txt";
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [escapedFile]: "not aidd's to delete",
       [`${CLAUDE_BUILT_DIR}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
@@ -914,7 +914,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     const registry = projectWithMigratableEntry();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       [OLD_CACHE_FILE]: "stale content",
       [`${CLAUDE_BUILT_DIR}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
@@ -978,7 +978,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
   }
 
   function staleCacheAndCatalog(): InMemoryFileAdapter {
-    return new InMemoryFileAdapter({
+    return fsAt(PROJECT_ROOT, {
       [OLD_CACHE_FILE]: "stale content",
       ...catalogFixture(CLAUDE_BUILT_DIR),
     });
@@ -999,7 +999,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" }),
+      fs: fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" }),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,
       logger,
@@ -1023,7 +1023,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" }),
+      fs: fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" }),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,
       logger,
@@ -1085,7 +1085,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
   it("names the candidate and the root it escaped when a symlink resolves it outside the project", async () => {
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
-    const fs = new InMemoryFileAdapter({
+    const fs = fsAt(PROJECT_ROOT, {
       "/etc/evil/still-here.txt": "not aidd's to delete",
       ...catalogFixture(CLAUDE_BUILT_DIR),
     });
@@ -1217,7 +1217,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     );
     const calls: RegisterFrameworkMarketplaceCommand[] = [];
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
@@ -1246,7 +1246,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     );
     const calls: RegisterFrameworkMarketplaceCommand[] = [];
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
@@ -1344,7 +1344,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
     manifest.addTool(TOOL.claude, "test", []);
 
     const doctor = buildCheckRegistration(
-      new InMemoryFileAdapter({
+      fsAt(PROJECT_ROOT, {
         [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
           name: FRAMEWORK_MARKETPLACE_NAME,
           plugins: [],
@@ -1353,7 +1353,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
       registry,
       () => false,
       registeredHostInspector(
-        new InMemoryFileAdapter({
+        fsAt(PROJECT_ROOT, {
           [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
             name: FRAMEWORK_MARKETPLACE_NAME,
             plugins: [],
@@ -1375,7 +1375,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
     expect(before.some((issue) => issue.fix.includes("aidd sync"))).toBe(true);
 
     const activator = new RegisteringActivator(hostEntries);
-    const syncFs = new InMemoryFileAdapter({
+    const syncFs = fsAt(PROJECT_ROOT, {
       [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: FRAMEWORK_MARKETPLACE_NAME,
         version: CURRENT_VERSION,

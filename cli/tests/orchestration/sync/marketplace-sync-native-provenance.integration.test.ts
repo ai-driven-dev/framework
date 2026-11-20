@@ -53,15 +53,18 @@ function makeSync(
   const hostCatalogBytes = options.machine
     ? '{"name":"aidd-framework","source":"aidd-owned","marker":7}'
     : FOREIGN_CATALOG_BYTES;
-  const fs = new InMemoryFileAdapter({
-    [catalogPath]: JSON.stringify({
-      name: CATALOG,
-      version: "1.0.0",
-      plugins: [{ name: "aidd-dev" }],
-    }),
-    [CACHE_WITNESS]: "foreign bytes stay byte-for-byte",
-    [HOST_CATALOG_WITNESS]: hostCatalogBytes,
-  });
+  const fs = new InMemoryFileAdapter(
+    {
+      [catalogPath]: JSON.stringify({
+        name: CATALOG,
+        version: "1.0.0",
+        plugins: [{ name: "aidd-dev" }],
+      }),
+      [CACHE_WITNESS]: "foreign bytes stay byte-for-byte",
+      [HOST_CATALOG_WITNESS]: hostCatalogBytes,
+    },
+    [PROJECT_ROOT]
+  );
   const project = Manifest.create();
   project.addTool(toolId, "1.0.0", []);
   project.addPlugin(

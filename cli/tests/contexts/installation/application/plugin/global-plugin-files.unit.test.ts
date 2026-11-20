@@ -131,7 +131,7 @@ describe("assertGlobalFilesWritable", () => {
   );
 
   it("refuses a parent that resolves outside the user directory", async () => {
-    const fs = new InMemoryFileAdapter({ [under("agents", "kept.md")]: "x" });
+    const fs = new InMemoryFileAdapter({ [under("agents", "kept.md")]: "x" }, ["/elsewhere"]);
     fs.setSymlink(under("agents"), "/elsewhere");
 
     await expect(
@@ -195,7 +195,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     new InstallationFile({ relativePath, content: "new", hash: FileHash.of("new") });
 
   it("allows a file whose parents are missing once the user directory resolves", async () => {
-    const fs = new InMemoryFileAdapter({}).rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter({});
 
     await expect(
       assertGlobalFilesWritable(
@@ -211,7 +211,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
   });
 
   it("refuses a missing file below a parent link resolving outside the user directory", async () => {
-    const fs = new InMemoryFileAdapter({ "/elsewhere/keep": "x" }).rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter({ "/elsewhere/keep": "x" });
     fs.setSymlink(join(DIR, "agents"), "/elsewhere");
 
     await expect(

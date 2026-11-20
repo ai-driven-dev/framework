@@ -106,7 +106,13 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     record.addPlugin(cursor, kind.aUserPlugin("sample-plugin", ["/A", "/B"]));
     const repo = new InMemoryRepository<MachineManifest>(record);
 
-    await detachUserPlugin(repo, new InMemoryFileAdapter(), cursor, "sample-plugin", "/A");
+    await detachUserPlugin(
+      repo,
+      new InMemoryFileAdapter({}, ["/A", "/B", "/C"]),
+      cursor,
+      "sample-plugin",
+      "/A"
+    );
 
     expect(repo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
     expect(repo.saveCount).toBe(1);
@@ -118,7 +124,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     const repo = new InMemoryRepository<MachineManifest>(record);
     const refs = new Map([[codex, ["sample-plugin@catalog"]]]);
 
-    await detachNativePluginRefs(repo, new InMemoryFileAdapter(), "/A", refs);
+    await detachNativePluginRefs(repo, new InMemoryFileAdapter({}, ["/A", "/B", "/C"]), "/A", refs);
 
     expect(repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: "sample-plugin@catalog", dependents: ["/B"] },

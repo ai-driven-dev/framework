@@ -177,7 +177,7 @@ describe("RemovePlugin", () => {
           scope: "project",
         })
       );
-      const fs = new RecordingFileAdapter();
+      const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const removeUseCase = pluginRemover({ fs, manifestRepo });
 
@@ -231,7 +231,7 @@ describe("RemovePlugin", () => {
         marketplace: "mkt",
       });
 
-      await removeUseCaseOver(new InMemoryFileAdapter(), manifestRepo).execute({
+      await removeUseCaseOver(new InMemoryFileAdapter({}, [PROJECT_ROOT]), manifestRepo).execute({
         pluginName: "aidd-context",
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -274,7 +274,7 @@ describe("RemovePlugin", () => {
           scope: "project",
         })
       );
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, script), "// edited");
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
 
@@ -295,7 +295,7 @@ describe("RemovePlugin", () => {
 
   describe("MCP entries on removal", () => {
     it("does not rewrite opencode's config when the plugin carries no MCP entries", async () => {
-      const fs = new RecordingFileAdapter();
+      const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(OPENCODE_JSON, JSON.stringify({ mcp: { mine: { type: "local" } } }));
       const manifestRepo = manifestHolding(TOOL.opencode, { name: "aidd-context" });
 
@@ -309,7 +309,7 @@ describe("RemovePlugin", () => {
     });
 
     it("leaves a native tool's own MCP file untouched when the plugin carries MCP entries", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const mcpFile = join(PROJECT_ROOT, ".mcp.json");
       const content = JSON.stringify({ mcpServers: { srv: { command: "node" } } });
       fs.setFile(mcpFile, content);
@@ -328,7 +328,7 @@ describe("RemovePlugin", () => {
     });
 
     it("removes the plugin's servers from the opencode config the project already owns", async () => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const ownedConfig = join(PROJECT_ROOT, "opencode.jsonc");
       const server = { type: "local" };
       fs.setFile(ownedConfig, JSON.stringify({ mcp: { srv: server, mine: {} } }));

@@ -393,7 +393,7 @@ describe("removeProjectHooks", () => {
   });
 
   it("reports nothing undone when neither the hooks file nor the script directory exists", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PROJECT_ROOT]);
     fs.failOn("deleteDirectory", `${PROJECT_ROOT}/.cursor/hooks/${PLUGIN}/`, errnoError("EPERM"));
 
     expect(
@@ -497,7 +497,7 @@ describe("removeProjectHooks", () => {
   });
 
   it("propagates a failure to read the hooks file other than its absence", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PROJECT_ROOT]);
     fs.failOn("readFile", HOOKS_PATH, errnoError("EACCES"));
 
     await expect(
