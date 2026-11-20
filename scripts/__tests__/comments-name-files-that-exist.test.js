@@ -38,6 +38,9 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   "cli/tests/contexts/framework/application/doctor-use-case.unit.test.ts": [
     "@.claude/rules/test.md",
   ],
+  // Fixture trees the check contracts' tests build in a scratch folder.
+  "scripts/__tests__/check/doc-checks.test.js": ["docs/a.md", "src/none.ts", "docs/b.md", "cli/tests/fixtures/x.md"],
+  "scripts/__tests__/check/doc-contract.test.js": ["docs/guide.md", "docs/missing.md"],
   // A seam artefact one plugin writes into a reader's own project and another reads back —
   // named here as the shape of that seam, never as a file this repository holds.
   "docs/CATALOG.md": ["INSTALL.md"],

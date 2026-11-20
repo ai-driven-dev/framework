@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "kind": "doc",
+  "unit": "file",
+  "targets": "README.md",
+  "rules": {
+    "DOC-01": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "markdown-links",
+      "why": "a link, an @import or a src: target that resolves nowhere sends the reader or the agent to nothing"
+    },
+    "DOC-02": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "referenced-paths",
+      "why": "a path the prose names in backticks dies when the file is deleted, in a commit that touches no page"
+    },
+    "DOC-03": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "context-imports",
+      "why": "an @import inside an HTML block is skipped by a context loader: the file looks right and loads nothing"
+    },
+    "DOC-04": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "context-reference-form",
+      "why": "a memory block reference in a form its tool cannot resolve is inert text that loads nothing and reports nothing"
+    },
+    "DOC-05": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "doc-duplication",
+      "why": "a fact copied into a second page stops being one fact: the copies drift"
+    },
+    "DOC-06": {
+      "op": "custom",
+      "in": "README.md",
+      "check": "mermaid-names",
+      "why": "a class named like a node breaks every diagram after it on the page, and GitHub shows raw text"
+    }
+  }
+}
