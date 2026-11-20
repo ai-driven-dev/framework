@@ -3,7 +3,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
@@ -18,6 +18,7 @@ import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
 type PluginKeys =
+  | "prompter"
   | "pluginRemoveUseCase"
   | "userPluginRemove"
   | "pluginListUseCase"
@@ -41,8 +42,7 @@ export function parseToolOption(
 export function registerPluginCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsSliceFactory<PluginKeys>,
-  createMenuDeps: MenuDepsSliceFactory<"prompter">
+  createDeps: DepsSliceFactory<PluginKeys>
 ): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
 
@@ -51,7 +51,7 @@ export function registerPluginCommand(
       plugin.help();
       return;
     }
-    const { prompter } = createMenuDeps(process.cwd());
+    const { prompter } = await createDeps(process.cwd(), { verbose: false }, undefined);
     const choice = await prompter.select("plugin: what do you want to do?", [
       { name: "Install plugin", value: "install" },
       { name: "List installed plugins", value: "list" },

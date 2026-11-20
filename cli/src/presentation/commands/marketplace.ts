@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
-import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../deps.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -29,8 +29,7 @@ type MarketplaceKeys =
 
 export function registerMarketplaceCommand(
   program: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>,
-  createMenuDeps: MenuDepsSliceFactory<"prompter">
+  createDeps: DepsSliceFactory<MarketplaceKeys>
 ): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
 
@@ -39,7 +38,7 @@ export function registerMarketplaceCommand(
       marketplace.help();
       return;
     }
-    const { prompter } = createMenuDeps(process.cwd());
+    const { prompter } = await createDeps(process.cwd(), { verbose: false }, undefined);
     const choice = await prompter.select("marketplace: what do you want to do?", [
       { name: "List marketplaces", value: "list" },
       { name: "Add marketplace", value: "add" },

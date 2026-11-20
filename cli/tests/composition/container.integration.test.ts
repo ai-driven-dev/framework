@@ -489,7 +489,7 @@ describe("the graph a container hands the commands", () => {
       },
     };
 
-    const { menuLoop } = createContainer({
+    const menuLoop = createContainer({
       projectRoot: root,
       verbose: false,
       tools: catalogOf(),
@@ -511,7 +511,7 @@ describe("the graph a container hands the commands", () => {
       },
     };
 
-    const { menuLoop } = createContainer({
+    const menuLoop = createContainer({
       projectRoot: root,
       verbose: false,
       tools: catalogOf(),

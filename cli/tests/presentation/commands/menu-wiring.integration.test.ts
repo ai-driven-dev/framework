@@ -20,7 +20,7 @@ const { runMenuLoop } = await import("../../../src/presentation/commands/menu.js
 const { waitForEnter } = await import("../../../src/presentation/terminal/wait-for-enter.js");
 const { resolveProjectRoot } = await import("../../../src/presentation/project-root.js");
 
-const createMenuDeps = vi.fn(() => {
+const menuOf = vi.fn(() => {
   const prompter = prompterAnswering({
     select: promptSelect,
     confirm: promptConfirm,
@@ -28,10 +28,7 @@ const createMenuDeps = vi.fn(() => {
   });
   const projectSetup = { isSetUp: async () => (await loadManifest()) !== null };
   const menu = new BuildMenu(projectSetup, prompter, wireTools());
-  return {
-    menuLoop: new MenuLoop(menu, { run: spawn }, { untilEnter: waitForEnter }),
-    prompter,
-  };
+  return new MenuLoop(menu, { run: spawn }, { untilEnter: waitForEnter });
 });
 
 let written: string[] = [];
@@ -70,7 +67,7 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop(createMenuDeps)).rejects.toThrow(/^exit /);
+  await expect(runMenuLoop(menuOf)).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {
@@ -80,7 +77,7 @@ describe("aidd with no argument — the menu loop", () => {
     await loopUntilExit();
 
     expect(written[0].split("\n").at(-2)).toBe(" AI-Driven Development CLI");
-    expect(vi.mocked(createMenuDeps)).toHaveBeenCalledWith(resolveProjectRoot());
+    expect(vi.mocked(menuOf)).toHaveBeenCalledWith(resolveProjectRoot());
   });
 
   it("waits for a keypress after a command, so its output can be read", async () => {

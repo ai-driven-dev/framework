@@ -1,4 +1,4 @@
-import type { MenuDepsFactory } from "../deps.js";
+import type { MenuLoop } from "../../orchestration/menu/menu-loop.js";
 import { printBanner } from "../display/menu-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
@@ -17,10 +17,12 @@ export function routeMenuError(error: unknown, output: CLIOutput): never {
   return failCommand(output, error);
 }
 
-export async function runMenuLoop(createMenuDeps: MenuDepsFactory): Promise<never> {
+export async function runMenuLoop(
+  menuOf: (projectRoot: string) => Pick<MenuLoop, "execute">
+): Promise<never> {
   const output = new CLIOutput();
   printBanner(output);
-  const { menuLoop } = createMenuDeps(resolveProjectRoot());
+  const menuLoop = menuOf(resolveProjectRoot());
   const exitCode = await menuLoop
     .execute()
     .catch((error: unknown) => routeMenuError(error, output));

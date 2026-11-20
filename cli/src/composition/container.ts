@@ -3,7 +3,7 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
-import type { Deps, FactoryOptions, MenuDeps } from "../presentation/deps.js";
+import type { Deps, FactoryOptions } from "../presentation/deps.js";
 import type { CLIOutput } from "../presentation/output.js";
 import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";
@@ -102,10 +102,10 @@ export function createContainer(options: ContainerOptions) {
       return recipes();
     },
     /** The menu loop of this project, given the terminal the loop runs commands on. */
-    menu(terminal: { runner: CommandRunner; pause: Pause }): MenuDeps {
+    menu(terminal: { runner: CommandRunner; pause: Pause }): MenuLoop {
       const { prompter, manifestRepo } = shared();
       const menu = new BuildMenu(projectSetupOf(manifestRepo), prompter, tools);
-      return { menuLoop: new MenuLoop(menu, terminal.runner, terminal.pause), prompter };
+      return new MenuLoop(menu, terminal.runner, terminal.pause);
     },
   };
 }

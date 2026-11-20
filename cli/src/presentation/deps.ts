@@ -54,7 +54,6 @@ import type { AddMarketplace } from "../orchestration/marketplace/add-marketplac
 import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check-marketplace-upstream.js";
 import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remove-project-marketplace.js";
 import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user-marketplace.js";
-import type { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
@@ -165,12 +164,6 @@ export interface Deps {
   frameworkBuild: (ctx: FrameworkBuildContext) => Pick<BuildNativeTree, "execute"> | undefined;
 }
 
-/** What the menu and the interactive prompts of a command group need, before any graph exists. */
-export interface MenuDeps {
-  menuLoop: Pick<MenuLoop, "execute">;
-  prompter: Prompter;
-}
-
 /** Builds the graph a command runs on. `cli.ts` hands one to every command, so a command never
  * reaches the composition root itself. */
 export type DepsFactory = (
@@ -179,15 +172,8 @@ export type DepsFactory = (
   output: CLIOutput | undefined
 ) => Promise<Deps>;
 
-export type MenuDepsFactory = (projectRoot: string) => MenuDeps;
-
 /** A factory of the part of the graph a command reads. The real `DepsFactory` is assignable to
  * every one, and a test builds only the members its command touches. */
 export type DepsSliceFactory<K extends keyof Deps> = (
   ...args: Parameters<DepsFactory>
 ) => Promise<Pick<Deps, K>>;
-
-/** The menu counterpart of {@link DepsSliceFactory}. */
-export type MenuDepsSliceFactory<K extends keyof MenuDeps> = (
-  projectRoot: string
-) => Pick<MenuDeps, K>;

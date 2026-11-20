@@ -15,7 +15,6 @@ import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
 import { registerToolConfigCommand } from "./presentation/commands/tool-config.js";
 import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
-import type { MenuDepsFactory } from "./presentation/deps.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
@@ -31,7 +30,7 @@ const version = createContainer({ projectRoot: process.cwd(), verbose: false, to
   .version;
 const createSlice = bindContainer(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
-const menuOfProject: MenuDepsFactory = (projectRoot) =>
+const menuOfProject = (projectRoot: string) =>
   createContainer({ projectRoot, verbose: false, tools }).menu(terminal);
 
 const program = new Command();
@@ -45,8 +44,8 @@ program
 registerSetupCommand(program, tools, createSlice);
 registerToolConfigCommand(program, tools, createSlice);
 registerTranslateCommand(program, tools, createSlice);
-registerPluginCommand(program, tools, createSlice, menuOfProject);
-registerMarketplaceCommand(program, createSlice, menuOfProject);
+registerPluginCommand(program, tools, createSlice);
+registerMarketplaceCommand(program, createSlice);
 registerAuthCommand(program, createSlice);
 registerSyncCommand(program, tools, createSlice);
 registerUpdateCommand(program, createSlice);

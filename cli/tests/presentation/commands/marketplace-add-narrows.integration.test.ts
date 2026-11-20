@@ -20,9 +20,6 @@ const createDeps = vi.fn(async () => ({
   syncNativeActivation: { execute: marketplaceSyncExecute },
   prompter: prompterAnswering({ input: vi.fn() }),
 }));
-const createMenuDeps = vi.fn(() => ({
-  prompter: prompterAnswering({ input: vi.fn(), select: vi.fn() }),
-}));
 
 const { registerMarketplaceCommand } = await import(
   "../../../src/presentation/commands/marketplace.js"
@@ -32,7 +29,7 @@ describe("marketplace add narrows native activation to the marketplace it just r
   it("passes marketplaceNames: [name] to SyncSettings.execute", async () => {
     const program = new Command();
     program.exitOverride();
-    registerMarketplaceCommand(program, createDeps, createMenuDeps);
+    registerMarketplaceCommand(program, createDeps);
 
     await program.parseAsync(["node", "aidd", "marketplace", "add", "market-b", "/some/source"]);
 

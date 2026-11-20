@@ -4996,7 +4996,6 @@
         "!src/orchestration/setup/setup-flow.ts",
         "!src/presentation/commands/clean.ts",
         "!src/presentation/commands/doctor.ts",
-        "!src/presentation/commands/plugin.ts",
         "!src/presentation/commands/setup.ts",
         "!src/presentation/commands/sync.ts",
         "!src/presentation/commands/tool-config.ts",

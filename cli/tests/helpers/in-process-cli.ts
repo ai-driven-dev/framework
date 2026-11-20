@@ -5,11 +5,8 @@ import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
 import type { ToolCatalog } from "../../src/contexts/tools/contract/tool-catalog.js";
-import type { DepsFactory, MenuDepsFactory } from "../../src/presentation/deps.js";
+import type { DepsFactory } from "../../src/presentation/deps.js";
 import { sandboxedEnv } from "../e2e/helpers.js";
-
-/** The subcommands under test never open the menu, so its terminal does nothing. */
-const NO_TERMINAL = { runner: { run: async () => 0 }, pause: { untilEnter: async () => {} } };
 
 /**
  * Drives the real Commander tree and the real container inside the test process, under a
@@ -48,12 +45,7 @@ class ExitSignal extends Error {
   }
 }
 
-type Register = (
-  program: Command,
-  tools: ToolCatalog,
-  createDeps: DepsFactory,
-  createMenuDeps: MenuDepsFactory
-) => void;
+type Register = (program: Command, tools: ToolCatalog, createDeps: DepsFactory) => void;
 
 /** The order `src/cli.ts` registers them in. Literal specifiers, so the bundler resolves them. */
 const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
@@ -67,7 +59,7 @@ const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
     const { registerMarketplaceCommand } = await import(
       "../../src/presentation/commands/marketplace.js"
     );
-    return (program, _tools, deps, menu) => registerMarketplaceCommand(program, deps, menu);
+    return (program, _tools, deps) => registerMarketplaceCommand(program, deps);
   },
   async () => {
     const { registerAuthCommand } = await import("../../src/presentation/commands/auth.js");
@@ -188,12 +180,9 @@ export async function runInProcess(
     const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    const { bindContainer, createContainer } = await import("../../src/composition/container.js");
+    const { bindContainer } = await import("../../src/composition/container.js");
     const depsFactory: DepsFactory = bindContainer(tools);
-    for (const load of REGISTRATIONS)
-      (await load())(program, tools, depsFactory, (projectRoot) =>
-        createContainer({ projectRoot, verbose: false, tools }).menu(NO_TERMINAL)
-      );
+    for (const load of REGISTRATIONS) (await load())(program, tools, depsFactory);
 
     try {
       await program.parseAsync(["node", "aidd", ...args]);
