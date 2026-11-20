@@ -131,11 +131,8 @@ export async function proveUserRegistrations(
         [...claimRefs].filter((ref) => isRefOnHost(ref, registration.hostName))
       );
       const hostRefs = await assertNoForeignNativeRefs(
-        deps.ports.pluginRegistries.get(toolId),
-        registration.hostName,
-        owned,
-        projectRoot,
-        tool
+        { reader: deps.ports.pluginRegistries.get(toolId), tool },
+        { hostName: registration.hostName, ownedRefs: owned, projectRoot }
       );
       assertClaimsEnabled(
         proof,

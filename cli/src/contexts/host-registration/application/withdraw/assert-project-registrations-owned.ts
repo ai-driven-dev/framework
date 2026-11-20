@@ -36,11 +36,12 @@ export async function assertProjectRegistrationsOwned(
         `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
       );
       await assertNoForeignNativeRefs(
-        deps.ports.pluginRegistries.get(toolId),
-        registration.hostName,
-        new Set([...registrations.pluginRefs, ...(await machineRefs(facts, toolId))]),
-        facts.projectRoot,
-        tool
+        { reader: deps.ports.pluginRegistries.get(toolId), tool },
+        {
+          hostName: registration.hostName,
+          ownedRefs: new Set([...registrations.pluginRefs, ...(await machineRefs(facts, toolId))]),
+          projectRoot: facts.projectRoot,
+        }
       );
     }
   }

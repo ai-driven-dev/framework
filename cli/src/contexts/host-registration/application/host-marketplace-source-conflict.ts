@@ -48,21 +48,27 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
  * symlink (`/var` → `/private/var` on macOS) would fail every containment check silently.
  */
 export async function hostMarketplaceSourceConflict(
-  fs: FileReader,
-  tool: CatalogProbeTool,
-  reader: HostMarketplaceRegistry,
-  requestedSource: string,
-  requestedIdentity: MarketplaceCatalogIdentity,
-  /** Present only for a caller that wants the version/migration drift decided before falling back
-   * to the catalog-identity check: computed for every `aidd-framework` entry regardless of its
-   * own `scope`, since an unmigrated project-scope registration is exactly what it decides. */
-  driftContext?: MarketplaceSourceDriftContext
+  host: {
+    readonly fs: FileReader;
+    readonly tool: CatalogProbeTool;
+    readonly reader: HostMarketplaceRegistry;
+  },
+  request: {
+    readonly requestedSource: string;
+    readonly requestedIdentity: MarketplaceCatalogIdentity;
+    /** Present only for a caller that wants the version/migration drift decided before falling
+     * back to the catalog-identity check: computed for every `aidd-framework` entry regardless of
+     * its own `scope`, since an unmigrated project-scope registration is exactly what it decides. */
+    readonly driftContext?: MarketplaceSourceDriftContext;
+  }
 ): Promise<HostMarketplaceSourceCheck> {
+  const { fs, tool, reader } = host;
+  const { requestedSource, requestedIdentity, driftContext } = request;
   const reading = await reader.read();
   const registeredSource = reading.entries?.get(requestedIdentity.name);
   if (registeredSource === undefined) return undefined;
   if (driftContext !== undefined) {
-    const drift = await resolvedDrift(fs, registeredSource, requestedSource, driftContext);
+    const drift = await resolvedDrift(fs, { registeredSource, requestedSource }, driftContext);
     if (drift !== undefined) {
       return {
         name: requestedIdentity.name,
@@ -74,21 +80,19 @@ export async function hostMarketplaceSourceConflict(
     }
   }
   const registeredIdentity = await readMarketplaceCatalogIdentity(fs, tool, registeredSource);
-  return marketplaceSourceConflict(
-    reading,
-    requestedIdentity.name,
+  return marketplaceSourceConflict(reading, requestedIdentity.name, {
     requestedSource,
     registeredIdentity,
-    requestedIdentity
-  );
+    requestedIdentity,
+  });
 }
 
 async function resolvedDrift(
   fs: FileReader,
-  registeredSource: string,
-  requestedSource: string,
+  sources: { readonly registeredSource: string; readonly requestedSource: string },
   context: MarketplaceSourceDriftContext
 ): Promise<MarketplaceSourceDrift | undefined> {
+  const { registeredSource, requestedSource } = sources;
   const [resolvedRegistered, resolvedRequested, resolvedUserCacheRoot, resolvedProjectRoot] =
     await Promise.all([
       resolvedOrSelf(fs, registeredSource),

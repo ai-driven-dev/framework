@@ -36,8 +36,8 @@ describe("judgeEmptiness", () => {
 });
 
 describe("judgeRegistryClearance", () => {
-  const judge = (reading: Parameters<typeof judgeRegistryClearance>[3]) =>
-    judgeRegistryClearance("claude", "aidd", CANDIDATE, reading);
+  const judge = (reading: Parameters<typeof judgeRegistryClearance>[1]) =>
+    judgeRegistryClearance({ binary: "claude", hostName: "aidd", candidate: CANDIDATE }, reading);
 
   it("purges when the registry never existed", () => {
     expect(judge({ location: LOCATION, absent: true })).toEqual({ purge: true });

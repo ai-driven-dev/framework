@@ -45,10 +45,13 @@ export interface MarketplaceSourceConflict {
 export function marketplaceSourceConflict(
   reading: HostMarketplaceRegistryReading,
   expectedName: string,
-  requestedSource: string,
-  registeredIdentity: MarketplaceCatalogIdentity | undefined,
-  requestedIdentity: MarketplaceCatalogIdentity
+  request: {
+    readonly requestedSource: string;
+    readonly registeredIdentity: MarketplaceCatalogIdentity | undefined;
+    readonly requestedIdentity: MarketplaceCatalogIdentity;
+  }
 ): MarketplaceSourceConflict | undefined {
+  const { requestedSource, registeredIdentity, requestedIdentity } = request;
   if (reading.entries === undefined) return undefined;
   const registeredSource = reading.entries.get(expectedName);
   if (registeredSource === undefined) return undefined;

@@ -126,17 +126,17 @@ export class InspectHostRegistration {
       // drift context goes to every entry whatever its recorded `scope`, since an unmigrated
       // project-scope registration is exactly the case it decides.
       const check = await hostMarketplaceSourceConflict(
-        this.fs,
-        profile,
-        reader,
-        marketplace.builtDir,
-        requestedIdentity,
+        { fs: this.fs, tool: profile, reader },
         {
-          userCacheRoot: command.userCacheRoot,
-          projectRoot: command.projectRoot,
-          marketplaceName: marketplace.name,
-          target: tool,
-          platform: this.platform,
+          requestedSource: marketplace.builtDir,
+          requestedIdentity,
+          driftContext: {
+            userCacheRoot: command.userCacheRoot,
+            projectRoot: command.projectRoot,
+            marketplaceName: marketplace.name,
+            target: tool,
+            platform: this.platform,
+          },
         }
       );
       if (check === undefined) continue;

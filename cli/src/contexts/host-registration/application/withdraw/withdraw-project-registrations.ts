@@ -100,11 +100,15 @@ async function uninstallProjectRef(run: ProjectToolRun, ref: string): Promise<vo
   const reader = deps.ports.pluginRegistries.get(withdrawal.tool.toolId);
   try {
     await assertNoForeignNativeRefs(
-      reader,
-      sourceRegistration.hostName,
-      new Set([...registrations.pluginRefs, ...(await machineRefs(facts, withdrawal.tool.toolId))]),
-      facts.projectRoot,
-      withdrawal.tool
+      { reader, tool: withdrawal.tool },
+      {
+        hostName: sourceRegistration.hostName,
+        ownedRefs: new Set([
+          ...registrations.pluginRefs,
+          ...(await machineRefs(facts, withdrawal.tool.toolId)),
+        ]),
+        projectRoot: facts.projectRoot,
+      }
     );
   } catch (error) {
     deps.logger.warn(`${registrations.binary}: '${ref}' left enabled; ${String(error)}`);
