@@ -7,7 +7,6 @@ import type {
   SourcePluginEntryRef,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
-import { DiskSink } from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   JsonSchemaValidationError,
@@ -16,6 +15,7 @@ import {
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
 const PLUGIN = "aidd-test";
 // resolve(): on Windows a leading "/" is drive-relative. Posix after: the adapter keys writes so.
@@ -74,7 +74,7 @@ function sinkFor(
   contract: ToolBuildContract,
   options: { force?: boolean; validator?: JsonSchemaValidator; assetProvider?: AssetProvider } = {}
 ) {
-  const sink = new DiskSink(
+  const sink = aDiskSink(
     fs,
     options.validator ?? passingValidator,
     options.assetProvider ?? assetProviderNaming([]),

@@ -23,7 +23,7 @@ import {
   OUT_OF_SCOPE_PLUGIN_SECTIONS,
   SOURCE_MARKETPLACE_RELATIVE,
 } from "../domain/canon-format.js";
-import type { DiskLayout, DiskSink, DiskTarget } from "./sinks/disk-sink.js";
+import type { DiskLayout, DiskTarget, PluginTreeSink } from "../ports/plugin-tree-sink.js";
 
 /** What a build for a target and mode asks of its caller. */
 export interface FrameworkBuildContext {
@@ -39,7 +39,7 @@ export class BuildNativeTree {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly sink: Pick<DiskSink, "prepare" | "writePlugin" | "finish">,
+    private readonly sink: PluginTreeSink,
     private readonly layout: DiskLayout
   ) {}
 

@@ -4,6 +4,7 @@ import {
   type FrameworkBuildContext,
 } from "../contexts/translate/application/build-native-tree.js";
 import { DiskSink } from "../contexts/translate/application/sinks/disk-sink.js";
+import { FlatWriter } from "../contexts/translate/application/sinks/flat-writer.js";
 import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
@@ -33,7 +34,8 @@ export function createFrameworkBuildUseCase(
     deps.fs,
     new AjvSchemaValidatorAdapter(),
     deps.assetProvider,
-    deps.logger
+    deps.logger,
+    new FlatWriter(deps.fs, deps.assetProvider, deps.logger)
   );
   return new BuildNativeTree(deps.fs, deps.logger, sink, {
     contract,

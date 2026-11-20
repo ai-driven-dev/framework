@@ -7,30 +7,32 @@ import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 
 type SkillContentTransform = (content: string, plugin: string, basename: string) => string;
 
-export async function writeSkillTree(
-  fs: FileReader & FileWriter,
-  pluginName: string,
-  pluginSrc: string,
-  pluginOut: string,
-  transform?: SkillContentTransform
-): Promise<number> {
-  const skillsSrc = join(pluginSrc, "skills");
-  const files = await fs.listFilesRecursive(skillsSrc);
+interface SkillTree {
+  readonly fs: FileReader & FileWriter;
+  readonly pluginName: string;
+  readonly pluginSrc: string;
+  readonly pluginOut: string;
+  readonly transform?: SkillContentTransform;
+}
+
+export async function writeSkillTree(tree: SkillTree): Promise<number> {
+  const skillsSrc = join(tree.pluginSrc, "skills");
+  const files = await tree.fs.listFilesRecursive(skillsSrc);
   let count = 0;
   for (const absPath of files) {
-    count += await writeSkillFile(fs, pluginName, absPath, skillsSrc, pluginOut, transform);
+    count += await writeSkillFile({ ...tree, absPath, skillsSrc });
   }
   return count;
 }
 
-async function writeSkillFile(
-  fs: FileReader & FileWriter,
-  pluginName: string,
-  absPath: string,
-  skillsSrc: string,
-  pluginOut: string,
-  transform?: SkillContentTransform
-): Promise<number> {
+async function writeSkillFile({
+  fs,
+  pluginName,
+  absPath,
+  skillsSrc,
+  pluginOut,
+  transform,
+}: SkillTree & { absPath: string; skillsSrc: string }): Promise<number> {
   const relPath = relative(skillsSrc, absPath).replace(/\\/g, "/");
   const destPath = join(pluginOut, "skills", relPath);
   const content = await fs.readFile(absPath);

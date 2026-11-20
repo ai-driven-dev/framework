@@ -1,9 +1,6 @@
 import type { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.js";
 import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
-import {
-  DEFAULT_REQUESTED_VERSION_POLICY,
-  type RequestedVersionPolicy,
-} from "../../contexts/distribution/contract/requested-version-policy.js";
+import type { RequestedVersionPolicy } from "../../contexts/distribution/contract/requested-version-policy.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { VersionMismatchError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
@@ -47,7 +44,7 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
   async execute(
     options: PluginInstallFromMarketplaceOptions
   ): Promise<PluginInstallFromMarketplaceResult> {
-    const policy = options.requestedVersionPolicy ?? DEFAULT_REQUESTED_VERSION_POLICY;
+    const policy = options.requestedVersionPolicy ?? "strict";
     const matches = await this.resolvePluginSource.execute({
       pluginName: options.pluginName,
       projectRoot: options.projectRoot,

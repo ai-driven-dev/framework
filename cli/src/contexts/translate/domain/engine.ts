@@ -266,7 +266,12 @@ function installedHooksBridge(
   const hasOwnBridge = dist.components.hooks.some(
     (f) => basename(f.relativePath) === bridge.skipIfSourceHas
   );
-  const file = flatHooksBridgeFile(bridge, manifestFile.content, dist.manifest.name, hasOwnBridge);
+  const file = flatHooksBridgeFile({
+    bridge,
+    rawHooksJson: manifestFile.content,
+    pluginName: dist.manifest.name,
+    sourceShipsItsOwn: hasOwnBridge,
+  });
   return file === null ? null : makeFile(file.relativePath, file.content);
 }
 

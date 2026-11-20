@@ -1,8 +1,8 @@
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.js";
-import type { DiskSink } from "../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { PluginTreeSink } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,
@@ -605,7 +605,7 @@ const LAYOUT = {
   force: false,
 } as const;
 
-const countingSink: Pick<DiskSink, "prepare" | "writePlugin" | "finish"> = {
+const countingSink: PluginTreeSink = {
   prepare: () => Promise.resolve(),
   writePlugin: () => Promise.resolve(31),
   finish: () => Promise.resolve(32),

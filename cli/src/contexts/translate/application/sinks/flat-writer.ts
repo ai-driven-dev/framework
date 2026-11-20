@@ -14,25 +14,21 @@ import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type {
-  ArtifactContract,
-  ToolBuildContract,
-} from "../../../tools/contract/build-contract.js";
 import { PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
-import { flatHooksBridgeFile } from "../../domain/flat-layout.js";
+import {
+  flatAgentPath,
+  flatHooksBridgeFile,
+  flatLinkTarget,
+  flatPathOfPluginSuffix,
+} from "../../domain/flat-layout.js";
+import type {
+  FlatFileStep,
+  FlatHooksStep,
+  FlatMcpStep,
+  FlatPluginWriter,
+  FlatTarget,
+} from "../../ports/flat-plugin-writer.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
-
-export type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
-/** What a flat MCP merge needs of its artifact: the merge, and where its file lives. */
-export type FlatMcpTarget = Required<Pick<SupportedArtifact, "merge" | "mergeDest">>;
-
-/** What a flat write needs of a build: the contract, the overwrite flag and both directories. */
-export interface FlatTarget {
-  readonly contract: ToolBuildContract;
-  readonly force: boolean;
-  readonly sourceDir: string;
-  readonly outDir: string;
-}
 
 function parsePluginMcp(pluginName: string, content: string): unknown {
   try {
@@ -45,7 +41,7 @@ function parsePluginMcp(pluginName: string, content: string): unknown {
 }
 
 /** Writes a built plugin into one flat tool directory, merging into the files other plugins share. */
-export class FlatWriter {
+export class FlatWriter implements FlatPluginWriter {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly assetProvider: AssetProvider,
@@ -73,17 +69,11 @@ export class FlatWriter {
   }
 
   /** One plugin's flat hooks: the hooks file or the bridge, then the scripts it points at. */
-  async writeHooks(
-    t: FlatTarget,
-    artifact: SupportedArtifact,
-    pluginName: string,
-    hooksSrc: string,
-    pluginSrc: string
-  ): Promise<number> {
-    const jsonCount = artifact.skipHooksJson
-      ? await this.writeHooksBridgeIfDeclared(t, artifact, pluginName, hooksSrc)
-      : await this.writeFlatHooksJson(t, artifact, pluginName, hooksSrc);
-    return jsonCount + (await this.writeFlatHooksScripts(t, artifact, pluginName, pluginSrc));
+  async writeHooks(step: FlatHooksStep): Promise<number> {
+    const jsonCount = step.artifact.skipHooksJson
+      ? await this.writeHooksBridgeIfDeclared(step)
+      : await this.writeFlatHooksJson(step);
+    return jsonCount + (await this.writeFlatHooksScripts(step));
   }
 
   /** Each built plugin's `.mcp.json`, its plugin-root paths already resolved into the output, as
@@ -126,48 +116,54 @@ export class FlatWriter {
     return found;
   }
 
-  async writeAgent(
-    t: FlatTarget,
-    artifact: SupportedArtifact,
-    pluginName: string,
-    absPath: string,
-    agentsSrc: string
-  ): Promise<number> {
+  async writeAgent({
+    target: t,
+    artifact,
+    pluginName,
+    absPath,
+    srcRoot: agentsSrc,
+  }: FlatFileStep): Promise<number> {
     const agentBaseName = basename(absPath);
     const srcRelPath = `agents/${relative(agentsSrc, absPath).replace(/\\/g, "/")}`;
     const content = await this.fs.readFile(absPath);
     assertNoToolsPlaceholder(content, pluginName, srcRelPath);
-    const flatRelPath = flatAgentPath(artifact, pluginName, agentBaseName);
+    const flatRelPath = flatAgentPath({ artifact, pluginName, agentFile: agentBaseName });
     const destPath = join(t.outDir, flatRelPath);
     await this.checkCollision(t, destPath, pluginName);
     const outContent = artifact.transform
       ? artifact.transform(content, pluginName, agentBaseName)
-      : this.rewriteAgentForFlat(t, content, flatRelPath, pluginName);
+      : this.rewriteAgentForFlat({ target: t, content, flatRelPath, pluginName });
     await this.fs.writeFile(destPath, outContent);
     return 1;
   }
 
-  private rewriteAgentForFlat(
-    t: FlatTarget,
-    content: string,
-    flatRelPath: string,
-    pluginName: string
-  ): string {
+  private rewriteAgentForFlat({
+    target: t,
+    content,
+    flatRelPath,
+    pluginName,
+  }: {
+    target: FlatTarget;
+    content: string;
+    flatRelPath: string;
+    pluginName: string;
+  }): string {
     const { frontmatter, body } = parseFrontmatter(content);
     const rewrittenBody = rewriteRelativeLinks(body, {
       currentFilePluginRelative: flatRelPath,
-      resolveTargetPath: (rel) => resolveTargetForMd(t.contract, pluginName, rel),
+      resolveTargetPath: (rel) =>
+        flatLinkTarget({ contract: t.contract, pluginName, pluginRelPath: rel }),
     });
     return serializeFrontmatter(frontmatter, rewrittenBody);
   }
 
-  async writeSkill(
-    t: FlatTarget,
-    artifact: SupportedArtifact,
-    pluginName: string,
-    absPath: string,
-    skillsSrc: string
-  ): Promise<number> {
+  async writeSkill({
+    target: t,
+    artifact,
+    pluginName,
+    absPath,
+    srcRoot: skillsSrc,
+  }: FlatFileStep): Promise<number> {
     const relFromSkills = relative(skillsSrc, absPath).replace(/\\/g, "/");
     const flatRelPath = artifact.path(pluginName, `skills/${relFromSkills}`);
     const destPath = join(t.outDir, flatRelPath);
@@ -180,7 +176,8 @@ export class FlatWriter {
     assertNoToolsPlaceholder(content, pluginName, relFromSkills);
     const rewritten = rewriteRelativeLinks(content, {
       currentFilePluginRelative: flatRelPath,
-      resolveTargetPath: (rel) => resolveTargetForMd(t.contract, pluginName, rel),
+      resolveTargetPath: (rel) =>
+        flatLinkTarget({ contract: t.contract, pluginName, pluginRelPath: rel }),
     });
     const outContent =
       artifact.rewriteSkillName && basename(absPath) === "SKILL.md"
@@ -190,12 +187,12 @@ export class FlatWriter {
     return 1;
   }
 
-  private async writeFlatHooksJson(
-    t: FlatTarget,
-    artifact: SupportedArtifact,
-    pluginName: string,
-    hooksSrc: string
-  ): Promise<number> {
+  private async writeFlatHooksJson({
+    target: t,
+    artifact,
+    pluginName,
+    hooksSrc,
+  }: FlatHooksStep): Promise<number> {
     const file = artifact.hooksFile;
     if (file === undefined) return 0;
     const destPath = join(t.outDir, file.path(pluginName));
@@ -206,7 +203,8 @@ export class FlatWriter {
       existing,
       raw,
       pluginName,
-      (pluginPath) => `./${resolveSuffixToFlatPath(t.contract, pluginPath, pluginName)}`
+      (pluginPath) =>
+        `./${flatPathOfPluginSuffix({ contract: t.contract, suffix: pluginPath, pluginName })}`
     );
     for (const w of warnings) this.logger.warn(w);
     await this.fs.writeFile(destPath, content);
@@ -224,21 +222,21 @@ export class FlatWriter {
   // generated bridge replaces the manifest a native host would read. Raw content only: the
   // bridge resolves its own scripts from its own `import.meta.url`, never from an outDir-relative
   // path this sink would otherwise rewrite for it.
-  private async writeHooksBridgeIfDeclared(
-    t: FlatTarget,
-    artifact: SupportedArtifact,
-    pluginName: string,
-    hooksSrc: string
-  ): Promise<number> {
+  private async writeHooksBridgeIfDeclared({
+    target: t,
+    artifact,
+    pluginName,
+    hooksSrc,
+  }: FlatHooksStep): Promise<number> {
     const bridge = artifact.hooksBridge;
     if (!bridge) return 0;
     const shipsItsOwn = await this.fs.fileExists(join(dirname(hooksSrc), bridge.skipIfSourceHas));
-    const generated = flatHooksBridgeFile(
+    const generated = flatHooksBridgeFile({
       bridge,
-      await this.fs.readFile(hooksSrc),
+      rawHooksJson: await this.fs.readFile(hooksSrc),
       pluginName,
-      shipsItsOwn
-    );
+      sourceShipsItsOwn: shipsItsOwn,
+    });
     if (generated === null) return 0;
     const destPath = join(t.outDir, generated.relativePath);
     await this.checkCollision(t, destPath, pluginName);
@@ -246,12 +244,12 @@ export class FlatWriter {
     return 1;
   }
 
-  private async writeFlatHooksScripts(
-    t: FlatTarget,
-    artifact: SupportedArtifact,
-    pluginName: string,
-    pluginSrc: string
-  ): Promise<number> {
+  private async writeFlatHooksScripts({
+    target: t,
+    artifact,
+    pluginName,
+    pluginSrc,
+  }: FlatHooksStep): Promise<number> {
     const hooksDir = join(pluginSrc, "hooks");
     let count = 0;
     for (const absPath of await this.fs.listFilesRecursive(hooksDir)) {
@@ -266,12 +264,7 @@ export class FlatWriter {
     return count;
   }
 
-  async writeMcp(
-    t: FlatTarget,
-    target: FlatMcpTarget,
-    pluginName: string,
-    mcpSrc: string
-  ): Promise<number> {
+  async writeMcp({ target: t, mcp: target, pluginName, mcpSrc }: FlatMcpStep): Promise<number> {
     const parsed = asPlainObject(JSON.parse(await this.fs.readFile(mcpSrc)));
     const servers = asPlainObject(parsed?.mcpServers) ?? {};
     const prefix = flatMcpKeyPrefix(pluginName);
@@ -296,7 +289,7 @@ export class FlatWriter {
   // reader comparing against the plain outDir string never finds it as a substring.
   private resolvePluginRootAbsolute(t: FlatTarget, suffix: string, pluginName: string): string {
     const normalizedOut = t.outDir.replace(/\\/g, "/");
-    return `${normalizedOut}/${resolveSuffixToFlatPath(t.contract, suffix, pluginName)}`;
+    return `${normalizedOut}/${flatPathOfPluginSuffix({ contract: t.contract, suffix, pluginName })}`;
   }
 
   private async checkCollision(t: FlatTarget, destPath: string, pluginName: string) {
@@ -304,12 +297,6 @@ export class FlatWriter {
       throw new FlatTargetExistsError(destPath, pluginName);
     }
   }
-}
-
-/** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer, a
- * command naming it and a link to it all resolve to. */
-function flatAgentPath(artifact: SupportedArtifact, pluginName: string, agentFile: string) {
-  return artifact.path(pluginName, `agents/${basename(agentFile)}`);
 }
 
 function assertParsableJson(content: string, outDir: string, destPath: string): void {
@@ -327,37 +314,4 @@ function rewriteSkillNameFrontmatter(content: string, flatRelPath: string): stri
   const skillFolder = parts[parts.length - 2];
   if (!skillFolder) return content;
   return serializeFrontmatter({ ...frontmatter, name: skillFolder }, body);
-}
-
-function resolveSuffixToFlatPath(
-  contract: ToolBuildContract,
-  suffix: string,
-  pluginName: string
-): string {
-  const art = contract.artifacts;
-  if (suffix.startsWith("agents/") && art.agents.supported) {
-    return flatAgentPath(art.agents, pluginName, suffix);
-  }
-  if (suffix.startsWith("skills/") && art.skills.supported) {
-    return art.skills.path(pluginName, `skills/${suffix.slice("skills/".length)}`);
-  }
-  if (suffix.startsWith("hooks/") && art.hooks.supported) {
-    return art.hooks.path(pluginName, `hooks/${suffix.slice("hooks/".length)}`);
-  }
-  return suffix;
-}
-
-function resolveTargetForMd(
-  contract: ToolBuildContract,
-  pluginName: string,
-  pluginRelPath: string
-): string {
-  const art = contract.artifacts;
-  if (pluginRelPath.startsWith("agents/") && art.agents.supported) {
-    return flatAgentPath(art.agents, pluginName, pluginRelPath);
-  }
-  if (pluginRelPath.startsWith("skills/") && art.skills.supported) {
-    return art.skills.path(pluginName, pluginRelPath);
-  }
-  return pluginRelPath;
 }

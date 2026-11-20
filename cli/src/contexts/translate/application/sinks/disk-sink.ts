@@ -8,53 +8,34 @@ import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type {
-  SourceMarketplaceRef,
-  ToolBuildContract,
-} from "../../../tools/contract/build-contract.js";
+import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
 import { rewritePluginRootToken } from "../../../tools/contract/plugin-root-token.js";
-import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_MCP_RELATIVE,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
 } from "../../domain/canon-format.js";
+import type { FlatPluginWriter, SupportedArtifact } from "../../ports/flat-plugin-writer.js";
 import type { JsonSchemaValidator } from "../../ports/json-schema-validator.js";
+import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
-import { FlatWriter, type SupportedArtifact } from "./flat-writer.js";
 import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";
 import { writeSkillTree } from "./write-skill-tree.js";
-
-/** What a build writes and how: the tool's contract, the layout, and whether it may overwrite. */
-export interface DiskLayout {
-  readonly contract: ToolBuildContract;
-  readonly mode: FrameworkBuildMode;
-  readonly force: boolean;
-}
-
-/** A layout aimed at one source tree and one output directory, both absolute. */
-export interface DiskTarget extends DiskLayout {
-  readonly sourceDir: string;
-  readonly outDir: string;
-}
 
 /**
  * Writes a built plugin tree to disk, in the marketplace layout or the flat one. It holds no
  * state: the layout, the force flag and both directories arrive with every call, so one sink
  * serves any build.
  */
-export class DiskSink {
-  private readonly flat: FlatWriter;
-
+export class DiskSink implements PluginTreeSink {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly jsonSchemaValidator: JsonSchemaValidator,
     private readonly assetProvider: AssetProvider,
-    private readonly logger: Logger
-  ) {
-    this.flat = new FlatWriter(fs, assetProvider, logger);
-  }
+    private readonly logger: Logger,
+    private readonly flat: FlatPluginWriter
+  ) {}
 
   /**
    * Marketplace never wipes outDir: a build only ever writes the canonical paths it produces, so
@@ -137,7 +118,13 @@ export class DiskSink {
       if (!absPath.endsWith(PLUGIN_AGENT_INPUT_EXT)) continue;
       count +=
         t.mode === "flat"
-          ? await this.flat.writeAgent(t, artifact, pluginName, absPath, agentsSrc)
+          ? await this.flat.writeAgent({
+              target: t,
+              artifact,
+              pluginName,
+              absPath,
+              srcRoot: agentsSrc,
+            })
           : await this.writeMarketplaceAgent({ t, artifact, pluginName, absPath, agentsSrc });
     }
     return count;
@@ -172,12 +159,24 @@ export class DiskSink {
     if (!artifact.supported) return 0;
     if (t.mode === "marketplace") {
       const pluginOut = join(t.outDir, "plugins", pluginName);
-      return writeSkillTree(this.fs, pluginName, pluginSrc, pluginOut, artifact.transform);
+      return writeSkillTree({
+        fs: this.fs,
+        pluginName,
+        pluginSrc,
+        pluginOut,
+        transform: artifact.transform,
+      });
     }
     const skillsSrc = join(pluginSrc, "skills");
     let count = 0;
     for (const absPath of await this.fs.listFilesRecursive(skillsSrc)) {
-      count += await this.flat.writeSkill(t, artifact, pluginName, absPath, skillsSrc);
+      count += await this.flat.writeSkill({
+        target: t,
+        artifact,
+        pluginName,
+        absPath,
+        srcRoot: skillsSrc,
+      });
     }
     return count;
   }
@@ -196,7 +195,7 @@ export class DiskSink {
     if (!(await this.fs.fileExists(hooksSrc))) return 0;
     if (t.mode === "marketplace")
       return this.writeMarketplaceHooks({ t, artifact, pluginName, hooksSrc });
-    return this.flat.writeHooks(t, artifact, pluginName, hooksSrc, pluginSrc);
+    return this.flat.writeHooks({ target: t, artifact, pluginName, hooksSrc, pluginSrc });
   }
 
   private async writeMarketplaceHooks({
@@ -236,7 +235,7 @@ export class DiskSink {
       const { merge, mergeDest } = artifact;
       if (!merge || !mergeDest) return 0;
       if (!(await this.fs.fileExists(mcpSrc))) return 0;
-      return this.flat.writeMcp(t, { merge, mergeDest }, pluginName, mcpSrc);
+      return this.flat.writeMcp({ target: t, mcp: { merge, mergeDest }, pluginName, mcpSrc });
     }
     if (!(await this.fs.fileExists(mcpSrc))) return 0;
     const content = await this.fs.readFile(mcpSrc);
