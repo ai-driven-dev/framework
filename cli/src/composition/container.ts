@@ -75,6 +75,15 @@ export function createContainer(options: ContainerOptions) {
       version: currentVersionProvider,
     });
   });
+  const marketplace = memoized(() => wireMarketplace(shared(), installation()));
+  const plugin = memoized(() => wirePlugin(shared(), installation()));
+  const global = memoized(() => wireGlobal(shared(), installation(), marketplace(), plugin()));
+  const setup = memoized(() =>
+    wireSetup(shared(), installation(), plugin(), marketplace(), global())
+  );
+  const agentModels = memoized(() => ({
+    setAgentModels: wireAgentModels(shared(), installation(), plugin(), marketplace()),
+  }));
   return {
     get shared() {
       return shared();
@@ -85,10 +94,25 @@ export function createContainer(options: ContainerOptions) {
     get update() {
       return update();
     },
+    get marketplace() {
+      return marketplace();
+    },
+    get plugin() {
+      return plugin();
+    },
+    get global() {
+      return global();
+    },
+    get setup() {
+      return setup();
+    },
+    get agentModels() {
+      return agentModels();
+    },
   };
 }
 
-/** The contexts the update, auth and translate commands and the update notice read. */
+/** The contexts the commands and the update notice read. */
 type ContainerSlice = Pick<
   Deps,
   | "selfUpdate"
@@ -100,6 +124,26 @@ type ContainerSlice = Pick<
   | "logOut"
   | "checkStatus"
   | "frameworkBuild"
+  | "userManifestRepo"
+  | "restoreAllUseCase"
+  | "restoreToolUseCase"
+  | "syncSettingsUseCase"
+  | "syncNativeActivation"
+  | "runSetup"
+  | "setAgentModels"
+  | "pluginRemoveUseCase"
+  | "userPluginRemove"
+  | "pluginListUseCase"
+  | "pluginInstallUseCase"
+  | "searchPlugins"
+  | "userPluginUpdateUseCase"
+  | "pluginUpdateUseCase"
+  | "addMarketplace"
+  | "listMarketplaces"
+  | "userMarketplaceRemoveUseCase"
+  | "marketplaceRemoveUseCase"
+  | "refreshMarketplace"
+  | "marketplaceCheckUseCase"
 >;
 
 /** The factory those commands receive: each call builds one container, and a member wires its
@@ -135,6 +179,66 @@ export function bindContainer(tools: ToolCatalog) {
       },
       get checkStatus() {
         return container.shared.checkStatus;
+      },
+      get userManifestRepo() {
+        return container.shared.userManifestRepo;
+      },
+      get restoreAllUseCase() {
+        return container.global.restoreAllUseCase;
+      },
+      get restoreToolUseCase() {
+        return container.global.restoreToolUseCase;
+      },
+      get syncSettingsUseCase() {
+        return container.marketplace.syncSettingsUseCase;
+      },
+      get syncNativeActivation() {
+        return container.marketplace.syncNativeActivation;
+      },
+      get runSetup() {
+        return container.setup.runSetup;
+      },
+      get setAgentModels() {
+        return container.agentModels.setAgentModels;
+      },
+      get pluginRemoveUseCase() {
+        return container.plugin.pluginRemoveUseCase;
+      },
+      get userPluginRemove() {
+        return container.plugin.userPluginRemove;
+      },
+      get pluginListUseCase() {
+        return container.installation.pluginListUseCase;
+      },
+      get pluginInstallUseCase() {
+        return container.plugin.pluginInstallUseCase;
+      },
+      get searchPlugins() {
+        return container.plugin.searchPlugins;
+      },
+      get userPluginUpdateUseCase() {
+        return container.plugin.userPluginUpdateUseCase;
+      },
+      get pluginUpdateUseCase() {
+        return container.plugin.pluginUpdateUseCase;
+      },
+      get addMarketplace() {
+        return container.marketplace.addMarketplace;
+      },
+      get listMarketplaces() {
+        return container.shared.listMarketplaces;
+      },
+      get userMarketplaceRemoveUseCase() {
+        return container.marketplace.userMarketplaceRemoveUseCase;
+      },
+      get marketplaceRemoveUseCase() {
+        return container.marketplace.marketplaceRemoveUseCase;
+      },
+      get refreshMarketplace() {
+        return container.shared.refreshMarketplace;
+      },
+      get marketplaceCheckUseCase() {
+        return container.marketplace.marketplaceCheckUseCase;
       },
       get frameworkBuild() {
         const { fs, logger } = container.shared;

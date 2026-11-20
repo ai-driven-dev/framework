@@ -48,13 +48,13 @@ program
   .version(formatVersion(version), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerSetupCommand(program, tools, createDeps);
+registerSetupCommand(program, tools, createSlice);
 registerToolConfigCommand(program, tools, createDeps);
 registerTranslateCommand(program, tools, createSlice);
-registerPluginCommand(program, tools, createDeps, createMenuDeps);
-registerMarketplaceCommand(program, createDeps, createMenuDeps);
+registerPluginCommand(program, tools, createSlice, createMenuDeps);
+registerMarketplaceCommand(program, createSlice, createMenuDeps);
 registerAuthCommand(program, createSlice);
-registerSyncCommand(program, tools, createDeps);
+registerSyncCommand(program, tools, createSlice);
 registerUpdateCommand(program, createSlice);
 registerDoctorCommand(program, tools, createDeps);
 registerCleanCommand(program, createDeps);

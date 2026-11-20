@@ -75,6 +75,23 @@ describe("createContainer", () => {
     expect(wireInstallation).toHaveBeenCalledTimes(1);
   });
 
+  it("hands setup, plugin, marketplace and sync their use cases", async () => {
+    const slice = await bindContainer(tools)(root, { verbose: false }, new CLIOutput(false));
+
+    for (const member of [
+      slice.runSetup,
+      slice.setAgentModels,
+      slice.pluginInstallUseCase,
+      slice.pluginRemoveUseCase,
+      slice.addMarketplace,
+      slice.marketplaceCheckUseCase,
+      slice.syncSettingsUseCase,
+      slice.restoreAllUseCase,
+    ])
+      expect(member.execute).toBeTypeOf("function");
+    expect(slice.userManifestRepo.load).toBeTypeOf("function");
+  });
+
   it("builds one container per call", async () => {
     const forContainer = bindContainer(tools);
     const first = await forContainer(root, { verbose: false }, new CLIOutput(false));

@@ -72,6 +72,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // createDeps is removed; 0.1% measured headroom.
 // 807 KB: 806.1 KB, the update, auth and translate commands and the update notice read slices of a
 // container; expected to shrink once createDeps is removed; 0.1% measured headroom.
+// 809 KB: 808.4 KB, setup, plugin, marketplace and sync read slices of a container; expected to
+// shrink once createDeps is removed; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
