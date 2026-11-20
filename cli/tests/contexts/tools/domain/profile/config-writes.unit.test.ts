@@ -4,8 +4,8 @@ import type { IdeToolConfig } from "../../../../../src/contexts/tools/domain/pro
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { stubAiTool } from "../../testing/stub-ai-tool.js";
 
 const mcp = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
 const hooks = new HooksConfigPart({ outputPath: ".claude/settings.json" });
