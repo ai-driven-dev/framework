@@ -67,7 +67,7 @@ export class RecordActivation {
       if (content === null) continue;
       const hash = FileHash.of(content);
       if (driftOf(tracked.hash.value, hash) === "ok") continue;
-      manifest.updateTrackedFileHash(toolId, settingsPath, hash);
+      manifest.recordFileHash(toolId, settingsPath, hash);
       changed = true;
     }
     return changed;

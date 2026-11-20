@@ -106,7 +106,7 @@ export class Manifest {
     return tracked;
   }
 
-  updateTrackedFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
+  recordFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
     const entry = this._tools.get(toolId);
     if (!entry) return;
     this._tools.set(toolId, {
@@ -152,6 +152,18 @@ export class Manifest {
     const entry = this._tools.get(toolId);
     if (!entry) throw new ToolNotInManifestError(toolId);
     this._tools.set(toolId, updatePluginInEntry(entry, plugin));
+  }
+
+  /** Records the plugin, replacing the one of the same name in place when there is one. */
+  withPlugin(toolId: ToolId, plugin: InstalledPlugin): void {
+    const recorded = this.getPlugins(toolId).some((p) => p.name === plugin.name);
+    if (recorded) this.updatePlugin(toolId, plugin);
+    else this.addPlugin(toolId, plugin);
+  }
+
+  /** Drops the plugin of that name. There is nothing to drop when the plugin or its tool is absent. */
+  withoutPlugin(toolId: ToolId, name: string): void {
+    if (this.getPlugins(toolId).some((p) => p.name === name)) this.removePlugin(toolId, name);
   }
 
   getNativeRegistrations(toolId: ToolId): NativeRegistrations | undefined {

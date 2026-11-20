@@ -125,6 +125,62 @@ describe("updatePlugin()", () => {
   });
 });
 
+describe("withPlugin()", () => {
+  it("adds the plugin when its name is not recorded", () => {
+    const manifest = makeManifest();
+    manifest.withPlugin(CLAUDE, makePlugin("fresh"));
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["fresh"]);
+  });
+
+  it("replaces the plugin of that name in place when it is recorded", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("first"));
+    manifest.addPlugin(CLAUDE, makePlugin("target"));
+    manifest.addPlugin(CLAUDE, makePlugin("last"));
+
+    manifest.withPlugin(CLAUDE, makePlugin("target").withVersion("2.0.0"));
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => [p.name, p.version])).toStrictEqual([
+      ["first", "1.0.0"],
+      ["target", "2.0.0"],
+      ["last", "1.0.0"],
+    ]);
+  });
+
+  it("refuses a tool that is not installed, naming it", () => {
+    expect(() => makeManifest().withPlugin(TOOL.codex, makePlugin())).toThrow(
+      ToolNotInManifestError
+    );
+  });
+});
+
+describe("withoutPlugin()", () => {
+  it("drops the plugin of that name and keeps the others", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("keep"));
+    manifest.addPlugin(CLAUDE, makePlugin("drop"));
+
+    manifest.withoutPlugin(CLAUDE, "drop");
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["keep"]);
+  });
+
+  it("leaves the manifest alone when the plugin is not recorded", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("keep"));
+
+    manifest.withoutPlugin(CLAUDE, "ghost");
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["keep"]);
+  });
+
+  it("leaves the manifest alone when the tool is not installed", () => {
+    const manifest = makeManifest();
+    expect(() => manifest.withoutPlugin(TOOL.codex, "my-plugin")).not.toThrow();
+    expect(manifest.hasTool(TOOL.codex)).toBe(false);
+  });
+});
+
 describe("a tool that is not installed", () => {
   const ABSENT = TOOL.codex;
 

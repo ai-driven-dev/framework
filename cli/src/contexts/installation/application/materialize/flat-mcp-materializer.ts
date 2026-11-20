@@ -20,7 +20,7 @@ export async function refreshTrackedMcpConfigHash(
   if (outputRelPath === undefined || !manifest.isFileTracked(outputRelPath)) return;
   const outputPath = join(projectRoot, outputRelPath);
   if (await fs.fileExists(outputPath)) {
-    manifest.updateTrackedFileHash(toolId, outputRelPath, await fs.readFileHash(outputPath));
+    manifest.recordFileHash(toolId, outputRelPath, await fs.readFileHash(outputPath));
   }
 }
 

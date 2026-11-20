@@ -397,15 +397,11 @@ describe("Manifest", () => {
     });
   });
 
-  describe("updateTrackedFileHash()", () => {
+  describe("recordFileHash()", () => {
     it("updates the hash when the file is already tracked", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
-      manifest.updateTrackedFileHash(
-        TOOL.claude,
-        ".claude/agents/code-reviewer.md",
-        makeHash("999999")
-      );
+      manifest.recordFileHash(TOOL.claude, ".claude/agents/code-reviewer.md", makeHash("999999"));
       const tracked = manifest
         .getToolFiles(TOOL.claude)
         .find((f) => f.relativePath === ".claude/agents/code-reviewer.md");
@@ -415,7 +411,7 @@ describe("Manifest", () => {
     it("appends a new tracked file entry when the path is not yet tracked", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.codex, "3.0.0", []);
-      manifest.updateTrackedFileHash(TOOL.codex, ".codex/config.json", makeHash("abcdef"));
+      manifest.recordFileHash(TOOL.codex, ".codex/config.json", makeHash("abcdef"));
       expect(manifest.isFileTracked(".codex/config.json")).toBe(true);
       const tracked = manifest
         .getToolFiles(TOOL.codex)
@@ -426,7 +422,7 @@ describe("Manifest", () => {
     it("is a no-op when the tool is not installed", () => {
       const manifest = Manifest.create();
       expect(() =>
-        manifest.updateTrackedFileHash(TOOL.claude, ".claude/settings.json", makeHash("111111"))
+        manifest.recordFileHash(TOOL.claude, ".claude/settings.json", makeHash("111111"))
       ).not.toThrow();
       expect(manifest.hasTool(TOOL.claude)).toBe(false);
     });

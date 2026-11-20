@@ -263,8 +263,7 @@ export class AddPlugin implements PluginAdd {
         const canonical = (
           owned ?? InstalledPlugin.withMcpEntries(plugin, new Map())
         ).withDependents([...(owned?.dependents ?? []), root]);
-        if (owned === undefined) machine.addPlugin(toolId, canonical);
-        else machine.updatePlugin(toolId, canonical);
+        machine.withPlugin(toolId, canonical);
         project.updatePlugin(toolId, plugin.withFiles(new Map()));
         claimed = true;
       }
@@ -305,8 +304,7 @@ export class AddPlugin implements PluginAdd {
 
   private dropExistingPlugin(pluginName: string, toolIds: AiToolId[], manifest: Manifest): void {
     for (const toolId of toolIds) {
-      const exists = manifest.getPlugins(toolId).some((p) => p.name === pluginName);
-      if (exists) manifest.removePlugin(toolId, pluginName);
+      manifest.withoutPlugin(toolId, pluginName);
     }
   }
 }

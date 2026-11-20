@@ -63,7 +63,7 @@ export class InstallRuntimeConfig {
       const asset = this.assets.loadConfigAsset(toolId, fileName);
       const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       await this.fs.writeFile(path, content);
-      manifest.updateTrackedFileHash(toolId, relativePath, FileHash.of(content));
+      manifest.recordFileHash(toolId, relativePath, FileHash.of(content));
     }
   }
 

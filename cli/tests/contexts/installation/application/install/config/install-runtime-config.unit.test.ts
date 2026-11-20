@@ -199,7 +199,7 @@ describe("InstallRuntimeConfig", () => {
     config.mcp = { context: { type: "local", command: "node", args: ["server.js"] } };
     const merged = JSON.stringify(config, null, 2);
     await deps.fs.writeFile(configPath, merged);
-    manifest.updateTrackedFileHash(toolId, path, FileHash.of(merged));
+    manifest.recordFileHash(toolId, path, FileHash.of(merged));
 
     await buildUseCase(deps).execute({
       toolId,

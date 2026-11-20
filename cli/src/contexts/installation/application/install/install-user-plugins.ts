@@ -41,7 +41,7 @@ export class InstallUserPlugins {
     if (manifest === null) {
       throw new Error("No machine manifest: cannot record the user-scope plugins it installs.");
     }
-    const plans: { readonly plan: PlannedUserPluginFileUpdate; readonly owned: boolean }[] = [];
+    const plans: PlannedUserPluginFileUpdate[] = [];
     for (const toolId of command.toolIds) {
       const tool = this.tools.profile(toolId);
       if (tool.kind !== "ai" || tool.plugins()?.copiesFilesGlobally() !== true) continue;
@@ -67,13 +67,12 @@ export class InstallUserPlugins {
           true
         );
         if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;
-        plans.push({ plan, owned: owned !== undefined });
+        plans.push(plan);
       }
     }
-    for (const { plan, owned } of plans) {
+    for (const plan of plans) {
       const next = await this.materializer.applyUpdate(plan, this.logger);
-      if (owned) manifest.updatePlugin(plan.tool.toolId, next);
-      else manifest.addPlugin(plan.tool.toolId, next);
+      manifest.withPlugin(plan.tool.toolId, next);
       await this.repo.save(manifest);
     }
   }

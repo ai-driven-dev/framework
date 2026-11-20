@@ -140,7 +140,7 @@ describe("plugin runtime files on an existing tool", () => {
     await deps.fs.writeFile(join(ROOT, HELPER), "// user's edit");
     const manifest = deps.manifestRepo.getCurrent();
     const originalHash = FileHash.of("// original helper");
-    manifest?.updateTrackedFileHash(TOOL.opencode, HELPER, originalHash);
+    manifest?.recordFileHash(TOOL.opencode, HELPER, originalHash);
     await addPlugin();
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toBe("// user's edit");
     expect(

@@ -39,6 +39,6 @@ export class TrackedSettingsFile {
   ): Promise<void> {
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(resolve(projectRoot, settingsFile), content);
-    manifest.updateTrackedFileHash(toolId, settingsFile, FileHash.of(content));
+    manifest.recordFileHash(toolId, settingsFile, FileHash.of(content));
   }
 }
