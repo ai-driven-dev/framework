@@ -18,7 +18,7 @@ import { wireMarketplace } from "./orchestration/marketplace.js";
 import { wirePlugin } from "./orchestration/plugin.js";
 import { wireAgentModels, wireSetup } from "./orchestration/setup.js";
 import { wireRecipes } from "./recipes.js";
-import { wireBase } from "./shared.js";
+import { currentVersion, wireBase } from "./shared.js";
 import { wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 import { wireUpdate } from "./update.js";
@@ -59,7 +59,10 @@ function memoized<T extends object>(build: () => T): () => T {
  * read, so a command pays only for the contexts it reads and two containers share nothing. */
 export function createContainer(options: ContainerOptions) {
   const { projectRoot, verbose, token, output, tools } = options;
-  const shared = memoized(() => wireBase(projectRoot, { verbose, token }, output, tools));
+  const shared = memoized(() => ({
+    ...wireBase(projectRoot, { verbose, token }, output, tools),
+    version: currentVersion(),
+  }));
   const installation = memoized(() => wireInstallation(shared()));
   const update = memoized(() => {
     const { logger, http, fs, environment, tokenProvider, currentVersionProvider } = shared();

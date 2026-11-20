@@ -1,7 +1,10 @@
 import { platform } from "node:os";
 import { Command } from "commander";
-import { bindCatalog, createMenuDeps as createCatalogMenuDeps } from "./composition/container.js";
-import { currentVersion } from "./composition/shared.js";
+import {
+  bindCatalog,
+  createMenuDeps as createCatalogMenuDeps,
+  createContainer,
+} from "./composition/container.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
@@ -28,6 +31,8 @@ function formatVersion(version: string): string {
 const tools = wireTools();
 
 // The composition edge: commands receive these factories and never import the wiring.
+const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
+  .version;
 const createDeps: DepsFactory = bindCatalog(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
 const createMenuDeps: MenuDepsFactory = (projectRoot) =>
@@ -38,7 +43,7 @@ const program = new Command();
 program
   .name("aidd")
   .description("Generate AI coding assistant configurations from the AIDD framework")
-  .version(formatVersion(currentVersion()), "-V, --version", "Show version number")
+  .version(formatVersion(version), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
 registerSetupCommand(program, tools, createDeps);

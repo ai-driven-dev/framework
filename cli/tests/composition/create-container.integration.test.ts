@@ -51,6 +51,12 @@ describe("createContainer", () => {
     expect(wireInstallation).toHaveBeenCalledTimes(1);
   });
 
+  it("reads the version of the running binary from its shared context", () => {
+    const container = createContainer({ projectRoot: root, verbose: false, tools });
+
+    expect(container.shared.version).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
   it("logs through the output it was handed", () => {
     const output = new CLIOutput(false);
     const container = createContainer({ projectRoot: root, verbose: false, output, tools });
