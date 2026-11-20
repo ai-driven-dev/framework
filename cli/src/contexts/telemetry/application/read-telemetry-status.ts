@@ -1,11 +1,11 @@
 import type { Environment } from "../../../shared/ports/environment.js";
 import { type Binding, resolveBinding } from "../domain/declaration/binding-resolution.js";
 import type { BranchRole } from "../domain/declaration/branch-role.js";
-import { measurementRefused } from "../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../domain/telemetry-consent.js";
 import type { SessionBindingStore } from "../ports/bindings/session-binding-store.js";
 import type { PersonIdentityStore } from "../ports/identity/person-identity-store.js";
-import type { BranchDeclarations } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
+import type { ReadCurrentBranch } from "./declaration/read-current-branch.js";
 
 export interface ReadTelemetryStatusCommand {
   readonly cwd: string;
@@ -36,17 +36,17 @@ export class ReadTelemetryStatus {
   constructor(
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
-    private readonly branches: BranchDeclarations,
+    private readonly branches: ReadCurrentBranch,
     private readonly options: ReportStatusCommand,
     private readonly identities: PersonIdentityStore
   ) {}
 
   async execute({ cwd }: ReadTelemetryStatusCommand): Promise<ReadTelemetryStatusResult> {
-    if (measurementRefused(this.options.environment))
+    if (measurementRefused(this.options.environment.get(MEASUREMENT_SWITCH)))
       return { status: "refused", reason: "environment" };
     const repository = await this.repositories.open(cwd);
     if (repository.status === "refused") return repository;
-    const current = await this.branches.current(repository.root);
+    const current = await this.branches.execute(repository.root);
     const binding = resolveBinding({
       sessionId: this.options.sessionId,
       at: this.options.now(),

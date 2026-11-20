@@ -13,7 +13,7 @@ import { conflictsOf, matchesFilter, resolveId } from "../../domain/report/repor
 import { buildReport } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
-import { measurementRefused } from "../../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestUsage, IngestUsageResult } from "../ingest-usage.js";
@@ -114,7 +114,7 @@ export class ReportUsage {
     if (conflict !== undefined) {
       return { status: "conflicting", flags: conflict, absent: asked.absent };
     }
-    if (measurementRefused(this.environment)) return { status: "refused" };
+    if (measurementRefused(this.environment.get(MEASUREMENT_SWITCH))) return { status: "refused" };
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
     const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { BranchDeclarations } from "../../../../../src/contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../../../../../src/contexts/telemetry/application/consented-repositories.js";
+import { DeclareOnBranch } from "../../../../../src/contexts/telemetry/application/declaration/declare-on-branch.js";
 import { DeclareTask } from "../../../../../src/contexts/telemetry/application/declaration/declare-task.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
@@ -49,7 +49,7 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
   const useCase = new DeclareTask(
     new ConsentedRepositories(locator, consents, history),
     sessions,
-    new BranchDeclarations(branches, source, snapshots),
+    new DeclareOnBranch(branches, snapshots),
     lock,
     {
       environment: { get: () => (options.refusedByEnvironment ? "0" : undefined) },

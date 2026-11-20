@@ -1,7 +1,10 @@
 import { personIdOf } from "../../domain/identity/person-identity.js";
+import type { ConsentSource } from "../../ports/consent-source.js";
 import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
-import type { ConsentSwitch, NewInterval } from "./consent-switch.js";
-import type { OwnRoots } from "./remember-own-root.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
+import { readCloneConsent } from "./clone-consent.js";
+import type { GrantConsent } from "./grant-consent.js";
+import type { RememberOwnRoot } from "./remember-own-root.js";
 
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
 export type IdentityChoice = "keep" | "none" | { readonly set: string };
@@ -44,10 +47,10 @@ export type EnableTelemetryResult =
  * back. */
 export class EnableTelemetry {
   constructor(
-    private readonly consent: ConsentSwitch,
-    private readonly roots: OwnRoots,
-    /** A fresh token and its moment for each interval. */
-    private readonly newInterval: NewInterval,
+    private readonly locator: RepositoryLocator,
+    private readonly consents: ConsentSource,
+    private readonly grant: GrantConsent,
+    private readonly roots: RememberOwnRoot,
     private readonly identities: PersonIdentityStore
   ) {}
 
@@ -58,16 +61,16 @@ export class EnableTelemetry {
       return { status: "refused", reason: "invalid-identity" };
     if (choice === "none" && previous !== null)
       return { status: "refused", reason: "identity-set" };
-    const clone = await this.consent.read(cwd);
+    const clone = await readCloneConsent(this.locator, this.consents, cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
     const identity = located.clone;
     if (identity === null) return { status: "refused", reason: "unidentified-clone" };
-    const consentWritten = await this.consent.grant(located.root, identity, this.newInterval);
+    const consentWritten = await this.grant.execute({ root: located.root, identity });
     if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
     // Written only once the clone is on: a refused `on` leaves the identity as it was.
     if (chosen !== null) await this.identities.write(chosen);
-    await this.roots.remember(located);
+    await this.roots.execute(located);
 
     return {
       status: "on",

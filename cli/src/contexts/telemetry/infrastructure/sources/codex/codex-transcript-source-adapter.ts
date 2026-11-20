@@ -4,6 +4,7 @@ import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
+import { declaredContentSize, FRAME_HEADER_BYTES } from "../../../domain/zstd-frame.js";
 import type { LineUsage, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
 import {
   type EachLine,
@@ -17,7 +18,6 @@ import {
   withModifiedAt,
 } from "../transcript-files.js";
 import { decodeCodexLine } from "./codex-transcript-usage.js";
-import { declaredContentSize, FRAME_HEADER_BYTES } from "./zstd-frame.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
 const COMPRESSED = ".zst";

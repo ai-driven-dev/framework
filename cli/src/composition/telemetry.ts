@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { BranchDeclarations } from "../contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
+import { DeclareOnBranch } from "../contexts/telemetry/application/declaration/declare-on-branch.js";
 import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
+import { ReadCurrentBranch } from "../contexts/telemetry/application/declaration/read-current-branch.js";
 import { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
@@ -22,16 +23,17 @@ import { RequestReport } from "../contexts/telemetry/application/report/request-
 import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
 import { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.js";
-import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
+import { GrantConsent } from "../contexts/telemetry/application/switch/grant-consent.js";
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
-import { OwnRoots } from "../contexts/telemetry/application/switch/remember-own-root.js";
+import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.js";
+import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.js";
+import { environmentWithoutGitVariables } from "../contexts/telemetry/domain/git-environment.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
-import { environmentWithoutGitVariables } from "../contexts/telemetry/infrastructure/git/git-environment.js";
 import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
@@ -103,7 +105,7 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   const root = telemetryDir();
   const ledgerDir = join(root, "ledger");
   const storage = new PrivateStorageAdapter();
-  const gitEnv = environmentWithoutGitVariables();
+  const gitEnv = environmentWithoutGitVariables(process.env);
   const bindingsDir = join(root, "bindings");
   const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
@@ -128,16 +130,14 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   const sessionId = declaringSessionOf(process.env);
   const processEnvironment = new EnvironmentAdapter();
   const repositories = new ConsentedRepositories(locator, consents, consentHistory);
-  const branchDeclarations = new BranchDeclarations(
-    new GitBranchBindingStoreAdapter(gitEnv),
-    branchSource,
-    snapshotBindings
-  );
+  const branchStore = new GitBranchBindingStoreAdapter(gitEnv);
+  const declareOnBranch = new DeclareOnBranch(branchStore, snapshotBindings);
+  const readCurrentBranch = new ReadCurrentBranch(branchStore, branchSource);
   const declaration = { environment: processEnvironment, sessionId, now: () => new Date() };
   const declareTask = new DeclareTask(
     repositories,
     sessions,
-    branchDeclarations,
+    declareOnBranch,
     bindingsLock,
     declaration
   );
@@ -145,7 +145,7 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   const readTelemetryStatus = new ReadTelemetryStatus(
     repositories,
     sessions,
-    branchDeclarations,
+    readCurrentBranch,
     declaration,
     identity
   );
@@ -163,7 +163,6 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   );
   const manageIdentity = new ManageIdentity(identity);
   const proposeIdentity = new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment);
-  const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
     declareTask,
@@ -188,12 +187,20 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
     ),
     readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
     enableTelemetry: new EnableTelemetry(
-      consentSwitch,
-      new OwnRoots(ledger, resolutionStore, environment),
-      () => ({ token: randomUUID(), at: environment.now() }),
+      locator,
+      consents,
+      new GrantConsent(consents, consents, consentHistory, ledger, () => ({
+        token: randomUUID(),
+        at: environment.now(),
+      })),
+      new RememberOwnRoot(ledger, resolutionStore, environment),
       identity
     ),
-    disableTelemetry: new DisableTelemetry(consentSwitch, environment.now),
+    disableTelemetry: new DisableTelemetry(
+      locator,
+      consents,
+      new WithdrawConsent(consents, consentHistory, ledger, environment.now)
+    ),
     forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
         root,

@@ -16,7 +16,7 @@ import { afterAll, inject } from "vitest";
 import { bindContainer } from "../../../src/composition/container.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
-import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/infrastructure/git/git-environment.js";
+import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/domain/git-environment.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { catalogOf } from "./catalog-of.builder.js";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { environmentWithoutGitVariables } from "../../../../../src/contexts/telemetry/infrastructure/git/git-environment.js";
+import { environmentWithoutGitVariables } from "../../../../src/contexts/telemetry/domain/git-environment.js";
 
 describe("environmentWithoutGitVariables", () => {
   it("drops every variable git exports into a hook, and keeps the rest", () => {
@@ -12,9 +12,5 @@ describe("environmentWithoutGitVariables", () => {
         MY_GIT_THING: "kept",
       })
     ).toStrictEqual({ PATH: "/usr/bin", MY_GIT_THING: "kept" });
-  });
-
-  it("reads the process environment when given none", () => {
-    expect(environmentWithoutGitVariables().PATH).toBe(process.env.PATH);
   });
 });

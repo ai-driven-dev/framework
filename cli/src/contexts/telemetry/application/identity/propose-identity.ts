@@ -1,6 +1,6 @@
 import type { Environment } from "../../../../shared/ports/environment.js";
 import { personIdOf } from "../../domain/identity/person-identity.js";
-import { measurementRefused } from "../../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { GitUserSource } from "../../ports/identity/git-user-source.js";
 
 export interface ProposeIdentityCommand {
@@ -15,7 +15,7 @@ export class ProposeIdentity {
   ) {}
 
   async execute({ cwd }: ProposeIdentityCommand): Promise<string | null> {
-    if (measurementRefused(this.environment)) return null;
+    if (measurementRefused(this.environment.get(MEASUREMENT_SWITCH))) return null;
     const user = await this.git.userIn(cwd);
     return user === null ? null : personIdOf(user);
   }

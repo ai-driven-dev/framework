@@ -1,19 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { BranchDeclarations } from "../../../../src/contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
+import { ReadCurrentBranch } from "../../../../src/contexts/telemetry/application/declaration/read-current-branch.js";
 import { ReadTelemetryStatus } from "../../../../src/contexts/telemetry/application/read-telemetry-status.js";
-import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeBranchStore } from "../testing/fake-branch-store.fake.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
 import { FakeLocator } from "../testing/fake-locator.fake.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
 import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
 import { InMemoryIdentity } from "../testing/in-memory-identity.fake.js";
 import { InMemorySessions } from "../testing/in-memory-sessions.fake.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
 
 const CWD = "/work/repo";
 const REPOSITORY: LocatedDirectory = {
@@ -42,16 +39,7 @@ function setup(
   const useCase = new ReadTelemetryStatus(
     new ConsentedRepositories(locator, consents, history),
     sessions,
-    new BranchDeclarations(
-      branches,
-      source,
-      new SnapshotBindings(
-        source,
-        new InMemorySnapshots(),
-        new InMemoryBindingsLock(),
-        () => new Date()
-      )
-    ),
+    new ReadCurrentBranch(branches, source),
     { environment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
     identities
   );

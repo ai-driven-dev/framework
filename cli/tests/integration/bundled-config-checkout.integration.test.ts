@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
+import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/domain/git-environment.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");
@@ -15,7 +15,7 @@ const ASSETS = [
 
 function changedByWindowsCheckout(attributes: string): string[] {
   const root = mkdtempSync(join(tmpdir(), "aidd-config-checkout-"));
-  const env = { ...environmentWithoutGitVariables(), HOME: root, USERPROFILE: root };
+  const env = { ...environmentWithoutGitVariables(process.env), HOME: root, USERPROFILE: root };
   const git = (...args: string[]) =>
     execFileSync("git", ["-c", "core.autocrlf=true", ...args], {
       cwd: root,

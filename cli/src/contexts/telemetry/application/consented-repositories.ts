@@ -1,9 +1,9 @@
+import { ConsentLog } from "../domain/consent/consent-log.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import { consentOf, tokenOfKey, turnedOff } from "../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
-import { ConsentLog } from "./consent-log.js";
 
 export type RefusalReason =
   | "environment"
@@ -44,7 +44,7 @@ export class ConsentedRepositories {
     if (consent === "unreadable") return { status: "refused", reason: "unreadable-consent" };
     const off = turnedOff(reading);
     if (consent === "absent" && !off) return { status: "refused", reason: "no-consent" };
-    const log = await ConsentLog.load(this.history);
+    const log = new ConsentLog(await this.history.read());
     // A log that cannot be read, or a clone the platform cannot identify, measures nothing. A
     // clone turned off is told so only past this point, where `on` would not refuse it.
     if (log.damaged || located.clone === null) {
