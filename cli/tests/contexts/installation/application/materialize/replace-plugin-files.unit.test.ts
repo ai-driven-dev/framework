@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PLUGIN_SOURCE_PATH = "/plugin-source/sample-plugin";
 const PROJECT_ROOT = "/test-project";

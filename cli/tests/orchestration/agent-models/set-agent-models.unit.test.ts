@@ -13,9 +13,9 @@ import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/ref
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT = "/p";

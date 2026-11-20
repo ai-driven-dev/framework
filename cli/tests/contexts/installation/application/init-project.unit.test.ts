@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InitProject } from "../../../../src/contexts/installation/application/init-project.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import {
   buildInstallationDeps,
   initProject,
   installTool,
-} from "../testing/installation-deps.builder.js";
+} from "../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

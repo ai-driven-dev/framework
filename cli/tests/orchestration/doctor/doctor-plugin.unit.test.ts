@@ -20,7 +20,7 @@ import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { checkRegistrationOver } from "../testing/build-check-registration.js";
+import { checkRegistrationOver } from "../testing/build-check-registration.builder.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";

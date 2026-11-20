@@ -5,9 +5,9 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";

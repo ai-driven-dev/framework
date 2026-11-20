@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { InstallIdeTool } from "../../../../../src/contexts/installation/application/install/install-ide-tool.js";
 import { PropagateAiSettingsToIde } from "../../../../../src/contexts/installation/application/install/propagate-ai-settings-to-ide.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   buildInstallationDeps,
   initProject,
   installTool,
-} from "../../testing/installation-deps.builder.js";
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

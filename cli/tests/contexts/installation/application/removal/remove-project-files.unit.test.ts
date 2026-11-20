@@ -7,9 +7,9 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
 const ROOT = "/test-project";

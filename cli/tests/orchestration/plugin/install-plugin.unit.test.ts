@@ -16,7 +16,7 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

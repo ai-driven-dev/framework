@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { buildInstallationDeps } from "../../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
-import { buildInstallationDeps } from "../../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const SOURCE = { kind: "local" as const, path: "/plugin" };

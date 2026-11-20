@@ -3,12 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { DuplicatePluginError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";

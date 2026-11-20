@@ -12,15 +12,15 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { buildCheckRegistration } from "../testing/build-check-registration.js";
+import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;

@@ -3,13 +3,13 @@ import { ListInstalledTools } from "../../../src/contexts/installation/applicati
 import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.js";
 import { UpdateTools } from "../../../src/orchestration/global/update-tools.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import {
   buildInstallationDeps,
   buildUpdateTool,
   initProject,
   installTool,
-} from "../../contexts/installation/testing/installation-deps.builder.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
+} from "../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const CURRENT_VERSION = new FakeCurrentVersion();

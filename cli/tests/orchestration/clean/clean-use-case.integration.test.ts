@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { projectCleaner } from "../testing/project-cleaner.builder.js";
 

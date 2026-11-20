@@ -23,13 +23,13 @@ import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
   buildInstallationDeps,
   initProject,
   installTool,
-} from "../testing/installation-deps.builder.js";
+} from "../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const SETTINGS_FILE = join(PROJECT_ROOT, ".vscode/settings.json");

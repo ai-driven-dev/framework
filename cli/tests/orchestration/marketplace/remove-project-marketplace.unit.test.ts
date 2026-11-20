@@ -11,9 +11,9 @@ import {
   MarketplaceNotFoundError,
 } from "../../../src/shared/domain/errors.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";

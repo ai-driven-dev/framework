@@ -13,7 +13,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { buildCheckRegistration } from "../testing/build-check-registration.js";
+import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 const { copilot } = TOOL;
 const HOST = "real-catalog";

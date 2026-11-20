@@ -6,12 +6,12 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/orchestration/plugin/install-from-marketplace.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   installTool,
-} from "../../testing/installation-deps.builder.js";
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";

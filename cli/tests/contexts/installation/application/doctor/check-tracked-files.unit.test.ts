@@ -8,8 +8,8 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 
 const PROJECT_ROOT = "/project";
 const FILE = ".claude/rules/one.md";

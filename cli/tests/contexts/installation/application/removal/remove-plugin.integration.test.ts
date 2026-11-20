@@ -10,13 +10,16 @@ import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js"
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 

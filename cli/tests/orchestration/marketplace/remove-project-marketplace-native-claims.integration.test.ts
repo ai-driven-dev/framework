@@ -8,13 +8,13 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import {
   errnoError,
   FaultingFileAdapter,
 } from "../../shared/testing/faulting-file-adapter.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";

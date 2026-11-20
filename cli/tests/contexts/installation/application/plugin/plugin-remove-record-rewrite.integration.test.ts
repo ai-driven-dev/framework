@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
 import {
@@ -9,7 +10,6 @@ import {
   REF,
   verifiedSourceReader,
 } from "../../testing/framework-plugin-on-claude.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.fake.js";
 

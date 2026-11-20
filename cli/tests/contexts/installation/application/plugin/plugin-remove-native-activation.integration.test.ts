@@ -10,6 +10,7 @@ import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   FakeHostPluginRegistry,
@@ -25,7 +26,6 @@ import {
   REF,
   verifiedSourceReader,
 } from "../../testing/framework-plugin-on-claude.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const { claude } = TOOL;

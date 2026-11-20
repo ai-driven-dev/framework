@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ConfigureMachineScope } from "../../../../../src/contexts/installation/application/install/configure-machine-scope.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 
 function setup(seed: Manifest | null = null) {
   const repo = new InMemoryManifestRepository(seed);

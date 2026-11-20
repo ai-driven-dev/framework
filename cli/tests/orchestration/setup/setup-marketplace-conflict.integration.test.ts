@@ -12,12 +12,12 @@ import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plu
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
-import { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.builder.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";

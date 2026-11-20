@@ -5,6 +5,13 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import {
+  buildInstallationDeps,
+  FIXTURE_DIR,
+  initAndInstall,
+  initProject,
+  installTool,
+} from "../../../../shared/testing/installation-deps.builder.js";
+import {
   registeredTools,
   resolveRegisteredToolId,
   TOOL,
@@ -18,13 +25,6 @@ import { seedFromDirectory } from "../../../../shared/testing/seed-from-director
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
-import {
-  buildInstallationDeps,
-  FIXTURE_DIR,
-  initAndInstall,
-  initProject,
-  installTool,
-} from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

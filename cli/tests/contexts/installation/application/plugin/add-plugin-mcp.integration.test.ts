@@ -4,16 +4,16 @@ import type { AddPlugin } from "../../../../../src/contexts/installation/applica
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+  installTool,
+} from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
-import {
-  buildInstallationDeps,
-  initAndInstall,
-  installTool,
-} from "../../testing/installation-deps.builder.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(
   process.cwd(),

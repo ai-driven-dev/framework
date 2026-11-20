@@ -16,16 +16,16 @@ import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
-import {
-  buildInstallationDeps,
-  initAndInstall,
-} from "../../contexts/installation/testing/installation-deps.builder.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../shared/testing/installation-deps.builder.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {

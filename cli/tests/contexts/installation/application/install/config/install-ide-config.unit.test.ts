@@ -4,9 +4,12 @@ import { InstallIdeConfig } from "../../../../../../src/contexts/installation/ap
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
+import {
+  buildInstallationDeps,
+  initProject,
+} from "../../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.fake.js";
-import { buildInstallationDeps, initProject } from "../../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";

@@ -8,8 +8,8 @@ import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/t
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
 const HASH = "0".repeat(32);

@@ -12,12 +12,15 @@ import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 import { userScopeFileGuard } from "../../testing/user-scope-file-guard.fake.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */

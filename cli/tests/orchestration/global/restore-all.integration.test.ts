@@ -21,14 +21,14 @@ import {
   fakeBuiltDeps,
   translateDistribution,
 } from "../../contexts/installation/testing/fake-build-sources.fake.js";
+import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   initProject,
   installTool,
-} from "../../contexts/installation/testing/installation-deps.builder.js";
-import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
-import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
+} from "../../shared/testing/installation-deps.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {

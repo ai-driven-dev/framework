@@ -17,14 +17,14 @@ import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
-import {
-  buildInstallationDeps,
-  initAndInstall,
-} from "../../contexts/installation/testing/installation-deps.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";
 import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../shared/testing/installation-deps.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";

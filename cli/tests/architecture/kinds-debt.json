@@ -49,10 +49,7 @@
     "tests/golden/expect-golden.ts",
     "tests/helpers/git-sandbox.ts",
     "tests/helpers/host-record-reading.ts",
-    "tests/helpers/install-harness.ts",
     "tests/helpers/repository-root.ts",
-    "tests/orchestration/testing/build-check-registration.ts",
-    "tests/orchestration/testing/build-doctor.ts",
     "tests/shared/testing/present.ts"
   ],
   "imports": [

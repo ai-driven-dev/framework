@@ -6,13 +6,13 @@ import type { ToolCatalog } from "../../../../../src/contexts/tools/contract/too
 import type { SettingsFileAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   initProject,
-} from "../../testing/installation-deps.builder.js";
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";

@@ -9,6 +9,10 @@ import type { PluginFetchOptions } from "../../../../../src/contexts/installatio
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
@@ -17,7 +21,6 @@ import {
   fakeBuiltDeps,
   translateDistribution,
 } from "../../testing/fake-build-sources.fake.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(

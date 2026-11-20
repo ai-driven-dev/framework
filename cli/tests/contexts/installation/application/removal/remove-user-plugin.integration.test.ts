@@ -12,11 +12,11 @@ import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-di
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import type { FakeNativeSource } from "../../testing/fake-host-marketplace-sources.fake.js";
 import type { FixedHostRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 import { userPluginRemover } from "../../testing/plugin-remover.builder.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.fake.js";

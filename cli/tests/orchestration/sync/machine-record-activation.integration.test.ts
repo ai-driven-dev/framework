@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const { claude, codex } = TOOL;

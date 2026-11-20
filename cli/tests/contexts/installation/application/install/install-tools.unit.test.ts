@@ -2,12 +2,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
 import type { AiToolId, IdeToolId } from "../../../../../src/shared/domain/tool.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   buildInstallationDeps,
   initProject,
   installTool,
-} from "../../testing/installation-deps.builder.js";
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";

@@ -7,9 +7,9 @@ import {
   buildInstallationDeps,
   initAndInstall,
   installTool,
-} from "../../contexts/installation/testing/installation-deps.builder.js";
+} from "../../shared/testing/installation-deps.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { buildDoctorUseCase } from "../testing/build-doctor.js";
+import { buildDoctorUseCase } from "../testing/build-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";

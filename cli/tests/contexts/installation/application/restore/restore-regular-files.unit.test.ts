@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import { restoreRegularFiles } from "../../../../../src/contexts/installation/application/restore/restore-regular-files.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { buildInstallationDeps } from "../../../../shared/testing/installation-deps.builder.js";
 import {
   KeepPrompter,
   OverwritePrompter,
   ScriptedPrompter,
 } from "../../../../shared/testing/scripted-prompter.fake.js";
-import { buildInstallationDeps } from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

@@ -17,7 +17,6 @@ import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import {
   pluginRemover,
@@ -29,6 +28,7 @@ import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-bui
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";

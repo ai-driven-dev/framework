@@ -1,15 +1,15 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
-import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
-import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   FIXTURE_DIR,
   initAndInstall,
-} from "../../testing/installation-deps.builder.js";
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
+import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 

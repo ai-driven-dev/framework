@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
+import type { Platform } from "../../../../../src/contexts/installation/ports/platform.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
-import { linuxPlatform, win32Platform } from "../../../../helpers/install-harness.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { StubAssetProvider } from "../../../../shared/testing/stub-asset-provider.fake.js";
@@ -27,6 +27,9 @@ function buildUseCase() {
   const fs = new InMemoryFileAdapter({});
   return { useCase: new InstallConfig(fs), fs };
 }
+
+const linuxPlatform: Platform = { current: () => "linux" };
+const win32Platform: Platform = { current: () => "win32" };
 
 function emptyDescriptor(): FrameworkDescriptor {
   return new FrameworkDescriptor({

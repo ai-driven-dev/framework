@@ -11,7 +11,7 @@ import type { CheckRegistrationCommand } from "../../../src/orchestration/doctor
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 
 /** The registration check wired as the composition root wires it. */
 export function checkRegistrationOver(

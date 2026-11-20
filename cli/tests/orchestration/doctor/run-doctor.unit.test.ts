@@ -9,11 +9,11 @@ import { LoadManifestForDoctor } from "../../../src/contexts/installation/applic
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import type { DoctorIssue } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,
-} from "../../contexts/installation/testing/installation-deps.builder.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
+} from "../../shared/testing/installation-deps.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";

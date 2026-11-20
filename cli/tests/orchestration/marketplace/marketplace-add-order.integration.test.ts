@@ -20,9 +20,9 @@ import {
   TrustDeniedError,
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { InMemoryMarketplaceTrustStore } from "../../shared/testing/in-memory-marketplace-trust-store.fake.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
