@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "kind": "implement",
+  "unit": "folder",
+  "marker": "plan.md",
+  "rules": {
+    "IMPLEMENT-01": {
+      "op": "pattern",
+      "in": "plan.md",
+      "field": "status",
+      "regex": "^(pending|in-progress|implemented|blocked)$",
+      "why": "the lifecycle tells which step comes next",
+      "fix": "set the plan status to pending, in-progress, implemented, or blocked"
+    },
+    "IMPLEMENT-02": {
+      "op": "pattern",
+      "in": "phase-*.md",
+      "field": "status",
+      "regex": "^(pending|in-progress|done)$",
+      "why": "the lifecycle tells which phase is next",
+      "fix": "set the phase status to pending, in-progress, or done"
+    },
+    "IMPLEMENT-03": {
+      "op": "custom",
+      "in": "plan.md",
+      "check": "progress",
+      "why": "the statuses of a plan and of its phases tell one possible story",
+      "fix": "fix the statuses"
+    },
+    "IMPLEMENT-04": {
+      "op": "template",
+      "in": "run.md",
+      "template": "../assets/run-template.md",
+      "why": "the next pass reads what the last one checked",
+      "fix": "follow run-template.md"
+    },
+    "IMPLEMENT-05": {
+      "op": "custom",
+      "in": "plan.md",
+      "check": "run",
+      "why": "an implemented plan records what was validated, against which commit",
+      "fix": "fix the run"
+    }
+  }
+}

@@ -14,6 +14,8 @@ const SCRIPT = path.resolve(__dirname, "../../plugins/aidd-dev/skills/02-impleme
 
 let root;
 
+const FINDING = / IMPLEMENT-\d+ /;
+
 /** A git hook runs with GIT_DIR and GIT_INDEX_FILE set: a command that inherits them acts on the
  * repository being committed, not on the scratch one a test made for itself. */
 const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
@@ -69,7 +71,7 @@ function folder(plan, phases, { crlf = false, runs = plan === "implemented" ? RU
 
 function run(dir, ...flags) {
   const r = spawnSync(process.execPath, [SCRIPT, dir, ...flags], { encoding: "utf8", env: cleanEnv() });
-  return { out: r.stdout.trim(), code: r.status };
+  return { out: r.stdout.trim(), err: r.stderr.trim(), code: r.status };
 }
 
 before(() => {
@@ -80,41 +82,41 @@ after(() => fs.rmSync(root, { recursive: true, force: true }));
 describe("validate-implement", () => {
   it("accepts a plan midway: done, then in progress on what it needed", () => {
     const r = run(folder("in-progress", [{ status: "done" }, { status: "in-progress", deps: "1" }]));
-    assert.match(r.out, /^OK(\n|$)/);
+    assert.doesNotMatch(r.out, FINDING);
   });
 
   it("accepts an implemented plan with every phase done", () => {
-    assert.match(run(folder("implemented", [{ status: "done" }, { status: "done", deps: "1" }])).out, /^OK$/);
+    assert.equal(run(folder("implemented", [{ status: "done" }, { status: "done", deps: "1" }])).out, "");
   });
 
   it("accepts a blocked plan whatever its phases hold", () => {
-    assert.match(run(folder("blocked", [{ status: "done" }, { status: "in-progress", deps: "1" }])).out, /^OK$/);
+    assert.equal(run(folder("blocked", [{ status: "done" }, { status: "in-progress", deps: "1" }])).out, "");
   });
 
   it("accepts the same plan saved with Windows line endings", () => {
     const r = run(folder("in-progress", [{ status: "done" }, { status: "in-progress", deps: "1" }], { crlf: true }));
-    assert.match(r.out, /^OK(\n|$)/);
+    assert.doesNotMatch(r.out, FINDING);
   });
 
   it("refuses a plan status outside the lifecycle", () => {
     const r = run(folder("done", [{ status: "pending" }]));
     assert.equal(r.code, 1);
-    assert.match(r.out, /plan\.md: status "done" must be pending, in-progress, implemented, or blocked/);
+    assert.match(r.out, /plan\.md:\d+ IMPLEMENT-01 .*"done"/);
   });
 
   it("refuses a phase status outside the lifecycle", () => {
     const r = run(folder("in-progress", [{ status: "implemented" }]));
-    assert.match(r.out, /phase-1\.md: status "implemented" must be pending, in-progress, or done/);
+    assert.match(r.out, /phase-1\.md:\d+ IMPLEMENT-02 .*"implemented"/);
   });
 
   it("refuses a pending plan whose phase has moved", () => {
     const r = run(folder("pending", [{ status: "in-progress" }]));
-    assert.match(r.out, /plan\.md: status pending but phase 1 is in-progress/);
+    assert.match(r.out, /plan\.md:1 IMPLEMENT-03 status pending but phase 1 is in-progress/);
   });
 
   it("refuses an implemented plan with a phase not done", () => {
     const r = run(folder("implemented", [{ status: "done" }, { status: "in-progress", deps: "1" }]));
-    assert.match(r.out, /plan\.md: status implemented but phase 2 is in-progress/);
+    assert.match(r.out, /plan\.md:1 IMPLEMENT-03 status implemented but phase 2 is in-progress/);
   });
 
   it("refuses two phases in progress at once", () => {
@@ -129,16 +131,16 @@ describe("validate-implement", () => {
 
   it("refuses an implemented plan with no run recorded", () => {
     const r = run(folder("implemented", [{ status: "done" }], { runs: null }));
-    assert.match(r.out, /^STATE\nrun\.md: no "## Run" recorded, append one$/);
+    assert.match(r.out, /run\.md:1 IMPLEMENT-05 no "## Run" recorded, append one/);
   });
 
   it("refuses an implemented plan whose run file holds no run", () => {
     const r = run(folder("implemented", [{ status: "done" }], { runs: "# Run\n" }));
-    assert.match(r.out, /run\.md: no "## Run" recorded/);
+    assert.match(r.out, /run\.md:1 IMPLEMENT-05 no "## Run" recorded/);
   });
 
   it("asks for no run before the plan is implemented", () => {
-    assert.match(run(folder("in-progress", [{ status: "in-progress" }])).out, /^OK(\n|$)/);
+    assert.doesNotMatch(run(folder("in-progress", [{ status: "in-progress" }])).out, FINDING);
   });
 
   it("refuses a phase started before what it depends on is done", () => {
@@ -148,18 +150,18 @@ describe("validate-implement", () => {
 
   it("lets a blocked plan stop with phases half done, in progress together", () => {
     const r = run(folder("blocked", [{ status: "in-progress" }, { status: "in-progress" }]));
-    assert.match(r.out, /^OK(\n|$)/);
+    assert.doesNotMatch(r.out, FINDING);
   });
 
   it("lets a blocked plan stop in a phase whose dependency is not done", () => {
     const r = run(folder("blocked", [{ status: "pending" }, { status: "in-progress", deps: "1" }]));
-    assert.match(r.out, /^OK(\n|$)/);
+    assert.doesNotMatch(r.out, FINDING);
   });
 
   it("reads the front matter of a phase with no status as pending", () => {
     const dir = folder("pending", [{ status: "pending" }]);
     fs.writeFileSync(path.join(dir, "phase-1.md"), "# Instruction: x\n");
-    assert.match(run(dir).out, /phase-1\.md: front matter key "status" missing/);
+    assert.match(run(dir).out, /phase-1\.md:\d+ IMPLEMENT-02 /);
   });
 });
 
@@ -177,38 +179,6 @@ function commitWithRun(dir) {
   return dir;
 }
 
-describe("validate-implement: uncommitted files once the plan is closed", () => {
-
-  function repo(plan, phases) {
-    return commitWithRun(folder(plan, phases, { runs: null }));
-  }
-
-  it("prints only OK when a closed plan leaves nothing uncommitted", () => {
-    const r = run(repo("implemented", [{ status: "done" }]));
-    assert.match(r.out, /^OK(\n|$)/);
-    assert.equal(r.code, 0);
-  });
-
-  it("names the uncommitted files after OK when a plan is implemented", () => {
-    const dir = repo("implemented", [{ status: "done" }]);
-    fs.writeFileSync(path.join(dir, "left-behind.txt"), "x");
-    const r = run(dir);
-    assert.equal(r.out.split("\n")[0], "OK");
-    assert.match(r.out, /NOTE uncommitted files \(1\): left-behind\.txt/);
-    assert.equal(r.code, 0);
-  });
-
-  it("names them when a plan is blocked", () => {
-    const dir = repo("blocked", [{ status: "in-progress" }]);
-    fs.writeFileSync(path.join(dir, "left-behind.txt"), "x");
-    assert.match(run(dir).out, /NOTE uncommitted files \(1\): left-behind\.txt/);
-  });
-
-  it("prints only OK outside a git repository", () => {
-    assert.match(run(folder("implemented", [{ status: "done" }])).out, /^OK(\n|$)/);
-  });
-});
-
 describe("validate-implement: files and folders as real machines write them", () => {
   it("works on a folder whose path holds spaces and is given with a trailing separator", () => {
     const parent = fs.mkdtempSync(path.join(root, "with space-"));
@@ -216,64 +186,26 @@ describe("validate-implement: files and folders as real machines write them", ()
     fs.mkdirSync(dir);
     const src = folder("in-progress", [{ status: "in-progress" }]);
     for (const f of fs.readdirSync(src)) fs.copyFileSync(path.join(src, f), path.join(dir, f));
-    assert.match(run(dir + path.sep).out, /^OK(\n|$)/);
+    assert.doesNotMatch(run(dir + path.sep).out, FINDING);
   });
 
   it("says what to pass when no folder is given", () => {
     const r = spawnSync(process.execPath, [SCRIPT], { encoding: "utf8", env: cleanEnv() });
-    assert.equal(r.status, 1);
-    assert.match(r.stdout, /^STATE\nusage: node validate-implement\.cjs <feature-folder>/);
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /^usage: /);
   });
 
   it("says the plan is missing when the folder does not exist", () => {
     const r = run(path.join(root, "no-such-folder"));
-    assert.equal(r.code, 1);
-    assert.match(r.out, /plan\.md: missing/);
+    assert.equal(r.code, 2);
+    assert.match(r.err, /plan\.md: missing/);
   });
 
   it("reports a listed phase whose file is absent as nothing to check, validate-plan owns that", () => {
     const dir = folder("in-progress", [{ status: "in-progress" }, { status: "pending", deps: "1" }]);
     fs.rmSync(path.join(dir, "phase-2.md"));
-    assert.match(run(dir).out, /^OK(\n|$)/);
+    assert.doesNotMatch(run(dir).out, FINDING);
   });
-});
-
-describe("validate-implement: the uncommitted files it names", () => {
-  function closedRepo() {
-    const dir = folder("implemented", [{ status: "done" }], { runs: null });
-    return commitWithRun(dir);
-  }
-
-  it("names a file whose name holds spaces without quoting it", () => {
-    const dir = closedRepo();
-    fs.writeFileSync(path.join(dir, "my notes.txt"), "x");
-    assert.match(run(dir).out, /NOTE uncommitted files \(1\): my notes\.txt$/m);
-  });
-
-  it("names every untracked file of a new folder, not the folder", () => {
-    const dir = closedRepo();
-    fs.mkdirSync(path.join(dir, "src"));
-    fs.writeFileSync(path.join(dir, "src", "a.txt"), "x");
-    fs.writeFileSync(path.join(dir, "src", "b.txt"), "x");
-    assert.match(run(dir).out, /NOTE uncommitted files \(2\): src\/a\.txt, src\/b\.txt$/m);
-  });
-
-  it("names the new path of a renamed file once", () => {
-    const dir = closedRepo();
-    fs.writeFileSync(path.join(dir, "old.txt"), "x");
-    git(dir, "add", "-A");
-    git(dir, "commit", "-q", "-m", "y");
-    git(dir, "mv", "old.txt", "new.txt");
-    assert.match(run(dir).out, /NOTE uncommitted files \(1\): new\.txt$/m);
-  });
-
-  it("names at most five files and says how many there are", () => {
-    const dir = closedRepo();
-    for (let i = 1; i <= 7; i++) fs.writeFileSync(path.join(dir, `f${i}.txt`), "x");
-    const note = run(dir).out.split("\n")[1];
-    assert.match(note, /^NOTE uncommitted files \(7\): f1\.txt, f2\.txt, f3\.txt, f4\.txt, f5\.txt$/);
-  });
-
 });
 
 describe("validate-implement: what a run records", () => {
@@ -288,15 +220,15 @@ describe("validate-implement: what a run records", () => {
       .replace(/\{\{undone[^}]*\}\}/, "none");
 
   it("accepts a run filled from the template", () => {
-    assert.match(closedWith(filledTemplate()).out, /^OK(\n|$)/);
+    assert.doesNotMatch(closedWith(filledTemplate()).out, FINDING);
   });
 
   it("refuses the template as it stands", () => {
-    assert.match(closedWith(fs.readFileSync(RUN_TEMPLATE, "utf8")).out, /run\.md: placeholder or comment left/);
+    assert.match(closedWith(fs.readFileSync(RUN_TEMPLATE, "utf8")).out, /run\.md:\d+ IMPLEMENT-04 (placeholder|comment) left/);
   });
 
   it("accepts several runs numbered in order", () => {
-    assert.match(closedWith(`# Run: A plan\n\n${runMd(1)}\n${runMd(2)}`).out, /^OK(\n|$)/);
+    assert.doesNotMatch(closedWith(`# Run: A plan\n\n${runMd(1)}\n${runMd(2)}`).out, FINDING);
   });
 
   it("refuses a run that names no head", () => {
@@ -330,7 +262,7 @@ describe("validate-implement: what a run records", () => {
   });
 
   it("refuses a comment left in the run file", () => {
-    assert.match(closedWith(`# Run: A plan\n\n<!-- note -->\n${runMd(1)}`).out, /run\.md: placeholder or comment left/);
+    assert.match(closedWith(`# Run: A plan\n\n<!-- note -->\n${runMd(1)}`).out, /run\.md:\d+ IMPLEMENT-04 (placeholder|comment) left/);
   });
 });
 
@@ -381,7 +313,7 @@ describe("validate-implement: a run covers every task of the plan", () => {
   const row = (task) => `| ${task} | pnpm test | passed |`;
 
   it("names a task the run has no row for", () => {
-    assert.match(withTasks([row("1.1"), row("2.1")]).out, /run\.md: run 1 has no row for task 1\.2/);
+    assert.match(withTasks([row("1.1"), row("2.1")]).out, /run\.md:\d+ IMPLEMENT-05 run 1 has no row for task 1\.2/);
   });
 
   it("names every missing task", () => {
@@ -389,13 +321,13 @@ describe("validate-implement: a run covers every task of the plan", () => {
   });
 
   it("asks nothing of a phase that lists no task", () => {
-    assert.match(withTasks([row("1.1")], [1, 0]).out, /^OK(\n|$)/);
+    assert.doesNotMatch(withTasks([row("1.1")], [1, 0]).out, FINDING);
   });
 
   it("reads the last run alone: an earlier one may cover less", () => {
     const dir = folder("implemented", [{ status: "done" }], { runs: `# Run: A plan\n\n${runMd(1, "abc1234", [row("1.1")])}\n${runMd(2, "abc1234", [row("1.1"), row("1.2")])}` });
     fs.writeFileSync(path.join(dir, "phase-1.md"), phaseMd("done", 2));
-    assert.match(run(dir).out, /^OK(\n|$)/);
+    assert.doesNotMatch(run(dir).out, FINDING);
   });
 
   it("refuses a last run that covers less than the plan", () => {
@@ -405,132 +337,3 @@ describe("validate-implement: a run covers every task of the plan", () => {
   });
 });
 
-describe("validate-implement: files modified before the start", () => {
-  /** A repository holding the plan in a sub-folder, with README.md edited and not committed. */
-  function startedRepo({ planFolderDirty = false } = {}) {
-    const repoDir = fs.mkdtempSync(path.join(root, "repo-"));
-    fs.writeFileSync(path.join(repoDir, "README.md"), "a\n");
-    fs.writeFileSync(path.join(repoDir, "code.txt"), "a\n");
-    git(repoDir, "init", "-q");
-    git(repoDir, "add", "-A");
-    git(repoDir, "commit", "-q", "-m", "start");
-    const dir = folder("pending", [{ status: "pending" }], { into: repoDir });
-    if (!planFolderDirty) {
-      git(repoDir, "add", "-A");
-      git(repoDir, "commit", "-q", "-m", "plan");
-    }
-    fs.writeFileSync(path.join(repoDir, "README.md"), "edited by the user\n");
-    return { repoDir, dir };
-  }
-  const commitFiles = (repoDir, ...files) => {
-    files.forEach((file) => git(repoDir, "add", file));
-    git(repoDir, "commit", "-q", "-m", "work");
-  };
-
-  it("records the files already modified and says which", () => {
-    const { dir } = startedRepo();
-    const r = run(dir, "--baseline");
-    assert.match(r.out, /^OK\nNOTE already modified \(1\): README\.md$/);
-    assert.equal(r.code, 0);
-  });
-
-  it("accepts a commit that leaves those files out", () => {
-    const { repoDir, dir } = startedRepo();
-    run(dir, "--baseline");
-    fs.writeFileSync(path.join(repoDir, "code.txt"), "b\n");
-    commitFiles(repoDir, "code.txt");
-    assert.match(run(dir).out, /^OK(\n|$)/);
-  });
-
-  it("refuses a commit that holds one of them, and says how to undo it", () => {
-    const { repoDir, dir } = startedRepo();
-    run(dir, "--baseline");
-    fs.writeFileSync(path.join(repoDir, "code.txt"), "b\n");
-    commitFiles(repoDir, "code.txt", "README.md");
-    const sha = git(repoDir, "rev-parse", "--short", "HEAD").stdout.trim();
-    const r = run(dir);
-    assert.match(r.out, new RegExp(`README\\.md: modified before the start, yet committed in ${sha}: undo that commit \\(git reset --soft ${sha}~1\\) and commit again without it`));
-    assert.equal(r.code, 1);
-  });
-
-  it("leaves alone the repository a git hook names, as a commit does with GIT_DIR and GIT_INDEX_FILE", () => {
-    const decoy = fs.mkdtempSync(path.join(root, "decoy-"));
-    git(decoy, "init", "-q");
-    fs.writeFileSync(path.join(decoy, "kept.txt"), "x\n");
-    git(decoy, "add", "-A");
-    git(decoy, "commit", "-q", "-m", "decoy");
-    const before = git(decoy, "rev-parse", "HEAD").stdout.trim();
-    process.env.GIT_DIR = path.join(decoy, ".git");
-    process.env.GIT_INDEX_FILE = path.join(decoy, ".git", "index");
-    try {
-      const { repoDir, dir } = startedRepo();
-      run(dir, "--baseline");
-      commitFiles(repoDir, "README.md");
-      run(dir);
-    } finally {
-      delete process.env.GIT_DIR;
-      delete process.env.GIT_INDEX_FILE;
-    }
-    assert.equal(git(decoy, "rev-parse", "HEAD").stdout.trim(), before);
-    assert.equal(git(decoy, "rev-list", "--count", "HEAD").stdout.trim(), "1");
-  });
-
-  it("takes the folder wherever it stands among the arguments, and ignores a flag it does not know", () => {
-    const { dir } = startedRepo();
-    const r = spawnSync(process.execPath, [SCRIPT, "--baseline", "--plan", dir], { encoding: "utf8", env: cleanEnv() });
-    assert.match(r.stdout.trim(), /^OK\nNOTE already modified \(1\): README\.md$/);
-  });
-
-  it("keeps the baseline once the plan has started: a later call cannot take the work for the past", () => {
-    const { repoDir, dir } = startedRepo();
-    run(dir, "--baseline");
-    const planFile = path.join(dir, "plan.md");
-    fs.writeFileSync(planFile, fs.readFileSync(planFile, "utf8").replace("status: pending", "status: in-progress"));
-    fs.writeFileSync(path.join(repoDir, "code.txt"), "b\n");
-    assert.match(run(dir, "--baseline").out, /^OK\nNOTE baseline kept: the plan has started$/);
-    commitFiles(repoDir, "code.txt", "README.md");
-    const refused = run(dir).out;
-    assert.match(refused, /README\.md: modified before the start/);
-    assert.doesNotMatch(refused, /code\.txt/);
-  });
-
-  it("asks nothing when no baseline was recorded", () => {
-    const { repoDir, dir } = startedRepo();
-    commitFiles(repoDir, "README.md");
-    assert.match(run(dir).out, /^OK(\n|$)/);
-  });
-
-  it("leaves the plan folder out of the baseline, however dirty it was", () => {
-    const { repoDir, dir } = startedRepo({ planFolderDirty: true });
-    const r = run(dir, "--baseline");
-    assert.match(r.out, /^OK\nNOTE already modified \(1\): README\.md$/);
-    git(repoDir, "add", path.relative(repoDir, dir));
-    git(repoDir, "commit", "-q", "-m", "plan files");
-    assert.match(run(dir).out, /^OK(\n|$)/);
-  });
-
-  it("holds a baseline to its own plan folder", () => {
-    const { repoDir, dir } = startedRepo();
-    run(dir, "--baseline");
-    const other = folder("in-progress", [{ status: "in-progress" }], { into: repoDir });
-    commitFiles(repoDir, "README.md");
-    assert.match(run(other).out, /^OK(\n|$)/);
-  });
-
-  it("names a file whose name holds spaces", () => {
-    const { repoDir, dir } = startedRepo();
-    fs.writeFileSync(path.join(repoDir, "my notes.txt"), "x");
-    run(dir, "--baseline");
-    commitFiles(repoDir, "my notes.txt");
-    assert.match(run(dir).out, /my notes\.txt: modified before the start/);
-  });
-
-  it("skips the check when the recorded commit is no longer in the history", () => {
-    const { repoDir, dir } = startedRepo();
-    run(dir, "--baseline");
-    git(repoDir, "checkout", "-q", "--orphan", "other");
-    git(repoDir, "rm", "-rf", "--cached", "-q", ".");
-    git(repoDir, "commit", "-q", "-m", "unrelated", "--allow-empty");
-    assert.match(run(dir).out, /^OK(\n|$)/);
-  });
-});
