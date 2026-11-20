@@ -170,16 +170,6 @@ export function contextNames(): string[] {
     .sort();
 }
 
-/**
- * Edges the chain forbids and the tree still has. The list may only shrink, and each entry
- * carries its measured weight: an edge alone could absorb any number of imports in silence.
- */
-export const BASELINE: readonly {
-  readonly edge: string;
-  readonly imports: number;
-  readonly files: number;
-}[] = [];
-
 export function contextOf(file: string): string {
   const inContext = /^src\/contexts\/([^/]+)\//.exec(file);
   if (inContext) return present(inContext[1]);

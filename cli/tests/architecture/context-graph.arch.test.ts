@@ -8,7 +8,6 @@ import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.js";
 import { ALLOWED, TRANSITIONAL_PAIRS } from "./allowed-edges.js";
 import {
-  BASELINE,
   contextImportPairs,
   contextOf,
   edgesBetweenContexts,
@@ -16,7 +15,6 @@ import {
   isContext,
   isCrossing,
   sourceFiles,
-  weighedEdges,
 } from "./helpers.js";
 
 function forbiddenEdges(edges: readonly string[], allowed: ReadonlySet<string>): string[] {
@@ -31,28 +29,7 @@ describe("the context graph has only the edges the plan allows", () => {
   it("no context reaches another the chain does not permit", () => {
     const violations = forbiddenEdges(edgesBetweenContexts(sourceFiles()), ALLOWED);
 
-    const { added, fixed } = expectRatchet(
-      violations,
-      BASELINE.map((entry) => entry.edge)
-    );
-    expect(added, "an edge the chain forbids — see arborescence.md invariant 2").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
-  });
-
-  it("holds each admitted edge to the weight its reason was written around", () => {
-    const weighed = weighedEdges(sourceFiles());
-    const recorded = BASELINE.map(
-      ({ edge, imports, files }) => `${edge}: ${imports} imports across ${files} files`
-    );
-    const actual = BASELINE.map(({ edge }) => {
-      const weight = weighed.get(edge) ?? { imports: 0, files: 0 };
-      return `${edge}: ${weight.imports} imports across ${weight.files} files`;
-    });
-
-    expect(
-      actual,
-      "an admitted edge absorbed imports — a baselined edge is not a licence to grow"
-    ).toEqual(recorded);
+    expect(violations, "an edge the chain forbids — see arborescence.md invariant 2").toEqual([]);
   });
 });
 

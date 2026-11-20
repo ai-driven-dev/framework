@@ -5,17 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.js";
-import {
-  contextOf,
-  expectRatchet,
-  importersByFile,
-  isContext,
-  read,
-  sourceFiles,
-} from "./helpers.js";
-
-/** Files that fail the rule today. This list may only shrink. */
-const BASELINE: readonly string[] = [];
+import { contextOf, importersByFile, isContext, read, sourceFiles } from "./helpers.js";
 
 /** The functional area a file belongs to. Two callers in one area are still one area. */
 function areaOf(file: string): string {
@@ -153,9 +143,7 @@ describe("shared modules are earned", () => {
     ).toBeGreaterThan(0);
     const violations = unearned(files, importersByFile());
 
-    const { added, fixed } = expectRatchet(violations, BASELINE);
-    expect(added, "new shared module with fewer than two calling areas").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+    expect(violations, "a shared module with fewer than two calling areas").toEqual([]);
   });
 });
 

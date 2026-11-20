@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.js";
 import { HELD_BY_BIOME } from "./allowed-edges.js";
-import { expectRatchet, importersByFile, read, sourceFiles } from "./helpers.js";
+import { importersByFile, read, sourceFiles } from "./helpers.js";
 
 /** A context's declared public surface, one entry per context. Every context is held by Biome
  * today (`HELD_BY_BIOME`), so the table is empty and a context that cannot be held that way
@@ -78,9 +78,6 @@ function reachesIntoInterior(
   return violations.sort();
 }
 
-/** Reaches into a context's interior today; the list may only shrink. */
-const BASELINE: readonly string[] = [];
-
 /**
  * What a context publishes in `contract/` exists for a reader outside it: another context,
  * `presentation/` or `orchestration/`. The composition root and the driving port do not
@@ -126,9 +123,7 @@ describe("nothing imports a context's interior", () => {
   it("every cross-context import targets a declared public module", () => {
     const violations = reachesIntoInterior(sourceFiles(), importersByFile(), PUBLIC_MODULES);
 
-    const { added, fixed } = expectRatchet(violations, BASELINE);
-    expect(added, "new import reaches a context's undeclared interior").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+    expect(violations, "an import reaches a context's undeclared interior").toEqual([]);
   });
 
   it("declares a public surface for every context on disk, or leaves it to Biome", () => {

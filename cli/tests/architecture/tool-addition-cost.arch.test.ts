@@ -7,6 +7,17 @@
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.js";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import { loadDebt } from "./kinds.js";
+
+const DEBT = loadDebt();
+
+/** A debt entry `path: n`, the file with the number it was measured with. */
+function counted(entries: readonly string[]): { readonly path: string; readonly named: number }[] {
+  return entries.map((entry) => {
+    const cut = entry.lastIndexOf(": ");
+    return { path: entry.slice(0, cut), named: Number(entry.slice(cut + 2)) };
+  });
+}
 
 /** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
 function toolIds(files: readonly string[]): string[] {
@@ -21,25 +32,21 @@ function toolIds(files: readonly string[]): string[] {
 /**
  * Files whose job is to wire tools together, so they name them by design. Admitted from the
  * violation scan, but each still held to the number of tools it was written around: a third
- * tool wired into one of them is caught by the count, never exempted by the admission.
+ * tool wired into one of them is caught by the count, never exempted by the admission. The list
+ * is `toolSites` in `kinds-debt.json`: the one list of measured tools, each source in a folder
+ * named for its tool.
  */
-const REGISTRATION_SITES: readonly { readonly path: string; readonly named: number }[] = [
-  // The one list of measured tools: each source sits in a folder named for its tool.
-  { path: "src/composition/telemetry.ts", named: 2 },
-];
+const REGISTRATION_SITES = counted(DEBT.toolSites);
 
 /**
  * A measured tool is a few files of readers. A file listed here names its own tool and no other,
  * so a tool is added by new files and one registration, never by an edit to a neighbour. A new
  * file naming a tool is red until written down here; a listed one naming none, until removed.
+ * The list is `toolOwn` in `kinds-debt.json`.
  */
-const SOURCE_DIR = "src/contexts/telemetry/infrastructure/sources";
-const OWN_TOOL_FILES: Readonly<Record<string, string>> = {
-  [`${SOURCE_DIR}/claude/claude-projects-root.ts`]: "claude",
-  [`${SOURCE_DIR}/claude/claude-settings-adapter.ts`]: "claude",
-  [`${SOURCE_DIR}/codex/codex-transcript-source-adapter.ts`]: "codex",
-  [`${SOURCE_DIR}/codex/codex-transcript-usage.ts`]: "codex",
-};
+const OWN_TOOL_FILES: Readonly<Record<string, string>> = Object.fromEntries(
+  DEBT.toolOwn.map((entry) => entry.split(": "))
+);
 
 function namesOnlyItsOwnTool(file: string, named: readonly string[]): boolean {
   const own = OWN_TOOL_FILES[file];
@@ -91,18 +98,13 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
  * Files naming a tool outside its profile today, with how many they name; the list may only
  * shrink, and a listed file may not take on another tool. One is not debt:
  * `tool-recommendations.ts`, naming a tool for a reason no profile carries. The rest is host
- * wiring and words shown to a user.
+ * wiring and words shown to a user. `foreign-suffix-filter.ts` is the foreign-file suffix
+ * vocabulary, held equal to the registered AI profiles by conformance, and vanishes when the
+ * profiles hand each section its own filter. `usage-record.ts` carries the contract's tool
+ * vocabulary: `codex` is admitted so a second tool's reader needs no change to the record, and is
+ * not a list a new tool joins. The list is `toolNames` in `kinds-debt.json`.
  */
-const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
-  { path: "src/orchestration/setup/tool-recommendations.ts", named: 4 },
-  { path: "src/presentation/commands/setup.ts", named: 2 },
-  // The foreign-file suffix vocabulary, held equal to the registered AI profiles by conformance.
-  // It vanishes when the profiles move to composition and hand each section its own filter.
-  { path: "src/contexts/tools/domain/profile/foreign-suffix-filter.ts", named: 7 },
-  // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
-  // reader needs no change to the record, and is not a list a new tool joins.
-  { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 },
-];
+const NAMING_DEBT = counted(DEBT.toolNames);
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
 const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
@@ -134,16 +136,10 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
 
 /**
  * Files under `ISOLATED_FROM_TOOLS` still naming a tool in an identifier, with how many
- * distinct identifiers; the list may only shrink, and a listed file may not take on another.
+ * distinct identifiers; the list may only shrink, and a listed file may not take on another. The
+ * list is `toolIdentifiers` in `kinds-debt.json`.
  */
-const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
-  { path: "src/contexts/distribution/application/fetch-marketplace-source.ts", named: 1 },
-  { path: "src/contexts/distribution/application/refresh-marketplace.ts", named: 1 },
-  {
-    path: "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
-    named: 1,
-  },
-];
+const IDENTIFIER_DEBT = counted(DEBT.toolIdentifiers);
 
 describe("a tool identifier stays inside its own profile", () => {
   it("no file outside a profile names a tool in a form a new tool would have to join", () => {
@@ -163,10 +159,10 @@ describe("a tool identifier stays inside its own profile", () => {
 
     const { added, fixed } = expectRatchet(
       violations,
-      BASELINE.map((entry) => entry.path)
+      NAMING_DEBT.map((entry) => entry.path)
     );
     expect(added, "tool named outside its profile — read it from the profile instead").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+    expect(fixed, "fixed — remove these from toolNames in kinds-debt.json").toEqual([]);
   });
 
   it("lists only files that still name their own tool", () => {
@@ -179,7 +175,7 @@ describe("a tool identifier stays inside its own profile", () => {
 
   it("holds each admitted file to the number of tools its reason was written around", () => {
     const ids = toolIds(sourceFiles());
-    const held = [...BASELINE, ...REGISTRATION_SITES];
+    const held = [...NAMING_DEBT, ...REGISTRATION_SITES];
     const recorded = held.map(({ path, named }) => `${path}: ${named}`);
     const actual = held.map(({ path }) => `${path}: ${toolsNamedIn(read(path), ids).length}`);
 
@@ -247,19 +243,19 @@ describe("a tool never names an identifier outside its profile, in the code ever
 
     const { added, fixed } = expectRatchet(
       violations,
-      IDENTIFIER_BASELINE.map((entry) => entry.path)
+      IDENTIFIER_DEBT.map((entry) => entry.path)
     );
     expect(
       added,
       "tool-named identifier outside its profile — read it from the capability"
     ).toEqual([]);
-    expect(fixed, "fixed — remove these from IDENTIFIER_BASELINE").toEqual([]);
+    expect(fixed, "fixed — remove these from toolIdentifiers in kinds-debt.json").toEqual([]);
   });
 
   it("holds each listed file to the identifiers it was measured with", () => {
     const ids = toolIds(sourceFiles());
-    const recorded = IDENTIFIER_BASELINE.map(({ path, named }) => `${path}: ${named}`);
-    const actual = IDENTIFIER_BASELINE.map(
+    const recorded = IDENTIFIER_DEBT.map(({ path, named }) => `${path}: ${named}`);
+    const actual = IDENTIFIER_DEBT.map(
       ({ path }) => `${path}: ${toolIdentifiersIn(read(path), ids).length}`
     );
 

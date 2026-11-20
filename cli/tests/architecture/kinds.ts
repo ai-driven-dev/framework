@@ -535,7 +535,20 @@ export function mirrorViolations(
 
 const escapeRegExp = (literal: string): string => literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export type Debt = Readonly<Record<Rule, readonly string[]>>;
+/**
+ * The lists the debt file holds beside the kind rules. Each is read by the test that owns the data:
+ * size-limit exclusions by `code-size`, tool names outside a profile by `tool-addition-cost`, the
+ * transitional context imports by `context-graph`.
+ */
+export type ListedDebt =
+  | "limits"
+  | "toolNames"
+  | "toolSites"
+  | "toolOwn"
+  | "toolIdentifiers"
+  | "transitional";
+
+export type Debt = Readonly<Record<Rule | ListedDebt, readonly string[]>>;
 
 const RULES: readonly Rule[] = [
   "classification",
@@ -568,6 +581,12 @@ export const noDebt = (): Debt => ({
   repository: [],
   translate: [],
   size: [],
+  limits: [],
+  toolNames: [],
+  toolSites: [],
+  toolOwn: [],
+  toolIdentifiers: [],
+  transitional: [],
 });
 
 /** The debt file, a rule it does not name counting as none. */

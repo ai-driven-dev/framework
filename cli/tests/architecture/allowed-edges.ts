@@ -1,8 +1,10 @@
 /** The context edge table: which context may import which, and which contexts Biome holds. */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 /** Exactly these edges between contexts, plus every context to shared. Every row is a row of the
  * target context map (target/00-overview.md, section 4); a row that is debt goes in
- * `TRANSITIONAL_PAIRS`. */
+ * `TRANSITIONAL_PAIRS`, which is `transitional` in `kinds-debt.json`. */
 export const ALLOWED = new Set([
   "translate->tools",
   // The token a fetch carries (`contract/token-provider.ts`).
@@ -23,7 +25,20 @@ export const ALLOWED = new Set([
  * admits these imports and no other, so a new import under an existing row fails instead of
  * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
  */
-export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {};
+export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = transitionalPairs();
+
+/** `transitional` of the debt file, `<edge> | <importer> -> <target>` each, grouped by edge. */
+function transitionalPairs(): Record<string, string[]> {
+  const debt: { transitional?: string[] } = JSON.parse(
+    readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8")
+  );
+  const byEdge: Record<string, string[]> = {};
+  for (const entry of debt.transitional ?? []) {
+    const [edge = "", pair = ""] = entry.split(" | ");
+    byEdge[edge] = [...(byEdge[edge] ?? []), pair];
+  }
+  return byEdge;
+}
 
 /**
  * The contexts whose interior is held by Biome's folder groups instead of the public-surface

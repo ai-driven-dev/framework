@@ -1,8 +1,9 @@
 /**
  * Five size limits live in biome, each at `error` on `src/**` with the files that exceed it today
- * listed as negated includes of its own override. Biome cannot say "this list only shrinks", and
- * a limit it silently stops applying is invisible, so this suite pins each carrier, measures
- * every guard with biome itself against its baseline, and plants a tree to watch each one bite.
+ * listed as negated includes of its own override. Biome cannot say "this list only shrinks": the
+ * `limits` of `kinds-debt.json` repeat each list and `debt-only-shrinks` holds it down. A limit
+ * Biome silently stops applying is invisible, so this suite pins each carrier, measures every
+ * guard with biome itself against its baseline, and plants a tree to watch each one bite.
  */
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -10,6 +11,7 @@ import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.js";
 import { biomeFindings, CLI_ROOT, expectRatchet, read } from "./helpers.js";
+import { loadDebt } from "./kinds.js";
 
 type Guard =
   | {
@@ -53,18 +55,6 @@ const GUARDS: readonly Guard[] = [
   { name: "function parameters", kind: "plugin", file: "max-function-params.grit" },
 ];
 
-/**
- * Entries each guard's baseline holds today. Lowered when an entry leaves, never raised: a new
- * violator is fixed, not listed.
- */
-const MAX_BASELINE: Readonly<Record<string, number>> = {
-  "function length": 26,
-  "cognitive complexity": 25,
-  "one class per file": 8,
-  "file length": 1,
-  "function parameters": 109,
-};
-
 interface Override {
   readonly includes?: readonly string[];
   readonly plugins?: readonly string[];
@@ -102,6 +92,15 @@ function baselineOf(guard: Guard): string[] {
     .sort();
 }
 
+/** The exclusions of a guard in `limits` of the debt file, `<guard> :: <file>` each. */
+function debtOf(guard: Guard): string[] {
+  const prefix = `${guard.name} :: `;
+  return loadDebt()
+    .limits.filter((entry) => entry.startsWith(prefix))
+    .map((entry) => entry.slice(prefix.length))
+    .sort();
+}
+
 /** The finding id biome prints for a guard: a rule's path, or `plugin`. */
 const findingId = (guard: Guard): string =>
   guard.kind === "rule" ? `lint/${guard.group}/${guard.rule}` : "plugin";
@@ -129,12 +128,12 @@ describe("biome carries the code-size guards", () => {
         });
       });
 
-      it("lists exactly as many files as its ceiling", () => {
-        const ceiling = present(MAX_BASELINE[guard.name]);
+      it("lists exactly the exclusions the debt file names", () => {
+        const listed = debtOf(guard);
         expect(
-          baselineOf(guard).length,
-          `${guard.name} baseline must hold ${ceiling} files: a new violator is fixed, never listed; a fixed file lowers the ceiling`
-        ).toBe(ceiling);
+          baselineOf(guard),
+          `${guard.name} exclusions are \`limits\` in kinds-debt.json: a new violator is fixed, never listed; a fixed file leaves both`
+        ).toEqual(listed);
       });
 
       it("applies to src/** and excludes exact, sorted, unique files only", () => {
