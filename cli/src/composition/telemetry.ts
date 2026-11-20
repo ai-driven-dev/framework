@@ -23,11 +23,12 @@ import { RequestReport } from "../contexts/telemetry/application/report/request-
 import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
 import { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.js";
-import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
+import { GrantConsent } from "../contexts/telemetry/application/switch/grant-consent.js";
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
 import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.js";
+import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
@@ -162,7 +163,6 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   );
   const manageIdentity = new ManageIdentity(identity);
   const proposeIdentity = new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment);
-  const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
     declareTask,
@@ -187,12 +187,20 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
     ),
     readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
     enableTelemetry: new EnableTelemetry(
-      consentSwitch,
+      locator,
+      consents,
+      new GrantConsent(consents, consents, consentHistory, ledger, () => ({
+        token: randomUUID(),
+        at: environment.now(),
+      })),
       new RememberOwnRoot(ledger, resolutionStore, environment),
-      () => ({ token: randomUUID(), at: environment.now() }),
       identity
     ),
-    disableTelemetry: new DisableTelemetry(consentSwitch, environment.now),
+    disableTelemetry: new DisableTelemetry(
+      locator,
+      consents,
+      new WithdrawConsent(consents, consentHistory, ledger, environment.now)
+    ),
     forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
         root,

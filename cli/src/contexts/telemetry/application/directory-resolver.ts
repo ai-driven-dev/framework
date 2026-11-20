@@ -129,9 +129,8 @@ export class ResolutionRun {
       if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
       if (!named) {
-        const event = closeEvent(interval.token, this.environment.now());
-        await this.history.append(event);
-        this.consents = this.consents.with(event);
+        await this.history.append(closeEvent(interval.token, this.environment.now()));
+        this.consents = new ConsentLog(await this.history.read());
       }
     }
   }

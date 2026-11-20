@@ -30,15 +30,9 @@ describe("when each clone consented, as the history says", () => {
     const open = logOf(openEvent(A, "t1", T2));
     expect(open.covers(A, T1.getTime())).toBe(false);
     expect(open.covers(A, T2.getTime())).toBe(true);
-    const closed = open.with(closeEvent("t1", T3));
+    const closed = logOf(openEvent(A, "t1", T2), closeEvent("t1", T3));
     expect(closed.covers(A, T3.getTime() - 1)).toBe(true);
     expect(closed.covers(A, T3.getTime())).toBe(false);
-  });
-
-  it("leaves the log it was added to as it was", () => {
-    const before = logOf(openEvent(A, "t1", T1));
-    before.with(closeEvent("t1", T2));
-    expect(before.covers(A, T3.getTime())).toBe(true);
   });
 
   it("opens a later on only from its own time", () => {
