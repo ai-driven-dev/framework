@@ -15,14 +15,13 @@ import type {
 import { rewritePluginRootToken } from "../../tools/contract/plugin-root-token.js";
 import type {
   FlatPluginAnswers,
-  MarkdownSectionAnswers,
   NativePluginAnswers,
   PluginAnswers,
   SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
-import type { TranslatedAiTool, TranslateProfile } from "../ports/translate-profile.js";
 import { flatHooksBridgeFile } from "./flat-layout.js";
 import type { OutputFile } from "./output-file.js";
+import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
 
 interface TranslatedFile {
   relativePath: string;
@@ -70,7 +69,7 @@ export function translateWithComponentPaths(
   if (delivery === null) return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
   const { tool, plugins } = delivery;
   if (plugins.kind === "native")
-    return translateNativeWithPaths(dist, tool, plugins, manifestPaths);
+    return translateNativeWithPaths({ dist, tool, plugins }, manifestPaths);
   if (plugins.kind === "flat") {
     const { files, skipped } = translateFlat(dist, tool, plugins);
     return { files, componentPaths: new Map(), skipped, notices: [] };
@@ -89,10 +88,15 @@ export function flatHookPaths(
   return new Set(flatHooksFiles(dist, delivery.plugins).map((file) => file.relativePath));
 }
 
+/** A distribution translated for a tool that installs a plugin as a directory of its own. */
+interface NativeBuild {
+  readonly dist: PluginDistribution;
+  readonly tool: TranslatedAiTool;
+  readonly plugins: NativePluginAnswers;
+}
+
 function translateNativeWithPaths(
-  dist: PluginDistribution,
-  tool: TranslatedAiTool,
-  plugins: NativePluginAnswers,
+  build: NativeBuild,
   manifestPaths: readonly string[]
 ): {
   files: OutputFile[];
@@ -100,17 +104,17 @@ function translateNativeWithPaths(
   skipped: ReadonlySkipList;
   notices: ReadonlyNoticeList;
 } {
+  const { dist, tool, plugins } = build;
   const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
-  const { files, componentPaths } = buildNativeFiles(dist, tool, plugins, pluginRoot);
-  appendManifestFile(dist, plugins, pluginRoot, manifestPaths, files);
+  const { files, componentPaths } = buildNativeFiles(build, pluginRoot);
+  const manifest = manifestFile(build, pluginRoot, manifestPaths);
+  if (manifest !== null) files.push(manifest);
   const notices = collectHooksTrustNotices(dist, tool, plugins);
   return { files, componentPaths, skipped: [], notices };
 }
 
 function buildNativeFiles(
-  dist: PluginDistribution,
-  tool: TranslatedAiTool,
-  plugins: NativePluginAnswers,
+  { dist, tool, plugins }: NativeBuild,
   pluginRoot: string
 ): { files: OutputFile[]; componentPaths: ReadonlyMap<string, string> } {
   const result: OutputFile[] = [];
@@ -137,18 +141,16 @@ function buildNativeFiles(
   return { files: result, componentPaths };
 }
 
-function appendManifestFile(
-  dist: PluginDistribution,
-  plugins: NativePluginAnswers,
+function manifestFile(
+  { dist, plugins }: NativeBuild,
   pluginRoot: string,
-  manifestPaths: readonly string[],
-  result: OutputFile[]
-): void {
+  manifestPaths: readonly string[]
+): OutputFile | null {
   const manifestPath = plugins.manifestPath();
-  if (manifestPath === null) return;
+  if (manifestPath === null) return null;
   const sourceManifest = findSourceManifestContent(dist, manifestPaths);
-  if (sourceManifest === null) return;
-  result.push(makeFile(`${pluginRoot}${manifestPath}`, sourceManifest));
+  if (sourceManifest === null) return null;
+  return makeFile(`${pluginRoot}${manifestPath}`, sourceManifest);
 }
 
 // A delivered hook is not a skip: `hooksTrustNotice` names what a person still has to do
@@ -203,8 +205,7 @@ function translateComponent(
 ): TranslatedFile | null {
   const top = file.relativePath.split("/")[0];
   if (top === "commands" || top === "agents" || top === "rules") {
-    const cap = tool.markdownSection(top);
-    return cap === null ? null : translateMarkdown(file, `${top}/`, tool.directory, cap);
+    return translateMarkdown(file, top, tool);
   }
   if (top === "skills") {
     const cap = tool.skillsSection();
@@ -220,12 +221,13 @@ function translateFlat(
 ): { files: OutputFile[]; skipped: ReadonlySkipList } {
   const { namespacePrefix: flatNamespacePrefix } = plugins.flatLayout();
   const result: OutputFile[] = [];
+  const target = { pluginName: dist.manifest.name, tool };
   for (const file of tool.markdownSection("commands") === null ? [] : dist.components.commands) {
-    result.push(flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix));
+    result.push(flatCommandFile(file, target, flatNamespacePrefix));
   }
   for (const section of ["agents", "rules", "skills"] as const) {
     for (const file of dist.components[section]) {
-      const f = flatSectionFile(file, section, dist.manifest.name, tool);
+      const f = flatSectionFile(file, section, target);
       if (f !== null) result.push(f);
     }
   }
@@ -266,7 +268,12 @@ function installedHooksBridge(
   const hasOwnBridge = dist.components.hooks.some(
     (f) => basename(f.relativePath) === bridge.skipIfSourceHas
   );
-  const file = flatHooksBridgeFile(bridge, manifestFile.content, dist.manifest.name, hasOwnBridge);
+  const file = flatHooksBridgeFile({
+    bridge,
+    rawHooksJson: manifestFile.content,
+    pluginName: dist.manifest.name,
+    sourceShipsItsOwn: hasOwnBridge,
+  });
   return file === null ? null : makeFile(file.relativePath, file.content);
 }
 
@@ -287,14 +294,20 @@ function collectHooksSkips(
   return [entry];
 }
 
+/** The plugin a flat install delivers, and the tool it is delivered for. */
+interface FlatTarget {
+  readonly pluginName: string;
+  readonly tool: TranslatedAiTool;
+}
+
 function flatCommandFile(
   file: PluginComponentFile,
-  pluginName: string,
-  tool: TranslatedAiTool,
+  target: FlatTarget,
   prefix: string
 ): OutputFile {
+  const { pluginName, tool } = target;
   const filename = basename(file.relativePath);
-  const raw = prefixCommandName(file.content, file.relativePath, prefix, pluginName);
+  const raw = prefixCommandName(file, prefix, pluginName);
   const content = tool.rewriteContent(raw);
   return makeFile(tool.flatInstallPath("commands", pluginName, filename), content);
 }
@@ -302,8 +315,7 @@ function flatCommandFile(
 function flatSectionFile(
   file: PluginComponentFile,
   section: "agents" | "rules" | "skills",
-  pluginName: string,
-  tool: TranslatedAiTool
+  { pluginName, tool }: FlatTarget
 ): OutputFile | null {
   const sectionDir = `${section}/`;
   const fileName = file.relativePath.slice(sectionDir.length);
@@ -376,15 +388,10 @@ function basename(relativePath: string): string {
   return relativePath.split("/").at(-1) ?? relativePath;
 }
 
-function prefixCommandName(
-  content: string,
-  relativePath: string,
-  prefix: string,
-  pluginName: string
-): string {
-  const { frontmatter, body } = parseFrontmatter(content);
+function prefixCommandName(file: PluginComponentFile, prefix: string, pluginName: string): string {
+  const { frontmatter, body } = parseFrontmatter(file.content);
   const rawName = typeof frontmatter.name === "string" ? frontmatter.name : "";
-  const simpleName = stripCommandPrefix(rawName) || basename(relativePath);
+  const simpleName = stripCommandPrefix(rawName) || basename(file.relativePath);
   const newFrontmatter = { ...frontmatter, name: `${prefix}${pluginName}:${simpleName}` };
   return serializeFrontmatter(newFrontmatter, body);
 }
@@ -404,14 +411,15 @@ function toPluginRelativePath(fullPath: string, toolDirectory: string): string {
 
 function translateMarkdown(
   file: PluginComponentFile,
-  sectionDir: string,
-  toolDirectory: string,
-  cap: MarkdownSectionAnswers
+  section: "commands" | "agents" | "rules",
+  tool: TranslatedAiTool
 ): TranslatedFile | null {
-  const fileName = file.relativePath.slice(sectionDir.length);
+  const cap = tool.markdownSection(section);
+  if (cap === null) return null;
+  const fileName = file.relativePath.slice(`${section}/`.length);
   const fullPath = cap.buildInstallPath(fileName);
   if (fullPath === null) return null;
-  const relativePath = toPluginRelativePath(fullPath, toolDirectory);
+  const relativePath = toPluginRelativePath(fullPath, tool.directory);
   const { frontmatter, body } = parseFrontmatter(file.content);
   const newFm = cap.convertFrontmatter(frontmatter, fileName);
   const content = cap.serialize(newFm, body);

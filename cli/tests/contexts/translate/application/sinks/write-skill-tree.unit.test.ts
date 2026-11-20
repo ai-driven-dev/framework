@@ -23,7 +23,9 @@ function writtenUnder(fs: InMemoryFileAdapter, dir: string): Record<string, stri
 describe("writeSkillTree", () => {
   it("writes nothing for a plugin shipping no skills directory", async () => {
     const fs = fsWith({ [`${PLUGIN_SRC}/agents/reviewer.md`]: "# Reviewer" });
-    expect(await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).toBe(0);
+    expect(
+      await writeSkillTree({ fs, pluginName: PLUGIN, pluginSrc: PLUGIN_SRC, pluginOut: PLUGIN_OUT })
+    ).toBe(0);
     expect(writtenUnder(fs, PLUGIN_OUT)).toEqual({});
   });
 
@@ -32,7 +34,9 @@ describe("writeSkillTree", () => {
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: entryContent,
       [`${PLUGIN_SRC}/skills/hello/reference.json`]: assetContent,
     });
-    expect(await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).toBe(2);
+    expect(
+      await writeSkillTree({ fs, pluginName: PLUGIN, pluginSrc: PLUGIN_SRC, pluginOut: PLUGIN_OUT })
+    ).toBe(2);
     expect(writtenUnder(fs, PLUGIN_OUT)).toEqual({
       [`${PLUGIN_OUT}/skills/hello/SKILL.md`]:
         "---\nname: hello\n---\n\nSee [reference.json](./reference.json) and [commit/SKILL.md](../commit/SKILL.md)\n",
@@ -48,7 +52,15 @@ describe("writeSkillTree", () => {
     });
     const transform = (content: string, plugin: string, base: string): string =>
       `${plugin}:${base}\n${content}`;
-    expect(await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT, transform)).toBe(3);
+    expect(
+      await writeSkillTree({
+        fs,
+        pluginName: PLUGIN,
+        pluginSrc: PLUGIN_SRC,
+        pluginOut: PLUGIN_OUT,
+        transform,
+      })
+    ).toBe(3);
     expect(writtenUnder(fs, PLUGIN_OUT)).toEqual({
       [`${PLUGIN_OUT}/skills/hello/SKILL.md`]: "aidd-test:SKILL.md\n# Entry\n",
       [`${PLUGIN_OUT}/skills/hello/actions/run.md`]: "# Action\n",
@@ -59,7 +71,9 @@ describe("writeSkillTree", () => {
   it("carries a file that is not markdown untouched, whatever it names", async () => {
     const raw = "See @./reference.json and @{{TOOLS}}/x.\n";
     const fs = fsWith({ [`${PLUGIN_SRC}/skills/hello/notes.txt`]: raw });
-    expect(await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).toBe(1);
+    expect(
+      await writeSkillTree({ fs, pluginName: PLUGIN, pluginSrc: PLUGIN_SRC, pluginOut: PLUGIN_OUT })
+    ).toBe(1);
     expect(fs.getFile(`${PLUGIN_OUT}/skills/hello/notes.txt`)).toBe(raw);
   });
 
@@ -67,7 +81,7 @@ describe("writeSkillTree", () => {
     const fs = fsWith({
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: `See @${CLAUDE_ROOT_TOKEN}/hooks/run.sh\n`,
     });
-    await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT);
+    await writeSkillTree({ fs, pluginName: PLUGIN, pluginSrc: PLUGIN_SRC, pluginOut: PLUGIN_OUT });
     expect(fs.getFile(`${PLUGIN_OUT}/skills/hello/SKILL.md`)).toBe(
       "See [run.sh](../../hooks/run.sh)\n"
     );
@@ -77,17 +91,17 @@ describe("writeSkillTree", () => {
     const fs = fsWith({
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "See @{{TOOLS}}/agents/planner.md.\n",
     });
-    await expect(writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).rejects.toThrow(
-      new FrameworkPlaceholderInPluginError(PLUGIN, "hello/SKILL.md")
-    );
+    await expect(
+      writeSkillTree({ fs, pluginName: PLUGIN, pluginSrc: PLUGIN_SRC, pluginOut: PLUGIN_OUT })
+    ).rejects.toThrow(new FrameworkPlaceholderInPluginError(PLUGIN, "hello/SKILL.md"));
   });
 
   it("names the file in the refusal with forward slashes", async () => {
     const fs = new WindowsListingFileAdapter({
       [`${PLUGIN_SRC}/skills/win/SKILL.md`]: "See @{{TOOLS}}/x.md.\n",
     });
-    await expect(writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).rejects.toThrow(
-      new FrameworkPlaceholderInPluginError(PLUGIN, "win/SKILL.md")
-    );
+    await expect(
+      writeSkillTree({ fs, pluginName: PLUGIN, pluginSrc: PLUGIN_SRC, pluginOut: PLUGIN_OUT })
+    ).rejects.toThrow(new FrameworkPlaceholderInPluginError(PLUGIN, "win/SKILL.md"));
   });
 });

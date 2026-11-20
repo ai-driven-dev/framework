@@ -6,7 +6,6 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.js";
-import { DiskSink } from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatTargetExistsError,
@@ -21,6 +20,7 @@ import { buildContractOf } from "../../../../shared/testing/registered-build-con
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../../testing/build-tree.builder.js";
+import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.
@@ -173,12 +173,7 @@ describe("FlatOutputStrategy integration", () => {
         [`${pluginSrc}/.claude-plugin/plugin.json`]: "{}",
         [`${pluginSrc}/.mcp.json`]: memFs.getFile(`${pluginSrc}/.mcp.json`) ?? "",
       });
-      const sink = new DiskSink(
-        mcpOnly,
-        makeValidator(),
-        makeAssetProvider(),
-        new CapturingLogger()
-      );
+      const sink = aDiskSink(mcpOnly, makeValidator(), makeAssetProvider(), new CapturingLogger());
       const target = {
         contract: buildContractOf(TOOL.copilot, "flat"),
         mode: "flat",
@@ -256,7 +251,7 @@ function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildContract 
 }
 
 function stubSink(memFs: InMemoryFileAdapter, logger?: CapturingLogger) {
-  return new DiskSink(memFs, makeValidator(), makeAssetProvider(), logger ?? new CapturingLogger());
+  return aDiskSink(memFs, makeValidator(), makeAssetProvider(), logger ?? new CapturingLogger());
 }
 
 function stubTarget(contract: ToolBuildContract, force = false) {

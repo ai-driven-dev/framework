@@ -72,7 +72,11 @@ describe("what is reported about a marketplace", () => {
     const { useCase, registry } = await buildUseCase();
     await registry.save(PROJECT_ROOT, fixtureMarketplace("never"));
     await registry.save(PROJECT_ROOT, fixtureMarketplace("fresh"));
-    await registry.updateLastFetched(PROJECT_ROOT, "fresh", "project", new Date().toISOString());
+    await registry.updateLastFetched(
+      PROJECT_ROOT,
+      { name: "fresh", scope: "project" },
+      new Date().toISOString()
+    );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -83,7 +87,11 @@ describe("what is reported about a marketplace", () => {
     const { useCase, registry } = await buildUseCase();
     await registry.save(PROJECT_ROOT, fixtureMarketplace("recent"));
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-    await registry.updateLastFetched(PROJECT_ROOT, "recent", "project", threeDaysAgo);
+    await registry.updateLastFetched(
+      PROJECT_ROOT,
+      { name: "recent", scope: "project" },
+      threeDaysAgo
+    );
 
     const narrowed = await useCase.execute({
       projectRoot: PROJECT_ROOT,

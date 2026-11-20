@@ -21,6 +21,14 @@ const execFile = promisify(execFileCb);
 const AUTH_ERROR_PATTERN =
   /Authentication failed|403|could not read Username|Permission denied \(publickey\)|Repository not found/i;
 
+/** A clone to make: the URL it runs with, the URL an error may show, and where it lands. */
+interface CloneRequest {
+  authUrl: string;
+  displayUrl: string;
+  targetDir: string;
+  ref?: string;
+}
+
 export class PluginFetcherAdapter implements PluginFetcher {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -66,7 +74,12 @@ export class PluginFetcherAdapter implements PluginFetcher {
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
       const token = (await this.tokenProvider?.resolve()) ?? undefined;
-      await this.cloneShallow(injectTokenIntoUrl(baseUrl, token), baseUrl, targetDir, source.ref);
+      await this.cloneShallow({
+        authUrl: injectTokenIntoUrl(baseUrl, token),
+        displayUrl: baseUrl,
+        targetDir,
+        ref: source.ref,
+      });
     }
     return targetDir;
   }
@@ -84,7 +97,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
       const authUrl = source.url.startsWith("git@")
         ? source.url
         : injectTokenIntoUrl(source.url, token);
-      await this.cloneShallow(authUrl, source.url, targetDir, source.ref);
+      await this.cloneShallow({ authUrl, displayUrl: source.url, targetDir, ref: source.ref });
     }
     return targetDir;
   }
@@ -101,7 +114,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
     if (!(await this.fs.fileExists(targetDir))) {
       const token = (await this.tokenProvider?.resolve()) ?? undefined;
       const authUrl = url.startsWith("git@") ? url : injectTokenIntoUrl(url, token);
-      await this.cloneSparse(authUrl, url, targetDir, subpath, ref);
+      await this.cloneSparse({ authUrl, displayUrl: url, targetDir, ref }, subpath);
     }
     return join(targetDir, subpath);
   }
@@ -136,12 +149,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
     return git.env("GIT_TERMINAL_PROMPT", "0");
   }
 
-  private async cloneShallow(
-    authUrl: string,
-    displayUrl: string,
-    targetDir: string,
-    ref?: string
-  ): Promise<void> {
+  private async cloneShallow({ authUrl, displayUrl, targetDir, ref }: CloneRequest): Promise<void> {
     const args = ["--depth", "1", ...(ref ? ["--branch", ref] : [])];
     try {
       await this.gitWithNoPrompt().clone(authUrl, targetDir, args);
@@ -151,11 +159,8 @@ export class PluginFetcherAdapter implements PluginFetcher {
   }
 
   private async cloneSparse(
-    authUrl: string,
-    displayUrl: string,
-    targetDir: string,
-    subpath: string,
-    ref?: string
+    { authUrl, displayUrl, targetDir, ref }: CloneRequest,
+    subpath: string
   ): Promise<void> {
     try {
       await this.gitWithNoPrompt().clone(authUrl, targetDir, [

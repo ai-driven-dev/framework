@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
-import { DiskSink } from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
@@ -12,6 +11,7 @@ import {
   declaredBuildContract,
 } from "../../../../shared/testing/registered-build-contracts.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-plugin-root");
@@ -65,7 +65,7 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
 
 async function build(tool: AiToolId, fs: InMemoryFileAdapter): Promise<void> {
   const contract = buildContractOf(tool, "flat");
-  const sink = new DiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
+  const sink = aDiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = { contract, mode: "flat", force: false, sourceDir: SOURCE, outDir: OUT } as const;
   await sink.prepare(target);
   await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);

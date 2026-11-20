@@ -1,8 +1,9 @@
 import { PrepareMarketplace } from "../../contexts/distribution/application/add/prepare-marketplace.js";
 import { RecordMarketplace } from "../../contexts/distribution/application/add/record-marketplace.js";
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
-import { ChooseMarketplaceSource } from "../../contexts/distribution/application/choose-marketplace-source.js";
 import { EnsureFrameworkMarketplace } from "../../contexts/distribution/application/ensure-framework-marketplace.js";
+import { ListFrameworkReleases } from "../../contexts/distribution/application/list-framework-releases.js";
+import { PinNewestFrameworkSource } from "../../contexts/distribution/application/pin-newest-framework-source.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
@@ -198,9 +199,11 @@ export function wireMarketplace(base: Base, inst: Installation) {
     )
   );
   const syncNativeActivation = new SyncNativeActivation(syncSettingsUseCase);
+  const listFrameworkReleases = new ListFrameworkReleases(releaseResolver);
   const askMarketplaceSource = new AskMarketplaceSource(
     prompter,
-    new ChooseMarketplaceSource(releaseResolver)
+    listFrameworkReleases,
+    new PinNewestFrameworkSource(listFrameworkReleases)
   );
   const registerMarketplace = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(registerFrameworkMarketplace, tokenProvider, releaseResolver),

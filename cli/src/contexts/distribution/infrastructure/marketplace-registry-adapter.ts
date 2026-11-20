@@ -5,7 +5,7 @@ import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/lay
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
+import type { MarketplaceKey, MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -65,28 +65,25 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     await this.write(path, filtered);
   }
 
-  async updateLastFetched(
-    projectRoot: string,
-    name: string,
-    scope: Scope,
-    when: string
-  ): Promise<void> {
-    const path = this.pathFor(projectRoot, scope);
-    const entries = await this.read(path, scope);
-    const updated = entries.map((m) => (m.name === name ? m.withLastFetched(when) : m));
-    await this.write(path, updated);
+  async updateLastFetched(projectRoot: string, key: MarketplaceKey, when: string): Promise<void> {
+    await this.update(projectRoot, key, (m) => m.withLastFetched(when));
   }
 
-  async updateVersion(
+  async updateVersion(projectRoot: string, key: MarketplaceKey, version: string): Promise<void> {
+    await this.update(projectRoot, key, (m) => m.withVersion(version));
+  }
+
+  private async update(
     projectRoot: string,
-    name: string,
-    scope: Scope,
-    version: string
+    key: MarketplaceKey,
+    change: (marketplace: Marketplace) => Marketplace
   ): Promise<void> {
-    const path = this.pathFor(projectRoot, scope);
-    const entries = await this.read(path, scope);
-    const updated = entries.map((m) => (m.name === name ? m.withVersion(version) : m));
-    await this.write(path, updated);
+    const path = this.pathFor(projectRoot, key.scope);
+    const entries = await this.read(path, key.scope);
+    await this.write(
+      path,
+      entries.map((m) => (m.name === key.name ? change(m) : m))
+    );
   }
 
   private pathFor(projectRoot: string, scope: Scope): string {

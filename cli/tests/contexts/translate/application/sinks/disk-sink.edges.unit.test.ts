@@ -4,11 +4,8 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
-import {
-  DiskSink,
-  type DiskTarget,
-} from "../../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import {
   FlatMergeTargetNotJsonError,
   FrameworkPlaceholderInPluginError,
@@ -19,6 +16,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.fake.js";
+import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-edges-out");
@@ -96,7 +94,7 @@ async function write(
   validator: JsonSchemaValidator = { validate() {} },
   logger = new CapturingLogger()
 ): Promise<number> {
-  const sink = new DiskSink(fs, validator, ASSETS, logger);
+  const sink = aDiskSink(fs, validator, ASSETS, logger);
   if (target.mode === "flat") fs.setFile(`${target.outDir}/.keep`, "");
   await sink.prepare(target);
   const count = await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);

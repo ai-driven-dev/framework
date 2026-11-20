@@ -7,6 +7,7 @@ import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profi
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
+import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
@@ -67,7 +68,14 @@ async function flatMerge(
   seed: Record<string, string>
 ): Promise<InMemoryFileAdapter> {
   const fs = sourceFs(seed);
-  const sink = new DiskSink(fs, { validate() {} }, unused, new CapturingLogger());
+  const logger = new CapturingLogger();
+  const sink = new DiskSink(
+    fs,
+    { validate() {} },
+    unused,
+    logger,
+    new FlatWriter(fs, unused, logger)
+  );
   await sink.writePlugin(
     { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },
     PLUGIN,

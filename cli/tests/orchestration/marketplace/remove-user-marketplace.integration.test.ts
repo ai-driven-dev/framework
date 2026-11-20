@@ -375,10 +375,8 @@ for (const toolId of [TOOL.codex]) {
         delete: async () => {
           throw new Error("registry delete failed");
         },
-        updateLastFetched: (root, name, scope, when) =>
-          f.registry.updateLastFetched(root, name, scope, when),
-        updateVersion: (root, name, scope, version) =>
-          f.registry.updateVersion(root, name, scope, version),
+        updateLastFetched: (root, key, when) => f.registry.updateLastFetched(root, key, when),
+        updateVersion: (root, key, version) => f.registry.updateVersion(root, key, version),
       };
       const useCase = userMarketplaceRemover(
         new InMemoryFileAdapter(),
