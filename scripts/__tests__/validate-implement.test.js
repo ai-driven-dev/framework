@@ -82,19 +82,23 @@ after(() => fs.rmSync(root, { recursive: true, force: true }));
 describe("validate-implement", () => {
   it("accepts a plan midway: done, then in progress on what it needed", () => {
     const r = run(folder("in-progress", [{ status: "done" }, { status: "in-progress", deps: "1" }]));
+    assert.equal(r.code, 0);
     assert.doesNotMatch(r.out, FINDING);
   });
 
   it("accepts an implemented plan with every phase done", () => {
-    assert.equal(run(folder("implemented", [{ status: "done" }, { status: "done", deps: "1" }])).out, "");
+    const r = run(folder("implemented", [{ status: "done" }, { status: "done", deps: "1" }]));
+    assert.deepEqual([r.code, r.out], [0, ""]);
   });
 
   it("accepts a blocked plan whatever its phases hold", () => {
-    assert.equal(run(folder("blocked", [{ status: "done" }, { status: "in-progress", deps: "1" }])).out, "");
+    const r = run(folder("blocked", [{ status: "done" }, { status: "in-progress", deps: "1" }]));
+    assert.deepEqual([r.code, r.out], [0, ""]);
   });
 
   it("accepts the same plan saved with Windows line endings", () => {
     const r = run(folder("in-progress", [{ status: "done" }, { status: "in-progress", deps: "1" }], { crlf: true }));
+    assert.equal(r.code, 0);
     assert.doesNotMatch(r.out, FINDING);
   });
 
@@ -150,11 +154,13 @@ describe("validate-implement", () => {
 
   it("lets a blocked plan stop with phases half done, in progress together", () => {
     const r = run(folder("blocked", [{ status: "in-progress" }, { status: "in-progress" }]));
+    assert.equal(r.code, 0);
     assert.doesNotMatch(r.out, FINDING);
   });
 
   it("lets a blocked plan stop in a phase whose dependency is not done", () => {
     const r = run(folder("blocked", [{ status: "pending" }, { status: "in-progress", deps: "1" }]));
+    assert.equal(r.code, 0);
     assert.doesNotMatch(r.out, FINDING);
   });
 
