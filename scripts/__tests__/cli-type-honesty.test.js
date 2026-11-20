@@ -189,6 +189,43 @@ test("as const and satisfies assert nothing and are not counted", () => {
   assert.equal(clean.status, 0, clean.output);
 });
 
+/** The annotation must resolve: an unresolved name is the checker's error type, which reads as `any`. */
+const THING = "interface Thing {\n  a: string;\n}\n";
+
+const DISGUISED_CASTS = {
+  "json-parse": `${THING}export const x: Thing = JSON.parse(raw);`,
+  "require": `${THING}export const x: Thing = require("./thing");`,
+  "any-binding": `${THING}declare const a: any;\nexport const x: Thing = a;`,
+  "multi-line-type": "export const x: {\n  a: string;\n} = JSON.parse(raw);",
+};
+
+for (const [name, source] of Object.entries(DISGUISED_CASTS)) {
+  test(`an annotated binding whose initializer is untyped counts as a cast: ${name}`, () => {
+    const breach = runOn({ [file("disguised")]: source });
+
+    assert.equal(breach.status, 1, breach.output);
+    assert.match(breach.output, /disguised\.ts has 1 type assertions, baseline 0: .*disguised\.ts:\d/);
+  });
+}
+
+test("a binding that annotates unknown or any, or holds a typed value, or already casts, adds no extra count", () => {
+  const clean = runOn({
+    "cli/src/honest.ts": [
+      "export const a: unknown = JSON.parse(raw);",
+      "export const b: any = JSON.parse(raw);",
+      "export const c: number = 1;",
+      "export const d = JSON.parse(raw);",
+    ].join("\n"),
+  });
+  const once = runOn({ [file("cast")]: `${THING}export const x: Thing = <any>JSON.parse(raw);` }, {
+    ...ALLOWED_CAST_BASELINE,
+    "src/cast.ts": 1,
+  });
+
+  assert.equal(clean.status, 0, clean.output);
+  assert.equal(once.status, 0, once.output);
+});
+
 test("a cast and a raised baseline in one change fail against the base's baseline", () => {
   const raised = { ...ALLOWED_CAST_BASELINE, "src/honest.ts": 1 };
   const breach = runOn({ "cli/src/honest.ts": "export const x = [] as string[];" }, raised, ALLOWED_CAST_BASELINE);

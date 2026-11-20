@@ -83,18 +83,39 @@ const CASTS_ALLOWED = new Map([
 /**
  * Type assertions (`x as T`, `<T>x`) are counted per file against a baseline that only shrinks:
  * `satisfies` checks instead of asserting, and `as const` asserts nothing wider than the value.
+ * A disguised assertion counts too: a variable declared with a type annotation (neither `any` nor
+ * `unknown`) whose initializer the checker types as `any`, such as `const x: T = JSON.parse(s)`,
+ * a `require(...)` or an `any` value. Limit: only variable declarations are read; an `any` passed
+ * as an argument, returned, or assigned to a property or parameter default is not counted.
  * The parser is the TypeScript compiler's own, reached through the cli's installed package.
  */
+const ANY_FLAG = 1; // TypeFlags.Any, which the package exposes only as a type-level enum
+const ANY_OR_UNKNOWN_FLAGS = 3; // TypeFlags.AnyOrUnknown
 const cliRequire = createRequire(new URL("../cli/package.json", import.meta.url));
 const importFromCli = (specifier) => import(pathToFileURL(cliRequire.resolve(specifier)).href);
 
 async function countTypeAssertions() {
   const { API } = await importFromCli("typescript/unstable/sync");
-  const { isAsExpression, isTypeAssertion, isTypeReferenceNode, isIdentifier } =
+  const {
+    isAsExpression,
+    isTypeAssertion,
+    isTypeReferenceNode,
+    isIdentifier,
+    isVariableDeclaration,
+  } =
     await importFromCli("typescript/unstable/ast/is");
   const isConst = (type) =>
     isTypeReferenceNode(type) && isIdentifier(type.typeName) && type.typeName.text === "const";
   const api = new API({ cwd: CLI });
+  const flagsOf = (project, node) => project.checker.getTypeAtLocation(node)?.flags ?? 0;
+  const isUntypedInit = (project, node) =>
+    isVariableDeclaration(node) &&
+    node.type !== undefined &&
+    node.initializer !== undefined &&
+    !isAsExpression(node.initializer) &&
+    !isTypeAssertion(node.initializer) &&
+    (flagsOf(project, node.type) & ANY_OR_UNKNOWN_FLAGS) === 0 &&
+    (flagsOf(project, node.initializer) & ANY_FLAG) !== 0;
   try {
     const project = api
       .updateSnapshot({ openProject: path.join(CLI, "tsconfig.json") })
@@ -106,7 +127,10 @@ async function countTypeAssertions() {
       const sourceFile = project.program.getSourceFile(name);
       const lines = [];
       const visit = (node) => {
-        if ((isAsExpression(node) || isTypeAssertion(node)) && !isConst(node.type)) {
+        if (
+          ((isAsExpression(node) || isTypeAssertion(node)) && !isConst(node.type)) ||
+          isUntypedInit(project, node)
+        ) {
           lines.push(sourceFile.text.slice(0, node.type.pos).split("\n").length);
         }
         node.forEachChild(visit);
