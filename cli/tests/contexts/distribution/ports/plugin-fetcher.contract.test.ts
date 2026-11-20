@@ -11,7 +11,7 @@ import {
   describePluginFetcherContract,
   PLUGIN_MANIFEST,
   type PluginFetcherSubject,
-} from "../testing/plugin-fetcher-contract.js";
+} from "../testing/plugin-fetcher.contract.js";
 
 const execFileAsync = promisify(execFile);
 const PLUGIN_JSON = '{ "name": "remote-plugin", "version": "1.0.0" }';

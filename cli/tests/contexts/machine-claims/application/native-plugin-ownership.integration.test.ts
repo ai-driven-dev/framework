@@ -9,7 +9,7 @@ import {
   InMemoryMachineManifest,
   InMemoryMachineManifestRepository,
   loadingOnlyUnderLock,
-} from "../testing/in-memory-machine-manifest.js";
+} from "../testing/in-memory-machine-manifest.fake.js";
 
 const { codex } = TOOL;
 

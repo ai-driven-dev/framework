@@ -8,7 +8,7 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.js";
-import { buildTree } from "../testing/build-tree.js";
+import { buildTree } from "../testing/build-tree.builder.js";
 import { translator } from "../testing/engine-kit.js";
 
 const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");

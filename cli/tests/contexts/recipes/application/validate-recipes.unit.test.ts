@@ -2,8 +2,8 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { ValidateRecipes } from "../../../../src/contexts/recipes/application/validate-recipes.js";
 import { InputRequiredError } from "../../../../src/shared/domain/errors.js";
-import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.js";
-import { categorized, markdown, validDirect, withLines } from "../testing/recipe-builders.js";
+import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.fake.js";
+import { categorized, markdown, validDirect, withLines } from "../testing/recipe.builder.js";
 
 const at = (name: string): string => path.resolve("/recipes", name);
 const recipe = at("recipe.md");

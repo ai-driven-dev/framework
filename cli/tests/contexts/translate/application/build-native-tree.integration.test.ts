@@ -15,7 +15,7 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.js";
-import { buildTree } from "../testing/build-tree.js";
+import { buildTree } from "../testing/build-tree.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 const SOURCE_DIR = FIXTURE_DIR;

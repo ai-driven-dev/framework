@@ -20,7 +20,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.js";
-import { buildTree } from "../../testing/build-tree.js";
+import { buildTree } from "../../testing/build-tree.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.

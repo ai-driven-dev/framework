@@ -4,7 +4,7 @@ import type {
   HooksAcceptance,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../src/shared/domain/materialization/flat-paths.js";
-import { pluginDeliveryAccepting } from "./plugin-delivery-stub.js";
+import { pluginDeliveryAccepting } from "./plugin-delivery-stub.builder.js";
 
 export interface FlatPluginsStub {
   readonly namespacePrefix?: string;

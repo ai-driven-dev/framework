@@ -5,7 +5,7 @@ import {
 } from "../../../../src/contexts/translate/contract/build-targets.js";
 import { distributionProbesOf } from "../../../../src/contexts/translate/domain/plugin-format.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { catalogDeclaring } from "../testing/declared-tool-catalog.js";
+import { catalogDeclaring } from "../testing/declared-tool-catalog.builder.js";
 
 describe("distributionProbesOf", () => {
   // Order is behaviour: the reader takes the first probe that resolves, and a bare

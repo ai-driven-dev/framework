@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
-import { contractToolProfile } from "../testing/contract-tool-profile.js";
+import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
 import {
   distOf,
   hooksDist,
@@ -11,11 +11,11 @@ import {
   translator,
   treeOf,
 } from "../testing/engine-kit.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
-import { markdownSectionInstalling } from "../testing/markdown-section-stub.js";
-import { nativePluginsStub } from "../testing/native-plugins-stub.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
+import { markdownSectionInstalling } from "../testing/markdown-section-stub.builder.js";
+import { nativePluginsStub } from "../testing/native-plugins-stub.builder.js";
 import { claude, opencode, vscode } from "../testing/registered-profiles.js";
-import { syntheticToolProfile } from "../testing/synthetic-tool-profile.js";
+import { syntheticToolProfile } from "../testing/synthetic-tool-profile.builder.js";
 
 const agents = [makeFile("agents/rev.md", "---\nname: rev\n---\n\nReview.\n")];
 const agentDist = distOf([...agents], { agents });

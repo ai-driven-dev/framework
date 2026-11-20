@@ -2,7 +2,7 @@ import type {
   HooksAcceptance,
   NativePluginAnswers,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import { pluginDeliveryAccepting } from "./plugin-delivery-stub.js";
+import { pluginDeliveryAccepting } from "./plugin-delivery-stub.builder.js";
 
 export interface NativePluginsStub {
   readonly pluginsDir?: string;

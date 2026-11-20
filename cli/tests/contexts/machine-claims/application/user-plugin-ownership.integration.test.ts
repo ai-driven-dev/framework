@@ -7,8 +7,8 @@ import {
   InMemoryMachineManifest,
   InMemoryMachineManifestRepository,
   loadingOnlyUnderLock,
-} from "../testing/in-memory-machine-manifest.js";
-import { MachinePlugin } from "../testing/machine-plugin.js";
+} from "../testing/in-memory-machine-manifest.fake.js";
+import { MachinePlugin } from "../testing/machine-plugin.fake.js";
 
 function fixture(scope: Scope = "user", dependents: readonly string[] = ["/A", "/B"]) {
   const manifest = new InMemoryMachineManifest(TOOL.cursor);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contractToolProfile } from "../testing/contract-tool-profile.js";
+import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
 import {
   CLAUDE_ROOT_TOKEN,
   CODEX_ROOT_TOKEN,
@@ -17,7 +17,7 @@ import {
   translator,
   treeOf,
 } from "../testing/engine-kit.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
 import { claude, codex, cursor, opencode } from "../testing/registered-profiles.js";
 
 describe("a plugin of one skill, its action and its asset", () => {

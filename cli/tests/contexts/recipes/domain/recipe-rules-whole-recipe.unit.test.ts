@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { inspectRecipe } from "../../../../src/contexts/recipes/domain/recipe-rules.js";
-import { markdown, validDirect, withLines } from "../testing/recipe-builders.js";
+import { markdown, validDirect, withLines } from "../testing/recipe.builder.js";
 
 const FILE = "recipe.md";
 

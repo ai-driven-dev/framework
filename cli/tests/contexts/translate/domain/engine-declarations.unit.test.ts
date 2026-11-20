@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { contractToolProfile } from "../testing/contract-tool-profile.js";
+import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
 import {
   distOf,
   hooksDist,
@@ -13,10 +13,10 @@ import {
   translator,
   treeOf,
 } from "../testing/engine-kit.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
-import { nativePluginsStub } from "../testing/native-plugins-stub.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
+import { nativePluginsStub } from "../testing/native-plugins-stub.builder.js";
 import { claude, codex, cursor, opencode, vscode } from "../testing/registered-profiles.js";
-import { unsupportedPluginsStub } from "../testing/unsupported-plugins-stub.js";
+import { unsupportedPluginsStub } from "../testing/unsupported-plugins-stub.builder.js";
 
 describe("a plugin's mcp declaration", () => {
   it("lands at the name cursor reads it under", () => {

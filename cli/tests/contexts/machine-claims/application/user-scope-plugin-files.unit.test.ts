@@ -10,7 +10,7 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { errnoError, FaultingFileAdapter } from "../../../shared/testing/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { MachinePlugin } from "../testing/machine-plugin.js";
+import { MachinePlugin } from "../testing/machine-plugin.fake.js";
 
 const HOME = "/home/u";
 const BOUNDARY = join(HOME, ".cursor", "plugins", "local");

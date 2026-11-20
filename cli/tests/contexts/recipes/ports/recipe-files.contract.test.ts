@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { RecipeFilesAdapter } from "../../../../src/contexts/recipes/infrastructure/recipe-files-adapter.js";
-import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.js";
-import { describeRecipeFilesContract } from "../testing/recipe-files-contract.js";
+import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.fake.js";
+import { describeRecipeFilesContract } from "../testing/recipe-files.contract.js";
 
 describeRecipeFilesContract("the in-memory files", async () => {
   const files = new InMemoryRecipeFiles();

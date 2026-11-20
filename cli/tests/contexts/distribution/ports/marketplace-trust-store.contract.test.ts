@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MarketplaceTrustStoreAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
 import { InMemoryMarketplaceTrustStore } from "../../../helpers/ports/in-memory-marketplace-trust-store.js";
-import { describeMarketplaceTrustStoreContract } from "../testing/marketplace-trust-store-contract.js";
+import { describeMarketplaceTrustStoreContract } from "../testing/marketplace-trust-store.contract.js";
 
 describeMarketplaceTrustStoreContract("in memory", async () => ({
   store: new InMemoryMarketplaceTrustStore(),

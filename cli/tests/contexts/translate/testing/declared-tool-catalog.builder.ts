@@ -7,7 +7,7 @@ import type {
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { ownMembers } from "./contract-tool-profile.js";
+import { ownMembers } from "./contract-tool-profile.builder.js";
 
 /** What a synthetic tool declares to the code that reads a catalog for probes and build modes. */
 export interface DeclaredTool {

@@ -5,7 +5,7 @@ import type { UserSourceReferences } from "../../../../src/contexts/machine-clai
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { RecordingSourceReferences } from "./recording-source-references.js";
+import { RecordingSourceReferences } from "../testing/recording-source-references.fake.js";
 
 const REF = "aidd-test@aidd-framework";
 const SHARED: ListedMarketplace = { name: "aidd-framework", scope: "user" };

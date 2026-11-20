@@ -7,7 +7,7 @@ import {
   type MarketplaceData,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
-import { makeRegistryAdapter } from "../testing/registry-adapter.js";
+import { makeRegistryAdapter } from "../testing/registry-adapter.builder.js";
 
 const baseData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome",
