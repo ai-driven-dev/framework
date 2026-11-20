@@ -13,6 +13,8 @@ node "$validator" "$project_root/.claude/agents/$name.md"
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
 - `$agent_json`: a temporary file outside the project holding `name`, `description` and `body`, plus each other frontmatter field the agent keeps, such as `model`, `effort` or `tools`. Claude Code also keeps `color`, `permissionMode` and `disallowedTools`; Copilot keeps `include-custom-instructions`.
 
+The agent contract validates the Claude Code rendering and the plugin source only; other hosts' files are not checked.
+
 | Option | Effect |
 | --- | --- |
 | none | Writes each host's file; a failure midway leaves earlier files written. |
