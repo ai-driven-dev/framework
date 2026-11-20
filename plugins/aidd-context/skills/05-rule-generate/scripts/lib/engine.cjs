@@ -47,6 +47,7 @@ function loadContract(file) {
   for (const key of Object.keys(contract)) if (!TOP_KEYS.includes(key)) fail(`unknown key ${key}`);
   if (contract.version !== 1) fail("version must be 1");
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
+  if (contract.unit === "folder" && !contract.marker) fail("marker is required when unit is folder");
   const prefix = `${String(contract.kind).toUpperCase()}-`;
   const retired = contract.retired ?? [];
   for (const [id, rule] of Object.entries(contract.rules ?? {})) {
@@ -55,7 +56,7 @@ function loadContract(file) {
     if (!(rule.op in ops)) fail(`${id}: unknown op ${rule.op}`);
     for (const key of Object.keys(rule)) if (![...RULE_KEYS, ...OPTIONS[rule.op]].includes(key)) fail(`${id}: unknown key ${key} for op ${rule.op}`);
     for (const key of ["in", "why", "fix"]) if (!rule[key]) fail(`${id}: ${key} is required`);
-    if (rule.op === "max" && !["chars", "lines", "files"].includes(rule.measure)) fail(`${id}: measure must be chars, lines or files`);
+    if (rule.op === "max" && !["chars", "lines"].includes(rule.measure)) fail(`${id}: measure must be chars or lines`);
     rule.match = asList(rule.in).map(globRegex);
     rule.skip = asList(rule.notIn).map(globRegex);
   }

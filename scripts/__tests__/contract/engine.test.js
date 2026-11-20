@@ -102,4 +102,12 @@ describe("engine", () => {
     assert.equal(validate().status, 2);
     assert.match(validate("unit").err, /MAIN\.md: missing/u);
   });
+
+  it("exits 2 on a folder contract without a marker", () => {
+    contract({ "DEMO-01": { op: "links", in: "**/*.md", why: "w", fix: "f" } }, { unit: "folder" });
+    fs.mkdirSync(path.join(dir, "unit"));
+    const result = validate("unit");
+    assert.equal(result.status, 2);
+    assert.match(result.err, /marker is required when unit is folder/u);
+  });
 });

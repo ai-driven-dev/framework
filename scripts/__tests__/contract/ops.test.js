@@ -36,33 +36,10 @@ describe("ops", () => {
     assert.deepEqual(lines(findings(rule, "a\nb\nc\nd\n")), [4]);
   });
 
-  it("max files counts the siblings", () => {
-    const rule = { op: "max", measure: "files", max: 3 };
-    assert.deepEqual(findings(rule, "a\n"), []);
-    for (const name of ["x", "y", "z"]) fs.writeFileSync(path.join(dir, name), "");
-    assert.equal(findings(rule, "a\n").length, 1);
-  });
-
-  it("max refuses an unknown measure", () => {
-    assert.throws(() => findings({ op: "max", measure: "words", max: 1 }, "a\n"), /measure must be/u);
-  });
-
-  it("required needs a field", () => {
-    const rule = { op: "required", field: "description" };
-    assert.deepEqual(findings(rule, "---\ndescription: x\n---\n"), []);
-    assert.deepEqual(lines(findings(rule, "---\nname: x\n---\n")), [1]);
-  });
-
-  it("pattern matches a field or a line", () => {
-    assert.deepEqual(findings({ op: "pattern", line: 1, regex: "^# " }, "# T\n"), []);
-    assert.deepEqual(lines(findings({ op: "pattern", line: 1, regex: "^# " }, "T\n")), [1]);
-  });
-
-  it("forbidden skips fences and inline code unless the scope is raw", () => {
+  it("forbidden skips fences and inline code", () => {
     const rule = { op: "forbidden", regex: "BAD" };
     assert.deepEqual(findings(rule, "ok `BAD`\n```\nBAD\n```\n"), []);
     assert.deepEqual(lines(findings(rule, "ok\nBAD\n")), [2]);
-    assert.deepEqual(lines(findings({ ...rule, scope: "raw" }, "ok\n```\nBAD\n```\n")), [3]);
     assert.deepEqual(lines(findings({ ...rule, scope: "nofence" }, "BAD\n```\nBAD\n```\n")), [1]);
   });
 

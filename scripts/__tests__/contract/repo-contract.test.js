@@ -54,4 +54,8 @@ describe("plugin contract", () => {
     assert.ok(ids({ name: "{{name}}", version: "0.0.0", description: "", skills: [] }).some((m) => m.startsWith("PLUGIN-01")));
     assert.deepEqual(ids(MANIFEST), []);
   });
+
+  it("flags a blank description", () => {
+    assert.ok(ids({ ...MANIFEST, description: "   " }).some((m) => m.startsWith("PLUGIN-01")));
+  });
 });

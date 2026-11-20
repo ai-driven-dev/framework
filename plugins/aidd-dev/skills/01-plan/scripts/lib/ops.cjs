@@ -2,8 +2,10 @@
 // The closed set of generic checks. Each op reads one file view and returns findings; no op knows an artifact kind.
 const fs = require("node:fs");
 const path = require("node:path");
-const { headings, sectionOf, fenceMask, readText, frontmatter, proseLines } = require("./markdown.cjs");
+const { headings, sectionOf, fenceMask, readText, frontmatter, proseLines, COMMENT } = require("./markdown.cjs");
 
+// A slot to fill, written the one way every template marks it.
+const SLOT = /\{\{[^}]*\}\}/u;
 const LINK = /\[[^\]\n]*\]\(([^)\s#]+)(?:#[^)]*)?\)/gu;
 const LIST_ITEM = /^\s*(?:\d+\.|-)\s+(.*)$/u;
 const CLAUSE_BREAK = /[.!?;]\s+\S/u;
@@ -20,7 +22,7 @@ const OPTIONS = {
   oneSentence: ["sections", "skipIndentedIn"],
   flatList: ["sections"],
   links: [],
-  template: ["template", "optional", "slot", "values"],
+  template: ["template", "optional", "values"],
   json: ["schema"],
   custom: ["check"],
 };
@@ -31,8 +33,7 @@ const at = (line, offending, values = {}) => ({ line, offending, values });
 function targets(ctx, rule) {
   if (rule.field !== undefined) return [{ line: ctx.fm.fieldLine[rule.field] ?? 1, value: ctx.fm.fields[rule.field] ?? "" }];
   if (rule.line !== undefined) return [{ line: rule.line, value: ctx.lines[rule.line - 1] ?? "" }];
-  const source = rule.scope === "raw" ? ctx.lines : ctx.prose;
-  return source.map((value, index) => ({ line: index + 1, value }));
+  return ctx.prose.map((value, index) => ({ line: index + 1, value }));
 }
 
 const ops = {
@@ -41,10 +42,6 @@ const ops = {
   },
   max(ctx, rule) {
     if (rule.measure === "lines") return ctx.lines.length > rule.max ? [at(rule.max + 1, undefined, { actual: ctx.lines.length })] : [];
-    if (rule.measure === "files") {
-      const count = fs.readdirSync(path.dirname(ctx.abs)).length;
-      return count > rule.max ? [at(1, undefined, { actual: count })] : [];
-    }
     return targets(ctx, rule)
       .filter(({ value }) => value.length > rule.max)
       .map(({ line, value }) => at(line, value, { actual: value.length }));
@@ -116,15 +113,14 @@ const ops = {
     return found;
   },
   template(ctx, rule) {
-    const slotSrc = rule.slot ?? "\\{\\{[^}]*\\}\\}";
-    const model = parseTemplate(path.resolve(ctx.contractDir, rule.template), slotSrc);
+    const model = parseTemplate(path.resolve(ctx.contractDir, rule.template));
     const doc = shape(ctx.text, ctx.prose, ctx.fm);
     const found = [];
     const say = (line, offending, fix) => found.push({ line, offending, values: {}, fix });
     const comment = ctx.text.search(/<!--/u);
     if (comment >= 0) say(ctx.text.slice(0, comment).split("\n").length, undefined, "comment left, delete every comment");
-    const slotRe = new RegExp(slotSrc, "u");
-    const noComment = ctx.text.replace(/<!--[\s\S]*?-->/gu, (c) => c.replace(/[^\n]/gu, " ")).split("\n");
+    const slotRe = SLOT;
+    const noComment = ctx.text.replace(COMMENT, (c) => c.replace(/[^\n]/gu, " ")).split("\n");
     // A slot left in prose, or one of the template's own slots left verbatim anywhere (code included).
     const slot = noComment.findIndex((line, i) => i >= ctx.fm.span && (slotRe.test(ctx.prose[i]) || model.slots.some((s) => line.includes(s))));
     if (slot >= 0) say(slot + 1, ctx.lines[slot], "placeholder left, fill it or omit its section");
@@ -225,19 +221,18 @@ function shape(text, prose, fm) {
 
 const templates = new Map();
 /** A template read once: front matter values, the title before its first slot, sections with table headers. */
-function parseTemplate(file, slotSrc) {
-  const key = `${file}\0${slotSrc}`;
-  const slotG = new RegExp(slotSrc, "gu");
-  if (!templates.has(key)) {
+function parseTemplate(file) {
+  const slotG = new RegExp(SLOT.source, "gu");
+  if (!templates.has(file)) {
     const text = readText(file);
     const fm = frontmatter(text);
     const doc = shape(text, proseLines(text).map((l, i) => (i < fm.span ? "" : l)), fm);
     const values = Object.fromEntries(Object.entries(fm.fields).map(([k, v]) => [k, unquote(v)]));
     // A section named with a slot, such as `## Run {{number}}`, matches every name of that shape and may repeat.
-    const sections = doc.sections.map((s) => ({ ...s, repeat: new RegExp(slotSrc, "u").test(s.name), match: new RegExp(`^${s.name.split(slotG).map((p) => p.replace(/[.*+?^$()|[\]\\{}]/gu, "\\$&")).join(".+")}$`, "u") }));
-    templates.set(key, { slots: [...new Set(text.replace(/<!--[\s\S]*?-->/gu, "").match(slotG) ?? [])], hasTitle: Boolean(doc.title.text), fm: values, titlePrefix: doc.title.text.split(new RegExp(slotSrc, "u"))[0].trim(), sections });
+    const sections = doc.sections.map((s) => ({ ...s, repeat: SLOT.test(s.name), match: new RegExp(`^${s.name.split(slotG).map((p) => p.replace(/[.*+?^$()|[\]\\{}]/gu, "\\$&")).join(".+")}$`, "u") }));
+    templates.set(file, { slots: [...new Set(text.replace(COMMENT, "").match(slotG) ?? [])], hasTitle: Boolean(doc.title.text), fm: values, titlePrefix: doc.title.text.split(SLOT)[0].trim(), sections });
   }
-  return templates.get(key);
+  return templates.get(file);
 }
 
 module.exports = { ops, OPTIONS, shape, cells };

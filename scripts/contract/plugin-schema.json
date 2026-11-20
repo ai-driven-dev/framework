@@ -4,7 +4,7 @@
   "properties": {
     "name": { "type": "string", "pattern": "^aidd-[a-z]+$" },
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
-    "description": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "pattern": "\\S" },
     "skills": { "type": "array", "items": { "type": "string", "pattern": "^\\./skills/\\d\\d-[a-z-]+$" } }
   }
 }
