@@ -18,11 +18,10 @@ flowchart LR
   plan --> write["actions/03-write.md"]
   write -->|"writer error"| stopped((stopped))
   write -->|"remove done"| done((written))
-  plan -->|"verifier error"| stopped
   write --> verify["actions/04-verify.md"]
-  verify -->|"trial failed"| plan
+  verify -->|"finding or trial failed"| plan
   verify <-->|"trial to approve"| user
-  verify -->|"trial declined"| unverified((format verified))
+  verify -->|"trial declined"| unverified((run not verified))
   verify --> verified((verified))
 ```
 

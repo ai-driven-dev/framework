@@ -103,6 +103,14 @@ describe("ops", () => {
     assert.equal(findings(rule, "# T {{x}}\n\n## S\n").length, 1);
   });
 
+  it("template flags a slot left in the front matter, and lets a declared key be absent", () => {
+    fs.writeFileSync(path.join(dir, "t.md"), '---\ntitle: "{{x}}"\nnote: "{{y}}"\n---\n\n# T\n');
+    const rule = { op: "template", template: "t.md", optional: ["note"] };
+    assert.deepEqual(findings(rule, '---\ntitle: "demo"\n---\n\n# T\n'), []);
+    assert.match(findings(rule, '---\ntitle: "{{x}}"\n---\n\n# T\n')[0].message, /front matter "title": placeholder left/u);
+    assert.match(findings({ op: "template", template: "t.md" }, '---\ntitle: "demo"\n---\n\n# T\n')[0].message, /key "note" missing/u);
+  });
+
   it("json validates against a schema", () => {
     fs.writeFileSync(path.join(dir, "s.json"), JSON.stringify({ type: "object", required: ["a"] }));
     const rule = { op: "json", schema: "s.json", fix: "{problem}" };

@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "required": [
+    "hooks"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "hooks"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "matcher": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "hooks": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "command"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "const": "command"
+                  },
+                  "command": {
+                    "type": "string",
+                    "pattern": "^node \\$\\{CLAUDE_PLUGIN_ROOT\\}/hooks/[\\w-]+\\.cjs"
+                  },
+                  "timeout": {
+                    "type": "integer"
+                  },
+                  "statusMessage": {
+                    "type": "string"
+                  },
+                  "async": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

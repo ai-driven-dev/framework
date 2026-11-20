@@ -1,14 +1,15 @@
 # Writer
 
-`scripts/write-hook.cjs` writes the hook to each host; `scripts/verify-hook.cjs` checks the script's answers.
+`scripts/write-hook.cjs` writes the hook to each host; `scripts/validate-hooks.cjs` checks a plugin's `hooks/hooks.json`.
 
 ```sh
 node "$writer" --project "$project_root" --input "$hook_json"
 node "$writer" --project "$project_root" --remove "$name"
-node "$verifier" --project "$project_root" --input "$hook_json"
+node "$validator" "$plugin_root/hooks/hooks.json"
 ```
 
-- `$writer`, `$verifier`: the absolute paths of the two scripts, in `scripts/` beside the loaded `SKILL.md`.
+- `$writer`, `$validator`: the absolute paths of the two scripts, in `scripts/` beside the loaded `SKILL.md`.
+- `$plugin_root`: a plugin folder holding `hooks/hooks.json`.
 - `$project_root`: the absolute path of the working directory.
 - `$hook_json`: a temporary file outside the project, deleted with its folder by the same command that writes the hook.
 
@@ -26,4 +27,6 @@ node "$verifier" --project "$project_root" --input "$hook_json"
 | `--plan` | writes nothing; lists each path with `create`, `update`, `unchanged` or `delete` |
 | `--force` | allows an `update`, refused without it |
 
-Both print JSON: the writer's `changes` or `error`, the verifier's `results` with a `status` and any `finding` per host. Exit 0 means done, 1 a refusal or a finding, 2 a usage error, 3 a filesystem error.
+The writer prints JSON, `changes` or `error`: exit 0 means done, 1 a refusal, 2 a usage error, 3 a filesystem error.
+
+The validator prints one `path:line HOOKS-nn message` per finding and nothing when clean: exit 0 means clean, 1 findings, 2 a usage error.

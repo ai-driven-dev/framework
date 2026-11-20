@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "kind": "hooks",
+  "unit": "file",
+  "rules": {
+    "HOOKS-01": {
+      "op": "json",
+      "in": "hooks.json",
+      "schema": "hooks-schema.json",
+      "why": "a wrong key is silently ignored by the host",
+      "fix": "{problem}"
+    },
+    "HOOKS-02": {
+      "op": "custom",
+      "in": "hooks.json",
+      "check": "handlers",
+      "why": "a missing or broken handler fails at the event, not at install",
+      "fix": "{problem}"
+    }
+  }
+}

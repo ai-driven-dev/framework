@@ -131,7 +131,8 @@ const ops = {
     for (const [key, value] of Object.entries(model.fm)) {
       const line = ctx.fm.fieldLine[key] ?? 1;
       const allowed = rule.values?.[key];
-      if (!(key in ctx.fm.fields)) say(1, undefined, `front matter key "${key}" missing`);
+      if (!(key in ctx.fm.fields)) { if (!(rule.optional ?? []).includes(key)) say(1, undefined, `front matter key "${key}" missing`); }
+      else if (slotRe.test(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}": placeholder left, fill it`);
       else if (allowed) { if (!allowed.includes(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}" must be one of ${allowed.join(", ")}`); }
       else if (!slotRe.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);
       else if (slotRe.test(value) && !unquote(ctx.fm.fields[key]).trim()) say(line, undefined, `front matter "${key}" empty`);
