@@ -15,7 +15,7 @@ import { parseShard, scoreOf, shardConfig } from "../../scripts/run-mutation.mjs
 import { read, sourceFiles } from "./helpers.js";
 import { present } from "./present.js";
 
-const declared: { scopes: Record<string, Scope> } = JSON.parse(read("mutation-scopes.json"));
+const declared = JSON.parse(read("mutation-scopes.json")) as { scopes: Record<string, Scope> };
 const scopes = declared.scopes;
 
 interface Scope {
@@ -179,7 +179,7 @@ describe("scoring a sharded scope once, over every shard", () => {
 });
 
 describe("running one shard", () => {
-  const base: Record<string, unknown> = JSON.parse(read("stryker.conf.json"));
+  const base = JSON.parse(read("stryker.conf.json")) as Record<string, unknown>;
 
   it("keeps the whole config and makes only its files, sandbox and reports its own", () => {
     const config = shardConfig(base, {

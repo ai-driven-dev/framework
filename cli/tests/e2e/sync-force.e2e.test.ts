@@ -14,9 +14,9 @@ async function installClaude(projectDir: string, fakeHome: string): Promise<void
 /** The first regular file the Claude install tracked, as the manifest records it. */
 async function firstTrackedFile(projectDir: string): Promise<string> {
   const raw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
-  const manifest: {
+  const manifest = JSON.parse(raw) as {
     tools: Record<string, { files: Array<{ relativePath: string }> }>;
-  } = JSON.parse(raw);
+  };
   const relativePath = manifest.tools.claude?.files[0]?.relativePath;
   if (relativePath === undefined) throw new Error("no tracked file to modify");
   return relativePath;

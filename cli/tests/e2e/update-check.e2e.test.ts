@@ -147,7 +147,7 @@ describe("update-check piggyback", () => {
       expect(exitCode).toBe(0);
       expect(existsSync(t.cachePath)).toBe(true);
       expect(t.server.hits()).toBeGreaterThanOrEqual(1);
-      const cached: { latest: string } = JSON.parse(readFileSync(t.cachePath, "utf-8"));
+      const cached = JSON.parse(readFileSync(t.cachePath, "utf-8")) as { latest: string };
       expect(cached.latest).toBe("999.0.0");
     } finally {
       await t.cleanup();

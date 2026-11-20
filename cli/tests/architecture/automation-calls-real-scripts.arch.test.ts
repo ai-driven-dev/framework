@@ -37,9 +37,9 @@ const PNPM_BUILTINS = new Set([
 ]);
 
 function manifestScripts(): Set<string> {
-  const manifest: {
+  const manifest = JSON.parse(readFileSync(join(CLI_ROOT, "package.json"), "utf8")) as {
     scripts: Record<string, string>;
-  } = JSON.parse(readFileSync(join(CLI_ROOT, "package.json"), "utf8"));
+  };
   return new Set(Object.keys(manifest.scripts));
 }
 
@@ -126,7 +126,7 @@ function undeclaredScriptCalls(text: string, declared: ReadonlySet<string>): str
 }
 
 function foreignIncludes(tsconfig: string): string[] {
-  const config: { include?: string[] } = JSON.parse(tsconfig.replace(/\/\/[^\n]*/g, ""));
+  const config = JSON.parse(tsconfig.replace(/\/\/[^\n]*/g, "")) as { include?: string[] };
   return (config.include ?? []).filter((pattern) => pattern.startsWith("../"));
 }
 

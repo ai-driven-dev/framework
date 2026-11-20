@@ -342,7 +342,7 @@ export interface Envelope {
 export async function json(aidd: Aidd, axis: string): Promise<Envelope> {
   const run = await aidd(["report", ...WINDOW, "--axis", axis, "--json"]);
   if (run.exitCode !== 0) throw new Error(`report --axis ${axis} failed: ${run.stderr}`);
-  const envelope: Envelope = JSON.parse(run.stdout);
+  const envelope = JSON.parse(run.stdout) as Envelope;
   return envelope;
 }
 export const rowsOf = (envelope: Envelope) =>

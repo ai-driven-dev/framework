@@ -80,7 +80,7 @@ interface HookToolCase {
   env_session_id: string | null;
   transcript_path: string | null;
 }
-const cases: {
+const cases = JSON.parse(text("cases.json")) as {
   gitConfig: Record<string, GitConfigCase>;
   binding: Record<string, BindingCase>;
   branchRole: Record<string, { head: string | null; originHead: string | null }>;
@@ -91,8 +91,8 @@ const cases: {
   environmentRefusal: Record<string, NodeJS.ProcessEnv>;
   telemetryDir: Record<string, DirCase>;
   hookTool: Record<string, HookToolCase>;
-} = JSON.parse(text("cases.json"));
-const expected: Record<string, Record<string, unknown>> = JSON.parse(text("expected.json"));
+};
+const expected = JSON.parse(text("expected.json")) as Record<string, Record<string, unknown>>;
 
 function logText(logLines: readonly LogLine[], tail = ""): string {
   return `${logLines

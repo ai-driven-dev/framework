@@ -8,7 +8,7 @@ const schemaPath = new URL(
   "../../../../assets/schemas/claude-marketplace-manifest.json",
   import.meta.url
 );
-const schema: object = JSON.parse(readFileSync(fileURLToPath(schemaPath), "utf8"));
+const schema = JSON.parse(readFileSync(fileURLToPath(schemaPath), "utf8")) as object;
 const validator = new AjvSchemaValidatorAdapter();
 
 function validate(data: unknown): void {

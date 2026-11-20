@@ -77,10 +77,10 @@ async function localModel() {
         response.writeHead(404).end();
         return;
       }
-      const input: {
+      const input = JSON.parse(body) as {
         messages: Array<{ role: string; content: unknown }>;
         tools?: Array<{ function: { name: string } }>;
-      } = JSON.parse(body);
+      };
       requests.push(input);
       response.writeHead(200, { "content-type": "text/event-stream" });
       const chunk = (delta: unknown, finish_reason: string | null = null) => {
@@ -263,7 +263,7 @@ describeKiloRuntime("real Kilo runtime", () => {
         shell: KILO_SHELL,
         maxBuffer: 8 * 1024 * 1024,
       });
-      const discoveredSkills: Array<{ location?: string }> = JSON.parse(skills.stdout);
+      const discoveredSkills = JSON.parse(skills.stdout) as Array<{ location?: string }>;
       const generatedSkillFiles = (
         await readdir(join(generatedProject, ".kilo", "skills"), {
           recursive: true,

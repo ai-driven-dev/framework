@@ -74,7 +74,7 @@ interface Override {
 }
 
 const overrides = (): readonly Override[] => {
-  const config: { overrides?: Override[] } = JSON.parse(read("biome.json"));
+  const config = JSON.parse(read("biome.json")) as { overrides?: Override[] };
   return config.overrides ?? [];
 };
 

@@ -96,7 +96,7 @@ describe("a flat build into a project that already holds a server of the person'
     // Written "/"-separated on purpose: a backslash-native path embedded in JSON comes back
     // doubly escaped, and a forward slash is valid on Windows too.
     expect(mcpRaw).toContain(out.replace(/\\/g, "/"));
-    const parsed: { servers: Record<string, unknown> } = JSON.parse(mcpRaw);
+    const parsed = JSON.parse(mcpRaw) as { servers: Record<string, unknown> };
     const servers = parsed.servers;
     expect(
       Object.keys(servers).filter((key) => key.startsWith("aidd-test-")).length

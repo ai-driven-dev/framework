@@ -24,7 +24,7 @@ async function agentModel(projectDir: string): Promise<unknown> {
 async function mainModel(home: string): Promise<unknown> {
   const path = join(home, ".config", "opencode", "opencode.jsonc");
   if (!(await fileExists(path))) return undefined;
-  const config: { model?: unknown } = JSON.parse(await readFile(path, "utf8"));
+  const config = JSON.parse(await readFile(path, "utf8")) as { model?: unknown };
   return config.model;
 }
 

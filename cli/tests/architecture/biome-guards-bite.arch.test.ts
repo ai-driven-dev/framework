@@ -30,9 +30,9 @@ const BARE_NODE_MODULES = ["fs", "fs/promises", "node:fs/promises", "child_proce
 
 describe("biome carries the exit and default-export rules", () => {
   it("scopes the process.exit plugin to the layers that throw, and to nothing else", () => {
-    const config: {
+    const config = JSON.parse(read("biome.json")) as {
       overrides?: { includes?: string[]; plugins?: string[] }[];
-    } = JSON.parse(read("biome.json"));
+    };
     const carrier = (config.overrides ?? []).find((o) => o.plugins?.includes(`./${PLUGIN}`));
     expect(carrier?.includes, `no override applies ${PLUGIN}`).toEqual([
       "src/shared/**",
@@ -54,12 +54,12 @@ describe("biome carries the exit and default-export rules", () => {
   });
 
   it("bans the process global across every context's domain and application", () => {
-    const config: {
+    const config = JSON.parse(read("biome.json")) as {
       overrides?: {
         includes?: string[];
         linter?: { rules?: { style?: { noRestrictedGlobals?: { options?: unknown } } } };
       }[];
-    } = JSON.parse(read("biome.json"));
+    };
     const carrier = (config.overrides ?? []).find(
       (o) => o.linter?.rules?.style?.noRestrictedGlobals !== undefined
     );
@@ -78,19 +78,19 @@ describe("biome carries the exit and default-export rules", () => {
   });
 
   it("denies a pure folder every package and every Node builtin but path and crypto", () => {
-    const config: {
+    const config = JSON.parse(read("biome.json")) as {
       overrides?: {
         includes?: string[];
         linter?: {
           rules?: { style?: { noRestrictedImports?: { options?: { paths?: object } } } };
         };
       }[];
-    } = JSON.parse(read("biome.json"));
+    };
     const deniedBy = (includes: string): string[] => {
       const override = (config.overrides ?? []).find((o) => o.includes?.[0] === includes);
       return Object.keys(override?.linter?.rules?.style?.noRestrictedImports?.options?.paths ?? {});
     };
-    const pkg: { dependencies: Record<string, string> } = JSON.parse(read("package.json"));
+    const pkg = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
     const builtins = [...new Set(builtinModules.map((name) => name.replace(/^node:/, "")))]
       .filter((name) => !PURE_BUILTINS.has(name))
       .flatMap((name) => [name, `node:${name}`]);
@@ -114,14 +114,14 @@ describe("biome carries the exit and default-export rules", () => {
   });
 
   it("bans the filesystem and child processes in a unit test, and in nothing else", () => {
-    const config: {
+    const config = JSON.parse(read("biome.json")) as {
       overrides?: {
         includes?: string[];
         linter?: {
           rules?: { style?: { noRestrictedImports?: { options?: { paths?: unknown } } } };
         };
       }[];
-    } = JSON.parse(read("biome.json"));
+    };
     const carrier = (config.overrides ?? []).find(
       (o) =>
         o.linter?.rules?.style?.noRestrictedImports?.options?.paths !== undefined &&

@@ -208,7 +208,7 @@ function runHook(
   });
   expect(run.status, run.stderr).toBe(0);
   const text = run.stdout.trim();
-  const json: Record<string, unknown> | null = text === "" ? null : JSON.parse(text);
+  const json = text === "" ? null : (JSON.parse(text) as Record<string, unknown>);
   return { stdout: text, json };
 }
 
@@ -229,7 +229,7 @@ const lines = async (file: string) =>
   (await readFile(file, "utf8"))
     .split("\n")
     .filter(Boolean)
-    .map((line): Record<string, unknown> => JSON.parse(line));
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
 
 function usageLine(call: Call, base: number): string {
   return JSON.stringify({
@@ -290,7 +290,7 @@ interface Envelope {
 async function report(axis: string, from: string, to: string): Promise<Envelope> {
   const run = await aidd(["report", "--from", from, "--to", to, "--axis", axis, "--json"]);
   expect(run.exitCode, run.stderr).toBe(0);
-  const envelope: Envelope = JSON.parse(run.stdout);
+  const envelope = JSON.parse(run.stdout) as Envelope;
   return envelope;
 }
 
@@ -459,10 +459,10 @@ describe("the telemetry journey, on the built binary", () => {
     runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
     const run = await aidd(["report", "--json"]);
     expect(run.exitCode, run.stderr).toBe(0);
-    const envelope: {
+    const envelope = JSON.parse(run.stdout) as {
       coverage: { records: number; left_out: Record<string, number> };
       run: { files_read: number };
-    } = JSON.parse(run.stdout);
+    };
     expect(envelope).toMatchObject({
       coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
       run: { files_read: 0 },
@@ -506,8 +506,8 @@ describe("the telemetry journey, on the built binary", () => {
         env: sandboxedEnv(env.fakeHome, { ...sandboxVariables(), PATH: path, Path: path }),
       });
       expect(run.status, run.stderr).toBe(0);
-      const json: Record<string, unknown> | null =
-        run.stdout.trim() === "" ? null : JSON.parse(run.stdout);
+      const json =
+        run.stdout.trim() === "" ? null : (JSON.parse(run.stdout) as Record<string, unknown>);
       return json;
     };
 

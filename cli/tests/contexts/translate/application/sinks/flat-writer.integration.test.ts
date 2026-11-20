@@ -616,9 +616,10 @@ describe("where a flat layout points a plugin-root reference", () => {
       [`${STUB_PLUGIN_SRC}/.mcp.json`]: JSON.stringify({ mcpServers: { srv: { args } } }),
     });
     await stubWrite(memFs, contract);
-    const merged: Record<string, { args: string[] }> = JSON.parse(
-      memFs.getFile(`${STUB_OUT}/.stub/mcp.json`) ?? "{}"
-    );
+    const merged = JSON.parse(memFs.getFile(`${STUB_OUT}/.stub/mcp.json`) ?? "{}") as Record<
+      string,
+      { args: string[] }
+    >;
     return Object.values(merged)[0]?.args ?? [];
   }
 

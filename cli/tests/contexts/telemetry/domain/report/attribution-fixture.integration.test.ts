@@ -31,14 +31,14 @@ interface Config {
   branch: string;
   keys: Record<string, string>;
 }
-const cases: {
+const cases = JSON.parse(text("cases.json")) as {
   gitConfig: Record<string, Config>;
   binding: Record<string, Case>;
-} = JSON.parse(text("cases.json"));
-const expected: Record<
+};
+const expected = JSON.parse(text("expected.json")).binding as Record<
   string,
   { state: string; task?: string | null; ticket?: string | null; none?: boolean }
-> = JSON.parse(text("expected.json")).binding;
+>;
 const declarations = () =>
   lines("sessions.jsonl").flatMap((line) => parseSessionDeclaration(line) ?? []);
 const carries = () => lines("carries.jsonl").flatMap((line) => parseSessionCarry(line) ?? []);

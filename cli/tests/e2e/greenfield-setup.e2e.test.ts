@@ -23,7 +23,7 @@ describe.concurrent("aidd framework install --tool: individual tool install", ()
       expect(stdout).toContain("Installed claude");
       expect(existsSync(join(projectDir, ".claude", "settings.json"))).toBe(true);
       const raw = await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8");
-      const manifest: { tools: Record<string, unknown> } = JSON.parse(raw);
+      const manifest = JSON.parse(raw) as { tools: Record<string, unknown> };
       expect(manifest.tools).toHaveProperty("claude");
     } finally {
       await cleanup();

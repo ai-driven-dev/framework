@@ -360,7 +360,7 @@ export async function backdateConsent(
   const file = join(telemetryDir, "ledger", "consents.jsonl");
   const lines = (await readFile(file, "utf8")).split("\n").filter((line) => line !== "");
   const moved = lines.map((line) => {
-    const event: Record<string, unknown> = JSON.parse(line);
+    const event = JSON.parse(line) as Record<string, unknown>;
     return JSON.stringify("open" in event ? { ...event, open: since } : event);
   });
   await writeFile(file, `${moved.join("\n")}\n`);

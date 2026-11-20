@@ -38,7 +38,7 @@ const declaration = (tool: string): string =>
 
 describe("the profile copy check is wired before push", () => {
   it("is a package script the pre-push runs", () => {
-    const manifest: { scripts: Record<string, string> } = JSON.parse(read("package.json"));
+    const manifest = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
     const { scripts } = manifest;
 
     expect(scripts["jscpd:profiles"]).toBe("node scripts/profile-copies.mjs");
