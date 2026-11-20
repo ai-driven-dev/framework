@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.js";
@@ -7,6 +5,7 @@ import { ChooseIdentity } from "../../../src/contexts/telemetry/application/iden
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.js";
 import type { ReportFilters } from "../../../src/contexts/telemetry/contract/report-filter.js";
 import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import surface from "../../golden/snapshots/help/surface.json" with { type: "json" };
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const ingest = vi.fn();
@@ -549,9 +548,7 @@ describe("aidd telemetry forget", () => {
 
 describe("the telemetry command surface", () => {
   /** What the built binary prints, captured by the help golden: the one place it is pinned. */
-  const golden = JSON.parse(
-    readFileSync(join(import.meta.dirname, "../../golden/snapshots/help/surface.json"), "utf8")
-  ) as { invocation: string; help: string }[];
+  const golden: { invocation: string; help: string }[] = surface;
 
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");

@@ -1,5 +1,3 @@
-import type { FileReader } from "../ports/file-reader.js";
-import type { FileWriter } from "../ports/file-writer.js";
 import { JsonParseError } from "./errors.js";
 import { FileHash } from "./file.js";
 import { isErrnoException } from "./reading/json-file.js";
@@ -76,8 +74,14 @@ export function isMergeContentEmpty(content: string, sectionKey: string | null):
   }
 }
 
+/** The two file operations a merge needs; any file adapter satisfies it. */
+export interface MergeTarget {
+  readFile(path: string): Promise<string>;
+  writeFile(path: string, content: string): Promise<void>;
+}
+
 export async function mergeIntoJsonFile(
-  files: FileReader & FileWriter,
+  files: MergeTarget,
   path: string,
   content: string,
   strategy: MergeStrategy

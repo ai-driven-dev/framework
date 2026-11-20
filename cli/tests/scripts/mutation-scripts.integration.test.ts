@@ -107,7 +107,7 @@ describe("the mutation scripts", () => {
       "shared",
     ]);
     expect(
-      scopesToRun(["cli/tests/shared/infrastructure/asset-loader.unit.test.ts"], mixed)
+      scopesToRun(["cli/tests/shared/infrastructure/asset-loader.integration.test.ts"], mixed)
     ).toEqual([]);
     expect(scopesToRun(["cli/pnpm-lock.yaml", ".github/workflows/cli-ci.yml"], mixed)).toEqual([]);
     for (const file of HARNESS) expect(scopesToRun([file], mixed)).toEqual(["shared", "tools"]);
@@ -121,7 +121,7 @@ describe("the mutation scripts", () => {
     ).toEqual(["telemetry"]);
     expect(
       scopesToRun(
-        ["cli/tests/presentation/display/telemetry/telemetry-report-display.unit.test.ts"],
+        ["cli/tests/presentation/display/telemetry/telemetry-report-display.golden.test.ts"],
         scopes
       )
     ).toEqual(["telemetry"]);
