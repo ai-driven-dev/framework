@@ -162,7 +162,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-frame.md](skills/07-command-generate/actions/01-frame.md) | - |
 | `actions` | [02-plan.md](skills/07-command-generate/actions/02-plan.md) | - |
 | `actions` | [03-write.md](skills/07-command-generate/actions/03-write.md) | - |
-| `assets` | [command-template.md](skills/07-command-generate/assets/command-template.md) | - |
+| `assets` | [command-template.md](skills/07-command-generate/assets/command-template.md) | `{{what the command does, one line}}` |
 | `references` | [command-authoring.md](skills/07-command-generate/references/command-authoring.md) | - |
 | `references` | [hosts.md](skills/07-command-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/07-command-generate/references/writer.md) | - |

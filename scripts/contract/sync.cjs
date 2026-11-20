@@ -6,7 +6,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const ENGINE_FILES = ["engine.cjs", "ops.cjs", "markdown.cjs", "scaffold.cjs"];
+const ENGINE_FILES = ["engine.cjs", "ops.cjs", "markdown.cjs"];
 const ROOT = path.resolve(__dirname, "..", "..");
 
 /** Every plugin skill folder that holds a contract. */
