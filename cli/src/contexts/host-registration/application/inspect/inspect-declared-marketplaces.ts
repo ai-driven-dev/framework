@@ -31,7 +31,6 @@ export class InspectDeclaredMarketplaces {
     command: InspectDeclaredMarketplacesCommand
   ): Promise<InspectDeclaredMarketplacesResult> {
     const findings: UndeclaredMarketplace[] = [];
-    if (command.marketplaceNames.length === 0) return { findings };
     for (const toolId of command.toolIds) {
       const profile = this.tools.profile(toolId);
       const settings = this.untrackedSettingsOf(profile);
@@ -64,7 +63,6 @@ export class InspectDeclaredMarketplaces {
     settings: { file: string; registration: MarketplaceRegistrationAnswers }
   ): Promise<Set<string>> {
     const path = join(projectRoot, settings.file);
-    if (!(await this.fs.fileExists(path))) return new Set();
     let parsed: unknown;
     try {
       parsed = JSON.parse(await this.fs.readFile(path));
