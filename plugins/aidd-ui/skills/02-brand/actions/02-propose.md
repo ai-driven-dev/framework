@@ -23,7 +23,7 @@ The case and the engine. In a later round, the mix and comments.
 4. Write each direction as a variant.
    - Use the [brand](../assets/brand-template.md) template.
    - Add a preview of the direction.
-5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+5. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
    - Fix what it reports.
 6. Read [choose](03-choose.md).
 

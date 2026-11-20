@@ -15,7 +15,7 @@ The output of [write](02-write.md).
    - errors the [engine](../references/engine.md) says are about the code
    - errors the [engine](../references/engine.md) says another skill owes
    - `warning` lines, which are not errors
-5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+5. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
 6. Reply with:
    - the tokens and the system written
    - the elements and screens the raise left, for a change

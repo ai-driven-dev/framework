@@ -23,7 +23,7 @@ The engine and the files written.
    - If they want a change, read [write](02-write.md) first, then ask again.
    - Leave a journey with no answer as it is.
 8. Validate again per [engine](../references/engine.md), and fix as in steps 2 and 3.
-9. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+9. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
 10. Reply, in plain words, per the transversal rules:
    - the journeys and wireframes written or raised
    - the journeys agreed, and those still awaiting their agreement

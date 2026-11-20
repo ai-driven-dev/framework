@@ -10,7 +10,7 @@ The output of [prepare](01-prepare.md).
 
 1. From the code, [read it](../references/extraction.md).
 2. If the user asks for variants, propose and choose per [variants](../references/variants.md).
-   - Write the showcase per [engine](../references/engine.md), in the project memory's language.
+   - Write the showcase per [engine](../references/engine.md), in the language the person writes in.
    - Fix what it reports.
    - Give the user the set's page, and ask them to choose, then paste the copied feedback here.
    - Wait for the feedback.

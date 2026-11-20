@@ -8,7 +8,7 @@ The records to review, and the captures to save.
 
 ## Process
 
-1. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+1. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
 2. Look at each page per [look](../references/look.md).
    - Never edit a record: tell the user what reads badly.
 3. Give the home page first, then each record's page.

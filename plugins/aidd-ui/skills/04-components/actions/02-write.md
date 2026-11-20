@@ -12,7 +12,7 @@ The output of [prepare](01-prepare.md).
 2. For a change, raise the versions per [versions](../references/versions.md), removals included.
 3. If the user asks for variants of an element, propose and choose.
    - Follow [variants](../references/variants.md).
-   - Write the showcase per [engine](../references/engine.md), in the project memory's language.
+   - Write the showcase per [engine](../references/engine.md), in the language the person writes in.
    - Fix what it reports.
    - Give the user the set's page, and ask them to choose, then paste the copied feedback here.
    - Wait for the feedback.

@@ -20,7 +20,7 @@ The screens kept.
    - Look on each platform the screen targets.
    - Skip those already looked at and unchanged since.
    - Hand back only when all are looked at.
-6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+6. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
 7. Reply with:
    - the screens created, by title
    - the screens you picked yourself

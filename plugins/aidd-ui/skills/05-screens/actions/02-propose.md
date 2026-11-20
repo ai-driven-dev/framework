@@ -16,7 +16,7 @@ The wireframes to dress, and the engine.
    - Use the [screen](../assets/screen-template.md) template.
    - Use the [render](../assets/render-template.html) template.
 4. Look at each variant per [look](../references/look.md), and fix it.
-5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+5. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
    - Fix what it reports.
 6. Read [choose](03-choose.md).
 

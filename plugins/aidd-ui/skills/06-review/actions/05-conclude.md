@@ -17,7 +17,7 @@ The review written.
    - errors the [engine](../references/engine.md) says are about the code
    - `warning` lines, which are not errors
 5. Rework each sent-back record now, without asking, as its comment says.
-6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+6. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
 7. Reply in a few short lines, never a recap of the verdicts:
    - what changed, by title
    - what to look at, ending with « la vitrine »

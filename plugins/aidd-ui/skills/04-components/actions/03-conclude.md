@@ -17,7 +17,7 @@ The output of [write](02-write.md).
 5. Look at every element the change reached per [look](../references/look.md), and fix it.
    - A change reaches each record `bump` lists in `changed`.
    - Hand back only when all are looked at.
-6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+6. Write the showcase per [engine](../references/engine.md), in the language the person writes in.
 7. Reply with:
    - the elements and screens created or raised, by title
    - the ones the raise left, for a change
