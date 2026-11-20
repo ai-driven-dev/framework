@@ -8,7 +8,7 @@ const schemaPath = new URL(
   "../../../../assets/schemas/codex-plugin-manifest.json",
   import.meta.url
 );
-const schema = JSON.parse(readFileSync(fileURLToPath(schemaPath), "utf8")) as object;
+const schema: object = JSON.parse(readFileSync(fileURLToPath(schemaPath), "utf8"));
 const validator = new AjvSchemaValidatorAdapter();
 
 function validate(data: unknown): void {

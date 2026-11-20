@@ -85,10 +85,16 @@ const identity = (json: string) => {
 const folded = (content: string, list: readonly Divergence[]): string =>
   JSON.stringify(list.reduce((doc, d) => d.fold?.(doc) ?? doc, parseFrontmatter(content)));
 
+const fileAt = (tree: InMemoryFileAdapter, path: string): string => {
+  const content = tree.getFile(path);
+  if (content === undefined) throw new Error(`${path} is not in the tree`);
+  return content;
+};
+
 /** Path A: the strategy writing a tree, as `aidd translate` does, read back. */
 async function writtenByA(tree: InMemoryFileAdapter, tool: AiToolProfile, native: boolean) {
   const fs = new InMemoryFileAdapter();
-  for (const path of tree.listAll()) fs.setFile(path, tree.getFile(path) as string);
+  for (const path of tree.listAll()) fs.setFile(path, fileAt(tree, path));
   const assets = { loadConfigAsset: () => "{}", loadSchema: () => ({}) };
   const validator = { validate() {} };
   const mode = native ? "marketplace" : "flat";
@@ -97,7 +103,7 @@ async function writtenByA(tree: InMemoryFileAdapter, tool: AiToolProfile, native
   await fs.createDirectory(OUT);
   const build = buildTree(fs, validator, assets, new CapturingLogger(), contract, mode);
   await build.execute({ sourceDir: SOURCE, outDir: OUT, target: tool.toolId, mode });
-  return new Map(fs.listUnder(OUT).map((p) => [p.replaceAll("\\", "/"), fs.getFile(p) as string]));
+  return new Map(fs.listUnder(OUT).map((p) => [p.replaceAll("\\", "/"), fileAt(fs, p)]));
 }
 
 function distributionOf(
@@ -108,7 +114,7 @@ function distributionOf(
   const root = join(SOURCE, "plugins", name);
   const files = tree.listUnder(root).map((path) => ({
     relativePath: path.slice(root.length + 1).replaceAll("\\", "/"),
-    content: tree.getFile(path) as string,
+    content: fileAt(tree, path),
   }));
   for (const f of files)
     if (f.relativePath === SOURCES[0].manifest) f.relativePath = source.manifest;

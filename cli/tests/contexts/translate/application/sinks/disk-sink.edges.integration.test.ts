@@ -32,7 +32,7 @@ const FOREIGN_PLACEHOLDER = "@{{TOOLS}}/";
 const ASSETS: AssetProvider = {
   loadConfigAsset: () => "{}",
   loadSchema: (name) => {
-    if (name === (null as unknown)) throw new Error("no schema was asked for");
+    if (typeof name !== "string") throw new Error("no schema was asked for");
     return {};
   },
 };
@@ -186,7 +186,7 @@ describe("a flat MCP artifact", () => {
     ["names a destination but no merge", { mergeDest }],
   ])("writes nothing when it %s", async (_label, parts) => {
     const fs = seeded({ [`${PLUGIN_SRC}/.mcp.json`]: "{ not json" });
-    const contract = contractOf({ mcp: { ...COPY, ...parts } as ArtifactContract });
+    const contract = contractOf({ mcp: { ...COPY, ...parts } });
 
     const count = await write(fs, targetOf(contract, "flat"));
 
@@ -288,7 +288,7 @@ describe("a source path a Windows host reports with backslashes", () => {
     );
 
     expect(failure).toBeInstanceOf(FrameworkPlaceholderInPluginError);
-    expect((failure as Error).message).toContain("(file: agents/sub/bad.md)");
+    expect(String(failure)).toContain("(file: agents/sub/bad.md)");
   });
 
   it("names a shared hooks file that is not JSON by its forward-slash path", async () => {
@@ -308,7 +308,7 @@ describe("a source path a Windows host reports with backslashes", () => {
     const failure = await write(fs, targetOf(contract, "flat")).catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(FlatMergeTargetNotJsonError);
-    expect((failure as Error).message).toContain("cfg/hooks.json is not valid JSON");
+    expect(String(failure)).toContain("cfg/hooks.json is not valid JSON");
   });
 });
 
@@ -324,7 +324,7 @@ describe("the placeholder a plugin must not carry", () => {
     );
 
     expect(failure).toBeInstanceOf(FrameworkPlaceholderInPluginError);
-    expect((failure as Error).message).toContain(file.replace(/^(agents|skills)\//, ""));
+    expect(String(failure)).toContain(file.replace(/^(agents|skills)\//, ""));
   });
 });
 

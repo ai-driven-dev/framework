@@ -43,7 +43,7 @@ describe("AjvSchemaValidatorAdapter", () => {
         expect.fail("should have thrown");
       } catch (e) {
         expect(e).toBeInstanceOf(JsonSchemaValidationError);
-        expect((e as Error).message).toContain("/name");
+        expect(String(e)).toContain("/name");
       }
     });
 
@@ -69,8 +69,8 @@ describe("AjvSchemaValidatorAdapter", () => {
         expect.fail("should have thrown");
       } catch (e) {
         expect(e).toBeInstanceOf(JsonSchemaValidationError);
-        expect((e as Error).message).toContain("a");
-        expect((e as Error).message).toContain("b");
+        expect(String(e)).toContain("a");
+        expect(String(e)).toContain("b");
       }
     });
   });

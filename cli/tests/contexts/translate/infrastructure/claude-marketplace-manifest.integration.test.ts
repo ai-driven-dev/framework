@@ -8,7 +8,7 @@ const schemaPath = new URL(
   "../../../../assets/schemas/claude-marketplace-manifest.json",
   import.meta.url
 );
-const schema = JSON.parse(readFileSync(fileURLToPath(schemaPath), "utf8")) as object;
+const schema: object = JSON.parse(readFileSync(fileURLToPath(schemaPath), "utf8"));
 const validator = new AjvSchemaValidatorAdapter();
 
 function validate(data: unknown): void {
@@ -22,7 +22,7 @@ describe("claude-marketplace-manifest.json schema", () => {
         "../../../fixtures/framework-real/.claude-plugin/marketplace.json",
         import.meta.url
       );
-      const fixture = JSON.parse(readFileSync(fileURLToPath(fixturePath), "utf8")) as unknown;
+      const fixture: unknown = JSON.parse(readFileSync(fileURLToPath(fixturePath), "utf8"));
       expect(() => validate(fixture)).not.toThrow();
     });
 

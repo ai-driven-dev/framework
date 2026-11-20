@@ -117,7 +117,7 @@ describe("a flat build that folds MCP servers into the tool's own config", () =>
       const failure = await build(tool, fs).catch((error: unknown) => error);
 
       expect(failure).toBeInstanceOf(McpConfigError);
-      expect((failure as Error).message).toContain("'plug'");
+      expect(String(failure)).toContain("'plug'");
     }
   );
 });

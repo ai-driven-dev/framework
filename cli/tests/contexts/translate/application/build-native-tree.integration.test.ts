@@ -133,9 +133,9 @@ describe("BuildNativeTree", () => {
     it("synthesized plugin.json has skills array when skills directory has SKILL.md files", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const parsed = JSON.parse(
+      const parsed: { skills: string[] } = JSON.parse(
         fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
-      ) as { skills: string[] };
+      );
       expect(Array.isArray(parsed.skills)).toBe(true);
       expect(parsed.skills.some((s: string) => s.startsWith("./skills/"))).toBe(true);
     });
@@ -146,18 +146,18 @@ describe("BuildNativeTree", () => {
       }
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const parsed = JSON.parse(
+      const parsed: Record<string, unknown> = JSON.parse(
         fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
-      ) as Record<string, unknown>;
+      );
       expect(parsed.skills).toBeUndefined();
     });
 
     it("synthesized plugin.json lists ./agents/*.md file paths when agents directory has .md files", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const parsed = JSON.parse(
+      const parsed: { agents: string[] } = JSON.parse(
         fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
-      ) as { agents: string[] };
+      );
       expect(parsed.agents).toEqual(["./agents/code-reviewer.md"]);
     });
 
@@ -167,9 +167,9 @@ describe("BuildNativeTree", () => {
       }
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const parsed = JSON.parse(
+      const parsed: Record<string, unknown> = JSON.parse(
         fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
-      ) as Record<string, unknown>;
+      );
       expect(parsed.agents).toBeUndefined();
     });
 
@@ -250,7 +250,7 @@ describe("BuildNativeTree", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
       const dest = fs.getFile(`${OUT_DIR}/plugins/aidd-test/hooks/hooks.json`) ?? "";
-      const parsed = JSON.parse(dest) as { hooks: { PreToolUse: unknown[] } };
+      const parsed: { hooks: { PreToolUse: unknown[] } } = JSON.parse(dest);
       expect(parsed.hooks.PreToolUse).toBeDefined();
     });
   });
@@ -271,7 +271,7 @@ describe("BuildNativeTree", () => {
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
       const dest = fs.getFile(`${OUT_DIR}/plugins/aidd-test/.mcp.json`) ?? "";
       const pluginRootRef = "$" + "{PLUGIN_ROOT}";
-      const parsed = JSON.parse(dest) as { mcpServers: Record<string, { command: string }> };
+      const parsed: { mcpServers: Record<string, { command: string }> } = JSON.parse(dest);
       expect(parsed.mcpServers["aidd-test-server"].command).toBe(`${pluginRootRef}/bin/server.js`);
     });
   });
@@ -451,18 +451,18 @@ describe("BuildNativeTree", () => {
       );
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const marketplaceOut = JSON.parse(
+      const marketplaceOut: { plugins: { version: string }[] } = JSON.parse(
         fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "{}"
-      ) as { plugins: { version: string }[] };
+      );
       expect(marketplaceOut.plugins[0].version).toBe("9.9.9");
     });
 
     it("falls back to plugin.json version when source marketplace entry has no version", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const marketplaceOut = JSON.parse(
+      const marketplaceOut: { plugins: { version: string }[] } = JSON.parse(
         fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "{}"
-      ) as { plugins: { version: string }[] };
+      );
       expect(marketplaceOut.plugins[0].version).toBe("0.1.0");
     });
 
@@ -509,10 +509,10 @@ describe("BuildNativeTree", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
       const raw = fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "";
-      const parsed = JSON.parse(raw) as {
+      const parsed: {
         metadata: { pluginRoot: string };
         plugins: { source: string }[];
-      };
+      } = JSON.parse(raw);
       expect(parsed.metadata.pluginRoot).toBe("./plugins");
       expect(parsed.plugins[0].source).toBe("aidd-test");
       expect(raw.endsWith("\n")).toBe(true);
@@ -530,8 +530,8 @@ describe("BuildNativeTree", () => {
     it("validates the emitted marketplace.json against the schema", async () => {
       const failingMarketplaceValidator = {
         validate(schema: object, _data: unknown): void {
-          const s = schema as { properties?: { plugins?: unknown } };
-          if (s.properties && "plugins" in s.properties) {
+          const properties = Object.entries(schema).find(([key]) => key === "properties")?.[1];
+          if (typeof properties === "object" && properties !== null && "plugins" in properties) {
             throw new JsonSchemaValidationError(["marketplace schema fail"]);
           }
         },

@@ -122,7 +122,8 @@ describe("a hook or MCP command naming an agent lands on the file the agents bui
     const { agents, references } = await build(tool, agentFile);
 
     expect(agents, "the agents build writes one file").toHaveLength(1);
-    const written = agents[0] as string;
+    const [written] = agents;
+    if (written === undefined) throw new Error("the agents build wrote nothing");
     for (const reference of references) {
       expect(reference.endsWith(`/${written}`), `${reference} names ${written}`).toBe(true);
     }
@@ -132,9 +133,7 @@ describe("a hook or MCP command naming an agent lands on the file the agents bui
   // MCP through their own config step, hook commands handed over base64-encoded), so the
   // per-tool check above may see none; one tool leaving one keeps it from passing on nothing.
   it("leaves a rewritten reference for at least one flat tool to check", async () => {
-    const built = await Promise.all(
-      flatTools().map((tool) => build(tool, AGENT_FILES[0] as string))
-    );
+    const built = await Promise.all(flatTools().map((tool) => build(tool, "reviewer.md")));
 
     expect(built.some(({ references }) => references.length > 0)).toBe(true);
   });
