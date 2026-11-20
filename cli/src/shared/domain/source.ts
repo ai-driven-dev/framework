@@ -1,5 +1,6 @@
 import { isAbsolute } from "node:path";
 import { InvalidPluginSourceError } from "./errors.js";
+import { asPlainObject } from "./reading/plain-object.js";
 export const GITHUB_REPO_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 
 // npm package name grammar: unscoped my-pkg or scoped @scope/name.
@@ -132,10 +133,9 @@ function parseLocal(raw: Record<string, unknown>): PluginSourceLocal {
 
 export function parsePluginSource(raw: unknown): PluginSource {
   if (typeof raw === "string") return parseStringPluginSource(raw);
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
-    throw new InvalidPluginSourceError("expected an object.");
-  }
-  return parseObjectPluginSource(raw as Record<string, unknown>);
+  const object = asPlainObject(raw);
+  if (object === null) throw new InvalidPluginSourceError("expected an object.");
+  return parseObjectPluginSource(object);
 }
 
 function parseStringPluginSource(raw: string): PluginSource {

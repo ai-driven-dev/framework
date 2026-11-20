@@ -2,7 +2,9 @@ import type { FileReader } from "../ports/file-reader.js";
 import type { FileWriter } from "../ports/file-writer.js";
 import { JsonParseError } from "./errors.js";
 import { FileHash } from "./file.js";
+import { isErrnoException } from "./reading/json-file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
+import { asPlainObject } from "./reading/plain-object.js";
 
 export type MergeStrategy = "none" | "framework-prime" | "user-prime";
 
@@ -16,15 +18,16 @@ export function extractMergeEntries(
   jsonContent: string,
   sectionKey: string | null
 ): Record<string, FileHash> {
-  let parsed: Record<string, unknown>;
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(stripJsonComments(jsonContent)) as Record<string, unknown>;
+    parsed = JSON.parse(stripJsonComments(jsonContent));
   } catch {
     return {};
   }
-  const container = resolveContainer(parsed, sectionKey);
-  if (container === null || typeof container !== "object" || Array.isArray(container)) return {};
-  return hashJsonEntries(container as Record<string, unknown>);
+  const root = asPlainObject(parsed);
+  if (root === null) return {};
+  const container = asPlainObject(sectionKey === null ? root : root[sectionKey]);
+  return container === null ? {} : hashJsonEntries(container);
 }
 
 export function hashJsonEntries(entries: Record<string, unknown>): Record<string, FileHash> {
@@ -35,22 +38,17 @@ export function hashJsonEntries(entries: Record<string, unknown>): Record<string
   return result;
 }
 
-function resolveContainer(parsed: Record<string, unknown>, sectionKey: string | null): unknown {
-  if (sectionKey === null) return parsed;
-  return parsed[sectionKey] ?? null;
-}
-
 export function removeEntriesFromJson(
   content: string,
   sectionKey: string | null,
   keysToRemove: string[]
 ): string {
-  const parsed = JSON.parse(content) as Record<string, unknown>;
+  const parsed = asPlainObject(JSON.parse(content)) ?? {};
   if (sectionKey === null) {
     for (const key of keysToRemove) delete parsed[key];
     return JSON.stringify(parsed, null, 2);
   }
-  const container = (parsed[sectionKey] as Record<string, unknown> | undefined) ?? {};
+  const container = asPlainObject(parsed[sectionKey]) ?? {};
   for (const key of keysToRemove) delete container[key];
   // An emptied section must vanish, not linger as `{}`: a settings file sharing its top
   // level with unrelated keys must come back byte-identical once every key we own is gone.
@@ -60,12 +58,15 @@ export function removeEntriesFromJson(
 
 export function isMergeContentEmpty(content: string, sectionKey: string | null): boolean {
   try {
-    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const parsed = asPlainObject(JSON.parse(content));
+    if (parsed === null) return false;
     if (sectionKey === null) return Object.keys(parsed).length === 0;
     const otherKeys = Object.keys(parsed).filter((k) => k !== sectionKey);
     if (otherKeys.length > 0) return false;
-    const section = parsed[sectionKey] as Record<string, unknown> | undefined;
-    return !section || Object.keys(section).length === 0;
+    const section = parsed[sectionKey];
+    if (!section) return true;
+    const entries = asPlainObject(section);
+    return entries !== null && Object.keys(entries).length === 0;
   } catch {
     return false;
   }
@@ -81,15 +82,15 @@ export async function mergeIntoJsonFile(
 
   try {
     const raw = await files.readFile(path);
-    existing = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
+    existing = asPlainObject(JSON.parse(stripJsonComments(raw))) ?? {};
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
+    const code = isErrnoException(err) ? err.code : undefined;
     if (code !== "ENOENT") {
-      throw new JsonParseError(path, (err as Error).message);
+      throw new JsonParseError(path, err instanceof Error ? err.message : String(err));
     }
   }
 
-  const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
+  const incoming = asPlainObject(JSON.parse(stripJsonComments(content))) ?? {};
 
   const merged =
     strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
@@ -113,10 +114,7 @@ function deepMerge(
       const combined = [...existing, ...value];
       result[key] = [...new Map(combined.map((v) => [JSON.stringify(v), v])).values()];
     } else if (isPlainObject(value) && isPlainObject(existing)) {
-      result[key] = deepMerge(
-        existing as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
+      result[key] = deepMerge(existing, value);
     } else {
       result[key] = value;
     }
@@ -125,6 +123,6 @@ function deepMerge(
   return result;
 }
 
-function isPlainObject(value: unknown): boolean {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return asPlainObject(value) !== null;
 }

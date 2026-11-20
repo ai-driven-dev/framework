@@ -1,3 +1,5 @@
+import { asPlainObject } from "../reading/plain-object.js";
+
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 const SOURCE_ROOT_PREFIX = "$" + "{CLAUDE_PLUGIN_ROOT}/";
 const DEFAULT_RELATIVE_PREFIX = "./";
@@ -10,8 +12,8 @@ export function rewritePluginRootInJson(
 ): unknown {
   if (typeof parsed === "string") return rewriteStringValue(parsed, substitute);
   if (Array.isArray(parsed)) return parsed.map((item) => rewritePluginRootInJson(item, substitute));
-  if (parsed !== null && typeof parsed === "object")
-    return rewriteObject(parsed as Record<string, unknown>, substitute);
+  const object = asPlainObject(parsed);
+  if (object !== null) return rewriteObject(object, substitute);
   return parsed;
 }
 

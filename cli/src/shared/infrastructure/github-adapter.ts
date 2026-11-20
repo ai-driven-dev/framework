@@ -5,6 +5,7 @@ import {
   CatalogFetchNotFoundError,
   HttpNotFoundError,
 } from "../domain/errors.js";
+import { asPlainObject } from "../domain/reading/plain-object.js";
 import type { PluginSourceGitHub } from "../domain/source.js";
 import type { HttpGet } from "../ports/http-get.js";
 
@@ -61,10 +62,10 @@ export class GitHubAdapter {
     const token = (await this.tokenProvider?.resolve()) ?? undefined;
     try {
       const response = await this.http.get(url, { token });
-      const body = response.body as unknown[];
+      const body = response.body;
       if (!Array.isArray(body)) return [];
       return body
-        .map((r) => (r as Record<string, unknown>).tag_name)
+        .map((r) => asPlainObject(r)?.tag_name)
         .filter((t): t is string => typeof t === "string");
     } catch (err) {
       if (err instanceof HttpNotFoundError) return [];

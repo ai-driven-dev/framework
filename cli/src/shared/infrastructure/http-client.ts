@@ -90,7 +90,7 @@ export class HttpClient implements HttpGet {
 
     if (contentType.includes("application/json")) {
       const text = buffer.toString("utf-8");
-      return { body: JSON.parse(text) as unknown, statusCode, contentType };
+      return { body: JSON.parse(text), statusCode, contentType };
     }
 
     return { body: buffer, statusCode, contentType };
