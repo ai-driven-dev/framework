@@ -115,7 +115,14 @@ type Container = ReturnType<typeof createContainer>;
 /** What the composition hands out: the members a command reads, plus the ones only wiring and
  * its tests read, which the presentation's `Deps` leaves out. */
 export type Graph = Deps &
-  Pick<Container["shared"], "fs" | "userSourceReferences" | "registerFrameworkMarketplace"> &
+  Pick<
+    Container["shared"],
+    | "fs"
+    | "manifestRepo"
+    | "userManifestRepo"
+    | "userSourceReferences"
+    | "registerFrameworkMarketplace"
+  > &
   Pick<Container["installation"], "assetProvider"> &
   Pick<Container["marketplace"], "askMarketplaceSource"> &
   Pick<Container["setup"], "choosePlugins">;
@@ -154,6 +161,12 @@ export function bindContainer(tools: ToolCatalog) {
       get checkStatus() {
         return container.shared.checkStatus;
       },
+      get manifestRepo() {
+        return container.shared.manifestRepo;
+      },
+      get userManifestRepo() {
+        return container.shared.userManifestRepo;
+      },
       get fs() {
         return container.shared.fs;
       },
@@ -172,8 +185,8 @@ export function bindContainer(tools: ToolCatalog) {
       get choosePlugins() {
         return container.setup.choosePlugins;
       },
-      get userManifestRepo() {
-        return container.shared.userManifestRepo;
+      get readMachineInstallation() {
+        return container.installation.readMachineInstallation;
       },
       get restoreAllUseCase() {
         return container.global.restoreAllUseCase;
@@ -264,9 +277,6 @@ export function bindContainer(tools: ToolCatalog) {
       },
       get installAiToolUseCase() {
         return container.global.installAiToolUseCase;
-      },
-      get manifestRepo() {
-        return container.shared.manifestRepo;
       },
       get installIdeToolUseCase() {
         return container.global.installIdeToolUseCase;

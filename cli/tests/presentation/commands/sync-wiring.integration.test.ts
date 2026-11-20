@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
 import {
   ManifestUnavailableError,
   UnregisteredToolError,
@@ -19,7 +20,7 @@ const createDeps = vi.fn(async () => ({
   restoreAllUseCase: { execute: restoreAll },
   restoreToolUseCase: { execute: restoreOne },
   syncSettingsUseCase: { execute: activation },
-  userManifestRepo,
+  readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
   userPluginUpdateUseCase: { execute: userPluginUpdate },
 }));
 

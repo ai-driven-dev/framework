@@ -14,7 +14,7 @@ import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./globa
 
 /** What this command reads of the graph. */
 type SyncKeys =
-  | "userManifestRepo"
+  | "readMachineInstallation"
   | "userPluginUpdateUseCase"
   | "syncSettingsUseCase"
   | "restoreAllUseCase"
@@ -30,7 +30,7 @@ interface SyncCmdOptions {
 
 /** A user-scope install writes nothing under any project, so this skips `restoreAllUseCase`:
  * it rebuilds the global files aidd copied into each tool's user directory from the shared
- * source, then drives native activation, through `deps.userManifestRepo` and never this
+ * source, then drives native activation, through `deps.readMachineInstallation` and never this
  * project's own manifest. */
 async function runUserScopeSync(
   deps: Pick<Deps, SyncKeys>,
@@ -53,9 +53,9 @@ async function runUserScopeSync(
   const aiToolIds = (names: readonly string[]) =>
     names.flatMap((name) => catalog.aiToolId(name) ?? []);
   const toolIds = cmdOptions.tool === undefined ? undefined : aiToolIds([cmdOptions.tool]);
-  const machine = await deps.userManifestRepo.load();
-  const withFiles = (toolIds ?? aiToolIds(machine?.getInstalledToolIds() ?? [])).filter((id) =>
-    machine?.getPlugins(id).some((plugin) => plugin.scope === "user")
+  const machine = await deps.readMachineInstallation.execute();
+  const withFiles = (toolIds ?? aiToolIds(machine?.toolIds ?? [])).filter((id) =>
+    machine?.hasUserPlugins(id)
   );
   const refreshed =
     withFiles.length === 0

@@ -20,6 +20,7 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../contexts/host-registration/domain/record/registration-record.js";
+import { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.js";
 import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.js";
@@ -152,6 +153,7 @@ export function wireInstallation(base: Base) {
     logger,
     currentVersionProvider,
     manifestRepo,
+    userManifestRepo,
     marketplaceRegistry,
     resolveMarketplaceUseCase,
   } = base;
@@ -201,6 +203,7 @@ export function wireInstallation(base: Base) {
     assetProvider
   );
   const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
+  const readMachineInstallation = new ReadMachineInstallation(userManifestRepo);
   const pluginListUseCase = new ListPlugins(manifestRepo, tools);
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
@@ -219,6 +222,7 @@ export function wireInstallation(base: Base) {
     installIdeConfig,
     propagateAiSettingsToIde,
     listInstalledRulesUseCase,
+    readMachineInstallation,
     pluginListUseCase,
     builtMaterializationDeps,
     detectPluginDriftUseCase,

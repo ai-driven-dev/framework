@@ -57,7 +57,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/contract/project-context.ts",
     "src/contexts/installation/contract/project-setup-state.ts",
     // the installation record, which is what this context owns
-    "src/contexts/installation/domain/manifest.ts",
     "src/contexts/installation/ports/manifest-repository.ts",
     // Transitional: the flows still in framework build on these,
     // and leave this list as each one moves behind an installation command.

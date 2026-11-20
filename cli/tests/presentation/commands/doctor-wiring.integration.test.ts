@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
+import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
 import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
@@ -19,7 +20,7 @@ const createDeps = vi.fn(async () => ({
   doctorUseCase: { execute: doctorScoped },
   statusUseCase: { execute: statusScoped },
   doctorRegistrationUseCase: { execute: doctorRegistration },
-  userManifestRepo: manifestRepositoryLoading(loadUserManifest),
+  readMachineInstallation: new ReadMachineInstallation(manifestRepositoryLoading(loadUserManifest)),
   homedir,
   environment: { get: () => undefined, set: () => undefined },
 }));

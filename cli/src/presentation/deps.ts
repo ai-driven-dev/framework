@@ -4,6 +4,7 @@ import type { LogOut } from "../contexts/auth/application/log-out.js";
 import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
+import type { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.js";
 import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
@@ -14,7 +15,6 @@ import type { UserPluginRemoveOptions } from "../contexts/installation/applicati
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
-import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
 import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
@@ -57,7 +57,6 @@ import type { RunSetup } from "../orchestration/setup/run-setup.js";
 import type { SyncNativeActivation } from "../orchestration/sync/sync-native-activation.js";
 import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
 import type { Environment } from "../shared/ports/environment.js";
-import type { Lock } from "../shared/ports/lock.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
@@ -92,10 +91,9 @@ export interface TelemetryRequests {
 }
 
 export interface Deps {
-  manifestRepo: ManifestRepository;
-  /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
-   * under a project's `.aidd/`. */
-  userManifestRepo: ManifestRepository & Lock;
+  /** The machine's installation record `--scope user` shows: `userConfigDir()/manifest.json`,
+   * never nested under a project's `.aidd/`. */
+  readMachineInstallation: Pick<ReadMachineInstallation, "execute">;
   /** The one home-directory resolver presentation calls, never `os.homedir()` directly, so a
    * test can point it elsewhere. */
   homedir: () => string;

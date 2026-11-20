@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const installAiTool = vi.fn();
@@ -9,7 +8,6 @@ const uninstallTools = vi.fn();
 const updateTools = vi.fn();
 const listInstalledRules = vi.fn();
 const validateRecipes = vi.fn();
-const loadManifest = vi.fn();
 const currentVersion = vi.fn(() => "5.2.2");
 
 const createDeps = vi.fn(async () => ({
@@ -19,7 +17,6 @@ const createDeps = vi.fn(async () => ({
   updateToolsUseCase: { execute: updateTools },
   listInstalledRulesUseCase: { execute: listInstalledRules },
   validateRecipes: { execute: validateRecipes },
-  manifestRepo: manifestRepositoryLoading(loadManifest),
   currentVersionProvider: { get: currentVersion },
 }));
 
@@ -66,7 +63,6 @@ beforeEach(() => {
   updateTools.mockResolvedValue({ updatedTools: [], errors: [] });
   listInstalledRules.mockResolvedValue({ rules: [] });
   validateRecipes.mockReturnValue({ findings: [], fileCount: 1 });
-  loadManifest.mockResolvedValue(null);
 });
 
 afterEach(() => {
@@ -149,12 +145,11 @@ describe("aidd framework install", () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 
-  it("sends an IDE tool down its own install, with the manifest it loaded", async () => {
+  it("sends an IDE tool down its own install", async () => {
     expect(await run("install", "--tool", "vscode")).toEqual(["Installed vscode (2 files)"]);
     expect(installIdeTool).toHaveBeenCalledWith({
       toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
-      manifest: expect.anything(),
       force: false,
       version: "5.2.2",
     });

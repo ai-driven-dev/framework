@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
@@ -23,7 +22,6 @@ import { type RecipesKeys, registerRecipesCommand } from "./recipes.js";
 type ToolConfigKeys =
   | "currentVersionProvider"
   | "installAiToolUseCase"
-  | "manifestRepo"
   | "installIdeToolUseCase"
   | "uninstallTools"
   | "updateToolsUseCase"
@@ -88,12 +86,10 @@ async function installIdeTool(
   toolId: IdeToolId,
   cmdOptions: { force: boolean }
 ): Promise<void> {
-  const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = deps.currentVersionProvider.get();
   const result = await deps.installIdeToolUseCase.execute({
     toolId,
     projectRoot,
-    manifest,
     force: cmdOptions.force,
     version,
   });

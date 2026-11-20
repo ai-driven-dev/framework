@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { InstallIdeTool } from "../../../../../src/contexts/installation/application/install/install-ide-tool.js";
 import { PropagateAiSettingsToIde } from "../../../../../src/contexts/installation/application/install/propagate-ai-settings-to-ide.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   buildUnitDeps,
   initProject,
@@ -25,11 +24,9 @@ function propagateAnswering(deps: Deps, answer: PropagateAiSettingsToIde["execut
 }
 
 async function installVscode(deps: Deps, propagate: PropagateAiSettingsToIde) {
-  const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-  return new InstallIdeTool(deps.installIdeConfig, propagate).execute({
+  return new InstallIdeTool(deps.manifestRepo, deps.installIdeConfig, propagate).execute({
     toolId: TOOL.vscode,
     projectRoot: PROJECT_ROOT,
-    manifest,
     force: false,
     version: "1.0.0",
   });
@@ -80,5 +77,16 @@ describe("InstallIdeTool", () => {
 
     expect(result.skipped).toBe(true);
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("installs on a fresh manifest when the project has none yet", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const { propagate } = propagateAnswering(deps, async () => {});
+    expect(await deps.manifestRepo.load()).toBeNull();
+
+    const result = await installVscode(deps, propagate);
+
+    expect(result.skipped).toBe(false);
+    expect((await deps.manifestRepo.load())?.hasTool(TOOL.vscode)).toBe(true);
   });
 });

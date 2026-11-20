@@ -24,7 +24,7 @@ type DoctorKeys =
   | "statusAllUseCase"
   | "doctorUseCase"
   | "statusUseCase"
-  | "userManifestRepo"
+  | "readMachineInstallation"
   | "homedir"
   | "environment"
   | "doctorRegistrationUseCase";
@@ -125,13 +125,13 @@ async function runUserScopeDoctor(
   if (cmdOptions.plugin !== undefined) {
     throw new UserScopeFilterUnsupportedError("--plugin", "doctor --plugin <name>");
   }
-  const manifest = await deps.userManifestRepo.load();
+  const manifest = await deps.readMachineInstallation.execute();
   if (manifest === null) {
     output.success("Nothing registered at user scope yet — run `aidd setup --global` first.");
     return;
   }
   const { tool } = cmdOptions;
-  const toolIds: readonly string[] = tool === undefined ? manifest.getInstalledToolIds() : [tool];
+  const toolIds: readonly string[] = tool === undefined ? manifest.toolIds : [tool];
   printUserScopeTools(
     output,
     toolIds.map((id) => {
@@ -144,7 +144,7 @@ async function runUserScopeDoctor(
           : undefined;
       return {
         toolId: profile.toolId,
-        version: manifest.getToolVersion(id) ?? "unknown",
+        version: manifest.versionOf(id) ?? "unknown",
         settings: settingsFile ?? "no user-scope settings file",
       };
     })
