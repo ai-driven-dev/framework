@@ -38,7 +38,6 @@
     "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts"
   ],
   "mirror": [
-    "src/contexts/installation/application/agents/agent-providers.ts",
     "src/contexts/installation/application/install/content/install-content-section.ts",
     "src/contexts/installation/application/install/install-config.ts",
     "src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
@@ -97,8 +96,6 @@
     "src/presentation/terminal/wait-for-enter.ts"
   ],
   "shape": [
-    "src/contexts/installation/application/agents/agent-providers.ts",
-    "src/contexts/installation/application/agents/main-session-models.ts",
     "src/contexts/installation/application/clean-project-files.ts",
     "src/contexts/installation/application/install/config/tracked-config-files.ts",
     "src/contexts/installation/application/install/configure-machine-scope.ts",

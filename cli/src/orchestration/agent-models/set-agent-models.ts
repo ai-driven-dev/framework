@@ -1,9 +1,10 @@
-import type { AgentProviders } from "../../contexts/installation/application/agents/agent-providers.js";
 import type {
   MainSessionModels,
   MainSessionOutcome,
 } from "../../contexts/installation/application/agents/main-session-models.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { RecordAgentProviders } from "../../contexts/installation/application/agents/record-agent-providers.js";
+import type { RestoreAgentProviders } from "../../contexts/installation/application/agents/restore-agent-providers.js";
+import type { RestoreMainSessionModels } from "../../contexts/installation/application/agents/restore-main-session-models.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { RefreshAgentPlugins } from "./refresh-agent-plugins.js";
@@ -36,46 +37,37 @@ export interface ResetAgentModelsResult extends MainSessionOutcome {
  */
 export class SetAgentModels {
   constructor(
-    private readonly providers: Pick<AgentProviders, "record" | "restore" | "forgetAll">,
-    private readonly mainSessions: Pick<MainSessionModels, "apply" | "restoreAll">,
-    private readonly refresh: Pick<RefreshAgentPlugins, "execute">,
-    private readonly tools: ToolCatalog
+    private readonly recordProviders: Pick<RecordAgentProviders, "execute">,
+    private readonly restoreProviders: Pick<RestoreAgentProviders, "execute">,
+    private readonly mainSessions: Pick<MainSessionModels, "execute">,
+    private readonly restoreMainSessions: Pick<RestoreMainSessionModels, "execute">,
+    private readonly refresh: Pick<RefreshAgentPlugins, "execute">
   ) {}
 
   async execute(options: SetAgentModelsOptions): Promise<SetAgentModelsResult> {
-    const chosen = this.chosenProviders(options);
-    const before = await this.providers.record(options.hosts, chosen);
+    const { chosen, before } = await this.recordProviders.execute(options);
     let reinstalled: readonly string[];
     try {
       reinstalled = await this.refresh.execute(options);
     } catch (error) {
       // A rebuild that failed leaves the machine on the provider it had.
-      await this.providers.restore(before);
+      await this.restoreProviders.execute({ providers: before });
       throw error;
     }
-    return { reinstalled, ...(await this.mainSessions.apply(options.hosts, chosen)) };
+    return {
+      reinstalled,
+      ...(await this.mainSessions.execute({ hosts: options.hosts, chosen })),
+    };
   }
 
   /** `clean --global`: forgets every host's provider and gives each main session back what it
    * held before aidd, machine-wide. `dryRun` says what it would restore and changes nothing. */
   async reset(options: { readonly dryRun: boolean }): Promise<ResetAgentModelsResult> {
-    const restored = await this.mainSessions.restoreAll(options.dryRun);
-    const providers = await this.providers.forgetAll(options.dryRun);
+    const restored = await this.restoreMainSessions.execute(options);
+    const providers = await this.restoreProviders.execute({
+      providers: {},
+      dryRun: options.dryRun,
+    });
     return { ...restored, providers };
-  }
-
-  /** Each host's provider, refused where the host does not run it. */
-  private chosenProviders(
-    options: Pick<SetAgentModelsOptions, "hosts" | "provider">
-  ): Map<string, string> {
-    const chosen = new Map<string, string>();
-    const { provider } = options;
-    if (provider === undefined) return chosen;
-    for (const host of options.hosts) {
-      const models = this.tools.aiProfile(host).agentModels();
-      if (models === null) throw new Error(`No agent provider is supported for "${host}".`);
-      chosen.set(host, models.supportedProvider(provider));
-    }
-    return chosen;
   }
 }

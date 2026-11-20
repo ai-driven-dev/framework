@@ -1,9 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AgentPluginHosts } from "../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
-import { AgentProviders } from "../../../src/contexts/installation/application/agents/agent-providers.js";
 import { MainSessionLocator } from "../../../src/contexts/installation/application/agents/main-session-locator.js";
 import { MainSessionModels } from "../../../src/contexts/installation/application/agents/main-session-models.js";
+import { RecordAgentProviders } from "../../../src/contexts/installation/application/agents/record-agent-providers.js";
+import { RestoreAgentProviders } from "../../../src/contexts/installation/application/agents/restore-agent-providers.js";
+import { RestoreMainSessionModels } from "../../../src/contexts/installation/application/agents/restore-main-session-models.js";
 import type { UpdatePluginCommand } from "../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -81,7 +83,13 @@ function setup(
     jsoncMainSessionSettings,
     new MainSessionLocator(fs, () => HOME, { get: env }, tools)
   );
-  const useCase = new SetAgentModels(new AgentProviders(store), mainSessions, refresh, tools);
+  const useCase = new SetAgentModels(
+    new RecordAgentProviders(store, tools),
+    new RestoreAgentProviders(store),
+    mainSessions,
+    new RestoreMainSessionModels(store, mainSessions),
+    refresh
+  );
   return { fs, useCase, updates, userUpdates, activations };
 }
 
