@@ -1,12 +1,10 @@
 import { chmod, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe } from "vitest";
+import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
 import { parseMarketplacesWithSource } from "../../../../src/contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import { InstallLocationsByNameReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
-import {
-  HostRegistryMarketplaceSourceReaderAdapter,
-  NativeMarketplaceSourceReaderAdapter,
-} from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
+import { NativeMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/native-marketplace-source-reader-adapter.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.fake.js";
 import {

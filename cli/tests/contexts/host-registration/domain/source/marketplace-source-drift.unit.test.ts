@@ -140,6 +140,24 @@ describe("marketplaceSourceDrift — deciding purely from the path's own segment
   });
 });
 
+describe("marketplaceSourceDrift — a pre-migration cache of another catalog is no drift", () => {
+  it.each([
+    ["project", "/project/.aidd/cache/built"],
+    ["other project", "/other-project/.aidd/cache/built"],
+  ])("is undefined for the %s cache of another marketplace or tool", (_label, root) => {
+    for (const leaf of ["other-mkt/claude", "aidd-framework/codex"])
+      expect(
+        marketplaceSourceDrift(join(root, leaf), sharedPath("1.0.0"), DRIFT_CONTEXT)
+      ).toBeUndefined();
+  });
+
+  it("is undefined when the registered version segment is not semver", () => {
+    expect(
+      marketplaceSourceDrift(sharedPath("not-a-version"), sharedPath("0.0.0-rc.1"), DRIFT_CONTEXT)
+    ).toBeUndefined();
+  });
+});
+
 describe("judgeDrift", () => {
   it("skips a host already following a newer build, carrying both versions", () => {
     expect(

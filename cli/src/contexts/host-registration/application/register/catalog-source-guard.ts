@@ -58,7 +58,7 @@ export interface HostRegistries {
   readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
 }
 
-interface NativeCatalogProof {
+export interface NativeCatalogProof {
   readonly canonical: boolean;
   readonly hostReadable: boolean;
   readonly sourceStatus: "absent" | "owned" | "unproven";

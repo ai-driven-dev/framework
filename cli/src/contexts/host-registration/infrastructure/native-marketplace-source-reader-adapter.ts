@@ -1,6 +1,5 @@
 import { type SpawnSyncOptionsWithStringEncoding, spawnSync } from "node:child_process";
 import type { NativeMarketplaceSourceReading } from "../domain/record/native-marketplace-source-reading.js";
-import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import {
   hostExecutableLookup,
@@ -9,29 +8,6 @@ import {
   windowsCommandLine,
 } from "./executable-on-path.js";
 import type { NativeMarketplaceSourceListContract } from "./native-marketplace-source-list-contract.js";
-
-export class HostRegistryMarketplaceSourceReaderAdapter implements HostMarketplaceSources {
-  constructor(private readonly hostReader: HostMarketplaceRegistry) {}
-
-  async read(_projectRoot: string): Promise<NativeMarketplaceSourceReading> {
-    const reading = await this.hostReader.read();
-    if (reading.entries !== undefined)
-      return {
-        location: reading.location,
-        entries: new Map(
-          [...reading.entries].map(([name, source]) => [
-            name,
-            { kind: "registry" as const, source },
-          ])
-        ),
-      };
-    if (reading.absent === true) return { location: reading.location, entries: new Map() };
-    return {
-      location: reading.location,
-      unreadable: reading.unreadable ?? "Host marketplace registry is unreadable",
-    };
-  }
-}
 
 /** Uses only a host's structured, effective listing with the requesting project's CWD. */
 export class NativeMarketplaceSourceReaderAdapter implements HostMarketplaceSources {
