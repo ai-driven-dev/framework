@@ -16,6 +16,7 @@ Source: [`spec.md`](./spec.md) (#1149 rest, #1165)
 | 3 | Rules replacing tests: SKILL name/description required, name = folder, no sibling plugin address, links stay inside the skill, SKILL-17 skips assets; HOOKS statusMessage; PLAN sections read by implement; REPORT contract; REPO severity scale, release coverage, SDLC demo | #1149 | per rule: silent today, one mutation exits 1 with its id, then the test is deleted |
 | 4 | DOC and REPO contracts take the content scripts: links, referenced paths, local paths, context imports and form, mermaid names, duplication, JSON with embedded schemas | #1149 | each script's findings on today's tree equal its rule's; script stays wired until #1165 |
 | 5 | Generators under `scripts/check/generators/`: catalogs, README counts merged into the README grid; COMPATIBILITY block split out as CLI-coupled | #1149 | `--fix` output equals today's generated files; stale file is a finding without `--fix` |
+| 5b | Challenge every check (contract rules, remaining tests, checks outside `run.cjs`, lefthook and CI entries): one source, catches real errors, no false positives, content or code; verdict keep, simplify, merge or delete | #1149 | user decides each verdict before phase 6 |
 | 6 | lefthook and CI on `run.cjs`; old scripts, entries and replaced tests deleted; recipe check limited to recipe files; argument-hint check and agent branch deleted | #1165 (stacked) | pre-commit and CI green; spec done-when all true |
 
 ## Decisions
