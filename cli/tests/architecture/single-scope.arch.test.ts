@@ -9,13 +9,14 @@ import { read, tsFilesUnder } from "./helpers.js";
 const SCOPE_HOME = "src/shared/domain/scope.ts";
 
 /** A credential's level names who may use a token, a different notion that happens to carry the
- * same two words. The guard reads one line, so a union broken across lines goes unseen: none
- * exists in the code today. */
+ * same two words. */
 const AUTH_LEVEL_HOME = "src/contexts/auth/contract/credential.ts";
 
 /** The probes below plant the very shape this guard reports. */
 const SELF = "tests/architecture/single-scope.arch.test.ts";
 
+/** The two members side by side, across a line break or not. One with another member between
+ * them, `"project" | null | "user"`, goes unseen: none exists in the code today. */
 const INLINE_UNION = /"project"\s*\|\s*"user"|"user"\s*\|\s*"project"/;
 
 describe("the project-or-user union has one spelling", () => {
