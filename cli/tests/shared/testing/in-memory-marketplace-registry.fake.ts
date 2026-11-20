@@ -1,5 +1,8 @@
 import type { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
+import type {
+  MarketplaceKey,
+  MarketplaceRegistry,
+} from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 
 export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
@@ -25,26 +28,20 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
 
   async updateLastFetched(
     projectRoot: string,
-    name: string,
-    scope: Scope,
+    target: MarketplaceKey,
     when: string
   ): Promise<void> {
-    const store = scope === "project" ? this.project : this.user;
-    const key = this.key(projectRoot, name, scope);
+    const store = target.scope === "project" ? this.project : this.user;
+    const key = this.key(projectRoot, target.name, target.scope);
     const existing = store.get(key);
     if (existing !== undefined) {
       store.set(key, existing.withLastFetched(when));
     }
   }
 
-  async updateVersion(
-    projectRoot: string,
-    name: string,
-    scope: Scope,
-    version: string
-  ): Promise<void> {
-    const store = scope === "project" ? this.project : this.user;
-    const key = this.key(projectRoot, name, scope);
+  async updateVersion(projectRoot: string, target: MarketplaceKey, version: string): Promise<void> {
+    const store = target.scope === "project" ? this.project : this.user;
+    const key = this.key(projectRoot, target.name, target.scope);
     const existing = store.get(key);
     if (existing !== undefined) {
       store.set(key, existing.withVersion(version));

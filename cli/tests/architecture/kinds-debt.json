@@ -338,10 +338,6 @@
     "function parameters :: src/composition/orchestration/plugin.ts",
     "function parameters :: src/composition/orchestration/setup.ts",
     "function parameters :: src/composition/shared.ts",
-    "function parameters :: src/contexts/distribution/application/fetch-marketplace-source.ts",
-    "function parameters :: src/contexts/distribution/infrastructure/marketplace-registry-adapter.ts",
-    "function parameters :: src/contexts/distribution/infrastructure/plugin-fetcher-adapter.ts",
-    "function parameters :: src/contexts/distribution/ports/marketplace-registry.ts",
     "function parameters :: src/contexts/host-registration/application/host-marketplace-source-conflict.ts",
     "function parameters :: src/contexts/host-registration/application/native-host-registration-gate.ts",
     "function parameters :: src/contexts/host-registration/application/native-marketplace-source-proof.ts",
@@ -425,7 +421,6 @@
     "function parameters :: src/contexts/tools/domain/profiles/copilot/build.ts",
     "function parameters :: src/contexts/tools/domain/profiles/cursor/build.ts",
     "function parameters :: src/contexts/tools/domain/sections/mcp-section.ts",
-    "function parameters :: src/contexts/translate/domain/engine.ts",
     "function parameters :: src/orchestration/doctor/check-registration.ts",
     "function parameters :: src/orchestration/setup/run-setup.ts",
     "function parameters :: src/orchestration/setup/setup-flow.ts",
@@ -462,8 +457,6 @@
     "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts: codex"
   ],
   "toolIdentifiers": [
-    "src/contexts/distribution/application/fetch-marketplace-source.ts: 1",
-    "src/contexts/distribution/application/refresh-marketplace.ts: 1",
     "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts: 1"
   ],
   "exemptProcessExit": ["src/presentation/exit.ts"],

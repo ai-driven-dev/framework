@@ -4,6 +4,7 @@ import type { Logger } from "../../../shared/ports/logger.js";
 import type { PluginCatalog } from "../contract/catalog.js";
 import { hasRelativePluginSources, parsePluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
+import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-layout.js";
 import type { MarketplaceCachePort } from "../ports/marketplace-cache.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 import type { ResolveMarketplace } from "./resolve-marketplace.js";
@@ -24,8 +25,6 @@ export interface RefreshMarketplaceResult {
   results: readonly RefreshEntryResult[];
   failedCount: number;
 }
-
-const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
 
 /** Refreshing registered marketplace catalogs. */
 export class RefreshMarketplace {
@@ -61,9 +60,9 @@ export class RefreshMarketplace {
         projectRoot,
         forceRefresh: true,
       });
-      await this.registry.updateLastFetched(projectRoot, m.name, m.scope, new Date().toISOString());
+      await this.registry.updateLastFetched(projectRoot, m, new Date().toISOString());
       if (catalog?.version !== undefined) {
-        await this.registry.updateVersion(projectRoot, m.name, m.scope, catalog.version);
+        await this.registry.updateVersion(projectRoot, m, catalog.version);
       }
       return { name: m.name, status: "ok" };
     } catch (err) {
@@ -84,7 +83,7 @@ export class RefreshMarketplace {
 
   private async isStaleCache(fs: FileReader, cacheDir: string): Promise<boolean> {
     try {
-      const catalogFilePath = join(cacheDir, CLAUDE_CATALOG_PATH);
+      const catalogFilePath = join(cacheDir, MARKETPLACE_CATALOG_RELATIVE);
       const raw: unknown = JSON.parse(await fs.readFile(catalogFilePath));
       const catalog = parsePluginCatalog(raw);
       if (!hasRelativePluginSources(catalog)) return false;

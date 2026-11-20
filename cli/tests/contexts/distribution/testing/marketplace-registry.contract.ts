@@ -105,7 +105,11 @@ export function describeMarketplaceRegistryContract(
       await registry.save(projectRoot, entry({ name: "a" }));
       await registry.save(projectRoot, entry({ name: "b" }));
 
-      await registry.updateLastFetched(projectRoot, "a", "project", "2026-04-28T12:00:00.000Z");
+      await registry.updateLastFetched(
+        projectRoot,
+        { name: "a", scope: "project" },
+        "2026-04-28T12:00:00.000Z"
+      );
 
       const result = await registry.list(projectRoot);
       expect(result.find((m) => m.name === "a")?.lastFetched).toBe("2026-04-28T12:00:00.000Z");
