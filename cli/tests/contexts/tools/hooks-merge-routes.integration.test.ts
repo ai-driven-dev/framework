@@ -15,7 +15,7 @@ import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js"
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { registeredAiProfile } from "./testing/catalog-of.js";
+import { registeredAiProfile } from "./testing/catalog-of.builder.js";
 
 /**
  * Every route that merges a plugin's hooks into a file the project already holds. The file

@@ -5,16 +5,16 @@ import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-u
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { cloneOf, grantedBy } from "./clone-builders.js";
-import { FakeBindings } from "./fake-bindings.js";
-import { FakeConsents } from "./fake-consents.js";
-import { FakeLocator } from "./fake-locator.js";
-import { InMemoryBindingsLock } from "./in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "./in-memory-consent-history.js";
-import { InMemoryLedger } from "./in-memory-ledger.js";
-import { InMemoryResolutions } from "./in-memory-resolutions.js";
-import { InMemorySnapshots } from "./in-memory-snapshots.js";
-import { InMemoryTranscripts } from "./in-memory-transcripts.js";
+import { cloneOf, grantedBy } from "./clone.builder.js";
+import { FakeBindings } from "./fake-bindings.fake.js";
+import { FakeConsents } from "./fake-consents.fake.js";
+import { FakeLocator } from "./fake-locator.fake.js";
+import { InMemoryBindingsLock } from "./in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "./in-memory-consent-history.fake.js";
+import { InMemoryLedger } from "./in-memory-ledger.fake.js";
+import { InMemoryResolutions } from "./in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "./in-memory-snapshots.fake.js";
+import { InMemoryTranscripts } from "./in-memory-transcripts.fake.js";
 
 export const sha = (text: string): string => createHash("sha256").update(text).digest("hex");
 export const NOW = new Date("2026-10-09T00:00:00.000Z");

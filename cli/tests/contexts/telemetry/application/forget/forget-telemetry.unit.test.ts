@@ -6,11 +6,11 @@ import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/rep
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { ErasureEntry } from "../../../../../src/contexts/telemetry/ports/forget/measurement-erasure.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { cloneOf } from "../../testing/clone-builders.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
-import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
-import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
+import { cloneOf } from "../../testing/clone.builder.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.fake.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
 
 const located = (
   root: string,

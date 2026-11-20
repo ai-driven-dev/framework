@@ -4,8 +4,8 @@ import { ReplacePluginFiles } from "../../../../../src/contexts/installation/app
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PLUGIN_SOURCE_PATH = "/plugin-source/sample-plugin";
 const PROJECT_ROOT = "/test-project";

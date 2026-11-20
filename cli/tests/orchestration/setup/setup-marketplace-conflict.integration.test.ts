@@ -11,8 +11,8 @@ import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
-import { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
+import { buildInstallationDeps } from "../../contexts/installation/testing/installation-deps.builder.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -21,9 +21,9 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
-import { runSetupOf } from "../testing/run-setup-of.js";
-import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
+import { runSetupOf } from "../testing/run-setup-of.builder.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
 const CURRENT_VERSION = new FakeCurrentVersion();
 

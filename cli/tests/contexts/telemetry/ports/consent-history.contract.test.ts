@@ -6,8 +6,8 @@ import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infras
 import {
   type ConsentHistorySubject,
   describeConsentHistoryContract,
-} from "../testing/consent-history-contract.js";
-import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
+} from "../testing/consent-history.contract.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
 
 describeConsentHistoryContract(
   "the in-memory history",

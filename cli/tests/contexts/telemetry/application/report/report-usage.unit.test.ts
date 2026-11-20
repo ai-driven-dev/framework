@@ -21,18 +21,18 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { AUTUMN } from "../../testing/autumn.js";
-import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
-import { FakeBindings } from "../../testing/fake-bindings.js";
-import { FakeConsents } from "../../testing/fake-consents.js";
-import { FakeLocator } from "../../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
-import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
-import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
-import { InMemorySessions } from "../../testing/in-memory-sessions.js";
-import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
-import { InMemoryTranscripts } from "../../testing/in-memory-transcripts.js";
+import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
+import { FakeBindings } from "../../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../../testing/fake-consents.fake.js";
+import { FakeLocator } from "../../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.fake.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
+import { InMemoryTranscripts } from "../../testing/in-memory-transcripts.fake.js";
 
 const ANY: Period = { from: null, to: null };
 

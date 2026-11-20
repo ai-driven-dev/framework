@@ -10,10 +10,10 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";

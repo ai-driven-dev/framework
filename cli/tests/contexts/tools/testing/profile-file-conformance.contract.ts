@@ -3,7 +3,7 @@ import {
   CANONICAL_HOOK_EVENTS,
   type HookEventRoute,
 } from "../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
-import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance.js";
+import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance.contract.js";
 
 /** What a conformance check is told of the files a profile ships beside its code. */
 export interface FileConformanceSubject extends ConformanceSubject {

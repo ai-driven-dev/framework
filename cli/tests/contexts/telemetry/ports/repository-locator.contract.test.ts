@@ -3,12 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { GitRepositoryLocatorAdapter } from "../../../../src/contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
-import { cloneOf } from "../testing/clone-builders.js";
-import { FakeLocator } from "../testing/fake-locator.js";
+import { cloneOf } from "../testing/clone.builder.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
 import {
   describeRepositoryLocatorContract,
   type RepositoryLocatorSubject,
-} from "../testing/repository-locator-contract.js";
+} from "../testing/repository-locator.contract.js";
 
 describeRepositoryLocatorContract("the fake", async (): Promise<RepositoryLocatorSubject> => {
   const fake = new FakeLocator();

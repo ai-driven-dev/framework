@@ -8,7 +8,7 @@ import {
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { sourceOf, supported } from "../../../testing/build-artifacts.js";
+import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";
 
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },

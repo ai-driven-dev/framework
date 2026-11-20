@@ -6,7 +6,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { aManifest } from "../../testing/manifest-builder.js";
+import { aManifest } from "../../testing/manifest.builder.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";
 const HASH_B = "def456def456def456def456def456de";

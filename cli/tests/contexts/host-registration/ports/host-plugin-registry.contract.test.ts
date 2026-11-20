@@ -5,12 +5,12 @@ import {
   PluginEntriesByScopeReader,
   TomlPluginTablesReader,
 } from "../../../../src/contexts/host-registration/infrastructure/plugin-registry-readers.js";
-import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.js";
+import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.fake.js";
 import {
   describeHostPluginRegistryContract,
   type PluginRegistryScenario,
   type PluginRegistrySubject,
-} from "../testing/host-plugin-registry-contract.js";
+} from "../testing/host-plugin-registry.contract.js";
 import { scratchDirectory } from "../testing/scratch-directory.js";
 
 describeHostPluginRegistryContract(

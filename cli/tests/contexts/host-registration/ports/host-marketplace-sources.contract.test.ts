@@ -8,12 +8,12 @@ import {
   NativeMarketplaceSourceReaderAdapter,
 } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
-import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.js";
+import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.fake.js";
 import {
   describeHostMarketplaceSourcesContract,
   type MarketplaceSourcesScenario,
   type MarketplaceSourcesSubject,
-} from "../testing/host-marketplace-sources-contract.js";
+} from "../testing/host-marketplace-sources.contract.js";
 import { scratchDirectory } from "../testing/scratch-directory.js";
 
 describeHostMarketplaceSourcesContract(

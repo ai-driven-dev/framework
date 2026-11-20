@@ -10,7 +10,7 @@ import {
 } from "../../../../shared/testing/faulting-file-adapter.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 

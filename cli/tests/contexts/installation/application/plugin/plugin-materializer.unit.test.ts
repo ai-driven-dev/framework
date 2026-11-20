@@ -11,8 +11,8 @@ import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-f
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
-import { userScopeFileGuard } from "../../testing/user-scope-file-guard.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+import { userScopeFileGuard } from "../../testing/user-scope-file-guard.fake.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
 const insideUserScope: IsWithinUserScope = () => true;

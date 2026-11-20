@@ -8,7 +8,7 @@ import {
 import { PurgeDeclaredCache } from "../../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const CONFIG = "/fake-home/.config/aidd";
 const ROOT = "/project";

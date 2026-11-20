@@ -10,7 +10,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
   installTool,
-} from "../../contexts/installation/testing/installation-deps.js";
+} from "../../contexts/installation/testing/installation-deps.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildDoctorUseCase } from "../testing/build-doctor.js";
 

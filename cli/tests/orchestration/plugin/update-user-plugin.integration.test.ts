@@ -14,9 +14,9 @@ import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
-import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.js";
+import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.fake.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";

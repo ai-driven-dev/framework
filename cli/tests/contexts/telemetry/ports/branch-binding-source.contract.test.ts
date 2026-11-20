@@ -6,8 +6,8 @@ import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox
 import {
   type BranchBindingSourceSubject,
   describeBranchBindingSourceContract,
-} from "../testing/branch-binding-source-contract.js";
-import { FakeBindings } from "../testing/fake-bindings.js";
+} from "../testing/branch-binding-source.contract.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
 
 const ROOT = "/work/app";
 

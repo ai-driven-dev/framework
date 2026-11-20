@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
 import {
   installViaModeA,
   PLUGIN_NAME,
   REF,
   verifiedSourceReader,
 } from "../../testing/framework-plugin-on-claude.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { pluginRemover } from "../../testing/plugin-remover.js";
-import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
+import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.fake.js";
 
 const { claude } = TOOL;
 const PROJECT_ROOT = "/test-project";

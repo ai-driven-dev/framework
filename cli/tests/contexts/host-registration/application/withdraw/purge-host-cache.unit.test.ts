@@ -6,7 +6,7 @@ import type { HostMarketplaceRegistry } from "../../../../../src/contexts/host-r
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.fake.js";
 
 const CACHE_ROOT = "/cache";
 const HOST_NAME = "aidd-framework";

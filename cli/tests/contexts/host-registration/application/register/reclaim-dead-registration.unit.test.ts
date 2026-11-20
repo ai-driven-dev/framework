@@ -13,9 +13,9 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.js";
-import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.fake.js";
+import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
 
 const DIR = "/built/aidd";
 const OWN: NativeMarketplaceSource = { kind: "registry", source: DIR };

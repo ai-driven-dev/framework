@@ -7,9 +7,9 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
-import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";
-import { buildInstallationDeps, initProject } from "../../testing/installation-deps.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+import { buildInstallationDeps, initProject } from "../../testing/installation-deps.builder.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");

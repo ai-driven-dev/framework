@@ -19,8 +19,8 @@ import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { flowTools } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
-import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";

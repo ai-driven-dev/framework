@@ -4,7 +4,7 @@ import type {
   ConsentRecords,
 } from "../../../../src/contexts/telemetry/domain/consent/consent-history.js";
 import type { ConsentHistory } from "../../../../src/contexts/telemetry/ports/consent-history.js";
-import { tokenOf } from "./clone-builders.js";
+import { tokenOf } from "./clone.builder.js";
 
 export class InMemoryConsentHistory implements ConsentHistory {
   readonly written: ConsentEvent[] = [];

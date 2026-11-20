@@ -15,12 +15,12 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
-import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.js";
+import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
+import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
-} from "../../contexts/installation/testing/installation-deps.js";
+} from "../../contexts/installation/testing/installation-deps.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";

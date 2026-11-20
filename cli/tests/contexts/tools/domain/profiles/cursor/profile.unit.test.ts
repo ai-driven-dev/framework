@@ -7,8 +7,8 @@ import {
   rulesRows,
   SHIPPED_AS_IS,
   WRITES_NOTHING,
-} from "../../../testing/profile-tables.js";
-import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
+} from "../../../testing/profile-tables.builder.js";
+import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
 
 describe("cursor declarations the rest of the CLI reads", () => {
   it("has .cursor/ directory", () => {

@@ -13,13 +13,13 @@ import {
   resolutionKey,
 } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { cloneOf } from "../../testing/clone-builders.js";
-import { FakeConsents } from "../../testing/fake-consents.js";
-import { FakeLocator } from "../../testing/fake-locator.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
-import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
-import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { cloneOf } from "../../testing/clone.builder.js";
+import { FakeConsents } from "../../testing/fake-consents.fake.js";
+import { FakeLocator } from "../../testing/fake-locator.fake.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.fake.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
 
 const repository = (
   root: string,

@@ -3,7 +3,7 @@ import type { TranslatorDeps } from "../../../../../src/contexts/installation/ap
 import { resolvePluginTranslator } from "../../../../../src/contexts/installation/application/materialize/resolve-plugin-translator.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 function deps(): TranslatorDeps {
   return {

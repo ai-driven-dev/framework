@@ -9,7 +9,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { aManifest } from "../../testing/manifest-builder.js";
+import { aManifest } from "../../testing/manifest.builder.js";
 
 const { cursor } = TOOL;
 

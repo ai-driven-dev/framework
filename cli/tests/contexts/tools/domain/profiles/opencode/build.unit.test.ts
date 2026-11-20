@@ -6,7 +6,7 @@ import type {
 import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
 import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { sourceOf, supported } from "../../../testing/build-artifacts.js";
+import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";

@@ -15,8 +15,8 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
-import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";

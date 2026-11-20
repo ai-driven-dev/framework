@@ -6,7 +6,7 @@ import { Manifest } from "../../../../../../src/contexts/installation/domain/man
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-provider.fake.js";
-import { buildInstallationDeps, initProject } from "../../../testing/installation-deps.js";
+import { buildInstallationDeps, initProject } from "../../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";

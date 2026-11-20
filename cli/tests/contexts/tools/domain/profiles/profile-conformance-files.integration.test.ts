@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { describeProfileFileConformance } from "../../testing/profile-file-conformance.js";
+import { describeProfileFileConformance } from "../../testing/profile-file-conformance.contract.js";
 
 /**
  * Adding a tool that runs hooks costs one descriptor, `profiles/<tool>/hooks.ts`, and one

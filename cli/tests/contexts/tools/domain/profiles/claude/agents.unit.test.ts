@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude-agent.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { AgentsSection } from "../../../../../../src/contexts/tools/domain/sections/agents-section.js";
-import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
 
 describe("claude agents", () => {
   describe("name resolution", () => {

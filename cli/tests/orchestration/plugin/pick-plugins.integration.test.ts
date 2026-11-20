@@ -14,13 +14,13 @@ import {
   NoMarketplacesRegisteredError,
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
-import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.js";
+import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
+import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
-} from "../../contexts/installation/testing/installation-deps.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+} from "../../contexts/installation/testing/installation-deps.builder.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";

@@ -7,7 +7,7 @@ import {
   describeHostActionsContract,
   type HostActionsScenario,
   type HostActionsSubject,
-} from "../testing/host-actions-contract.js";
+} from "../testing/host-actions.contract.js";
 import { scratchDirectory } from "../testing/scratch-directory.js";
 
 describeHostActionsContract(

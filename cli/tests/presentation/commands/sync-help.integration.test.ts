@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 

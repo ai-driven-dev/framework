@@ -3,9 +3,9 @@ import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/
 import { FileHash } from "../../../../../../src/shared/domain/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
-import { flatOf } from "../../../testing/plugin-mode.js";
-import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
-import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
+import { flatOf } from "../../../testing/plugin-mode.builder.js";
+import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.builder.js";
+import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
 
 function _makeFs(existingPaths: string[]): FileReader {
   return {

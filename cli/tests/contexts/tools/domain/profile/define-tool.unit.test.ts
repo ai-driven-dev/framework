@@ -18,8 +18,8 @@ import {
   nativePlugins,
   type PluginSet,
   sectionsOf,
-} from "../../testing/plugin-mode.js";
-import { aProfile, projectMergeDelivery } from "../../testing/profiles.js";
+} from "../../testing/plugin-mode.builder.js";
+import { aProfile, projectMergeDelivery } from "../../testing/profiles.builder.js";
 
 const settings = new ConfigSection({
   outputPath: ".x/settings.json",

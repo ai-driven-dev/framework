@@ -3,8 +3,8 @@ import { ResolveAddedPluginSource } from "../../../../../../src/contexts/install
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { fakeBuiltDeps } from "../../../testing/fake-build-sources.js";
-import { buildInstallationDeps } from "../../../testing/installation-deps.js";
+import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
+import { buildInstallationDeps } from "../../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const SOURCE = { kind: "local" as const, path: "/plugin" };

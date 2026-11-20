@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
-import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
+import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.builder.js";
+import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
 
 describe("opencode profile", () => {
   it.each<[InstallKind, string, string]>([

@@ -9,8 +9,8 @@ import { FileHash, InstallationFile } from "../../../../../src/shared/domain/fil
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../testing/manifest-builder.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../testing/manifest.builder.js";
 
 const HASH = "0".repeat(32);
 

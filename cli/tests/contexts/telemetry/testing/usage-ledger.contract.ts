@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import type { StoredUsage } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
 import type { UsageLedger } from "../../../../src/contexts/telemetry/ports/usage-ledger.js";
 import { type ContractSubject, describeSubject } from "./contract-subject.js";
-import { aUsageRecord } from "./usage-record-builder.js";
+import { aUsageRecord } from "./usage-record.builder.js";
 
 export interface LedgerSubject extends ContractSubject {
   readonly ledger: UsageLedger;

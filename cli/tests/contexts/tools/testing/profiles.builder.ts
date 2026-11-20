@@ -17,7 +17,7 @@ import type { McpSection } from "../../../../src/contexts/tools/domain/sections/
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { flatPlugins, type PluginSet } from "./plugin-mode.js";
+import { flatPlugins, type PluginSet } from "./plugin-mode.builder.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
 export type KitCapabilities = {

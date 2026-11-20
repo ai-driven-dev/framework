@@ -27,7 +27,7 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { aUsageRecord } from "../../testing/usage-record-builder.js";
+import { aUsageRecord } from "../../testing/usage-record.builder.js";
 
 const call = (over: Partial<StoredUsage> = {}): StoredUsage =>
   aUsageRecord()

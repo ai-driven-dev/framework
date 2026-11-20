@@ -13,17 +13,17 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
-} from "../../contexts/installation/testing/spy-record-rules.js";
+} from "../../contexts/installation/testing/spy-record-rules.fake.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { userMarketplaceRemover } from "../testing/user-marketplace-remover.js";
+import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 
 const ALIAS = "project-alias";
 const HOST = "real-catalog";

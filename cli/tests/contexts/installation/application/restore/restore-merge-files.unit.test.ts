@@ -9,7 +9,7 @@ import {
   OverwritePrompter,
   ScriptedPrompter,
 } from "../../../../shared/testing/scripted-prompter.fake.js";
-import { buildInstallationDeps } from "../../testing/installation-deps.js";
+import { buildInstallationDeps } from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

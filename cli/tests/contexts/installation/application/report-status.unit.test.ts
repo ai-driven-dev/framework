@@ -12,9 +12,9 @@ import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.js";
-import { buildInstallationDeps } from "../testing/installation-deps.js";
-import { aManifest } from "../testing/manifest-builder.js";
+import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.fake.js";
+import { buildInstallationDeps } from "../testing/installation-deps.builder.js";
+import { aManifest } from "../testing/manifest.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const TRACKED = ".claude/rules/one.md";

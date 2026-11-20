@@ -15,16 +15,16 @@ import {
   ScriptedPrompter,
 } from "../../../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
-import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.js";
-import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   FIXTURE_DIR,
   initAndInstall,
   initProject,
   installTool,
-} from "../../testing/installation-deps.js";
+} from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

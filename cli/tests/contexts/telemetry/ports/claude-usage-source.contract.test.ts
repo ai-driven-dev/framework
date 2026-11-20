@@ -2,11 +2,11 @@ import { appendFile, mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promi
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { InMemoryTranscripts } from "../testing/in-memory-transcripts.js";
+import { InMemoryTranscripts } from "../testing/in-memory-transcripts.fake.js";
 import {
   describeUsageSourceContract,
   type UsageSourceSubject,
-} from "../testing/usage-source-contract.js";
+} from "../testing/usage-source.contract.js";
 
 const SECONDS = 1000;
 

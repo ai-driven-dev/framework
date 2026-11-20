@@ -12,7 +12,7 @@ import {
   KeepPrompter,
   OverwritePrompter,
 } from "../../../../shared/testing/scripted-prompter.fake.js";
-import { restoreToolFilesOf } from "../../testing/build-restore.js";
+import { restoreToolFilesOf } from "../../testing/build-restore.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";

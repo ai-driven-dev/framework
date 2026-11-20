@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SessionBindingStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { InMemorySessions } from "../testing/in-memory-sessions.js";
+import { InMemorySessions } from "../testing/in-memory-sessions.fake.js";
 import {
   describeSessionBindingStoreContract,
   type SessionBindingSubject,
-} from "../testing/session-binding-store-contract.js";
+} from "../testing/session-binding-store.contract.js";
 
 describeSessionBindingStoreContract(
   "the in-memory store",

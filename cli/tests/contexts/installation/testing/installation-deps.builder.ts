@@ -21,7 +21,7 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
-import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "./in-memory-manifest-repository.fake.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 

@@ -5,12 +5,12 @@ import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clon
 import { GitConsentAdapter } from "../../../../src/contexts/telemetry/infrastructure/git/git-consent-adapter.js";
 import { readCloneIdentity } from "../../../../src/contexts/telemetry/infrastructure/storage/consent/clone-identity-reader.js";
 import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
-import { cloneOf } from "../testing/clone-builders.js";
+import { cloneOf } from "../testing/clone.builder.js";
 import {
   type ConsentSourceSubject,
   describeConsentSourceContract,
-} from "../testing/consent-source-contract.js";
-import { FakeConsents } from "../testing/fake-consents.js";
+} from "../testing/consent-source.contract.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
 
 const ROOT = "/work/app";
 

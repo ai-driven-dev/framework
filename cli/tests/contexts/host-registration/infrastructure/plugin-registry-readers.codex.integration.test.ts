@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { PROJECT, registryHome } from "../testing/registry-home.js";
+import { PROJECT, registryHome } from "../testing/registry-home.builder.js";
 
 const { write, readerFor } = registryHome();
 

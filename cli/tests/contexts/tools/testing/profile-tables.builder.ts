@@ -7,7 +7,7 @@ import {
   PLUGIN_TREE_SOURCES,
   pluginRelativePathsOf,
   pluginTreeSourcesOf,
-} from "./build-artifacts.js";
+} from "./build-artifacts.builder.js";
 
 type Buildable = Pick<AiTool, "buildContracts">;
 type Frontmatter = Record<string, unknown>;

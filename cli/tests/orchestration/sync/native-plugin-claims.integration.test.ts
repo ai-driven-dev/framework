@@ -16,14 +16,14 @@ import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
-import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
+import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import {
   pluginRemover,
   userPluginRemover,
-} from "../../contexts/installation/testing/plugin-remover.js";
-import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.js";
+} from "../../contexts/installation/testing/plugin-remover.builder.js";
+import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.fake.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
@@ -33,8 +33,8 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { userMarketplaceRemover } from "../testing/user-marketplace-remover.js";
-import { userScopeCleaner } from "../testing/user-scope-cleaner.js";
+import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
+import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 for (const [toolId, catalogPath] of [
   [TOOL.codex, ".agents/plugins/marketplace.json"],

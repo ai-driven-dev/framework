@@ -7,7 +7,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";

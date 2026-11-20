@@ -17,7 +17,7 @@ import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
-import { FakePlatform } from "./fake-platform.js";
+import { FakePlatform } from "./fake-platform.fake.js";
 
 type Files = FileReader & FileWriter & FileMerger;
 

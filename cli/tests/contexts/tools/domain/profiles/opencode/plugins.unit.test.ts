@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { flatOf } from "../../../testing/plugin-mode.js";
+import { flatOf } from "../../../testing/plugin-mode.builder.js";
 
 describe("opencode plugins", () => {
   describe("capabilities.plugins", () => {

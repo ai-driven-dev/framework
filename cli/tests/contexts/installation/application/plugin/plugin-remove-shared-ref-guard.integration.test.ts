@@ -9,11 +9,11 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
-import { FakeUserSourceReferences } from "../../testing/fake-user-source-references.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../testing/manifest-builder.js";
-import { pluginRemover } from "../../testing/plugin-remover.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
+import { FakeUserSourceReferences } from "../../testing/fake-user-source-references.fake.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../testing/manifest.builder.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";

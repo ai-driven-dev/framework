@@ -5,7 +5,7 @@ import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry
 import {
   describeUsageSourceContract,
   type UsageSourceSubject,
-} from "../testing/usage-source-contract.js";
+} from "../testing/usage-source.contract.js";
 
 const SECONDS = 1000;
 

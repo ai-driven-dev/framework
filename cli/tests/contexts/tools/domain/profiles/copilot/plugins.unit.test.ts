@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
-import { keyAskedOf } from "../../../testing/settings-key-probe.js";
+import { keyAskedOf } from "../../../testing/settings-key-probe.builder.js";
 
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {

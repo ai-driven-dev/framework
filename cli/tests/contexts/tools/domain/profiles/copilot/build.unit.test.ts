@@ -5,7 +5,7 @@ import {
 } from "../../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { supported } from "../../../testing/build-artifacts.js";
+import { supported } from "../../../testing/build-artifacts.builder.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";

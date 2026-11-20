@@ -10,7 +10,7 @@ import {
 } from "../../../shared/testing/faulting-file-adapter.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.fake.js";
 
 const NAME = "aidd-framework";
 const LOCATION = "/home/.claude/plugins/known_marketplaces.json";

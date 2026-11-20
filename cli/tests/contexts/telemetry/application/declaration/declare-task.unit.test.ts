@@ -6,15 +6,15 @@ import { SnapshotBindings } from "../../../../../src/contexts/telemetry/applicat
 import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
 import { HOOK_LOCK_WAIT_MS } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
-import { FakeBindings } from "../../testing/fake-bindings.js";
-import { FakeBranchStore } from "../../testing/fake-branch-store.js";
-import { FakeConsents } from "../../testing/fake-consents.js";
-import { FakeLocator } from "../../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemorySessions } from "../../testing/in-memory-sessions.js";
-import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
+import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
+import { FakeBindings } from "../../testing/fake-bindings.fake.js";
+import { FakeBranchStore } from "../../testing/fake-branch-store.fake.js";
+import { FakeConsents } from "../../testing/fake-consents.fake.js";
+import { FakeLocator } from "../../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
 
 const CWD = "/work/repo";
 const REPOSITORY: LocatedDirectory = {

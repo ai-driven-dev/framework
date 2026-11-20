@@ -6,8 +6,8 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";

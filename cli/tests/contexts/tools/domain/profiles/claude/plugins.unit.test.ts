@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
-import { keyAskedOf } from "../../../testing/settings-key-probe.js";
+import { keyAskedOf } from "../../../testing/settings-key-probe.builder.js";
 
 describe("claude plugins", () => {
   describe("capabilities.plugins", () => {

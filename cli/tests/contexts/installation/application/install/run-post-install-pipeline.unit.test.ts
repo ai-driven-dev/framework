@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RunPostInstallPipeline } from "../../../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { TOOL } from "../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const AIDD_DIR = ".aidd";

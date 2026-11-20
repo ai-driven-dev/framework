@@ -8,9 +8,9 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";

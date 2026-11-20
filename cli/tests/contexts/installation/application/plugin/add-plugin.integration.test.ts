@@ -16,11 +16,11 @@ import type { Logger } from "../../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
-import { fakeBuildSources } from "../../testing/fake-build-sources.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const { cursor, copilot, opencode, codex } = TOOL;
 

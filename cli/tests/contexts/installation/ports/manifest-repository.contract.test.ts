@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../testing/in-memory-manifest-repository.fake.js";
 import {
   describeManifestRepositoryContract,
   type ManifestRepositorySubject,
-} from "../testing/manifest-repository-contract.js";
+} from "../testing/manifest-repository.contract.js";
 
 const FAKE_ROOT = "/test-project";
 

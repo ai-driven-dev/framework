@@ -10,7 +10,7 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakePlatform } from "../../testing/fake-platform.js";
+import { FakePlatform } from "../../testing/fake-platform.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";

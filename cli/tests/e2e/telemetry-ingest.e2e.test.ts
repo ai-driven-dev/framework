@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { writeUsageTranscripts } from "../contexts/telemetry/testing/claude-usage-transcripts.js";
+import { writeUsageTranscripts } from "../contexts/telemetry/testing/claude-usage-transcripts.builder.js";
 import { initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { backdateConsent, createTestEnv, runCli } from "./helpers.js";
 

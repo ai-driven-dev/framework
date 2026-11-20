@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
-import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.js";
-import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
+import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   FIXTURE_DIR,
   initAndInstall,
-} from "../../testing/installation-deps.js";
+} from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

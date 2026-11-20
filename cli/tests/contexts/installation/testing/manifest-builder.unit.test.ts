@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { aManifest } from "./manifest-builder.js";
+import { aManifest } from "./manifest.builder.js";
 
 const file = (relativePath: string): InstallationFile =>
   new InstallationFile({

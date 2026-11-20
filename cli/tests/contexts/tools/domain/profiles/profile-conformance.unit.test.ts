@@ -3,7 +3,7 @@ import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/pr
 import {
   describeProfileConformance,
   registeredSuffixesMatchVocabulary,
-} from "../../testing/profile-conformance.js";
+} from "../../testing/profile-conformance.contract.js";
 
 describe("the registered profiles", () => {
   it("carry exactly the suffixes the foreign file filter knows", () => {

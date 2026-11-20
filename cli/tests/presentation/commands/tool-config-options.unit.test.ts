@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertKnownToolId } from "../../../src/presentation/commands/tool-config.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 
 describe("assertKnownToolId", () => {
   it("accepts an AI tool id", () => {

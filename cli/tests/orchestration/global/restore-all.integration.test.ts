@@ -11,22 +11,22 @@ import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
 import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.js";
+import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import {
   restoreAllPluginsOf,
   restoreOf,
-} from "../../contexts/installation/testing/build-restore.js";
+} from "../../contexts/installation/testing/build-restore.builder.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
   translateDistribution,
-} from "../../contexts/installation/testing/fake-build-sources.js";
+} from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   initProject,
   installTool,
-} from "../../contexts/installation/testing/installation-deps.js";
+} from "../../contexts/installation/testing/installation-deps.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";

@@ -7,10 +7,10 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";

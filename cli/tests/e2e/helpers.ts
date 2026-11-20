@@ -18,7 +18,7 @@ import { InitProject } from "../../src/contexts/installation/application/init-pr
 import { UpdateGitignore } from "../../src/contexts/installation/application/update-gitignore.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { CLIOutput } from "../../src/presentation/output.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
 
 export const execFileAsync = promisify(execFile);
 

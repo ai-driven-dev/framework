@@ -11,10 +11,10 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";

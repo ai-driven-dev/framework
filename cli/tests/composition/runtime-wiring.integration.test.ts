@@ -31,7 +31,7 @@ import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
-import { catalogOf, registeredAiProfile } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile } from "../contexts/tools/testing/catalog-of.builder.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { CapturingOutput } from "../shared/testing/capturing-output.fake.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";

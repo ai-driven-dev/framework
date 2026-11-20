@@ -20,14 +20,14 @@ import {
   TrustDeniedError,
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryMarketplaceTrustStore } from "../../helpers/ports/in-memory-marketplace-trust-store.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
-import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.js";
+import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
 const MARKETPLACE_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";

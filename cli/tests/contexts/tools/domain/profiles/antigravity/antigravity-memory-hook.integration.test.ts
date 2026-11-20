@@ -19,7 +19,7 @@ import { dirname, join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
-import { flatOf } from "../../../testing/plugin-mode.js";
+import { flatOf } from "../../../testing/plugin-mode.builder.js";
 
 const PLUGIN = "aidd-context";
 const PLUGIN_HOOKS = join(REPOSITORY_ROOT, "plugins", PLUGIN, "hooks");

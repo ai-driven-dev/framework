@@ -6,8 +6,8 @@ import type { RegistrationRecord } from "../../../src/contexts/host-registration
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredAiProfile } from "../../contexts/tools/testing/catalog-of.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { catalogOf, registeredAiProfile } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";

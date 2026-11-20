@@ -15,8 +15,8 @@ import {
   FakeHostPluginRegistry,
   type FixedHostRegistry,
   type FixedRegistryReading,
-} from "../../testing/fake-host-plugin-registry.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
+} from "../../testing/fake-host-plugin-registry.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 import {
   buildDist,
   installViaModeA,
@@ -25,8 +25,8 @@ import {
   REF,
   verifiedSourceReader,
 } from "../../testing/framework-plugin-on-claude.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { pluginRemover } from "../../testing/plugin-remover.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const { claude } = TOOL;
 

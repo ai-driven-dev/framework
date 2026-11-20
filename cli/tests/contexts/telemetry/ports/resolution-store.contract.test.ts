@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ResolutionStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { InMemoryResolutions } from "../testing/in-memory-resolutions.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
 import {
   describeResolutionStoreContract,
   type ResolutionStoreSubject,
-} from "../testing/resolution-store-contract.js";
+} from "../testing/resolution-store.contract.js";
 
 describeResolutionStoreContract(
   "the in-memory store",

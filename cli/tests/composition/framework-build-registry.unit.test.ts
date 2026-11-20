@@ -7,7 +7,7 @@ import {
   type FrameworkBuildTarget,
 } from "../../src/contexts/translate/contract/build-targets.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.builder.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
 

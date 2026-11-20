@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { AUTUMN } from "../testing/autumn.js";
-import { cloneOf, tokenOf } from "../testing/clone-builders.js";
+import { cloneOf, tokenOf } from "../testing/clone.builder.js";
 import { A, line, NOT_STORED, NOW, repository, setup, sha } from "../testing/ingest-usage-setup.js";
 
 describe("not reading what no consent can cover", () => {

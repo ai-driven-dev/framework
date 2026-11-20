@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import { cloneOf, grantedBy, tokenOf } from "../testing/clone-builders.js";
+import { cloneOf, grantedBy, tokenOf } from "../testing/clone.builder.js";
 import { A, line, NOW, repository, setup, sha } from "../testing/ingest-usage-setup.js";
 
 const WIDGETS = sha("github.com/acme/widgets");

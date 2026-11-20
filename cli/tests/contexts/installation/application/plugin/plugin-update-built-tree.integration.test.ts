@@ -14,11 +14,11 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
-import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
-import { userScopeFileGuard } from "../../testing/user-scope-file-guard.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
+import { userScopeFileGuard } from "../../testing/user-scope-file-guard.fake.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
 const insideUserScope: IsWithinUserScope = () => true;

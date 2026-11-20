@@ -13,14 +13,14 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { projectCleaner } from "../testing/project-cleaner.js";
+import { projectCleaner } from "../testing/project-cleaner.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";

@@ -11,13 +11,13 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
   translateDistribution,
-} from "../../testing/fake-build-sources.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
+} from "../../testing/fake-build-sources.fake.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(

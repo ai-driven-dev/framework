@@ -8,8 +8,8 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../contexts/installation/testing/manifest-builder.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import {
   errnoError,
@@ -18,7 +18,7 @@ import {
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.js";
+import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
 const { cursor, codex } = TOOL;
 

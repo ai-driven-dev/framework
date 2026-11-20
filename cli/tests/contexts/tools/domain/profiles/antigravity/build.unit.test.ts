@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAntigravityFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/build.js";
-import { supported } from "../../../testing/build-artifacts.js";
+import { supported } from "../../../testing/build-artifacts.builder.js";
 
 describe("buildAntigravityFlatContract", () => {
   it("sits a skill one level under .agents/skills, the plugin hyphenated onto its name", () => {

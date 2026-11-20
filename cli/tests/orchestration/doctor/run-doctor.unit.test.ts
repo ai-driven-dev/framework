@@ -12,8 +12,8 @@ import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import {
   buildInstallationDeps,
   initAndInstall,
-} from "../../contexts/installation/testing/installation-deps.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+} from "../../contexts/installation/testing/installation-deps.builder.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";

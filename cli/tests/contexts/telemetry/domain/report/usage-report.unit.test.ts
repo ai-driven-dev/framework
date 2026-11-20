@@ -9,7 +9,7 @@ import type { SessionDeclaration } from "../../../../../src/contexts/telemetry/d
 import type { AttributionFacts } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { aUsageRecord } from "../../testing/usage-record-builder.js";
+import { aUsageRecord } from "../../testing/usage-record.builder.js";
 
 let counter = 0;
 const call = (over: Partial<StoredUsage> = {}): StoredUsage => {

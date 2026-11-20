@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domain/profile.js";
 import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import { flatOf } from "../../../testing/plugin-mode.js";
-import { installPathOf } from "../../../testing/profiles.js";
+import { flatOf } from "../../../testing/plugin-mode.builder.js";
+import { installPathOf } from "../../../testing/profiles.builder.js";
 
 describe("antigravity", () => {
   it("is named for the person reading it and declares a flat build only", () => {

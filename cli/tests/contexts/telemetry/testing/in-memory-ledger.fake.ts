@@ -5,7 +5,7 @@ import type {
   LoadedLedger,
   UsageLedger,
 } from "../../../../src/contexts/telemetry/ports/usage-ledger.js";
-import { InMemoryLeftOut } from "./in-memory-left-out.js";
+import { InMemoryLeftOut } from "./in-memory-left-out.fake.js";
 
 export class InMemoryLedger implements UsageLedger {
   records: StoredUsage[] = [];

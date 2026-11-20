@@ -6,7 +6,7 @@ import {
   buildInstallationDeps,
   initProject,
   installTool,
-} from "../../testing/installation-deps.js";
+} from "../../testing/installation-deps.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 

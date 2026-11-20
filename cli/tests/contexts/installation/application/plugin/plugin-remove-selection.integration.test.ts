@@ -12,10 +12,10 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../testing/manifest-builder.js";
-import { pluginRemover, userPluginRemover } from "../../testing/plugin-remover.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../testing/manifest.builder.js";
+import { pluginRemover, userPluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const { claude, cursor, codex } = TOOL;
 

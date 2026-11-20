@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { requireManifest } from "../../../../../src/contexts/installation/application/shared/require-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestUnavailableError } from "../../../../../src/shared/domain/errors.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 
 describe("requireManifest()", () => {
   it("answers the manifest a project holds", async () => {

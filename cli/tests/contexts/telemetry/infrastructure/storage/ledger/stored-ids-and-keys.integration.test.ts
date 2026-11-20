@@ -8,7 +8,7 @@ import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/tele
 import { ResolutionStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { cloneOf } from "../../../testing/clone-builders.js";
+import { cloneOf } from "../../../testing/clone.builder.js";
 
 let dir: string;
 let bindings: string;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
-import { FakeBindings } from "../testing/fake-bindings.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
 
 const ROOT = "/repo";
 const DECLARED = { branch: "feat/x", task: "t", ticket: null, declared_at: "d", none: false };

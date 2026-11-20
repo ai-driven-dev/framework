@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ManageIdentity } from "../../../../../src/contexts/telemetry/application/identity/manage-identity.js";
-import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 
 function setup() {
   const identity = new InMemoryIdentity();

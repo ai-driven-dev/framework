@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PersonIdentityAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { InMemoryIdentity } from "../testing/in-memory-identity.js";
+import { InMemoryIdentity } from "../testing/in-memory-identity.fake.js";
 import {
   describePersonIdentityStoreContract,
   type PersonIdentitySubject,
-} from "../testing/person-identity-store-contract.js";
+} from "../testing/person-identity-store.contract.js";
 
 describePersonIdentityStoreContract(
   "the in-memory store",

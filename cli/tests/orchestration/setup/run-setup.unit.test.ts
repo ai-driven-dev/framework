@@ -31,12 +31,12 @@ import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   initProject,
-} from "../../contexts/installation/testing/installation-deps.js";
+} from "../../contexts/installation/testing/installation-deps.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
@@ -44,9 +44,9 @@ import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { askMarketplaceSource } from "../testing/ask-marketplace-source.js";
-import { runSetupOf } from "../testing/run-setup-of.js";
-import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.js";
+import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
+import { runSetupOf } from "../testing/run-setup-of.builder.js";
+import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
 const CURRENT_VERSION = new FakeCurrentVersion();
 

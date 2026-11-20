@@ -4,7 +4,7 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import { resolveTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { fakeBuiltDeps } from "../../testing/fake-build-sources.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 function buildDeps(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();

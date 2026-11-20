@@ -8,10 +8,10 @@ import type { ReadonlySkipList } from "../../../../../src/shared/domain/plugin/p
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
-import { buildAddPlugin } from "../../testing/build-add-plugin.js";
-import { fakeBuildSources } from "../../testing/fake-build-sources.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
-import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
+import { buildInstallationDeps, initAndInstall } from "../../testing/installation-deps.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";

@@ -9,7 +9,7 @@ import {
   type StoredUsage,
   upsertUsage,
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { aUsageRecord } from "../testing/usage-record-builder.js";
+import { aUsageRecord } from "../testing/usage-record.builder.js";
 
 const stored = (overrides: Partial<StoredUsage> = {}): StoredUsage =>
   aUsageRecord().with(overrides).build();

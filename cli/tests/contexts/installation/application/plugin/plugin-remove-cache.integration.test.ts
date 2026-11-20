@@ -12,9 +12,9 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { pluginRemover } from "../../testing/plugin-remover.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const ALIAS = "my-local-alias";

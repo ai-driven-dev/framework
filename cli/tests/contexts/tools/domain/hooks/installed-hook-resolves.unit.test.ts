@@ -13,8 +13,8 @@ import { opencode } from "../../../../../src/contexts/tools/domain/profiles/open
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { hooksAcceptanceOf } from "../../testing/plugin-mode.js";
-import { translatePlugin } from "../../testing/translate-plugin.js";
+import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
+import { translatePlugin } from "../../testing/translate-plugin.builder.js";
 
 /**
  * A hook command pointing at nothing installs clean and does nothing, so the command is read

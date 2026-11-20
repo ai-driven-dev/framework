@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { SyncNativeActivation } from "../../../src/orchestration/sync/sync-native-activation.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 
 const _CATALOG = catalogOf();
 const OUTCOME = {

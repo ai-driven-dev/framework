@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { aManifest } from "./manifest-builder.js";
+import { aManifest } from "./manifest.builder.js";
 
 /** What a contract run needs from one implementation of the repository. */
 export interface ManifestRepositorySubject {

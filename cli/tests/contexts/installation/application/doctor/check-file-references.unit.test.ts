@@ -7,8 +7,8 @@ import { FileHash, InstallationFile } from "../../../../../src/shared/domain/fil
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
-import { aManifest } from "../../testing/manifest-builder.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
+import { aManifest } from "../../testing/manifest.builder.js";
 
 const PROJECT_ROOT = "/project";
 const DOC = ".claude/rules/doc.md";

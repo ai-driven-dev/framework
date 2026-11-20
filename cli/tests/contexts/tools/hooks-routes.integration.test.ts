@@ -14,7 +14,7 @@ import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
-import { catalogOf } from "./testing/catalog-of.js";
+import { catalogOf } from "./testing/catalog-of.builder.js";
 
 /**
  * Every route that writes or removes a tool's hook files, driven through the same use cases

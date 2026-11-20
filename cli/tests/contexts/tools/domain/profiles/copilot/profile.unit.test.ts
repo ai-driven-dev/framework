@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { registeredAiConfig } from "../../../testing/catalog-of.js";
+import { registeredAiConfig } from "../../../testing/catalog-of.builder.js";
 import {
   pluginTreeShapeOf,
   rulesRows,
   SHIPPED_AS_IS,
   WRITES_NOTHING,
-} from "../../../testing/profile-tables.js";
-import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
+} from "../../../testing/profile-tables.builder.js";
+import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
 
 describe("copilot declarations the rest of the CLI reads", () => {
   it("probes a plugin manifest in the three places Copilot reads one, in its order", () => {

@@ -5,7 +5,7 @@ import {
   ManifestUnavailableError,
   UnregisteredToolError,
 } from "../../../src/shared/domain/errors.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.builder.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 

@@ -10,7 +10,7 @@ import {
   UnregisteredToolError,
 } from "../../../../src/shared/domain/errors.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { catalogOf } from "../testing/catalog-of.js";
+import { catalogOf } from "../testing/catalog-of.builder.js";
 
 describe("the registered tool catalog", () => {
   it("follows the order its profiles were registered in, not the id order", () => {

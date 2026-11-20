@@ -15,7 +15,7 @@ import {
   flatPlugins,
   nativePlugins,
   unsupportedPlugins,
-} from "../../testing/plugin-mode.js";
+} from "../../testing/plugin-mode.builder.js";
 
 const projectHooksFormat: ProjectHooksFormat = {
   merge: () => ({ content: "", warnings: [] }),

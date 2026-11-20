@@ -1,4 +1,4 @@
-import { TOOL } from "../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../contexts/tools/testing/catalog-of.builder.js";
 /**
  * TTY scenarios use /usr/bin/expect: only a real terminal proves the banner and the menu.
  */

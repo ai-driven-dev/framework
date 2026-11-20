@@ -3,7 +3,7 @@ import { LoadManifest } from "../../../../../src/contexts/installation/applicati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
 import { ManifestUnavailableError } from "../../../../../src/shared/domain/errors.js";
-import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.js";
+import { InMemoryManifestRepository } from "../../testing/in-memory-manifest-repository.fake.js";
 
 function failingWith(error: Error): ManifestRepository {
   return new (class extends InMemoryManifestRepository {

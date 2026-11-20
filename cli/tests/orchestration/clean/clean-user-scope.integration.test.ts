@@ -11,9 +11,9 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import { FileHash } from "../../../src/shared/domain/file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
-import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { InMemoryManifestRepository } from "../../contexts/installation/testing/in-memory-manifest-repository.fake.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -21,7 +21,7 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { userScopeCleaner } from "../testing/user-scope-cleaner.js";
+import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const HOME = "/fake-home";
