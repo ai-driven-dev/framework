@@ -4,6 +4,7 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -70,7 +71,7 @@ async function readExistingJson(fs: FileReader, path: string): Promise<string | 
   try {
     return await fs.readFile(path);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    if (isErrnoException(err) && err.code === "ENOENT") return null;
     throw err;
   }
 }

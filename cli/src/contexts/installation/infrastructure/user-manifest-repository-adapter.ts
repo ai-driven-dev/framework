@@ -1,6 +1,7 @@
 import { mkdir, rm, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Manifest } from "../domain/manifest.js";
@@ -57,7 +58,7 @@ export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
         await mkdir(lock);
         break;
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+        if (!(isErrnoException(error) && error.code === "EEXIST")) throw error;
         if (Date.now() >= deadline) {
           throw new Error(
             `User manifest is busy: ${lock}. Retry after the other AIDD operation finishes.`

@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { FileHash, type InstallationFile } from "../../../../../shared/domain/file.js";
+import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
@@ -138,7 +139,7 @@ export class InstallRuntimeConfig {
     try {
       return await this.fs.readFile(join(projectRoot, relativePath));
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      if (isErrnoException(error) && error.code === "ENOENT") return null;
       throw error;
     }
   }

@@ -1,5 +1,6 @@
 import { applyEdits, modify, type ParseError, parse } from "jsonc-parser";
 import { stripJsonComments } from "../../../shared/domain/reading/jsonc.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type {
   MainModelRecord,
   MainModelValues,
@@ -78,9 +79,9 @@ function readSettings(content: string | null): Record<string, unknown> {
   if (content === null || content.trim() === "") return {};
   const errors: ParseError[] = [];
   const parsed: unknown = parse(content, errors, { allowTrailingComma: true });
-  if (errors.length > 0 || typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
-    throw new Error("it holds no JSON object");
-  return parsed as Record<string, unknown>;
+  const settings = errors.length > 0 ? null : asPlainObject(parsed);
+  if (settings === null) throw new Error("it holds no JSON object");
+  return settings;
 }
 
 /** Sets each key, or removes it when `undefined`, touching nothing else in the file. */

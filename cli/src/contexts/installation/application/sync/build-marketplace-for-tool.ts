@@ -36,7 +36,7 @@ export class BuildMarketplaceForTool {
       return builtDir;
     } catch (error) {
       this.logger.warn(
-        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
+        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${error instanceof Error ? error.message : String(error)}`
       );
       return null;
     }

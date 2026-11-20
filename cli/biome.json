@@ -4831,7 +4831,6 @@
         "!src/contexts/installation/application/shared/remove-project-hooks.ts",
         "!src/contexts/installation/application/sync/record-activation.ts",
         "!src/contexts/installation/domain/manifest.ts",
-        "!src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts",
         "!src/contexts/machine-claims/application/user-scope-plugin-files.ts",
         "!src/contexts/recipes/application/validate-recipes.ts",
         "!src/contexts/recipes/domain/markdown-scan.ts",

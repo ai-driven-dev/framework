@@ -84,6 +84,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
             dist.manifest.name,
             this.built.platform
           );
+    const noSkips: ReadonlySkipList = [];
     const hooks = deliversHooksToProject
       ? await this.projectHooks.materializeWithProvenance(
           dist,
@@ -92,7 +93,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
           previousProjectHooks,
           hooksGuard
         )
-      : { skipped: [] as ReadonlySkipList };
+      : { skipped: noSkips };
     const files = deliversHooksToProject
       ? withoutHooksPrefix(builtFiles, dist.manifest.name)
       : builtFiles;

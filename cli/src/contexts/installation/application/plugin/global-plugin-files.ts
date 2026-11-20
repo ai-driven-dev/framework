@@ -1,6 +1,7 @@
 import { dirname, join, posix } from "node:path";
 import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -95,7 +96,7 @@ async function tryRealpath(fs: FileReader, path: string): Promise<string | null>
   try {
     return await fs.realpath(path);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    if (isErrnoException(err) && err.code === "ENOENT") return null;
     throw err;
   }
 }

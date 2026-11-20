@@ -1,4 +1,5 @@
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 
 /** Resolve an existing file or its nearest existing parent before mutating project-local content. */
@@ -24,7 +25,7 @@ export async function assertProjectPathWithinRoot(
       }
       return;
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      if (!(isErrnoException(error) && error.code === "ENOENT")) throw error;
       if (candidate === lexicalRoot) {
         throw new Error(`Project root '${projectRoot}' disappeared; local mutation refused.`);
       }

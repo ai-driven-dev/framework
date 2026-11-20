@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -37,7 +38,7 @@ async function planProjectMcpRemoval(
     const existing = await fs.readFile(output);
     return { output, content: mcp.removePluginServers(existing, plugin.mcpEntries) };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    if (isErrnoException(error) && error.code === "ENOENT") return undefined;
     throw error;
   }
 }

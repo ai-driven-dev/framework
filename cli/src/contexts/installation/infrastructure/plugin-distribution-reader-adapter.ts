@@ -10,6 +10,7 @@ import {
   PluginDistribution,
   type PluginManifestFields,
 } from "../../../shared/domain/plugin/plugin-distribution.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { isSemver } from "../../../shared/domain/semver.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -99,10 +100,10 @@ function isComponentFile(relativePath: string): boolean {
 }
 
 function validateManifest(raw: unknown): PluginManifestFields {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+  const obj = asPlainObject(raw);
+  if (obj === null) {
     throw new InvalidPluginManifestError("plugin.json must be a JSON object");
   }
-  const obj = raw as Record<string, unknown>;
 
   const name = obj.name;
   if (typeof name !== "string" || name.length === 0) {
@@ -123,8 +124,8 @@ function validateManifest(raw: unknown): PluginManifestFields {
   const result: PluginManifestFields = { name, version };
 
   if (typeof obj.description === "string") result.description = obj.description;
-  if (obj.author !== null && typeof obj.author === "object" && !Array.isArray(obj.author)) {
-    const a = obj.author as Record<string, unknown>;
+  const a = asPlainObject(obj.author);
+  if (a !== null) {
     if (typeof a.name === "string") {
       result.author = { name: a.name };
       if (typeof a.email === "string") result.author.email = a.email;

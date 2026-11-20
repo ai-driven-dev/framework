@@ -1,6 +1,7 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -129,7 +130,7 @@ export class RemovePlugin<Proof> {
     try {
       return await this.fs.readFile(path);
     } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+      if (isErrnoException(err) && err.code === "ENOENT") return null;
       throw err;
     }
   }

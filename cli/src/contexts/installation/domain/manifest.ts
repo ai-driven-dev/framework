@@ -199,7 +199,7 @@ export class Manifest {
   }
 
   toJSON(): ManifestData {
-    return { version: MANIFEST_VERSION as 8, tools: serializeManifestTools(this._tools) };
+    return { version: MANIFEST_VERSION, tools: serializeManifestTools(this._tools) };
   }
 
   static fromJSON(
