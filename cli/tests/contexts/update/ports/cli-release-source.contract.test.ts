@@ -1,5 +1,4 @@
 import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
 import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
 import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
@@ -25,9 +24,11 @@ describeCliReleaseSourceContract(
 
 function listen(server: Server): Promise<string> {
   return new Promise((resolve) =>
-    server.listen(0, "127.0.0.1", () =>
-      resolve(`http://127.0.0.1:${(server.address() as AddressInfo).port}`)
-    )
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (address === null || typeof address === "string") throw new Error("no port to ask");
+      resolve(`http://127.0.0.1:${address.port}`);
+    })
   );
 }
 

@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/errors.js";
+import { asPlainObject } from "../../../../src/shared/domain/reading/plain-object.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
@@ -17,6 +18,10 @@ function markExisting(fs: InMemoryFileAdapter, root: string): void {
   fs.setFile(`${root}/marker`, "");
 }
 
+function writtenReferences(fs: InMemoryFileAdapter): Record<string, unknown> {
+  return asPlainObject(JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}")) ?? {};
+}
+
 describe("the shared source's own project references", () => {
   it("adds two projects under the same version", async () => {
     const fs = new InMemoryFileAdapter();
@@ -27,7 +32,7 @@ describe("the shared source's own project references", () => {
     await refs.addReference("1.0.0", "/project-a");
     await refs.addReference("1.0.0", "/project-b");
 
-    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    const written = writtenReferences(fs);
     expect(written["1.0.0"]).toEqual(["/project-a", "/project-b"]);
   });
 
@@ -39,7 +44,7 @@ describe("the shared source's own project references", () => {
     await refs.addReference("1.0.0", "/project-a");
     await refs.addReference("1.0.0", "/project-a");
 
-    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    const written = writtenReferences(fs);
     expect(written).toEqual({ "1.0.0": ["/project-a"] });
   });
 
@@ -52,7 +57,7 @@ describe("the shared source's own project references", () => {
     await refs.addReference("1.0.0", "/project-a");
     await refs.addReference("2.0.0", "/project-b");
 
-    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    const written = writtenReferences(fs);
     expect(Object.keys(written).sort()).toEqual(["1.0.0", "2.0.0"]);
     expect(written["1.0.0"]).toEqual(["/project-a"]);
     expect(written["2.0.0"]).toEqual(["/project-b"]);
@@ -85,7 +90,7 @@ describe("the shared source's own project references", () => {
     markExisting(fs, "/project-c");
     await refs.addReference("1.0.0", "/project-c");
 
-    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    const written = writtenReferences(fs);
     expect(written["1.0.0"]).toEqual(["/project-a", "/project-c"]);
   });
 
@@ -148,7 +153,7 @@ describe("the shared source's own project references", () => {
 
     await refs.addReference("2.0.0", "/project-a");
 
-    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    const written = writtenReferences(fs);
     expect(written).toEqual({ "2.0.0": ["/project-a"] });
   });
 
@@ -165,7 +170,7 @@ describe("the shared source's own project references", () => {
 
       await refs.removeReference("/project-a");
 
-      const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+      const written = writtenReferences(fs);
       expect(written["1.0.0"]).toEqual(["/project-b"]);
     });
 
@@ -177,7 +182,7 @@ describe("the shared source's own project references", () => {
 
       await refs.removeReference("/project-a");
 
-      const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, unknown>;
+      const written = writtenReferences(fs);
       expect(written).toEqual({});
     });
 
@@ -327,7 +332,7 @@ describe("removing a reference where paths compare case-insensitively", () => {
 
     await refs.removeReference("/project-a");
 
-    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    const written = writtenReferences(fs);
     expect(written).toEqual({ "1.0.0": ["/project-b"] });
   });
 });

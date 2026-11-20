@@ -1,5 +1,6 @@
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
 import { samePathSegment } from "../../../shared/domain/paths.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
@@ -93,7 +94,7 @@ export async function resolveProjectRootForReferences(
   try {
     return await fs.realpath(projectRoot);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return projectRoot;
+    if (isErrnoException(error) && error.code === "ENOENT") return projectRoot;
     throw error;
   }
 }

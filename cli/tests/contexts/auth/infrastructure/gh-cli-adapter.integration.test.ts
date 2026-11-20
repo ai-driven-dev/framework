@@ -19,7 +19,7 @@ function answer(overrides: Partial<ReturnType<typeof spawnSync>>): ReturnType<ty
     signal: null,
     error: undefined,
     ...overrides,
-  } as ReturnType<typeof spawnSync>;
+  };
 }
 
 describe("GhCliAdapter, the commands it runs", () => {

@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
 import { USER_SOURCE_REFERENCES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import { dedupePathSegments, samePathSegment } from "../../../shared/domain/paths.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
@@ -134,11 +135,12 @@ function parseReferencesFile(raw: string, path: string): ReferencesFile {
       error instanceof Error ? error.message : "it is not valid JSON"
     );
   }
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+  const versions = asPlainObject(parsed);
+  if (versions === null) {
     throw new UnreadableUserSourceReferencesError(path, "it is not a version-keyed object");
   }
   const result: Record<string, string[]> = {};
-  for (const [version, projectRoots] of Object.entries(parsed as Record<string, unknown>)) {
+  for (const [version, projectRoots] of Object.entries(versions)) {
     if (!Array.isArray(projectRoots) || !projectRoots.every((root) => typeof root === "string")) {
       throw new UnreadableUserSourceReferencesError(
         path,

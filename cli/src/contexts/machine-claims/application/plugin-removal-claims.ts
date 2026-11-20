@@ -66,9 +66,9 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
     ) {
       return undefined;
     }
-    const otherProjects = await toleratingUnreadableSourceReferences(
+    const otherProjects = await toleratingUnreadableSourceReferences<readonly string[]>(
       logger,
-      [] as readonly string[],
+      [],
       async () => {
         const ownRoot = await resolveProjectRootForReferences(fs, projectRoot);
         return otherProjectsReferencing(userSourceReferences, ownRoot, deps.platform);

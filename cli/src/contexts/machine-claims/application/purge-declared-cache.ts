@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describeError } from "../../../shared/domain/describe-error.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
@@ -53,7 +54,7 @@ export class PurgeDeclaredCache {
     try {
       return await this.fs.realpath(path);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      if (isErrnoException(error) && error.code === "ENOENT") return null;
       throw error;
     }
   }

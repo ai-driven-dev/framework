@@ -1,5 +1,4 @@
 import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
 import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";
@@ -40,7 +39,9 @@ describeIdentityVerifierContract(
   "GitHubAdapter over a local server",
   async (): Promise<VerifierSubject> => {
     const server = await serveUser();
-    const { port } = server.address() as AddressInfo;
+    const address = server.address();
+    if (address === null || typeof address === "string") throw new Error("no port to ask");
+    const { port } = address;
     return {
       verifier: new GitHubAdapter(new HttpClient(), { apiBase: `http://127.0.0.1:${port}` }),
       knownToken: KNOWN,

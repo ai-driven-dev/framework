@@ -1,5 +1,6 @@
 import { dirname, join, posix } from "node:path";
 import { FileHash, type InstallationFile } from "../../../shared/domain/file.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
@@ -128,7 +129,7 @@ async function tryRealpath(fs: FileReader, path: string): Promise<string | null>
   try {
     return await fs.realpath(path);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    if (isErrnoException(err) && err.code === "ENOENT") return null;
     throw err;
   }
 }

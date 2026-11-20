@@ -46,7 +46,7 @@ export function describeIdentityVerifierContract(
     it("never carries the refused token in its refusal", async () => {
       const refusal = await subject.verifier.verifyToken(subject.refusedToken).then(
         () => "",
-        (error: unknown) => String((error as Error).stack ?? error)
+        (error: unknown) => String(error instanceof Error ? (error.stack ?? error) : error)
       );
 
       expect(refusal.includes(subject.refusedToken)).toBe(false);
