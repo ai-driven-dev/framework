@@ -78,6 +78,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // container; 0.1% measured headroom.
 // 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
 // 810 KB: 809.4 KB, the kind rollout splits the telemetry resolver from its run; 0.1% measured headroom.
+// 811 KB: 810.5 KB, the kind rollout splits telemetry reads by responsibility; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
