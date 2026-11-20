@@ -29,6 +29,16 @@ export interface ConsentRecords {
   readonly damaged: boolean;
 }
 
+/** The event that opens an interval for a clone at `at`, named by `token`. */
+export function openEvent(clone: CloneIdentity, token: string, at: Date): ConsentEvent {
+  return { kind: "open", token, clone, at: at.toISOString() };
+}
+
+/** The event that closes the interval named by `token` at `at`. */
+export function closeEvent(token: string, at: Date): ConsentEvent {
+  return { kind: "close", token, at: at.toISOString() };
+}
+
 export function renderConsentEvent(event: ConsentEvent): string {
   return event.kind === "open"
     ? JSON.stringify({ token: event.token, clone: event.clone, open: event.at })

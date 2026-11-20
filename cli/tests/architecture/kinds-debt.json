@@ -251,7 +251,6 @@
     "src/contexts/machine-claims/application/release-claims.ts",
     "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts",
     "src/contexts/telemetry/application/branch-declarations.ts",
-    "src/contexts/telemetry/application/consent-log.ts",
     "src/contexts/telemetry/application/directory-resolver.ts",
     "src/contexts/telemetry/application/remembered-resolutions.ts",
     "src/contexts/telemetry/application/switch/consent-switch.ts",

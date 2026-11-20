@@ -1,5 +1,7 @@
 import type { NotStoredReason } from "../contract/repository-resolution.js";
 import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
+import { closeEvent } from "../domain/consent/consent-history.js";
+import { ConsentLog } from "../domain/consent/consent-log.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import { cwdKey, ownerAt, type RepositoryResolution } from "../domain/repository-resolution.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
@@ -7,7 +9,6 @@ import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
-import { ConsentLog } from "./consent-log.js";
 import { RememberedResolutions } from "./remembered-resolutions.js";
 
 export type DirectoryOutcome =
@@ -56,7 +57,8 @@ export class DirectoryResolver {
       this.locator,
       this.consentSource,
       await RememberedResolutions.load(this.store, this.environment.now),
-      await ConsentLog.load(this.history),
+      new ConsentLog(await this.history.read()),
+      this.history,
       this.environment
     );
     await run.observeOpenConsents();
@@ -73,7 +75,8 @@ export class ResolutionRun {
     private readonly locator: RepositoryLocator,
     private readonly consentSource: ConsentSource,
     private readonly remembered: RememberedResolutions,
-    private readonly consents: ConsentLog,
+    private consents: ConsentLog,
+    private readonly history: ConsentHistory,
     private readonly environment: ResolutionEnvironment
   ) {}
 
@@ -123,7 +126,11 @@ export class ResolutionRun {
       }
       if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
-      if (!named) await this.consents.close(interval.token, this.environment.now());
+      if (!named) {
+        const event = closeEvent(interval.token, this.environment.now());
+        await this.history.append(event);
+        this.consents = this.consents.with(event);
+      }
     }
   }
 

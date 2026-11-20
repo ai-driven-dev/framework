@@ -1,11 +1,12 @@
 import { type CloneIdentity, sameClone } from "../../domain/consent/clone-identity.js";
+import { closeEvent, openEvent } from "../../domain/consent/consent-history.js";
+import { ConsentLog } from "../../domain/consent/consent-log.js";
 import { CONSENT_WITHDRAWN, consentValue, tokenOfKey } from "../../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../../ports/consent-history.js";
 import type { ConsentSource } from "../../ports/consent-source.js";
 import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
-import { ConsentLog } from "../consent-log.js";
 import { type CloneConsent, type Located, readCloneConsent } from "./clone-consent.js";
 
 /** A fresh token for an interval about to open, and the moment it opens. */
@@ -37,7 +38,7 @@ export class ConsentSwitch {
     newInterval: NewInterval
   ): Promise<boolean | "damaged"> {
     return this.ledger.exclusively(async () => {
-      const log = await ConsentLog.load(this.history);
+      const log = new ConsentLog(await this.history.read());
       // A log that cannot be trusted is not added to: an interval opened over it could span a
       // window the lost lines closed.
       if (log.damaged) return "damaged";
@@ -47,9 +48,9 @@ export class ConsentSwitch {
       const open = log.openFor(identity);
       if (held !== null && open.some((interval) => interval.token === held)) return false;
       const { token, at } = newInterval();
-      for (const stale of open) await log.close(stale.token, at);
+      for (const stale of open) await this.history.append(closeEvent(stale.token, at));
       await this.writer.set(root, consentValue(token));
-      await log.open(identity, token, at);
+      await this.history.append(openEvent(identity, token, at));
       return true;
     });
   }
@@ -65,7 +66,7 @@ export class ConsentSwitch {
     let closed = false;
     let damaged = false;
     await this.ledger.exclusively(async () => {
-      const log = await ConsentLog.load(this.history);
+      const log = new ConsentLog(await this.history.read());
       // A log that cannot be trusted is not added to, and the key is left as it is.
       if (log.damaged) {
         damaged = true;
@@ -85,7 +86,7 @@ export class ConsentSwitch {
               (interval.token === token && interval.clone.path === here.path)
           );
         for (const interval of ours) {
-          await log.close(interval.token, at);
+          await this.history.append(closeEvent(interval.token, at));
           closed = true;
         }
       }
