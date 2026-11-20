@@ -200,7 +200,10 @@ export function registerSetupCommand(
     .option("--source <mode>", "Framework source: remote or local")
     .option("--path <dir>", "Absolute path to local framework (required with --source local)")
     .option("--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)")
-    .option("--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)")
+    .option(
+      "--ide <ids>",
+      `Comma-separated tool IDs, or 'all' (e.g., ${[catalog.inHelpOrder("ai")[0], catalog.inHelpOrder("ide")[0]].join(",")} or all)`
+    )
     .addOption(new Option("--ai <ids>", "Former spelling of --ide, for AI tools").hideHelp())
     .option(
       "--plugins <mode>",

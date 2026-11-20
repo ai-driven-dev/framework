@@ -28,8 +28,7 @@
   "classification": [
     "src/presentation/deps.ts",
     "src/presentation/exit.ts",
-    "src/presentation/output.ts",
-    "src/presentation/project-root.ts"
+    "src/presentation/output.ts"
   ],
   "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
   "mirror": [
@@ -248,7 +247,6 @@
   ],
   "toolNames": [
     "src/orchestration/setup/tool-recommendations.ts: 4",
-    "src/presentation/commands/setup.ts: 2",
     "src/contexts/tools/domain/profile/foreign-suffix-filter.ts: 7",
     "src/contexts/telemetry/contract/usage-record.ts: 1"
   ],

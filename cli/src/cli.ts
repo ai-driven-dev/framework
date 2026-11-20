@@ -7,6 +7,7 @@ import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerCommands } from "./presentation/commands/register-commands.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
+import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
 
 function formatVersion(version: string): string {
@@ -48,7 +49,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop(menuOfProject);
+  runMenuLoop(menuOfProject, resolveProjectRoot());
 } else {
   program.parse(process.argv);
 }
