@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "kind": "report",
+  "unit": "file",
+  "targets": "plugins/aidd-dev/skills/*/assets/*-template.md",
+  "rules": {
+    "REPORT-01": { "op": "pattern", "in": "run-template.md", "line": 1, "regex": "^# Run: \\{\\{.+\\}\\}$",
+      "why": "reports of a task folder read alike, each titled after its work", "fix": "title the report `# Run: {{work}}`" },
+    "REPORT-02": { "op": "pattern", "in": "assert-template.md", "line": 1, "regex": "^# Assert: \\{\\{.+\\}\\}$",
+      "why": "reports of a task folder read alike, each titled after its work", "fix": "title the report `# Assert: {{work}}`" },
+    "REPORT-03": { "op": "pattern", "in": "review-template.md", "line": 1, "regex": "^# Review: \\{\\{.+\\}\\}$",
+      "why": "reports of a task folder read alike, each titled after its work", "fix": "title the report `# Review: {{work}}`" },
+    "REPORT-04": { "op": "pattern", "any": true, "in": "{run,assert,review}-template.md", "regex": "^## (Run|Round) \\{\\{.+\\}\\}",
+      "why": "a report grows by one numbered section per pass", "fix": "add a section `## Run {{number}}` or `## Round {{number}}`" },
+    "REPORT-05": { "op": "pattern", "any": true, "in": "{run,assert}-template.md", "regex": "^- Head: ``",
+      "why": "a pass must name the commit it judged", "fix": "add the field ``- Head: `{{sha}}` ``" },
+    "REPORT-06": { "op": "forbidden", "in": "assert-template.md", "regex": "^- (?!Head:|Verdict:)\\w+:",
+      "why": "assert says the commit judged and its verdict, nothing more", "fix": "keep only the Head and Verdict fields" },
+    "REPORT-07": { "op": "pattern", "any": true, "in": "assert-template.md", "regex": "^- Verdict:",
+      "why": "assert says its verdict", "fix": "add the field `- Verdict: {{PASS | FAIL}}`" },
+    "REPORT-08": { "op": "custom", "in": "assert-template.md", "check": "template-cited",
+      "why": "an action that does not link its template writes the report from memory" }
+  }
+}
