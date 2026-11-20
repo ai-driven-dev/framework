@@ -18,6 +18,11 @@ const USER_ROOT = resolve("/user-config");
 const VERSION = "1.2.3";
 const TOOL_ID = TOOL.claude;
 
+/** What the in-memory `realpath` answers: `resolve`d, spelled with "/" as the fake spells every path. */
+function virtual(path: string): string {
+  return resolve(path).replaceAll("\\", "/");
+}
+
 function registered(name: string, scope: Scope): Marketplace {
   return Marketplace.create({
     name,
@@ -50,7 +55,7 @@ describe("ResolveBuiltMarketplaces", () => {
 
     const { built } = await resolver.execute({ projectRoot: PROJECT, toolIds: [TOOL_ID] });
 
-    expect(built.get(TOOL_ID)).toEqual([{ name: "mine", builtDir: resolve(dir) }]);
+    expect(built.get(TOOL_ID)).toEqual([{ name: "mine", builtDir: virtual(dir) }]);
   });
 
   it("finds a user marketplace's build under the user cache, per version", async () => {
@@ -59,7 +64,7 @@ describe("ResolveBuiltMarketplaces", () => {
 
     const { built } = await resolver.execute({ projectRoot: PROJECT, toolIds: [TOOL_ID] });
 
-    expect(built.get(TOOL_ID)).toEqual([{ name: "shared", builtDir: resolve(dir) }]);
+    expect(built.get(TOOL_ID)).toEqual([{ name: "shared", builtDir: virtual(dir) }]);
   });
 
   it("looks for the framework marketplace under the user cache even when recorded at project scope", async () => {
@@ -69,7 +74,7 @@ describe("ResolveBuiltMarketplaces", () => {
     const { built } = await resolver.execute({ projectRoot: PROJECT, toolIds: [TOOL_ID] });
 
     expect(built.get(TOOL_ID)).toEqual([
-      { name: FRAMEWORK_MARKETPLACE_NAME, builtDir: resolve(dir) },
+      { name: FRAMEWORK_MARKETPLACE_NAME, builtDir: virtual(dir) },
     ]);
   });
 

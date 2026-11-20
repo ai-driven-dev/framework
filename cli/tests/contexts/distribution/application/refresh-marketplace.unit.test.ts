@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
@@ -110,7 +111,8 @@ describe("RefreshMarketplace", () => {
       [`${cacheDir}/.claude-plugin/marketplace.json`]: JSON.stringify({
         plugins: [{ name: "x", source: "./plugins/x" }],
       }),
-      [`${cacheDir}/plugins/x/plugin.json`]: "{}",
+      // the product resolves a plugin path to an absolute one, drive included on Windows
+      [resolve(cacheDir, "plugins/x/plugin.json")]: "{}",
     });
     const logger = new CapturingLogger();
 
