@@ -77,10 +77,10 @@ async function localModel() {
         response.writeHead(404).end();
         return;
       }
-      const input = JSON.parse(body) as {
+      const input: {
         messages: Array<{ role: string; content: unknown }>;
         tools?: Array<{ function: { name: string } }>;
-      };
+      } = JSON.parse(body);
       requests.push(input);
       response.writeHead(200, { "content-type": "text/event-stream" });
       const chunk = (delta: unknown, finish_reason: string | null = null) => {
@@ -181,7 +181,8 @@ async function stopKilo(child: ReturnType<typeof spawn>): Promise<void> {
     try {
       process.kill(-child.pid, "SIGKILL");
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+      const gone = error instanceof Error && "code" in error && error.code === "ESRCH";
+      if (!gone) throw error;
     }
   }
   await expect.poll(() => child.exitCode !== null || child.signalCode !== null).toBe(true);
@@ -262,7 +263,7 @@ describeKiloRuntime("real Kilo runtime", () => {
         shell: KILO_SHELL,
         maxBuffer: 8 * 1024 * 1024,
       });
-      const discoveredSkills = JSON.parse(skills.stdout) as Array<{ location?: string }>;
+      const discoveredSkills: Array<{ location?: string }> = JSON.parse(skills.stdout);
       const generatedSkillFiles = (
         await readdir(join(generatedProject, ".kilo", "skills"), {
           recursive: true,

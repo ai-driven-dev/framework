@@ -5,7 +5,7 @@ import { delimiter, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
+import { cliPath, createTestEnv, present, runCli, sandboxedEnv } from "./helpers.js";
 
 /**
  * The whole journey on the built binary, driven by the plugin's real hooks: a person opts in,
@@ -208,7 +208,8 @@ function runHook(
   });
   expect(run.status, run.stderr).toBe(0);
   const text = run.stdout.trim();
-  return { stdout: text, json: text === "" ? null : (JSON.parse(text) as Record<string, unknown>) };
+  const json: Record<string, unknown> | null = text === "" ? null : JSON.parse(text);
+  return { stdout: text, json };
 }
 
 const prompt = (session: Session, text: string) =>
@@ -228,7 +229,7 @@ const lines = async (file: string) =>
   (await readFile(file, "utf8"))
     .split("\n")
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as Record<string, unknown>);
+    .map((line): Record<string, unknown> => JSON.parse(line));
 
 function usageLine(call: Call, base: number): string {
   return JSON.stringify({
@@ -289,7 +290,8 @@ interface Envelope {
 async function report(axis: string, from: string, to: string): Promise<Envelope> {
   const run = await aidd(["report", "--from", from, "--to", to, "--axis", axis, "--json"]);
   expect(run.exitCode, run.stderr).toBe(0);
-  return JSON.parse(run.stdout) as Envelope;
+  const envelope: Envelope = JSON.parse(run.stdout);
+  return envelope;
 }
 
 describe("the telemetry journey, on the built binary", () => {
@@ -434,7 +436,9 @@ describe("the telemetry journey, on the built binary", () => {
     const base = Date.now() + 60_000;
     const project = join(claude, "projects", "sandbox");
     await mkdir(project, { recursive: true });
-    const [first, second, third] = CALLS as [Call, Call, Call];
+    const first = present(CALLS[0]);
+    const second = present(CALLS[1]);
+    const third = present(CALLS[2]);
     const at = (cwd: string) => (line: string) =>
       line.replace(JSON.stringify(repo), JSON.stringify(cwd));
     const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
@@ -455,10 +459,10 @@ describe("the telemetry journey, on the built binary", () => {
     runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
     const run = await aidd(["report", "--json"]);
     expect(run.exitCode, run.stderr).toBe(0);
-    const envelope = JSON.parse(run.stdout) as {
+    const envelope: {
       coverage: { records: number; left_out: Record<string, number> };
       run: { files_read: number };
-    };
+    } = JSON.parse(run.stdout);
     expect(envelope).toMatchObject({
       coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
       run: { files_read: 0 },
@@ -502,7 +506,9 @@ describe("the telemetry journey, on the built binary", () => {
         env: sandboxedEnv(env.fakeHome, { ...sandboxVariables(), PATH: path, Path: path }),
       });
       expect(run.status, run.stderr).toBe(0);
-      return run.stdout.trim() === "" ? null : (JSON.parse(run.stdout) as Record<string, unknown>);
+      const json: Record<string, unknown> | null =
+        run.stdout.trim() === "" ? null : JSON.parse(run.stdout);
+      return json;
     };
 
     expect(codex(S_CODEX, rootFile, "default", "build the checkout")).toMatchObject({

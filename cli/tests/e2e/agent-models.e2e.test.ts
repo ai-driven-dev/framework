@@ -24,7 +24,8 @@ async function agentModel(projectDir: string): Promise<unknown> {
 async function mainModel(home: string): Promise<unknown> {
   const path = join(home, ".config", "opencode", "opencode.jsonc");
   if (!(await fileExists(path))) return undefined;
-  return (JSON.parse(await readFile(path, "utf8")) as { model?: unknown }).model;
+  const config: { model?: unknown } = JSON.parse(await readFile(path, "utf8"));
+  return config.model;
 }
 
 describe("aidd setup --provider on a project", () => {

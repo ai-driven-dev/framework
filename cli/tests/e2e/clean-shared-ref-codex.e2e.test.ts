@@ -21,7 +21,8 @@ function stringLeavesOf(value: unknown): string[] {
 }
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
-  return JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+  const parsed: Record<string, unknown> = JSON.parse(await readFile(path, "utf-8"));
+  return parsed;
 }
 
 async function writeCodexWithEffectiveSource(

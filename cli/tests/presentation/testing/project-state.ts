@@ -50,7 +50,8 @@ export async function directoryExists(dir: string): Promise<boolean> {
 }
 
 export async function readJson<T = Record<string, unknown>>(path: string): Promise<T> {
-  return JSON.parse(await readFile(path, "utf-8")) as T;
+  const parsed: T = JSON.parse(await readFile(path, "utf-8"));
+  return parsed;
 }
 
 /** A project that has been initialised and has installed nothing yet. */

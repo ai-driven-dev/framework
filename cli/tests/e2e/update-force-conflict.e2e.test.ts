@@ -9,10 +9,10 @@ const AIDD_DIR = ".aidd";
 async function modifyFirstTrackedFile(projectDir: string, toolId: string): Promise<void> {
   const manifestPath = join(projectDir, AIDD_DIR, "manifest.json");
   const manifestRaw = await readFile(manifestPath, "utf-8");
-  const manifest = JSON.parse(manifestRaw) as {
+  const manifest: {
     version: number;
     tools: Record<string, { files: Array<{ relativePath: string }> }>;
-  };
+  } = JSON.parse(manifestRaw);
   const toolFiles = manifest.tools?.[toolId]?.files ?? [];
   const firstFile = toolFiles[0];
   if (!firstFile) throw new Error(`No ${toolId} files in manifest — install may have failed`);

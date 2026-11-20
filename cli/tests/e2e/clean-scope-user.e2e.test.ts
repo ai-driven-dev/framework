@@ -12,6 +12,10 @@ import {
 } from "../presentation/testing/project-state.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 
+interface MarketplacesFile {
+  marketplaces: Array<{ name: string; [field: string]: unknown }>;
+}
+
 // CI runners carry no git identity; a commit made by a test brings its own.
 const GIT_TEST_IDENTITY = ["-c", "user.email=t@t.com", "-c", "user.name=t"];
 
@@ -50,15 +54,13 @@ describe("clean --scope user purges the shared source", () => {
 
       const userConfigDir = join(fakeHome, ".config", "aidd");
       const marketplacesPath = join(userConfigDir, "marketplaces.json");
-      const beforeMarketplaces = await readJson(marketplacesPath);
-      const beforeNames = (beforeMarketplaces.marketplaces as Array<{ name: string }>).map(
-        (m) => m.name
-      );
+      const beforeMarketplaces = await readJson<MarketplacesFile>(marketplacesPath);
+      const beforeNames = beforeMarketplaces.marketplaces.map((m) => m.name);
       expect(beforeNames).toContain("aidd-framework");
 
       // A second, unrelated registration, plus the two files this whitelist has no
       // business touching — `clean --scope user` must leave every one of them alone.
-      const marketplaces = beforeMarketplaces.marketplaces as Array<Record<string, unknown>>;
+      const { marketplaces } = beforeMarketplaces;
       marketplaces.push({
         name: "other-marketplace",
         source: { kind: "local", path: "/src/other" },
@@ -112,10 +114,8 @@ describe("clean --scope user purges the shared source", () => {
       expect(after).toEqual(
         ["auth.json", "marketplaces.json", join("telemetry", "2026-01-01.jsonl")].sort()
       );
-      const afterMarketplaces = await readJson(marketplacesPath);
-      const afterNames = (afterMarketplaces.marketplaces as Array<{ name: string }>).map(
-        (m) => m.name
-      );
+      const afterMarketplaces = await readJson<MarketplacesFile>(marketplacesPath);
+      const afterNames = afterMarketplaces.marketplaces.map((m) => m.name);
       expect(afterNames).not.toContain("aidd-framework");
       expect(afterNames).toContain("other-marketplace");
       expect(await readFile(telemetryFile, "utf-8")).toBe('{"kind":"session"}\n');

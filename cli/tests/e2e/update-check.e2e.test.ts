@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { cliPath } from "./helpers.js";
+import { cliPath, failedRunOf } from "./helpers.js";
 
 const execFileAsync = promisify(execFile);
 const FAKE_TAG = "v999.0.0"; // current CLI is 4.6.x → always outdated against this
@@ -97,8 +97,8 @@ async function runCli(
     });
     return { stdout, stderr, exitCode: 0 };
   } catch (error) {
-    const err = error as { stdout?: string; stderr?: string; code?: number };
-    return { stdout: err.stdout ?? "", stderr: err.stderr ?? "", exitCode: err.code ?? 1 };
+    const { stdout, stderr, code } = failedRunOf(error);
+    return { stdout, stderr, exitCode: code ?? 1 };
   }
 }
 
@@ -147,7 +147,7 @@ describe("update-check piggyback", () => {
       expect(exitCode).toBe(0);
       expect(existsSync(t.cachePath)).toBe(true);
       expect(t.server.hits()).toBeGreaterThanOrEqual(1);
-      const cached = JSON.parse(readFileSync(t.cachePath, "utf-8")) as { latest: string };
+      const cached: { latest: string } = JSON.parse(readFileSync(t.cachePath, "utf-8"));
       expect(cached.latest).toBe("999.0.0");
     } finally {
       await t.cleanup();

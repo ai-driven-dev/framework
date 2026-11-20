@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { pathDirsWithoutAidd, shellDirsWithoutAidd } from "./helpers.js";
+import { failedRunOf, pathDirsWithoutAidd, present, shellDirsWithoutAidd } from "./helpers.js";
 
 /**
  * Git runs a hook by looking its shebang interpreter up by name on `PATH`, so a narrow
@@ -51,8 +51,9 @@ describe("choosing the directories a git hook's own shell is found in", () => {
 });
 
 describe("the PATH a sandboxed run is given, on the platform nobody here can run", () => {
+  const platform: NodeJS.Platform = "win32";
   const WINDOWS = {
-    platform: "win32" as NodeJS.Platform,
+    platform,
     nodeDir: "C:\\Program Files\\nodejs",
     gitDir: GIT_BIN,
     systemRoot: "C:\\Windows",
@@ -92,5 +93,35 @@ describe("the PATH a sandboxed run is given, on the platform nobody here can run
 
     expect(dirs).toContain("/bin");
     for (const shell of SHELL_DIRS) expect(dirs).not.toContain(shell);
+  });
+});
+
+describe("failedRunOf", () => {
+  it("reads the output and the exit code a failed child process carries", () => {
+    expect(
+      failedRunOf(Object.assign(new Error("exit"), { stdout: "o", stderr: "e", code: 3 }))
+    ).toEqual({
+      stdout: "o",
+      stderr: "e",
+      code: 3,
+    });
+  });
+
+  it("keeps a code that is not a number out of the exit code, and anything that is not an object out of the output", () => {
+    expect(failedRunOf({ code: "ENOENT", stdout: 1 })).toEqual({
+      stdout: "",
+      stderr: "",
+      code: undefined,
+    });
+    expect(failedRunOf(null)).toEqual({ stdout: "", stderr: "", code: undefined });
+  });
+});
+
+describe("present", () => {
+  it("hands back a held value, falsy ones included, and names what is missing otherwise", () => {
+    expect([present(""), present(0), present(null)]).toEqual(["", 0, null]);
+    expect(() => present(undefined, "the first call")).toThrow(
+      "expected the first call to be present"
+    );
   });
 });

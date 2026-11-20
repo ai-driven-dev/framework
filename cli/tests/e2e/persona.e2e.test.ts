@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { cliPath, createTestEnv } from "./helpers.js";
+import { cliPath, createTestEnv, failedRunOf } from "./helpers.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -38,8 +38,8 @@ ${script}
     });
     return { stdout, exitCode: 0 };
   } catch (err) {
-    const e = err as { stdout?: string; stderr?: string; code?: number };
-    return { stdout: (e.stdout ?? "") + (e.stderr ?? ""), exitCode: e.code ?? 1 };
+    const { stdout, stderr, code } = failedRunOf(err);
+    return { stdout: stdout + stderr, exitCode: code ?? 1 };
   } finally {
     await rm(scriptDir, { recursive: true, force: true });
   }

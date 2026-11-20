@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, failedRunOf, runCli } from "./helpers.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -36,8 +36,8 @@ async function importSurvives(
     );
     return { exitCode: 0, stdout };
   } catch (error) {
-    const err = error as { stdout?: string; code?: number };
-    return { exitCode: err.code ?? 1, stdout: err.stdout ?? "" };
+    const { stdout, code } = failedRunOf(error);
+    return { exitCode: code ?? 1, stdout };
   }
 }
 

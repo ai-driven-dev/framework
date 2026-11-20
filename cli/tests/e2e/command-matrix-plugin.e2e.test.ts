@@ -81,7 +81,7 @@ describe.concurrent("Command Matrix: Plugin lifecycle (local install)", () => {
       const manifest = JSON.parse(
         await readFile(join(projectDir, AIDD_DIR, "manifest.json"), "utf-8")
       );
-      const tracked = manifest.tools.claude.files[0].relativePath as string;
+      const tracked: string = manifest.tools.claude.files[0].relativePath;
       await appendFile(join(projectDir, tracked), "\n<!-- drift -->\n");
 
       const global = await runCli(["doctor"], projectDir, fakeHome);

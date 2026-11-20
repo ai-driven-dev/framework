@@ -292,12 +292,8 @@ export async function runCli(
     });
     return { stdout, stderr, exitCode: 0 };
   } catch (error) {
-    const err = error as { stdout?: string; stderr?: string; code?: number };
-    return {
-      stdout: err.stdout ?? "",
-      stderr: err.stderr ?? "",
-      exitCode: err.code ?? 1,
-    };
+    const { stdout, stderr, code } = failedRunOf(error);
+    return { stdout, stderr, exitCode: code ?? 1 };
   }
 }
 
@@ -314,12 +310,8 @@ export async function runCliFast(
     });
     return { stdout, stderr, exitCode: 0 };
   } catch (error) {
-    const err = error as { stdout?: string; stderr?: string; code?: number };
-    return {
-      stdout: err.stdout ?? "",
-      stderr: err.stderr ?? "",
-      exitCode: err.code ?? 1,
-    };
+    const { stdout, stderr, code } = failedRunOf(error);
+    return { stdout, stderr, exitCode: code ?? 1 };
   }
 }
 
@@ -368,8 +360,34 @@ export async function backdateConsent(
   const file = join(telemetryDir, "ledger", "consents.jsonl");
   const lines = (await readFile(file, "utf8")).split("\n").filter((line) => line !== "");
   const moved = lines.map((line) => {
-    const event = JSON.parse(line) as Record<string, unknown>;
+    const event: Record<string, unknown> = JSON.parse(line);
     return JSON.stringify("open" in event ? { ...event, open: since } : event);
   });
   await writeFile(file, `${moved.join("\n")}\n`);
+}
+
+/** What a child process that exited badly carries: its output, and its exit code when it has one. */
+export function failedRunOf(error: unknown): {
+  stdout: string;
+  stderr: string;
+  code: number | undefined;
+} {
+  const field = (key: string): unknown =>
+    typeof error === "object" && error !== null && key in error
+      ? Reflect.get(error, key)
+      : undefined;
+  const stdout = field("stdout");
+  const stderr = field("stderr");
+  const code = field("code");
+  return {
+    stdout: typeof stdout === "string" ? stdout : "",
+    stderr: typeof stderr === "string" ? stderr : "",
+    code: typeof code === "number" ? code : undefined,
+  };
+}
+
+/** A value a test has just seen held, narrowed past `undefined`. */
+export function present<T>(value: T | undefined, what = "value"): T {
+  if (value === undefined) throw new Error(`expected ${what} to be present`);
+  return value;
 }

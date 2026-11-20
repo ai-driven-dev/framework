@@ -33,9 +33,9 @@ describe.concurrent("setup with a named plugin from a local source", () => {
       expect(stderr).not.toContain("local path does not exist");
 
       const raw = await readFile(join(projectDir, ".aidd", "manifest.json"), "utf-8");
-      const manifest = JSON.parse(raw) as Record<string, unknown>;
-      const tools = manifest.tools as Record<string, { plugins?: Array<{ name: string }> }>;
-      const claudePlugins = tools.claude?.plugins ?? [];
+      const manifest: { tools: Record<string, { plugins?: Array<{ name: string }> }> } =
+        JSON.parse(raw);
+      const claudePlugins = manifest.tools.claude?.plugins ?? [];
       expect(claudePlugins.map((p) => p.name)).toContain("aidd-context");
     } finally {
       await cleanup();

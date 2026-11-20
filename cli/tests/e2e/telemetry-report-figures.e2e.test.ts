@@ -16,7 +16,7 @@ async function report(axis: string, zone: string, locale: string) {
     LANG: locale,
   });
   expect(run.exitCode, run.stderr).toBe(0);
-  const { run: facts, ...figures } = JSON.parse(run.stdout) as Record<string, unknown>;
+  const { run: facts, ...figures }: Record<string, unknown> = JSON.parse(run.stdout);
   return { figures: JSON.stringify(figures, null, 2), facts };
 }
 
