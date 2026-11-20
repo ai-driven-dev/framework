@@ -102,3 +102,47 @@ export interface ProjectCleanFacts {
   readonly exclusive: <T>(action: () => Promise<T>) => Promise<T>;
   readonly resolveCacheCandidate: CacheCandidateResolver;
 }
+
+/** Every question a withdrawal answers, told apart by `kind`: the proofs refuse before any host
+ * change, the withdrawals act. */
+export type WithdrawalCommand =
+  | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostCommand)
+  | ({ readonly kind: "prove-project-source" } & ProjectSourceCommand)
+  | {
+      readonly kind: "prove-claimed-ref";
+      readonly registrationData: RegistrationRecordData;
+      readonly claim: ClaimedHostRef;
+      readonly projectRoot: string;
+    }
+  | { readonly kind: "withdraw-proven-ref"; readonly proven: ProvenHostRef }
+  | {
+      readonly kind: "prove-project-registrations";
+      readonly withdrawals: readonly ProjectRegistrationWithdrawal[];
+      readonly facts: ProjectCleanFacts;
+    }
+  | {
+      readonly kind: "withdraw-project-registrations";
+      readonly withdrawals: readonly ProjectRegistrationWithdrawal[];
+      readonly facts: ProjectCleanFacts;
+    }
+  | {
+      readonly kind: "check-user-hosts";
+      readonly withdrawals: readonly UserRegistrationWithdrawal[];
+    }
+  | {
+      readonly kind: "prove-user-registrations";
+      readonly withdrawals: readonly UserRegistrationWithdrawal[];
+      readonly projectRoot: string;
+    }
+  | {
+      readonly kind: "withdraw-user-registrations";
+      readonly withdrawals: readonly UserRegistrationWithdrawal[];
+      readonly resolveCacheCandidate: CacheCandidateResolver;
+    };
+
+export type WithdrawPluginCommand = Extract<WithdrawalCommand, { kind: "withdraw-plugin" }>;
+export type ProveClaimedRefCommand = Extract<WithdrawalCommand, { kind: "prove-claimed-ref" }>;
+export type WithdrawalStepCommand = Exclude<
+  WithdrawalCommand,
+  WithdrawPluginCommand | ProveClaimedRefCommand
+>;

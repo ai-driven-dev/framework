@@ -65,17 +65,22 @@ export class CleanUserScope {
     this.purgeFiles.assertNothingDepends(inspection);
 
     const withdrawals = await this.purgeFiles.proveWithdrawals();
-    this.withdrawFromHost.assertUserHostsReachable(withdrawals);
-    await this.withdrawFromHost.proveUserRegistrations(withdrawals, options.projectRoot);
+    await this.withdrawFromHost.execute({ kind: "check-user-hosts", withdrawals });
+    await this.withdrawFromHost.execute({
+      kind: "prove-user-registrations",
+      withdrawals,
+      projectRoot: options.projectRoot,
+    });
     // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
     // what it is unregistering against the built tree still on disk, and the purge removes
     // exactly that tree. Absent a manifest there is nothing recorded to undo, so there are no
     // withdrawals and each step below does nothing.
-    await this.withdrawFromHost.withdrawUserRegistrations(
+    await this.withdrawFromHost.execute({
+      kind: "withdraw-user-registrations",
       withdrawals,
-      (cacheRoot, relativeSegments, label) =>
-        this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label)
-    );
+      resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
+        this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label),
+    });
     await this.purgeFiles.purge(options.projectRoot);
 
     return { dryRun: false, manifestFound, preview };

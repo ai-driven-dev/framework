@@ -1,5 +1,6 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
 import {
+  claimedRefWithdrawal,
   projectHostWithdrawal,
   underMachineHome,
 } from "../../src/composition/orchestration/plugin.js";
@@ -86,7 +87,7 @@ export function userPluginRemover(
   return underMachineHome(
     new RemoveUserPlugin(
       parts.userManifestRepo,
-      withdrawing({ ...parts, logger }, fs),
+      claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
       parts.records ?? registrationRecordRules,
       new UserScopePluginFiles(fs, (plugin, tool, home) =>
         userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)

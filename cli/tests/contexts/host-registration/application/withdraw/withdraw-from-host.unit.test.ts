@@ -18,8 +18,9 @@ describe("withdrawing a user-scope registration", () => {
       sources: new Map(),
     });
 
-    await withdraw.withdrawUserRegistrations(
-      [
+    await withdraw.execute({
+      kind: "withdraw-user-registrations",
+      withdrawals: [
         {
           tool: registeredTools().aiProfile(TOOL.claude),
           registrations: {
@@ -31,8 +32,8 @@ describe("withdrawing a user-scope registration", () => {
           claimedRefs: [],
         },
       ],
-      async (root, segment) => `${root}/${segment}`
-    );
+      resolveCacheCandidate: async (root, segment) => `${root}/${segment}`,
+    });
 
     expect(activator.removedMarketplaces).toStrictEqual([HOST_NAME]);
   });
@@ -56,6 +57,7 @@ describe("removing a plugin from its host", () => {
 
     await expect(
       withdraw.execute({
+        kind: "withdraw-plugin",
         tool: registeredTools().aiProfile(TOOL.claude),
         plugin: { name: "plugin", marketplace: HOST_NAME, scope: "project" },
         projectRoot: "/project",

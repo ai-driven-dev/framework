@@ -75,6 +75,17 @@ export const userScopeFileGuard: UserScopeFileGuard = {
   assertWriteBoundary: assertUserScopeWriteBoundary,
 };
 
+/** The host's two steps a user-scope removal takes: prove a claimed ref removable, then withdraw it. */
+export function claimedRefWithdrawal(
+  withdrawFromHost: WithdrawFromHost
+): Pick<HostWithdrawal<ProvenHostRef>, "proveClaimedRef" | "uninstallProven"> {
+  return {
+    proveClaimedRef: (registrationData, claim, projectRoot) =>
+      withdrawFromHost.execute({ kind: "prove-claimed-ref", registrationData, claim, projectRoot }),
+    uninstallProven: (proven) => withdrawFromHost.execute({ kind: "withdraw-proven-ref", proven }),
+  };
+}
+
 /** The host withdrawal a project removal calls: the host's own, checked against the machine's
  * claims for the tool and project at hand. */
 export function projectHostWithdrawal(
@@ -82,12 +93,12 @@ export function projectHostWithdrawal(
   removalClaims: Parameters<typeof withdrawalClaimsOf>[0]
 ): HostWithdrawal<ProvenHostRef> {
   return {
-    assertProjectSource: (command) => withdrawFromHost.assertProjectSource(command),
-    proveClaimedRef: (registrations, claim, projectRoot) =>
-      withdrawFromHost.proveClaimedRef(registrations, claim, projectRoot),
-    uninstallProven: (proof) => withdrawFromHost.uninstallProven(proof),
+    assertProjectSource: (command) =>
+      withdrawFromHost.execute({ kind: "prove-project-source", ...command }),
+    ...claimedRefWithdrawal(withdrawFromHost),
     execute: (command) =>
       withdrawFromHost.execute({
+        kind: "withdraw-plugin",
         ...command,
         claims: withdrawalClaimsOf(removalClaims, {
           toolId: command.tool.toolId,
@@ -152,7 +163,7 @@ export function wirePlugin(base: Base, inst: Installation) {
   const userPluginRemove = underMachineHome(
     new RemoveUserPlugin(
       userManifestRepo,
-      withdrawFromHost,
+      claimedRefWithdrawal(withdrawFromHost),
       registrationRecordRules,
       new UserScopePluginFiles(fs, (plugin, tool, home) =>
         userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)

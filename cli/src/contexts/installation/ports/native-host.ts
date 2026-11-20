@@ -111,7 +111,7 @@ export interface HostWithdrawal<Proof> {
     claim: ClaimedHostRef,
     projectRoot: string
   ) => Promise<Proof>;
-  readonly uninstallProven: (proof: Proof) => void;
+  readonly uninstallProven: (proof: Proof) => Promise<void>;
   /** `undefined` when nothing was registered, else whether the host confirmed. */
   readonly execute: (command: WithdrawFromHostCommand) => Promise<boolean | undefined>;
 }

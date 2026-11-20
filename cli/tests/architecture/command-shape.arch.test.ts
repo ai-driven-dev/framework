@@ -59,6 +59,12 @@ const HELPERS_BY_DESIGN: readonly string[] = [
   "src/contexts/telemetry/application/directory-resolver.ts",
 ];
 
+/** Folders whose commands answer one question through `execute` alone: each step they run is a
+ * private function, never a second public method. */
+const ONLY_EXECUTE_HOMES: readonly string[] = [
+  "src/contexts/host-registration/application/withdraw/",
+];
+
 /** What breaks the command shape in one file, empty when it holds no command. */
 function commandShapeBreaks(file: string, source: string): string[] {
   const { classes, executes, hidesExecute, publicMethods, implementsInterface } =
@@ -86,6 +92,10 @@ function commandShapeBreaks(file: string, source: string): string[] {
   }
   if (hidesExecute) {
     breaks.push(`${file}: an execute that is not public`);
+  }
+  const others = publicMethods.filter((name) => name !== "execute");
+  if (ONLY_EXECUTE_HOMES.some((home) => file.startsWith(home)) && others.length > 0) {
+    breaks.push(`${file}: public methods besides execute: ${others.join(", ")}`);
   }
   return breaks;
 }
@@ -171,6 +181,15 @@ describe("a command is one file, one class of the same name", () => {
 
     it("clears a command named after its file", () => {
       expect(commandShapeBreaks(file, "export class XY { execute() {} }")).toEqual([]);
+    });
+
+    it("flags a second public method on a command of a folder that allows execute alone", () => {
+      const home = "src/contexts/host-registration/application/withdraw/x-y.ts";
+      const source = "export class XY {\n  execute() {}\n  other() {}\n}";
+      expect(commandShapeBreaks(home, source)).toContain(
+        `${home}: public methods besides execute: other`
+      );
+      expect(commandShapeBreaks(file, source)).toEqual([]);
     });
 
     it("flags a name that does not follow the file", () => {

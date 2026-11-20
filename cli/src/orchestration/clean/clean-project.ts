@@ -65,7 +65,11 @@ export class CleanProject {
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
     const facts = this.cleanFacts(projectRoot, await this.marketplaceScopes(projectRoot));
-    await this.withdrawFromHost.assertProjectRegistrationsOwned(plan.withdrawals, facts);
+    await this.withdrawFromHost.execute({
+      kind: "prove-project-registrations",
+      withdrawals: plan.withdrawals,
+      facts,
+    });
     await this.cleanProject.assertRemovable(projectRoot, options.force);
     // Read the other projects before host cleanup, but keep this project's claim until every
     // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
@@ -76,9 +80,10 @@ export class CleanProject {
     // resolves the marketplace name against the built tree under `.aidd/cache/`, which the
     // removal of AIDD's state deletes next, and a host may refuse to unregister a source that is
     // gone.
-    await this.withdrawFromHost.withdrawProjectRegistrations(plan.withdrawals, {
-      ...facts,
-      sharedSource,
+    await this.withdrawFromHost.execute({
+      kind: "withdraw-project-registrations",
+      withdrawals: plan.withdrawals,
+      facts: { ...facts, sharedSource },
     });
     const fileCount = await this.cleanProject.remove(projectRoot, options.force);
     // One project-level decrement, only after the local projection has been cleaned successfully.

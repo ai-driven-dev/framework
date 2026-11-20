@@ -1,10 +1,7 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import {
-  type RegistrationRecordData,
-  recordedRegistrations,
-} from "../../domain/record/registration-record.js";
+import { recordedRegistrations } from "../../domain/record/registration-record.js";
 import type { HostPorts } from "../../ports/host-ports.js";
 import { assertProjectRegistrationsOwned } from "./assert-project-registrations-owned.js";
 import { assertProjectSource } from "./assert-project-source.js";
@@ -18,15 +15,12 @@ import {
   withdrawUserRegistrations,
 } from "./withdraw-user-registrations.js";
 import type {
-  CacheCandidateResolver,
-  ClaimedHostRef,
-  ProjectCleanFacts,
-  ProjectRegistrationWithdrawal,
-  ProjectSourceCommand,
+  ProveClaimedRefCommand,
   ProvenHostRef,
-  UserRegistrationWithdrawal,
+  WithdrawalCommand,
   WithdrawalDeps,
-  WithdrawFromHostCommand,
+  WithdrawalStepCommand,
+  WithdrawPluginCommand,
 } from "./withdrawal.js";
 
 /**
@@ -42,9 +36,56 @@ export class WithdrawFromHost {
     this.deps = { fs, logger, ports };
   }
 
-  /** Returns `undefined` when there was nothing to undo, so no cache purge applies either;
-   * otherwise whether the host's own CLI confirmed the removal. */
-  async execute(command: WithdrawFromHostCommand): Promise<boolean | undefined> {
+  /** A plugin withdrawal returns `undefined` when there was nothing to undo, so no cache purge
+   * applies either, otherwise whether the host's own CLI confirmed the removal. A claimed-ref
+   * proof returns the ref it proved removable. Every other kind refuses before any change, or
+   * acts, and returns nothing. */
+  async execute(command: WithdrawPluginCommand): Promise<boolean | undefined>;
+  async execute(command: ProveClaimedRefCommand): Promise<ProvenHostRef>;
+  async execute(command: WithdrawalStepCommand): Promise<void>;
+  async execute(command: WithdrawalCommand): Promise<unknown> {
+    switch (command.kind) {
+      case "withdraw-plugin":
+        return this.withdrawPlugin(command);
+      case "prove-project-source":
+        return assertProjectSource(this.deps, command);
+      case "prove-claimed-ref":
+        return proveClaimedRef(this.deps, command);
+      case "withdraw-proven-ref":
+        command.proven.activator.uninstallPlugin(command.proven.ref, command.proven.scope);
+        return undefined;
+      case "prove-project-registrations":
+        return assertProjectRegistrationsOwned(this.deps, command.withdrawals, command.facts);
+      case "withdraw-project-registrations": {
+        // Asks each tool's own CLI to forget what this project registered, then purges its cache.
+        const removed = await withdrawProjectRegistrations(
+          this.deps,
+          command.withdrawals,
+          command.facts
+        );
+        return purgeMarketplaceCaches(this.deps, removed, command.facts.resolveCacheCandidate);
+      }
+      case "check-user-hosts":
+        // Nothing is undone for a tool whose binary is absent, and its canonical claims are kept.
+        for (const withdrawal of command.withdrawals) {
+          reachableUserActivator(
+            this.deps,
+            withdrawal,
+            recordedRegistrations(withdrawal.registrations)
+          );
+        }
+        return undefined;
+      case "prove-user-registrations":
+        return proveUserRegistrations(this.deps, command.withdrawals, command.projectRoot);
+      case "withdraw-user-registrations": {
+        // Every claimed ref uninstalled, then every marketplace unregistered, then the caches purged.
+        const removed = await withdrawUserRegistrations(this.deps, command.withdrawals);
+        return purgeMarketplaceCaches(this.deps, removed, command.resolveCacheCandidate);
+      }
+    }
+  }
+
+  private async withdrawPlugin(command: WithdrawPluginCommand): Promise<boolean | undefined> {
     await assertProjectSource(this.deps, {
       tool: command.tool,
       plugin: command.plugin,
@@ -57,70 +98,5 @@ export class WithdrawFromHost {
     return confirmed;
   }
 
-  /** Refuses, before any change, a removal the host's own state does not prove safe. */
-  async assertProjectSource(command: ProjectSourceCommand): Promise<void> {
-    await assertProjectSource(this.deps, command);
-  }
-
-  /** Proves an AIDD-owned ref is still enabled on a reachable host and sits under a catalogue this
-   * project owns, so a batch can be refused before the first host change. */
-  async proveClaimedRef(
-    registrationData: RegistrationRecordData,
-    claim: ClaimedHostRef,
-    projectRoot: string
-  ): Promise<ProvenHostRef> {
-    return proveClaimedRef(this.deps, { registrationData, claim, projectRoot });
-  }
-
-  uninstallProven(proven: ProvenHostRef): void {
-    proven.activator.uninstallPlugin(proven.ref, proven.scope);
-  }
-
-  /** Refuses, before any change, a project clean whose registrations the host no longer proves
-   * this project's own: a catalogue gone or foreign, or a ref another owner holds. */
-  async assertProjectRegistrationsOwned(
-    withdrawals: readonly ProjectRegistrationWithdrawal[],
-    facts: ProjectCleanFacts
-  ): Promise<void> {
-    await assertProjectRegistrationsOwned(this.deps, withdrawals, facts);
-  }
-
   /** Asks each tool's own CLI to forget what this project registered, then purges its cache. */
-  async withdrawProjectRegistrations(
-    withdrawals: readonly ProjectRegistrationWithdrawal[],
-    facts: ProjectCleanFacts
-  ): Promise<void> {
-    const removed = await withdrawProjectRegistrations(this.deps, withdrawals, facts);
-    await purgeMarketplaceCaches(this.deps, removed, facts.resolveCacheCandidate);
-  }
-
-  /** Refuses, before any change, a user clean whose host CLI cannot be reached: nothing is
-   * undone for a tool whose binary is absent, and its canonical claims are kept. */
-  assertUserHostsReachable(withdrawals: readonly UserRegistrationWithdrawal[]): void {
-    for (const withdrawal of withdrawals) {
-      reachableUserActivator(
-        this.deps,
-        withdrawal,
-        recordedRegistrations(withdrawal.registrations)
-      );
-    }
-  }
-
-  /** Refuses, before the first host change, a user clean whose canonical claims the host does
-   * not prove. */
-  async proveUserRegistrations(
-    withdrawals: readonly UserRegistrationWithdrawal[],
-    projectRoot: string
-  ): Promise<void> {
-    await proveUserRegistrations(this.deps, withdrawals, projectRoot);
-  }
-
-  /** Every claimed ref uninstalled, then every marketplace unregistered, then the caches purged. */
-  async withdrawUserRegistrations(
-    withdrawals: readonly UserRegistrationWithdrawal[],
-    resolveCacheCandidate: CacheCandidateResolver
-  ): Promise<void> {
-    const removed = await withdrawUserRegistrations(this.deps, withdrawals);
-    await purgeMarketplaceCaches(this.deps, removed, resolveCacheCandidate);
-  }
 }

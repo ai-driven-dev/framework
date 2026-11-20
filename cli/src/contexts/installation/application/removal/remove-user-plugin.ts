@@ -99,7 +99,7 @@ export class RemoveUserPlugin<Proof> {
       }))
     );
     for (const target of nativeRemoval) {
-      this.withdrawFromHost.uninstallProven(target.proven);
+      await this.withdrawFromHost.uninstallProven(target.proven);
       manifest.setNativeRegistrations(
         target.toolId,
         this.records.withoutClaimedRef(target.registrations, target.claim.ref)
