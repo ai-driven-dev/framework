@@ -1,6 +1,6 @@
 ---
 objective: "An artifact the model wrote in a turn is judged by its contract at the turn end, each finding handed back once as `file:line rule fix`, silent otherwise."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Artifact check at turn end, tranche 2a
