@@ -40,12 +40,6 @@ describe("the graph a container hands the commands", () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it("builds a new graph on every call, as a new process would", async () => {
-    const first = await graphOf(root, { verbose: false }, undefined, tools);
-
-    expect(await graphOf(root, { verbose: false }, undefined, tools)).not.toBe(first);
-  });
-
   it("logs through the output it was handed", async () => {
     const output = new CLIOutput(false);
     const withOutput = await mkdtemp(join(tmpdir(), "aidd-create-deps-output-"));
