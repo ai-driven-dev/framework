@@ -8,7 +8,6 @@ import type { PluginCatalogEntry } from "../../../src/contexts/distribution/cont
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { DetectProjectContext } from "../../../src/contexts/installation/application/detect-project-context.js";
 import { ConfigureMachineScope } from "../../../src/contexts/installation/application/install/configure-machine-scope.js";
@@ -30,6 +29,7 @@ import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js"
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
+import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -45,6 +45,7 @@ import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
     listReleaseTags: vi.fn().mockResolvedValue([]),
+    readReleaseBody: vi.fn().mockResolvedValue(null),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }

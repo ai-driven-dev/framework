@@ -13,7 +13,6 @@ import type { MarketplaceRegistry } from "../contexts/distribution/ports/marketp
 import type { MarketplaceTrustStore } from "../contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginCatalogRepository } from "../contexts/distribution/ports/plugin-catalog-repository.js";
 import type { PluginFetcher } from "../contexts/distribution/ports/plugin-fetcher.js";
-import type { ReleaseLister } from "../contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../contexts/distribution/ports/repository-visibility.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
@@ -22,6 +21,7 @@ import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
+import type { ReleaseLister } from "../shared/ports/release-lister.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter;

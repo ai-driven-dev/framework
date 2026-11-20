@@ -1,12 +1,12 @@
 import { resolve } from "node:path";
 import type { PluginSourceGitHub, PluginSourceLocal } from "../../../shared/domain/source.js";
+import type { ReleaseLister } from "../../../shared/ports/release-lister.js";
 import {
   type FrameworkSource,
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../contract/framework-source.js";
 import { rootReleaseTags } from "../domain/root-release.js";
-import type { ReleaseLister } from "../ports/release-lister.js";
 
 /** What setup needs to settle where the framework marketplace comes from, without asking anyone:
  * the sources a choice can name, the releases to choose from, and the default a run with no one to

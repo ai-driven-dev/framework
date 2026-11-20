@@ -5,15 +5,16 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
-import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InputRequiredError } from "../../../src/shared/domain/errors.js";
+import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.js";
 
 function makeResolver(rootReleases: string[]): ReleaseLister & RepositoryVisibility {
   return {
     listReleaseTags: vi.fn().mockResolvedValue(rootReleases),
+    readReleaseBody: vi.fn().mockResolvedValue(null),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }

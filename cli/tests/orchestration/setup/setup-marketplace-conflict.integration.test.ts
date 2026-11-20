@@ -4,13 +4,13 @@ import type { RefreshMarketplace } from "../../../src/contexts/distribution/appl
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
+import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
@@ -30,6 +30,7 @@ const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
     listReleaseTags: vi.fn().mockResolvedValue([]),
+    readReleaseBody: vi.fn().mockResolvedValue(null),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };
 }

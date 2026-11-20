@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
 import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
 import type { HttpGet, HttpGetOptions } from "../../../../src/shared/ports/http-get.js";
+import type { ReleaseLister } from "../../../../src/shared/ports/release-lister.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.js";
 
 const NPM_URL = "https://registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags";
-// release-please tags this package `cli-v<semver>`, never a bare `v<semver>`.
-const TAG_URL = "https://api.github.com/repos/ai-driven-dev/framework/releases/tags/cli-v1.2.3";
 
 function http(answers: Record<string, unknown | Error>) {
   const calls: { url: string; options?: HttpGetOptions }[] = [];
@@ -22,37 +21,36 @@ function http(answers: Record<string, unknown | Error>) {
   return { client, calls };
 }
 
+function releasesAnswering(answer: string | null | Error) {
+  const asked: { repo: string; tag: string }[] = [];
+  const releases: Pick<ReleaseLister, "readReleaseBody"> = {
+    readReleaseBody: async (repo, tag) => {
+      asked.push({ repo, tag });
+      if (answer instanceof Error) throw answer;
+      return answer;
+    },
+  };
+  return { releases, asked };
+}
+
 describe("NpmRegistryReleaseAdapter", () => {
-  it("asks npm for plain JSON, then GitHub for the tag with the token it was given", async () => {
-    const { client, calls } = http({
-      [NPM_URL]: { latest: "1.2.3" },
-      [TAG_URL]: { body: "notes" },
-    });
-    const adapter = new NpmRegistryReleaseAdapter(client, {
-      tokenProvider: { resolve: async () => "tok" },
-    });
-
-    await adapter.fetchLatestRelease();
-
-    expect(calls).toStrictEqual([
-      { url: NPM_URL, options: { accept: "application/json" } },
-      { url: TAG_URL, options: { token: "tok" } },
-    ]);
-  });
-
-  it("asks GitHub for the tag with no token when the provider has none", async () => {
+  it("asks npm for plain JSON, then the releases for the notes of the cli tag", async () => {
     const { client, calls } = http({ [NPM_URL]: { latest: "1.2.3" } });
+    const { releases, asked } = releasesAnswering("notes");
 
-    await new NpmRegistryReleaseAdapter(client, {
-      tokenProvider: { resolve: async () => null },
-    }).fetchLatestRelease();
+    const release = await new NpmRegistryReleaseAdapter(client, releases).fetchLatestRelease();
 
-    expect(calls[1]?.options).toStrictEqual({ token: undefined });
+    expect(release).toStrictEqual({ version: "1.2.3", changelog: "notes" });
+    expect(calls).toStrictEqual([{ url: NPM_URL, options: { accept: "application/json" } }]);
+    // release-please tags this package `cli-v<semver>`, never a bare `v<semver>`.
+    expect(asked).toStrictEqual([{ repo: "ai-driven-dev/framework", tag: "cli-v1.2.3" }]);
   });
 
   it("asks the bases it was given instead of the public ones", async () => {
     const { client, calls } = http({});
-    await new NpmRegistryReleaseAdapter(client, { npmRegistryBase: "http://npm.test" })
+    await new NpmRegistryReleaseAdapter(client, releasesAnswering(null).releases, {
+      npmRegistryBase: "http://npm.test",
+    })
       .fetchLatestRelease()
       .catch(() => undefined);
 
@@ -62,7 +60,9 @@ describe("NpmRegistryReleaseAdapter", () => {
   it("refuses a registry answer that is not an object", async () => {
     const { client } = http({ [NPM_URL]: null });
 
-    await expect(new NpmRegistryReleaseAdapter(client).fetchLatestRelease()).rejects.toThrow(
+    await expect(
+      new NpmRegistryReleaseAdapter(client, releasesAnswering(null).releases).fetchLatestRelease()
+    ).rejects.toThrow(
       new FrameworkResolutionError(`Unexpected npm registry response from ${NPM_URL}`)
     );
   });
@@ -70,19 +70,37 @@ describe("NpmRegistryReleaseAdapter", () => {
   it("wraps a transport failure with the URL it was reading", async () => {
     const { client } = http({ [NPM_URL]: new Error("socket hang up") });
 
-    await expect(new NpmRegistryReleaseAdapter(client).fetchLatestRelease()).rejects.toThrow(
+    await expect(
+      new NpmRegistryReleaseAdapter(client, releasesAnswering(null).releases).fetchLatestRelease()
+    ).rejects.toThrow(
       new FrameworkResolutionError(
         `Could not resolve the latest CLI version from ${NPM_URL}: socket hang up`
       )
     );
   });
 
+  it("has no changelog when the release has no notes", async () => {
+    const { client } = http({ [NPM_URL]: { latest: "1.2.3" } });
+
+    const release = await new NpmRegistryReleaseAdapter(
+      client,
+      releasesAnswering(null).releases
+    ).fetchLatestRelease();
+
+    expect(release.changelog).toBeNull();
+  });
+
   it("says why the changelog is missing, on the debug channel", async () => {
     const logger = new CapturingLogger();
-    const { client } = http({ [NPM_URL]: { latest: "1.2.3" }, [TAG_URL]: new Error("offline") });
+    const { client } = http({ [NPM_URL]: { latest: "1.2.3" } });
 
-    await new NpmRegistryReleaseAdapter(client, { logger }).fetchLatestRelease();
+    const release = await new NpmRegistryReleaseAdapter(
+      client,
+      releasesAnswering(new Error("offline")).releases,
+      { logger }
+    ).fetchLatestRelease();
 
-    expect(logger.debugMessages).toStrictEqual([`Changelog unavailable from ${TAG_URL}: offline`]);
+    expect(release.changelog).toBeNull();
+    expect(logger.debugMessages).toStrictEqual(["Changelog unavailable: offline"]);
   });
 });

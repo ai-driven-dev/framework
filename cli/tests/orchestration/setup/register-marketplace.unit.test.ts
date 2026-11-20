@@ -6,13 +6,13 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
-import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.js";
@@ -28,6 +28,7 @@ const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";
 function makeNoOpLatestResolver(isRepoPublic = true): ReleaseLister & RepositoryVisibility {
   return {
     listReleaseTags: vi.fn().mockResolvedValue([]),
+    readReleaseBody: vi.fn().mockResolvedValue(null),
     isRepoPublic: vi.fn().mockResolvedValue(isRepoPublic),
   };
 }

@@ -72,6 +72,20 @@ export class GitHubAdapter {
     }
   }
 
+  async readReleaseBody(repo: string, tag: string): Promise<string | null> {
+    const url = `${this.apiBase}/repos/${repo}/releases/tags/${tag}`;
+    const token = (await this.tokenProvider?.resolve()) ?? undefined;
+    try {
+      const response = await this.http.get(url, { token });
+      const body = response.body;
+      const notes = typeof body === "object" && body !== null && "body" in body ? body.body : null;
+      return typeof notes === "string" ? notes : null;
+    } catch (err) {
+      if (err instanceof HttpNotFoundError) return null;
+      this.rethrowAsCatalogError(err, url);
+    }
+  }
+
   async isRepoPublic(repo: string): Promise<boolean> {
     // Deliberately tokenless: only a 404 unambiguously means "auth required", so any other
     // error resolves true and a rate-limited or offline public user is not sent to login.

@@ -6,10 +6,13 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
-import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
+import type { ReleaseLister } from "../../../../src/shared/ports/release-lister.js";
 
 function releasesOf(tags: string[]): ReleaseLister {
-  return { listReleaseTags: vi.fn().mockResolvedValue(tags) };
+  return {
+    listReleaseTags: vi.fn().mockResolvedValue(tags),
+    readReleaseBody: vi.fn().mockResolvedValue(null),
+  };
 }
 
 describe("ChooseMarketplaceSource", () => {

@@ -75,6 +75,65 @@ describe("GitHubAdapter", () => {
     });
   });
 
+  describe("readReleaseBody", () => {
+    const TAG_URL = "https://api.github.com/repos/owner/repo/releases/tags/cli-v1.2.3";
+
+    it("reads the notes of the tagged release with the token it was given", async () => {
+      const http = makeHttp({ body: "notes" });
+      const adapter = new GitHubAdapter(http, { tokenProvider: { resolve: async () => "tok" } });
+
+      expect(await adapter.readReleaseBody(REPO, "cli-v1.2.3")).toBe("notes");
+      expect(http.get).toHaveBeenCalledWith(TAG_URL, { token: "tok" });
+    });
+
+    it("asks with no token when the provider has none", async () => {
+      const http = makeHttp({ body: "notes" });
+      const adapter = new GitHubAdapter(http, { tokenProvider: { resolve: async () => null } });
+
+      await adapter.readReleaseBody(REPO, "cli-v1.2.3");
+
+      expect(http.get).toHaveBeenCalledWith(TAG_URL, { token: undefined });
+    });
+
+    it("asks the API base it was given", async () => {
+      const http = makeHttp({ body: "notes" });
+      const adapter = new GitHubAdapter(http, { apiBase: "http://github.test" });
+
+      await adapter.readReleaseBody(REPO, "cli-v1.2.3");
+
+      expect(http.get).toHaveBeenCalledWith(
+        "http://github.test/repos/owner/repo/releases/tags/cli-v1.2.3",
+        { token: undefined }
+      );
+    });
+
+    it("answers null for a release without notes", async () => {
+      const adapter = new GitHubAdapter(makeHttp({ body: 7 }));
+
+      expect(await adapter.readReleaseBody(REPO, "cli-v1.2.3")).toBeNull();
+    });
+
+    it("answers null when the repository has no such release, a private one read without a token", async () => {
+      const adapter = new GitHubAdapter(makeHttpThrowing(new HttpNotFoundError(TAG_URL)));
+
+      expect(await adapter.readReleaseBody(REPO, "cli-v1.2.3")).toBeNull();
+    });
+
+    it("throws CatalogFetchAuthError on HTTP 401/403", async () => {
+      const adapter = new GitHubAdapter(makeHttpThrowing(new AuthenticationError("HTTP 401")));
+
+      await expect(adapter.readReleaseBody(REPO, "cli-v1.2.3")).rejects.toThrow(
+        CatalogFetchAuthError
+      );
+    });
+
+    it("throws CatalogFetchError on network error", async () => {
+      const adapter = new GitHubAdapter(makeHttpThrowing(new Error("offline")));
+
+      await expect(adapter.readReleaseBody(REPO, "cli-v1.2.3")).rejects.toThrow(CatalogFetchError);
+    });
+  });
+
   describe("isRepoPublic", () => {
     it("returns true when the unauthenticated repo request succeeds (public)", async () => {
       const http = makeHttp({ full_name: REPO, private: false });

@@ -18,7 +18,7 @@ paths:
 - `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the fake and on the real adapter.
 - `updateVersion` has a caller, `RefreshMarketplace`, and no contract case: no test reaches the adapter's own lines.
 - The registry case "keeps one user entry for every project" has no one-line break to plant in the adapter arm: `userPath()` takes no project argument.
-- `MarketplaceRemover`, `ReleaseLister`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.
+- `MarketplaceRemover`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.
 - `MarketplaceRemover` is answered by `src/composition/orchestration/marketplace.ts`, which hands it to the add command.
 - Outside importers reach only the modules listed for distribution in `context-boundary.arch.test.ts`.
 

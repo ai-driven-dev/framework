@@ -2,6 +2,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
 import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
+import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
 import {
   describeCliReleaseSourceContract,
@@ -50,9 +51,9 @@ describeCliReleaseSourceContract(
     // A closed port is a registry nobody answers on.
     if (scenario.kind === "unreachable")
       await new Promise<void>((done) => server.close(() => done()));
+    const http = new HttpClient();
     return {
-      source: new NpmRegistryReleaseAdapter(new HttpClient(), {
-        githubApiBase: base,
+      source: new NpmRegistryReleaseAdapter(http, new GitHubAdapter(http, { apiBase: base }), {
         npmRegistryBase: base,
       }),
       dispose: () => new Promise<void>((done) => server.close(() => done())),

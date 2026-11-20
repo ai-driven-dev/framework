@@ -10,7 +10,6 @@ import {
 } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
@@ -19,6 +18,7 @@ import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
+import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -31,6 +31,7 @@ import { OverwritePrompter } from "../../shared/testing/scripted-prompter.js";
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
     listReleaseTags: vi.fn().mockResolvedValue([]),
+    readReleaseBody: vi.fn().mockResolvedValue(null),
     isRepoPublic: vi.fn().mockResolvedValue(isPublic),
   };
 }
