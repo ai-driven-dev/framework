@@ -20,19 +20,23 @@ interface PluginDriftReport {
   }[];
 }
 
-/** Which tools are equipped and how much they carry, independent of health and drift, which
- * are reported separately. Versions come from the status report already fetched for drift. */
-export function printInventory(
-  output: Output,
-  label: string,
+interface Inventory {
+  label: string;
   doctorReport: {
     readonly toolHealth: readonly {
       readonly toolId: string;
       readonly fileCount: number;
       readonly mergeFileCount: number;
     }[];
-  } | null,
-  statusTools: readonly { toolId: string; version: string }[]
+  } | null;
+  statusTools: readonly { toolId: string; version: string }[];
+}
+
+/** Which tools are equipped and how much they carry, independent of health and drift, which
+ * are reported separately. Versions come from the status report already fetched for drift. */
+export function printInventory(
+  output: Output,
+  { label, doctorReport, statusTools }: Inventory
 ): void {
   const health = doctorReport?.toolHealth ?? [];
   if (health.length === 0) return;

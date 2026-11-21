@@ -168,32 +168,41 @@ export function printTelemetryStatus(output: Output, result: ReadTelemetryStatus
   );
 }
 
-function printBinding(
-  output: Output,
-  result: Extract<ReadTelemetryStatusResult, { status: "shown" }>
-): void {
-  const { binding, sessionId, branch, role } = result;
+type ShownStatus = Extract<ReadTelemetryStatusResult, { status: "shown" }>;
+
+function describeUnbound({ sessionId, branch, role }: ShownStatus): string {
+  if (role === "working") {
+    const session = sessionId === null ? "no session" : `session ${shortSession(sessionId)}`;
+    return `branch ${branch} and ${session}`;
+  }
+  return `${role === "detached" ? "a detached HEAD" : `the default branch ${branch}`}, which is never bound`;
+}
+
+function describeBoundSource(
+  binding: Extract<ShownStatus["binding"], { state: "bound" }>,
+  { sessionId, branch }: ShownStatus,
+  what: string
+): string {
+  const when = binding.declaredAt === null ? "" : ` at ${binding.declaredAt}`;
+  if (binding.source === "branch") return `Bound to ${what}, declared on branch ${branch}${when}.`;
+  if (binding.source === "session-carried") {
+    return `Bound to ${what}, carried into session ${shortSession(sessionId ?? "")} from session ${shortSession(binding.carriedFrom ?? "")}.`;
+  }
+  return `Bound to ${what}, declared in session ${shortSession(sessionId ?? "")}${when}.`;
+}
+
+function printBinding(output: Output, result: ShownStatus): void {
+  const { binding } = result;
   if (binding.state === "unbound") {
-    const where =
-      role === "working"
-        ? `branch ${branch} and ${sessionId === null ? "no session" : `session ${shortSession(sessionId)}`}`
-        : `${role === "detached" ? "a detached HEAD" : `the default branch ${branch}`}, which is never bound`;
-    output.info(`Nothing is bound: ${where}. Declare with \`aidd telemetry task <name>\`.`);
+    output.info(
+      `Nothing is bound: ${describeUnbound(result)}. Declare with \`aidd telemetry task <name>\`.`
+    );
     return;
   }
   const what = binding.none
     ? "no task (declared none)"
     : describeTask(binding.task, binding.ticket);
-  const when = binding.declaredAt === null ? "" : ` at ${binding.declaredAt}`;
-  if (binding.source === "branch") {
-    output.info(`Bound to ${what}, declared on branch ${branch}${when}.`);
-  } else if (binding.source === "session-carried") {
-    output.info(
-      `Bound to ${what}, carried into session ${shortSession(sessionId ?? "")} from session ${shortSession(binding.carriedFrom ?? "")}.`
-    );
-  } else {
-    output.info(`Bound to ${what}, declared in session ${shortSession(sessionId ?? "")}${when}.`);
-  }
+  output.info(describeBoundSource(binding, result, what));
 }
 
 export function printIdentityResult(output: Output, result: ManageIdentityResult): void {

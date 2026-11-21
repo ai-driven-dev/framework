@@ -22,7 +22,7 @@ describe("printToolInstalled", () => {
   it("announces the tool and its file count when nothing warned", () => {
     const output = new CapturingOutput(false);
 
-    printToolInstalled(output, TOOL.cursor, 12, []);
+    printToolInstalled(output, { toolId: TOOL.cursor, fileCount: 12, warnings: [] });
 
     expect(output.at("success")).toEqual(["Installed cursor (12 files)"]);
   });
@@ -30,7 +30,11 @@ describe("printToolInstalled", () => {
   it("puts every warning before the success line, in the order given", () => {
     const output = new CapturingOutput(false);
 
-    printToolInstalled(output, TOOL.codex, 3, ["first", "second"]);
+    printToolInstalled(output, {
+      toolId: TOOL.codex,
+      fileCount: 3,
+      warnings: ["first", "second"],
+    });
 
     expect(output.captured).toEqual([
       { level: "warn", message: "first" },

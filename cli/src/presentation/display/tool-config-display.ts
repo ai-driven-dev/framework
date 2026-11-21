@@ -20,9 +20,11 @@ export function printToolAlreadyInstalled(output: Output, toolId: ToolId): void 
 
 export function printToolInstalled(
   output: Output,
-  toolId: ToolId,
-  fileCount: number,
-  warnings: readonly string[]
+  {
+    toolId,
+    fileCount,
+    warnings,
+  }: { toolId: ToolId; fileCount: number; warnings: readonly string[] }
 ): void {
   for (const warning of warnings) output.warn(warning);
   output.success(`Installed ${toolId} (${fileCount} files)`);

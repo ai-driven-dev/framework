@@ -108,7 +108,7 @@ describe("printInventory", () => {
   it("prints nothing when the category holds no tool", () => {
     const output = new CapturingOutput(false);
 
-    printInventory(output, "AI", { toolHealth: [] }, []);
+    printInventory(output, { label: "AI", doctorReport: { toolHealth: [] }, statusTools: [] });
 
     expect(output.lines).toEqual([]);
   });
@@ -116,7 +116,11 @@ describe("printInventory", () => {
   it("prints nothing when the category was never reported on", () => {
     const output = new CapturingOutput(false);
 
-    printInventory(output, "AI", null, [{ toolId: TOOL.claude, version: "7.0.0" }]);
+    printInventory(output, {
+      label: "AI",
+      doctorReport: null,
+      statusTools: [{ toolId: TOOL.claude, version: "7.0.0" }],
+    });
 
     expect(output.lines).toEqual([]);
   });
@@ -124,15 +128,14 @@ describe("printInventory", () => {
   it("heads the category, then counts each tool's files and merge files at its version", () => {
     const output = new CapturingOutput(false);
 
-    printInventory(
-      output,
-      "AI",
-      { toolHealth: [{ toolId: TOOL.claude, fileCount: 12, mergeFileCount: 2 }] },
-      [
+    printInventory(output, {
+      label: "AI",
+      doctorReport: { toolHealth: [{ toolId: TOOL.claude, fileCount: 12, mergeFileCount: 2 }] },
+      statusTools: [
         { toolId: TOOL.cursor, version: "6.0.0" },
         { toolId: TOOL.claude, version: "7.0.0" },
-      ]
-    );
+      ],
+    });
 
     expect(output.lines).toEqual(["\nAI tools:", "  claude (v7.0.0): 12 files, 2 merge files"]);
   });
@@ -140,12 +143,11 @@ describe("printInventory", () => {
   it("calls a version the status report never named unknown", () => {
     const output = new CapturingOutput(false);
 
-    printInventory(
-      output,
-      "IDE",
-      { toolHealth: [{ toolId: TOOL.vscode, fileCount: 1, mergeFileCount: 0 }] },
-      []
-    );
+    printInventory(output, {
+      label: "IDE",
+      doctorReport: { toolHealth: [{ toolId: TOOL.vscode, fileCount: 1, mergeFileCount: 0 }] },
+      statusTools: [],
+    });
 
     expect(output.lines).toEqual(["\nIDE tools:", "  vscode (vunknown): 1 files, 0 merge files"]);
   });

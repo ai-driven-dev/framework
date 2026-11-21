@@ -30,39 +30,48 @@ import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 /** What this command reads of the graph. */
 type SetupKeys = "runSetup" | "setAgentModels";
 
+interface AgentModelsReport {
+  output: Output;
+  catalog: ToolCatalog;
+  provider: string | undefined;
+  hosts: readonly AiToolId[];
+  main: Awaited<ReturnType<SetAgentModels["execute"]>>;
+}
+
+function reportHostModels(
+  { output, catalog, main }: AgentModelsReport,
+  host: AiToolId,
+  provider: string
+): void {
+  const models = catalog.aiProfile(host).agentModels();
+  if (models === null) return;
+  const skipped = main.skipped.some((entry) => entry.host === host);
+  const written = main.changed.findLast((entry) => entry.host === host);
+  const { model, effort } = models.mainModel(provider);
+  const effortShown = effort === undefined ? "" : ` (${effort})`;
+  if (!skipped) {
+    output.info(
+      written === undefined
+        ? `  ${host} main session: not managed by aidd, still the IDE's choice`
+        : `  ${host} main session: ${model}${effortShown}, written in ${written.path}`
+    );
+  }
+  for (const group of models.roleModels(provider)) {
+    output.info(`  ${host} ${group.roles.join(", ")}: ${group.model} (${group.effort})`);
+  }
+}
+
 /** Says, per host, what the main session and each agent now run on, where the main session's
  * model was written, which plugins were updated, and what other projects still need. */
-function reportAgentModels(
-  output: Output,
-  catalog: ToolCatalog,
-  provider: string | undefined,
-  hosts: readonly AiToolId[],
-  main: Awaited<ReturnType<SetAgentModels["execute"]>>
-): void {
+function reportAgentModels(report: AgentModelsReport): void {
+  const { output, provider, hosts, main } = report;
   if (provider === undefined) {
     output.success(`${hosts.join(", ")}: the agents run on the IDE's model again.`);
     for (const { host, path } of main.changed)
       output.info(`  ${host} main session: restored in ${path}`);
   } else {
     output.success(`Models on ${provider}, for every project on this machine:`);
-    for (const host of hosts) {
-      const models = catalog.aiProfile(host).agentModels();
-      if (models === null) continue;
-      const skipped = main.skipped.some((entry) => entry.host === host);
-      const written = main.changed.findLast((entry) => entry.host === host);
-      const { model, effort } = models.mainModel(provider);
-      const effortShown = effort === undefined ? "" : ` (${effort})`;
-      if (!skipped) {
-        output.info(
-          written === undefined
-            ? `  ${host} main session: not managed by aidd, still the IDE's choice`
-            : `  ${host} main session: ${model}${effortShown}, written in ${written.path}`
-        );
-      }
-      for (const group of models.roleModels(provider)) {
-        output.info(`  ${host} ${group.roles.join(", ")}: ${group.model} (${group.effort})`);
-      }
-    }
+    for (const host of hosts) reportHostModels(report, host, provider);
   }
   for (const { host, path, reason } of main.skipped) {
     output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
@@ -185,6 +194,120 @@ export function globalSetupHelp(catalog: ToolCatalog): string {
   ].join("\n");
 }
 
+interface SetupRequest {
+  source: FrameworkSource | undefined;
+  scope: ReturnType<typeof parseScopeFlag>;
+  toolIds: { aiTools: string[]; ideTools: string[] };
+  interactive: boolean;
+  plugins: { mode: PluginInstallMode; names: string[] };
+}
+
+function parseSetupRequest(
+  cmdOptions: SetupCmdOptions,
+  output: Output,
+  catalog: ToolCatalog
+): SetupRequest | null {
+  const source = parseSourceFlag(cmdOptions, output);
+  const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
+  const toolIds = parseToolIds(cmdOptions, output, catalog);
+  if (toolIds === null) return null;
+
+  const interactive = isInteractiveRun(process.stdout.isTTY, [
+    cmdOptions.source,
+    cmdOptions.release,
+    cmdOptions.ai,
+    cmdOptions.ide,
+    cmdOptions.plugins,
+    cmdOptions.yes,
+    cmdOptions.global,
+    cmdOptions.provider,
+  ]);
+  return {
+    source,
+    scope,
+    toolIds,
+    interactive,
+    plugins: parsePluginsFlag(cmdOptions.plugins, interactive),
+  };
+}
+
+function buildSetupFlow(
+  { projectRoot, catalog, cmdOptions }: Pick<SetupRun, "projectRoot" | "catalog" | "cmdOptions">,
+  request: SetupRequest
+): SetupFlow {
+  return new SetupFlow({
+    projectRoot,
+    registeredToolIds: catalog.idsInCanonicalOrder(),
+    aiToolIds: catalog.idsInCanonicalOrder("ai"),
+    ideToolIds: catalog.idsInCanonicalOrder("ide"),
+    supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
+    source: request.source,
+    aiTools: request.toolIds.aiTools,
+    ideTools: request.toolIds.ideTools,
+    pluginMode: request.plugins.mode,
+    pluginNames: request.plugins.names,
+    interactive: request.interactive,
+    force: false,
+    registerDefaultMarketplace: cmdOptions.defaultMarketplace !== false,
+    scope: request.scope,
+  });
+}
+
+interface SetupRun {
+  verbose: boolean;
+  output: Output;
+  projectRoot: string;
+  catalog: ToolCatalog;
+  createDeps: DepsSliceFactory<SetupKeys>;
+  cmdOptions: SetupCmdOptions;
+}
+
+async function runSetupAction(run: SetupRun): Promise<void> {
+  const { verbose, output, projectRoot, catalog, createDeps, cmdOptions } = run;
+  const request = parseSetupRequest(cmdOptions, output, catalog);
+  if (request === null) return;
+  const { interactive, scope } = request;
+  try {
+    const flow = buildSetupFlow(run, request);
+    const { runnable, ...agents } = agentModelsRequest(
+      cmdOptions.provider,
+      request.toolIds.aiTools,
+      catalog
+    );
+    requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
+
+    if (interactive) printWelcomeBanner(output);
+
+    const deps = await createDeps(projectRoot, { verbose }, output);
+    const result = await deps.runSetup.execute(flow);
+
+    if (interactive && result.context !== undefined) {
+      printDetectedContext(output, result.context.describe());
+    }
+    printSetupOutcome(output, result, verbose);
+    // Once the install has succeeded: the provider and the main session's model hold for
+    // every project on the machine, so a failed install leaves both as they were.
+    if (cmdOptions.provider !== undefined) {
+      const main = await deps.setAgentModels.execute({
+        projectRoot,
+        ...agents,
+        scope: scope ?? "project",
+      });
+      reportAgentModels({
+        output,
+        catalog,
+        provider: agents.provider,
+        hosts: agents.hosts,
+        main,
+      });
+    }
+    if (interactive) printNextSteps(output, result.install.results.length > 0);
+    reportNativeActivation(output, result.activation);
+  } catch (error) {
+    failCommand(output, error);
+  }
+}
+
 export function registerSetupCommand(
   program: Command,
   catalog: ToolCatalog,
@@ -225,78 +348,6 @@ export function registerSetupCommand(
     .addHelpText("after", () => globalSetupHelp(catalog))
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-
-      const source = parseSourceFlag(cmdOptions, output);
-      const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
-      const toolIds = parseToolIds(cmdOptions, output, catalog);
-      if (toolIds === null) return;
-
-      const interactive = isInteractiveRun(process.stdout.isTTY, [
-        cmdOptions.source,
-        cmdOptions.release,
-        cmdOptions.ai,
-        cmdOptions.ide,
-        cmdOptions.plugins,
-        cmdOptions.yes,
-        cmdOptions.global,
-        cmdOptions.provider,
-      ]);
-
-      const { mode: pluginMode, names: pluginNames } = parsePluginsFlag(
-        cmdOptions.plugins,
-        interactive
-      );
-
-      const registerDefaultMarketplace = cmdOptions.defaultMarketplace !== false;
-      try {
-        const flow = new SetupFlow({
-          projectRoot,
-          registeredToolIds: catalog.idsInCanonicalOrder(),
-          aiToolIds: catalog.idsInCanonicalOrder("ai"),
-          ideToolIds: catalog.idsInCanonicalOrder("ide"),
-          supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
-          source,
-          aiTools: toolIds.aiTools,
-          ideTools: toolIds.ideTools,
-          pluginMode,
-          pluginNames,
-          interactive,
-          force: false,
-          registerDefaultMarketplace,
-          scope,
-        });
-
-        const { runnable, ...agents } = agentModelsRequest(
-          cmdOptions.provider,
-          toolIds.aiTools,
-          catalog
-        );
-        requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
-
-        if (interactive) printWelcomeBanner(output);
-
-        const deps = await createDeps(projectRoot, { verbose }, output);
-
-        const result = await deps.runSetup.execute(flow);
-
-        if (interactive && result.context !== undefined) {
-          printDetectedContext(output, result.context.describe());
-        }
-        printSetupOutcome(output, result, verbose);
-        // Once the install has succeeded: the provider and the main session's model hold for
-        // every project on the machine, so a failed install leaves both as they were.
-        if (cmdOptions.provider !== undefined) {
-          const models = await deps.setAgentModels.execute({
-            projectRoot,
-            ...agents,
-            scope: scope ?? "project",
-          });
-          reportAgentModels(output, catalog, agents.provider, agents.hosts, models);
-        }
-        if (interactive) printNextSteps(output, result.install.results.length > 0);
-        reportNativeActivation(output, result.activation);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      await runSetupAction({ verbose, output, projectRoot, catalog, createDeps, cmdOptions });
     });
 }

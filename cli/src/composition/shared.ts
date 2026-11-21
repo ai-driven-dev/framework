@@ -7,11 +7,9 @@ import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastr
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { FactoryOptions, Output } from "../presentation/deps.js";
+import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-prompter.adapter.js";
 import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../presentation/terminal/prompter-adapter.js";
+import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";

@@ -27,18 +27,26 @@ interface SyncCmdOptions {
   global?: boolean;
 }
 
+interface SyncRun {
+  deps: Pick<Deps, SyncKeys>;
+  output: Output;
+  projectRoot: string;
+  fileArgs: string[];
+  cmdOptions: SyncCmdOptions;
+}
+
 /** A user-scope install writes nothing under any project, so this skips `restoreAllUseCase`:
  * it rebuilds the global files aidd copied into each tool's user directory from the shared
  * source, then drives native activation, through `deps.readMachineInstallation` and never this
  * project's own manifest. */
-async function runUserScopeSync(
-  deps: Pick<Deps, SyncKeys>,
-  output: Output,
-  projectRoot: string,
-  fileArgs: string[],
-  cmdOptions: SyncCmdOptions,
-  catalog: ToolCatalog
-): Promise<void> {
+async function runUserScopeSync({
+  deps,
+  output,
+  projectRoot,
+  fileArgs,
+  cmdOptions,
+  catalog,
+}: SyncRun & { catalog: ToolCatalog }): Promise<void> {
   // Neither has a user-scope counterpart, so both are refused rather than read and
   // silently discarded.
   if (cmdOptions.plugin !== undefined) {
@@ -76,25 +84,45 @@ async function runUserScopeSync(
   printUserScopeSyncOutcome(output, activation.activated, [...new Set(refreshed)]);
 }
 
-async function runSyncAction(
-  program: Command,
-  tools: ToolCatalog,
-  createDeps: DepsSliceFactory<SyncKeys>,
-  fileArgs: string[],
-  cmdOptions: SyncCmdOptions
-): Promise<void> {
+async function runSyncAction({
+  program,
+  tools,
+  createDeps,
+  fileArgs,
+  cmdOptions,
+}: {
+  program: Command;
+  tools: ToolCatalog;
+  createDeps: DepsSliceFactory<SyncKeys>;
+  fileArgs: string[];
+  cmdOptions: SyncCmdOptions;
+}): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   try {
     const deps = await createDeps(projectRoot, { verbose }, output);
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
-      await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
+      await runUserScopeSync({
+        deps,
+        output,
+        projectRoot,
+        fileArgs,
+        cmdOptions,
+        catalog: tools,
+      });
       return;
     }
 
     if (cmdOptions.tool !== undefined) {
-      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, cmdOptions.tool);
+      await runScopedSync({
+        deps,
+        output,
+        projectRoot,
+        fileArgs,
+        cmdOptions,
+        toolName: cmdOptions.tool,
+      });
       return;
     }
 
@@ -119,14 +147,14 @@ async function runSyncAction(
   }
 }
 
-async function runScopedSync(
-  deps: Pick<Deps, SyncKeys>,
-  output: Output,
-  projectRoot: string,
-  fileArgs: string[],
-  cmdOptions: SyncCmdOptions,
-  toolName: string
-): Promise<void> {
+async function runScopedSync({
+  deps,
+  output,
+  projectRoot,
+  fileArgs,
+  cmdOptions,
+  toolName,
+}: SyncRun & { toolName: string }): Promise<void> {
   const result = await deps.restoreToolUseCase.execute({
     projectRoot,
     toolId: toolName,
@@ -169,6 +197,6 @@ export function registerSyncCommand(
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction(program, tools, createDeps, fileArgs, cmdOptions);
+      await runSyncAction({ program, tools, createDeps, fileArgs, cmdOptions });
     });
 }

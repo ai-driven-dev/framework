@@ -5857,11 +5857,7 @@
         "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
         "!src/contexts/installation/application/plugin/update-user-plugin-files.ts",
         "!src/contexts/installation/application/removal/remove-user-plugin.ts",
-        "!src/orchestration/sync/sync-settings.ts",
-        "!src/presentation/commands/marketplace.ts",
-        "!src/presentation/commands/plugin.ts",
-        "!src/presentation/commands/setup.ts",
-        "!src/presentation/commands/tool-config.ts"
+        "!src/orchestration/sync/sync-settings.ts"
       ],
       "linter": {
         "rules": {
@@ -5889,9 +5885,6 @@
         "!src/contexts/installation/application/shared/remove-project-hooks.ts",
         "!src/contexts/installation/application/sync/record-activation.ts",
         "!src/contexts/installation/domain/manifest.ts",
-        "!src/presentation/commands/setup.ts",
-        "!src/presentation/display/telemetry-display.ts",
-        "!src/presentation/display/telemetry/telemetry-report-display.ts",
         "!src/shared/domain/markdown.ts",
         "!src/shared/domain/reading/jsonc.ts",
         "!src/shared/domain/source.ts"
@@ -5910,12 +5903,7 @@
       }
     },
     {
-      "includes": [
-        "src/**",
-        "!src/presentation/terminal/prompter-adapter.ts",
-        "!src/shared/domain/errors.ts",
-        "!src/shared/domain/file.ts"
-      ],
+      "includes": ["src/**", "!src/shared/domain/errors.ts", "!src/shared/domain/file.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -5996,13 +5984,6 @@
         "!src/orchestration/doctor/check-registration.ts",
         "!src/orchestration/setup/run-setup.ts",
         "!src/orchestration/setup/setup-flow.ts",
-        "!src/presentation/commands/clean.ts",
-        "!src/presentation/commands/doctor.ts",
-        "!src/presentation/commands/setup.ts",
-        "!src/presentation/commands/sync.ts",
-        "!src/presentation/commands/tool-config.ts",
-        "!src/presentation/display/doctor-display.ts",
-        "!src/presentation/display/tool-config-display.ts",
         "!src/shared/domain/layout/aidd-layout.ts",
         "!src/shared/domain/materialization/flat-paths.ts"
       ],

@@ -140,7 +140,7 @@ export const PLANTS: readonly Plant[] = [
   ["src/shared/infrastructure/exit.ts", exits, "plugin", 1],
   ["src/presentation/commands/exit.ts", exits, "plugin", 1],
   ["src/presentation/project-root.ts", exits, "plugin", 1],
-  ["src/presentation/terminal/prompter-adapter.ts", exits, "plugin", 1],
+  ["src/presentation/terminal/inquirer-prompter.adapter.ts", exits, "plugin", 1],
   // export default, under src/ and tests/ alike.
   ["src/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],
   ["tests/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],

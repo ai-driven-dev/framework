@@ -1,9 +1,7 @@
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../../../src/presentation/terminal/prompter-adapter.js";
+import { InquirerPrompterAdapter } from "../../../src/presentation/terminal/inquirer-prompter.adapter.js";
+import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";
 
 const ENTER = "\n";
 const ARROW_DOWN = "\x1b[B";

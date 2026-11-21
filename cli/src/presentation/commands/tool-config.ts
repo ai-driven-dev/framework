@@ -36,29 +36,40 @@ export function assertKnownToolId(raw: string, catalog: ToolCatalog): ToolId {
   return toolId;
 }
 
-async function installTool(
-  deps: Pick<Deps, ToolConfigKeys>,
-  output: Output,
-  projectRoot: string,
-  raw: string,
-  cmdOptions: { force: boolean; plugins: boolean },
-  catalog: ToolCatalog
-): Promise<void> {
+interface ToolRun {
+  deps: Pick<Deps, ToolConfigKeys>;
+  output: Output;
+  projectRoot: string;
+}
+
+async function installTool({
+  raw,
+  cmdOptions,
+  catalog,
+  ...run
+}: ToolRun & {
+  raw: string;
+  cmdOptions: { force: boolean; plugins: boolean };
+  catalog: ToolCatalog;
+}): Promise<void> {
   const toolId = assertKnownToolId(raw, catalog);
   if (catalog.isAiTool(toolId)) {
-    await installAiTool(deps, output, projectRoot, toolId, cmdOptions);
+    await installAiTool({ ...run, toolId, cmdOptions });
   } else {
-    await installIdeTool(deps, output, projectRoot, toolId, cmdOptions);
+    await installIdeTool({ ...run, toolId, cmdOptions });
   }
 }
 
-async function installAiTool(
-  deps: Pick<Deps, ToolConfigKeys>,
-  output: Output,
-  projectRoot: string,
-  toolId: AiToolId,
-  cmdOptions: { force: boolean; plugins: boolean }
-): Promise<void> {
+async function installAiTool({
+  deps,
+  output,
+  projectRoot,
+  toolId,
+  cmdOptions,
+}: ToolRun & {
+  toolId: AiToolId;
+  cmdOptions: { force: boolean; plugins: boolean };
+}): Promise<void> {
   const version = deps.currentVersionProvider.get();
   const result = await deps.installAiToolUseCase.execute({
     toolId,
@@ -71,20 +82,21 @@ async function installAiTool(
     printToolAlreadyInstalled(output, toolId);
     return;
   }
-  printToolInstalled(output, toolId, result.runtimeResult.fileCount, [
-    ...result.runtimeResult.warnings,
-    ...result.propagationWarnings,
-  ]);
+  printToolInstalled(output, {
+    toolId,
+    fileCount: result.runtimeResult.fileCount,
+    warnings: [...result.runtimeResult.warnings, ...result.propagationWarnings],
+  });
   if (result.activation !== undefined) reportNativeActivation(output, result.activation);
 }
 
-async function installIdeTool(
-  deps: Pick<Deps, ToolConfigKeys>,
-  output: Output,
-  projectRoot: string,
-  toolId: IdeToolId,
-  cmdOptions: { force: boolean }
-): Promise<void> {
+async function installIdeTool({
+  deps,
+  output,
+  projectRoot,
+  toolId,
+  cmdOptions,
+}: ToolRun & { toolId: IdeToolId; cmdOptions: { force: boolean } }): Promise<void> {
   const version = deps.currentVersionProvider.get();
   const result = await deps.installIdeToolUseCase.execute({
     toolId,
@@ -96,16 +108,20 @@ async function installIdeTool(
     printToolAlreadyInstalled(output, result.toolId);
     return;
   }
-  printToolInstalled(output, result.toolId, result.fileCount, result.warnings);
+  printToolInstalled(output, {
+    toolId: result.toolId,
+    fileCount: result.fileCount,
+    warnings: result.warnings,
+  });
 }
 
-async function removeTool(
-  deps: Pick<Deps, ToolConfigKeys>,
-  output: Output,
-  projectRoot: string,
-  raw: string,
-  catalog: ToolCatalog
-): Promise<void> {
+async function removeTool({
+  deps,
+  output,
+  projectRoot,
+  raw,
+  catalog,
+}: ToolRun & { raw: string; catalog: ToolCatalog }): Promise<void> {
   const toolId = assertKnownToolId(raw, catalog);
 
   const results = await deps.uninstallTools.execute({
@@ -116,14 +132,18 @@ async function removeTool(
   printToolRemoved(output, results[0].toolId, totalFileCount);
 }
 
-async function updateTools(
-  deps: Pick<Deps, ToolConfigKeys>,
-  output: Output,
-  projectRoot: string,
-  raw: string | undefined,
-  cmdOptions: { force: boolean },
-  catalog: ToolCatalog
-): Promise<void> {
+async function updateTools({
+  deps,
+  output,
+  projectRoot,
+  raw,
+  cmdOptions,
+  catalog,
+}: ToolRun & {
+  raw: string | undefined;
+  cmdOptions: { force: boolean };
+  catalog: ToolCatalog;
+}): Promise<void> {
   const toolId = raw === undefined ? undefined : assertKnownToolId(raw, catalog);
   const interactive = process.stdout.isTTY ?? false;
 
@@ -136,15 +156,16 @@ async function updateTools(
   printUpdateResult(output, result.updatedTools, result.errors);
 }
 
-export function registerToolConfigCommand(
-  program: Command,
-  catalog: ToolCatalog,
-  createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>
-): void {
-  const toolConfig = program
-    .command("framework")
-    .description("Manage the framework's lifecycle on installed tools");
+interface ToolConfigWiring {
+  readonly catalog: ToolCatalog;
+  readonly createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>;
+}
 
+function registerInstall(
+  program: Command,
+  toolConfig: Command,
+  { catalog, createDeps }: ToolConfigWiring
+): void {
   toolConfig
     .command("install")
     .description(
@@ -157,12 +178,25 @@ export function registerToolConfigCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await installTool(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
+        await installTool({
+          deps,
+          output,
+          projectRoot,
+          raw: cmdOptions.tool,
+          cmdOptions,
+          catalog,
+        });
       } catch (error) {
         failCommand(output, error);
       }
     });
+}
 
+function registerRemove(
+  program: Command,
+  toolConfig: Command,
+  { catalog, createDeps }: ToolConfigWiring
+): void {
   toolConfig
     .command("remove")
     .description(
@@ -173,12 +207,18 @@ export function registerToolConfigCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await removeTool(deps, output, projectRoot, cmdOptions.tool, catalog);
+        await removeTool({ deps, output, projectRoot, raw: cmdOptions.tool, catalog });
       } catch (error) {
         failCommand(output, error);
       }
     });
+}
 
+function registerUpdate(
+  program: Command,
+  toolConfig: Command,
+  { catalog, createDeps }: ToolConfigWiring
+): void {
   toolConfig
     .command("update")
     .description(
@@ -190,12 +230,25 @@ export function registerToolConfigCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await updateTools(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
+        await updateTools({
+          deps,
+          output,
+          projectRoot,
+          raw: cmdOptions.tool,
+          cmdOptions,
+          catalog,
+        });
       } catch (error) {
         failCommand(output, error);
       }
     });
+}
 
+function registerRules(
+  program: Command,
+  toolConfig: Command,
+  createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>
+): void {
   toolConfig
     .command("rules")
     .description("List the rules installed in this project, across every AI tool")
@@ -213,6 +266,21 @@ export function registerToolConfigCommand(
         failCommand(output, error);
       }
     });
+}
 
+export function registerToolConfigCommand(
+  program: Command,
+  catalog: ToolCatalog,
+  createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>
+): void {
+  const toolConfig = program
+    .command("framework")
+    .description("Manage the framework's lifecycle on installed tools");
+
+  const wiring = { catalog, createDeps };
+  registerInstall(program, toolConfig, wiring);
+  registerRemove(program, toolConfig, wiring);
+  registerUpdate(program, toolConfig, wiring);
+  registerRules(program, toolConfig, createDeps);
   registerRecipesCommand(toolConfig, program, createDeps);
 }

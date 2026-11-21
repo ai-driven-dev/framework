@@ -12,7 +12,7 @@ import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import type { Output } from "../../src/presentation/deps.js";
-import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
+import { SilentPrompterAdapter } from "../../src/presentation/terminal/silent-prompter.adapter.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../src/shared/domain/scope.js";
 import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";

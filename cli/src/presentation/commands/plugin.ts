@@ -44,12 +44,11 @@ interface PluginWiring {
   readonly runCommand: CommandRunner;
 }
 
-export function registerPluginCommand(
-  program: Command,
-  { catalog, createDeps, runCommand }: PluginWiring
+function registerMenu(
+  plugin: Command,
+  createDeps: DepsSliceFactory<PluginKeys>,
+  runCommand: CommandRunner
 ): void {
-  const plugin = program.command("plugin").description("Manage plugins for AI tools");
-
   plugin.action(async () => {
     if (!process.stdout.isTTY) {
       plugin.help();
@@ -65,7 +64,13 @@ export function registerPluginCommand(
     ]);
     await runCommand(["plugin", choice]);
   });
+}
 
+function registerRemove(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
   plugin
     .command("remove <name>")
     .description("Remove a plugin from one or all AI tools")
@@ -89,25 +94,13 @@ export function registerPluginCommand(
         failCommand(output, error);
       }
     });
+}
 
-  plugin
-    .command("list")
-    .description("List installed plugins for one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .action(async (cmdOptions: { tool?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.pluginListUseCase.execute({
-          toolIds,
-        });
-        printInstalledPlugins(output, result);
-      } catch (error) {
-        failCommand(output, error);
-      }
-    });
-
+function registerInstall(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
   plugin
     .command("install [plugin]")
     .description("Install a plugin (marketplace name, local path, or interactive pick)")
@@ -154,28 +147,13 @@ export function registerPluginCommand(
         }
       }
     );
+}
 
-  plugin
-    .command("search <query>")
-    .description("Search registered marketplaces for plugins")
-    .option("--recommended", "Show only recommended plugins")
-    .option("--marketplace <name>", "Limit to a single marketplace")
-    .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { hits } = await deps.searchPlugins.execute({
-          query,
-          recommendedOnly: cmdOptions.recommended ?? false,
-          marketplace: cmdOptions.marketplace,
-          projectRoot,
-        });
-        printSearchHits(output, hits);
-      } catch (error) {
-        failCommand(output, error);
-      }
-    });
-
+function registerUpdate(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
   plugin
     .command("update [name]")
     .description("Update one or all plugins for one or all AI tools")
@@ -204,4 +182,66 @@ export function registerPluginCommand(
         failCommand(output, error);
       }
     });
+}
+
+function registerList(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
+  plugin
+    .command("list")
+    .description("List installed plugins for one or all AI tools")
+    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .action(async (cmdOptions: { tool?: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      try {
+        const toolIds = parseToolOption(cmdOptions.tool, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const result = await deps.pluginListUseCase.execute({
+          toolIds,
+        });
+        printInstalledPlugins(output, result);
+      } catch (error) {
+        failCommand(output, error);
+      }
+    });
+}
+
+function registerSearch(
+  program: Command,
+  plugin: Command,
+  createDeps: DepsSliceFactory<PluginKeys>
+): void {
+  plugin
+    .command("search <query>")
+    .description("Search registered marketplaces for plugins")
+    .option("--recommended", "Show only recommended plugins")
+    .option("--marketplace <name>", "Limit to a single marketplace")
+    .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const { hits } = await deps.searchPlugins.execute({
+          query,
+          recommendedOnly: cmdOptions.recommended ?? false,
+          marketplace: cmdOptions.marketplace,
+          projectRoot,
+        });
+        printSearchHits(output, hits);
+      } catch (error) {
+        failCommand(output, error);
+      }
+    });
+}
+
+export function registerPluginCommand(program: Command, wiring: PluginWiring): void {
+  const { createDeps, runCommand } = wiring;
+  const plugin = program.command("plugin").description("Manage plugins for AI tools");
+  registerMenu(plugin, createDeps, runCommand);
+  registerRemove(program, plugin, wiring);
+  registerList(program, plugin, wiring);
+  registerInstall(program, plugin, wiring);
+  registerSearch(program, plugin, createDeps);
+  registerUpdate(program, plugin, wiring);
 }
