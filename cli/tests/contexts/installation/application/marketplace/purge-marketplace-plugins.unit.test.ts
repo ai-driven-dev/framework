@@ -10,6 +10,7 @@ import type { MarketplaceRemovalPlanner } from "../../../../../src/contexts/inst
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { FakeUserScopePluginFiles } from "../../testing/fake-user-scope-plugin-files.fake.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.fake.js";
 
@@ -157,7 +158,7 @@ describe("PurgeMarketplacePlugins", () => {
       native: record({ ref: `one@${HOST_NAME}`, dependents: ["/other"] }),
     });
 
-    await expect(s.purge.execute(s.command)).rejects.toThrow("/other");
+    await expect(s.purge.execute(s.command)).rejects.toThrow(saying("/other"));
     expect(s.removeMarketplace).not.toHaveBeenCalled();
   });
 

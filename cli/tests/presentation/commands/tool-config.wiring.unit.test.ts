@@ -112,7 +112,7 @@ describe("aidd framework install", () => {
   it("prints the runtime's own warnings before the propagation's, then the count", async () => {
     installAiTool.mockResolvedValue({
       runtimeResult: { skipped: false, fileCount: 5, warnings: ["merged settings.json"] },
-      propagationWarnings: ["aidd-dev was not propagated"],
+      propagationWarnings: [{ text: "aidd-dev was not propagated" }],
     });
 
     expect(await run("install", "--tool", "claude")).toEqual(["Installed claude (5 files)"]);

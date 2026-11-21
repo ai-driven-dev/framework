@@ -14,6 +14,7 @@ import {
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import {
@@ -135,7 +136,7 @@ describe("UpdatePlugin", () => {
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/does not support scope 'project'/);
+    ).rejects.toThrow(saying(/does not support scope 'project'/));
   });
 
   describe("same version", () => {

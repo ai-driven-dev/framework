@@ -8,6 +8,7 @@ import { Manifest } from "../../../../src/contexts/installation/domain/manifest.
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;
@@ -39,7 +40,7 @@ describe("UserManifestRepositoryAdapter", () => {
       const manifestPath = join(userConfigDir, "manifest.json");
       await writeFile(manifestPath, '{"version": 8, "tools": {');
 
-      await expect(adapter.load()).rejects.toThrow(manifestPath);
+      await expect(adapter.load()).rejects.toThrow(saying(manifestPath));
     });
 
     it('rejects a refused manifest version naming the real user manifest path and `aidd setup --global`, never .aidd/manifest.json or "in this project"', async () => {
@@ -47,10 +48,12 @@ describe("UserManifestRepositoryAdapter", () => {
       await writeFile(manifestPath, '{"version": 7, "tools": {}}');
 
       await expect(adapter.load()).rejects.toThrow(
-        new RegExp(`${manifestPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*aidd setup --global`)
+        saying(
+          new RegExp(`${manifestPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*aidd setup --global`)
+        )
       );
-      await expect(adapter.load()).rejects.not.toThrow(/\.aidd\/manifest\.json/);
-      await expect(adapter.load()).rejects.not.toThrow(/in this project/);
+      await expect(adapter.load()).rejects.not.toThrow(saying(/\.aidd\/manifest\.json/));
+      await expect(adapter.load()).rejects.not.toThrow(saying(/in this project/));
     });
 
     it("names this machine as where the refused manifest lives", async () => {
@@ -58,7 +61,9 @@ describe("UserManifestRepositoryAdapter", () => {
       await writeFile(manifestPath, '{"version": 7, "tools": {}}');
 
       await expect(adapter.load()).rejects.toThrow(
-        `delete ${manifestPath} for this machine, then run \`aidd setup --global\` to reinstall the framework.`
+        saying(
+          `delete ${manifestPath} for this machine, then run \`aidd setup --global\` to reinstall the framework.`
+        )
       );
     });
   });

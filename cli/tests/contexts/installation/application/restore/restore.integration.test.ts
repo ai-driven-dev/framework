@@ -17,6 +17,7 @@ import {
   resolveRegisteredToolId,
   TOOL,
 } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import {
   KeepPrompter,
   OverwritePrompter,
@@ -94,7 +95,7 @@ describe("restore", () => {
         version: "test",
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow("aidd setup");
+    ).rejects.toThrow(saying("aidd setup"));
   });
 
   it("reports nothing to restore when files are unmodified", async () => {

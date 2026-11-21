@@ -30,10 +30,16 @@ export interface InstallAiToolOptions {
   propagatePlugins: boolean;
 }
 
+/** A warning's words, with the failure it tails when one caused it: the presentation words that. */
+export interface PropagationWarning {
+  text: string;
+  cause?: unknown;
+}
+
 export interface InstallAiToolResult {
   runtimeResult: InstallRuntimeConfigResult;
   propagatedPlugins: string[];
-  propagationWarnings: string[];
+  propagationWarnings: PropagationWarning[];
   /** What native activation did while re-registering the plugins this run propagated -
    * `undefined` when nothing was propagated, so activation never ran. */
   activation?: NativeActivationReport;
@@ -98,7 +104,7 @@ export class InstallAiTool {
       freshManifest.getPlugins(id)
     );
     const propagated: string[] = [];
-    const warnings: string[] = [];
+    const warnings: PropagationWarning[] = [];
     for (const plugin of plugins) {
       const outcome = await this.propagatePlugin({ plugin, toolId, projectRoot });
       if (outcome.propagated !== undefined) propagated.push(outcome.propagated);
@@ -137,10 +143,10 @@ export class InstallAiTool {
     plugin: InstalledPlugin;
     toolId: AiToolId;
     projectRoot: string;
-  }): Promise<{ propagated?: string; warning?: string }> {
+  }): Promise<{ propagated?: string; warning?: PropagationWarning }> {
     const { plugin, toolId, projectRoot } = request;
     if (plugin.marketplace === undefined) {
-      return { warning: this.warnNoMarketplace(plugin.name, toolId) };
+      return { warning: { text: this.warnNoMarketplace(plugin.name, toolId) } };
     }
     try {
       await this.pluginInstallFromMarketplace.execute({
@@ -156,9 +162,9 @@ export class InstallAiTool {
       });
       return { propagated: plugin.name };
     } catch (err) {
-      const msg = `Plugin '${plugin.name}' could not be propagated to ${toolId}: ${err instanceof Error ? err.message : String(err)}`;
-      this.logger.warn(msg);
-      return { warning: msg };
+      const text = `Plugin '${plugin.name}' could not be propagated to ${toolId}: `;
+      this.logger.warn(text, err);
+      return { warning: { text, cause: err } };
     }
   }
 

@@ -33,6 +33,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
@@ -114,7 +115,7 @@ for (const [toolId, catalogPath] of [
         pluginRegistries: hostPlugins,
       });
       await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        /active projects.*\/B/
+        saying(/active projects.*\/B/)
       );
       expect(failing.uninstalledPlugins).toEqual([]);
       expect(
@@ -348,7 +349,7 @@ for (const [toolId, catalogPath] of [
           autoConfirm: true,
           scope: "user",
         })
-      ).rejects.toThrow(/active projects/);
+      ).rejects.toThrow(saying(/active projects/));
 
       const foreignUser = new InMemoryManifestRepository(Manifest.create());
       const foreignUseCase = marketplaceSync({

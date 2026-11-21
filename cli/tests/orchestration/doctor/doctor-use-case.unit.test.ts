@@ -12,6 +12,7 @@ import {
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import { buildDoctorUseCase } from "../testing/build-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -110,7 +111,7 @@ describe("doctor", () => {
     };
     const useCase = buildDoctorUseCase({ ...deps, manifestRepo: corruptRepo });
     await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
-      "Manifest is corrupted"
+      saying("Manifest is corrupted")
     );
   });
 
@@ -118,7 +119,9 @@ describe("doctor", () => {
     const deps = await buildInstallationDeps();
 
     const useCase = buildDoctorUseCase(deps);
-    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow("aidd setup");
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
+      saying("aidd setup")
+    );
   });
 
   it("warns about tool directory not registered in manifest", async () => {

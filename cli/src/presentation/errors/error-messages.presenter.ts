@@ -1,6 +1,7 @@
 import type * as auth from "../../contexts/auth/domain/auth.error.js";
 import type * as distribution from "../../contexts/distribution/domain/distribution.error.js";
 import type * as hostRegistration from "../../contexts/host-registration/domain/host-registration.error.js";
+import type * as installation from "../../contexts/installation/domain/installation.error.js";
 import { MAX_IDENTITY_LENGTH } from "../../contexts/telemetry/contract/identity-limit.js";
 import type * as telemetry from "../../contexts/telemetry/domain/telemetry.error.js";
 import type * as tools from "../../contexts/tools/domain/tools.error.js";
@@ -20,6 +21,7 @@ type Catalogued = InstanceType<
   | Classes<typeof tools>
   | Classes<typeof orchestration>
   | Classes<typeof hostRegistration>
+  | Classes<typeof installation>
 >;
 type ByCode = { [Error in Catalogued as Error["code"]]: Error };
 
@@ -32,6 +34,39 @@ const entries: {
   [Code in keyof ByCode]: (error: ByCode[Code], words: (cause: unknown) => string) => string;
 } = {
   "auth-storage": (error) => error.detail,
+  "active-machine-dependents": (error) =>
+    `Cannot remove ${error.target}: active projects still depend on it: ${error.projects.join(", ")}.`,
+  "aidd-files-detected": () =>
+    "AIDD files detected but no manifest found.\nRun `aidd setup` to register existing files.",
+  "already-initialized": (error) =>
+    error.detail ?? "Already initialized. Use `aidd update` to upgrade.",
+  "duplicate-plugin": (error) => `Plugin '${error.pluginName}' is already installed.`,
+  "invalid-manifest-data": (error) =>
+    error.detail ? `Invalid manifest data: ${error.detail}` : "Invalid manifest data.",
+  "invalid-manifest-tool-id": (error) => `Invalid tool id in manifest: '${error.key}'.`,
+  "invalid-plugin-name": (error) =>
+    `Invalid plugin name: "${error.pluginName}". Use lowercase alphanumeric characters and hyphens only.`,
+  "invalid-plugin-scope": (error) =>
+    `Tool '${error.toolId}' does not support scope '${error.requested}'. Supported scope: '${error.supported}'. ` +
+    `Re-run with --scope ${error.supported} or omit the flag.`,
+  "invalid-plugin-version": (error) =>
+    `Invalid plugin version: "${error.version}". Expected semver format (e.g. 1.0.0).`,
+  "malformed-plugin-scope": (error) =>
+    `Plugin "${error.pluginName}" carries an invalid scope: ${JSON.stringify(error.scope)}. Expected "project" or "user".`,
+  "manifest-missing": () => "No AIDD manifest found. Run `aidd setup` to initialize your project.",
+  "manifest-corrupted": () =>
+    "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize.",
+  "missing-plugin-metadata": () =>
+    "Cannot register github marketplace plugin: catalog entry is missing plugin metadata.",
+  "plugin-not-found": (error) => `Plugin '${error.pluginName}' is not installed.`,
+  "cursor-project-scope-unsupported": () =>
+    "Cursor plugins only support user-scope install (~/.cursor/plugins/local/). Project-scope is not auto-loaded by Cursor.",
+  "tool-not-installed": (error) =>
+    error.context
+      ? `${error.context} '${error.toolId}' is not installed.`
+      : `${error.toolId} is not installed`,
+  "unresolvable-user-scope": (error) =>
+    `Manifest records a user-scope plugin for "${error.toolId}", but this tool's profile declares no user-scope plugins directory. Refusing to guess a base directory rather than silently resolving under the project root.`,
   "marketplace-source-conflict": (error) => error.detail,
   "native-plugin-cli": (error) => error.detail,
   "unreadable-built-catalog": (error) =>

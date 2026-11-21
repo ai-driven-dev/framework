@@ -12,6 +12,7 @@ import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/curso
 import { kilo } from "../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
@@ -349,7 +350,7 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
   try {
     await wired.choosePlugins.execute(options);
   } catch (error) {
-    outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
+    outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
   }
   const after = await describeHookFiles(ws, [ws.project, ws.home]);
   if (!/^## .*hook/im.test(after))
@@ -379,7 +380,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
     try {
       await installPlugin(ws.project, toolId, "aidd-context");
     } catch (error) {
-      outcome = `second install threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
+      outcome = `second install threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
     }
     return `${outcome}\n\n${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
   }

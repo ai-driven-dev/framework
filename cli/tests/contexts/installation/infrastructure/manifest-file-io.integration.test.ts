@@ -9,6 +9,7 @@ import {
   writeManifestFile,
 } from "../../../../src/contexts/installation/infrastructure/manifest-file-io.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 describe("manifest file io", () => {
   let dir: string;
@@ -66,7 +67,7 @@ describe("manifest file io", () => {
     const read = readManifestFile(contextOf(path), resolveRegisteredToolId);
 
     await expect(read).rejects.toThrow(InvalidManifestDataError);
-    await expect(read).rejects.toThrow(`${path} is not valid JSON`);
+    await expect(read).rejects.toThrow(saying(`${path} is not valid JSON`));
   });
 
   it("names the file and the reinstall command when its version is refused", async () => {
@@ -74,7 +75,7 @@ describe("manifest file io", () => {
     await writeFile(path, '{"version": 1, "tools": {}}');
 
     await expect(readManifestFile(contextOf(path), resolveRegisteredToolId)).rejects.toThrow(
-      "aidd setup"
+      saying("aidd setup")
     );
   });
 

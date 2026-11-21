@@ -7,6 +7,7 @@ import {
   installTool,
 } from "../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -125,7 +126,7 @@ describe("init", () => {
         initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
         })
-      ).rejects.toThrow("AIDD files detected but no manifest found");
+      ).rejects.toThrow(saying("AIDD files detected but no manifest found"));
     });
 
     it("passes when .claude/ exists without AIDD frontmatter", async () => {
@@ -151,7 +152,7 @@ describe("init", () => {
         initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
         })
-      ).rejects.toThrow(/Already initialized/);
+      ).rejects.toThrow(saying(/Already initialized/));
     });
 
     // `aidd init` is not a command this CLI exposes (see the surface in cli.md) — telling
@@ -165,12 +166,12 @@ describe("init", () => {
         initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
         })
-      ).rejects.toThrow(/aidd clean --force/);
+      ).rejects.toThrow(saying(/aidd clean --force/));
       await expect(
         initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
         })
-      ).rejects.not.toThrow(/aidd init --force/);
+      ).rejects.not.toThrow(saying(/aidd init --force/));
     });
 
     it("--force: fails with guidance when no manifest exists", async () => {
@@ -180,7 +181,7 @@ describe("init", () => {
           projectRoot: PROJECT_ROOT,
           force: true,
         })
-      ).rejects.toThrow("No AIDD manifest found");
+      ).rejects.toThrow(saying("No AIDD manifest found"));
     });
 
     it("--force: passes when manifest exists", async () => {

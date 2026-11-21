@@ -13,6 +13,7 @@ import {
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
   const data = makePluginData({
@@ -91,7 +92,7 @@ describe("InstalledPlugin", () => {
       // cannot construct as invalid data.
       delete (data as { scope?: unknown }).scope;
       expect(() => InstalledPlugin.fromJSON(data)).toThrow(MalformedPluginScopeError);
-      expect(() => InstalledPlugin.fromJSON(data)).toThrow(/my-plugin/);
+      expect(() => InstalledPlugin.fromJSON(data)).toThrow(saying(/my-plugin/));
     });
 
     it("throws MalformedPluginScopeError when scope is neither project nor user", () => {

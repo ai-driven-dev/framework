@@ -18,6 +18,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import {
   CLAUDE_CACHE,
   manifestWithClaude,
@@ -132,7 +133,7 @@ describe("clean --scope user", () => {
     });
 
     await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-      /user-scope plugin files.*active projects.*\/project-b/
+      saying(/user-scope plugin files.*active projects.*\/project-b/)
     );
 
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -307,7 +308,7 @@ describe("clean --scope user", () => {
       pluginRegistries: provenHostPlugins(machine),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
-      /active projects.*\/B/
+      saying(/active projects.*\/B/)
     );
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -360,7 +361,9 @@ describe("clean --scope user", () => {
     expect(
       (await useCase.execute({ projectRoot: "/A", force: false })).preview.activePluginDependents
     ).toEqual(["/B"]);
-    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(/\/B/);
+    await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
+      saying(/\/B/)
+    );
     expect(fs.has(userFile)).toBe(true);
     expect(fs.has(projectFile)).toBe(true);
     expect(
@@ -429,7 +432,7 @@ describe("clean --scope user", () => {
       });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /the shared framework source.*active projects.*\/project-a/
+        saying(/the shared framework source.*active projects.*\/project-a/)
       );
       expect(fs.order).not.toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache", "built")}`);
       // No manifest means no `nativeRegistrations` to drive a host's own CLI through —
