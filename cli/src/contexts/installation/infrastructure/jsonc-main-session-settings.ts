@@ -19,15 +19,7 @@ export function planMainModelInstall(request: MainModelInstall): {
 } {
   const { path, content, values, record, schema } = request;
   const settings = readSettings(content);
-  const previous: Record<string, string | null> = {};
-  for (const key of Object.keys(values)) {
-    const value = settings[key];
-    if (value !== undefined && typeof value !== "string")
-      throw new Error(`"${key}" is not a string`);
-    const ours = record !== undefined && Object.hasOwn(record.written, key);
-    previous[key] =
-      ours && value === record.written[key] ? (record.previous[key] ?? null) : (value ?? null);
-  }
+  const previous = previousValues(settings, values, record);
   return {
     content: edit(
       content ?? "{}",
@@ -40,6 +32,35 @@ export function planMainModelInstall(request: MainModelInstall): {
       created: content === null || (record?.created ?? false),
     },
   };
+}
+
+/** What to restore for a key: the value as it stands now, unless aidd wrote it and the person has
+ * not touched it since, then what aidd replaced. */
+function valueToRestore(
+  key: string,
+  current: string | null,
+  record: MainModelRecord | undefined
+): string | null {
+  const ours = record !== undefined && Object.hasOwn(record.written, key);
+  return ours && current === record.written[key] ? (record.previous[key] ?? null) : current;
+}
+
+/** What each key held before aidd wrote it: the value it replaced, or, for a key the person
+ * changed since, that new value. Refuses a key holding no string. */
+function previousValues(
+  settings: Record<string, unknown>,
+  values: Record<string, string>,
+  record: MainModelRecord | undefined
+): Record<string, string | null> {
+  const previous: Record<string, string | null> = {};
+  for (const key of Object.keys(values)) {
+    const value = settings[key];
+    if (value !== undefined && typeof value !== "string") {
+      throw new Error(`"${key}" is not a string`);
+    }
+    previous[key] = valueToRestore(key, value ?? null, record);
+  }
+  return previous;
 }
 
 /** Restores the keys aidd's values still hold; leaves a key the person changed as it is.

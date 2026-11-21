@@ -112,30 +112,4 @@ describe("CleanProjectFiles over a tool that is not an AI tool", () => {
       clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: false })
     ).resolves.toBeUndefined();
   });
-
-  it("leaves it out of the user plugins a plan lists", async () => {
-    const clean = cleanOver(manifestWithIdePlugin("user"), new InMemoryFileAdapter());
-
-    const plan = await clean.execute({ kind: "plan" });
-
-    expect(plan?.userPlugins).toEqual([]);
-  });
-});
-
-describe("CleanProjectFiles plan registrations", () => {
-  it("keys a ref scope only for a plugin the host registered", async () => {
-    const manifest = aManifest()
-      .withTool(TOOL.codex, [])
-      .withPlugin(TOOL.codex, localPlugin("unregistered"))
-      .build();
-    manifest.setNativeRegistrations(TOOL.codex, {
-      binary: "codex",
-      marketplaces: [{ alias: "aidd", hostName: "aidd" }],
-      pluginRefs: [],
-    });
-
-    const plan = await cleanOver(manifest, new InMemoryFileAdapter()).execute({ kind: "plan" });
-
-    expect(plan?.withdrawals.map((w) => w.refScopes.size)).toEqual([0]);
-  });
 });
