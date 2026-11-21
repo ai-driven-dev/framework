@@ -18,7 +18,7 @@ describe("Claude Code's settings", () => {
     const user = join(root, "user");
     mkdirSync(join(project, ".claude"), { recursive: true });
     mkdirSync(user);
-    const adapter = new ClaudeSettingsAdapter(user, ".claude");
+    const adapter = new ClaudeSettingsAdapter(user);
     expect(await adapter.texts(project)).toEqual([null, null, null]);
     writeFileSync(join(project, ".claude", "settings.local.json"), "local");
     writeFileSync(join(project, ".claude", "settings.json"), "shared");

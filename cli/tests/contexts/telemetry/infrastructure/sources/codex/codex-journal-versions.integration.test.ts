@@ -9,7 +9,7 @@ const SESSIONS = resolve(import.meta.dirname, "../../../../../fixtures/codex-usa
 const NO_ZSTD = typeof zlib.createZstdDecompress !== "function";
 
 const read = (roots: string[]) =>
-  new ReadUsage(new CodexTranscriptSourceAdapter({ roots: roots, tool: "codex" })).execute({
+  new ReadUsage(new CodexTranscriptSourceAdapter({ roots })).execute({
     since: new Map(),
   });
 

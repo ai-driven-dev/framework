@@ -38,8 +38,13 @@ import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-
 import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
+import {
+  claudeConfigDir,
+  claudeProjectsRoot,
+} from "../contexts/telemetry/infrastructure/sources/claude/claude-config-dir.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { codexSessionRoots } from "../contexts/telemetry/infrastructure/sources/codex/codex-session-roots.js";
 import { CodexTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
@@ -83,23 +88,6 @@ export function telemetryDirOf(
 
 export function telemetryDir(): string {
   return telemetryDirOf(process.env, homedir());
-}
-
-/** The directory holding Claude Code's own configuration. `configDir` is `CLAUDE_CONFIG_DIR`. */
-export function claudeConfigDir(configDir: string | undefined, home: string): string {
-  return configDir === undefined || configDir === "" ? join(home, ".claude") : configDir;
-}
-
-/** The directory holding every Claude Code transcript. */
-export function claudeProjectsRoot(configDir: string | undefined, home: string): string {
-  return join(claudeConfigDir(configDir, home), "projects");
-}
-
-/** Where Codex keeps its session files. `codexHome` is `CODEX_HOME`. Archiving moves a file
- * from the first to the second. */
-export function codexSessionRoots(codexHome: string | undefined, home: string): string[] {
-  const dir = codexHome === undefined || codexHome === "" ? join(home, ".codex") : codexHome;
-  return [join(dir, "sessions"), join(dir, "archived_sessions")];
 }
 
 /** The session a declaration binds: the one a hook names (Codex sets no session variable), else
@@ -198,7 +186,6 @@ function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
     new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
     new CodexTranscriptSourceAdapter({
       roots: codexSessionRoots(process.env.CODEX_HOME, homedir()),
-      tool: "codex",
     }),
   ];
   const ingestUsage = new IngestUsage(
@@ -251,10 +238,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
   const { ledger, resolutionStore, consentHistory } = stores;
   return {
     readTranscriptRetention: new ReadTranscriptRetention(
-      new ClaudeSettingsAdapter(
-        claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir()),
-        ".claude"
-      )
+      new ClaudeSettingsAdapter(claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir()))
     ),
     enableTelemetry: new EnableTelemetry(
       locator,
