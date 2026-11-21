@@ -5,8 +5,8 @@ import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
 
 type RuntimeDeps = Pick<DiskSinkDeps, "fs" | "flat" | "logger">;
 
-/** One plugin's hooks in the flat layout; the marketplace one is built by the engine. Returns the
- * files written. */
+/** One plugin's hooks file merged into the flat tool's own; its scripts, its bridge and the
+ * marketplace layout are built by the engine. Returns the files written. */
 export async function writePluginHooks(
   deps: RuntimeDeps,
   t: DiskTarget,
@@ -29,7 +29,6 @@ export async function writePluginHooks(
     artifact,
     pluginName: plugin.name,
     hooksSrc,
-    pluginSrc: plugin.src,
   });
 }
 

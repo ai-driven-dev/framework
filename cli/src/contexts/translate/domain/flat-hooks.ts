@@ -5,9 +5,9 @@ import type {
 } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
 import type { FlatPluginAnswers, PluginAnswers } from "../../tools/contract/tool-profile.js";
-import { flatHooksBridgeFile } from "./flat-layout.js";
+import { flatHooksBridgeFile, sourceShipsHooksBridge } from "./flat-layout.js";
 import type { OutputFile } from "./output-file.js";
-import { basename, makeFile, PLUGIN_HOOKS_DIR } from "./plugin-paths.js";
+import { makeFile, PLUGIN_HOOKS_DIR } from "./plugin-paths.js";
 import type { TranslatedAiTool } from "./translate-profile.js";
 
 // hooks/hooks.json is a manifest a merge reads, never a runtime module a loader scans for, so
@@ -39,14 +39,11 @@ function installedHooksBridge(
     (f) => f.relativePath === `${PLUGIN_HOOKS_DIR}/hooks.json`
   );
   if (manifestFile === undefined) return null;
-  const hasOwnBridge = dist.components.hooks.some(
-    (f) => basename(f.relativePath) === bridge.skipIfSourceHas
-  );
   const file = flatHooksBridgeFile({
     bridge,
     rawHooksJson: manifestFile.content,
     pluginName: dist.manifest.name,
-    sourceShipsItsOwn: hasOwnBridge,
+    sourceShipsItsOwn: sourceShipsHooksBridge(dist.components.hooks, bridge),
   });
   return file === null ? null : makeFile(file.relativePath, file.content);
 }

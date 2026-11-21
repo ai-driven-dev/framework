@@ -30,6 +30,14 @@ export function flatHooksBridgeFile({
   return { relativePath: bridge.path(pluginName), content };
 }
 
+/** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */
+export function sourceShipsHooksBridge(
+  hooks: readonly { readonly relativePath: string }[],
+  bridge: FlatHooksBridge
+): boolean {
+  return hooks.some((file) => basename(file.relativePath) === bridge.skipIfSourceHas);
+}
+
 /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer, a
  * command naming it and a link to it all resolve to. */
 export function flatAgentPath(

@@ -19,15 +19,8 @@ export interface FlatArtifactStep {
   readonly pluginName: string;
 }
 
-export interface FlatFileStep extends FlatArtifactStep {
-  readonly absPath: string;
-  /** The folder of the plugin's source holding `absPath`. */
-  readonly srcRoot: string;
-}
-
 export interface FlatHooksStep extends FlatArtifactStep {
   readonly hooksSrc: string;
-  readonly pluginSrc: string;
 }
 
 export interface FlatMcpStep {
