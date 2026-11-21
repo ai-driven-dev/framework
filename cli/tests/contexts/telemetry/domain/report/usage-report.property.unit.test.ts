@@ -126,6 +126,42 @@ function expected(records: readonly StoredUsage[]): Oracle {
   return oracle;
 }
 
+type Report = ReturnType<typeof buildReport>;
+
+/** The sum of one figure over the rows. */
+const sumOf = (rows: Report["rows"], pick: (row: Report["rows"][number]) => number) =>
+  rows.reduce((n, row) => n + pick(row), 0);
+
+/** By tool, each row counts the calls of its tool. */
+function expectToolRowsToCountTheCalls(rows: Report["rows"], records: readonly StoredUsage[]) {
+  const counted = new Map<string, number>();
+  for (const record of records) counted.set(record.tool, (counted.get(record.tool) ?? 0) + 1);
+  expect(
+    new Map(rows.map((row) => [row.value.kind === "value" ? row.value.value : "", row.records]))
+  ).toEqual(counted);
+}
+
+function expectCountersToAddUp({ rows, totals }: Report, oracle: Oracle) {
+  for (const name of COUNTERS) {
+    expect(totals.counters[name]).toEqual({
+      known: oracle.known[name],
+      unknownRecords: oracle.unknown[name],
+    });
+    expect(sumOf(rows, (row) => row.counters[name].known)).toBe(oracle.known[name]);
+    expect(sumOf(rows, (row) => row.counters[name].unknownRecords)).toBe(oracle.unknown[name]);
+  }
+}
+
+function expectAxisToAddUp(report: Report, records: readonly StoredUsage[], oracle: Oracle) {
+  const { rows, totals } = report;
+  expect(totals.records).toBe(records.length);
+  expect(sumOf(rows, (row) => row.records)).toBe(records.length);
+  expect(totals.total).toEqual({ known: oracle.total, unknownRecords: oracle.recordsWithUnknown });
+  expect(sumOf(rows, (row) => row.total.known)).toBe(oracle.total);
+  expect(sumOf(rows, (row) => row.total.unknownRecords)).toBe(oracle.recordsWithUnknown);
+  expectCountersToAddUp(report, oracle);
+}
+
 describe("every axis of a report adds up to the same totals", () => {
   it("on any ledger, unknown counters included", () => {
     fc.assert(
@@ -136,44 +172,9 @@ describe("every axis of a report adds up to the same totals", () => {
         (records, attributionFacts, person) => {
           const oracle = expected(records);
           for (const axis of REPORT_AXES) {
-            const { rows, totals } = buildReport({
-              records,
-              facts: attributionFacts,
-              person,
-              axis,
-            });
-            const sum = (pick: (row: (typeof rows)[number]) => number) =>
-              rows.reduce((n, row) => n + pick(row), 0);
-            if (axis === "tool") {
-              const counted = new Map<string, number>();
-              for (const record of records) {
-                counted.set(record.tool, (counted.get(record.tool) ?? 0) + 1);
-              }
-              expect(
-                new Map(
-                  rows.map((row) => [
-                    row.value.kind === "value" ? row.value.value : "",
-                    row.records,
-                  ])
-                )
-              ).toEqual(counted);
-            }
-            expect(totals.records).toBe(records.length);
-            expect(sum((row) => row.records)).toBe(records.length);
-            expect(totals.total).toEqual({
-              known: oracle.total,
-              unknownRecords: oracle.recordsWithUnknown,
-            });
-            expect(sum((row) => row.total.known)).toBe(oracle.total);
-            expect(sum((row) => row.total.unknownRecords)).toBe(oracle.recordsWithUnknown);
-            for (const name of COUNTERS) {
-              expect(totals.counters[name]).toEqual({
-                known: oracle.known[name],
-                unknownRecords: oracle.unknown[name],
-              });
-              expect(sum((row) => row.counters[name].known)).toBe(oracle.known[name]);
-              expect(sum((row) => row.counters[name].unknownRecords)).toBe(oracle.unknown[name]);
-            }
+            const report = buildReport({ records, facts: attributionFacts, person, axis });
+            if (axis === "tool") expectToolRowsToCountTheCalls(report.rows, records);
+            expectAxisToAddUp(report, records, oracle);
           }
         }
       ),

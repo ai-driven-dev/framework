@@ -165,6 +165,30 @@ async function bytes(dir: string): Promise<Record<string, string>> {
   return Object.fromEntries(Object.entries(found).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
+type Transcript = typeof transcript extends fc.Arbitrary<infer T> ? T : never;
+
+/** Write each transcript as far as this step has got, the last step writing all of it. */
+async function writeStep(
+  projects: string,
+  files: readonly Transcript[],
+  step: number,
+  last: boolean
+) {
+  for (const [index, file] of files.entries()) {
+    const cut = last ? file.bytes.length : (file.cuts[step] ?? file.bytes.length);
+    await writeFile(join(projects, `${index}.jsonl`), file.bytes.subarray(0, cut));
+  }
+}
+
+async function ingestBoth(machines: ReturnType<typeof machine>[], last: boolean) {
+  const results = [];
+  for (const m of machines) {
+    m.lock(!last);
+    results.push(await m.ingest.execute());
+  }
+  return results;
+}
+
 describe("ingesting transcripts read as a stream", () => {
   it("writes the same ledger, offsets and left-out bytes, and says the same, as the whole tail read at once, at any block size and however the transcripts were written between ingests", async () => {
     await fc.assert(
@@ -179,15 +203,8 @@ describe("ingesting transcripts read as a stream", () => {
           const steps = Math.max(...files.map((file) => file.cuts.length)) + 1;
           for (let step = 0; step < steps; step += 1) {
             const last = step === steps - 1;
-            for (const [index, file] of files.entries()) {
-              const cut = last ? file.bytes.length : (file.cuts[step] ?? file.bytes.length);
-              await writeFile(join(projects, `${index}.jsonl`), file.bytes.subarray(0, cut));
-            }
-            const results = [];
-            for (const m of [streamed, whole]) {
-              m.lock(!last);
-              results.push(await m.ingest.execute());
-            }
+            await writeStep(projects, files, step, last);
+            const results = await ingestBoth([streamed, whole], last);
             expect(results[0]).toEqual(results[1]);
             expect(await bytes(streamed.dir)).toEqual(await bytes(whole.dir));
           }
