@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { UsageRecord } from "../../../../../../src/contexts/telemetry/contract/usage-record.js";
-import { decodeCodexLine } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
+import type { UsageRecord } from "../../../../src/contexts/telemetry/contract/usage-record.js";
+import { decodeCodexLine } from "../../../../src/contexts/telemetry/domain/codex-transcript-usage.js";
 
 const SESSION = "11111111-1111-4111-8111-111111111111";
 const THREAD = "22222222-2222-4222-8222-222222222222";
@@ -60,7 +60,7 @@ function call(payload: Record<string, unknown> = {}, root: Record<string, unknow
 function readAll(lines: readonly string[]) {
   let context: unknown;
   return lines.map((line) => {
-    const outcome = decodeCodexLine(line, context);
+    const outcome = decodeCodexLine(line, context, "codex");
     context = outcome.context ?? context;
     return outcome;
   });

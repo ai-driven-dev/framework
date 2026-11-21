@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readClaudeUsageLine } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
+import { readClaudeUsageLine } from "../../../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../../../../../fixtures/claude-usage/projects");
 

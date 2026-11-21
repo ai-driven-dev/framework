@@ -1,7 +1,7 @@
-import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
-import type { UsageRecord } from "../../../contract/usage-record.js";
-import { counter, expected, type Json, text } from "../../../domain/line-values.js";
-import type { LineNames } from "../../../domain/transcript-position.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import type { UsageRecord } from "../contract/usage-record.js";
+import { counter, expected, type Json, text } from "./line-values.js";
+import type { LineNames } from "./transcript-position.js";
 
 export interface ClaudeUsageLine {
   readonly records: readonly UsageRecord[];
@@ -82,10 +82,8 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
   }
 
   const notes: string[] = [];
-  const requestId = text(root.requestId);
-  const key = `${id}:${requestId ?? sessionId}`;
+  const key = `${id}:${text(root.requestId) ?? sessionId}`;
   const iterations = messageIterations(usage, notes);
-  const writes = cacheWrites(usage, iterations, notes);
   const shared = {
     tool: "claude-code",
     tool_version: text(root.version),
@@ -94,9 +92,36 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     cwd: text(root.cwd),
     git_branch: text(root.gitBranch),
   } as const;
+  const main = mainRecord(
+    { shared, key, root, message, usage },
+    cacheWrites(usage, iterations, notes),
+    notes
+  );
+  return {
+    records: [main, ...advisorRecords({ shared, key, iterations }, notes)],
+    unrecognised: notes,
+  };
+}
 
+type SharedFields = Pick<
+  UsageRecord,
+  "tool" | "tool_version" | "session_id" | "at" | "cwd" | "git_branch"
+>;
+
+function mainRecord(
+  from: {
+    readonly shared: SharedFields;
+    readonly key: string;
+    readonly root: Json;
+    readonly message: Json;
+    readonly usage: Json;
+  },
+  writes: { readonly total: number | null; readonly oneHour: number | null },
+  notes: string[]
+): UsageRecord {
+  const { shared, key, root, message, usage } = from;
   const count = expected("usage", notes);
-  const main: UsageRecord = {
+  return {
     ...shared,
     key,
     agent: root.isSidechain === true || text(root.agentId) !== null ? "subagent" : "main",
@@ -108,9 +133,19 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     cache_write_1h: writes.oneHour,
     reasoning: counter(asPlainObject(usage.output_tokens_details)?.thinking_tokens),
   };
+}
 
-  const advisorCount = expected("advisor", notes);
-  const advisors = iterations
+function advisorRecords(
+  from: {
+    readonly shared: SharedFields;
+    readonly key: string;
+    readonly iterations: readonly Json[];
+  },
+  notes: string[]
+): UsageRecord[] {
+  const { shared, key, iterations } = from;
+  const count = expected("advisor", notes);
+  return iterations
     .filter((iteration) => iteration.type === "advisor_message")
     .map(
       (advisor, n): UsageRecord => ({
@@ -118,14 +153,12 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
         key: `${key}#advisor${n}`,
         agent: "advisor",
         model: text(advisor.model),
-        input: advisorCount(advisor, "input_tokens"),
-        output: advisorCount(advisor, "output_tokens"),
-        cache_read: advisorCount(advisor, "cache_read_input_tokens"),
-        cache_write: advisorCount(advisor, "cache_creation_input_tokens"),
+        input: count(advisor, "input_tokens"),
+        output: count(advisor, "output_tokens"),
+        cache_read: count(advisor, "cache_read_input_tokens"),
+        cache_write: count(advisor, "cache_creation_input_tokens"),
         cache_write_1h: counter(asPlainObject(advisor.cache_creation)?.ephemeral_1h_input_tokens),
         reasoning: null,
       })
     );
-
-  return { records: [main, ...advisors], unrecognised: notes };
 }

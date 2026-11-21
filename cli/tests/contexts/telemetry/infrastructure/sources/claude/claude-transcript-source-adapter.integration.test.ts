@@ -45,7 +45,7 @@ async function readLines(
   writtenFrom: number
 ) {
   const lines: string[] = [];
-  const read = await source.read(path, since, writtenFrom, (line) => {
+  const read = await source.read({ path, since, writtenFrom }, (line) => {
     lines.push(line);
   });
   const { position } = read;
@@ -321,9 +321,12 @@ describe("reading a transcript in blocks of a few bytes", () => {
     const path = await file("aaa\nbbb\nccc\n");
     const lines: string[] = [];
     // Blocks of 5: the last read, of 2 bytes, would find the appended line in a full block.
-    const read = await inBlocksOf(5).read(path, null, EVERYTHING, (line) => {
-      if (lines.push(line) === 1) appendFileSync(path, "d\n");
-    });
+    const read = await inBlocksOf(5).read(
+      { path, since: null, writtenFrom: EVERYTHING },
+      (line) => {
+        if (lines.push(line) === 1) appendFileSync(path, "d\n");
+      }
+    );
     expect(lines).toEqual(["aaa", "bbb", "ccc"]);
     expect(read.position).toMatchObject({ offset: 12, size: 12 });
     expect((await readLines(inBlocksOf(5), path, read.position, EVERYTHING)).lines).toEqual(["d"]);
@@ -332,9 +335,12 @@ describe("reading a transcript in blocks of a few bytes", () => {
   it("gives no position for a file truncated while it reads, so it is read again whole", async () => {
     const path = await file("aaa\nbbb\nccc\n");
     const lines: string[] = [];
-    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
-      if (lines.push(line) === 1) truncateSync(path, 0);
-    });
+    const read = await inBlocksOf(4).read(
+      { path, since: null, writtenFrom: EVERYTHING },
+      (line) => {
+        if (lines.push(line) === 1) truncateSync(path, 0);
+      }
+    );
     expect(lines).toEqual(["aaa"]);
     expect(read).toMatchObject({ position: null, skipped: false });
     await appendFile(path, "new\n");
@@ -343,9 +349,12 @@ describe("reading a transcript in blocks of a few bytes", () => {
 
   it("gives no position for a file rewritten shorter in place while it reads, whatever line that splices", async () => {
     const path = await file("aaa\nbbbbbbb\nccc\n");
-    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
-      if (line === "aaa") writeFileSync(path, "xxxxxxxx\nyy\n");
-    });
+    const read = await inBlocksOf(4).read(
+      { path, since: null, writtenFrom: EVERYTHING },
+      (line) => {
+        if (line === "aaa") writeFileSync(path, "xxxxxxxx\nyy\n");
+      }
+    );
     expect(read.position).toBeNull();
     expect((await readLines(inBlocksOf(4), path, null, EVERYTHING)).lines).toEqual([
       "xxxxxxxx",
@@ -356,9 +365,12 @@ describe("reading a transcript in blocks of a few bytes", () => {
   it("reads a file deleted while it reads as it was: its open handle still holds it whole", async () => {
     const path = await file("aaa\nbbb\n");
     const lines: string[] = [];
-    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
-      if (lines.push(line) === 1) rmSync(path);
-    });
+    const read = await inBlocksOf(4).read(
+      { path, since: null, writtenFrom: EVERYTHING },
+      (line) => {
+        if (lines.push(line) === 1) rmSync(path);
+      }
+    );
     expect(lines).toEqual(["aaa", "bbb"]);
     expect(read.position).toMatchObject({ offset: 8, size: 8 });
   });
@@ -371,9 +383,12 @@ describe("reading a transcript in blocks of a few bytes", () => {
       const other = join(projects, "other.jsonl");
       await writeFile(other, "zzz\n");
       const lines: string[] = [];
-      const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
-        if (lines.push(line) === 1) renameSync(other, path);
-      });
+      const read = await inBlocksOf(4).read(
+        { path, since: null, writtenFrom: EVERYTHING },
+        (line) => {
+          if (lines.push(line) === 1) renameSync(other, path);
+        }
+      );
       expect(lines).toEqual(["aaa", "bbb", "ccc"]);
       expect(read.position).toMatchObject({ offset: 12, size: 12 });
       const next = await readLines(inBlocksOf(4), path, read.position, EVERYTHING);

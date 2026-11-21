@@ -1,8 +1,6 @@
 import { rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { isErrnoException, tryParseJson } from "../../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import { modifiedAtIfPresent, readTextIfPresent } from "../../reading/text-file.js";
 
 export interface LockOptions {
@@ -55,29 +53,6 @@ function holderIn(text: string): Holder | null {
   return typeof pid === "number" && Number.isInteger(pid) && !Number.isNaN(createdAt)
     ? { pid, createdAt }
     : null;
-}
-
-/** A lock on a file in a directory kept private, taken around some work. */
-export class DirectoryLock {
-  constructor(
-    private readonly dir: string,
-    private readonly file: string,
-    private readonly storage: PrivateStorage,
-    private readonly options: Partial<LockOptions>
-  ) {}
-
-  async exclusively<T>(work: () => Promise<T>, waitMs?: number): Promise<T> {
-    await this.storage.ensureDirectory(this.dir);
-    const release = await new LedgerLock(join(this.dir, this.file), {
-      ...this.options,
-      ...(waitMs === undefined ? {} : { waitMs }),
-    }).acquire();
-    try {
-      return await work();
-    } finally {
-      await release();
-    }
-  }
 }
 
 /** A lock file holding the pid and creation time of its owner, created exclusively. The owner

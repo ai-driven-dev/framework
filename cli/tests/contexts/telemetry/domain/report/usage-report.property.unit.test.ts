@@ -136,7 +136,12 @@ describe("every axis of a report adds up to the same totals", () => {
         (records, attributionFacts, person) => {
           const oracle = expected(records);
           for (const axis of REPORT_AXES) {
-            const { rows, totals } = buildReport(records, attributionFacts, person, axis);
+            const { rows, totals } = buildReport({
+              records,
+              facts: attributionFacts,
+              person,
+              axis,
+            });
             const sum = (pick: (row: (typeof rows)[number]) => number) =>
               rows.reduce((n, row) => n + pick(row), 0);
             if (axis === "tool") {
@@ -180,9 +185,14 @@ describe("every axis of a report adds up to the same totals", () => {
     fc.assert(
       fc.property(fc.array(usage, { maxLength: 30 }), facts, (records, attributionFacts) => {
         for (const axis of REPORT_AXES) {
-          expect(buildReport([...records].reverse(), attributionFacts, null, axis)).toEqual(
-            buildReport(records, attributionFacts, null, axis)
-          );
+          expect(
+            buildReport({
+              records: [...records].reverse(),
+              facts: attributionFacts,
+              person: null,
+              axis,
+            })
+          ).toEqual(buildReport({ records, facts: attributionFacts, person: null, axis }));
         }
       }),
       { numRuns: 100 }

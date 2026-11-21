@@ -20,7 +20,7 @@ function source(files: Readonly<Record<string, Transcript>>) {
   const seen: (TranscriptPosition | null)[] = [];
   const subject: UsageSource = {
     list: async () => Object.keys(files),
-    read: async (path, since, _writtenFrom, each) => {
+    read: async ({ path, since }, each) => {
       const file = files[path];
       if (file === undefined) throw new Error(`no transcript ${path}`);
       seen.push(since);

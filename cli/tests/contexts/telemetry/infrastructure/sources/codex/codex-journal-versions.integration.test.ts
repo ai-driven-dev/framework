@@ -9,7 +9,9 @@ const SESSIONS = resolve(import.meta.dirname, "../../../../../fixtures/codex-usa
 const NO_ZSTD = typeof zlib.createZstdDecompress !== "function";
 
 const read = (roots: string[]) =>
-  new ReadUsage(new CodexTranscriptSourceAdapter(roots)).execute({ since: new Map() });
+  new ReadUsage(new CodexTranscriptSourceAdapter({ roots: roots, tool: "codex" })).execute({
+    since: new Map(),
+  });
 
 /** Each fixture stands for a group of versions: one starts where a version introduces a line type
  * or a usage payload key (`fixtures/codex-usage/README.md`). A group with no `token_usage_record`

@@ -1,13 +1,23 @@
-import { join } from "node:path";
 import type { Duplex } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
+import type { UsageTool } from "../../../contract/usage-record.js";
+import { decodeCodexLine } from "../../../domain/codex-transcript-usage.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
-import { declaredContentSize, FRAME_HEADER_BYTES } from "../../../domain/zstd-frame.js";
-import type { LineUsage, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
 import {
-  type EachLine,
+  declaredContentSize,
+  FRAME_HEADER_BYTES,
+  FrameSizeMismatch,
+} from "../../../domain/zstd-frame.js";
+import type {
+  EachTranscriptLine,
+  LineUsage,
+  TranscriptRead,
+  TranscriptRequest,
+  UsageSource,
+} from "../../../ports/usage-source.js";
+import {
   eachLine,
   LineSplitter,
   type LinesRead,
@@ -17,26 +27,14 @@ import {
   readTranscript,
   withModifiedAt,
 } from "../transcript-files.js";
-import { decodeCodexLine } from "./codex-transcript-usage.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
 const COMPRESSED = ".zst";
 /** What zlib names a stream it cannot decompress by: `Z_…` or `ZSTD_error_…`, never an I/O code. */
 const UNDECOMPRESSABLE = /^Z(STD)?_/;
 
-/** A compressed file not read, named once per run: its position stays, so it is tried again. */
-/** A stream that decompressed to another size than its frame declares. */
-class FrameSizeMismatch extends Error {}
-
 function unread(since: TranscriptPosition | null, reason: string): LinesRead {
   return { position: since ?? NOWHERE, restarted: false, skipped: false, unrecognised: [reason] };
-}
-
-/** Where Codex keeps its session files. `codexHome` is `CODEX_HOME`; reading the environment is
- * the composition root's job. Archiving moves a file from the first to the second. */
-export function codexSessionRoots(codexHome: string | undefined, home: string): string[] {
-  const dir = codexHome === undefined || codexHome === "" ? join(home, ".codex") : codexHome;
-  return [join(dir, "sessions"), join(dir, "archived_sessions")];
 }
 
 /** Reads the session files Codex keeps. A call's directory and model are written earlier in the
@@ -44,39 +42,50 @@ export function codexSessionRoots(codexHome: string | undefined, home: string): 
  * offset handed on as not counted. Codex compresses a file it no longer writes to
  * `.jsonl.zst`: that one is read whole, once, as a stream. */
 export class CodexTranscriptSourceAdapter implements UsageSource {
-  constructor(
-    private readonly roots: readonly string[],
+  private readonly roots: readonly string[];
+  private readonly tool: UsageTool;
+  private readonly decompress: (() => Duplex) | null;
+  private readonly blockBytes: number;
+
+  constructor(options: {
+    readonly roots: readonly string[];
+    /** The id the records carry. */
+    readonly tool: UsageTool;
     /** Absent from a Node whose zlib has no zstd. */
-    private readonly decompress: (() => Duplex) | null = zlib.createZstdDecompress ?? null,
+    readonly decompress?: (() => Duplex) | null;
     /** How much of a plain file is read at once. */
-    private readonly blockBytes = 1 << 20
-  ) {}
+    readonly blockBytes?: number;
+  }) {
+    this.roots = options.roots;
+    this.tool = options.tool;
+    this.decompress =
+      options.decompress === undefined ? (zlib.createZstdDecompress ?? null) : options.decompress;
+    this.blockBytes = options.blockBytes ?? 1 << 20;
+  }
 
   list(): Promise<readonly string[]> {
     return listTranscripts(this.roots, SESSION_FILE);
   }
 
-  read(
-    path: string,
-    since: TranscriptPosition | null,
-    writtenFrom: number,
-    each: EachLine
-  ): Promise<TranscriptRead> {
-    return withModifiedAt(path, this.readLines(path, since, writtenFrom, each));
+  read(request: TranscriptRequest, each: EachTranscriptLine): Promise<TranscriptRead> {
+    return withModifiedAt(request.path, this.readLines(request, each));
   }
 
   private async readLines(
-    path: string,
-    since: TranscriptPosition | null,
-    writtenFrom: number,
-    each: EachLine
+    request: TranscriptRequest,
+    each: EachTranscriptLine
   ): Promise<LinesRead> {
+    const { path, since } = request;
     if (!path.endsWith(COMPRESSED)) {
-      return readTranscript(path, since, writtenFrom, {
+      return readTranscript(request, {
         skippedEnd: lastLineEnd,
         lines: (handle, now, { offset }) => {
           const from = since?.size === now.size ? offset : 0;
-          return eachLine(handle, from, offset, now.size, this.blockBytes, each);
+          return eachLine(
+            handle,
+            { from, countFrom: offset, size: now.size, blockBytes: this.blockBytes },
+            each
+          );
         },
       });
     }
@@ -85,7 +94,7 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
       return unread(since, "a compressed session file is not read: this Node has no zstd");
     }
     // Its offset is its size: it does not change, so its size and identity keep it read.
-    return readTranscript(path, since, writtenFrom, {
+    return readTranscript(request, {
       skippedEnd: async (_handle, size) => size,
       lines: async (handle, now, { restarted }) => {
         if (!restarted && since?.size === now.size) return now.size;
@@ -121,6 +130,6 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
   }
 
   decode(line: string, context?: unknown): LineUsage {
-    return decodeCodexLine(line, context);
+    return decodeCodexLine(line, context, this.tool);
   }
 }

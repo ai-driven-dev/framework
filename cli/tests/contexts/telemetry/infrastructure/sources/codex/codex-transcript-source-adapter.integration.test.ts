@@ -5,10 +5,7 @@ import { PassThrough, Transform } from "node:stream";
 import * as zlib from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
-import {
-  CodexTranscriptSourceAdapter,
-  codexSessionRoots,
-} from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { CodexTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 
 const EVERYTHING = Number.NEGATIVE_INFINITY;
 
@@ -29,7 +26,11 @@ afterEach(async () => {
 });
 
 function source(blockBytes?: number) {
-  return new CodexTranscriptSourceAdapter([sessions, archived], undefined, blockBytes);
+  return new CodexTranscriptSourceAdapter({
+    roots: [sessions, archived],
+    tool: "codex",
+    blockBytes: blockBytes,
+  });
 }
 
 async function readLines(
@@ -39,29 +40,11 @@ async function readLines(
   writtenFrom = EVERYTHING
 ) {
   const lines: [string, boolean][] = [];
-  const read = await adapter.read(path, since, writtenFrom, (line, counted) => {
+  const read = await adapter.read({ path, since, writtenFrom }, (line, counted) => {
     lines.push([line, counted]);
   });
   return { lines, read };
 }
-
-describe("where Codex keeps its session files", () => {
-  it("is sessions/ and archived_sessions/ under CODEX_HOME when it is set", () => {
-    expect(codexSessionRoots("/cfg/codex", "/home/p")).toEqual([
-      join("/cfg/codex", "sessions"),
-      join("/cfg/codex", "archived_sessions"),
-    ]);
-  });
-
-  it("is under .codex in the home directory otherwise, an empty CODEX_HOME being none", () => {
-    for (const unset of [undefined, ""]) {
-      expect(codexSessionRoots(unset, "/home/p")).toEqual([
-        join("/home/p", ".codex", "sessions"),
-        join("/home/p", ".codex", "archived_sessions"),
-      ]);
-    }
-  });
-});
 
 describe("listing Codex session files", () => {
   it("lists every rollout file, plain or compressed, at any depth, under both roots", async () => {
@@ -98,9 +81,14 @@ describe("listing Codex session files", () => {
         new Date("2026-09-01T00:00:00.000Z"),
         new Date("2026-09-01T00:00:00.000Z")
       );
-      expect((await source().read(path, null, Number.NEGATIVE_INFINITY, () => {})).modifiedAt).toBe(
-        Date.parse("2026-09-01T00:00:00.000Z")
-      );
+      expect(
+        (
+          await source().read(
+            { path, since: null, writtenFrom: Number.NEGATIVE_INFINITY },
+            () => {}
+          )
+        ).modifiedAt
+      ).toBe(Date.parse("2026-09-01T00:00:00.000Z"));
     }
   });
 });
@@ -226,7 +214,11 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     await writeFile(path, "a\nb\n");
     const passesThrough = () => new PassThrough();
     const { lines, read } = await readLines(
-      new CodexTranscriptSourceAdapter([sessions, archived], passesThrough),
+      new CodexTranscriptSourceAdapter({
+        roots: [sessions, archived],
+        tool: "codex",
+        decompress: passesThrough,
+      }),
       path,
       null
     );
@@ -254,7 +246,11 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
       });
     };
     const { read } = await readLines(
-      new CodexTranscriptSourceAdapter([sessions, archived], dropsLastByte),
+      new CodexTranscriptSourceAdapter({
+        roots: [sessions, archived],
+        tool: "codex",
+        decompress: dropsLastByte,
+      }),
       path,
       null
     );
@@ -299,7 +295,11 @@ describe("a Node with no zstd", () => {
   it("is one unrecognised shape, naming why, where Node has no zstd, and stays unread", async () => {
     const path = join(archived, "rollout-a.jsonl.zst");
     await writeFile(path, "not read");
-    const adapter = new CodexTranscriptSourceAdapter([sessions, archived], null);
+    const adapter = new CodexTranscriptSourceAdapter({
+      roots: [sessions, archived],
+      tool: "codex",
+      decompress: null,
+    });
     const { lines, read } = await readLines(adapter, path, null);
     expect(lines).toEqual([]);
     expect(read).toEqual({

@@ -14,7 +14,12 @@ const REPORTED: ReportUsageResult = {
   status: "reported",
   period: { from: null, to: null },
   filters: filtersOf({ model: "opus" }),
-  report: buildReport([], { declarations: [], carries: [], branches: new Map() }, null, "day"),
+  report: buildReport({
+    records: [],
+    facts: { declarations: [], carries: [], branches: new Map() },
+    person: null,
+    axis: "day",
+  }),
   coverage: { records: 0, leftOut: { undated: 0, unrecognised: 0, requestless: 0 } },
   run: {
     filesRead: 0,

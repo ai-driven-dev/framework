@@ -26,7 +26,7 @@ async function countedLines(
   writtenFrom = EVERYTHING
 ) {
   const counted: string[] = [];
-  const read = await source.read(path, since, writtenFrom, (line, isCounted) => {
+  const read = await source.read({ path, since, writtenFrom }, (line, isCounted) => {
     if (isCounted) counted.push(line);
   });
   if (read.position === null) throw new Error(`${path} changed under the read`);

@@ -37,16 +37,9 @@ import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-
 import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
-import {
-  claudeConfigDir,
-  claudeProjectsRoot,
-} from "../contexts/telemetry/infrastructure/sources/claude/claude-projects-root.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import {
-  CodexTranscriptSourceAdapter,
-  codexSessionRoots,
-} from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { CodexTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
@@ -88,6 +81,23 @@ export function telemetryDirOf(
 
 export function telemetryDir(): string {
   return telemetryDirOf(process.env, homedir());
+}
+
+/** The directory holding Claude Code's own configuration. `configDir` is `CLAUDE_CONFIG_DIR`. */
+export function claudeConfigDir(configDir: string | undefined, home: string): string {
+  return configDir === undefined || configDir === "" ? join(home, ".claude") : configDir;
+}
+
+/** The directory holding every Claude Code transcript. */
+export function claudeProjectsRoot(configDir: string | undefined, home: string): string {
+  return join(claudeConfigDir(configDir, home), "projects");
+}
+
+/** Where Codex keeps its session files. `codexHome` is `CODEX_HOME`. Archiving moves a file
+ * from the first to the second. */
+export function codexSessionRoots(codexHome: string | undefined, home: string): string[] {
+  const dir = codexHome === undefined || codexHome === "" ? join(home, ".codex") : codexHome;
+  return [join(dir, "sessions"), join(dir, "archived_sessions")];
 }
 
 /** The session a declaration binds: the one a hook names (Codex sets no session variable), else
@@ -152,7 +162,10 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   // The measured tools, registered once: a tool is one source here and nowhere else.
   const usageSources: readonly UsageSource[] = [
     new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
-    new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
+    new CodexTranscriptSourceAdapter({
+      roots: codexSessionRoots(process.env.CODEX_HOME, homedir()),
+      tool: "codex",
+    }),
   ];
   const ingestUsage = new IngestUsage(
     usageSources.map((source) => new ReadUsage(source)),
@@ -185,7 +198,9 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
       new CheckIdentity(),
       prompter
     ),
-    readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
+    readTranscriptRetention: new ReadTranscriptRetention(
+      new ClaudeSettingsAdapter(claudeDir, ".claude")
+    ),
     enableTelemetry: new EnableTelemetry(
       locator,
       consents,
@@ -204,7 +219,12 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
     forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
         root,
-        legacyLocations(process.env, homedir(), process.platform, root)
+        legacyLocations({
+          env: process.env,
+          home: homedir(),
+          platform: process.platform,
+          telemetryDir: root,
+        })
       ),
       new RepositoryDeclarationsAdapter(gitEnv),
       new RememberedClones(resolutionStore, consentHistory, snapshotStore),

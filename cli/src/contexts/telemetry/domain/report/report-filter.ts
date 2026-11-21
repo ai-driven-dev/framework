@@ -70,14 +70,19 @@ function selects(selector: Selector, value: AxisValue): boolean {
 
 /** Whether every flag given keeps the call: its axis is, by the function that builds the rows,
  * exactly what the flag names. A filter and a row cannot then disagree on a call. */
-export function matchesFilter(
-  filters: ReportFilters,
-  record: StoredUsage,
-  attribution: Attribution,
-  person: string | null
-): boolean {
+export function matchesFilter({
+  filters,
+  record,
+  attribution,
+  person,
+}: {
+  readonly filters: ReportFilters;
+  readonly record: StoredUsage;
+  readonly attribution: Attribution;
+  readonly person: string | null;
+}): boolean {
   return selectorsOf(filters).every(([axis, selector]) =>
-    selects(selector, axisValueOf(axis, record, attribution, person))
+    selects(selector, axisValueOf({ axis, record, attribution, person }))
   );
 }
 

@@ -55,7 +55,7 @@ const keeps = (
   record = call(),
   attribution: Attribution = on("t-1", "T-1"),
   person: string | null = "p-1"
-) => matchesFilter(only(over), record, attribution, person);
+) => matchesFilter({ filters: only(over), record, attribution, person });
 
 describe("a filter", () => {
   it("keeps every call when no flag is given", () => {
@@ -265,13 +265,15 @@ describe("selecting a row", () => {
         fc.option(fc.constant("p-1"), { nil: null }),
         fc.constantFrom(...REPORT_AXES.filter((axis) => axis !== "total" && axis !== "day")),
         (records, held, person, axis) => {
-          for (const row of buildReport(records, held, person, axis).rows) {
+          for (const row of buildReport({ records, facts: held, person, axis }).rows) {
             const filters = filtersOfRow(axis, row.value);
             const kept = records.filter((record) =>
-              matchesFilter(filters, record, attribute(record, held), person)
+              matchesFilter({ filters, record, attribution: attribute(record, held), person })
             );
             const { records: n, counters, total } = row;
-            expect(buildReport(kept, held, person, "total").totals).toEqual({
+            expect(
+              buildReport({ records: kept, facts: held, person, axis: "total" }).totals
+            ).toEqual({
               records: n,
               counters,
               total,

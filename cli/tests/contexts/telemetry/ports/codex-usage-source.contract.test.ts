@@ -16,7 +16,7 @@ describeUsageSourceContract(
     const sessions = join(root, "sessions");
     await mkdir(sessions, { recursive: true });
     return {
-      source: new CodexTranscriptSourceAdapter([sessions]),
+      source: new CodexTranscriptSourceAdapter({ roots: [sessions], tool: "codex" }),
       write: async (session, lines) => {
         const path = join(sessions, "2026", "10", "07", `rollout-${session}.jsonl`);
         await mkdir(dirname(path), { recursive: true });

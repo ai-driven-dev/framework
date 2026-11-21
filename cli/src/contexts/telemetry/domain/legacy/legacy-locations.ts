@@ -17,12 +17,17 @@ function set(value: string | undefined): string | null {
 
 /** Every place the previous version could have written, whichever of its rules applied on the
  * machine it ran on. It ignored `XDG_CONFIG_HOME`, so `~/.config/aidd` is named outright. */
-export function legacyLocations(
-  env: NodeJS.ProcessEnv,
-  home: string,
-  platform: NodeJS.Platform,
-  telemetryDir: string
-): LegacyLocations {
+export function legacyLocations({
+  env,
+  home,
+  platform,
+  telemetryDir,
+}: {
+  readonly env: NodeJS.ProcessEnv;
+  readonly home: string;
+  readonly platform: NodeJS.Platform;
+  readonly telemetryDir: string;
+}): LegacyLocations {
   const config = join(home, ".config", "aidd");
   const appData = platform === "win32" ? set(env.APPDATA) : null;
   const userConfig = set(env.AIDD_USER_CONFIG_DIR);
