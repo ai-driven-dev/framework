@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it, type Mock, vi } from "vitest";
 import { TrustPluginSource } from "../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.js";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.js";
 import { InvalidPluginScopeError } from "../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";

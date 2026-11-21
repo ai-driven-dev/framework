@@ -56,18 +56,13 @@ export class RestoreAllPlugins {
     let totalFiles = 0;
     const restoredNames = new Set<string>();
     const nativeOnlyToolIds: AiToolId[] = [];
-    for (const toolId of this.tools.idsInCanonicalOrder("ai")) {
-      if (!manifest.hasTool(toolId)) continue;
-      if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
+    const selected = this.tools
+      .idsInCanonicalOrder("ai")
+      .filter((toolId) => manifest.hasTool(toolId) && (toolIds?.includes(toolId) ?? true));
+    for (const toolId of selected) {
       const toolConfig = this.tools.aiProfile(toolId);
       const targets = this.targetPlugins(toolId, manifest, pluginName);
-      if (
-        targets.length > 0 &&
-        this.everyTargetUntracked(targets) &&
-        toolConfig.nativeActivation()
-      ) {
-        nativeOnlyToolIds.push(toolId);
-      }
+      if (this.isNativeOnly(targets, toolConfig)) nativeOnlyToolIds.push(toolId);
       const result = await this.restoreToolPlugins(toolId, toolConfig, scope);
       totalFiles += result.totalFiles;
       for (const name of result.pluginNames) restoredNames.add(name);
@@ -84,8 +79,12 @@ export class RestoreAllPlugins {
     return pluginName !== undefined ? plugins.filter((p) => p.name === pluginName) : plugins;
   }
 
-  private everyTargetUntracked(targets: readonly InstalledPlugin[]): boolean {
-    return targets.every((plugin) => plugin.files.size === 0);
+  private isNativeOnly(targets: readonly InstalledPlugin[], toolConfig: AiToolProfile): boolean {
+    return (
+      targets.length > 0 &&
+      targets.every((plugin) => plugin.files.size === 0) &&
+      Boolean(toolConfig.nativeActivation())
+    );
   }
 
   private async restoreToolPlugins(

@@ -9,7 +9,10 @@ const JSONC = join(HOME, ".config", "opencode", "opencode.jsonc");
 const TWIN = JSONC.replace(/c$/, "");
 
 function locator(fs = new InMemoryFileAdapter()) {
-  return new MainSessionLocator(fs, () => HOME, { get: () => undefined }, registeredTools());
+  return new MainSessionLocator(
+    { fs, homedir: () => HOME, environment: { get: () => undefined } },
+    registeredTools()
+  );
 }
 
 describe("MainSessionLocator", () => {

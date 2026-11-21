@@ -1,10 +1,8 @@
+import type { NativeMarketplaceRegistration } from "../../domain/record/native-marketplace-source.js";
 import { recordedRegistrations } from "../../domain/record/registration-record.js";
-import {
-  assertNoForeignNativeRefs,
-  assertSourceOwned,
-  inspectNativeMarketplaceSource,
-} from "../native-marketplace-source-proof.js";
-import { machineRefs } from "./host-call.js";
+import { assertSourceOwned, inspectHostSource } from "../native-marketplace-source-proof.js";
+import { reachableActivator } from "../reachable-activator.js";
+import { assertNoForeignRefs } from "./host-call.js";
 import type {
   ProjectCleanFacts,
   ProjectRegistrationWithdrawal,
@@ -18,31 +16,42 @@ export async function assertProjectRegistrationsOwned(
   withdrawals: readonly ProjectRegistrationWithdrawal[],
   facts: ProjectCleanFacts
 ): Promise<void> {
-  for (const withdrawal of withdrawals) {
-    const { tool } = withdrawal;
-    const registrations = recordedRegistrations(withdrawal.registrations);
-    const toolId = tool.toolId;
-    const activator = deps.ports.activators.get(registrations.binary);
-    if (activator === undefined || !activator.isAvailable()) continue;
-    for (const registration of registrations.marketplaces) {
-      if (facts.marketplaceScopes.get(registration.alias) !== "project") continue;
-      const proof = await inspectNativeMarketplaceSource(
-        deps.ports.sources.get(toolId),
-        facts.projectRoot,
-        registration
-      );
-      assertSourceOwned(
-        proof,
-        `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
-      );
-      await assertNoForeignNativeRefs(
-        { reader: deps.ports.pluginRegistries.get(toolId), tool },
-        {
-          hostName: registration.hostName,
-          ownedRefs: new Set([...registrations.pluginRefs, ...(await machineRefs(facts, toolId))]),
-          projectRoot: facts.projectRoot,
-        }
-      );
-    }
+  for (const withdrawal of withdrawals) await assertToolOwned(deps, withdrawal, facts);
+}
+
+async function assertToolOwned(
+  deps: WithdrawalDeps,
+  withdrawal: ProjectRegistrationWithdrawal,
+  facts: ProjectCleanFacts
+): Promise<void> {
+  const registrations = recordedRegistrations(withdrawal.registrations);
+  if (reachableActivator(deps.ports.activators, registrations.binary) === undefined) return;
+  for (const registration of registrations.marketplaces) {
+    if (facts.marketplaceScopes.get(registration.alias) !== "project") continue;
+    await assertOwned(deps, { withdrawal, registrations, facts }, registration);
   }
+}
+
+async function assertOwned(
+  deps: WithdrawalDeps,
+  held: {
+    readonly withdrawal: ProjectRegistrationWithdrawal;
+    readonly registrations: ReturnType<typeof recordedRegistrations>;
+    readonly facts: ProjectCleanFacts;
+  },
+  registration: NativeMarketplaceRegistration
+): Promise<void> {
+  const { withdrawal, facts } = held;
+  const { tool } = withdrawal;
+  const toolId = tool.toolId;
+  const proof = await inspectHostSource(
+    deps.ports.sources.get(toolId),
+    facts.projectRoot,
+    registration
+  );
+  assertSourceOwned(
+    proof,
+    `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
+  );
+  await assertNoForeignRefs(deps, held, registration.hostName);
 }

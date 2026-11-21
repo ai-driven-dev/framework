@@ -26,15 +26,29 @@ export interface RefreshMarketplaceResult {
   failedCount: number;
 }
 
+export interface RefreshMarketplaceDeps {
+  readonly registry: MarketplaceRegistry;
+  readonly resolveMarketplace: ResolveMarketplace;
+  readonly cache: MarketplaceCachePort;
+  readonly logger?: Logger;
+  readonly fs?: FileReader;
+}
+
 /** Refreshing registered marketplace catalogs. */
 export class RefreshMarketplace {
-  constructor(
-    private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: ResolveMarketplace,
-    private readonly cache: MarketplaceCachePort,
-    private readonly logger?: Logger,
-    private readonly fs?: FileReader
-  ) {}
+  private readonly registry: MarketplaceRegistry;
+  private readonly resolveMarketplace: ResolveMarketplace;
+  private readonly cache: MarketplaceCachePort;
+  private readonly logger: Logger | undefined;
+  private readonly fs: FileReader | undefined;
+
+  constructor(deps: RefreshMarketplaceDeps) {
+    this.registry = deps.registry;
+    this.resolveMarketplace = deps.resolveMarketplace;
+    this.cache = deps.cache;
+    this.logger = deps.logger;
+    this.fs = deps.fs;
+  }
 
   async execute(options: RefreshMarketplaceCommand): Promise<RefreshMarketplaceResult> {
     if (options.force) await this.cache.clear(options.name);

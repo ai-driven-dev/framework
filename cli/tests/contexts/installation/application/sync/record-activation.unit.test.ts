@@ -27,7 +27,10 @@ function setup(onDisk: string) {
   const manifest = aManifest()
     .withTool(claude, [trackedSettings("{}")])
     .build();
-  const record = new RecordActivation(fs, registrationRecordRules, registeredCatalog());
+  const record = new RecordActivation(
+    { fs, records: registrationRecordRules },
+    registeredCatalog()
+  );
   return { manifest, record };
 }
 
@@ -55,22 +58,6 @@ describe("RecordActivation settings-written-by-host", () => {
         projectRoot: ROOT,
         manifest,
         activated: [claude],
-      })
-    ).resolves.toBe(false);
-  });
-});
-
-describe("RecordActivation machine-claims", () => {
-  it("changes nothing without a machine manifest to write to", async () => {
-    const { manifest, record } = setup("{}");
-
-    await expect(
-      record.execute({
-        kind: "machine-claims",
-        project: manifest,
-        outcomes: new Map(),
-        marketplaces: [],
-        scope: "user",
       })
     ).resolves.toBe(false);
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
+import type { ProvenNativeRefresh } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
 import {
-  type ProvenNativeRefresh,
   UpdateUserPluginFiles,
   type UpdateUserPluginFilesCommand,
 } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
@@ -70,10 +70,7 @@ function fixture(
     return refresh;
   };
   const update = new UpdateUserPluginFiles(
-    repo,
-    materializer,
-    logger,
-    registrationRecordRules,
+    { repo, materializer, logger, records: registrationRecordRules },
     registeredTools()
   );
   const run = (command: Partial<UpdateUserPluginFilesCommand> = {}) =>

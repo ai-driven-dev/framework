@@ -42,11 +42,16 @@ interface InitProjectResult {
   manifest: Manifest;
 }
 
+/** What InitProject is built from. */
+export interface InitProjectDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly manifestRepo: ManifestRepository;
+  readonly updateGitignore: UpdateGitignore;
+}
+
 export class InitProject {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly updateGitignore: UpdateGitignore,
+    private readonly deps: InitProjectDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -76,7 +81,7 @@ export class InitProject {
 
   private async hasAiddSignals(projectRoot: string): Promise<boolean> {
     for (const id of this.tools.sortedIds()) {
-      if ((await detectToolSignals(this.fs, this.tools.profile(id), projectRoot)).length > 0) {
+      if ((await detectToolSignals(this.deps.fs, this.tools.profile(id), projectRoot)).length > 0) {
         return true;
       }
     }
@@ -84,13 +89,13 @@ export class InitProject {
   }
 
   async execute(options: InitProjectCommand): Promise<InitProjectResult> {
-    return this.initialize(await this.manifestRepo.load(), options);
+    return this.initialize(await this.deps.manifestRepo.load(), options);
   }
 
   /** Initializes a project that has no manifest yet and leaves one that has. Answers whether
    * this call created it, which a caller reports as a fresh start or an already-set-up project. */
   async initializeIfAbsent(options: Omit<InitProjectCommand, "force">): Promise<boolean> {
-    if ((await this.manifestRepo.load()) !== null) return false;
+    if ((await this.deps.manifestRepo.load()) !== null) return false;
     await this.initialize(null, { ...options, force: false });
     return true;
   }
@@ -113,9 +118,9 @@ export class InitProject {
     projectRoot: string,
     force: boolean
   ): Promise<void> {
-    await this.manifestRepo.save(manifest);
+    await this.deps.manifestRepo.save(manifest);
     if (!force) {
-      await this.updateGitignore.execute(projectRoot, [`${AIDD_DIR}/cache/`]);
+      await this.deps.updateGitignore.execute(projectRoot, [`${AIDD_DIR}/cache/`]);
     }
   }
 }

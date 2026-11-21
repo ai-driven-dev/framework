@@ -44,9 +44,11 @@ const createDeps = vi.fn(async () => {
       },
       { plugins: setupPluginsPrompt, tools: setupToolsPrompt },
       new InitProject(
-        fs,
-        manifestRepositoryLoading(loadManifest),
-        new UpdateGitignore(fs),
+        {
+          fs,
+          manifestRepo: manifestRepositoryLoading(loadManifest),
+          updateGitignore: new UpdateGitignore(fs),
+        },
         registeredTools()
       )
     ),

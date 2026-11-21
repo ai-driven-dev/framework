@@ -19,10 +19,16 @@ describe("SyncToolSettingsFiles project-tools", () => {
     const path = resolve(ROOT, SETTINGS);
     const logger = new CapturingLogger();
     const sync = new SyncToolSettingsFiles(
-      new InMemoryFileAdapter({ [path]: '{"enabledPlugins": {},}' }),
-      logger,
-      new BuildMarketplaceForTool(fakeEnsureBuiltMarketplace(), logger, registeredTools()),
-      registrationRecordRules,
+      {
+        fs: new InMemoryFileAdapter({ [path]: '{"enabledPlugins": {},}' }),
+        logger,
+        buildMarketplace: new BuildMarketplaceForTool(
+          fakeEnsureBuiltMarketplace(),
+          logger,
+          registeredTools()
+        ),
+        records: registrationRecordRules,
+      },
       registeredTools()
     );
 

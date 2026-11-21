@@ -63,9 +63,18 @@ async function setup(
     registeredTools()
   );
   const updateUseCase = new UpdatePlugin(
-    deps.manifestRepo,
-    new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
-    new ReplacePluginFiles(deps.fs, options.builtDeps ?? fakeBuiltDeps(), registeredTools()),
+    {
+      manifestRepo: deps.manifestRepo,
+      distributionLoader: new PluginDistributionLoader(
+        options.fetcher ?? deps.pluginFetcher,
+        reader
+      ),
+      replacePluginFiles: new ReplacePluginFiles(
+        deps.fs,
+        options.builtDeps ?? fakeBuiltDeps(),
+        registeredTools()
+      ),
+    },
     registeredTools()
   );
   return { addUseCase, updateUseCase };

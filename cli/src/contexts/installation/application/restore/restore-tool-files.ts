@@ -50,17 +50,22 @@ export interface RestoreToolFilesResult {
   unrestorable: string[];
 }
 
+/** What RestoreToolFiles is built from. */
+export interface RestoreToolFilesDeps {
+  readonly generateToolDistribution: GenerateToolDistribution;
+  readonly fs: FileReader & FileWriter & FileMerger;
+  readonly prompter: Prompter;
+  readonly logger: Logger;
+}
+
 export class RestoreToolFiles {
   constructor(
-    private readonly generateToolDistribution: GenerateToolDistribution,
-    private readonly fs: FileReader & FileWriter & FileMerger,
-    private readonly prompter: Prompter,
-    private readonly logger: Logger,
+    private readonly deps: RestoreToolFilesDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreToolFilesCommand): Promise<RestoreToolFilesResult> {
-    this.logger.info(`Checking ${options.toolId} for files to restore...`);
+    this.deps.logger.info(`Checking ${options.toolId} for files to restore...`);
     const config = this.tools.profile(options.toolId);
     const { toolId } = config;
     const distMap = await this.buildDistributionMap(options, config);
@@ -83,7 +88,7 @@ export class RestoreToolFiles {
     config: RestoredTool
   ): Promise<Map<string, InstallationFile>> {
     const { configRefs, contentFiles, projectRoot } = options;
-    const distribution = await this.generateToolDistribution.execute({
+    const distribution = await this.deps.generateToolDistribution.execute({
       config,
       configRefs,
       contentFiles,
@@ -96,7 +101,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     distMap: Map<string, InstallationFile>
   ): Promise<SectionRestoreResult | null> {
-    return restoreRegularFiles(this.fs, this.prompter, {
+    return restoreRegularFiles(this.deps.fs, this.deps.prompter, {
       manifestFiles: options.manifest.getToolFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -110,7 +115,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     distMap: Map<string, InstallationFile>
   ): Promise<MergeSectionRestoreResult | null> {
-    return restoreMergeFiles(this.fs, this.prompter, {
+    return restoreMergeFiles(this.deps.fs, this.deps.prompter, {
       mergeFiles: options.manifest.getMergeFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -135,10 +140,14 @@ export class RestoreToolFiles {
     const mergeFiles = mergeSection?.updatedMergeFiles ?? [...manifest.getMergeFiles(toolId)];
     manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, files);
     manifest.updateToolMergeFiles(toolId, mergeFiles);
-    const restored = [...(section?.restored ?? []), ...(mergeSection?.restored ?? [])];
-    const kept = [...(section?.kept ?? []), ...(mergeSection?.kept ?? [])];
-    const unrestorable = [...(section?.unrestorable ?? []), ...(mergeSection?.unrestorable ?? [])];
-    return { toolId, nothingToRestore: false, restored, kept, unrestorable };
+    const sectionsDone = [section, mergeSection];
+    return {
+      toolId,
+      nothingToRestore: false,
+      restored: sectionsDone.flatMap((s) => s?.restored ?? []),
+      kept: sectionsDone.flatMap((s) => s?.kept ?? []),
+      unrestorable: sectionsDone.flatMap((s) => s?.unrestorable ?? []),
+    };
   }
 
   private existingFilesAsGenerated(

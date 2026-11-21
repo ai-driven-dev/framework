@@ -2,12 +2,16 @@
  * A step imports this and `withdrawal.ts`, never another step. */
 import { join } from "node:path";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { AiToolId } from "../../../../shared/domain/tool.js";
 import { NativePluginCliError } from "../../domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import { bestEffortNativeCall } from "../confirmation.js";
-import type { ProjectCleanFacts, WithdrawalDeps } from "./withdrawal.js";
+import { assertNoForeignNativeRefs } from "../native-marketplace-source-proof.js";
+import type {
+  ProjectCleanFacts,
+  ProjectRegistrationWithdrawal,
+  WithdrawalDeps,
+} from "./withdrawal.js";
 
 /** Runs `action` against the host, naming a failure in a warning instead of throwing it. */
 export function callHost(deps: WithdrawalDeps, action: () => void, label: string): boolean {
@@ -16,6 +20,11 @@ export function callHost(deps: WithdrawalDeps, action: () => void, label: string
     (reason) => `${label} failed: ${reason}`,
     (warning) => deps.logger.warn(warning)
   ).confirmed;
+}
+
+/** The sentence naming the other projects that still need what a clean leaves in place. */
+export function stillNeededBy(others: readonly string[]): string {
+  return others.length > 0 ? ` Still needed by ${others.join(", ")}.` : "";
 }
 
 /** The first refusal message when the host accepted no scope in `order`, else `undefined`. */
@@ -79,9 +88,25 @@ export function hostNameFor(
   return registrations?.marketplaces.find((m) => m.alias === alias)?.hostName;
 }
 
-export async function machineRefs(
-  facts: ProjectCleanFacts,
-  tool: AiToolId
-): Promise<readonly string[]> {
-  return ((await facts.machineClaims(tool)) ?? []).map((claim) => claim.ref);
+/** Refuses `hostName` when the host carries a ref neither this project nor a machine claim owns. */
+export async function assertNoForeignRefs(
+  deps: WithdrawalDeps,
+  held: {
+    readonly withdrawal: ProjectRegistrationWithdrawal;
+    readonly registrations: RegistrationRecord;
+    readonly facts: ProjectCleanFacts;
+  },
+  hostName: string
+): Promise<void> {
+  const { withdrawal, registrations, facts } = held;
+  const { tool } = withdrawal;
+  const claims = (await facts.machineClaims(tool.toolId)) ?? [];
+  await assertNoForeignNativeRefs(
+    { reader: deps.ports.pluginRegistries.get(tool.toolId), tool },
+    {
+      hostName,
+      ownedRefs: new Set([...registrations.pluginRefs, ...claims.map((claim) => claim.ref)]),
+      projectRoot: facts.projectRoot,
+    }
+  );
 }

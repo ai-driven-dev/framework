@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createOutput } from "../../../../src/composition/shared.js";
-import { resolveProjectRootForReferences } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
+import { resolveReferenceRoot } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 let root: string;
@@ -18,7 +18,7 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-describe("resolveProjectRootForReferences against a real symlink", () => {
+describe("resolveReferenceRoot against a real symlink", () => {
   it("resolves a project reached through a symlink to its real location", async () => {
     const real = join(root, "real-project");
     const link = join(root, "link-project");
@@ -26,7 +26,7 @@ describe("resolveProjectRootForReferences against a real symlink", () => {
     await symlink(real, link);
     const fs = new FileAdapter(createOutput(false));
 
-    const resolved = await resolveProjectRootForReferences(fs, link);
+    const resolved = await resolveReferenceRoot(fs, link);
 
     expect(resolved).toBe(real);
     expect(resolved).not.toBe(link);
@@ -36,7 +36,7 @@ describe("resolveProjectRootForReferences against a real symlink", () => {
     const vanished = join(root, "gone");
     const fs = new FileAdapter(createOutput(false));
 
-    const resolved = await resolveProjectRootForReferences(fs, vanished);
+    const resolved = await resolveReferenceRoot(fs, vanished);
 
     expect(resolved).toBe(vanished);
   });

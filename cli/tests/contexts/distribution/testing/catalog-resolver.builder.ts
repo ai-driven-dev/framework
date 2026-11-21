@@ -18,11 +18,13 @@ export function resolvingCatalogs(
   const pathOf = (source: { kind: string; path?: string; repo?: string }): string =>
     source.kind === "local" ? String(source.path) : fetchedPathOf(String(source.repo));
   const fetcher = new FetchMarketplaceSource({
-    fetch: async (source) => {
-      const path = pathOf(source);
-      const catalog = catalogs[path];
-      if (catalog instanceof Error) throw catalog;
-      return path;
+    pluginFetcher: {
+      fetch: async (source) => {
+        const path = pathOf(source);
+        const catalog = catalogs[path];
+        if (catalog instanceof Error) throw catalog;
+        return path;
+      },
     },
   });
   return new ResolveMarketplace(fetcher, {

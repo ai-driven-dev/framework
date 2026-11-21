@@ -48,10 +48,12 @@ function fixture(
   );
   const host = new FakeHostWithdrawal();
   const remove = new RemoveUserPlugin(
-    repo,
-    host,
-    registrationRecordRules,
-    files,
+    {
+      userRepo: repo,
+      withdrawFromHost: host,
+      records: registrationRecordRules,
+      userScopePluginFiles: files,
+    },
     registeredTools()
   );
   const run = (pluginName = NAME, toolId: AiToolId = TOOL.claude) =>

@@ -4,6 +4,7 @@ import type { Scope } from "../../../shared/domain/scope.js";
 import { NativePluginCliError } from "../domain/host-registration.error.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { HostActions } from "../ports/host-actions.js";
+import type { HostCliShape } from "../ports/host-cli-shape.js";
 import {
   hostExecutableLookup,
   resolveExecutableOnPath,
@@ -14,21 +15,17 @@ import {
 // `plugin add/install` may fetch and cache a marketplace snapshot from a git remote.
 const COMMAND_TIMEOUT_MS = 120000;
 
-/** Everything about a tool's plugin CLI that differs between tools, read off its profile. */
-export interface HostCliShape {
-  readonly scopeArgs?: Readonly<Record<Scope, readonly string[]>>;
-  readonly userRemoveArgs?: readonly string[];
-  readonly forceRemoveArgs?: readonly string[];
-  readonly sourceCheckVerb?: string;
-  readonly upgradeVerb?: string;
-  readonly updateVerb?: string;
-  readonly enableVerb?: string;
-  /** How the tool spells removing a plugin it installed: `remove` for codex, `uninstall` for
-   * claude and copilot. Absent where this CLI enables plugins through a file it writes. */
-  readonly disableVerb?: string;
-  /** Arguments every `plugin <verb> <ref>` call carries, after the reference. Claude needs
-   * `--yes`: a headless stdin cannot answer its prune confirmation. */
-  readonly pluginArgs?: readonly string[];
+/** Whether a plugin list names a plugin of the marketplace installed beyond the user's scope. A
+ * list that does not parse counts as yes, like one that could not be read. */
+function listsOtherScopeUse(stdout: string, name: string): boolean {
+  try {
+    const plugins = JSON.parse(stdout) as { id?: string; scope?: string }[];
+    return plugins.some(
+      (plugin) => plugin.id !== undefined && isRefOnHost(plugin.id, name) && plugin.scope !== "user"
+    );
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -106,15 +103,7 @@ export class HostCliAdapter implements HostActions {
       homedir()
     );
     if (result.error !== undefined || result.status !== 0) return true;
-    try {
-      const plugins = JSON.parse(result.stdout) as { id?: string; scope?: string }[];
-      return plugins.some(
-        (plugin) =>
-          plugin.id !== undefined && isRefOnHost(plugin.id, name) && plugin.scope !== "user"
-      );
-    } catch {
-      return true;
-    }
+    return listsOtherScopeUse(result.stdout, name);
   }
 
   enablesPlugins(): boolean {

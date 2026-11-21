@@ -1,5 +1,6 @@
 import type { PluginSourceMatch } from "../../contract/plugin-source-match.js";
 import { PluginNotInMarketplaceError } from "../../domain/distribution.error.js";
+import type { Marketplace } from "../../domain/marketplace.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugin-source-resolver.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 import type { ResolveMarketplace } from "../resolve-marketplace.js";
@@ -25,22 +26,28 @@ export class ResolvePluginSource {
       : all;
     const matches: PluginSourceMatch[] = [];
     for (const marketplace of searched) {
-      const { catalog, localPath } = await this.resolveMarketplace.execute({
-        marketplace,
-        projectRoot: command.projectRoot,
-      });
-      if (!catalog) continue;
-      for (const entry of catalog.plugins) {
-        if (entry.name !== command.pluginName) continue;
-        matches.push({
-          marketplaceName: marketplace.name,
-          githubMarketplace: marketplace.source.kind === "github",
-          entry,
-          source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
-        });
-      }
+      matches.push(...(await this.matchesIn(marketplace, command)));
     }
     if (matches.length === 0) throw new PluginNotInMarketplaceError(command.pluginName);
     return matches;
+  }
+
+  private async matchesIn(
+    marketplace: Marketplace,
+    command: ResolvePluginSourceCommand
+  ): Promise<PluginSourceMatch[]> {
+    const { catalog, localPath } = await this.resolveMarketplace.execute({
+      marketplace,
+      projectRoot: command.projectRoot,
+    });
+    if (!catalog) return [];
+    return catalog.plugins
+      .filter((entry) => entry.name === command.pluginName)
+      .map((entry) => ({
+        marketplaceName: marketplace.name,
+        githubMarketplace: marketplace.source.kind === "github",
+        entry,
+        source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
+      }));
   }
 }

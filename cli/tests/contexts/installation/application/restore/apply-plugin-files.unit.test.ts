@@ -43,12 +43,12 @@ async function installedSample() {
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("the project manifest was not initialised");
   const plugin = present(manifest.getPlugins(TOOL.claude)[0]);
-  const apply = new ApplyPluginFiles(
-    deps.fs,
-    deps.pluginFetcher,
-    deps.pluginDistributionReader,
-    fakeBuiltDeps()
-  );
+  const apply = new ApplyPluginFiles({
+    fs: deps.fs,
+    pluginFetcher: deps.pluginFetcher,
+    pluginDistributionReader: deps.pluginDistributionReader,
+    builtDeps: fakeBuiltDeps(),
+  });
   const command = {
     toolId: TOOL.claude,
     plugin,

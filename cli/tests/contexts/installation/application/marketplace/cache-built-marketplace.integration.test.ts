@@ -81,7 +81,12 @@ function buildEnsurer(
   builds: FrameworkBuilds,
   version: VersionReader = fakeVersion("5.0.0")
 ): EnsureBuiltMarketplace {
-  const cache = new CacheBuiltMarketplace(fs, builds, version, () => USER_CACHE_ROOT);
+  const cache = new CacheBuiltMarketplace({
+    fs,
+    builds,
+    version,
+    userCacheRoot: () => USER_CACHE_ROOT,
+  });
   return new EnsureBuiltMarketplace(resolveMarketplace, cache);
 }
 

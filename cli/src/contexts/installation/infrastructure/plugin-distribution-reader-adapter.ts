@@ -11,7 +11,7 @@ import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import { InvalidPluginNameError, InvalidPluginVersionError } from "../domain/installation.error.js";
-import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
+import { PLUGIN_NAME_REGEX } from "../domain/plugins/plugin-entry.js";
 import type { PluginDistributionReader } from "../ports/plugin/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";
@@ -88,12 +88,29 @@ function toPosix(p: string): string {
   return p.split("\\").join("/");
 }
 
+/** The component group each top-level plugin directory feeds. */
+const DIRECTORY_GROUPS = new Map<string, keyof PluginComponents>([
+  ["skills", "skills"],
+  ["commands", "commands"],
+  ["agents", "agents"],
+  ["rules", "rules"],
+  ["hooks", "hooks"],
+]);
+
+function groupOf(relativePath: string): keyof PluginComponents | undefined {
+  if (relativePath === ".mcp.json") return "mcp";
+  return DIRECTORY_GROUPS.get(relativePath.split("/")[0] ?? "");
+}
+
 function isComponentFile(relativePath: string): boolean {
-  const top = relativePath.split("/")[0];
-  if (top === "skills" || top === "commands" || top === "agents" || top === "rules") return true;
-  if (top === "hooks") return true;
-  if (relativePath === ".mcp.json") return true;
-  return false;
+  return groupOf(relativePath) !== undefined;
+}
+
+function requiredString(value: unknown, field: string): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new InvalidPluginManifestError(`"${field}" must be a non-empty string`);
+  }
+  return value;
 }
 
 function validateManifest(raw: unknown): PluginManifestFields {
@@ -101,57 +118,35 @@ function validateManifest(raw: unknown): PluginManifestFields {
   if (obj === null) {
     throw new InvalidPluginManifestError("plugin.json must be a JSON object");
   }
-
-  const name = obj.name;
-  if (typeof name !== "string" || name.length === 0) {
-    throw new InvalidPluginManifestError('"name" must be a non-empty string');
-  }
-  if (!PLUGIN_NAME_REGEX.test(name)) {
-    throw new InvalidPluginNameError(name);
-  }
-
-  const version = obj.version;
-  if (typeof version !== "string" || version.length === 0) {
-    throw new InvalidPluginManifestError('"version" must be a non-empty string');
-  }
-  if (!isSemver(version)) {
-    throw new InvalidPluginVersionError(version);
-  }
+  const name = requiredString(obj.name, "name");
+  if (!PLUGIN_NAME_REGEX.test(name)) throw new InvalidPluginNameError(name);
+  const version = requiredString(obj.version, "version");
+  if (!isSemver(version)) throw new InvalidPluginVersionError(version);
 
   const result: PluginManifestFields = { name, version };
-
   if (typeof obj.description === "string") result.description = obj.description;
-  const a = asPlainObject(obj.author);
-  if (a !== null) {
-    if (typeof a.name === "string") {
-      result.author = { name: a.name };
-      if (typeof a.email === "string") result.author.email = a.email;
-    }
-  }
-
+  const author = authorOf(asPlainObject(obj.author));
+  if (author !== undefined) result.author = author;
   return result;
 }
 
+function authorOf(raw: Record<string, unknown> | null): PluginManifestFields["author"] {
+  if (raw === null || typeof raw.name !== "string") return undefined;
+  return typeof raw.email === "string" ? { name: raw.name, email: raw.email } : { name: raw.name };
+}
+
 function categorize(files: readonly PluginComponentFile[]): PluginComponents {
-  const skills: PluginComponentFile[] = [];
-  const commands: PluginComponentFile[] = [];
-  const agents: PluginComponentFile[] = [];
-  const rules: PluginComponentFile[] = [];
-  const hooks: PluginComponentFile[] = [];
-  const mcp: PluginComponentFile[] = [];
-
+  const groups: Record<keyof PluginComponents, PluginComponentFile[]> = {
+    skills: [],
+    commands: [],
+    agents: [],
+    rules: [],
+    hooks: [],
+    mcp: [],
+  };
   for (const file of files) {
-    if (file.relativePath === ".mcp.json") {
-      mcp.push(file);
-      continue;
-    }
-    const top = file.relativePath.split("/")[0];
-    if (top === "skills") skills.push(file);
-    else if (top === "commands") commands.push(file);
-    else if (top === "agents") agents.push(file);
-    else if (top === "rules") rules.push(file);
-    else if (top === "hooks") hooks.push(file);
+    const group = groupOf(file.relativePath);
+    if (group !== undefined) groups[group].push(file);
   }
-
-  return { skills, commands, agents, rules, hooks, mcp };
+  return groups;
 }

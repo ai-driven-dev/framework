@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertNoForeignNativeRefs,
   assertSourceOwned,
-  inspectNativeMarketplaceSource,
+  inspectHostSource,
 } from "../../../../src/contexts/host-registration/application/native-marketplace-source-proof.js";
 import type {
   NativeMarketplaceRegistration,
@@ -55,7 +55,7 @@ describe("current native marketplace source proof", () => {
           throw error;
         },
       };
-      expect(await inspectNativeMarketplaceSource(sourceReader, "/project-b", claim)).toEqual({
+      expect(await inspectHostSource(sourceReader, "/project-b", claim)).toEqual({
         status: "unproven",
         reason:
           "Catalogue 'real-catalog': host source read failed (source permission denied); reconcile manually.",
@@ -70,7 +70,7 @@ describe("current native marketplace source proof", () => {
     "reports the exact unreadable host source diagnostic",
     async ({ location, unreadable, reason }) => {
       expect(
-        await inspectNativeMarketplaceSource(
+        await inspectHostSource(
           { read: async () => ({ location, unreadable }) },
           "/project-b",
           claim
@@ -226,7 +226,7 @@ describe("current native marketplace source proof", () => {
   ];
 
   it.each(VERDICTS)("judges %s", async (_cell, sourceReader, registration, status, reason) => {
-    const result = await inspectNativeMarketplaceSource(sourceReader, "/project-b", registration);
+    const result = await inspectHostSource(sourceReader, "/project-b", registration);
 
     expect(result.status).toBe(status);
     if (reason !== undefined) {

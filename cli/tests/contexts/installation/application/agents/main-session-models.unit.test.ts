@@ -114,7 +114,12 @@ function harness(given: Case = {}) {
     locate: async (host: string): Promise<MainSessionLocation> =>
       given.located?.[host] ?? { models: models(SCHEMA), path: A },
   };
-  const subject = new MainSessionModels(files, store, settings, locator);
+  const subject = new MainSessionModels({
+    fs: files,
+    store,
+    settings,
+    mainSessionLocator: locator,
+  });
   return {
     apply: (hosts: readonly string[], chosen: ReadonlyMap<string, string>, dryRun = false) =>
       subject.execute({ hosts, chosen, dryRun }),

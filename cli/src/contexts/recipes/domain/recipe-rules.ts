@@ -1,11 +1,11 @@
+import { errorMessage } from "../../../shared/domain/describe-error.js";
+import { findAnglePlaceholders, maskAngleSyntaxBlocks } from "./angle-placeholders.js";
+import type { Fence, Report } from "./fence-scan.js";
+import { headingAnchors } from "./heading-anchors.js";
 import {
-  type Fence,
-  findAnglePlaceholders,
-  headingAnchors,
   lineNumberAt,
   type RecipeFinding,
   type RecipeLink,
-  type Report,
   recipeLinks,
   reporter,
   type ScannedRecipe,
@@ -17,43 +17,6 @@ export interface RecipeInspection {
   readonly findings: RecipeFinding[];
   readonly links: RecipeLink[];
   readonly anchors: Set<string>;
-}
-
-const ANGLE_SYNTAX_LANGUAGES = new Set([
-  "c",
-  "c++",
-  "cpp",
-  "cs",
-  "csharp",
-  "go",
-  "html",
-  "java",
-  "jsx",
-  "kotlin",
-  "objc",
-  "objective-c",
-  "rust",
-  "svg",
-  "swift",
-  "tsx",
-  "xml",
-]);
-
-function maskAngleSyntaxBlocks(content: string, blocks: Fence[]): string {
-  const lines = content.split(/\r?\n/u);
-  for (const block of blocks) {
-    if (!ANGLE_SYNTAX_LANGUAGES.has(block.language)) continue;
-    for (let index = block.start; index <= block.end; index += 1) {
-      lines[index] = lines[index].replace(/<([a-z][^<>\n]*)>/giu, (match: string, value: string) =>
-        /\b(?:recipe title|one sentence|the reader|benefit-focused|benefit-first|first step title|next step title|last step title|where it is|how to invoke it|the useful output|what this screenshot|optional\.)/iu.test(
-          value
-        )
-          ? match
-          : match.replace(/./gu, " ")
-      );
-    }
-  }
-  return lines.join("\n");
 }
 
 function checkTitle({ lines, headings }: ScannedRecipe, report: Report): void {
@@ -118,11 +81,7 @@ function checkJsonExamples(blocks: Fence[], report: Report): void {
     try {
       JSON.parse(block.body);
     } catch (error) {
-      report(
-        block.start + 1,
-        "json-syntax",
-        `Fix the JSON example: ${error instanceof Error ? error.message : String(error)}`
-      );
+      report(block.start + 1, "json-syntax", `Fix the JSON example: ${errorMessage(error)}`);
     }
   }
 }

@@ -14,9 +14,11 @@ type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function propagateAnswering(deps: Deps, answer: PropagateAiSettingsToIde["execute"]) {
   const propagate = new PropagateAiSettingsToIde(
-    deps.manifestRepo,
-    deps.trackedConfigFiles,
-    deps.runPostInstallPipeline,
+    {
+      manifestRepo: deps.manifestRepo,
+      trackedConfigFiles: deps.trackedConfigFiles,
+      runPostInstallPipeline: deps.runPostInstallPipeline,
+    },
     registeredTools()
   );
   const execute = vi.spyOn(propagate, "execute").mockImplementation(answer);

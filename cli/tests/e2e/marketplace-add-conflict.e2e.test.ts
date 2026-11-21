@@ -12,7 +12,7 @@ import {
 
 const PLUGIN_FIXTURE = resolve(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 
-/** A claude-shaped catalog at the exact path `readMarketplaceCatalogIdentity` reads.
+/** A claude-shaped catalog at the exact path `readCatalogIdentity` reads.
  * Identity is `pluginName`, never the version, which two writes of one catalog may differ on. */
 async function writeCatalog(dir: string, name: string, pluginName: string): Promise<void> {
   await mkdir(join(dir, ".claude-plugin"), { recursive: true });

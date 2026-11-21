@@ -3,7 +3,7 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
+import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 
 export interface PluginRematerialization {

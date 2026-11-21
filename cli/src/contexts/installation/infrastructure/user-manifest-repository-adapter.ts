@@ -52,25 +52,35 @@ export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
   async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
     const lock = `${this.path}.lock`;
     await mkdir(dirname(lock), { recursive: true });
-    const deadline = Date.now() + 30_000;
-    while (true) {
-      try {
-        await mkdir(lock);
-        break;
-      } catch (error) {
-        if (!(isErrnoException(error) && error.code === "EEXIST")) throw error;
-        if (Date.now() >= deadline) {
-          throw new Error(
-            `User manifest is busy: ${lock}. Retry after the other AIDD operation finishes.`
-          );
-        }
-        await pause(100);
-      }
-    }
+    await this.acquire(lock);
     try {
       return await action();
     } finally {
       await rmdir(lock);
     }
+  }
+
+  /** Takes the lock directory, waiting for whoever holds it up to a deadline. */
+  private async acquire(lock: string): Promise<void> {
+    const deadline = Date.now() + 30_000;
+    while (!(await tryTake(lock))) {
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `User manifest is busy: ${lock}. Retry after the other AIDD operation finishes.`
+        );
+      }
+      await pause(100);
+    }
+  }
+}
+
+/** False when another process holds the lock directory. */
+async function tryTake(lock: string): Promise<boolean> {
+  try {
+    await mkdir(lock);
+    return true;
+  } catch (error) {
+    if (isErrnoException(error) && error.code === "EEXIST") return false;
+    throw error;
   }
 }

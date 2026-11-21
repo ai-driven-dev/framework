@@ -56,6 +56,19 @@ interface EnsureJob extends BuildJob {
 const SENTINEL_FILE = ".build-version";
 const UNVERSIONED = "unversioned";
 
+/** What CacheBuiltMarketplace is built from. */
+export interface CacheBuiltMarketplaceDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly builds: FrameworkBuilds;
+  readonly version: VersionReader;
+  /**
+   * Where a user-scope marketplace's built tree belongs. Building it under the project that
+   * happened to register it would tie a declaration meant for every project to the life of one
+   * of them: delete that project and the global registration points at nothing.
+   */
+  readonly userCacheRoot: () => string;
+}
+
 /**
  * The disk half of the ensurer: staleness, the build and the guard-safe outDir (build to temp then
  * copy when the cache nests under the source), for a source already resolved.
@@ -63,17 +76,7 @@ const UNVERSIONED = "unversioned";
 export class CacheBuiltMarketplace {
   private readonly memo = new Map<string, EnsureBuiltMarketplaceResult>();
 
-  constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly builds: FrameworkBuilds,
-    private readonly version: VersionReader,
-    /**
-     * Where a user-scope marketplace's built tree belongs. Building it under the project that
-     * happened to register it would tie a declaration meant for every project to the life of one
-     * of them: delete that project and the global registration points at nothing.
-     */
-    private readonly userCacheRoot: () => string
-  ) {}
+  constructor(private readonly deps: CacheBuiltMarketplaceDeps) {}
 
   async execute(
     options: EnsureBuiltMarketplaceCommand,
@@ -85,14 +88,14 @@ export class CacheBuiltMarketplace {
     const builtDir = resolve(
       options.marketplace.scope === "user"
         ? userBuiltMarketplaceDir({
-            userConfigDir: this.userCacheRoot(),
-            cliVersion: this.version.get(),
+            userConfigDir: this.deps.userCacheRoot(),
+            cliVersion: this.deps.version.get(),
             marketplaceName: options.marketplace.name,
             target: options.target,
           })
         : builtMarketplaceDir(options.projectRoot, options.marketplace.name, options.target)
     );
-    const variant = await this.builds.variant(options.target);
+    const variant = await this.deps.builds.variant(options.target);
     const sentinel = this.sentinelValue(resolved.catalog?.version, variant);
     const memoKey = `${options.marketplace.name}:${options.target}:${sentinel}`;
     const memoized = this.memo.get(memoKey);
@@ -111,7 +114,7 @@ export class CacheBuiltMarketplace {
   }
 
   private sentinelValue(catalogVersion: string | undefined, variant: string | undefined): string {
-    const base = `${this.version.get()}:${catalogVersion ?? UNVERSIONED}`;
+    const base = `${this.deps.version.get()}:${catalogVersion ?? UNVERSIONED}`;
     return variant === undefined ? base : `${base}:${variant}`;
   }
 
@@ -136,7 +139,7 @@ export class CacheBuiltMarketplace {
       return { builtDir, version, rebuilt: false };
     }
     await this.build(job);
-    await this.fs.writeFile(join(builtDir, SENTINEL_FILE), sentinel);
+    await this.deps.fs.writeFile(join(builtDir, SENTINEL_FILE), sentinel);
     return { builtDir, version, rebuilt: true };
   }
 
@@ -144,8 +147,8 @@ export class CacheBuiltMarketplace {
     // The catalog version sits second, whatever variant follows it.
     if (sentinel.split(":")[1] === UNVERSIONED) return false;
     const path = join(builtDir, SENTINEL_FILE);
-    if (!(await this.fs.fileExists(path))) return false;
-    const current = await this.fs.readFile(path).catch(() => "");
+    if (!(await this.deps.fs.fileExists(path))) return false;
+    const current = await this.deps.fs.readFile(path).catch(() => "");
     return current === sentinel;
   }
 
@@ -164,11 +167,11 @@ export class CacheBuiltMarketplace {
   private async buildViaTemp(job: BuildJob): Promise<void> {
     const { target, mode, builtDir } = job;
     const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
-    await this.fs.deleteDirectory(temp);
+    await this.deps.fs.deleteDirectory(temp);
     await this.runBuild({ ...job, outDir: temp });
-    await this.fs.deleteDirectory(builtDir);
+    await this.deps.fs.deleteDirectory(builtDir);
     await this.copyDir(temp, builtDir);
-    await this.fs.deleteDirectory(temp);
+    await this.deps.fs.deleteDirectory(temp);
   }
 
   // Every outDir reaching this method is either `builtMarketplaceDir()` or a temp dir this class
@@ -176,8 +179,8 @@ export class CacheBuiltMarketplace {
   // reuse, not data loss.
   private async runBuild(job: BuildJob & { outDir: string }): Promise<void> {
     const { target, mode, sourceDir, outDir, variant } = job;
-    await this.fs.createDirectory(outDir);
-    const build = this.builds.buildFor({ target, mode, outDir, variant });
+    await this.deps.fs.createDirectory(outDir);
+    const build = this.deps.builds.buildFor({ target, mode, outDir, variant });
     if (build === undefined) {
       throw new Error(`No framework build for target '${target}' mode '${mode}'.`);
     }
@@ -185,11 +188,11 @@ export class CacheBuiltMarketplace {
   }
 
   private async copyDir(from: string, to: string): Promise<void> {
-    const files = await this.fs.listFilesRecursive(from);
+    const files = await this.deps.fs.listFilesRecursive(from);
     for (const abs of files) {
       const rel = abs.slice(from.length + 1);
-      const content = await this.fs.readFile(abs);
-      await this.fs.writeFile(join(to, rel), content);
+      const content = await this.deps.fs.readFile(abs);
+      await this.deps.fs.writeFile(join(to, rel), content);
     }
   }
 }

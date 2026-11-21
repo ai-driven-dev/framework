@@ -9,18 +9,53 @@ import type { UserSourceReferences } from "../ports/user-source-references.js";
 
 type ReferencesFile = Record<string, readonly string[]>;
 
-/** The version key `projectRoot` is recorded under, and that key's full roots list: `undefined`
- * when it is recorded nowhere. Path equality goes through `samePathSegment`, never `===`, so a
+/** A project root recorded under one version, its paths compared by the platform's rules. */
+interface RootRecord {
+  readonly version: string;
+  readonly projectRoot: string;
+  readonly platform: string;
+}
+
+type RootAt = Omit<RootRecord, "version">;
+
+const holdsRoot = (roots: readonly string[], at: RootAt): boolean =>
+  roots.some((root) => samePathSegment(root, at.projectRoot, at.platform));
+
+const withoutRoot = (roots: readonly string[], at: RootAt): string[] =>
+  roots.filter((root) => !samePathSegment(root, at.projectRoot, at.platform));
+
+/** The version key the root is recorded under, and that key's full roots list: `undefined` when it
+ * is recorded nowhere. Path equality goes through `samePathSegment`, never `===`, so a
  * case-insensitive platform still matches a root a real `realpath` returns with different casing. */
 function findVersionFor(
   references: ReferencesFile,
-  projectRoot: string,
-  platform: string
+  at: RootAt
 ): [string, readonly string[]] | undefined {
   for (const [version, roots] of Object.entries(references)) {
-    if (roots.some((root) => samePathSegment(root, projectRoot, platform))) return [version, roots];
+    if (holdsRoot(roots, at)) return [version, roots];
   }
   return undefined;
+}
+
+function isRecordedOnlyAt(references: ReferencesFile, record: RootRecord): boolean {
+  const { version } = record;
+  return (
+    holdsRoot(references[version] ?? [], record) &&
+    Object.entries(references).every(([key, roots]) => key === version || !holdsRoot(roots, record))
+  );
+}
+
+/** The references with the root recorded under `version` alone, and every other version keeping
+ * only the roots it still has. */
+function recordedAt(references: ReferencesFile, record: RootRecord): ReferencesFile {
+  const { version, projectRoot } = record;
+  const next: Record<string, string[]> = {};
+  for (const [key, roots] of Object.entries(references)) {
+    const remaining = withoutRoot(roots, record);
+    if (key !== version && remaining.length > 0) next[key] = remaining;
+  }
+  next[version] = [...withoutRoot(references[version] ?? [], record), projectRoot];
+  return next;
 }
 
 export class UserSourceReferencesAdapter implements UserSourceReferences {
@@ -32,26 +67,9 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
 
   async addReference(version: string, projectRoot: string): Promise<void> {
     const references = await this.readAll();
-    const alreadyOnlyHere =
-      (references[version] ?? []).some((root) =>
-        samePathSegment(root, projectRoot, this.platform)
-      ) &&
-      Object.entries(references).every(
-        ([key, roots]) =>
-          key === version ||
-          !roots.some((root) => samePathSegment(root, projectRoot, this.platform))
-      );
-    if (alreadyOnlyHere) return;
-    const next: Record<string, string[]> = {};
-    for (const [key, roots] of Object.entries(references)) {
-      if (key === version) continue;
-      const filtered = roots.filter((root) => !samePathSegment(root, projectRoot, this.platform));
-      if (filtered.length > 0) next[key] = filtered;
-    }
-    const existingAtVersion = (references[version] ?? []).filter(
-      (root) => !samePathSegment(root, projectRoot, this.platform)
-    );
-    next[version] = [...existingAtVersion, projectRoot];
+    const record = { version, projectRoot, platform: this.platform };
+    if (isRecordedOnlyAt(references, record)) return;
+    const next = recordedAt(references, record);
     // `projectRoot` is protected from the prune below: a project vanishing between being recorded
     // and this very write finishing would otherwise drop the claim `addReference` was just asked
     // to add.
@@ -60,10 +78,11 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
 
   async removeReference(projectRoot: string): Promise<void> {
     const references = await this.readAll();
-    const found = findVersionFor(references, projectRoot, this.platform);
+    const at = { projectRoot, platform: this.platform };
+    const found = findVersionFor(references, at);
     if (found === undefined) return;
     const [version, roots] = found;
-    const remaining = roots.filter((root) => !samePathSegment(root, projectRoot, this.platform));
+    const remaining = withoutRoot(roots, at);
     const next = { ...references };
     if (remaining.length > 0) next[version] = remaining;
     else delete next[version];
@@ -103,18 +122,26 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
     await this.fs.writeFile(this.path, JSON.stringify(pruned, null, 2));
   }
 
+  private async survivingRoots(
+    roots: readonly string[],
+    protectedRoot: string | undefined
+  ): Promise<string[]> {
+    const existing: string[] = [];
+    for (const root of roots) {
+      const protectedFromPrune =
+        protectedRoot !== undefined && samePathSegment(root, protectedRoot, this.platform);
+      if (protectedFromPrune || (await this.fs.fileExists(root))) existing.push(root);
+    }
+    return existing;
+  }
+
   private async pruneVanishedRoots(
     references: ReferencesFile,
     protectedRoot: string | undefined
   ): Promise<ReferencesFile> {
     const result: ReferencesFile = {};
     for (const [version, roots] of Object.entries(references)) {
-      const existing: string[] = [];
-      for (const root of roots) {
-        const protectedFromPrune =
-          protectedRoot !== undefined && samePathSegment(root, protectedRoot, this.platform);
-        if (protectedFromPrune || (await this.fs.fileExists(root))) existing.push(root);
-      }
+      const existing = await this.survivingRoots(roots, protectedRoot);
       if (existing.length > 0) result[version] = existing;
     }
     return result;

@@ -32,20 +32,25 @@ interface ProjectUpdateScope {
   rebuild: boolean;
 }
 
+/** What UpdatePlugin is built from. */
+export interface UpdatePluginDeps {
+  readonly manifestRepo: ManifestRepository;
+  readonly distributionLoader: PluginDistributionLoader;
+  readonly replacePluginFiles: ReplacePluginFiles;
+  readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">;
+}
+
 export class UpdatePlugin {
   constructor(
-    private readonly manifestRepo: ManifestRepository,
-    private readonly distributionLoader: PluginDistributionLoader,
-    private readonly replacePluginFiles: ReplacePluginFiles,
-    private readonly tools: ToolCatalog,
-    private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
+    private readonly deps: UpdatePluginDeps,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: UpdatePluginCommand): Promise<string[]> {
     if (options.scope === "user")
       throw new Error("User-scope plugin update requires UpdateUserPluginFiles.");
     const { pluginNames, toolIds, projectRoot } = options;
-    const manifest = await requireManifest(this.manifestRepo);
+    const manifest = await requireManifest(this.deps.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const scope: ProjectUpdateScope = {
       projectRoot,
@@ -62,7 +67,7 @@ export class UpdatePlugin {
       );
       updated.push(...names);
     }
-    await this.manifestRepo.save(manifest);
+    await this.deps.manifestRepo.save(manifest);
     return updated;
   }
 
@@ -91,12 +96,12 @@ export class UpdatePlugin {
     const { projectRoot, cacheDir, manifest, rebuild } = scope;
     const toolId = tool.toolId;
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
-    const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
+    const dist = await this.deps.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
-    await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
+    await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
-    await this.replacePluginFiles.execute({
+    await this.deps.replacePluginFiles.execute({
       plugin,
       dist,
       toolId,

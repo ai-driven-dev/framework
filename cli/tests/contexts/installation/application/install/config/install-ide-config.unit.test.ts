@@ -19,9 +19,11 @@ function buildUseCase(
   assets: AssetProvider = deps.assetProvider
 ) {
   return new InstallIdeConfig(
-    new TrackedConfigFiles(deps.fs, deps.logger),
-    assets,
-    deps.runPostInstallPipeline,
+    {
+      trackedConfigFiles: new TrackedConfigFiles(deps.fs, deps.logger),
+      assets,
+      runPostInstallPipeline: deps.runPostInstallPipeline,
+    },
     registeredTools()
   );
 }

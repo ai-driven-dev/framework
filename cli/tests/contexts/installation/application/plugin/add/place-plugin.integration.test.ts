@@ -46,9 +46,14 @@ async function placeForCursor(foundFile: string | undefined) {
     platform: process.platform,
   };
   const added = await new ResolveAddedPluginSource(
-    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    deps.fs,
-    built,
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        deps.pluginDistributionReader
+      ),
+      fs: deps.fs,
+      built,
+    },
     registeredTools()
   ).execute({
     source: GIT_SUBDIR_SOURCE,
@@ -60,7 +65,7 @@ async function placeForCursor(foundFile: string | undefined) {
   const logger = new CapturingLogger();
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("the project manifest was not initialised");
-  await new PlacePlugin(deps.fs, logger, built, registeredTools()).execute({
+  await new PlacePlugin({ fs: deps.fs, logger, built }, registeredTools()).execute({
     dist: added.distribution,
     toolIds: [cursor],
     source: GIT_SUBDIR_SOURCE,

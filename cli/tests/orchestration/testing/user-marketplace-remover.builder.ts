@@ -26,10 +26,12 @@ export function userMarketplaceRemover(
   return new RemoveUserMarketplace(
     new FindUserMarketplace(registry),
     new PurgeMarketplacePlugins(
-      repo,
-      nativeHost,
-      new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-      records,
+      {
+        repo,
+        nativeHost,
+        userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+        records,
+      },
       registeredTools()
     ),
     new RemoveMarketplace(registry),

@@ -68,12 +68,14 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
   const purgeUserScopeFiles = new PurgeUserScopeFiles(
-    userManifestRepo,
-    new PurgeMachineState(fs, logger, marketplaceRegistry, guards),
-    homedir,
-    new UserScopePluginFiles(fs, (plugin, tool, home) =>
-      userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-    ),
+    {
+      userManifestRepo,
+      purgeMachineState: new PurgeMachineState({ fs, logger, marketplaceRegistry, guards }),
+      homeDir: homedir,
+      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+      ),
+    },
     tools
   );
   return new CleanUserScope(purgeUserScopeFiles, withdrawFromHost, claims, logger, prompter);
@@ -94,10 +96,12 @@ export function wireClean(base: Base, inst: Installation) {
   } = base;
   const { updateGitignore, registrationRecordRules } = inst;
   const uninstallTools = new UninstallTools(
-    manifestRepo,
-    detachProjectClaims(userManifestRepo, fs),
-    registrationRecordRules,
-    new RemoveToolFiles(fs, logger, tools),
+    {
+      manifestRepo,
+      detachClaims: detachProjectClaims(userManifestRepo, fs),
+      records: registrationRecordRules,
+      removeToolFiles: new RemoveToolFiles(fs, logger, tools),
+    },
     tools
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
@@ -110,15 +114,20 @@ export function wireClean(base: Base, inst: Installation) {
   });
   const cleanUserScopeUseCase = wireCleanUserScope(base, purgeCache, claims);
   const cleanProjectFiles = new CleanProjectFiles(
-    fs,
-    manifestRepo,
     {
-      homeDir: resolveHomeDir,
-      assertMcpRemovable: (plugin, tool, projectRoot) =>
-        assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
-      records: registrationRecordRules,
+      fs,
+      manifestRepo,
+      asks: {
+        homeDir: resolveHomeDir,
+        assertMcpRemovable: (plugin, tool, projectRoot) =>
+          assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
+        records: registrationRecordRules,
+      },
+      removeProjectFiles: new RemoveProjectFiles(
+        { fs, manifestRepo, logger, updateGitignore },
+        tools
+      ),
     },
-    new RemoveProjectFiles(fs, manifestRepo, logger, updateGitignore, tools),
     tools
   );
   const cleanUseCase = new CleanProject(

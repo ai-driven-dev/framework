@@ -7,24 +7,8 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { RestoreAllPlugins, RestoreAllPluginsResult } from "./restore-all-plugins.js";
+import { buildFileFilter, configRefsOf } from "./restore-inputs.js";
 import type { RestoreToolFiles, RestoreToolFilesResult } from "./restore-tool-files.js";
-
-/**
- * Where each config artifact sits in the canonical source, asked of every registered profile
- * through the artifacts its capabilities consume, so restoring knows artifacts, not tools.
- * An artifact several tools consume is named once.
- */
-function configRefsOf(tools: ToolCatalog): readonly ConfigRef[] {
-  const byName = new Map<string, ConfigRef>();
-  for (const id of tools.sortedIds()) {
-    const profile = tools.profile(id);
-    for (const write of profile.configWrites()) {
-      if (write.kind === "hooks") continue;
-      for (const ref of write.capability.consumedRefs()) byName.set(ref.name, ref);
-    }
-  }
-  return [...byName.values()];
-}
 
 interface RestoreCommand {
   frameworkPath?: string;
@@ -63,17 +47,22 @@ interface RestoreResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
+/** What Restore is built from. */
+export interface RestoreDeps {
+  readonly fs: FileReader;
+  readonly manifestRepo: ManifestRepository;
+  readonly restoreToolFiles: RestoreToolFiles;
+  readonly restoreAllPlugins: RestoreAllPlugins;
+}
+
 export class Restore {
   constructor(
-    private readonly fs: FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly restoreToolFiles: RestoreToolFiles,
-    private readonly restoreAllPlugins: RestoreAllPlugins,
+    private readonly deps: RestoreDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreCommand): Promise<RestoreResult> {
-    const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
+    const manifest = options.manifest ?? (await requireManifest(this.deps.manifestRepo));
     const ctx = await this.buildRestoreContext(options, manifest);
     return this.executeRestore(ctx);
   }
@@ -116,13 +105,13 @@ export class Restore {
   private async runToolRestores(ctx: RestoreCtx): Promise<RestoreToolFilesResult[]> {
     const results: RestoreToolFilesResult[] = [];
     for (const toolId of ctx.toolIds) {
-      results.push(await this.restoreToolFiles.execute({ toolId, ...ctx }));
+      results.push(await this.deps.restoreToolFiles.execute({ toolId, ...ctx }));
     }
     return results;
   }
 
   private async runPluginRestore(ctx: RestoreCtx): Promise<RestoreAllPluginsResult> {
-    return this.restoreAllPlugins.execute({
+    return this.deps.restoreAllPlugins.execute({
       projectRoot: ctx.projectRoot,
       manifest: ctx.manifest,
       fileFilter: ctx.fileFilter,
@@ -143,7 +132,7 @@ export class Restore {
       toolResults.some((t) => t.restored.length > 0) ||
       totalPluginFilesRestored > 0 ||
       JSON.stringify(manifest.toJSON()) !== previousManifest;
-    if (hasChanges) await this.manifestRepo.save(manifest);
+    if (hasChanges) await this.deps.manifestRepo.save(manifest);
   }
 
   private buildTotals(
@@ -168,24 +157,10 @@ export class Restore {
     const contentFiles = new Map<string, string>();
     for (const ref of configRefs) {
       const absPath = join(frameworkPath, ref.path);
-      if (await this.fs.fileExists(absPath)) {
-        contentFiles.set(ref.path, await this.fs.readFile(absPath));
+      if (await this.deps.fs.fileExists(absPath)) {
+        contentFiles.set(ref.path, await this.deps.fs.readFile(absPath));
       }
     }
     return contentFiles;
   }
-}
-
-function buildFileFilter(files: string[] | undefined): ((p: string) => boolean) | null {
-  if (!files || files.length === 0) return null;
-  return (relativePath: string) =>
-    files.some((entry) => {
-      const basename = entry.split("/").at(-1) ?? entry;
-      const isDirectoryPrefix = entry.endsWith("/") || !basename.includes(".");
-      if (isDirectoryPrefix) {
-        const prefix = entry.endsWith("/") ? entry : `${entry}/`;
-        return relativePath.startsWith(prefix);
-      }
-      return relativePath === entry;
-    });
 }

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import {
   judgeConfirmation,
   judgeEmptiness,
@@ -142,12 +143,7 @@ async function purgeMarketplaceCache(
     await deleteWhenJudged(deps, verdict, target);
     return;
   }
-  let entries: string[];
-  try {
-    entries = await deps.fs.listDirectory(candidate);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
-    throw error;
-  }
+  const entries = await whenAbsent(() => deps.fs.listDirectory(candidate), undefined);
+  if (entries === undefined) return;
   await deleteWhenJudged(deps, judgeEmptiness(label, candidate, entries.length), target);
 }

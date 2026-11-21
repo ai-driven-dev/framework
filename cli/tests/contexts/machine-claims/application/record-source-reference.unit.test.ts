@@ -14,7 +14,13 @@ function recorder(
   references: UserSourceReferences | undefined,
   logger = new CapturingLogger()
 ) {
-  return new RecordSourceReference(fs, { get: () => "1.2.3" }, logger, NAME, references);
+  return new RecordSourceReference({
+    fs,
+    currentVersionProvider: { get: () => "1.2.3" },
+    logger,
+    frameworkMarketplaceName: NAME,
+    userSourceReferences: references,
+  });
 }
 
 function register(subject: RecordSourceReference, scope: Scope = "user", name = NAME) {

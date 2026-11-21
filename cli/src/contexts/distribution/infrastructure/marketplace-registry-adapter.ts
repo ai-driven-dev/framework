@@ -51,18 +51,14 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   }
 
   async save(projectRoot: string, marketplace: Marketplace): Promise<void> {
-    const path = this.pathFor(projectRoot, marketplace.scope);
-    const entries = await this.read(path, marketplace.scope);
-    const filtered = entries.filter((m) => m.name !== marketplace.name);
-    filtered.push(marketplace);
-    await this.write(path, filtered);
+    await this.rewrite(projectRoot, marketplace.scope, (entries) => [
+      ...entries.filter((m) => m.name !== marketplace.name),
+      marketplace,
+    ]);
   }
 
   async delete(projectRoot: string, name: string, scope: Scope): Promise<void> {
-    const path = this.pathFor(projectRoot, scope);
-    const entries = await this.read(path, scope);
-    const filtered = entries.filter((m) => m.name !== name);
-    await this.write(path, filtered);
+    await this.rewrite(projectRoot, scope, (entries) => entries.filter((m) => m.name !== name));
   }
 
   async updateLastFetched(projectRoot: string, key: MarketplaceKey, when: string): Promise<void> {
@@ -78,12 +74,19 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     key: MarketplaceKey,
     change: (marketplace: Marketplace) => Marketplace
   ): Promise<void> {
-    const path = this.pathFor(projectRoot, key.scope);
-    const entries = await this.read(path, key.scope);
-    await this.write(
-      path,
+    await this.rewrite(projectRoot, key.scope, (entries) =>
       entries.map((m) => (m.name === key.name ? change(m) : m))
     );
+  }
+
+  /** The scope's registry file, rewritten with what `edit` makes of the entries it holds. */
+  private async rewrite(
+    projectRoot: string,
+    scope: Scope,
+    edit: (entries: Marketplace[]) => Marketplace[]
+  ): Promise<void> {
+    const path = this.pathFor(projectRoot, scope);
+    await this.write(path, edit(await this.read(path, scope)));
   }
 
   private pathFor(projectRoot: string, scope: Scope): string {

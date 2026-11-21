@@ -29,7 +29,7 @@ function buildUseCase(
     [MKT1_PATH]: MKT1_PATH,
     [MKT2_PATH]: MKT2_PATH,
   });
-  const fetchMarketplaceSource = new FetchMarketplaceSource(fetcher);
+  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: fetcher });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)

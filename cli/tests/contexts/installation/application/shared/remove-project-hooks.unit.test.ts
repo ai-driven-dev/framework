@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { assertProjectHooksUnchanged } from "../../../../../src/contexts/installation/application/shared/assert-project-hooks-unchanged.js";
 import {
   assertProjectHooksRemovable,
-  assertProjectHooksUnchanged,
   removeProjectHooks,
 } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -364,31 +364,6 @@ describe("removeProjectHooks", () => {
     expect(fs.getFile(SCRIPT_PATH)).toBeUndefined();
   });
 
-  it("allows a legacy install with no project contribution and returns the existing hooks during preflight", async () => {
-    const content = hooksFile(OTHER);
-    const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
-
-    await expect(
-      assertProjectHooksUnchanged({
-        fs,
-        pluginName: PLUGIN,
-        provenance: undefined,
-        tool: registeredTools().aiProfile(cursor),
-        projectRoot: PROJECT_ROOT,
-      })
-    ).resolves.toStrictEqual({ existing: content });
-    await expect(
-      assertProjectHooksUnchanged({
-        fs,
-        pluginName: PLUGIN,
-        provenance: undefined,
-        tool: registeredTools().aiProfile(TOOL.opencode),
-        projectRoot: PROJECT_ROOT,
-      })
-    ).resolves.toStrictEqual({ existing: null });
-
-    expect(fs.getFile(HOOKS_PATH)).toBe(content);
-  });
   it("refuses a hooks.json symlink outside the project even when its entries match the install digest", async () => {
     const content = hooksFile(PLUGIN, OTHER);
     const foreignPath = "/foreign/hooks.json";

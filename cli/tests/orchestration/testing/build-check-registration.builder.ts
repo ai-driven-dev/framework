@@ -26,7 +26,7 @@ export function checkRegistrationOver(
 ): CheckRegistration {
   return new CheckRegistration(
     new ListRegisteredPlugins(loadManifest, registrationRecordRules),
-    new ResolveBuiltMarketplaces(fs, registry, userCacheRoot, currentVersion),
+    new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
     new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
     inspectHost,
     tools

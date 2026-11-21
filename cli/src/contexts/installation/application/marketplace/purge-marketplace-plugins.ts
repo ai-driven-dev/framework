@@ -29,32 +29,45 @@ export interface PurgeMarketplacePluginsCommand {
   forget: () => Promise<void>;
 }
 
+/** What PurgeMarketplacePlugins is built from. */
+export interface PurgeMarketplacePluginsDeps {
+  readonly repo: ManifestRepository & Lock;
+  readonly nativeHost: MarketplaceRemovalPlanner;
+  readonly userScopePluginFiles: UserScopePluginFileRemoval;
+  readonly records: RegistrationRecordRules;
+}
+
+function applyNativeRemovals(
+  calls: readonly Awaited<ReturnType<PurgeMarketplacePlugins["planNativeRemovals"]>>[number][]
+): void {
+  for (const { registration, activator, refs, scopes } of calls) {
+    for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
+    activator.removeMarketplace(registration.hostName, "user");
+  }
+}
+
 /** Removes everything the machine holds on behalf of one user-scope marketplace: the plugins
  * installed from it, and the host's catalogue and plugin claims, once none is still in use. */
 export class PurgeMarketplacePlugins {
   constructor(
-    private readonly repo: ManifestRepository & Lock,
-    private readonly nativeHost: MarketplaceRemovalPlanner,
-    private readonly userScopePluginFiles: UserScopePluginFileRemoval,
-    private readonly records: RegistrationRecordRules,
+    private readonly deps: PurgeMarketplacePluginsDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   /** The count of plugins and host plugin references removed. */
   async execute(command: PurgeMarketplacePluginsCommand): Promise<number> {
-    return this.repo.withExclusiveAccess(() => this.purgeLocked(command));
+    return this.deps.repo.withExclusiveAccess(() => this.purgeLocked(command));
   }
 
   private async purgeLocked(command: PurgeMarketplacePluginsCommand): Promise<number> {
     const { marketplace, projectRoot, home } = command;
     await command.whileLocked();
-    const manifest = await this.repo.load();
+    const manifest = await this.deps.repo.load();
     if (manifest === null)
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no user manifest.`
       );
-    const claims = this.claimsOn(manifest, marketplace);
-    const { plugins, native, nativeRefs } = claims;
+    const { plugins, native, nativeRefs } = this.claimsOn(manifest, marketplace);
     const dependents = [
       ...new Set([
         ...plugins.flatMap(({ plugin }) => plugin.dependents),
@@ -65,23 +78,19 @@ export class PurgeMarketplacePlugins {
       throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, dependents);
     const safeFiles = await this.proveFiles(plugins, home);
     const nativeCalls = await this.planNativeRemovals(native, projectRoot);
-    for (const { registration, activator, refs, scopes } of nativeCalls) {
-      for (const claim of refs)
-        activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
-      activator.removeMarketplace(registration.hostName, "user");
-    }
+    applyNativeRemovals(nativeCalls);
     for (const { toolId, plugin, files } of safeFiles) {
-      await this.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), projectRoot);
+      await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), projectRoot);
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of nativeCalls) {
       manifest.setNativeRegistrations(
         toolId,
-        this.records.withoutMarketplace(registrations, registration.alias)
+        this.deps.records.withoutMarketplace(registrations, registration.alias)
       );
     }
     await command.forget();
-    await this.repo.save(manifest);
+    await this.deps.repo.save(manifest);
     return plugins.length + nativeRefs.length;
   }
 
@@ -95,7 +104,7 @@ export class PurgeMarketplacePlugins {
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
-      const registration = this.records.marketplaceOf(registrations, marketplace);
+      const registration = this.deps.records.marketplaceOf(registrations, marketplace);
       return registration === undefined ? [] : [{ toolId, registrations, registration }];
     });
     if (plugins.length === 0 && native.length === 0) {
@@ -104,7 +113,7 @@ export class PurgeMarketplacePlugins {
       );
     }
     const nativeRefs = native.flatMap(({ registrations }) =>
-      this.records.claimsOnMarketplace(registrations, marketplace)
+      this.deps.records.claimsOnMarketplace(registrations, marketplace)
     );
     return { plugins, native, nativeRefs };
   }
@@ -112,7 +121,7 @@ export class PurgeMarketplacePlugins {
   private proveFiles(plugins: readonly PluginOf[], home: string) {
     return Promise.all(
       plugins.map(async ({ toolId, plugin }) => {
-        const files = await this.userScopePluginFiles.proven(
+        const files = await this.deps.userScopePluginFiles.proven(
           plugin,
           this.tools.aiProfile(toolId),
           home
@@ -132,7 +141,7 @@ export class PurgeMarketplacePlugins {
         toolId,
         registrations,
         registration,
-        ...(await this.nativeHost.planMarketplaceRemoval(
+        ...(await this.deps.nativeHost.planMarketplaceRemoval(
           this.tools.aiProfile(toolId),
           registrations,
           { registration, projectRoot }

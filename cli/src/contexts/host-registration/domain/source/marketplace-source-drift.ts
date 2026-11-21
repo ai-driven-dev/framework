@@ -35,15 +35,29 @@ export function marketplaceSourceDrift(
   requestedSource: string,
   context: MarketplaceSourceDriftContext
 ): MarketplaceSourceDrift | undefined {
-  const { userCacheRoot, projectRoot, platform } = context;
-  const isOurs = (location: { readonly marketplaceName: string; readonly target: string }) =>
-    samePathSegment(location.marketplaceName, context.marketplaceName, platform) &&
-    samePathSegment(location.target, context.target, platform);
+  const { userCacheRoot, platform } = context;
+  const isOurs = ownedBy(context);
   const requested = parseUserBuiltMarketplaceDir(userCacheRoot, requestedSource, platform);
   if (requested === undefined || !isOurs(requested)) return undefined;
   const shared = parseUserBuiltMarketplaceDir(userCacheRoot, registeredSource, platform);
   if (shared !== undefined)
     return isOurs(shared) ? versionBehind(shared.version, requested.version) : undefined;
+  return unmigratedSource(registeredSource, context);
+}
+
+function ownedBy(context: MarketplaceSourceDriftContext) {
+  return (location: { readonly marketplaceName: string; readonly target: string }): boolean =>
+    samePathSegment(location.marketplaceName, context.marketplaceName, context.platform) &&
+    samePathSegment(location.target, context.target, context.platform);
+}
+
+/** A source still under a project's own cache: this project's, or another project's. */
+function unmigratedSource(
+  registeredSource: string,
+  context: MarketplaceSourceDriftContext
+): MarketplaceSourceDrift | undefined {
+  const { projectRoot, platform } = context;
+  const isOurs = ownedBy(context);
   const project = parseBuiltMarketplaceDir(projectRoot, registeredSource, platform);
   if (project !== undefined && isOurs(project)) return { kind: "unmigrated-project-source" };
   const foreign = parseBuiltMarketplaceDirAtAnyRoot(registeredSource, platform);

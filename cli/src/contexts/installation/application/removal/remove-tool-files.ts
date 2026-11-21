@@ -44,17 +44,20 @@ export class RemoveToolFiles {
     const mergeFilePaths = this.collectMergeFilePaths(toolId, manifest);
     const deleted: string[] = [];
     for (const relativePath of this.collectToolPaths(toolId, manifest)) {
-      if (sharedPaths.has(relativePath) && !mergeFilePaths.has(relativePath)) continue;
-      if (mergeFilePaths.has(relativePath)) {
-        if (await this.removeMergeFile(removal, relativePath)) deleted.push(relativePath);
-        continue;
-      }
-      const fullPath = join(projectRoot, relativePath);
-      await this.fs.deleteFile(fullPath);
-      deleted.push(relativePath);
-      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      const isMerge = mergeFilePaths.has(relativePath);
+      if (!isMerge && sharedPaths.has(relativePath)) continue;
+      const removed = isMerge
+        ? await this.removeMergeFile(removal, relativePath)
+        : await this.deleteTracked(join(projectRoot, relativePath));
+      if (removed) deleted.push(relativePath);
     }
     return deleted;
+  }
+
+  private async deleteTracked(fullPath: string): Promise<true> {
+    await this.fs.deleteFile(fullPath);
+    await this.fs.deleteEmptyDirectories(dirname(fullPath));
+    return true;
   }
 
   private async removeAllPluginFiles(

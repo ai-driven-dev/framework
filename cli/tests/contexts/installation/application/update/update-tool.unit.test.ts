@@ -49,10 +49,12 @@ function setup(
     PROJECT
   );
   const tool = new UpdateTool(
-    { execute: runtime },
-    { execute: ide },
-    { execute: conflict },
-    repo,
+    {
+      installRuntimeConfig: { execute: runtime },
+      installIdeConfig: { execute: ide },
+      resolveSyncConflict: { execute: conflict },
+      manifestRepo: repo,
+    },
     registeredTools()
   );
   return { tool, runtime, ide, conflict };

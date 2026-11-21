@@ -52,7 +52,10 @@ function fixture(
     [join(ROOT, "keep.md")]: "k",
   });
   const withdrawal = new FakeProjectPluginWithdrawal(options.answers);
-  const remove = new RemovePlugin(fs, repo, withdrawal, registrationRecordRules, registeredTools());
+  const remove = new RemovePlugin(
+    { fs, projectRepo: repo, withdrawal, records: registrationRecordRules },
+    registeredTools()
+  );
   const run = (pluginName = NAME) =>
     remove.execute({ pluginName, toolIds: [toolId], projectRoot: ROOT });
   return { repo, fs, withdrawal, run };

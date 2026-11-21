@@ -1,4 +1,5 @@
 import { isAbsolute, join, resolve } from "node:path";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -37,7 +38,7 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
 
   private parseDetail(err: unknown): string {
     if (err instanceof InvalidPluginManifestError) return err.detail ?? "";
-    return err instanceof Error ? err.message : String(err);
+    return errorMessage(err);
   }
 
   private async readCopilotNativeCatalog(fullPath: string): Promise<PluginCatalog> {

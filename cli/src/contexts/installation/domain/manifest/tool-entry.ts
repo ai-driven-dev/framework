@@ -2,7 +2,8 @@ import type { InstallationFile } from "../../../../shared/domain/installation-fi
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import { DuplicatePluginError, PluginNotFoundError } from "../installation.error.js";
-import { InstalledPlugin, type PluginEntryData } from "../plugins/installed-plugin.js";
+import { InstalledPlugin } from "../plugins/installed-plugin.js";
+import type { PluginEntryData } from "../plugins/plugin-entry.js";
 import {
   type MergeFileEntryData,
   parseMergeFileEntries,
@@ -79,6 +80,20 @@ export function updatePluginInEntry(entry: ToolEntry, plugin: InstalledPlugin): 
     ...entry,
     plugins: entry.plugins.map((p) => (p.name === plugin.name ? plugin : p)),
   };
+}
+
+/** Every tracked path under `dir`: files, merge files and plugin files alike, across the entries. */
+export function trackedPathsInDirectory(entries: Iterable<ToolEntry>, dir: string): Set<string> {
+  const tracked = new Set<string>();
+  for (const entry of entries) {
+    const paths = [
+      ...entry.files.map((f) => f.relativePath),
+      ...entry.mergeFiles.map((m) => m.relativePath),
+      ...entry.plugins.flatMap((plugin) => [...plugin.files.keys()]),
+    ];
+    for (const path of paths) if (path.startsWith(dir)) tracked.add(path);
+  }
+  return tracked;
 }
 
 export function serializeToolEntry(entry: ToolEntry): ToolEntryData {

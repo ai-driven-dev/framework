@@ -65,17 +65,8 @@ async function collectMergeDrift(
   fs: FileReader,
   options: RestoreMergeFilesCommand
 ): Promise<DriftCollection<MergeDriftEntry>> {
-  const { mergeFiles, distMap, projectRoot, fileFilter } = options;
-  const recorded: RecordedVerdict[] = [];
-  const entries = new Map<string, MergeFileEntry>();
-  for (const entry of mergeFiles) {
-    if (fileFilter && !fileFilter(entry.relativePath)) continue;
-    entries.set(entry.relativePath, entry);
-    recorded.push({
-      relativePath: entry.relativePath,
-      verdict: await mergeVerdictOf(fs, entry, projectRoot),
-    });
-  }
+  const { distMap } = options;
+  const { recorded, entries } = await recordMergeVerdicts(fs, options);
 
   // A file the current distribution no longer merge-tracks (dropped, or its
   // strategy became "none") has nothing left to restore drift from.
@@ -128,4 +119,21 @@ async function applyOneMergeRestore(
     sectionKey: entry.sectionKey,
     entries: newEntries,
   });
+}
+
+async function recordMergeVerdicts(
+  fs: FileReader,
+  { mergeFiles, projectRoot, fileFilter }: RestoreMergeFilesCommand
+): Promise<{ recorded: RecordedVerdict[]; entries: Map<string, MergeFileEntry> }> {
+  const recorded: RecordedVerdict[] = [];
+  const entries = new Map<string, MergeFileEntry>();
+  for (const entry of mergeFiles) {
+    if (fileFilter && !fileFilter(entry.relativePath)) continue;
+    entries.set(entry.relativePath, entry);
+    recorded.push({
+      relativePath: entry.relativePath,
+      verdict: await mergeVerdictOf(fs, entry, projectRoot),
+    });
+  }
+  return { recorded, entries };
 }

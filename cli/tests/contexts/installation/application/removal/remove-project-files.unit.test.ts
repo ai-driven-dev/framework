@@ -20,7 +20,10 @@ function removalOver(
   repo = new InMemoryManifestRepository(manifest, ROOT),
   gitignore = new UpdateGitignore(fs)
 ): RemoveProjectFiles {
-  return new RemoveProjectFiles(fs, repo, new CapturingLogger(), gitignore, registeredTools());
+  return new RemoveProjectFiles(
+    { fs, manifestRepo: repo, logger: new CapturingLogger(), updateGitignore: gitignore },
+    registeredTools()
+  );
 }
 
 function localPlugin(name: string): InstalledPlugin {

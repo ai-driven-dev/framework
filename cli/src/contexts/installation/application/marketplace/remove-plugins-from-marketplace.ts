@@ -26,25 +26,30 @@ interface OrphanRef {
   plugin: InstalledPlugin;
 }
 
+/** What RemovePluginsFromMarketplace is built from. */
+export interface RemovePluginsFromMarketplaceDeps {
+  readonly manifestRepo: ManifestRepository;
+  readonly cleanup: ProjectIntegrationCleanup;
+  readonly records: RegistrationRecordRules;
+}
+
 /** Removes the plugins installed from one marketplace, once whoever asked has confirmed. */
 export class RemovePluginsFromMarketplace {
   constructor(
-    private readonly manifestRepo: ManifestRepository,
-    private readonly cleanup: ProjectIntegrationCleanup,
-    private readonly records: RegistrationRecordRules,
+    private readonly deps: RemovePluginsFromMarketplaceDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(
     command: RemovePluginsFromMarketplaceCommand
   ): Promise<RemovePluginsFromMarketplaceResult> {
-    const manifest = await this.manifestRepo.load();
+    const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return { orphanCount: 0, removedCount: 0 };
     const orphans = this.collectOrphans(manifest, command.marketplace);
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of orphans) {
       const registrations = manifest.getNativeRegistrations(toolId);
-      const ref = this.records.refOf(registrations, plugin.name, command.marketplace);
+      const ref = this.deps.records.refOf(registrations, plugin.name, command.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [...(nativeRefs.get(toolId) ?? []), ref]);
     }
     if (orphans.length === 0 || !(await command.confirm(orphans.length))) {
@@ -71,7 +76,7 @@ export class RemovePluginsFromMarketplace {
   ): Promise<number> {
     const { marketplace, projectRoot } = command;
     for (const { toolId, plugin } of orphans) {
-      await this.cleanup.assertLocalIntegrationRemovable(
+      await this.deps.cleanup.assertLocalIntegrationRemovable(
         this.tools.aiProfile(toolId),
         plugin,
         projectRoot
@@ -79,15 +84,15 @@ export class RemovePluginsFromMarketplace {
     }
     for (const { toolId, plugin } of orphans) {
       const tool = this.tools.aiProfile(toolId);
-      await this.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
-      await this.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
+      await this.deps.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
+      await this.deps.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
-      const ref = this.records.refOf(registrations, plugin.name, marketplace);
+      const ref = this.deps.records.refOf(registrations, plugin.name, marketplace);
       if (registrations !== undefined && ref !== undefined)
-        manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
+        manifest.setNativeRegistrations(toolId, this.deps.records.withoutRef(registrations, ref));
       manifest.removePlugin(toolId, plugin.name);
     }
-    await this.manifestRepo.save(manifest);
+    await this.deps.manifestRepo.save(manifest);
     return orphans.length;
   }
 }

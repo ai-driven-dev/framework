@@ -74,7 +74,12 @@ function buildEnsurer(
 ): {
   execute(command: EnsureBuiltMarketplaceCommand): Promise<EnsureBuiltMarketplaceResult>;
 } {
-  const cache = new CacheBuiltMarketplace(fs, builds, version, () => USER_CACHE_ROOT);
+  const cache = new CacheBuiltMarketplace({
+    fs,
+    builds,
+    version,
+    userCacheRoot: () => USER_CACHE_ROOT,
+  });
   return { execute: (command) => cache.execute(command, resolved) };
 }
 

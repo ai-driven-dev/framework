@@ -59,20 +59,19 @@ export class CheckTrackedFiles {
     allowedIds: Set<string> | null
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (allowedIds && !allowedIds.has(toolId)) continue;
-      for (const file of manifest.getToolFiles(toolId)) {
-        const fullPath = join(projectRoot, file.relativePath);
-        if (!(await this.fs.fileExists(fullPath))) continue;
-        const diskHash = await this.fs.readFileHash(fullPath);
-        if (driftOf(file.hash.value, diskHash) === "modified") {
-          issues.push({
-            severity: "warning",
-            message: `Modified tracked file: ${file.relativePath}`,
-            fix: `Run \`aidd sync --force\` to revert to the framework version.`,
-          });
-        }
-      }
+    const files = manifest
+      .getInstalledToolIds()
+      .filter((toolId) => allowedIds === null || allowedIds.has(toolId))
+      .flatMap((toolId) => manifest.getToolFiles(toolId));
+    for (const file of files) {
+      const fullPath = join(projectRoot, file.relativePath);
+      if (!(await this.fs.fileExists(fullPath))) continue;
+      if (driftOf(file.hash.value, await this.fs.readFileHash(fullPath)) !== "modified") continue;
+      issues.push({
+        severity: "warning",
+        message: `Modified tracked file: ${file.relativePath}`,
+        fix: `Run \`aidd sync --force\` to revert to the framework version.`,
+      });
     }
     return issues;
   }

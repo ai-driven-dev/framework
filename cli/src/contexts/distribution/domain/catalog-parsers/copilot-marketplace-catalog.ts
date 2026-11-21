@@ -36,29 +36,31 @@ function parseEntry(raw: unknown, index: number, pluginRoot: string): PluginCata
   if (obj === null) {
     throw new InvalidPluginManifestError(`${COPILOT_SOURCE}: plugins[${index}] must be an object`);
   }
-  if (typeof obj.name !== "string" || obj.name.length === 0) {
-    throw new InvalidPluginManifestError(
-      `${COPILOT_SOURCE}: plugins[${index}].name must be a non-empty string`
-    );
-  }
-  if (typeof obj.source !== "string" || obj.source.length === 0) {
-    throw new InvalidPluginManifestError(
-      `${COPILOT_SOURCE}: plugins[${index}].source must be a non-empty string`
-    );
-  }
+  const name = requireNonEmpty(obj.name, `plugins[${index}].name`);
+  const source = requireNonEmpty(obj.source, `plugins[${index}].source`);
   const entry: PluginCatalogEntry = {
-    name: obj.name,
-    source: { kind: "local", path: `${pluginRoot}/${obj.source}` },
+    name,
+    source: { kind: "local", path: `${pluginRoot}/${source}` },
     recommended: false,
     strict: false,
   };
-  if (typeof obj.description === "string" && obj.description.length > 0) {
-    entry.description = obj.description;
-  }
-  if (typeof obj.version === "string" && obj.version.length > 0) {
-    entry.version = obj.version;
-  }
+  const description = nonEmpty(obj.description);
+  if (description !== undefined) entry.description = description;
+  const version = nonEmpty(obj.version);
+  if (version !== undefined) entry.version = version;
   return entry;
+}
+
+function nonEmpty(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function requireNonEmpty(value: unknown, field: string): string {
+  const found = nonEmpty(value);
+  if (found === undefined) {
+    throw new InvalidPluginManifestError(`${COPILOT_SOURCE}: ${field} must be a non-empty string`);
+  }
+  return found;
 }
 
 export function parseCopilotMarketplaceCatalog(rawJson: string): PluginCatalog {

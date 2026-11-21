@@ -18,36 +18,34 @@ export interface FetchMarketplaceSourceCommand {
   fetchOptions?: PluginFetchOptions;
 }
 
-export class FetchMarketplaceSource {
-  constructor(pluginFetcher: PluginFetcher);
+export interface FetchMarketplaceSourceDeps {
+  readonly pluginFetcher: PluginFetcher;
   /** A raw catalog fetcher comes with the files its catalog is written to. */
-  constructor(
-    pluginFetcher: PluginFetcher,
-    rawCatalogFetcher: RawCatalogFetcher,
-    fs: FileReader & FileWriter,
-    logger?: Logger
-  );
-  constructor(
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly rawCatalogFetcher?: RawCatalogFetcher,
-    private readonly fs?: FileReader & FileWriter,
-    private readonly logger?: Logger
-  ) {}
+  readonly rawCatalog?: { fetcher: RawCatalogFetcher; fs: FileReader & FileWriter };
+  readonly logger?: Logger;
+}
+
+export class FetchMarketplaceSource {
+  private readonly pluginFetcher: PluginFetcher;
+  private readonly rawCatalog: FetchMarketplaceSourceDeps["rawCatalog"];
+  private readonly logger: Logger | undefined;
+
+  constructor(deps: FetchMarketplaceSourceDeps) {
+    this.pluginFetcher = deps.pluginFetcher;
+    this.rawCatalog = deps.rawCatalog;
+    this.logger = deps.logger;
+  }
 
   async execute(options: FetchMarketplaceSourceCommand): Promise<string> {
     const { marketplace, cacheDir, fetchOptions } = options;
-    const { rawCatalogFetcher, fs } = this;
-    if (
-      marketplace.source.kind === "github" &&
-      rawCatalogFetcher !== undefined &&
-      fs !== undefined
-    ) {
-      const catalog = await rawCatalogFetcher.fetchCatalog(
+    const { rawCatalog } = this;
+    if (marketplace.source.kind === "github" && rawCatalog !== undefined) {
+      const catalog = await rawCatalog.fetcher.fetchCatalog(
         marketplace.source,
         MARKETPLACE_CATALOG_RELATIVE
       );
-      await fs.writeFile(join(cacheDir, MARKETPLACE_CATALOG_RELATIVE), catalog);
-      return this.probeAndMaybeFallback(fs, options);
+      await rawCatalog.fs.writeFile(join(cacheDir, MARKETPLACE_CATALOG_RELATIVE), catalog);
+      return this.probeAndMaybeFallback(rawCatalog.fs, options);
     }
     return this.pluginFetcher.fetch(marketplace.source, cacheDir, fetchOptions);
   }

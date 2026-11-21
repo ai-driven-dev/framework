@@ -25,9 +25,11 @@ async function resolver() {
       }),
   };
   return new ResolveAddedPluginSource(
-    new PluginDistributionLoader({ fetch }, reader),
-    deps.fs,
-    fakeBuiltDeps(),
+    {
+      distributionLoader: new PluginDistributionLoader({ fetch }, reader),
+      fs: deps.fs,
+      built: fakeBuiltDeps(),
+    },
     registeredTools()
   );
 }

@@ -46,11 +46,16 @@ async function legacyProject() {
     deps.installRuntimeConfigUseCase
   );
   const update = new UpdatePlugin(
-    deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
-    registeredTools(),
-    deps.installRuntimeConfigUseCase
+    {
+      manifestRepo: deps.manifestRepo,
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        deps.pluginDistributionReader
+      ),
+      replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
+      pluginRuntime: deps.installRuntimeConfigUseCase,
+    },
+    registeredTools()
   );
   const addPlugin = () =>
     add.execute({

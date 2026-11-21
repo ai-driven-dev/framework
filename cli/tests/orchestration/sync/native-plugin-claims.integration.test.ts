@@ -253,18 +253,20 @@ for (const [toolId, catalogPath] of [
       const updateFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
       const update = new UpdateUserPlugin(
         new UpdateUserPluginFiles(
-          user,
-          new PluginMaterializer(
-            updateFs,
-            new PluginDistributionLoader(
-              new FixturePluginFetcher(),
-              new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
-            ),
-            userScopeFileGuard,
-            fakeBuiltDeps()
-          ),
-          new CapturingLogger(),
-          registrationRecordRules,
+          {
+            repo: user,
+            materializer: new PluginMaterializer({
+              fs: updateFs,
+              loader: new PluginDistributionLoader(
+                new FixturePluginFetcher(),
+                new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+              ),
+              guard: userScopeFileGuard,
+              builtDeps: fakeBuiltDeps(),
+            }),
+            logger: new CapturingLogger(),
+            records: registrationRecordRules,
+          },
           registeredTools()
         ),
         new RefreshHostPlugin(
@@ -287,18 +289,20 @@ for (const [toolId, catalogPath] of [
         const failed = new FakeHostActions({ available: true, failOnUpdate: [ref] });
         const failingUpdate = new UpdateUserPlugin(
           new UpdateUserPluginFiles(
-            user,
-            new PluginMaterializer(
-              updateFs,
-              new PluginDistributionLoader(
-                new FixturePluginFetcher(),
-                new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
-              ),
-              userScopeFileGuard,
-              fakeBuiltDeps()
-            ),
-            new CapturingLogger(),
-            registrationRecordRules,
+            {
+              repo: user,
+              materializer: new PluginMaterializer({
+                fs: updateFs,
+                loader: new PluginDistributionLoader(
+                  new FixturePluginFetcher(),
+                  new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+                ),
+                guard: userScopeFileGuard,
+                builtDeps: fakeBuiltDeps(),
+              }),
+              logger: new CapturingLogger(),
+              records: registrationRecordRules,
+            },
             registeredTools()
           ),
           new RefreshHostPlugin(

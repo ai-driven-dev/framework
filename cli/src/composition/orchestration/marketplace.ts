@@ -94,7 +94,10 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const projectCleanup = new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs));
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(marketplaceRegistry),
-    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup, registrationRecordRules, tools),
+    new RemovePluginsFromMarketplace(
+      { manifestRepo, cleanup: projectCleanup, records: registrationRecordRules },
+      tools
+    ),
     new RemoveMarketplace(marketplaceRegistry),
     detachClaimsOf(projectCleanup),
     prompter
@@ -102,10 +105,12 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const userMarketplaceRemoveUseCase = new RemoveUserMarketplace(
     new FindUserMarketplace(marketplaceRegistry),
     new PurgeMarketplacePlugins(
-      userManifestRepo,
-      nativeHostRegistrationGate,
-      new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-      registrationRecordRules,
+      {
+        repo: userManifestRepo,
+        nativeHost: nativeHostRegistrationGate,
+        userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+        records: registrationRecordRules,
+      },
       tools
     ),
     new RemoveMarketplace(marketplaceRegistry),
@@ -123,14 +128,16 @@ function nativeActivationOf(
   const { tools, fs, logger } = base;
   return new ActivateNativeTools(
     new RegisterPluginWithHost(
-      fs,
-      base.nativePluginActivators,
       {
-        marketplaceRegistries: base.hostMarketplaceRegistries,
-        pluginRegistries: base.hostPluginRegistries,
-        sources: base.nativeSources,
+        fs,
+        activators: base.nativePluginActivators,
+        hosts: {
+          marketplaceRegistries: base.hostMarketplaceRegistries,
+          pluginRegistries: base.hostPluginRegistries,
+          sources: base.nativeSources,
+        },
+        platform: process.platform,
       },
-      process.platform,
       tools
     ),
     build,
@@ -150,31 +157,34 @@ function wireMarketplaceSync(base: Base, inst: Installation) {
     logger,
     tools
   );
-  const recordSourceReference = new RecordSourceReference(
+  const recordSourceReference = new RecordSourceReference({
     fs,
     currentVersionProvider,
     logger,
-    FRAMEWORK_MARKETPLACE_NAME,
-    base.userSourceReferences
-  );
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    userSourceReferences: base.userSourceReferences,
+  });
   const syncSettingsUseCase = new SyncSettings(
-    new LoadSyncContext(
+    new LoadSyncContext({
       manifestRepo,
       marketplaceRegistry,
-      FRAMEWORK_MARKETPLACE_NAME,
-      registerFrameworkMarketplace,
-      userManifestRepo
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      marketplaceRegisterFrameworkUseCase: registerFrameworkMarketplace,
+      userManifestRepo,
+    }),
+    new SyncToolSettingsFiles(
+      { fs, logger, buildMarketplace: buildMarketplaceForTool, records: registrationRecordRules },
+      tools
     ),
-    new SyncToolSettingsFiles(fs, logger, buildMarketplaceForTool, registrationRecordRules, tools),
     nativeActivationOf(base, inst, buildMarketplaceForTool),
-    new RecordActivation(fs, registrationRecordRules, tools, userManifestRepo),
-    new SharedFrameworkSource(
+    new RecordActivation({ fs, records: registrationRecordRules, userManifestRepo }, tools),
+    new SharedFrameworkSource({
       fs,
       logger,
-      recordSourceReference,
-      new PurgeDeclaredCache(fs, logger),
-      FRAMEWORK_MARKETPLACE_NAME
-    )
+      recordReference: recordSourceReference,
+      purgeCache: new PurgeDeclaredCache(fs, logger),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    })
   );
   return {
     recordSourceReference,

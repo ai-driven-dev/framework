@@ -161,18 +161,18 @@ describe("UpdatePlugin — built-tree materialization", () => {
         new Map([...stale.files, [oldRelativePath, FileHash.of("old owned bytes").value]])
       )
     );
-    const updater = new PluginMaterializer(
-      deps.fs,
-      new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-      userScopeFileGuard,
-      {
+    const updater = new PluginMaterializer({
+      fs: deps.fs,
+      loader: new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
+      guard: userScopeFileGuard,
+      builtDeps: {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
         platform: process.platform,
         homedir: () => HOME,
         translate: translateDistribution,
-      }
-    );
+      },
+    });
     const plan = await updater.planUpdate({
       plugin: machine.getPlugins(cursor)[0],
       tool: registeredTools().aiProfile(cursor),

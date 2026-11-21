@@ -98,7 +98,10 @@ function setup(seed: Seed = {}) {
   );
   const files = new FakeUserScopePluginFiles(proven);
   const { rules, withoutMarketplace } = spiedRecordRules();
-  const purge = new PurgeMarketplacePlugins(repo, planner, files, rules, registeredTools());
+  const purge = new PurgeMarketplacePlugins(
+    { repo, nativeHost: planner, userScopePluginFiles: files, records: rules },
+    registeredTools()
+  );
   const command: PurgeMarketplacePluginsCommand = {
     marketplace: MARKET,
     projectRoot: PROJECT,

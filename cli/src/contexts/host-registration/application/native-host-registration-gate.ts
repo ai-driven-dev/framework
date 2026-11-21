@@ -1,6 +1,5 @@
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
@@ -13,8 +12,10 @@ import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { HostedTool, HostRefCounter } from "../ports/host-tool.js";
 import {
   assertNoForeignNativeRefs,
-  inspectNativeMarketplaceSource,
+  inspectHostSource,
+  judgeCatalogueWithdrawal,
 } from "./native-marketplace-source-proof.js";
+import { reachableActivator } from "./reachable-activator.js";
 
 export class NativeHostRegistrationGate {
   constructor(
@@ -39,19 +40,8 @@ export class NativeHostRegistrationGate {
   }> {
     const { toolId } = tool;
     const { registration, projectRoot } = removal;
-    const binary = readRegistrationRecord(registrations)?.binary;
-    const activator = binary === undefined ? undefined : this.activators.get(binary);
-    const reader = this.registries.get(toolId);
-    if (activator === undefined || !activator.isAvailable() || reader === undefined) {
-      throw new Error(
-        `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${binary} CLI or host registry unavailable.`
-      );
-    }
-    const proof = await inspectNativeMarketplaceSource(
-      this.sources.get(toolId),
-      projectRoot,
-      registration
-    );
+    const { activator, reader } = this.hostOf(tool, registrations, registration);
+    const proof = await inspectHostSource(this.sources.get(toolId), projectRoot, registration);
     const owned = new Set((registrations.pluginClaims ?? []).map((claim) => claim.ref));
     const hostRefs = await assertNoForeignNativeRefs(
       { reader, tool },
@@ -60,21 +50,40 @@ export class NativeHostRegistrationGate {
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
       isRefOnHost(claim.ref, registration.hostName)
     );
-    const verdict = judgeRegistration({
-      intent: "withdraw-catalog",
-      source: proof,
-      unenabledClaim: refs.find((claim) => hostRefs.get(claim.ref)?.enabled !== true)?.ref,
-    });
-    if (verdict.outcome === "refuse")
-      throw new Error(
-        verdict.reason === "source-not-owned"
-          ? (verdict.reconcile ?? `${toolId}: catalogue source unproven.`)
-          : `Cannot prove AIDD-owned host ref '${verdict.reconcile}' is still enabled; refusing user-scope removal.`
-      );
+    const verdict = judgeCatalogueWithdrawal(
+      proof,
+      refs.find((claim) => hostRefs.get(claim.ref)?.enabled !== true)?.ref
+    );
+    if (verdict.outcome === "refuse") throw new Error(refusalMessage(toolId, verdict));
     return {
       activator,
       refs,
       scopes: new Map([...hostRefs].map(([ref, state]) => [ref, state.scope])),
     };
   }
+
+  private hostOf(
+    tool: HostedTool,
+    registrations: RegistrationRecordData,
+    registration: NativeMarketplaceRegistration
+  ): { activator: HostActions; reader: HostPluginRegistry } {
+    const binary = readRegistrationRecord(registrations)?.binary;
+    const activator = reachableActivator(this.activators, binary);
+    const reader = this.registries.get(tool.toolId);
+    if (activator === undefined || reader === undefined) {
+      throw new Error(
+        `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${binary} CLI or host registry unavailable.`
+      );
+    }
+    return { activator, reader };
+  }
+}
+
+function refusalMessage(
+  toolId: AiToolId,
+  verdict: { readonly reason: string; readonly reconcile?: string }
+): string {
+  return verdict.reason === "source-not-owned"
+    ? (verdict.reconcile ?? `${toolId}: catalogue source unproven.`)
+    : `Cannot prove AIDD-owned host ref '${verdict.reconcile}' is still enabled; refusing user-scope removal.`;
 }

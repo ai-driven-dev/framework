@@ -3,7 +3,8 @@ import { dirname } from "node:path";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import { InvalidManifestDataError } from "../domain/installation.error.js";
-import { Manifest, type ManifestFileContext } from "../domain/manifest.js";
+import type { ManifestFileContext } from "../domain/manifest/assert-supported-version.js";
+import { Manifest } from "../domain/manifest.js";
 
 /**
  * The one place a manifest file's bytes are read, parsed and turned into a `Manifest`. The project

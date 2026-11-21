@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlacePluginCommand } from "../../../../../src/contexts/installation/application/plugin/add/place-plugin.js";
-import {
-  AddPlugin,
-  type PluginAddOptions,
-} from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { PluginAddOptions } from "../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
@@ -33,24 +31,28 @@ function addTo(manifest: Manifest) {
   const fs = new InMemoryFileAdapter();
   fs.setFile(`${PROJECT_ROOT}/.aidd/manifest.json`, "{}");
   const add = new AddPlugin(
-    fs,
-    { project, user },
-    { execute: async () => ({ isGithubMarketplace: false, distribution: DISTRIBUTION }) },
     {
-      execute: async (command) => {
-        placed.push(command);
-        for (const toolId of command.toolIds) {
-          command.manifest.addPlugin(
-            toolId,
-            InstalledPlugin.fromMetadata({
-              name: "sample-plugin",
-              version: "1.0.0",
-              source: SOURCE,
-              strict: false,
-              scope: "project",
-            })
-          );
-        }
+      fs,
+      manifests: { project, user },
+      source: {
+        execute: async () => ({ isGithubMarketplace: false, distribution: DISTRIBUTION }),
+      },
+      place: {
+        execute: async (command) => {
+          placed.push(command);
+          for (const toolId of command.toolIds) {
+            command.manifest.addPlugin(
+              toolId,
+              InstalledPlugin.fromMetadata({
+                name: "sample-plugin",
+                version: "1.0.0",
+                source: SOURCE,
+                strict: false,
+                scope: "project",
+              })
+            );
+          }
+        },
       },
     },
     registeredTools()

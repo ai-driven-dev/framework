@@ -67,7 +67,7 @@ describe("FetchMarketplaceSource", () => {
   describe("local source", () => {
     it("delegates to pluginFetcher for local sources", async () => {
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSource(fetcher);
+      const uc = new FetchMarketplaceSource({ pluginFetcher: fetcher });
 
       const result = await uc.execute({ marketplace: makeLocalMarketplace(), cacheDir: CACHE_DIR });
 
@@ -80,7 +80,7 @@ describe("FetchMarketplaceSource", () => {
       const fetcher = new FixturePluginFetcher({
         '{"kind":"github","repo":"owner/repo"}': "/cached/path",
       });
-      const uc = new FetchMarketplaceSource(fetcher);
+      const uc = new FetchMarketplaceSource({ pluginFetcher: fetcher });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -95,7 +95,10 @@ describe("FetchMarketplaceSource", () => {
     it("routes github sources through rawCatalogFetcher and returns cacheDir", async () => {
       const spy = new SpyRawCatalogFetcher();
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSource(fetcher, spy, makeSpyFileAdapter());
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace("v3.9.0"),
@@ -108,7 +111,10 @@ describe("FetchMarketplaceSource", () => {
 
     it("preserves ref when routing github source to rawCatalogFetcher", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy, makeSpyFileAdapter());
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+      });
 
       await uc.execute({
         marketplace: makeGitHubMarketplace("v4.1.0-beta.14"),
@@ -120,7 +126,10 @@ describe("FetchMarketplaceSource", () => {
 
     it("passes undefined ref to rawCatalogFetcher when no ref set", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy, makeSpyFileAdapter());
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+      });
 
       await uc.execute({
         marketplace: makeGitHubMarketplace(undefined),
@@ -135,7 +144,10 @@ describe("FetchMarketplaceSource", () => {
     it("writes the fetched catalog body at cacheDir/.claude-plugin/marketplace.json", async () => {
       const spy = new SpyRawCatalogFetcher(ABSOLUTE_CATALOG_JSON);
       const fsAdapter = makeSpyFileAdapter();
-      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       await uc.execute({ marketplace: makeGitHubMarketplace("v3.9.0"), cacheDir: CACHE_DIR });
 
@@ -150,7 +162,10 @@ describe("FetchMarketplaceSource", () => {
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       await uc.execute({ marketplace: makeGitHubMarketplace(), cacheDir: CACHE_DIR });
 
@@ -163,7 +178,10 @@ describe("FetchMarketplaceSource", () => {
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -179,7 +197,10 @@ describe("FetchMarketplaceSource", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       await uc.execute({ marketplace: makeGitHubMarketplace("HEAD"), cacheDir: CACHE_DIR });
 
@@ -199,7 +220,10 @@ describe("FetchMarketplaceSource", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: ABSOLUTE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -219,7 +243,10 @@ describe("FetchMarketplaceSource", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: "not-json" });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -240,7 +267,7 @@ describe("FetchMarketplaceSource", () => {
         calls.push({ forceRefresh: opts?.forceRefresh });
         return origFetch(source, cacheDir, opts);
       };
-      const uc = new FetchMarketplaceSource(fetcher);
+      const uc = new FetchMarketplaceSource({ pluginFetcher: fetcher });
 
       await uc.execute({
         marketplace: makeLocalMarketplace(),

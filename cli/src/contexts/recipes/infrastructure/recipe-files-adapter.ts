@@ -1,12 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import type { RecipeDirectory, RecipeFiles, RecipeSource } from "../ports/recipe-files.js";
 
 function errorCode(error: unknown): string {
   if (error instanceof Error && "code" in error && typeof error.code === "string") {
     return error.code;
   }
-  return error instanceof Error ? error.message : String(error);
+  return errorMessage(error);
 }
 
 export class RecipeFilesAdapter implements RecipeFiles {

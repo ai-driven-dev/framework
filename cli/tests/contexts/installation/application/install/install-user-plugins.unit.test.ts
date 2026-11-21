@@ -56,9 +56,7 @@ function setup(seed: Manifest | null = defaultManifest()) {
   );
   const applyUpdate = vi.fn(async (plan: PlannedUserPluginFileUpdate) => plan.next);
   const useCase = new InstallUserPlugins(
-    repo,
-    { planUpdate, applyUpdate },
-    new CapturingLogger(),
+    { repo, materializer: { planUpdate, applyUpdate }, logger: new CapturingLogger() },
     registeredTools()
   );
   return { repo, useCase, planUpdate, applyUpdate };

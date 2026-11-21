@@ -1,7 +1,7 @@
 import { dirname, join, posix } from "node:path";
 import { FileHash } from "../../../shared/domain/file-hash.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
-import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
@@ -164,10 +164,5 @@ export async function assertUserScopeWriteBoundary(
 }
 
 async function tryRealpath(fs: FileReader, path: string): Promise<string | null> {
-  try {
-    return await fs.realpath(path);
-  } catch (err) {
-    if (isErrnoException(err) && err.code === "ENOENT") return null;
-    throw err;
-  }
+  return whenAbsent(() => fs.realpath(path), null);
 }

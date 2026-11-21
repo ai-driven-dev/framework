@@ -38,19 +38,21 @@ export type SharedSourceRequest =
       readonly activation: ActivationEvidence;
     };
 
+export interface SharedFrameworkSourceDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly logger: Logger;
+  /** Records this project against the running version's shared source, when the machine keeps
+   * that record. */
+  readonly recordReference: Pick<RecordSourceReference, "execute">;
+  readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">;
+  /** The name the framework marketplace is registered under; the distribution owns it and
+   * composition hands it over. */
+  readonly frameworkMarketplaceName: string;
+}
+
 /** The machine's shared framework source and this project's own pre-migration copy of it. */
 export class SharedFrameworkSource {
-  constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly logger: Logger,
-    /** Records this project against the running version's shared source, when the machine keeps
-     * that record. */
-    private readonly recordReference: Pick<RecordSourceReference, "execute">,
-    private readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">,
-    /** The name the framework marketplace is registered under; the distribution owns it and
-     * composition hands it over. */
-    private readonly frameworkMarketplaceName: string
-  ) {}
+  constructor(private readonly deps: SharedFrameworkSourceDeps) {}
 
   execute(request: SharedSourceRequest): Promise<void> {
     return request.kind === "record-reference"
@@ -71,11 +73,11 @@ export class SharedFrameworkSource {
   }: Extract<SharedSourceRequest, { kind: "purge-stale-project-cache" }>): Promise<void> {
     if (activation.errors.length > 0) return;
     const framework = marketplaces.find((m) =>
-      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
+      frameworkSourceIsShared(m.name, m.scope, this.deps.frameworkMarketplaceName)
     );
     if (framework === undefined) return;
     if (activation.binaryMissing.length > 0) {
-      this.logger.warn(
+      this.deps.logger.warn(
         "This project's own pre-migration framework cache kept: a requested tool's CLI " +
           "was not on PATH this run, so its own registration may still point at it — run " +
           "`aidd sync` again once every tool's CLI is on PATH."
@@ -83,21 +85,21 @@ export class SharedFrameworkSource {
       return;
     }
     if ([...activation.outcomes.values()].some((outcome) => outcome.buildFailed)) {
-      this.logger.warn(
+      this.deps.logger.warn(
         "This project's own pre-migration framework cache kept: a requested tool's build " +
           "failed this run, so its own registration may still point at it — fix the build " +
           "warning above, then run `aidd sync` again."
       );
       return;
     }
-    const candidate = await this.purgeCache.resolveCandidate(
+    const candidate = await this.deps.purgeCache.resolveCandidate(
       projectRoot,
-      join(BUILT_CACHE_SUBDIR, this.frameworkMarketplaceName),
+      join(BUILT_CACHE_SUBDIR, this.deps.frameworkMarketplaceName),
       "This project's own pre-migration framework cache"
     );
     if (candidate === null) return;
-    await this.fs.deleteDirectory(candidate);
-    this.logger.info(`This project's own pre-migration framework cache purged: ${candidate}`);
+    await this.deps.fs.deleteDirectory(candidate);
+    this.deps.logger.info(`This project's own pre-migration framework cache purged: ${candidate}`);
   }
 
   /**
@@ -109,7 +111,7 @@ export class SharedFrameworkSource {
     outcomes,
   }: Extract<SharedSourceRequest, { kind: "record-reference" }>): Promise<void> {
     const framework = marketplaces.find((m) =>
-      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
+      frameworkSourceIsShared(m.name, m.scope, this.deps.frameworkMarketplaceName)
     );
     if (framework === undefined) return;
     if (
@@ -118,6 +120,6 @@ export class SharedFrameworkSource {
       )
     )
       return;
-    await this.recordReference.execute({ projectRoot, marketplace: framework });
+    await this.deps.recordReference.execute({ projectRoot, marketplace: framework });
   }
 }

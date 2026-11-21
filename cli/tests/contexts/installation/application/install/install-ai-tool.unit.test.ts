@@ -53,13 +53,13 @@ function buildUseCase(
     ...syncSettings,
   };
   return {
-    useCase: new InstallAiTool(
-      deps.installRuntimeConfigUseCase,
-      deps.manifestRepo,
-      pluginInstallMock,
-      syncSettingsMock,
-      deps.logger
-    ),
+    useCase: new InstallAiTool({
+      installRuntimeConfig: deps.installRuntimeConfigUseCase,
+      manifestRepo: deps.manifestRepo,
+      pluginInstallFromMarketplace: pluginInstallMock,
+      activatePropagated: syncSettingsMock,
+      logger: deps.logger,
+    }),
     pluginInstallMock,
     syncSettingsMock,
   };

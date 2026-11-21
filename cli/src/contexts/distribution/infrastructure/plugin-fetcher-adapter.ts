@@ -1,7 +1,6 @@
 import { execFile as execFileCb } from "node:child_process";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
-import { simpleGit } from "simple-git";
 import type {
   PluginSource,
   PluginSourceGitHub,
@@ -14,22 +13,14 @@ import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import { PluginFetchError } from "../domain/distribution.error.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
+import { GitCloner } from "./git-cloner-adapter.js";
 import { injectTokenIntoUrl, withoutCredentials } from "./inject-token.js";
 
 const execFile = promisify(execFileCb);
 
-const AUTH_ERROR_PATTERN =
-  /Authentication failed|403|could not read Username|Permission denied \(publickey\)|Repository not found/i;
-
-/** A clone to make: the URL it runs with, the URL an error may show, and where it lands. */
-interface CloneRequest {
-  authUrl: string;
-  displayUrl: string;
-  targetDir: string;
-  ref?: string;
-}
-
 export class PluginFetcherAdapter implements PluginFetcher {
+  private readonly git = new GitCloner();
+
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly tokenProvider?: TokenProvider
@@ -71,17 +62,14 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const baseUrl = `https://github.com/${source.repo}.git`;
     const key = `github-${source.repo.replace("/", "-")}-${source.ref ?? "HEAD"}`;
     const targetDir = join(cacheDir, key);
-    await this.bustCacheIfNeeded(targetDir, forceRefresh);
-    if (!(await this.fs.fileExists(targetDir))) {
-      const token = (await this.tokenProvider?.resolve()) ?? undefined;
-      await this.cloneShallow({
+    return this.cloned(targetDir, forceRefresh, (token) =>
+      this.git.cloneShallow({
         authUrl: injectTokenIntoUrl(baseUrl, token),
         displayUrl: baseUrl,
         targetDir,
         ref: source.ref,
-      });
-    }
-    return targetDir;
+      })
+    );
   }
 
   private async fetchUrl(
@@ -91,15 +79,14 @@ export class PluginFetcherAdapter implements PluginFetcher {
   ): Promise<string> {
     const key = `${encodeKey(withoutCredentials(source.url))}${source.ref ? `-${source.ref}` : "-HEAD"}`;
     const targetDir = join(cacheDir, key);
-    await this.bustCacheIfNeeded(targetDir, forceRefresh);
-    if (!(await this.fs.fileExists(targetDir))) {
-      const token = (await this.tokenProvider?.resolve()) ?? undefined;
-      const authUrl = source.url.startsWith("git@")
-        ? source.url
-        : injectTokenIntoUrl(source.url, token);
-      await this.cloneShallow({ authUrl, displayUrl: source.url, targetDir, ref: source.ref });
-    }
-    return targetDir;
+    return this.cloned(targetDir, forceRefresh, (token) =>
+      this.git.cloneShallow({
+        authUrl: authenticated(source.url, token),
+        displayUrl: source.url,
+        targetDir,
+        ref: source.ref,
+      })
+    );
   }
 
   private async fetchGitSubdir(
@@ -110,13 +97,26 @@ export class PluginFetcherAdapter implements PluginFetcher {
     const { url, path: subpath, ref } = source;
     const key = `${encodeKey(withoutCredentials(url))}-subdir-${subpath.replace(/\//g, "_")}-${ref ?? "HEAD"}`;
     const targetDir = join(cacheDir, key);
+    await this.cloned(targetDir, forceRefresh, (token) =>
+      this.git.cloneSparse(
+        { authUrl: authenticated(url, token), displayUrl: url, targetDir, ref },
+        subpath
+      )
+    );
+    return join(targetDir, subpath);
+  }
+
+  /** The cache directory, cloned into first unless a fetch already left it there. */
+  private async cloned(
+    targetDir: string,
+    forceRefresh: boolean,
+    clone: (token: string | undefined) => Promise<void>
+  ): Promise<string> {
     await this.bustCacheIfNeeded(targetDir, forceRefresh);
     if (!(await this.fs.fileExists(targetDir))) {
-      const token = (await this.tokenProvider?.resolve()) ?? undefined;
-      const authUrl = url.startsWith("git@") ? url : injectTokenIntoUrl(url, token);
-      await this.cloneSparse({ authUrl, displayUrl: url, targetDir, ref }, subpath);
+      await clone((await this.tokenProvider?.resolve()) ?? undefined);
     }
-    return join(targetDir, subpath);
+    return targetDir;
   }
 
   private async bustCacheIfNeeded(targetDir: string, forceRefresh: boolean): Promise<void> {
@@ -132,9 +132,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
   ): Promise<string> {
     const { package: pkg, version } = source;
     const pkgDir = join(cacheDir, "node_modules", pkg);
-    if (forceRefresh && (await this.fs.fileExists(pkgDir))) {
-      await this.fs.deleteDirectory(pkgDir);
-    }
+    await this.bustCacheIfNeeded(pkgDir, forceRefresh);
     const spec = `${pkg}@${version ?? "latest"}`;
     try {
       await execFile("pnpm", ["add", "--prefix", cacheDir, "--", spec]);
@@ -143,63 +141,14 @@ export class PluginFetcherAdapter implements PluginFetcher {
     }
     return pkgDir;
   }
+}
 
-  private gitWithNoPrompt(baseDir?: string): ReturnType<typeof simpleGit> {
-    const git = simpleGit({ baseDir, allowEnvironment: ["GIT_TERMINAL_PROMPT"] });
-    return git.env("GIT_TERMINAL_PROMPT", "0");
-  }
-
-  private async cloneShallow({ authUrl, displayUrl, targetDir, ref }: CloneRequest): Promise<void> {
-    const args = ["--depth", "1", ...(ref ? ["--branch", ref] : [])];
-    try {
-      await this.gitWithNoPrompt().clone(authUrl, targetDir, args);
-    } catch (err) {
-      this.classifyAndThrow(err, displayUrl);
-    }
-  }
-
-  private async cloneSparse(
-    { authUrl, displayUrl, targetDir, ref }: CloneRequest,
-    subpath: string
-  ): Promise<void> {
-    try {
-      await this.gitWithNoPrompt().clone(authUrl, targetDir, [
-        "--filter=blob:none",
-        "--no-checkout",
-      ]);
-      await this.gitWithNoPrompt(targetDir).raw(["sparse-checkout", "set", subpath]);
-      await this.gitWithNoPrompt(targetDir).checkout(ref ?? "HEAD");
-    } catch (err) {
-      this.classifyAndThrow(err, displayUrl);
-    }
-  }
-
-  private classifyAndThrow(err: unknown, displayUrl: string): never {
-    const msg = err instanceof Error ? err.message : String(err);
-    // The URL the user typed may carry their own credential; the message must not.
-    const safeUrl = withoutCredentials(displayUrl);
-    if (AUTH_ERROR_PATTERN.test(msg)) {
-      throw new PluginFetchError(
-        `Authentication failed for "${safeUrl}". ${this.authHint(safeUrl)}`
-      );
-    }
-    throw new PluginFetchError(`git clone failed for "${safeUrl}": ${scrubCredentials(msg)}`);
-  }
-
-  private authHint(url: string): string {
-    if (url.startsWith("git@")) {
-      return "Check your SSH key is registered on the remote host.";
-    }
-    return "Set AIDD_TOKEN, run `aidd auth login`, or pass --token <value>. Required scope depends on the host (github: `repo`, gitlab: `read_repository`, bitbucket: `repository:read`).";
-  }
+function authenticated(url: string, token: string | undefined): string {
+  return url.startsWith("git@") ? url : injectTokenIntoUrl(url, token);
 }
 
 // Truncation to 64 chars avoids filesystem path-length limits.
 // URLs that differ only beyond position 64 will collide: acceptable for typical plugin URLs.
 function encodeKey(url: string): string {
   return url.replace(/[^a-zA-Z0-9-]/g, "_").slice(0, 64);
-}
-
-function scrubCredentials(msg: string): string {
-  return msg.replace(/https:\/\/[^@]+@/g, "https://");
 }

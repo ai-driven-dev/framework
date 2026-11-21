@@ -38,14 +38,19 @@ export function wireAuth(shared: AuthWiring): AuthDeps {
   const cliProviders = new Map<string, CliAuthProvider>([["gh", gh]]);
   const identity = new GitHubAdapter(shared.http);
   return {
-    tokenProvider: new CachedTokenProvider(
+    tokenProvider: new CachedTokenProvider({
       records,
-      { commandLine: shared.explicitToken, environment: shared.environment },
-      gh,
-      shared.logger
-    ),
+      supplied: { commandLine: shared.explicitToken, environment: shared.environment },
+      externalTokens: gh,
+      logger: shared.logger,
+    }),
     logIn: new LogIn(records, identity, cliProviders),
     logOut: new LogOut(records),
-    checkStatus: new CheckStatus(records, shared.environment, identity, cliProviders),
+    checkStatus: new CheckStatus({
+      records,
+      environment: shared.environment,
+      identity,
+      cliProviders,
+    }),
   };
 }

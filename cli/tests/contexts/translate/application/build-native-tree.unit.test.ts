@@ -22,7 +22,7 @@ function buildOver(files: Record<string, string>, sink = new RecordingSink()) {
     mode: "marketplace",
     force: false,
   } as const;
-  const build = new BuildNativeTree(fs, logger, sink, layout);
+  const build = new BuildNativeTree({ fs, logger, sink, layout });
   return {
     build,
     sink,

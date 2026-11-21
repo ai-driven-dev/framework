@@ -64,23 +64,11 @@ async function collectDrift(
   fs: FileReader,
   options: RestoreRegularFilesCommand
 ): Promise<DriftCollection<DriftEntry>> {
-  const { manifestFiles, distMap, projectRoot, fileFilter } = options;
-  const recorded: RecordedVerdict[] = [];
-  for (const manifestFile of manifestFiles) {
-    if (fileFilter && !fileFilter(manifestFile.relativePath)) continue;
-    const diskPath = join(projectRoot, manifestFile.relativePath);
-    recorded.push({
-      relativePath: manifestFile.relativePath,
-      verdict: (await fs.fileExists(diskPath))
-        ? driftOf(manifestFile.hash.value, await fs.readFileHash(diskPath))
-        : "missing",
-    });
-  }
-
+  const recorded = await recordVerdicts(fs, options);
   const drift: DriftEntry[] = [];
   const unrestorable: DriftDescriptor[] = [];
-  for (const step of planRestore(recorded, new Set(distMap.keys()))) {
-    const distFile = distMap.get(step.relativePath);
+  for (const step of planRestore(recorded, new Set(options.distMap.keys()))) {
+    const distFile = options.distMap.get(step.relativePath);
     if (step.kind === "rewrite" && distFile) {
       drift.push({
         relativePath: step.relativePath,
@@ -92,4 +80,22 @@ async function collectDrift(
     }
   }
   return { drift, unrestorable };
+}
+
+async function recordVerdicts(
+  fs: FileReader,
+  { manifestFiles, projectRoot, fileFilter }: RestoreRegularFilesCommand
+): Promise<RecordedVerdict[]> {
+  const recorded: RecordedVerdict[] = [];
+  for (const manifestFile of manifestFiles) {
+    if (fileFilter && !fileFilter(manifestFile.relativePath)) continue;
+    const diskPath = join(projectRoot, manifestFile.relativePath);
+    recorded.push({
+      relativePath: manifestFile.relativePath,
+      verdict: (await fs.fileExists(diskPath))
+        ? driftOf(manifestFile.hash.value, await fs.readFileHash(diskPath))
+        : "missing",
+    });
+  }
+  return recorded;
 }

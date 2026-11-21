@@ -19,7 +19,9 @@ function seedMarketplaceJson(
 }
 
 function buildUseCase(fs: InMemoryFileAdapter) {
-  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: new FixturePluginFetcher(),
+  });
   return new ResolveMarketplace(fetchMarketplaceSource, new PluginCatalogRepositoryAdapter(fs));
 }
 
@@ -35,7 +37,7 @@ function makeMarketplace(name: string): Marketplace {
 describe("ResolveMarketplace", () => {
   it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
     const useCase = new ResolveMarketplace(
-      new FetchMarketplaceSource(new FixturePluginFetcher()),
+      new FetchMarketplaceSource({ pluginFetcher: new FixturePluginFetcher() }),
       new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({})),
       () => "/config/aidd"
     );

@@ -4,7 +4,8 @@ import {
   type RegistrationRecordData,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
-import { inspectNativeMarketplaceSource } from "../native-marketplace-source-proof.js";
+import { inspectHostSource } from "../native-marketplace-source-proof.js";
+import { reachableActivator } from "../reachable-activator.js";
 import type { ClaimedHostRef, ProvenHostRef, WithdrawalDeps } from "./withdrawal.js";
 
 export interface ClaimedRefRequest {
@@ -21,9 +22,9 @@ export async function proveClaimedRef(
 ): Promise<ProvenHostRef> {
   const { registrationData, claim, projectRoot } = request;
   const registrations = recordedRegistrations(registrationData);
-  const activator = deps.ports.activators.get(registrations.binary);
+  const activator = reachableActivator(deps.ports.activators, registrations.binary);
   const reader = deps.ports.pluginRegistries.get(claim.tool);
-  if (activator === undefined || !activator.isAvailable() || reader === undefined) {
+  if (activator === undefined || reader === undefined) {
     throw new Error(
       `Cannot prove or remove AIDD-owned native ref '${claim.ref}': ${registrations.binary} CLI or host registry is unavailable.`
     );
@@ -32,28 +33,28 @@ export async function proveClaimedRef(
   const catalogues = registrations.marketplaces.filter((registration) =>
     isRefOnHost(claim.ref, registration.hostName)
   );
+  const [only] = catalogues;
   const verdict = judgeRegistration({
     intent: "withdraw-ref",
     refEnabled: onHost?.enabled === true,
     source:
       catalogues.length === 1
-        ? await inspectNativeMarketplaceSource(
-            deps.ports.sources.get(claim.tool),
-            projectRoot,
-            catalogues[0]
-          )
+        ? await inspectHostSource(deps.ports.sources.get(claim.tool), projectRoot, only)
         : undefined,
   });
-  if (verdict.outcome === "refuse") {
-    if (verdict.reason === "ref-not-enabled")
-      throw new Error(
-        `Cannot prove native ref '${claim.ref}' is still enabled on ${registrations.binary}; no host mutation made.`
-      );
-    if (verdict.reason === "no-canonical-source")
-      throw new Error(
-        `Native ref '${claim.ref}' has no exact canonical catalogue source proof; removal refused.`
-      );
-    throw new Error(verdict.reconcile ?? `Native ref '${claim.ref}' has unproven host source.`);
-  }
+  if (verdict.outcome === "refuse")
+    throw new Error(refusalMessage(verdict, claim.ref, registrations.binary));
   return { activator, ref: claim.ref, scope: onHost?.scope ?? "user" };
+}
+
+function refusalMessage(
+  verdict: { readonly reason: string; readonly reconcile?: string },
+  ref: string,
+  binary: string
+): string {
+  if (verdict.reason === "ref-not-enabled")
+    return `Cannot prove native ref '${ref}' is still enabled on ${binary}; no host mutation made.`;
+  if (verdict.reason === "no-canonical-source")
+    return `Native ref '${ref}' has no exact canonical catalogue source proof; removal refused.`;
+  return verdict.reconcile ?? `Native ref '${ref}' has unproven host source.`;
 }

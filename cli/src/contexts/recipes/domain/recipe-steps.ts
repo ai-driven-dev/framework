@@ -1,4 +1,5 @@
-import { type Heading, hasTable, type Report, type ScannedRecipe } from "./markdown-scan.js";
+import type { Report } from "./fence-scan.js";
+import { type Heading, hasTable, type ScannedRecipe } from "./markdown-scan.js";
 
 interface RecipeStep extends Heading {
   number: number;
@@ -24,33 +25,40 @@ function reportMissingIcon(step: RecipeStep, report: Report): void {
   report(step.line, "step-emoji", "Add one meaningful emoji between the step number and title.");
 }
 
+function isCategory(heading: Heading, report: Report, underDirectStep: boolean): boolean {
+  if (/^\d+[.)]?\s/u.test(heading.text)) {
+    report(
+      heading.line,
+      "step-heading",
+      "Use `### N) <emoji> Title`, or `#### N) <emoji> Title` below a category."
+    );
+    return false;
+  }
+  if (heading.depth === 3) return true;
+  if (!underDirectStep) {
+    report(
+      heading.line,
+      "category-depth",
+      "Use level 4 for numbered category steps or subsections of a direct numbered step."
+    );
+  }
+  return false;
+}
+
 function collectSteps(headings: Heading[], report: Report): StepOutline {
   const steps: RecipeStep[] = [];
   const categories: Heading[] = [];
   let underDirectStep = false;
 
   for (const heading of headings) {
-    if (heading.depth === 3) underDirectStep = false;
     const step = stepOf(heading);
     if (step) {
       reportMissingIcon(step, report);
       steps.push(step);
-      if (heading.depth === 3) underDirectStep = true;
-    } else if (/^\d+[.)]?\s/u.test(heading.text)) {
-      report(
-        heading.line,
-        "step-heading",
-        "Use `### N) <emoji> Title`, or `#### N) <emoji> Title` below a category."
-      );
-    } else if (heading.depth === 3) {
+    } else if (isCategory(heading, report, underDirectStep)) {
       categories.push(heading);
-    } else if (!underDirectStep) {
-      report(
-        heading.line,
-        "category-depth",
-        "Use level 4 for numbered category steps or subsections of a direct numbered step."
-      );
     }
+    if (heading.depth === 3) underDirectStep = step !== undefined;
   }
   return { steps, categories };
 }
@@ -68,20 +76,31 @@ function checkNumbering(steps: RecipeStep[], report: Report): void {
   });
 }
 
+function depthProblem(
+  step: RecipeStep,
+  categories: Heading[]
+): { rule: string; fix: string } | undefined {
+  if (categories.length === 0) {
+    return step.depth === 3
+      ? undefined
+      : { rule: "step-depth", fix: "Use level 3 for direct numbered steps." };
+  }
+  if (step.depth !== 4) {
+    return {
+      rule: "step-depth",
+      fix: "Use level 4 for every numbered step when level 3 categories are present.",
+    };
+  }
+  if (!categories.some((category) => category.index < step.index)) {
+    return { rule: "step-parent", fix: "Place this level 4 step below a level 3 category." };
+  }
+  return undefined;
+}
+
 function checkDepths({ steps, categories }: StepOutline, report: Report): void {
   for (const step of steps) {
-    if (categories.length === 0) {
-      if (step.depth !== 3)
-        report(step.line, "step-depth", "Use level 3 for direct numbered steps.");
-    } else if (step.depth !== 4) {
-      report(
-        step.line,
-        "step-depth",
-        "Use level 4 for every numbered step when level 3 categories are present."
-      );
-    } else if (!categories.some((category) => category.index < step.index)) {
-      report(step.line, "step-parent", "Place this level 4 step below a level 3 category.");
-    }
+    const problem = depthProblem(step, categories);
+    if (problem) report(step.line, problem.rule, problem.fix);
   }
 }
 

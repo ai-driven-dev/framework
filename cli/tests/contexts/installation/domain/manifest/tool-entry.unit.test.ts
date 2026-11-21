@@ -6,6 +6,7 @@ import {
   removePluginFromEntry,
   serializeToolEntry,
   type ToolEntry,
+  trackedPathsInDirectory,
   updatePluginInEntry,
 } from "../../../../../src/contexts/installation/domain/manifest/tool-entry.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -96,5 +97,20 @@ describe("a tool's manifest entry", () => {
         entry.nativeRegistrations
       );
     });
+  });
+});
+
+describe("trackedPathsInDirectory", () => {
+  it("collects the files, merge files and plugin files under the directory across entries", () => {
+    const entry = makeEntry([makePlugin("aidd-dev")]);
+
+    expect([...trackedPathsInDirectory([entry], ".claude/")].sort()).toEqual([
+      ".claude/CLAUDE.md",
+      ".claude/plugins/aidd-dev/README.md",
+    ]);
+  });
+
+  it("leaves out a path outside the directory", () => {
+    expect([...trackedPathsInDirectory([makeEntry([])], ".cursor/")]).toEqual([]);
   });
 });

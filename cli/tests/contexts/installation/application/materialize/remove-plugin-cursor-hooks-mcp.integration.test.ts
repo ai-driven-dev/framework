@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { createOutput } from "../../../../../src/composition/shared.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";

@@ -1,23 +1,18 @@
-import { join } from "node:path";
-import type { FileHash } from "../../../shared/domain/file-hash.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ToolNotInstalledError } from "../domain/installation.error.js";
-import { driftOf } from "../domain/manifest/drift.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ToolFootprint } from "../ports/tool-sections.js";
 import type { DetectPluginDrift } from "./shared/detect-plugin-drift.js";
 import { requireManifest } from "./shared/require-manifest.js";
-
-type FileStatusKind = "modified" | "deleted" | "added";
-
-interface FileDrift {
-  relativePath: string;
-  status: FileStatusKind;
-}
+import {
+  addedFileDrift,
+  type FileDrift,
+  mergeFileDrift,
+  trackedFileDrift,
+} from "./status/tool-file-drift.js";
 
 interface ToolStatus {
   toolId: ToolId;
@@ -55,17 +50,22 @@ export interface StatusQuery {
   execute(options: ReportStatusCommand): Promise<ReportStatusResult>;
 }
 
+/** What ReportStatus is built from. */
+export interface ReportStatusDeps {
+  readonly fs: FileReader;
+  readonly manifestRepo: ManifestRepository;
+  readonly detectPluginDrift: DetectPluginDrift;
+}
+
 export class ReportStatus implements StatusQuery {
   constructor(
-    private readonly fs: FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly detectPluginDrift: DetectPluginDrift,
+    private readonly deps: ReportStatusDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: ReportStatusCommand): Promise<ReportStatusResult> {
     const { projectRoot, filterToolId, category, pluginName } = options;
-    const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
+    const manifest = options.manifest ?? (await requireManifest(this.deps.manifestRepo));
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
@@ -115,107 +115,18 @@ export class ReportStatus implements StatusQuery {
     const version = manifest.getToolVersion(toolId) ?? "unknown";
     const trackedFiles = manifest.getToolFiles(toolId);
     const mergeFiles = manifest.getMergeFiles(toolId);
-    const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
-    drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
-    const dir = tool.directory;
-    const trackedSet = manifest.getTrackedPathsInDirectory(dir);
-    drifted.push(
-      ...(await this.detectAddedFiles({
-        directory: dir,
-        trackedSet,
+    const { fs } = this.deps;
+    const drifted = [
+      ...(await trackedFileDrift(fs, trackedFiles, projectRoot)),
+      ...(await mergeFileDrift(fs, mergeFiles, projectRoot)),
+      ...(await addedFileDrift(fs, {
+        directory: tool.directory,
+        trackedSet: manifest.getTrackedPathsInDirectory(tool.directory),
         projectRoot,
         machineLocal: tool.machineLocalFiles(),
-      }))
-    );
+      })),
+    ];
     return { toolId, version, drifted };
-  }
-
-  // User-scope plugin dirs (e.g. ~/.cursor/plugins/local/) are not scanned for added files;
-  // only tracked-file drift is detected for user-scope plugins.
-  private async detectAddedFiles(scan: {
-    directory: string;
-    trackedSet: Set<string>;
-    projectRoot: string;
-    // Written by this CLI on purpose and never tracked: reporting one as something the user added
-    // would be a lie. The `.backup` skip below is not the same thing: nothing here writes such a
-    // file, so it only spares one an older version left behind.
-    machineLocal: readonly string[];
-  }): Promise<FileDrift[]> {
-    const { directory, trackedSet, projectRoot, machineLocal } = scan;
-    const toolDir = join(projectRoot, directory);
-    if (!(await this.fs.fileExists(toolDir))) return [];
-    const added: FileDrift[] = [];
-    const diskFiles = await this.fs.listDirectory(toolDir);
-    for (const diskRelPath of diskFiles) {
-      if (diskRelPath.endsWith(".backup")) continue;
-      const fullRelPath = `${directory}${diskRelPath}`;
-      if (machineLocal.includes(fullRelPath)) continue;
-      if (!trackedSet.has(fullRelPath)) added.push({ relativePath: fullRelPath, status: "added" });
-    }
-    return added;
-  }
-
-  private async checkMergeFiles(
-    mergeFiles: readonly MergeFileEntry[],
-    projectRoot: string
-  ): Promise<FileDrift[]> {
-    const drifted: FileDrift[] = [];
-    for (const mergeFile of mergeFiles) {
-      drifted.push(...(await this.checkOneMergeFile(mergeFile, projectRoot)));
-    }
-    return drifted;
-  }
-
-  private async checkOneMergeFile(
-    mergeFile: MergeFileEntry,
-    projectRoot: string
-  ): Promise<FileDrift[]> {
-    const fullPath = join(projectRoot, mergeFile.relativePath);
-    if (!(await this.fs.fileExists(fullPath))) {
-      return Object.keys(mergeFile.entries).map((key) => ({
-        relativePath: `${mergeFile.relativePath} > ${key}`,
-        status: "deleted" as const,
-      }));
-    }
-    const diskContent = await this.fs.readFile(fullPath);
-    const diskEntries = extractMergeEntries(diskContent, mergeFile.sectionKey);
-    return this.compareMergeEntries(mergeFile, diskEntries);
-  }
-
-  private compareMergeEntries(
-    mergeFile: MergeFileEntry,
-    diskEntries: Record<string, FileHash>
-  ): FileDrift[] {
-    const drifted: FileDrift[] = [];
-    for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
-      const verdict = driftOf(manifestHash.value, diskEntries[key] ?? null);
-      if (verdict === "missing") {
-        drifted.push({ relativePath: `${mergeFile.relativePath} > ${key}`, status: "deleted" });
-      } else if (verdict === "modified") {
-        drifted.push({ relativePath: `${mergeFile.relativePath} > ${key}`, status: "modified" });
-      }
-    }
-    return drifted;
-  }
-
-  private async checkTrackedFiles(
-    files: ReadonlyArray<{ relativePath: string; hash: FileHash }>,
-    projectRoot: string
-  ): Promise<FileDrift[]> {
-    const drifted: FileDrift[] = [];
-    for (const file of files) {
-      const fullPath = join(projectRoot, file.relativePath);
-      const onDisk = (await this.fs.fileExists(fullPath))
-        ? await this.fs.readFileHash(fullPath)
-        : null;
-      const verdict = driftOf(file.hash.value, onDisk);
-      if (verdict === "missing") {
-        drifted.push({ relativePath: file.relativePath, status: "deleted" });
-      } else if (verdict === "modified") {
-        drifted.push({ relativePath: file.relativePath, status: "modified" });
-      }
-    }
-    return drifted;
   }
 
   private async checkAllPlugins(scope: {
@@ -224,7 +135,7 @@ export class ReportStatus implements StatusQuery {
     projectRoot: string;
     pluginName?: string;
   }): Promise<PluginDriftEntry[]> {
-    const drifts = await this.detectPluginDrift.execute(scope);
+    const drifts = await this.deps.detectPluginDrift.execute(scope);
     return drifts.map((drift) => ({
       toolId: drift.toolId,
       pluginName: drift.pluginName,

@@ -18,6 +18,32 @@ function object(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
+const isText = (value: unknown): value is string => typeof value === "string" && value !== "";
+
+/** One `{ name, root, marketplaceSource? }` row: its name and the source it proves, if any. */
+function withSourceRow(
+  hostLabel: string,
+  item: unknown,
+  seen: Sources
+): [string, NativeMarketplaceSource | null] {
+  const row = object(item);
+  if (!isText(row?.name) || !isText(row.root) || seen.has(row.name))
+    throw new Error(`ambiguous ${hostLabel} marketplace JSON row`);
+  if (row.marketplaceSource === undefined) return [row.name, null];
+  const sourceRow = object(row.marketplaceSource);
+  if (!isText(sourceRow?.sourceType) || !isText(sourceRow.source))
+    throw new Error(`unproven ${hostLabel} marketplace source shape`);
+  return [
+    row.name,
+    {
+      kind: "effective-list",
+      root: row.root,
+      sourceType: sourceRow.sourceType,
+      source: sourceRow.source,
+    },
+  ];
+}
+
 /** `{ marketplaces: [{ name, root, marketplaceSource?: { sourceType, source } }] }`. A row
  * without `marketplaceSource` is named but unproven. */
 export const parseMarketplacesWithSource: MarketplaceListParser = (hostLabel, output) => {
@@ -25,37 +51,30 @@ export const parseMarketplacesWithSource: MarketplaceListParser = (hostLabel, ou
   if (!Array.isArray(parsed?.marketplaces)) throw new Error(`unexpected ${hostLabel} JSON shape`);
   const entries = new Map<string, NativeMarketplaceSource | null>();
   for (const item of parsed.marketplaces) {
-    const row = object(item);
-    if (
-      typeof row?.name !== "string" ||
-      row.name === "" ||
-      typeof row.root !== "string" ||
-      row.root === "" ||
-      entries.has(row.name)
-    )
-      throw new Error(`ambiguous ${hostLabel} marketplace JSON row`);
-    const source = row.marketplaceSource;
-    if (source === undefined) {
-      entries.set(row.name, null);
-      continue;
-    }
-    const sourceRow = object(source);
-    if (
-      typeof sourceRow?.sourceType !== "string" ||
-      sourceRow.sourceType === "" ||
-      typeof sourceRow.source !== "string" ||
-      sourceRow.source === ""
-    )
-      throw new Error(`unproven ${hostLabel} marketplace source shape`);
-    entries.set(row.name, {
-      kind: "effective-list",
-      root: row.root,
-      sourceType: sourceRow.sourceType,
-      source: sourceRow.source,
-    });
+    const [name, source] = withSourceRow(hostLabel, item, entries);
+    entries.set(name, source);
   }
   return entries;
 };
+
+/** One `{ name, source }` row: its name and the local path its source reads, if it is local. */
+function nameSourceRow(
+  hostLabel: string,
+  item: unknown,
+  seen: Sources
+): [string, NativeMarketplaceSource | null] {
+  if (item === null || typeof item !== "object") throw new Error(`ambiguous ${hostLabel} JSON row`);
+  const { name, source } = item as Record<string, unknown>;
+  if (!isText(name) || typeof source !== "string" || seen.has(name))
+    throw new Error(`ambiguous ${hostLabel} marketplace JSON row`);
+  const path = source.startsWith(LOCAL_SOURCE_PREFIX)
+    ? source.slice(LOCAL_SOURCE_PREFIX.length)
+    : "";
+  return [
+    name,
+    path === "" ? null : { kind: "effective-list", root: path, sourceType: "local", source: path },
+  ];
+}
 
 /**
  * `[{ name, source, isDefault }]`, `source` reading `Local: <path>` or `GitHub: <owner/repo>`.
@@ -66,18 +85,8 @@ export const parseNameSourceRows: MarketplaceListParser = (hostLabel, output) =>
   if (!Array.isArray(parsed)) throw new Error(`unexpected ${hostLabel} JSON shape`);
   const entries = new Map<string, NativeMarketplaceSource | null>();
   for (const item of parsed) {
-    const row: unknown = item;
-    if (row === null || typeof row !== "object") throw new Error(`ambiguous ${hostLabel} JSON row`);
-    const { name, source } = row as Record<string, unknown>;
-    if (typeof name !== "string" || name === "" || typeof source !== "string" || entries.has(name))
-      throw new Error(`ambiguous ${hostLabel} marketplace JSON row`);
-    const path = source.startsWith(LOCAL_SOURCE_PREFIX)
-      ? source.slice(LOCAL_SOURCE_PREFIX.length)
-      : "";
-    entries.set(
-      name,
-      path === "" ? null : { kind: "effective-list", root: path, sourceType: "local", source: path }
-    );
+    const [name, source] = nameSourceRow(hostLabel, item, entries);
+    entries.set(name, source);
   }
   return entries;
 };

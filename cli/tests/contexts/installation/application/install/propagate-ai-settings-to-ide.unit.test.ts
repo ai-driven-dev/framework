@@ -25,11 +25,13 @@ function propagate(
   tools: ToolCatalog = registeredTools()
 ) {
   return new PropagateAiSettingsToIde(
-    deps.manifestRepo,
-    deps.trackedConfigFiles,
-    deps.runPostInstallPipeline,
-    tools,
-    assetProvider ?? undefined
+    {
+      manifestRepo: deps.manifestRepo,
+      trackedConfigFiles: deps.trackedConfigFiles,
+      runPostInstallPipeline: deps.runPostInstallPipeline,
+      assetProvider: assetProvider ?? undefined,
+    },
+    tools
   ).execute({ ideId: TOOL.vscode, projectRoot: PROJECT_ROOT });
 }
 

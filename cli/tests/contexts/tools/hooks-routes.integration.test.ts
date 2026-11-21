@@ -119,9 +119,11 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
     "../../../src/contexts/installation/application/init-project.js"
   );
   await new InitProject(
-    wired.fs,
-    wired.manifestRepo,
-    new UpdateGitignore(wired.fs),
+    {
+      fs: wired.fs,
+      manifestRepo: wired.manifestRepo,
+      updateGitignore: new UpdateGitignore(wired.fs),
+    },
     catalogOf()
   ).execute({
     projectRoot: project,

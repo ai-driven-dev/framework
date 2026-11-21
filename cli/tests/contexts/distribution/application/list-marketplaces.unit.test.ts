@@ -54,7 +54,9 @@ describe("ListMarketplaces", () => {
         ],
       };
       const fakeFetcher = new FetchMarketplaceSource({
-        fetch: async () => "/fake/local-path",
+        pluginFetcher: {
+          fetch: async () => "/fake/local-path",
+        },
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => fakeCatalog,
@@ -71,8 +73,10 @@ describe("ListMarketplaces", () => {
 
     it("skips marketplace when catalog fetch fails and continues", async () => {
       const failingFetcher = new FetchMarketplaceSource({
-        fetch: async () => {
-          throw new Error("network error");
+        pluginFetcher: {
+          fetch: async () => {
+            throw new Error("network error");
+          },
         },
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
@@ -90,8 +94,10 @@ describe("ListMarketplaces", () => {
 
     it("logs a warning through the logger when the catalog fetch fails", async () => {
       const failingFetcher = new FetchMarketplaceSource({
-        fetch: async () => {
-          throw new Error("network error");
+        pluginFetcher: {
+          fetch: async () => {
+            throw new Error("network error");
+          },
         },
       });
       const fakeCatalogRepo: PluginCatalogRepository = {

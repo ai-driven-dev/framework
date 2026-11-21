@@ -2,7 +2,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
+import {
+  UpdatePlugin,
+  type UpdatePluginDeps,
+} from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import type { RuntimeConfigSection } from "../../../../../src/contexts/installation/ports/tool-sections.js";
 import {
   buildInstallationDeps,
@@ -39,16 +42,18 @@ async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
     interactive: false,
   });
   const update = new UpdatePlugin(
-    deps.manifestRepo,
-    loader,
-    new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
-    registeredTools(),
-    pluginRuntime
+    {
+      manifestRepo: deps.manifestRepo,
+      distributionLoader: loader,
+      replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
+      pluginRuntime,
+    },
+    registeredTools()
   );
   return { deps, update };
 }
 
-type UpdatePluginRuntime = ConstructorParameters<typeof UpdatePlugin>[4];
+type UpdatePluginRuntime = UpdatePluginDeps["pluginRuntime"];
 
 describe("UpdatePlugin", () => {
   it("leaves user scope to UpdateUserPluginFiles", async () => {

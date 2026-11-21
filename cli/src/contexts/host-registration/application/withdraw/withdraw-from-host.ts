@@ -6,11 +6,11 @@ import type { HostPorts } from "../../ports/host-ports.js";
 import { assertProjectRegistrationsOwned } from "./assert-project-registrations-owned.js";
 import { assertProjectSource } from "./assert-project-source.js";
 import { proveClaimedRef } from "./prove-claimed-ref.js";
+import { proveUserRegistrations } from "./prove-user-registrations.js";
 import { purgeCachedPlugin, purgeMarketplaceCaches } from "./purge-host-cache.js";
 import { uninstallPlugin } from "./uninstall-plugin.js";
 import { withdrawProjectRegistrations } from "./withdraw-project-registrations.js";
 import {
-  proveUserRegistrations,
   reachableUserActivator,
   withdrawUserRegistrations,
 } from "./withdraw-user-registrations.js";
@@ -56,33 +56,49 @@ export class WithdrawFromHost {
         return undefined;
       case "prove-project-registrations":
         return assertProjectRegistrationsOwned(this.deps, command.withdrawals, command.facts);
-      case "withdraw-project-registrations": {
-        // Asks each tool's own CLI to forget what this project registered, then purges its cache.
-        const removed = await withdrawProjectRegistrations(
-          this.deps,
-          command.withdrawals,
-          command.facts
-        );
-        return purgeMarketplaceCaches(this.deps, removed, command.facts.resolveCacheCandidate);
-      }
+      case "withdraw-project-registrations":
+        return this.withdrawProject(command);
       case "check-user-hosts":
-        // Nothing is undone for a tool whose binary is absent, and its canonical claims are kept.
-        for (const withdrawal of command.withdrawals) {
-          reachableUserActivator(
-            this.deps,
-            withdrawal,
-            recordedRegistrations(withdrawal.registrations)
-          );
-        }
-        return undefined;
+        return this.checkUserHosts(command);
       case "prove-user-registrations":
         return proveUserRegistrations(this.deps, command.withdrawals, command.projectRoot);
-      case "withdraw-user-registrations": {
-        // Every claimed ref uninstalled, then every marketplace unregistered, then the caches purged.
-        const removed = await withdrawUserRegistrations(this.deps, command.withdrawals);
-        return purgeMarketplaceCaches(this.deps, removed, command.resolveCacheCandidate);
-      }
+      case "withdraw-user-registrations":
+        return this.withdrawUser(command);
     }
+  }
+
+  /** Asks each tool's own CLI to forget what this project registered, then purges its cache. */
+  private async withdrawProject(
+    command: Extract<WithdrawalCommand, { kind: "withdraw-project-registrations" }>
+  ): Promise<void> {
+    const removed = await withdrawProjectRegistrations(
+      this.deps,
+      command.withdrawals,
+      command.facts
+    );
+    return purgeMarketplaceCaches(this.deps, removed, command.facts.resolveCacheCandidate);
+  }
+
+  // Nothing is undone for a tool whose binary is absent, and its canonical claims are kept.
+  private checkUserHosts(
+    command: Extract<WithdrawalCommand, { kind: "check-user-hosts" }>
+  ): undefined {
+    for (const withdrawal of command.withdrawals) {
+      reachableUserActivator(
+        this.deps,
+        withdrawal,
+        recordedRegistrations(withdrawal.registrations)
+      );
+    }
+    return undefined;
+  }
+
+  /** Every claimed ref uninstalled, then every marketplace unregistered, then the caches purged. */
+  private async withdrawUser(
+    command: Extract<WithdrawalCommand, { kind: "withdraw-user-registrations" }>
+  ): Promise<void> {
+    const removed = await withdrawUserRegistrations(this.deps, command.withdrawals);
+    return purgeMarketplaceCaches(this.deps, removed, command.resolveCacheCandidate);
   }
 
   private async withdrawPlugin(command: WithdrawPluginCommand): Promise<boolean | undefined> {
@@ -97,6 +113,4 @@ export class WithdrawFromHost {
     if (confirmed !== undefined) await purgeCachedPlugin(this.deps, command, confirmed);
     return confirmed;
   }
-
-  /** Asks each tool's own CLI to forget what this project registered, then purges its cache. */
 }

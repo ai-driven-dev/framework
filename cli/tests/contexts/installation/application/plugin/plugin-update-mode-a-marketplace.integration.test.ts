@@ -45,19 +45,24 @@ async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
 
 function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): UpdatePlugin {
   return new UpdatePlugin(
-    deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    new ReplacePluginFiles(
-      deps.fs,
-      {
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: registry,
-        platform: process.platform,
-        homedir: () => HOME,
-        translate: translateDistribution,
-      },
-      registeredTools()
-    ),
+    {
+      manifestRepo: deps.manifestRepo,
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        deps.pluginDistributionReader
+      ),
+      replacePluginFiles: new ReplacePluginFiles(
+        deps.fs,
+        {
+          ensureBuilt: fakeEnsureBuiltMarketplace(),
+          marketplaceRegistry: registry,
+          platform: process.platform,
+          homedir: () => HOME,
+          translate: translateDistribution,
+        },
+        registeredTools()
+      ),
+    },
     registeredTools()
   );
 }

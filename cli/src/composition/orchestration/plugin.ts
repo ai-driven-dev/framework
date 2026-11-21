@@ -139,23 +139,27 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
   });
   const pluginRemoveUseCase = new RemovePlugin(
-    fs,
-    manifestRepo,
-    new ProjectPluginWithdrawal(
-      projectHostWithdrawal(withdrawFromHost, removalClaims),
-      removalClaims
-    ),
-    registrationRecordRules,
+    {
+      fs,
+      projectRepo: manifestRepo,
+      withdrawal: new ProjectPluginWithdrawal(
+        projectHostWithdrawal(withdrawFromHost, removalClaims),
+        removalClaims
+      ),
+      records: registrationRecordRules,
+    },
     tools
   );
   const userPluginRemove = underMachineHome(
     new RemoveUserPlugin(
-      userManifestRepo,
-      claimedRefWithdrawal(withdrawFromHost),
-      registrationRecordRules,
-      new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-      ),
+      {
+        userRepo: userManifestRepo,
+        withdrawFromHost: claimedRefWithdrawal(withdrawFromHost),
+        records: registrationRecordRules,
+        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+        ),
+      },
       tools
     )
   );
@@ -167,26 +171,30 @@ function wirePluginUpdate(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, pluginDistributionReader } = base;
   const { pluginFetcher } = base;
   const { installRuntimeConfigUseCase, builtMaterializationDeps, registrationRecordRules } = inst;
-  const pluginMaterializer = new PluginMaterializer(
+  const pluginMaterializer = new PluginMaterializer({
     fs,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    userScopeFileGuard,
-    builtMaterializationDeps,
-    pluginCacheDir
-  );
+    loader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    guard: userScopeFileGuard,
+    builtDeps: builtMaterializationDeps,
+    globalCacheDir: pluginCacheDir,
+  });
   const pluginUpdateUseCase = new UpdatePlugin(
-    manifestRepo,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
-    tools,
-    installRuntimeConfigUseCase
+    {
+      manifestRepo,
+      distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+      replacePluginFiles: new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
+      pluginRuntime: installRuntimeConfigUseCase,
+    },
+    tools
   );
   const userPluginUpdateUseCase = new UpdateUserPlugin(
     new UpdateUserPluginFiles(
-      userManifestRepo,
-      pluginMaterializer,
-      logger,
-      registrationRecordRules,
+      {
+        repo: userManifestRepo,
+        materializer: pluginMaterializer,
+        logger,
+        records: registrationRecordRules,
+      },
       tools
     ),
     new RefreshHostPlugin(
@@ -210,15 +218,22 @@ export function wirePlugin(base: Base, inst: Installation) {
   const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
   const { installRuntimeConfigUseCase, builtMaterializationDeps } = inst;
   const pluginAddUseCase = new AddPlugin(
-    fs,
-    { project: manifestRepo, user: userManifestRepo },
-    new ResolveAddedPluginSource(
-      new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    {
       fs,
-      builtMaterializationDeps,
-      tools
-    ),
-    new PlacePlugin(fs, logger, builtMaterializationDeps, tools, installRuntimeConfigUseCase),
+      manifests: { project: manifestRepo, user: userManifestRepo },
+      source: new ResolveAddedPluginSource(
+        {
+          distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+          fs,
+          built: builtMaterializationDeps,
+        },
+        tools
+      ),
+      place: new PlacePlugin(
+        { fs, logger, built: builtMaterializationDeps, pluginRuntime: installRuntimeConfigUseCase },
+        tools
+      ),
+    },
     tools
   );
   const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(

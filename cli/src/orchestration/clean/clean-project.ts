@@ -1,10 +1,8 @@
 import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { ProjectCleanFacts } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
-import type {
-  CleanNativeRegistrationPreview,
-  CleanProjectFiles,
-} from "../../contexts/installation/application/clean-project-files.js";
+import type { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.js";
+import type { CleanNativeRegistrationPreview } from "../../contexts/installation/application/plan-project-clean.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";

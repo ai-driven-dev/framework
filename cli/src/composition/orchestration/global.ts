@@ -56,13 +56,13 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
     installIdeConfig,
     propagateAiSettingsToIde
   );
-  const installAiToolUseCase = new InstallAiTool(
-    installRuntimeConfigUseCase,
+  const installAiToolUseCase = new InstallAiTool({
+    installRuntimeConfig: installRuntimeConfigUseCase,
     manifestRepo,
-    plugin.pluginInstallFromMarketplaceUseCase,
-    marketplace.syncSettingsUseCase,
-    logger
-  );
+    pluginInstallFromMarketplace: plugin.pluginInstallFromMarketplaceUseCase,
+    activatePropagated: marketplace.syncSettingsUseCase,
+    logger,
+  });
   const setupToolsUseCase = new InstallTools(
     manifestRepo,
     installRuntimeConfigUseCase,
@@ -71,10 +71,12 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
   const updateToolsUseCase = new UpdateTools(
     new ListInstalledTools(manifestRepo, tools),
     new UpdateTool(
-      installRuntimeConfigUseCase,
-      installIdeConfig,
-      new ResolveSyncConflict(fs),
-      manifestRepo,
+      {
+        installRuntimeConfig: installRuntimeConfigUseCase,
+        installIdeConfig,
+        resolveSyncConflict: new ResolveSyncConflict(fs),
+        manifestRepo,
+      },
       tools
     ),
     new ResolveUpdateDecision(prompter),
@@ -87,22 +89,31 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
 function wireRestore(base: Base, installation: Installation, statusUseCase: ReportStatus) {
   const { fs, prompter, logger, manifestRepo, currentVersionProvider, platform, tools } = base;
   const restoreToolFiles = new RestoreToolFiles(
-    new GenerateToolDistribution(new InstallConfig(fs), platform, installation.assetProvider),
-    fs,
-    prompter,
-    logger,
+    {
+      generateToolDistribution: new GenerateToolDistribution(
+        new InstallConfig(fs),
+        platform,
+        installation.assetProvider
+      ),
+      fs,
+      prompter,
+      logger,
+    },
     tools
   );
   const restoreAllPlugins = new RestoreAllPlugins(
-    new ApplyPluginFiles(
+    new ApplyPluginFiles({
       fs,
-      base.pluginFetcher,
-      base.pluginDistributionReader,
-      installation.builtMaterializationDeps
-    ),
+      pluginFetcher: base.pluginFetcher,
+      pluginDistributionReader: base.pluginDistributionReader,
+      builtDeps: installation.builtMaterializationDeps,
+    }),
     tools
   );
-  const restoreUseCase = new Restore(fs, manifestRepo, restoreToolFiles, restoreAllPlugins, tools);
+  const restoreUseCase = new Restore(
+    { fs, manifestRepo, restoreToolFiles, restoreAllPlugins },
+    tools
+  );
   const restoreAllUseCase = new RestoreAll(
     prompter,
     statusUseCase,
@@ -119,7 +130,10 @@ export function wireGlobal(parts: GlobalParts) {
   const { syncSettingsUseCase, resolveSetupSource, registerSetupSource } = marketplace;
   const installGlobalPlugins = new InstallGlobalPlugins(
     new ListFrameworkPlugins(base.marketplaceRegistry, base.resolveMarketplaceUseCase),
-    new InstallUserPlugins(userManifestRepo, plugin.userPluginFileUpdater, logger, tools)
+    new InstallUserPlugins(
+      { repo: userManifestRepo, materializer: plugin.userPluginFileUpdater, logger },
+      tools
+    )
   );
   const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
@@ -129,9 +143,7 @@ export function wireGlobal(parts: GlobalParts) {
     installGlobalPlugins
   );
   const statusUseCase = new ReportStatus(
-    fs,
-    manifestRepo,
-    installation.detectPluginDriftUseCase,
+    { fs, manifestRepo, detectPluginDrift: installation.detectPluginDriftUseCase },
     tools
   );
   const restore = wireRestore(base, installation, statusUseCase);

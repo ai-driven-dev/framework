@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginSourceMatch } from "../../../src/contexts/distribution/contract/plugin-source-match.js";
-import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import {
   InstallFromMarketplace,
   type PluginInstallFromMarketplaceOptions,

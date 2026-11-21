@@ -30,17 +30,18 @@ export function createFrameworkBuildUseCase(
   if (target === null) return undefined;
   const contract = tools.aiProfile(target).buildContract(ctx.mode, ctx.provider);
   if (contract === null) return undefined;
-  const sink = new DiskSink(
-    deps.fs,
-    new AjvSchemaValidatorAdapter(),
-    deps.assetProvider,
-    deps.logger,
-    new FlatWriter(deps.fs, deps.assetProvider, deps.logger)
-  );
-  return new BuildNativeTree(deps.fs, deps.logger, sink, {
-    contract,
-    mode: ctx.mode,
-    force: ctx.force,
+  const sink = new DiskSink({
+    fs: deps.fs,
+    jsonSchemaValidator: new AjvSchemaValidatorAdapter(),
+    assetProvider: deps.assetProvider,
+    logger: deps.logger,
+    flat: new FlatWriter(deps.fs, deps.assetProvider, deps.logger),
+  });
+  return new BuildNativeTree({
+    fs: deps.fs,
+    logger: deps.logger,
+    sink,
+    layout: { contract, mode: ctx.mode, force: ctx.force },
   });
 }
 

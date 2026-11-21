@@ -40,12 +40,12 @@ async function resolverOver(
   for (const marketplace of marketplaces) await registry.save(PROJECT, marketplace);
   const fs = new InMemoryFileAdapter();
   for (const dir of built) fs.setFile(join(dir, "marker"), "");
-  return new ResolveBuiltMarketplaces(
+  return new ResolveBuiltMarketplaces({
     fs,
     registry,
-    () => USER_ROOT,
-    new FakeCurrentVersion(VERSION)
-  );
+    userCacheRoot: () => USER_ROOT,
+    currentVersion: new FakeCurrentVersion(VERSION),
+  });
 }
 
 describe("ResolveBuiltMarketplaces", () => {
