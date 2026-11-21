@@ -4,7 +4,8 @@ import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/do
 import { genericFlatSkillPath } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
-import { flatHooksArtifact } from "../../formats/hooks/routes.js";
+import { flatTargetsOf } from "../../formats/flat-targets.js";
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
 
@@ -23,11 +24,7 @@ function antigravityFlatAgentPath(plugin: string, rel: string): string {
   return `${ANTIGRAVITY_AGENTS_DIR}${agentName(plugin, rel)}/agent.md`;
 }
 
-function resolveTarget(plugin: string, rel: string): string {
-  if (rel.startsWith("agents/")) return antigravityFlatAgentPath(plugin, rel);
-  if (rel.startsWith("skills/")) return antigravityFlatSkillPath(plugin, rel);
-  return rel;
-}
+const resolveTarget = flatTargetsOf(antigravityFlatAgentPath, antigravityFlatSkillPath);
 
 function transformAntigravityAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);

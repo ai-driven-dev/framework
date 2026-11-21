@@ -19,11 +19,16 @@ export function flatGlobalFilePath(directory: string): GlobalFiles["map"] {
   return (builtPath, plugin) => {
     if (!builtPath.startsWith(directory)) return null;
     const relative = builtPath.slice(directory.length);
-    if (relative.startsWith(`skills/${plugin.name}/`)) return relative;
-    const agent = /^agents\/(.+)\.md$/.exec(relative)?.[1];
-    if (agent === undefined || !agent.startsWith(`${plugin.name}-`)) return null;
-    return plugin.agents.has(agent.slice(plugin.name.length + 1)) ? relative : null;
+    return ownsPath(relative, plugin) ? relative : null;
   };
+}
+
+/** Whether a path below the directory is one of the plugin's skills or agents. */
+function ownsPath(relative: string, plugin: Parameters<GlobalFiles["map"]>[1]): boolean {
+  if (relative.startsWith(`skills/${plugin.name}/`)) return true;
+  const agent = /^agents\/(.+)\.md$/.exec(relative)?.[1];
+  if (agent === undefined || !agent.startsWith(`${plugin.name}-`)) return false;
+  return plugin.agents.has(agent.slice(plugin.name.length + 1));
 }
 
 /** A tool that installs a plugin into its own plugin directory and activates it natively. */
@@ -65,6 +70,21 @@ export interface NativeLayoutParams {
   marketplaceSettings?: MarketplaceSettings;
 }
 
+function activationOf(params: NativeLayoutParams): NativeActivation | undefined {
+  return params.nativeActivation === undefined
+    ? undefined
+    : new NativeActivation(params.nativeActivation);
+}
+
+function marketplaceOf(
+  params: NativeLayoutParams,
+  activation: NativeActivation | undefined
+): MarketplaceRegistration | undefined {
+  return params.marketplaceSettings === undefined
+    ? undefined
+    : new MarketplaceRegistration(params.marketplaceSettings, activation ?? null);
+}
+
 export function nativeLayout(params: NativeLayoutParams): NativeLayout {
   const installScope = params.installScope ?? "project";
   if (installScope === "user" && params.userPluginsDir === undefined) {
@@ -72,14 +92,8 @@ export function nativeLayout(params: NativeLayoutParams): NativeLayout {
       "installScope 'user' requires a userPluginsDir resolver function."
     );
   }
-  const activation =
-    params.nativeActivation === undefined
-      ? undefined
-      : new NativeActivation(params.nativeActivation);
-  const marketplace =
-    params.marketplaceSettings === undefined
-      ? undefined
-      : new MarketplaceRegistration(params.marketplaceSettings, activation ?? null);
+  const activation = activationOf(params);
+  const marketplace = marketplaceOf(params, activation);
   return {
     mode: "native",
     pluginsDir: params.pluginsDir,

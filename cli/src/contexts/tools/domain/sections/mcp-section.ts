@@ -9,6 +9,7 @@ import {
   mergeTypedMcp,
   unmergeTypedMcp,
 } from "../formats/typed-mcp-merge.js";
+import { transformMcpForWin32 } from "./mcp-win32-launch.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
  * first tier that has any file present, two present files make `conflict` throw, one is the answer.
@@ -29,31 +30,13 @@ export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: Toml
   consumes?: readonly ConfigRef[];
 };
 
-interface McpServerWin32 {
-  command?: string;
-  args?: string[];
-  [key: string]: unknown;
-}
-
-interface McpConfigWin32 {
-  mcpServers?: Record<string, McpServerWin32>;
-  [key: string]: unknown;
-}
-
-function transformMcpForWin32(content: string): string {
-  const config = JSON.parse(content) as McpConfigWin32;
-  if (!config.mcpServers) return JSON.stringify(config, null, 2);
-  for (const server of Object.values(config.mcpServers)) {
-    if (server.command === "npx") {
-      server.args = ["/c", "npx", ...(server.args ?? [])];
-      server.command = "cmd";
-    } else if (server.command === "uvx") {
-      server.command = "uvx.exe";
-    } else if (server.command === "uv") {
-      server.command = "uv.exe";
-    }
-  }
-  return JSON.stringify(config, null, 2);
+async function presentIn(
+  tier: readonly string[],
+  exists: (relativePath: string) => Promise<boolean>
+): Promise<string[]> {
+  const present: string[] = [];
+  for (const candidate of tier) if (await exists(candidate)) present.push(candidate);
+  return present;
 }
 
 /** The file a tool's own MCP servers are written to, and how it is merged and converted. */
@@ -122,10 +105,7 @@ export class McpConfigPart {
     const candidates = this.#params.outputPathCandidates;
     if (candidates === undefined) return this.#params.outputPath;
     for (const tier of candidates.tiers) {
-      const present: string[] = [];
-      for (const candidate of tier) {
-        if (await exists(candidate)) present.push(candidate);
-      }
+      const present = await presentIn(tier, exists);
       if (present.length > 1) candidates.conflict();
       if (present.length === 1) return present[0] as string;
     }

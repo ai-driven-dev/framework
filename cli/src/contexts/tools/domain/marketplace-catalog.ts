@@ -32,6 +32,44 @@ export interface SynthesizeSharedManifestOpts {
   readonly hooksField: boolean;
 }
 
+const isText = (value: unknown): value is string => typeof value === "string";
+const isFilledText = (value: unknown): value is string => isText(value) && value.length > 0;
+
+/** The source manifest's identity fields, in the order the output keeps them. */
+const IDENTITY: readonly (readonly [string, (value: unknown) => boolean])[] = [
+  ["name", isText],
+  ["description", isText],
+  ["version", isText],
+  ["author", (value) => typeof value === "string" || typeof value === "object"],
+  ["homepage", isText],
+  ["repository", isText],
+  ["license", isText],
+  ["keywords", Array.isArray],
+];
+
+function identityFields(source: Record<string, unknown>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const [key, accepts] of IDENTITY) if (accepts(source[key])) fields[key] = source[key];
+  return fields;
+}
+
+/** The skills, agents, hooks and MCP paths the built plugin ships. */
+function shippedPaths(
+  presence: PluginPresence,
+  opts: SynthesizeSharedManifestOpts
+): Record<string, unknown> {
+  const paths: Record<string, unknown> = {};
+  if (opts.agentsField && presence.agentsList.length > 0) {
+    paths.agents = presence.agentsList.map((n) => `./agents/${n}`);
+  }
+  if (presence.skillsList.length > 0) {
+    paths.skills = presence.skillsList.map((n) => `./skills/${n}`);
+  }
+  if (opts.hooksField && presence.hasHooksJson) paths.hooks = "./hooks/hooks.json";
+  if (presence.hasMcpJson) paths.mcpServers = "./.mcp.json";
+  return paths;
+}
+
 /** Synthesize the plugin manifest shared by the claude, cursor and copilot strategies: the
  * source manifest's identity fields, then the skills, agents, hooks and MCP paths the built
  * plugin ships, all as `./`-relative paths. Key insertion order is part of the output shape. */
@@ -40,23 +78,7 @@ export function synthesizeSharedManifest(
   presence: PluginPresence,
   opts: SynthesizeSharedManifestOpts
 ): Record<string, unknown> {
-  const manifest: Record<string, unknown> = {};
-  if (typeof source.name === "string") manifest.name = source.name;
-  if (typeof source.description === "string") manifest.description = source.description;
-  if (typeof source.version === "string") manifest.version = source.version;
-  if (typeof source.author === "string" || typeof source.author === "object")
-    manifest.author = source.author;
-  if (typeof source.homepage === "string") manifest.homepage = source.homepage;
-  if (typeof source.repository === "string") manifest.repository = source.repository;
-  if (typeof source.license === "string") manifest.license = source.license;
-  if (Array.isArray(source.keywords)) manifest.keywords = source.keywords;
-  if (opts.agentsField && presence.agentsList.length > 0)
-    manifest.agents = presence.agentsList.map((n) => `./agents/${n}`);
-  if (presence.skillsList.length > 0)
-    manifest.skills = presence.skillsList.map((n) => `./skills/${n}`);
-  if (opts.hooksField && presence.hasHooksJson) manifest.hooks = "./hooks/hooks.json";
-  if (presence.hasMcpJson) manifest.mcpServers = "./.mcp.json";
-  return manifest;
+  return { ...identityFields(source), ...shippedPaths(presence, opts) };
 }
 
 export function buildSharedMarketplace(
@@ -104,41 +126,27 @@ export interface EntrySource {
   readonly outputManifestRelative: string;
 }
 
-export async function resolveVersion({
-  fs,
-  name,
-  srcEntry,
-  outDir,
-  outputManifestRelative,
-}: EntrySource): Promise<string> {
-  if (srcEntry?.version) return srcEntry.version;
-  const manifestPath = join(outDir, "plugins", name, outputManifestRelative);
-  const raw = await fs.readFile(manifestPath);
-  const manifest = JSON.parse(raw) as Record<string, unknown>;
-  if (typeof manifest.version === "string") return manifest.version;
+/** The entry's own `field`, else the plugin's built manifest's, read as `accepted` says. */
+async function resolveField(
+  { fs, name, srcEntry, outDir, outputManifestRelative }: EntrySource,
+  field: "version" | "description",
+  accepted: (value: unknown) => value is string
+): Promise<string> {
+  const own = srcEntry?.[field];
+  if (own) return own;
+  const raw = await fs.readFile(join(outDir, "plugins", name, outputManifestRelative));
+  const value = (JSON.parse(raw) as Record<string, unknown>)[field];
+  if (accepted(value)) return value;
   throw new InvalidSourceMarketplaceError(
-    `plugin '${name}' has no version in marketplace entry or plugin.json`
+    `plugin '${name}' has no ${field} in marketplace entry or plugin.json`
   );
 }
 
-export async function resolveDescription({
-  fs,
-  name,
-  srcEntry,
-  outDir,
-  outputManifestRelative,
-}: EntrySource): Promise<string> {
-  if (srcEntry?.description) return srcEntry.description;
-  const manifestPath = join(outDir, "plugins", name, outputManifestRelative);
-  const raw = await fs.readFile(manifestPath);
-  const manifest = JSON.parse(raw) as Record<string, unknown>;
-  if (typeof manifest.description === "string" && manifest.description.length > 0) {
-    return manifest.description;
-  }
-  throw new InvalidSourceMarketplaceError(
-    `plugin '${name}' has no description in marketplace entry or plugin.json`
-  );
-}
+export const resolveVersion = (source: EntrySource): Promise<string> =>
+  resolveField(source, "version", isText);
+
+export const resolveDescription = (source: EntrySource): Promise<string> =>
+  resolveField(source, "description", isFilledText);
 
 /** Resolve version and description, then shape the catalog entry: the marketplace-entry
  * builder claude and cursor both hand to `ToolBuildContract.buildMarketplaceEntry`. */

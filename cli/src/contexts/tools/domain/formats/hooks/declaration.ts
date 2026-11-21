@@ -93,6 +93,32 @@ export interface HooksOwner {
   readonly adapter: string;
 }
 
+/** The routes and the hooks file must agree: a route merges through a file's format, and a file
+ * has commands that name the plugin root by a variable. */
+function refuseIncoherentRoutes(declaration: HooksDeclaration, refuse: Refuse): void {
+  const { project, flat, file, rootToken } = declaration;
+  if (project !== undefined && file === undefined) {
+    refuse("project-without-file", "a project route merges through the hooks file's format");
+  }
+  if (flat?.loaderEntry !== undefined && file !== undefined) {
+    refuse("loader-with-file", "a loader imports a bridge instead of reading a hooks file");
+  }
+  if (rootToken === undefined && file !== undefined) {
+    refuse("file-without-root-token", "a hooks file's commands name the plugin root by a variable");
+  }
+  if (rootToken !== undefined && file === undefined) {
+    refuse("root-token-without-file", "the root token names what a hooks file's commands hold");
+  }
+}
+
+function refusePathsOutside(directory: string, declaration: HooksDeclaration, refuse: Refuse) {
+  for (const path of ownPaths(declaration)) {
+    if (isAbsolute(path) || path.split("/").includes("..") || !path.startsWith(directory)) {
+      refuse("path-outside-directory", `${path} is not under ${directory}`);
+    }
+  }
+}
+
 /** The one door to a descriptor: refuses what no tool could run, and derives what the readers
  * of a descriptor need from the events it declares. */
 export function declareHooks<const D extends HooksDeclaration>(
@@ -109,23 +135,8 @@ export function declareHooks<const D extends HooksDeclaration>(
     ...rest
   } = declaration;
   const events = canonicalEvents(declared, refuse);
-  if (declaration.project !== undefined && declaration.file === undefined) {
-    refuse("project-without-file", "a project route merges through the hooks file's format");
-  }
-  if (declaration.flat?.loaderEntry !== undefined && declaration.file !== undefined) {
-    refuse("loader-with-file", "a loader imports a bridge instead of reading a hooks file");
-  }
-  if (rootToken === undefined && declaration.file !== undefined) {
-    refuse("file-without-root-token", "a hooks file's commands name the plugin root by a variable");
-  }
-  if (rootToken !== undefined && declaration.file === undefined) {
-    refuse("root-token-without-file", "the root token names what a hooks file's commands hold");
-  }
-  for (const path of ownPaths(declaration)) {
-    if (isAbsolute(path) || path.split("/").includes("..") || !path.startsWith(directory)) {
-      refuse("path-outside-directory", `${path} is not under ${directory}`);
-    }
-  }
+  refuseIncoherentRoutes(declaration, refuse);
+  refusePathsOutside(directory, declaration, refuse);
   const declared_ = {
     ...rest,
     runtime: stamped(toolId, adapter, refuse),

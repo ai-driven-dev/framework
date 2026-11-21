@@ -15,13 +15,15 @@ import type {
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
+import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type {
   FlatHooksRoute,
   HooksDescriptor,
   HooksRouting,
 } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/routes.js";
-import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
+import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/flat-routes.js";
+import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
+import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
@@ -46,11 +48,7 @@ function opencodeFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(".opencode/skills/", plugin, rel.replace(/^skills\//, ""));
 }
 
-function opencodeFlatResolveTarget(plugin: string, rel: string): string {
-  if (rel.startsWith("agents/")) return opencodeFlatAgentPath(plugin, rel);
-  if (rel.startsWith("skills/")) return opencodeFlatSkillPath(plugin, rel);
-  return rel;
-}
+const opencodeFlatResolveTarget = flatTargetsOf(opencodeFlatAgentPath, opencodeFlatSkillPath);
 
 function transformOpencodeFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);

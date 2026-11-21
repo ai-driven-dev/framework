@@ -12,7 +12,8 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
 import {

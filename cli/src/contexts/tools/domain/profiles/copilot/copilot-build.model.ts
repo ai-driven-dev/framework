@@ -12,8 +12,10 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
+import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   resolveDescription,
   resolveVersion,
@@ -128,11 +130,7 @@ function transformCopilotFlatAgent(content: string, plugin: string, outName: str
   return serializeFrontmatter(copilotAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
 }
 
-function copilotFlatResolveTarget(plugin: string, rel: string): string {
-  if (rel.startsWith("agents/")) return copilotFlatAgentPath(plugin, rel);
-  if (rel.startsWith("skills/")) return copilotFlatSkillPath(plugin, rel);
-  return rel;
-}
+const copilotFlatResolveTarget = flatTargetsOf(copilotFlatAgentPath, copilotFlatSkillPath);
 
 export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {

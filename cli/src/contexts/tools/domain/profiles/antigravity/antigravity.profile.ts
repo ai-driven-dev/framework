@@ -1,7 +1,7 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-antigravity.cjs";
 import { declareHooks } from "../../formats/hooks/declaration.js";
-import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks/routes.js";
+import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks/flat-routes.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
 import { buildAntigravityFlatContract } from "./antigravity-build.model.js";

@@ -6,7 +6,7 @@
 
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ArtifactContract } from "../../../contract/build-contract.js";
-import type { HooksFileFormat } from "../../hooks/hooks-merge.js";
+import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
 import type { HooksConfigParams } from "../../sections/hooks-section.js";
 
 /** The events a plugin's hooks may name, whichever tool runs them. */

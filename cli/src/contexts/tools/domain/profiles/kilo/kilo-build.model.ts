@@ -10,9 +10,11 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact } from "../../formats/hooks/routes.js";
-import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
+import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
 import {
@@ -40,11 +42,7 @@ function kiloFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(`${KILO_DIRECTORY}skills/`, plugin, rel.replace(/^skills\//, ""));
 }
 
-function kiloFlatResolveTarget(plugin: string, rel: string): string {
-  if (rel.startsWith("agents/")) return kiloFlatAgentPath(plugin, rel);
-  if (rel.startsWith("skills/")) return kiloFlatSkillPath(plugin, rel);
-  return rel;
-}
+const kiloFlatResolveTarget = flatTargetsOf(kiloFlatAgentPath, kiloFlatSkillPath);
 
 function transformKiloFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);

@@ -12,8 +12,10 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
+import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,
@@ -101,11 +103,7 @@ function cursorFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(".cursor/skills/", plugin, rel.replace(/^skills\//, ""));
 }
 
-function cursorFlatResolveTarget(plugin: string, rel: string): string {
-  if (rel.startsWith("agents/")) return cursorFlatAgentPath(plugin, rel);
-  if (rel.startsWith("skills/")) return cursorFlatSkillPath(plugin, rel);
-  return rel;
-}
+const cursorFlatResolveTarget = flatTargetsOf(cursorFlatAgentPath, cursorFlatSkillPath);
 
 function transformCursorFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);

@@ -17,10 +17,10 @@
   "src/contexts/tools/domain/formats/base64.ts": 1,
   "src/contexts/tools/domain/formats/hooks/declaration.ts": 1,
   "src/contexts/tools/domain/formats/mcp-format.ts": 5,
-  "src/contexts/tools/domain/formats/typed-mcp-merge.ts": 8,
+  "src/contexts/tools/domain/formats/typed-mcp-merge.ts": 7,
   "src/contexts/tools/domain/hooks/hooks-merge.ts": 4,
   "src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.ts": 6,
-  "src/contexts/tools/domain/marketplace-catalog.ts": 3,
+  "src/contexts/tools/domain/marketplace-catalog.ts": 2,
   "src/contexts/tools/domain/profile/define-tool.ts": 4,
   "src/contexts/tools/domain/profiles/antigravity/antigravity.profile.ts": 1,
   "src/contexts/tools/domain/profiles/claude/claude-build.model.ts": 1,
@@ -29,7 +29,7 @@
   "src/contexts/tools/domain/profiles/cursor/cursor-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/kilo/kilo-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/opencode/opencode-build.model.ts": 1,
-  "src/contexts/tools/domain/sections/mcp-section.ts": 2,
+  "src/contexts/tools/domain/sections/mcp-section.ts": 1,
   "src/contexts/tools/domain/sections/models-section.ts": 1,
   "src/contexts/translate/application/build-native-tree.ts": 2,
   "src/contexts/translate/infrastructure/schema-validator.ts": 2,
@@ -68,7 +68,6 @@
   "tests/contexts/telemetry/testing/telemetry-report-seed.builder.ts": 1,
   "tests/contexts/tools/domain/bridges/event-bridge.integration.test.ts": 5,
   "tests/contexts/tools/domain/formats/additive-mcp-merge.unit.test.ts": 8,
-  "tests/contexts/tools/domain/formats/hooks/routes.unit.test.ts": 1,
   "tests/contexts/tools/domain/formats/toml-agent.unit.test.ts": 2,
   "tests/contexts/tools/domain/formats/typed-mcp-merge.unit.test.ts": 19,
   "tests/contexts/tools/domain/hooks/hooks-merge.unit.test.ts": 2,
@@ -122,5 +121,6 @@
   "tests/setup/unloadable-file-as-failed-test.integration.test.ts": 1,
   "tests/setup/unloadable-file-as-failed-test.ts": 1,
   "tests/shared/testing/cli-sandbox.builder.ts": 1,
-  "tests/shared/testing/in-process-cli.builder.ts": 2
+  "tests/shared/testing/in-process-cli.builder.ts": 2,
+  "tests/shared/testing/routed-hooks.builder.ts": 1
 }

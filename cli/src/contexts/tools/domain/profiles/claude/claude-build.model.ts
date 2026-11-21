@@ -12,8 +12,10 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
+import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,
@@ -96,11 +98,7 @@ function transformClaudeAgent(content: string, _plugin: string, outName: string)
   return serializeFrontmatter(claudeAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
-function claudeFlatResolveTarget(plugin: string, rel: string): string {
-  if (rel.startsWith("agents/")) return claudeFlatAgentPath(plugin, rel);
-  if (rel.startsWith("skills/")) return claudeFlatSkillPath(plugin, rel);
-  return rel;
-}
+const claudeFlatResolveTarget = flatTargetsOf(claudeFlatAgentPath, claudeFlatSkillPath);
 
 function transformClaudeFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
