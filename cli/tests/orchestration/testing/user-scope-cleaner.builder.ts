@@ -36,6 +36,15 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   prompter?: CleanUserScopeDeps["prompter"];
 }
 
+function hostPortsOf(parts: Partial<HostPorts>): HostPorts {
+  return {
+    activators: parts.activators ?? new Map(),
+    pluginRegistries: parts.pluginRegistries ?? new Map(),
+    marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
+    sources: parts.sources ?? new Map(),
+  };
+}
+
 export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
@@ -64,12 +73,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       },
       registeredTools()
     ),
-    withdrawFromHost: new WithdrawFromHost(fs, logger, {
-      activators: parts.activators ?? new Map(),
-      pluginRegistries: parts.pluginRegistries ?? new Map(),
-      marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
-      sources: parts.sources ?? new Map(),
-    }),
+    withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
     claims: wireCleanClaims({
       fs,
       logger,
