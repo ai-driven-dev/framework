@@ -72,7 +72,9 @@ describe("GhCliAdapter, when gh fails", () => {
   it("names the exit code when gh wrote nothing", () => {
     mockSpawnSync.mockReturnValue(answer({ status: 1, stderr: "" }));
 
-    expect(() => new GhCliAdapter().read()).toThrow("exited with code 1");
+    expect(() => new GhCliAdapter().read()).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("exited with code 1") })
+    );
   });
 
   it("names the upgrade when gh lacks `auth token`", () => {
@@ -80,25 +82,37 @@ describe("GhCliAdapter, when gh fails", () => {
       answer({ status: 1, stderr: 'unknown command "token" for "gh auth"' })
     );
 
-    expect(() => new GhCliAdapter().read()).toThrow("gh CLI is too old to support");
+    expect(() => new GhCliAdapter().read()).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("gh CLI is too old to support") })
+    );
   });
 
   it("copes with no stderr stream", () => {
     mockSpawnSync.mockReturnValue(answer({ status: 2, stderr: undefined }));
 
-    expect(() => new GhCliAdapter().read()).toThrow("gh auth token exited with code 2");
+    expect(() => new GhCliAdapter().read()).toThrow(
+      expect.objectContaining({
+        detail: expect.stringContaining("gh auth token exited with code 2"),
+      })
+    );
   });
 
   it("says the code is unknown when gh left none", () => {
     mockSpawnSync.mockReturnValue(answer({ status: null, stderr: "" }));
 
-    expect(() => new GhCliAdapter().read()).toThrow("gh auth token exited with code unknown");
+    expect(() => new GhCliAdapter().read()).toThrow(
+      expect.objectContaining({
+        detail: expect.stringContaining("gh auth token exited with code unknown"),
+      })
+    );
   });
 
   it("names its stderr, trimmed", () => {
     mockSpawnSync.mockReturnValue(answer({ status: 1, stderr: "  boom  \n" }));
 
-    expect(() => new GhCliAdapter().read()).toThrow("gh auth token failed: boom");
+    expect(() => new GhCliAdapter().read()).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("gh auth token failed: boom") })
+    );
   });
 });
 
