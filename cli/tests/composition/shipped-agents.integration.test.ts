@@ -1,6 +1,7 @@
-import { readdir, readFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { SmolTomlCodec } from "../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
 import { createTestEnv } from "../shared/testing/cli-sandbox.builder.js";
@@ -27,6 +28,29 @@ const HOSTS = [
   { host: "kilo", dir: ".kilo/agents", ext: ".md", extra: () => ({ mode: "subagent" }) },
 ] as const;
 
+/** The real plugin alone under its real marketplace entry: a build reads every plugin it is
+ * given, so the nine of the repository would cost nine times the proof of this one. */
+let source: string;
+
+beforeAll(async () => {
+  source = await mkdtemp(join(tmpdir(), "aidd-shipped-agents-source-"));
+  await mkdir(join(source, ".claude-plugin"), { recursive: true });
+  await cp(join(REPOSITORY_ROOT, "plugins", PLUGIN), join(source, "plugins", PLUGIN), {
+    recursive: true,
+  });
+  const marketplace = JSON.parse(
+    await readFile(join(REPOSITORY_ROOT, ".claude-plugin", "marketplace.json"), "utf8")
+  );
+  marketplace.plugins = marketplace.plugins.filter(
+    (entry: { name: string }) => entry.name === PLUGIN
+  );
+  await writeFile(join(source, ".claude-plugin", "marketplace.json"), JSON.stringify(marketplace));
+});
+
+afterAll(async () => {
+  await rm(source, { recursive: true, force: true });
+});
+
 let project: string;
 let home: string;
 let cleanup: () => Promise<void>;
@@ -44,7 +68,7 @@ describe("the shipped agents, built flat for each host", () => {
     "$host loads every agent at its path, with its own frontmatter",
     async ({ host, dir, ext, extra }) => {
       const build = await runInProcess(
-        ["translate", REPOSITORY_ROOT, "--to", host, "--as", "flat", "--out", project],
+        ["translate", source, "--to", host, "--as", "flat", "--out", project],
         { cwd: project, home }
       );
       expect(build.exitCode, build.stderr).toBe(0);
