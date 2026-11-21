@@ -1,8 +1,9 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ToolBuildContract } from "../../../tools/contract/build-contract.js";
-import { flatAgentPath, flatLinkTarget } from "../flat-layout.js";
+import { flatAgentPath, flatLinkTarget, flatPathOfPluginSuffix } from "../flat-layout.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
+import { HOOKS_MANIFEST } from "../rules/hook-scripts.js";
 import { rewriteRelativeLinks } from "../rules/links.js";
 import { agentFiles, baseOf, isEntry, type SupportedArtifact } from "./build-shared.js";
 
@@ -78,4 +79,23 @@ function flatSkills(
       namedAfterFolder: artifact.rewriteSkillName && isEntry(relativePath) ? true : undefined,
     };
   });
+}
+
+/** The hooks file a plugin owns whole, for a tool that gives each plugin one: its manifest, merged
+ * into nothing. A tool whose hooks file every plugin shares has none, and the sink folds it. */
+export function flatOwnHooksFile(
+  canon: PluginDistribution,
+  contract: ToolBuildContract
+): { plan: ComponentPlan; warnings: readonly string[] } | null {
+  const { hooks } = contract.artifacts;
+  const file = hooks.supported && !hooks.skipHooksJson ? hooks.hooksFile : undefined;
+  const manifest = canon.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST);
+  if (file === undefined || file.shared || manifest === undefined) return null;
+  const plugin = canon.manifest.name;
+  const { content, warnings } = file.merge(null, {
+    json: manifest.content,
+    plugin,
+    locate: (pluginPath) => `./${flatPathOfPluginSuffix(contract, pluginPath, plugin)}`,
+  });
+  return { plan: { source: "", path: file.path(plugin), content }, warnings };
 }

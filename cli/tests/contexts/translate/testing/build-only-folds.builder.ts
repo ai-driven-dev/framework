@@ -27,17 +27,12 @@ const CATALOG: Record<string, string> = {
   cursor: ".cursor-plugin/marketplace.json",
 };
 
-/** The flat files a cell folds into, by fold. Written down, so a new one is a deliberate edit. */
+/** The flat files a cell folds into, by fold. A hooks file one plugin owns is no fold: the engine
+ * writes it, so copilot lists none here. Written down, so a new one is a deliberate edit. */
 const FLAT_FOLDS: Record<string, Record<string, string[]>> = {
   claude: { "flat hooks file": [".claude/settings.json"], "flat MCP file": [".mcp.json"] },
   cursor: { "flat hooks file": [".cursor/hooks.json"], "flat MCP file": [".cursor/mcp.json"] },
-  copilot: {
-    "flat hooks file": [
-      ".github/hooks/aidd-async-dev.hooks.json",
-      ".github/hooks/aidd-context.hooks.json",
-    ],
-    "flat MCP file": [".vscode/mcp.json"],
-  },
+  copilot: { "flat MCP file": [".vscode/mcp.json"] },
   opencode: { "flat config artifact": [".opencode/hooks/opencode-events.js", "opencode.json"] },
   kilo: { "flat config artifact": [".kilo/kilo.jsonc"] },
   codex: {

@@ -56,12 +56,13 @@ export class DiskSink implements PluginTreeSink {
     const plugin = { name: pluginName, src: pluginSrc };
     const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
     const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
-    const { files, hooks, mcp } = translate(canon, {
+    const { files, hooks, mcp, warnings } = translate(canon, {
       kind: "build",
       contract: t.contract,
       mode: t.mode,
       outDir: t.outDir,
     });
+    for (const warning of warnings) this.deps.logger.warn(warning);
     for (const file of files) await this.writeBuilt(t, plugin.name, file);
     const folded =
       (await writePluginHooks(this.deps, t, { name: plugin.name, hooks })) +

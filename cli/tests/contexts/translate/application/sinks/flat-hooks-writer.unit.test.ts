@@ -1,7 +1,5 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { writeFlatHooks } from "../../../../../src/contexts/translate/application/sinks/flat-hooks-writer.js";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
@@ -10,11 +8,11 @@ import {
   aSupportedArtifact,
 } from "../../testing/stub-build-contract.builder.js";
 
-function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}, force = false) {
+function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
   const artifact = aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over });
   if (!artifact.supported) throw new Error("stub artifact is supported");
   return {
-    target: aDiskTarget(aStubBuildContract(), { mode: "flat", force }),
+    target: aDiskTarget(aStubBuildContract(), { mode: "flat", force: false }),
     artifact,
     pluginName: "plug",
     hooksJson: "{}",
@@ -35,11 +33,19 @@ function seeded(extra: Record<string, string> = {}): InMemoryFileAdapter {
 }
 
 describe("one plugin's flat hooks file", () => {
-  it("writes the merged hooks file", async () => {
+  it("writes the merged hooks file of a tool every plugin shares", async () => {
+    const fs = seeded();
+    const shared = { ...OWN_FILE, path: () => "flat/all.json", shared: true };
+    const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: shared }));
+    expect(count).toBe(1);
+    expect(fs.getFile("/out/flat/all.json")).toBe("merged:{}");
+  });
+
+  it("writes nothing for a hooks file one plugin owns: the engine lists it", async () => {
     const fs = seeded();
     const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: OWN_FILE }));
-    expect(count).toBe(1);
-    expect(fs.getFile("/out/flat/plug.json")).toBe("merged:{}");
+    expect(count).toBe(0);
+    expect(fs.getFile("/out/flat/plug.json")).toBeUndefined();
   });
 
   it("writes nothing for a tool that reads no hooks file", async () => {
@@ -51,18 +57,5 @@ describe("one plugin's flat hooks file", () => {
     const fs = seeded();
     const step = stepFor({ hooksFile: OWN_FILE, skipHooksJson: true });
     expect(await writeFlatHooks(fs, new CapturingLogger(), step)).toBe(0);
-  });
-
-  it("refuses its own hooks file another build already wrote", async () => {
-    const fs = seeded({ "/out/flat/plug.json": "old" });
-    await expect(
-      writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: OWN_FILE }))
-    ).rejects.toThrow(new FlatTargetExistsError(join("/out", "flat/plug.json"), "plug"));
-  });
-
-  it("overwrites it when forced", async () => {
-    const fs = seeded({ "/out/flat/plug.json": "old" });
-    await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: OWN_FILE }, true));
-    expect(fs.getFile("/out/flat/plug.json")).toBe("merged:{}");
   });
 });

@@ -6,22 +6,21 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import { flatPathOfPluginSuffix } from "../../domain/flat-layout.js";
 import { FlatMergeTargetNotJsonError } from "../../domain/translate.error.js";
 import type { FlatHooksStep } from "../../ports/flat-plugin-writer.js";
-import { assertFlatDestinationFree } from "./flat-collision.js";
 
 type FlatFiles = FileReader & FileWriter;
 
-/** One plugin's hooks file, merged into the tool's own. The scripts and the bridge are built by
- * the engine. A tool that reads no hooks file gets nothing here. */
+/** One plugin's hooks manifest, merged into the hooks file every plugin of the tool shares. The
+ * scripts, the bridge and a hooks file one plugin owns are built by the engine, so a tool that
+ * reads none, or gives each plugin its own, gets nothing here. */
 export async function writeFlatHooks(
   fs: FlatFiles,
   logger: Logger,
   { target, artifact, pluginName, hooksJson }: FlatHooksStep
 ): Promise<number> {
   const file = artifact.skipHooksJson ? undefined : artifact.hooksFile;
-  if (file === undefined) return 0;
+  if (file === undefined || !file.shared) return 0;
   const destPath = join(target.outDir, file.path(pluginName));
-  if (!file.shared) await assertFlatDestinationFree(fs, { target, destPath, pluginName });
-  const existing = file.shared ? await readSharedHooksTarget(fs, target.outDir, destPath) : null;
+  const existing = await readSharedHooksTarget(fs, target.outDir, destPath);
   const { content, warnings } = file.merge(existing, {
     json: hooksJson,
     plugin: pluginName,
