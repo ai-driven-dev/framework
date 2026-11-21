@@ -19,9 +19,11 @@ import {
 
 /**
  * An install and a build of the same plugin write the same bytes for the same canon file, bar
- * the differences below. Each is a measured difference of the layouts, not of a rule: it is
- * written down with the reason it exists, and an entry that no longer differs fails the test, so
- * a difference cannot outlive its cause.
+ * the differences below. Links, frontmatter, the skill name, the root token and the hook scripts
+ * each have one implementation; a difference here is what a layout or a tool's profile hands
+ * that implementation as data: the link form, which files are shaped, whether a skill is renamed,
+ * what a tool keeps of a header. Each is written down with the reason it exists, and an entry that
+ * no longer differs fails the test, so a difference cannot outlive its cause.
  */
 interface Difference {
   readonly cell: string;
@@ -120,10 +122,10 @@ const forFile = (cell: string, source: string): Difference | undefined =>
 function differs(
   cell: string,
   source: string,
-  sides: { install: string; build?: string }
+  sides: { install?: string; build?: string }
 ): boolean {
   const { install, build } = sides;
-  if (build === undefined) return true;
+  if (build === undefined || install === undefined) return true;
   const named = forFile(cell, source);
   return named ? named.normalize(install) !== named.normalize(build) : install !== build;
 }
@@ -158,11 +160,11 @@ describe("an install against a build of the same plugin", () => {
     "$cell: both write the same bytes for each file, bar the named differences",
     (cell) => {
       const unexplained = pairs(cell).flatMap(({ name, install, build }) =>
-        [...install]
-          .filter(([source, content]) =>
-            differs(cell.cell, source, { install: content, build: build.get(source) })
+        [...new Set([...install.keys(), ...build.keys()])]
+          .filter((source) =>
+            differs(cell.cell, source, { install: install.get(source), build: build.get(source) })
           )
-          .map(([source]) => `${name}/${source}`)
+          .map((source) => `${name}/${source}`)
       );
       expect(unexplained).toEqual([]);
     }

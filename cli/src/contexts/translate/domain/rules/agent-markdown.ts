@@ -1,8 +1,6 @@
-import type { AgentMarkdown, ArtifactContract } from "../../../tools/contract/build-contract.js";
+import type { AgentMarkdown, SupportedArtifact } from "../../../tools/contract/build-contract.js";
 import { reshapeFrontmatter } from "./frontmatter.js";
 import type { LinkForm } from "./links.js";
-
-type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
 /** Where an agent is written and how its links are read from there. */
 export interface AgentPlace {

@@ -92,6 +92,9 @@ export type ArtifactContract =
       readonly hooksBridge?: FlatHooksBridge;
     };
 
+/** An artifact a tool carries, as opposed to one it declares unsupported. */
+export type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
+
 export interface ToolBuildContract {
   /** Rewrites the source `${CLAUDE_PLUGIN_ROOT}` placeholder in hooks and mcp content: e.g.
    * `${CURSOR_PLUGIN_ROOT}`, `${PLUGIN_ROOT}`. Absent for a flat-only contract, which

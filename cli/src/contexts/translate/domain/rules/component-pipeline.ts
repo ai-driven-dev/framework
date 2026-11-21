@@ -1,12 +1,10 @@
-import type { ArtifactContract } from "../../../tools/contract/build-contract.js";
+import type { SupportedArtifact } from "../../../tools/contract/build-contract.js";
 import type { OutputFile } from "../output-file.js";
 import { assertNoToolsPlaceholder } from "../tools-placeholder.js";
 import { type AgentPlace, agentContent } from "./agent-markdown.js";
 import { type LinkForm, rewriteLinks } from "./links.js";
 import { withRootToken } from "./root-token.js";
 import { namedAfterFolder } from "./skill-name.js";
-
-type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
 /** One file a layout writes, and the rules it goes through. A layout decides the path and which
  * rules apply, as data; `applyPlan` is the only place a rule is run, whichever layout planned it.

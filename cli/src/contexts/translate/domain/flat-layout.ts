@@ -1,12 +1,10 @@
 import { basename } from "node:path";
 import type {
-  ArtifactContract,
   FlatHooksBridge,
+  SupportedArtifact,
   ToolBuildContract,
 } from "../../tools/contract/build-contract.js";
 import type { OutputFile } from "./output-file.js";
-
-type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
 /**
  * The generated hooks bridge of a flat install, whether it is built to disk or translated for an

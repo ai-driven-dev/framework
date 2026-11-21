@@ -1,11 +1,14 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { ToolBuildContract } from "../../../tools/contract/build-contract.js";
+import type {
+  SupportedArtifact,
+  ToolBuildContract,
+} from "../../../tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import { PLUGIN_MCP_RELATIVE, PLUGIN_SKILL_ENTRY_FILE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { buildFlatPlans } from "./build-flat.js";
-import { agentFiles, baseOf, isEntry, type SupportedArtifact } from "./build-shared.js";
+import { agentFiles, baseOf, isEntry } from "./build-shared.js";
 
 /** Where a build puts one plugin for a tool and which rules each file goes through. The files
  * are named from the output directory; a flat layout leaves its MCP servers and hooks file to the

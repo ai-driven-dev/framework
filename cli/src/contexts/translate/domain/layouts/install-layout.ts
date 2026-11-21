@@ -32,7 +32,6 @@ export function installPlan(
     return {
       ...none,
       notices: [],
-      componentPaths: none.componentPaths,
       ...flatInstallPlan(dist, { tool, plugins }),
     };
   }

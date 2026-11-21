@@ -1,11 +1,14 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { ToolBuildContract } from "../../../tools/contract/build-contract.js";
+import type {
+  SupportedArtifact,
+  ToolBuildContract,
+} from "../../../tools/contract/build-contract.js";
 import { flatAgentPath, flatLinkTarget, flatPathOfPluginSuffix } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { HOOKS_MANIFEST } from "../rules/hook-scripts.js";
-import { agentFiles, baseOf, isEntry, type SupportedArtifact } from "./build-shared.js";
+import { agentFiles, baseOf, isEntry } from "./build-shared.js";
 
 /** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
  * merged across plugins by the sink. */
