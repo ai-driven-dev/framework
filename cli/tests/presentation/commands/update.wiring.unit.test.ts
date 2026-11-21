@@ -49,7 +49,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd update — what it asks the self-updater", () => {
+describe("aidd update - what it asks the self-updater", () => {
   it("asks for a real install with every flag off when none was given", async () => {
     expect(await run("update")).toEqual(["Already up to date (5.2.2)"]);
     expect(selfUpdate).toHaveBeenCalledWith({ check: false, dryRun: false, force: false });
@@ -127,7 +127,7 @@ describe("aidd update — what it asks the self-updater", () => {
   });
 });
 
-describe("aidd update — the help surface", () => {
+describe("aidd update - the help surface", () => {
   function updateCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

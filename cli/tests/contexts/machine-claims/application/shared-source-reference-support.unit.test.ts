@@ -88,8 +88,8 @@ describe("describeGuardedPluginRefMessage", () => {
     );
   });
 
-  // Full removal names both commands in order — `aidd clean` in each other project before
-  // `aidd clean --scope user` — the same clause `clean --scope user`'s own report states.
+  // Full removal names both commands in order - `aidd clean` in each other project before
+  // `aidd clean --scope user` - the same clause `clean --scope user`'s own report states.
   it("names the projects and both removal commands, in order, sharing the same clause clean --scope user uses", () => {
     const message = describeGuardedPluginRefMessage({
       binary: "codex",

@@ -70,7 +70,7 @@ function clonedInto(): string {
   return mockCloneFn.mock.calls[0]?.[1];
 }
 
-/** The URL the clone was given — the one that may legitimately carry a token. */
+/** The URL the clone was given - the one that may legitimately carry a token. */
 function clonedFrom(): string {
   return mockCloneFn.mock.calls[0]?.[0];
 }

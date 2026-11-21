@@ -36,7 +36,7 @@ describe("translate holds no list of the other hosts' manifest paths", () => {
   });
 });
 
-describe("a test reaches the repository through one helper", () => {
+describe("a test reaches the repository through the repository-root builder", () => {
   const file = "tests/contexts/a/b.unit.test.ts";
   const found = (text: string, path = file) => entries(repositoryViolations({ [path]: text }));
 
@@ -56,7 +56,7 @@ describe("a test reaches the repository through one helper", () => {
     ]);
   });
 
-  it("clears a climb that stays inside cli/, the helper itself and the gate's own tests", () => {
+  it("clears a climb that stays inside cli/, the builder itself and the gate's own tests", () => {
     expect(found('import { x } from "../../../src/x.js"; join(dir, "..")')).toEqual([]);
     expect(
       found('join(CLI_ROOT, "..")', "tests/shared/testing/repository-root.builder.ts")

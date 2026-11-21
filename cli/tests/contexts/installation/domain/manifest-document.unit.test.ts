@@ -119,7 +119,7 @@ describe("Manifest read from a document", () => {
     });
 
     // 5.2.2's own reader accepts exactly version 6, so its `clean --force` can still unregister
-    // a host's native registrations — only before the manifest naming them is deleted.
+    // a host's native registrations - only before the manifest naming them is deleted.
     it("names `clean --force` on 5.2.2 before naming the deletion, for a version 6 manifest", () => {
       const v6 = { version: 6, tools: {} };
       let message = "";

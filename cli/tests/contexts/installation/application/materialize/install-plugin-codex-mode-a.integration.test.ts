@@ -145,7 +145,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     // Registers the BUILT (transformed) tree, not the raw source. A fresh add
-    // succeeds outright — no pre-emptive remove on a clean install.
+    // succeeds outright - no pre-emptive remove on a clean install.
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.upgradeCount).toBe(0);

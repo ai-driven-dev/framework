@@ -40,7 +40,7 @@ describe("aidd framework rules", () => {
   });
 });
 
-describe("aidd framework — how every subcommand builds its graph and reports a failure", () => {
+describe("aidd framework - how every subcommand builds its graph and reports a failure", () => {
   it.each([
     ["install", "--tool", "claude"],
     ["remove", "--tool", "claude"],
@@ -70,7 +70,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
   });
 });
 
-describe("aidd framework — the help surface", () => {
+describe("aidd framework - the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

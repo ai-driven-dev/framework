@@ -8,6 +8,7 @@ import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/dist
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { unusedRawCatalog } from "../../../../shared/testing/raw-catalog.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const MKT1_PATH = "/mkt1";
@@ -29,7 +30,10 @@ function buildUseCase(
     [MKT1_PATH]: MKT1_PATH,
     [MKT2_PATH]: MKT2_PATH,
   });
-  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: fetcher });
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: fetcher,
+    rawCatalog: unusedRawCatalog(),
+  });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)

@@ -3,7 +3,7 @@ import { codexGlobalFilePath } from "../../../../../../src/contexts/tools/domain
 
 const ORCHESTRATOR = { name: "aidd-orchestrator", agents: new Set<string>() };
 
-describe("codexGlobalFilePath — the agents a machine-scope install copies into ~/.codex", () => {
+describe("codexGlobalFilePath - the agents a machine-scope install copies into ~/.codex", () => {
   it("prefixes a staged agent with its plugin under agents/", () => {
     expect(
       codexGlobalFilePath("plugins/aidd-orchestrator/codex-agents/reviewer.toml", ORCHESTRATOR)

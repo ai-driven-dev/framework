@@ -72,7 +72,7 @@ describe("Codex's own config.toml", () => {
 
   /**
    * A header spelled inside a multi-line string is not a table, and TOML forbids the real one
-   * being defined twice — so exactly one occurrence is real, whichever comes first.
+   * being defined twice - so exactly one occurrence is real, whichever comes first.
    */
   it.each([
     [

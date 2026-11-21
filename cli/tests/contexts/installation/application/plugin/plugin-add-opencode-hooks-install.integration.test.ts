@@ -68,7 +68,7 @@ describe("AddPlugin OpenCode hooks install (Phase 7)", () => {
     );
   });
 
-  it("emits no logger.warn — hooks are delivered, not skipped", async () => {
+  it("emits no logger.warn - hooks are delivered, not skipped", async () => {
     const { capturingLogger } = await installSamplePlugin();
 
     expect(capturingLogger.warnMessages).toEqual([]);

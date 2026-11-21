@@ -1,4 +1,4 @@
-/** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs` — codex,
+/** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs` - codex,
  * copilot), a ref is left enabled while another project still references its shared source. */
 
 import { describe, expect, it } from "vitest";

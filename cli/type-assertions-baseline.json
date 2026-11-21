@@ -113,10 +113,10 @@
   "tests/presentation/testing/project-state.builder.ts": 3,
   "tests/scripts/mutation-shards.integration.test.ts": 2,
   "tests/scripts/profile-copies.integration.test.ts": 1,
-  "tests/setup/mutation-sequencer.integration.test.ts": 1,
+  "tests/mutation/mutation-sequencer.integration.test.ts": 1,
   "tests/setup/sweep-stale-temp-dirs.ts": 1,
-  "tests/setup/unloadable-file-as-failed-test.integration.test.ts": 1,
-  "tests/setup/unloadable-file-as-failed-test.ts": 1,
+  "tests/mutation/unloadable-file-as-failed-test.integration.test.ts": 1,
+  "tests/mutation/unloadable-file-as-failed-test.ts": 1,
   "tests/shared/testing/cli-sandbox.builder.ts": 1,
   "tests/shared/testing/in-process-cli.builder.ts": 2,
   "tests/shared/testing/routed-hooks.builder.ts": 1

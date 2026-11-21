@@ -37,7 +37,7 @@ function makeAdapter(): PluginFetcherAdapter {
   return new PluginFetcherAdapter(fs);
 }
 
-describe("PluginFetcherAdapter — fail-fast git clone", () => {
+describe("PluginFetcherAdapter - fail-fast git clone", () => {
   it("sets GIT_TERMINAL_PROMPT=0 on every clone to prevent interactive credential prompts", async () => {
     const adapter = makeAdapter();
 
@@ -47,7 +47,7 @@ describe("PluginFetcherAdapter — fail-fast git clone", () => {
   });
 });
 
-describe("PluginFetcherAdapter — npm option-injection prevention", () => {
+describe("PluginFetcherAdapter - npm option-injection prevention", () => {
   it("passes -- before the package spec in pnpm add argv", async () => {
     mockExecFile.mockClear();
     const adapter = makeAdapter();

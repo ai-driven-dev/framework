@@ -101,7 +101,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
   );
 }
 
-describe("DoctorUseCase — plugin integrity", () => {
+describe("DoctorUseCase - plugin integrity", () => {
   describe("when plugin file is missing", () => {
     it("reports a missing plugin issue", async () => {
       const manifest = makeManifest(EXPECTED_HASH);

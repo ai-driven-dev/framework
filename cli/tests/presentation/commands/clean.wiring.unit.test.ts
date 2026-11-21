@@ -75,7 +75,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd clean — the project this command was run in", () => {
+describe("aidd clean - the project this command was run in", () => {
   it("previews rather than removes when nothing confirmed it", async () => {
     expect(await run("clean")).toEqual([
       "The following will be removed:",
@@ -225,7 +225,7 @@ describe("aidd clean --scope", () => {
   });
 });
 
-describe("aidd clean — how it builds its graph and reports a failure", () => {
+describe("aidd clean - how it builds its graph and reports a failure", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("clean");
 
@@ -249,7 +249,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
   });
 });
 
-describe("aidd clean — the help surface", () => {
+describe("aidd clean - the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

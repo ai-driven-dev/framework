@@ -74,7 +74,7 @@ codex_hooks = false
     expect(result).not.toContain("hooks = true");
   });
 
-  it("does NOT emit [[skills.config]] — discovery is by placement", () => {
+  it("does NOT emit [[skills.config]] - discovery is by placement", () => {
     const result = mergeCodexConfigToml(TOML)("", MCP_PAYLOAD);
     expect(result).not.toContain(".agents/skills");
     expect(result).not.toContain("skills.config");

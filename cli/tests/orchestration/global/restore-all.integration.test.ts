@@ -113,7 +113,7 @@ function countingReader(fs: Deps["fs"]): {
   return { reader, count: () => calls };
 }
 
-describe("RestoreAll — the --force flag", () => {
+describe("RestoreAll - the --force flag", () => {
   /**
    * `--force` has to reach the use case: folded into `interactive`, a non-TTY run decided
    * with `force: false` and reported "all files are unmodified" over a modified file.
@@ -163,7 +163,7 @@ describe("RestoreAll — the --force flag", () => {
   });
 });
 
-describe("RestoreAll — an interactive run that ticks nothing", () => {
+describe("RestoreAll - an interactive run that ticks nothing", () => {
   it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -192,7 +192,7 @@ describe("RestoreAll — an interactive run that ticks nothing", () => {
   });
 });
 
-describe("RestoreAll — plugin materialization", () => {
+describe("RestoreAll - plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -206,7 +206,7 @@ describe("RestoreAll — plugin materialization", () => {
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
-    // Counting reader wired only from here — installPlugin's own read() must not count.
+    // Counting reader wired only from here - installPlugin's own read() must not count.
     const { reader, count } = countingReader(deps.fs);
     const useCase = makeRestoreAll(deps, reader);
     await useCase.execute(PROJECT_ROOT, false, false);
@@ -266,7 +266,7 @@ describe("RestoreAll — plugin materialization", () => {
     const { reader } = countingReader(deps.fs);
     await installPlugin(deps, TOOL.claude, reader);
 
-    // Nothing corrupted — plugin files are already at their installed state.
+    // Nothing corrupted - plugin files are already at their installed state.
     const manifestBefore = await deps.manifestRepo.load();
     const pluginBefore = manifestBefore
       ?.getPlugins(TOOL.claude)

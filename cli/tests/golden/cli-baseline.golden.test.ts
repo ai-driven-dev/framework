@@ -376,7 +376,7 @@ const captures = twoCaptures("golden-det", async (env) =>
   normalizeSnapshot(await captureAll(env.projectDir, env.fakeHome))
 );
 
-describe.concurrent("Golden baseline — command matrix", () => {
+describe.concurrent("Golden baseline - command matrix", () => {
   afterAll(captures.cleanup);
 
   it("snapshot is deterministic (two captures are byte-identical)", async () => {

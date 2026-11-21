@@ -119,7 +119,7 @@ const captures = twoCaptures("fb-golden-det", (env) =>
   captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
 );
 
-describe.concurrent(`Framework build golden — ${CELL_COUNT}-cell matrix`, () => {
+describe.concurrent(`Framework build golden - ${CELL_COUNT}-cell matrix`, () => {
   afterAll(captures.cleanup);
 
   // Two full builds of every cell measured just past the 60s default on a Windows runner, not a

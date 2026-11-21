@@ -97,7 +97,7 @@ const ONE_MARKETPLACE = new Map([
   ["local", [entry("aidd-context", true), entry("aidd-dev", true), entry("aidd-ui", false)]],
 ]);
 
-describe("ChoosePlugins — the mode decides what is installed", () => {
+describe("ChoosePlugins - the mode decides what is installed", () => {
   it("installs nothing and asks nothing when no plugins were wanted", async () => {
     const { useCase, pick, installer } = await build(ONE_MARKETPLACE);
 
@@ -197,7 +197,7 @@ describe("ChoosePlugins — the mode decides what is installed", () => {
   });
 });
 
-describe("ChoosePlugins — what each install is asked for", () => {
+describe("ChoosePlugins - what each install is asked for", () => {
   it("installs into every tool, replacing what is there and choosing its marketplace itself", async () => {
     const { useCase, installer } = await build();
 
@@ -234,7 +234,7 @@ describe("ChoosePlugins — what each install is asked for", () => {
   });
 });
 
-describe("ChoosePlugins — the interactive pick", () => {
+describe("ChoosePlugins - the interactive pick", () => {
   it("hands the pick every tool, and reports back what it installed", async () => {
     const { useCase, pick } = await build(ONE_MARKETPLACE, ["aidd-dev", "aidd-pm"]);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
+import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
@@ -11,6 +11,7 @@ import { nativeOf } from "../../../../shared/testing/native-plugin-answers.build
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { flatOf, hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
 import { translatePlugin } from "../../testing/translate-plugin.builder.js";
+import type { WithSections } from "../../testing/with-sections.builder.js";
 
 const codex = codexProfile(new SmolTomlCodec());
 

@@ -149,7 +149,7 @@ describe("interactive menu", () => {
   });
 });
 
-describe("interactive menu — the command each pick hands over", () => {
+describe("interactive menu - the command each pick hands over", () => {
   async function commandFor(path: string[], input?: string): Promise<string[]> {
     const { prompter } = makeQueuedPrompter(path, input === undefined ? [] : [input]);
 

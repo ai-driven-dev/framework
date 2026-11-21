@@ -21,7 +21,7 @@ export interface FetchMarketplaceSourceCommand {
 export interface FetchMarketplaceSourceDeps {
   readonly pluginFetcher: PluginFetcher;
   /** A raw catalog fetcher comes with the files its catalog is written to. */
-  readonly rawCatalog?: { fetcher: RawCatalogFetcher; fs: FileReader & FileWriter };
+  readonly rawCatalog: { fetcher: RawCatalogFetcher; fs: FileReader & FileWriter };
   readonly logger?: Logger;
 }
 
@@ -39,7 +39,7 @@ export class FetchMarketplaceSource {
   async execute(options: FetchMarketplaceSourceCommand): Promise<string> {
     const { marketplace, cacheDir, fetchOptions } = options;
     const { rawCatalog } = this;
-    if (marketplace.source.kind === "github" && rawCatalog !== undefined) {
+    if (marketplace.source.kind === "github") {
       const catalog = await rawCatalog.fetcher.fetchCatalog(
         marketplace.source,
         MARKETPLACE_CATALOG_RELATIVE

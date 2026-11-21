@@ -309,7 +309,7 @@ describe("restoreRegularFiles", () => {
   });
 });
 
-describe("restoreRegularFiles — the files it hands back", () => {
+describe("restoreRegularFiles - the files it hands back", () => {
   it("hands back a restored file under its new hash and with no content", async () => {
     const deps = await buildDeps();
     const prompter = new OverwritePrompter();

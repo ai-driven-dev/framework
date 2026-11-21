@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import type { RunnerTask, RunnerTestFile } from "vitest";
 import { defineConfig } from "vitest/config";
 import type { Vitest } from "vitest/node";
-import { UnloadableFileAsFailedTest } from "../../setup/unloadable-file-as-failed-test.js";
+import { UnloadableFileAsFailedTest } from "../../mutation/unloadable-file-as-failed-test.js";
 
 function testsOf(task: RunnerTask): RunnerTask[] {
   return task.type === "suite" ? task.tasks.flatMap(testsOf) : [task];

@@ -31,7 +31,7 @@ import {
   staleCacheAndCatalog,
 } from "../testing/stale-cache-purge.builder.js";
 
-describe("SyncSettings — when the stale cache is purged and what it says", () => {
+describe("SyncSettings - when the stale cache is purged and what it says", () => {
   it("purges only after native activation has run against the still-present cache, never before", async () => {
     class OrderObservingActivator implements HostActions {
       readonly cacheStillPresentAtAdd: boolean[] = [];

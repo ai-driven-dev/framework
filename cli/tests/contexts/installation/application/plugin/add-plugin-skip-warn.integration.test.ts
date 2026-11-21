@@ -21,7 +21,7 @@ const PROJECT_ROOT = "/test-project";
 
 describe("AddPlugin skip warnings", () => {
   describe("when a plugin's hooks are now accepted (no skip entry)", () => {
-    it("emits no logger.warn — OpenCode delivers sample-plugin's hooks instead of skipping them", async () => {
+    it("emits no logger.warn - OpenCode delivers sample-plugin's hooks instead of skipping them", async () => {
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -52,7 +52,7 @@ describe("AddPlugin skip warnings", () => {
   });
 
   describe("warn message format", () => {
-    it("formats skip warnings as Plugin <name>: <component> skipped for <toolId> — <reason>", () => {
+    it("formats skip warnings as Plugin <name>: <component> skipped for <toolId> - <reason>", () => {
       const logger = new CapturingLogger();
       const skipped: ReadonlySkipList = [
         {

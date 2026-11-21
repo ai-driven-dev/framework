@@ -52,7 +52,7 @@ describe("rewriteRelativeLinks", () => {
     });
   });
 
-  describe("leaves @{{TOOLS}}/... untouched in this helper", () => {
+  describe("leaves @{{TOOLS}}/... untouched by the rewrite", () => {
     it("does not rewrite @{{TOOLS}}/ placeholders", () => {
       const input = "Use @{{TOOLS}}/skills/foo.md";
       expect(rewriteRelativeLinks(input, STABLE_OPTS)).toBe(input);
@@ -134,7 +134,7 @@ describe("rewriteRelativeLinks", () => {
       expect(output).toBe("See [reviewer.md](./reviewer.md) here");
     });
 
-    it("override is applied per match — multiple references in same content", () => {
+    it("override is applied per match - multiple references in same content", () => {
       const opts = {
         currentFilePluginRelative: "agents/foo.md",
         resolveTargetPath: (rel: string) => `flat/${rel}`,

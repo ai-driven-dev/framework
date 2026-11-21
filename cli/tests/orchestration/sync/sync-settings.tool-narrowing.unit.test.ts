@@ -18,7 +18,7 @@ import {
   seededBuiltCatalog,
 } from "../testing/sync-settings.builder.js";
 
-/** `sync --tool <id>` must touch only that tool — otherwise a person fixing one tool's
+/** `sync --tool <id>` must touch only that tool - otherwise a person fixing one tool's
  * registration would silently re-drive every other tool's CLI too. */
 describe("toolIds narrows which tool's CLI is driven", () => {
   it("never calls the activator of a tool not named in toolIds", async () => {

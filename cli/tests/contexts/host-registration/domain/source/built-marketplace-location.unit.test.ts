@@ -189,7 +189,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
     ).toBeUndefined();
   });
 
-  it("is undefined for a path with nothing before the marker — no project root to report", () => {
+  it("is undefined for a path with nothing before the marker - no project root to report", () => {
     expect(
       parseBuiltMarketplaceDirAtAnyRoot(
         "/.aidd/cache/built/aidd-framework/claude",

@@ -44,7 +44,7 @@ function makeFs(missing: Set<string>): FileReader {
   };
 }
 
-describe("DetectPluginDrift — user-scope tool never installed on this machine", () => {
+describe("DetectPluginDrift - user-scope tool never installed on this machine", () => {
   it("collapses a plugin whose every tracked file is missing into one not-installed entry", async () => {
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
@@ -110,7 +110,7 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
   });
 });
 
-describe("DetectPluginDrift — the manifest's recorded scope wins over the profile", () => {
+describe("DetectPluginDrift - the manifest's recorded scope wins over the profile", () => {
   it("checks a cursor plugin under projectRoot, not ~/.cursor/plugins/local, when scope: project disagrees with cursor's profile", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);

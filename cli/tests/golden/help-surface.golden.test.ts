@@ -36,7 +36,7 @@ function commandNamed(line: string, indent: number): string[] {
 }
 
 /** Commander wraps a long description past the name column, so only lines at the first entry's
- * exact indentation are commands — reading a wrapped word as one hangs on the interactive menu. */
+ * exact indentation are commands - reading a wrapped word as one hangs on the interactive menu. */
 function subcommandsOf(help: string): string[] {
   const lines = help.split("\n");
   const start = lines.findIndex((line) => line.trim() === "Commands:");

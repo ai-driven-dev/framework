@@ -23,7 +23,7 @@ import {
   projectWithMigratableEntry,
 } from "../testing/stale-cache-purge.builder.js";
 
-describe("SyncSettings — purging this project's own pre-migration cache", () => {
+describe("SyncSettings - purging this project's own pre-migration cache", () => {
   it("deletes the project's own stale built tree once the run completes without error", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(

@@ -37,7 +37,7 @@ describe("marketplaceSourceConflict", () => {
     ).toBeUndefined();
   });
 
-  it("is not a conflict when the same catalog is registered from a different, resolved path — two projects sharing one build", () => {
+  it("is not a conflict when the same catalog is registered from a different, resolved path - two projects sharing one build", () => {
     const reading = { location: LOCATION, entries: new Map([["probe-mkt", "/src/A"]]) };
 
     expect(
@@ -49,7 +49,7 @@ describe("marketplaceSourceConflict", () => {
     ).toBeUndefined();
   });
 
-  it("is not a conflict when the registered source no longer resolves to a readable catalog — a dead entry a re-add repairs", () => {
+  it("is not a conflict when the registered source no longer resolves to a readable catalog - a dead entry a re-add repairs", () => {
     const reading = { location: LOCATION, entries: new Map([["probe-mkt", "/gone"]]) };
 
     expect(
@@ -124,7 +124,7 @@ describe("marketplaceSourceConflict", () => {
       ).toBeUndefined();
     });
 
-    it("is not a conflict when only a version field differs — an upgrade under the same name and plugin set, not a different catalog", () => {
+    it("is not a conflict when only a version field differs - an upgrade under the same name and plugin set, not a different catalog", () => {
       const a = { name: "probe-mkt", pluginNames: ["sample-plugin"], version: "1.0.0" };
       const b = { name: "probe-mkt", pluginNames: ["sample-plugin"], version: "2.0.0" };
 

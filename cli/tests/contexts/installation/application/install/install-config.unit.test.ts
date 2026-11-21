@@ -30,7 +30,7 @@ function buildUseCase() {
 const linuxPlatform: Platform = { current: () => "linux" };
 const win32Platform: Platform = { current: () => "win32" };
 
-describe("InstallConfig — staticContent", () => {
+describe("InstallConfig - staticContent", () => {
   it("an asset-backed capability does not need a matching configRef", async () => {
     const { useCase } = buildUseCase();
 
@@ -157,7 +157,7 @@ describe("InstallConfig — staticContent", () => {
   });
 });
 
-describe("InstallConfig — MCP config", () => {
+describe("InstallConfig - MCP config", () => {
   const MCP_REF = { name: CONFIG_MCP, path: "config/mcp.json" };
   const NPX_SERVER = JSON.stringify(
     { mcpServers: { docs: { command: "npx", args: ["-y", "docs-server"] } } },

@@ -83,7 +83,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `CachedTokenProvider`, not a command, sits in `application/` | the published `TokenProvider` needs memo and logs, which the domain may not hold | the target names a home for a contract implementation |
 | A contract file counts any outside importer, presentation included | presentation consumes the credential types | the target counts presentation as a reader |
 | auth keeps its own permission code (`credential-record-file-adapter.ts`) | telemetry's `PrivateStorage` has no read and no delete and grants a directory where auth grants the file | private storage gains read and delete with identical modes |
-| `src/orchestration/deps.ts` imports application interiors to type `Deps`, an `import type` only (`drivingPortViolations` in `kinds.rules.arch.test.ts`) | the container's shape is the members the commands read; the types erase at build | `createContainer(options)` and `orchestration/` exist and `deps.ts` types with `contract/` types only |
 | The native activation classes stay in `tools` as data (`domain/native-registration/`, spec types in `contract/native-registration-spec.ts`) | moving them to `host-registration` needs a `tools` to `host-registration` edge the graph forbids | the graph admits that edge and the classes move to `host-registration` |
 | `shared/domain/` imports `node:path` (`paths.ts`, `source.ts`, `layout/aidd-layout.ts`) | section 4 allows `node:path` in every pure folder and the target's way out is undecided | no file under `shared/domain` imports `node:path` |
 | The host adapters' `EVENTS` tables (`assets/hooks-runtime/host-*.cjs`) are a second copy of the event fact | the adapters are plain Node and import nothing from the CLI; `profile-file-conformance.ts` holds them equal to the descriptor | the adapters are generated from the descriptor at build time |
@@ -93,10 +92,11 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `catalog-of.builder.ts` keeps `TOOL` and `resolveRegisteredToolId` as aliases of the shared kit | the characterization test `host-registration-derivation.characterization.integration.test.ts` and the e2e files that import them stay frozen | those files import `tests/shared/testing/registered-tools.builder.ts` |
 | `rewritePluginRootToken` lives in `tools/contract/plugin-root-token.ts`, not in `tools/domain/formats/` | `translate` calls it from `domain/engine.ts` and `application/sinks/disk-sink.ts` and reaches `tools` through `contract/` only | none, accepted placement |
 | the `profile` rule of the kind gate does not read an element-access alias of a profile (`tools["aiProfile"](id)`) | no `src` file writes one | none, a written limit |
-| the per-context test overrides in `biome.json` cover `tests/contexts`, `tests/helpers` and `tests/shared` only | orchestration, presentation, composition, e2e and golden tests compose contexts and may import any kit (`kinds.ts`) | none, deliberate |
+| the per-context test overrides in `biome.json` cover `tests/contexts` and `tests/shared` only | orchestration, presentation, composition, e2e and golden tests compose contexts and may import any kit (`kinds.ts`) | none, deliberate |
 | `STORED_ANSWERS` in `kind-rules.ts` lists the stored values a plugin variant answers verbatim | each has a caller that needs the raw value across a file boundary, recorded beside its entry | none, deliberate: a value a method can answer is asked, not listed |
 | `STORED_VOCABULARY` in `tool-addition-cost.arch.test.ts` admits `usage-record.ts` naming `codex` | `USAGE_TOOLS` is the vocabulary of tools stored in a user's ledger, kept by telemetry apart from `tools` | none, deliberate: stored data, not a branch on the name |
 | `no-swallowed-catch.grit` does not see the empty catches written inside the template text of `opencode-hooks-bridge.ts`, nor a dynamic `import()` of `seed-from-directory` or a `vi.importActual` of a closed folder | those catches are text, not syntax; no unit test imports the helper dynamically | none, a written limit |
+| `Prompter` has no contract suite | it answers a person at a terminal, and a prompt has nothing to read back: the doubles script answers, and the real adapter is checked by the e2e journeys that drive it | none, accepted: an interactive port is not a store |
 
 ### Migration state
 | Deviation | Closes when |
@@ -104,6 +104,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | orchestration reads `machine-claims` beyond its `contract/` | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (each carries a `biome-ignore lint/plugin` above its import) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |
+| `folder-size.arch.test.ts` lets the folders it lists hold more than 10 source files | each was grown before the cap was checked, and a split moves files between kits and imports | the folder is split or shrinks to 10, and its line leaves the list: the list only ever gets shorter |
 
 ## 10. Checklist for a context's migration PR
 

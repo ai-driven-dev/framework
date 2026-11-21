@@ -49,7 +49,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
     // Model choice is owned by the account, not this repo: a pinned "gpt-5" is rejected by
     // ChatGPT-account Codex sessions, so Codex's own default applies.
-    it("writes no model — the account decides which one it can use", () => {
+    it("writes no model - the account decides which one it can use", () => {
       const asset = provider.loadConfigAsset(TOOL.codex, "config.toml");
       const parsed = parseToml(String(asset));
       expect(parsed).not.toHaveProperty("model");
@@ -91,7 +91,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
   });
 });
 
-describe("BundledAssetProviderAdapter.loadSchema — marketplace", () => {
+describe("BundledAssetProviderAdapter.loadSchema - marketplace", () => {
   it("returns a Copilot-native schema with required fields including metadata", () => {
     const schema = provider.loadSchema("marketplace");
     expect(schema).toHaveProperty("properties");

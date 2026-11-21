@@ -49,7 +49,7 @@ function syncWithProvenFreshHost(
 }
 
 /** A readable catalog at the path the default `fakeEnsureBuiltMarketplace()` resolves
- * "claude" to — a real build always leaves one there, and an unreadable one now fails hard. */
+ * "claude" to - a real build always leaves one there, and an unreadable one now fails hard. */
 async function seedBuiltCatalog(fs: InMemoryFileAdapter, name = MARKETPLACE_NAME): Promise<void> {
   await fs.writeFile(
     "/built/claude/.claude-plugin/marketplace.json",
@@ -107,7 +107,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     ) as Record<string, unknown>;
 
     // Claude registers its own marketplaces through its own command, so this CLI
-    // writes no registration anywhere — not in the shared file, not beside it.
+    // writes no registration anywhere - not in the shared file, not beside it.
     expect(shared.extraKnownMarketplaces).toBeUndefined();
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".claude/settings.local.json"))).toBe(false);
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
@@ -166,7 +166,7 @@ describe("install claude plugin via Mode A (integration)", () => {
 
     expect(shared.extraKnownMarketplaces).toBeUndefined();
     expect(activator.addedMarketplaces).toContain("/built/claude");
-    // Both branches wrote the shared file in this one call — the eviction, then the enabled-
+    // Both branches wrote the shared file in this one call - the eviction, then the enabled-
     // plugins merge; the plugin landing proves the second did not carry the evicted key back.
     expect(
       (shared.enabledPlugins as Record<string, boolean>)[`aidd-context@${MARKETPLACE_NAME}`]

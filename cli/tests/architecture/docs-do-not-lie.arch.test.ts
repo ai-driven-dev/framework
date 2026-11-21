@@ -2,12 +2,12 @@
  * A reader cannot tell a promised command or a promised directory from a real one; this test can.
  *
  * Commands: naming a command in order to say it is gone is not a lie, so a citation is accepted
- * when its line marks it removed or is a migration row — which keeps the check honest without a
+ * when its line marks it removed or is a migration row - which keeps the check honest without a
  * name allowlist.
  *
  * Map: `codebase-map.md` is the single place that says where things live, and a map maintained by
  * hand drifts both ways. The comparison is over full paths reconstructed from the tree block's
- * indentation — comparing names alone reads `application/` as present wherever it exists — and
+ * indentation - comparing names alone reads `application/` as present wherever it exists - and
  * it runs in both directions: an invented directory sends a reader to create a file there.
  */
 import { describe, expect, it } from "vitest";
@@ -21,7 +21,7 @@ import {
   unresolvedCommandMentions,
 } from "./source-graph.js";
 
-/** Documents that present the CLI's surface to a reader — the memory bank included, since an
+/** Documents that present the CLI's surface to a reader - the memory bank included, since an
  * agent reads it first in every session. */
 const DOCS = [
   "ARCHITECTURE.md",

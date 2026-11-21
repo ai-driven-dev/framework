@@ -10,14 +10,6 @@ import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js"
 
 /** `manifestPaths` is every place a host keeps a plugin manifest, built once by composition from
  * the registered profiles. */
-export function translate(
-  dist: PluginDistribution,
-  toolConfig: TranslateProfile,
-  manifestPaths: readonly string[]
-): OutputFile[] {
-  return translateWithComponentPaths(dist, toolConfig, manifestPaths).files;
-}
-
 export function translateWithComponentPaths(
   dist: PluginDistribution,
   toolConfig: TranslateProfile,

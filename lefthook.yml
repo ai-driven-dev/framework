@@ -192,6 +192,9 @@ pre-push:
     cli-knip:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
+    cli-knip-production:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-knip-production -- pnpm --dir cli knip:production
     cli-jscpd-profiles:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-jscpd-profiles -- pnpm --dir cli jscpd:profiles

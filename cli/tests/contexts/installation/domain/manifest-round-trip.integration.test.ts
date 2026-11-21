@@ -1,5 +1,5 @@
 // Each fixture is a byte-for-byte capture of a real manifest, so a rewritten shape that is
-// merely self-consistent — which a fixed-point test would still pass — fails here.
+// merely self-consistent - which a fixed-point test would still pass - fails here.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";

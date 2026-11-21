@@ -24,7 +24,7 @@ import {
   staleCacheAndCatalog,
 } from "../testing/stale-cache-purge.builder.js";
 
-describe("SyncSettings — when the stale cache is left alone", () => {
+describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone at user scope, where no project file is this run's to touch", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({

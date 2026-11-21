@@ -96,7 +96,7 @@ describe("CheckRegistration", () => {
     expect(await issuesFor(null, { machine: true })).toStrictEqual([]);
   });
 
-  it("reports it when the whole file is gone — nothing else would notice", async () => {
+  it("reports it when the whole file is gone - nothing else would notice", async () => {
     expect(await issuesFor(null)).toStrictEqual([UNDECLARED]);
   });
 
@@ -204,7 +204,7 @@ async function nativeIssuesFor(
   });
 }
 
-describe("CheckRegistration — native registrations against the host's own registry", () => {
+describe("CheckRegistration - native registrations against the host's own registry", () => {
   it("says nothing when the registry carries the expected ref, enabled", async () => {
     const issues = await nativeIssuesFor(manifestWithNativeRegistrations([REF]), {
       location: REGISTRY_LOCATION,
@@ -316,7 +316,7 @@ describe("CheckRegistration — native registrations against the host's own regi
   });
 });
 
-describe("CheckRegistration — order", () => {
+describe("CheckRegistration - order", () => {
   it("lists the undeclared marketplace before what the host's registry lacks", async () => {
     const marketplace = Marketplace.create({
       name: "aidd-framework",

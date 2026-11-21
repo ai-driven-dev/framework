@@ -158,7 +158,7 @@ describe("init", () => {
       ).rejects.toThrow(saying(/Already initialized/));
     });
 
-    // `aidd init` is not a command this CLI exposes (see the surface in cli.md) — telling
+    // `aidd init` is not a command this CLI exposes (see the surface in cli.md) - telling
     // a user to run `aidd init --force` points them at something that does not exist.
     it("names a real recovery path, not the nonexistent `aidd init --force`", async () => {
       const deps = await buildInstallationDeps();

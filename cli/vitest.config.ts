@@ -5,14 +5,14 @@ import { textLoader } from "./tests/setup/vitest-text-loader.js";
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
 // Tests of the test tooling itself (mutation filter, sequencer, throwaway profile, platform
-// helpers). They run in the `tooling` project, which CI runs and the default run skips.
+// fixtures). They run in the `tooling` project, which CI runs and the default run skips.
 const TOOLING_TESTS = [
-  "tests/helpers/stryker-filter.integration.test.ts",
-  "tests/helpers/ports/realpath-windows.unit.test.ts",
-  "tests/setup/mutation-sequencer.integration.test.ts",
+  "tests/mutation/stryker-filter.integration.test.ts",
+  "tests/shared/testing/realpath-windows.unit.test.ts",
+  "tests/mutation/mutation-sequencer.integration.test.ts",
   "tests/setup/throwaway-profile.unit.test.ts",
-  "tests/setup/unloadable-file-as-failed-test.integration.test.ts",
-  "tests/setup/unloadable-file-as-failed-test.unit.test.ts",
+  "tests/mutation/unloadable-file-as-failed-test.integration.test.ts",
+  "tests/mutation/unloadable-file-as-failed-test.unit.test.ts",
 ];
 
 export default defineConfig({

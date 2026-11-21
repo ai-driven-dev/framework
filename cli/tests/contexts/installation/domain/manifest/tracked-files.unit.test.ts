@@ -16,7 +16,7 @@ const HASH_NEW = new FileHash("f".repeat(32));
 const installed = (relativePath: string, frameworkPath?: string): InstallationFile =>
   new InstallationFile({ relativePath, content: "content", hash: HASH_A, frameworkPath });
 
-describe("tracked files — one tool's paths and hashes", () => {
+describe("tracked files - one tool's paths and hashes", () => {
   describe("recorded from an installation", () => {
     it("keeps where a framework-owned file came from", () => {
       expect(toTrackedFiles([installed(".claude/rules/a.md", "rules/a.md")])).toStrictEqual([

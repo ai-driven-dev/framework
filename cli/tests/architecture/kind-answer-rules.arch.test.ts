@@ -17,9 +17,9 @@ describe("a section declares nothing nobody calls", () => {
   const thing = [
     "export class ThingSection {",
     "  used(): string {",
-    "    return this.helper();",
+    "    return this.inner();",
     "  }",
-    "  helper(): string {",
+    "  inner(): string {",
     '    return "x";',
     "  }",
     "  merge(a: string, b: string): string {",

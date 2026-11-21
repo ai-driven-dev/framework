@@ -91,7 +91,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd marketplace — the group with no subcommand", () => {
+describe("aidd marketplace - the group with no subcommand", () => {
   it("offers the five things a person can do, then re-runs itself with the pick", async () => {
     pretendTerminal(true);
 
@@ -242,7 +242,7 @@ describe("aidd marketplace list", () => {
   });
 });
 
-describe("aidd marketplace — a failed read or removal", () => {
+describe("aidd marketplace - a failed read or removal", () => {
   it("names a failed listing on stderr and fails the process", async () => {
     marketplaceList.mockRejectedValue(new Error("registry is unreadable"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
@@ -360,7 +360,7 @@ describe("aidd marketplace check", () => {
   });
 });
 
-describe("aidd marketplace — how every subcommand builds its graph and reports a failure", () => {
+describe("aidd marketplace - how every subcommand builds its graph and reports a failure", () => {
   it.each([
     ["add", "market-b", "/some/source"],
     ["list"],
@@ -390,7 +390,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
   });
 });
 
-describe("aidd marketplace — the help surface", () => {
+describe("aidd marketplace - the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

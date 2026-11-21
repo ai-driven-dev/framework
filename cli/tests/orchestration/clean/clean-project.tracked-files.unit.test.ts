@@ -139,7 +139,7 @@ describe("clean: tracked project files", () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
-    // Written by `marketplace add`, not by an install — so it survived a clean that removed
+    // Written by `marketplace add`, not by an install - so it survived a clean that removed
     // only the caches and the manifest, and its presence kept `.aidd/` alive with it.
     const registry = join(PROJECT_ROOT, ".aidd", "marketplaces.json");
     await deps.fs.writeFile(registry, JSON.stringify({ version: 1, marketplaces: [] }));

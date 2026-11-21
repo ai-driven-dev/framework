@@ -137,7 +137,7 @@ describe("setup --scope user", () => {
     expect(userManifestRepo.saveCount).toBe(0);
   });
 
-  it("writes nothing at all under projectRoot — full directory delta, not a list", async () => {
+  it("writes nothing at all under projectRoot - full directory delta, not a list", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const { useCase, deps } = await buildUseCase(undefined, undefined, undefined, {
       userManifestRepo,
@@ -205,7 +205,7 @@ describe("setup --scope user", () => {
     );
   });
 
-  it("never installs framework files nor prompts for plugins — no project delivery at all", async () => {
+  it("never installs framework files nor prompts for plugins - no project delivery at all", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
@@ -214,7 +214,7 @@ describe("setup --scope user", () => {
     expect(result.install.results).toEqual([]);
   });
 
-  it("records no shared-source reference — there is no project-scope manifest for a later clean to ever decrement", async () => {
+  it("records no shared-source reference - there is no project-scope manifest for a later clean to ever decrement", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const userSourceReferences = makeRecordingUserSourceReferences();
     const { useCase } = await buildUseCase(undefined, userSourceReferences, undefined, {

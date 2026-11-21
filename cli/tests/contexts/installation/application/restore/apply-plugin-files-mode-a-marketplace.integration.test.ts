@@ -82,7 +82,7 @@ async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry
   });
 }
 
-describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)", () => {
+describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", () => {
   it("cleans up files a pre-fix update/restore materialized, leaving the manifest entry empty", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -134,7 +134,7 @@ describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)"
     const untrackedPath = ".claude/plugins/sample-plugin/notes.md";
     manifest.updatePlugin(TOOL.claude, plugin.withFiles(new Map([[trackedPath, "stray-hash"]])));
     await deps.fs.writeFile(join(PROJECT_ROOT, trackedPath), "stray content");
-    // Not in the manifest entry — a file placed alongside the plugin's tracked ones, which
+    // Not in the manifest entry - a file placed alongside the plugin's tracked ones, which
     // the cleanup must never delete, since it only iterates the manifest's own keys.
     await deps.fs.writeFile(join(PROJECT_ROOT, untrackedPath), "keep me");
 

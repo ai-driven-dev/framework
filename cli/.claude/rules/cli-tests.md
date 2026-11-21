@@ -21,7 +21,7 @@ paths:
 ## Guards
 
 - Kit: a context's tests import its own `tests/contexts/<ctx>/testing/` only, `kinds.ts`.
-- Another context is reached through its `application/` and `contract/` only (Biome `noRestrictedImports`, generated per context by `pnpm biome:boundaries`; `no-laundered-test-interior.grit` for a re-export from `tests/helpers` or `tests/shared`).
+- Another context is reached through its `application/` and `contract/` only (Biome `noRestrictedImports`, generated per context by `pnpm biome:boundaries`; `no-laundered-test-interior.grit` for a re-export from `tests/shared`).
 - Mirror: `tests/` follows `src/`, the mirror rule of `kinds.ts`.
 - A test file stays under 800 lines, `test-file-size.arch.test.ts`; 400 is a review point.
 

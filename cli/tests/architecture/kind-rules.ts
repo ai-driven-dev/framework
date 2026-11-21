@@ -1,7 +1,7 @@
 /**
  * The rules of the kind gate that read a file's content rather than its name: an error class is
  * thrown, a message names a command that exists, a port method has a caller, a test reaches the
- * repository through its helper. Each takes the files as text and returns violations;
+ * repository through the repository-root builder. Each takes the files as text and returns violations;
  * `kinds.rules.arch.test.ts` holds the tree to them, with no violation tolerated. The rules about
  * plugin sections and answers are in `kind-answer-rules.ts`.
  *

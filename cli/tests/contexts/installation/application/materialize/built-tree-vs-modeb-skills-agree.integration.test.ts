@@ -53,7 +53,7 @@ function builtTreeSkillPaths(dist: PluginDistribution): string[] {
   return dist.components.skills.map((f) => skillsArtifact.path(PLUGIN_NAME, f.relativePath)).sort();
 }
 
-describe("opencode flat skills — built-tree route agrees with mode-B install route", () => {
+describe("opencode flat skills - built-tree route agrees with mode-B install route", () => {
   it("produce the identical set of relative output paths for a plugin with non-skill children", () => {
     const dist = makeTelemetryLikeDist();
 

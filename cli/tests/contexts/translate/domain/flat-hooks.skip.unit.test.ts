@@ -58,7 +58,7 @@ describe("the engine skip list", () => {
       expect(result.skipped).toEqual([]);
     });
 
-    it("returns no skip entry when plugin has hooks — OpenCode now accepts them", () => {
+    it("returns no skip entry when plugin has hooks - OpenCode now accepts them", () => {
       const dist = buildDistWithHooks("aidd-pm");
       const result = translator.translateWithComponentPaths(dist, opencode);
       expect(result.skipped).toEqual([]);

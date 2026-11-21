@@ -154,7 +154,7 @@ describe("shared modules are earned", () => {
     const files = sourceFiles();
     expect(
       files.filter((file) => file.startsWith("src/shared/")).length,
-      "no shared file found — the scope of this rule is stale"
+      "no shared file found - the scope of this rule is stale"
     ).toBeGreaterThan(0);
 
     expect(
@@ -168,7 +168,7 @@ describe("shared modules are earned", () => {
     // A rule that selects nothing passes forever, and this one selects a single directory.
     expect(
       files.filter(underSharedDirectory).length,
-      "no shared module found — the scope of this rule is stale"
+      "no shared module found - the scope of this rule is stale"
     ).toBeGreaterThan(0);
     const violations = unearned(files, importersByFile());
 
@@ -195,12 +195,12 @@ describe("the guard itself", () => {
   });
 
   it("does not count the shared folder of the orchestration as an area", () => {
-    const helper = "src/orchestration/shared/b.ts";
+    const leaf = "src/orchestration/shared/b.ts";
     const importers = new Map([
-      [helper, new Set(["src/orchestration/shared/a.ts", "src/orchestration/setup/x.ts"])],
+      [leaf, new Set(["src/orchestration/shared/a.ts", "src/orchestration/setup/x.ts"])],
     ]);
 
-    expect(unearned([helper], importers)).toEqual([helper]);
+    expect(unearned([leaf], importers)).toEqual([leaf]);
   });
 
   it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
@@ -208,7 +208,7 @@ describe("the guard itself", () => {
     const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
     const port = "src/shared/ports/port.ts";
     const adapter = "src/shared/infrastructure/adapter.ts";
-    const helper = "src/shared/infrastructure/helper.ts";
+    const leaf = "src/shared/infrastructure/leaf.ts";
     const wired = "src/shared/infrastructure/wired.ts";
     const text: Record<string, string> = {
       [port]: "export interface Reader {}",
@@ -218,7 +218,7 @@ describe("the guard itself", () => {
       ["src/shared/domain/lonely.ts", new Set([A, "src/presentation/commands/doctor.ts"])],
       ["src/shared/domain/earned.ts", new Set([A, B])],
       [port, new Set([A, B])],
-      [helper, new Set([adapter])],
+      [leaf, new Set([adapter])],
       [wired, new Set([C1, C2])],
       ["src/shared/infrastructure/lonely.ts", new Set([C1])],
     ]);

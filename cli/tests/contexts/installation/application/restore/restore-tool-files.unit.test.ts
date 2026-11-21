@@ -91,7 +91,7 @@ function restore(
   });
 }
 
-describe("RestoreToolFiles — what it reports", () => {
+describe("RestoreToolFiles - what it reports", () => {
   it("announces the tool it is checking", async () => {
     const installed = installedVscode();
     const logger = new CapturingLogger();
@@ -149,7 +149,7 @@ describe("RestoreToolFiles — what it reports", () => {
   });
 });
 
-describe("RestoreToolFiles — what it records", () => {
+describe("RestoreToolFiles - what it records", () => {
   it("keeps the version the tool was installed at, not the one the restore runs with", async () => {
     const installed = installedVscode();
     await installed.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");

@@ -23,6 +23,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
+import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
@@ -75,7 +76,10 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     },
     catalogOf()
   );
-  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: deps.pluginFetcher,
+    rawCatalog: unusedRawCatalog(),
+  });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(deps.fs)
@@ -200,7 +204,7 @@ describe("PickPlugins", () => {
   });
 });
 
-describe("PickPlugins — what it asks, and when it asks nothing", () => {
+describe("PickPlugins - what it asks, and when it asks nothing", () => {
   it("asks nothing about a marketplace when only one is registered", async () => {
     const prompter = new KeepPrompter();
     const select = vi.spyOn(prompter, "select");
@@ -235,7 +239,7 @@ describe("PickPlugins — what it asks, and when it asks nothing", () => {
   });
 });
 
-describe("PickPlugins — what it hands the installer", () => {
+describe("PickPlugins - what it hands the installer", () => {
   it("passes the entry's own source, metadata and marketplace, replacing what is there", async () => {
     const prompter = new KeepPrompter();
     const { useCase, deps, registry, pluginAdd } = await buildUseCase(prompter);

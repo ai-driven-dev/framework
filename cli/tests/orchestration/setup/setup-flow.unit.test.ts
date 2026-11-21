@@ -127,7 +127,7 @@ describe("SetupFlow", () => {
       expect(makeFlow({ scope: "user", aiTools: [TOOL.claude] }).scope).toBe("user");
     });
 
-    it("refuses an IDE tool at user scope — an IDE tool has no user scope to install at", () => {
+    it("refuses an IDE tool at user scope - an IDE tool has no user scope to install at", () => {
       expect(() => makeFlow({ scope: "user", ideTools: [TOOL.vscode] })).toThrow(
         UserScopeIdeToolsError
       );
@@ -137,7 +137,7 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ scope: "project", ideTools: [TOOL.vscode] })).not.toThrow();
     });
 
-    it("refuses --scope user with no --ai — nothing would be registered for any tool", () => {
+    it("refuses --scope user with no --ai - nothing would be registered for any tool", () => {
       expect(() => makeFlow({ scope: "user", aiTools: [] })).toThrow(UserScopeNoToolsError);
     });
 
@@ -159,7 +159,7 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ scope: "user", aiTools: [TOOL.kilo, TOOL.claude] })).not.toThrow();
     });
 
-    it("refuses an interactive plugin pick at --scope user — there is no project to ask in", () => {
+    it("refuses an interactive plugin pick at --scope user - there is no project to ask in", () => {
       expect(() =>
         makeFlow({ scope: "user", aiTools: [TOOL.claude], pluginMode: "interactive" })
       ).toThrow(UserScopePluginModeError);

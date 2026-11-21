@@ -76,7 +76,7 @@ async function addPlugin(
 }
 
 describe("InstallAiTool", () => {
-  describe("empty manifest — no prior tools", () => {
+  describe("empty manifest - no prior tools", () => {
     it("installs the tool and returns no propagation when no plugins exist on other tools", async () => {
       const deps = await buildInstallationDeps();
       const { useCase } = buildUseCase(deps);

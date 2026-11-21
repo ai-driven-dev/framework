@@ -56,7 +56,7 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase 7)", () => {
+describe("BuiltTreeMaterializationTranslator - cursor marketplace hooks (Phase 7)", () => {
   it("merges hooks into the project's .cursor/hooks.json, not the plugin-scoped built tree", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);

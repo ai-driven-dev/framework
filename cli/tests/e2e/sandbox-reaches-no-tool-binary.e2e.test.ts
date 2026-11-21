@@ -11,7 +11,7 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-/** A test's result must not depend on which AI tools the runner happens to have installed —
+/** A test's result must not depend on which AI tools the runner happens to have installed -
  * the OpenCode reader shells out to a binary and waits ten seconds for it. */
 // AI tools only: `gh` is the CLI's own auth dependency, the same standing as `git` and `node`
 // below, and a runner shipping it is the normal case, not a deviation.

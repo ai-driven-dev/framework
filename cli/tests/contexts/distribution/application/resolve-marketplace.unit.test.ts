@@ -6,6 +6,7 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_DIR = "/marketplace-source";
@@ -21,6 +22,7 @@ function seedMarketplaceJson(
 function buildUseCase(fs: InMemoryFileAdapter) {
   const fetchMarketplaceSource = new FetchMarketplaceSource({
     pluginFetcher: new FixturePluginFetcher(),
+    rawCatalog: unusedRawCatalog(),
   });
   return new ResolveMarketplace(fetchMarketplaceSource, new PluginCatalogRepositoryAdapter(fs));
 }
@@ -37,7 +39,10 @@ function makeMarketplace(name: string): Marketplace {
 describe("ResolveMarketplace", () => {
   it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
     const useCase = new ResolveMarketplace(
-      new FetchMarketplaceSource({ pluginFetcher: new FixturePluginFetcher() }),
+      new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: unusedRawCatalog(),
+      }),
       new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({})),
       () => "/config/aidd"
     );

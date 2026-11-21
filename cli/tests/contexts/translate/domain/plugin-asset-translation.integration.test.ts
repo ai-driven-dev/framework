@@ -15,7 +15,7 @@ import {
 } from "../testing/registered-profiles.builder.js";
 
 /**
- * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.
+ * Prose - a skill, an agent, a rule - is translated: frontmatter converted, paths rewritten.
  * An artefact is carried byte for byte: a path rewritten inside a program no longer parses.
  */
 function pluginFile(relativePath: string): string {

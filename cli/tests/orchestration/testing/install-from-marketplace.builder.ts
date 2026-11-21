@@ -14,6 +14,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
+import { cloneRequiringRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
@@ -55,7 +56,10 @@ export async function buildUseCase(
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
-  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: deps.pluginFetcher,
+    rawCatalog: cloneRequiringRawCatalog(),
+  });
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);
   const useCase = new InstallFromMarketplace({
     resolvePluginSource: new ResolvePluginSource(

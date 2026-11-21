@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 import type { InMemoryFileAdapter } from "./in-memory-file-adapter.fake.js";
 
 interface SeedOptions {
-  /** Key by absolute path rather than one relative to dirPath — required when the use case
+  /** Key by absolute path rather than one relative to dirPath - required when the use case
    * constructs paths via join(frameworkPath, relativePart). */
   useAbsolutePaths?: boolean;
   /** Path prefix to prepend when useAbsolutePaths is false (default: ""). */

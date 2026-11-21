@@ -216,7 +216,7 @@ describe("the em dash guard itself", () => {
 
 const TESTS_ROOT = join(CLI_ROOT, "tests");
 
-/** `resolve(process.cwd(), "dist...")` or `join(process.cwd(), "dist...")` — the bug. */
+/** `resolve(process.cwd(), "dist...")` or `join(process.cwd(), "dist...")` - the bug. */
 const CWD_INTO_DIST = /(?:resolve|join)\(\s*process\.cwd\(\)\s*,\s*["'`]dist(?:\/|["'`])/;
 
 function testFiles(): string[] {
@@ -240,7 +240,7 @@ describe("no test resolves a path into the shared dist/ build output", () => {
 
     expect(
       violations,
-      "resolves into the shared dist/ — read cliPath() from tests/shared/testing/cli-sandbox.builder.ts instead"
+      "resolves into the shared dist/ - read cliPath() from tests/shared/testing/cli-sandbox.builder.ts instead"
     ).toEqual([]);
   });
 });

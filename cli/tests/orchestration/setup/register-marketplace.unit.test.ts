@@ -128,9 +128,10 @@ describe("RegisterMarketplace", () => {
       );
     });
 
-    it("refuses a remote source when no token can be resolved and no release resolver can vouch for it", async () => {
+    it("refuses a remote source when no token can be resolved and the release resolver does not vouch for it", async () => {
       const { useCase } = makeUseCase(new InMemoryEnvironment(), {
         tokenProvider: { resolve: async () => null },
+        releaseResolver: makeNoOpLatestResolver(false),
       });
       const flow = new SetupFlow({
         ...flowTools(),
