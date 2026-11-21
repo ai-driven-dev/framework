@@ -192,12 +192,21 @@ function reachableBinDir(dirs: readonly string[]): string | undefined {
   return dir;
 }
 
-export function pathWithoutAidd(
-  overrides?: Partial<Pick<PathWithoutAiddInputs, "nodeDir" | "gitDir" | "pathDirs">>
-): string {
-  const pathDirs = overrides?.pathDirs ?? (process.env.PATH ?? "").split(delimiter).filter(Boolean);
-  const nodeDir = overrides?.nodeDir ?? dirname(process.execPath);
-  const gitDir = "gitDir" in (overrides ?? {}) ? overrides?.gitDir : findGitDirWithoutAidd();
+type PathOverrides = Partial<Pick<PathWithoutAiddInputs, "nodeDir" | "gitDir" | "pathDirs">>;
+
+function resolvedPathInputs(overrides: PathOverrides = {}): {
+  pathDirs: readonly string[];
+  nodeDir: string;
+  gitDir: string | undefined;
+} {
+  const { pathDirs = (process.env.PATH ?? "").split(delimiter).filter(Boolean) } = overrides;
+  const { nodeDir = dirname(process.execPath) } = overrides;
+  const gitDir = "gitDir" in overrides ? overrides.gitDir : findGitDirWithoutAidd();
+  return { pathDirs, nodeDir, gitDir };
+}
+
+export function pathWithoutAidd(overrides?: PathOverrides): string {
+  const { pathDirs, nodeDir, gitDir } = resolvedPathInputs(overrides);
 
   const kept = pathDirsWithoutAidd({
     platform: process.platform,

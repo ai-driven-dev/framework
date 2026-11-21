@@ -238,14 +238,53 @@ function hooksOfDescriptor(content: string): string | null {
   return hooks === undefined ? null : JSON.stringify({ hooks }, null, 2);
 }
 
+function byRelativePath(a: { rel: string }, b: { rel: string }): number {
+  if (a.rel === b.rel) return 0;
+  return a.rel < b.rel ? -1 : 1;
+}
+
+interface HookSources {
+  readonly scripts: ReadonlyMap<string, string>;
+  readonly adapters: ReadonlyMap<string, string>;
+}
+
+/** The plugin script a delivered file was copied from, by the path it arrives under. */
+function pluginScriptOf(scripts: ReadonlyMap<string, string>, rel: string): string | undefined {
+  const origin = [...scripts].find(([key]) => {
+    const [plugin, ...rest] = key.split("/");
+    return /\.c?js$/.test(rel) && rel.includes(`${plugin}/`) && rel.endsWith(`/${rest.join("/")}`);
+  });
+  return origin?.[1];
+}
+
+/** One delivered hook file as the snapshot shows it, or `null` for a descriptor with no hooks. */
+async function hookFileSection(
+  { label, rel, file }: { label: string; rel: string; file: string },
+  sources: HookSources,
+  ws: Workspace
+): Promise<string | null> {
+  const content = await readFile(file, "utf8");
+  const shown = `${label}/${rel}`;
+  const adapter = basename(rel) === "host.cjs" ? sources.adapters.get(content) : undefined;
+  if (adapter !== undefined) {
+    return `## ${shown}\nscript, identical to the host adapter ${adapter}\n`;
+  }
+  const origin = pluginScriptOf(sources.scripts, rel);
+  if (origin !== undefined) {
+    const verdict = origin === content ? "identical to" : "differs from";
+    return `## ${shown}\nscript, ${verdict} the plugin source\n`;
+  }
+  const shownContent = basename(rel) === "plugin.json" ? hooksOfDescriptor(content) : content;
+  return shownContent === null ? null : `## ${shown}\n${normalize(shownContent, ws)}\n`;
+}
+
 /**
  * Hook scripts are plugin content, not route output: they are pinned by path and by whether
  * they arrive byte for byte. Everything a route composes (config, bridges, descriptors'
  * hooks reference) is pinned in full.
  */
 async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promise<string> {
-  const scripts = await sourceHookScripts();
-  const adapters = await hostAdapters();
+  const sources = { scripts: await sourceHookScripts(), adapters: await hostAdapters() };
   const sections: string[] = [];
   for (const base of bases) {
     const label = relative(ws.root, base).split(sep).join("/");
@@ -253,36 +292,38 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
       file,
       rel: relative(base, file).split(sep).join("/"),
     }));
-    for (const { file, rel } of found.sort((a, b) =>
-      a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0
-    )) {
-      if (!isHookFile(rel)) continue;
-      const content = await readFile(file, "utf8");
-      const shown = `${label}/${rel}`;
-      const adapter = basename(rel) === "host.cjs" ? adapters.get(content) : undefined;
-      if (adapter !== undefined) {
-        sections.push(`## ${shown}\nscript, identical to the host adapter ${adapter}\n`);
-        continue;
-      }
-      const origin = [...scripts].find(([key]) => {
-        const [plugin, ...rest] = key.split("/");
-        return (
-          /\.c?js$/.test(rel) && rel.includes(`${plugin}/`) && rel.endsWith(`/${rest.join("/")}`)
-        );
-      });
-      if (origin !== undefined) {
-        const verdict = origin[1] === content ? "identical to" : "differs from";
-        sections.push(`## ${shown}\nscript, ${verdict} the plugin source\n`);
-        continue;
-      }
-      const shownContent = basename(rel) === "plugin.json" ? hooksOfDescriptor(content) : content;
-      if (shownContent !== null) sections.push(`## ${shown}\n${normalize(shownContent, ws)}\n`);
+    const hookFiles = found.sort(byRelativePath).filter(({ rel }) => isHookFile(rel));
+    for (const { file, rel } of hookFiles) {
+      const section = await hookFileSection({ label, rel, file }, sources, ws);
+      if (section !== null) sections.push(section);
     }
   }
   return sections.length === 0 ? "no hook file\n" : sections.join("\n");
 }
 
 type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["manifestRepo"]["load"]>>>;
+
+type RecordedPlugin = ReturnType<RecordedManifest["getPlugins"]>[number];
+
+function recordedPluginLines(
+  ws: Workspace,
+  header: { scope: string; toolId: string },
+  plugin: RecordedPlugin
+): string[] {
+  const hookFiles = [...plugin.files.keys()]
+    .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
+    .sort();
+  const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
+  const dependents = plugin.dependents.map(
+    (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
+  );
+  return [
+    `${header.scope} ${header.toolId} ${plugin.name} scope=${plugin.scope}: ${hookFiles.length} hook files`,
+    ...hookFiles.map((f) => `  ${f}`),
+    `  projectHooks ${projectHooks}`,
+    `  dependents ${JSON.stringify(dependents)}`,
+  ];
+}
 
 async function recordedPlugins(
   ws: Workspace,
@@ -293,19 +334,7 @@ async function recordedPlugins(
   const lines: string[] = [];
   for (const toolId of manifest.getInstalledToolIds()) {
     for (const plugin of manifest.getPlugins(toolId)) {
-      const hookFiles = [...plugin.files.keys()]
-        .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
-        .sort();
-      lines.push(
-        `${scope} ${toolId} ${plugin.name} scope=${plugin.scope}: ${hookFiles.length} hook files`
-      );
-      lines.push(...hookFiles.map((f) => `  ${f}`));
-      const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
-      lines.push(`  projectHooks ${projectHooks}`);
-      const dependents = plugin.dependents.map(
-        (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
-      );
-      lines.push(`  dependents ${JSON.stringify(dependents)}`);
+      lines.push(...recordedPluginLines(ws, { scope, toolId }, plugin));
     }
     const registrations = manifest.getNativeRegistrations(toolId);
     lines.push(
@@ -360,6 +389,37 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
   return `${outcome}\nhook files unchanged by the second run: ${before === after}`;
 }
 
+async function recordedReport(ws: Workspace, bases: readonly string[]): Promise<string> {
+  return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
+}
+
+async function secondInstall(ws: Workspace, toolId: AiToolId): Promise<string> {
+  try {
+    await installPlugin(ws.project, toolId, "aidd-context");
+    return "second install resolved";
+  } catch (error) {
+    return `second install threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
+  }
+}
+
+/** The routes that start from the tool and the two plugins installed in a project. */
+async function runOnInstalled(ws: Workspace, route: Route, toolId: AiToolId): Promise<string> {
+  const bases = [ws.project, ws.home];
+  if (route === "plugin-install") return recordedReport(ws, bases);
+  if (route === "plugin-install-twice") {
+    return `${await secondInstall(ws, toolId)}\n\n${await recordedReport(ws, bases)}`;
+  }
+  const wired = await deps(ws.project);
+  if (route === "plugin-remove") {
+    const removal = { pluginName: "aidd-context", toolIds: [toolId] };
+    await wired.pluginRemoveUseCase.execute({ ...removal, projectRoot: ws.project });
+    return recordedReport(ws, bases);
+  }
+  const clean = { force: true, interactive: false, tools: catalogOf() };
+  await wired.cleanUseCase.execute({ ...clean, projectRoot: ws.project });
+  return recordedReport(ws, bases);
+}
+
 async function run(route: Route, toolId: AiToolId): Promise<string> {
   const ws = await workspace();
   if (route === "native-build" || route === "flat-translate") {
@@ -373,28 +433,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   }
   await installPlugin(ws.project, toolId, "aidd-context");
   await installPlugin(ws.project, toolId, "aidd-telemetry");
-  const bases = [ws.project, ws.home];
-  if (route === "plugin-install") {
-    return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
-  }
-  if (route === "plugin-install-twice") {
-    let outcome = "second install resolved";
-    try {
-      await installPlugin(ws.project, toolId, "aidd-context");
-    } catch (error) {
-      outcome = `second install threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
-    }
-    return `${outcome}\n\n${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
-  }
-  const wired = await deps(ws.project);
-  if (route === "plugin-remove") {
-    const removal = { pluginName: "aidd-context", toolIds: [toolId] };
-    await wired.pluginRemoveUseCase.execute({ ...removal, projectRoot: ws.project });
-    return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
-  }
-  const clean = { force: true, interactive: false, tools: catalogOf() };
-  await wired.cleanUseCase.execute({ ...clean, projectRoot: ws.project });
-  return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
+  return runOnInstalled(ws, route, toolId);
 }
 
 describe("the hook files every route writes and removes, per tool", () => {

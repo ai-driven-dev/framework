@@ -46,6 +46,17 @@ function filesUnder(dir: string): string[] {
 describe("the memory hook under Antigravity", () => {
   let root: string;
 
+  function installScript(
+    format: NonNullable<ReturnType<typeof antigravity.projectHooksDelivery>>["format"],
+    source: string
+  ): void {
+    const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
+    if (pluginPath === "hooks/hooks.json") return;
+    const dest = join(root, format.scriptPath(PLUGIN, pluginPath));
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, plugins.hookScript(pluginPath, readFileSync(source, "utf8")));
+  }
+
   beforeEach(() => {
     root = realpathSync(mkdtempSync(join(tmpdir(), "aidd-agy-memory-")));
     mkdirSync(join(root, "aidd_docs", "memory"), { recursive: true });
@@ -59,13 +70,7 @@ describe("the memory hook under Antigravity", () => {
   function install(): string {
     const format = antigravity.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("antigravity declares no project hooks format");
-    for (const source of filesUnder(PLUGIN_HOOKS)) {
-      const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
-      if (pluginPath === "hooks/hooks.json") continue;
-      const dest = join(root, format.scriptPath(PLUGIN, pluginPath));
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, plugins.hookScript(pluginPath, readFileSync(source, "utf8")));
-    }
+    for (const source of filesUnder(PLUGIN_HOOKS)) installScript(format, source);
     const { content } = format.merge(
       null,
       readFileSync(join(PLUGIN_HOOKS, "hooks.json"), "utf8"),

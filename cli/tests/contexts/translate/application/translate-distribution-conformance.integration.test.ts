@@ -135,6 +135,99 @@ function distributionOf(
   });
 }
 
+function isExplainedBy(
+  file: { relativePath: string; content: string },
+  onA: string | undefined,
+  list: readonly Divergence[]
+): boolean {
+  if (onA === undefined) return list.some((d) => d.absentFromA);
+  if (onA === file.content) return true;
+  return file.relativePath.endsWith(".md") && folded(onA, list) === folded(file.content, list);
+}
+
+function compareWithPathA(
+  id: string,
+  file: { relativePath: string; content: string },
+  onA: string | undefined
+): { explained: boolean; needed: string[] } {
+  const named = DIVERGENCES.filter((d) => d.applies(id, file.relativePath, onA ?? ""));
+  const needed = named
+    .filter(
+      (d) =>
+        !isExplainedBy(
+          file,
+          onA,
+          named.filter((e) => e !== d)
+        )
+    )
+    .map((d) => d.id);
+  return { explained: isExplainedBy(file, onA, named), needed };
+}
+
+function manifestPathOf(tool: AiToolProfile): { installed: string; onDisk: string } | null {
+  const plugins = tool.plugins();
+  if (plugins?.kind !== "native") return null;
+  const path = nativeOf(plugins).manifestPath();
+  if (path === null) return null;
+  return {
+    installed: `${nativeOf(plugins).pluginOutputDir("aidd-vcs")}${path}`,
+    onDisk: `${OUT}/plugins/aidd-vcs/${path}`,
+  };
+}
+
+function manifestDivergencesUsed(
+  onAPath: string,
+  onA: string,
+  expectedPath: string,
+  installed: string
+): string[] {
+  return [
+    ...(onAPath === expectedPath ? [] : [MANIFEST_DIVERGENCES[0]]),
+    ...(onA === installed ? [] : [MANIFEST_DIVERGENCES[1]]),
+  ];
+}
+
+type Comparison = { unexplained: string[]; agreed: number; needed: string[] };
+
+function comparePlugin(
+  tree: InMemoryFileAdapter,
+  tool: AiToolProfile,
+  written: ReadonlyMap<string, string>,
+  name: string,
+  root: string | null
+): Comparison {
+  const out: Comparison = { unexplained: [], agreed: 0, needed: [] };
+  const translated = translator
+    .translate(distributionOf(tree, name), tool)
+    .filter((f) => !f.relativePath.endsWith("/plugin.json"));
+  for (const file of translated) {
+    const rest = file.relativePath.slice((root ?? "").length);
+    const onA = written.get(root === null ? `${OUT}/${rest}` : `${OUT}/plugins/${name}/${rest}`);
+    const verdict = compareWithPathA(tool.toolId, file, onA);
+    if (!verdict.explained) out.unexplained.push(`${tool.toolId}: ${file.relativePath}`);
+    else if (onA !== undefined) out.agreed++;
+    out.needed.push(...verdict.needed);
+  }
+  return out;
+}
+
+async function compareTool(
+  tree: InMemoryFileAdapter,
+  tool: AiToolProfile,
+  native: boolean
+): Promise<Comparison> {
+  const written = await writtenByA(tree, tool, native);
+  const plugins = tool.plugins();
+  const rootOf = (name: string): string | null =>
+    native && plugins ? nativeOf(plugins).pluginOutputDir(name) : null;
+  const parts = PLUGINS.map((name) => comparePlugin(tree, tool, written, name, rootOf(name)));
+  return {
+    unexplained: parts.flatMap((c) => c.unexplained),
+    agreed: parts.reduce((sum, c) => sum + c.agreed, 0),
+    needed: parts.flatMap((c) => c.needed),
+  };
+}
+
 describe("path B (install) writes what path A (disk) writes, but for what DIVERGENCES names", () => {
   const used = new Set<string>();
   let tree: InMemoryFileAdapter;
@@ -147,30 +240,10 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
     const tool = registeredTools().aiProfile(id);
     const plugins = tool.plugins();
     if (plugins === null) return;
-    const native = plugins.kind === "native";
-    const written = await writtenByA(tree, tool, native);
-    const unexplained: string[] = [];
-    let agreed = 0;
-    for (const name of PLUGINS) {
-      const root = native ? nativeOf(plugins).pluginOutputDir(name) : "";
-      for (const file of translator.translate(distributionOf(tree, name), tool)) {
-        if (file.relativePath.endsWith("/plugin.json")) continue;
-        const rest = file.relativePath.slice(root.length);
-        const onA = written.get(native ? `${OUT}/plugins/${name}/${rest}` : `${OUT}/${rest}`);
-        const named = DIVERGENCES.filter((d) => d.applies(id, file.relativePath, onA ?? ""));
-        const explained = (list: readonly Divergence[]) =>
-          onA === undefined
-            ? list.some((d) => d.absentFromA)
-            : onA === file.content ||
-              (file.relativePath.endsWith(".md") &&
-                folded(onA, list) === folded(file.content, list));
-        if (!explained(named)) unexplained.push(`${id}: ${file.relativePath}`);
-        else if (onA !== undefined) agreed++;
-        for (const d of named) if (!explained(named.filter((e) => e !== d))) used.add(d.id);
-      }
-    }
-    expect(unexplained).toEqual([]);
-    expect(agreed).toBeGreaterThan(100);
+    const result = await compareTool(tree, tool, plugins.kind === "native");
+    for (const needed of result.needed) used.add(needed);
+    expect(result.unexplained).toEqual([]);
+    expect(result.agreed).toBeGreaterThan(100);
   });
 
   const manifestCases = registeredTools()
@@ -179,16 +252,13 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
   it.each(manifestCases)("%s installs the manifest of a %s source", async (id, sourceName) => {
     const source = SOURCES.find((s) => s.name === sourceName) ?? SOURCES[0];
     const tool = registeredTools().aiProfile(id);
-    const plugins = tool.plugins();
     const dist = distributionOf(tree, "aidd-vcs", source);
     const own = translator
       .translate(dist, tool)
       .filter((f) => f.relativePath.endsWith("/plugin.json"));
-    const path = plugins?.kind === "native" ? nativeOf(plugins).manifestPath() : null;
-    if (plugins === null || path === null) return void expect(own).toEqual([]);
-    expect(own.map((f) => f.relativePath)).toEqual([
-      `${nativeOf(plugins).pluginOutputDir("aidd-vcs")}${path}`,
-    ]);
+    const path = manifestPathOf(tool);
+    if (path === null) return void expect(own).toEqual([]);
+    expect(own.map((f) => f.relativePath)).toEqual([path.installed]);
     expect(own[0].content).toBe(
       dist.files.find((f) => f.relativePath === source.manifest)?.content
     );
@@ -196,8 +266,8 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
       ([k]) => k.includes("/plugins/aidd-vcs/") && k.endsWith("/plugin.json")
     );
     expect(identity(onA)).toEqual(identity(own[0].content));
-    if (onAPath !== `${OUT}/plugins/aidd-vcs/${path}`) used.add(MANIFEST_DIVERGENCES[0]);
-    if (onA !== own[0].content) used.add(MANIFEST_DIVERGENCES[1]);
+    for (const id of manifestDivergencesUsed(onAPath, onA, path.onDisk, own[0].content))
+      used.add(id);
   });
 
   it("every divergence is still needed by some tool", () => {
