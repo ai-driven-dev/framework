@@ -7,7 +7,7 @@ export interface StaleMarketplace {
 export interface CatalogReading {
   readonly marketplace: string;
   readonly plugins: ReadonlySet<string> | null;
-  readonly error?: string;
+  readonly error?: unknown;
 }
 
 export interface MarketplaceCatalogs {

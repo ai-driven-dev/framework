@@ -8,6 +8,12 @@ export function render(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** A caught value as a log line tails it: `String(value)` for a plain one, the name and words
+ * for a catalogued one. */
+export function describeCause(cause: unknown): string {
+  return cause instanceof AiddError ? `${cause.name}: ${render(cause)}` : String(cause);
+}
+
 /** Reports the error and ends the process with a failure code. */
 export function failCommand(output: Output, error: unknown): never {
   output.error(render(error));

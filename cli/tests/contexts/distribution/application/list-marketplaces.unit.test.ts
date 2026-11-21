@@ -104,7 +104,8 @@ describe("ListMarketplaces", () => {
       await useCase.execute({ projectRoot, withCatalogs: true });
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining("Skipping marketplace 'awesome'")
+        expect.stringContaining("Skipping marketplace 'awesome'"),
+        expect.any(Error)
       );
     });
 

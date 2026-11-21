@@ -112,9 +112,9 @@ export function frameworkBuildsOf(
 /** A logger whose every level lands at debug, for work that runs behind almost every command. */
 export function debugOnly(logger: Logger): Logger {
   return {
-    debug: (message) => logger.debug(message),
+    debug: (message, cause) => logger.debug(message, cause),
     info: (message) => logger.debug(message),
-    warn: (message) => logger.debug(message),
+    warn: (message, cause) => logger.debug(message, cause),
   };
 }
 

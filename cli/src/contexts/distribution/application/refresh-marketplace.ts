@@ -18,7 +18,7 @@ export interface RefreshMarketplaceCommand {
 export interface RefreshEntryResult {
   name: string;
   status: "ok" | "failed";
-  error?: string;
+  error?: unknown;
 }
 
 export interface RefreshMarketplaceResult {
@@ -66,11 +66,7 @@ export class RefreshMarketplace {
       }
       return { name: m.name, status: "ok" };
     } catch (err) {
-      return {
-        name: m.name,
-        status: "failed",
-        error: err instanceof Error ? err.message : String(err),
-      };
+      return { name: m.name, status: "failed", error: err };
     }
   }
 

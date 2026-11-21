@@ -151,7 +151,7 @@ export async function runInProcess(
       createSlice: depsFactory,
       telemetryRequests: wireTelemetryRequests(),
       runCommand: async () => 0,
-      createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code)),
+      createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code), String),
     });
 
     const { outputOf } = await import("../../../src/presentation/commands/global-options.js");

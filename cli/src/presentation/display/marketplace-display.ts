@@ -3,6 +3,7 @@ import type { PluginCatalog } from "../../contexts/distribution/contract/catalog
 import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { describePluginSource } from "../../shared/domain/source.js";
+import { render } from "../errors/error-translator.presenter.js";
 
 interface MarketplaceCheckOutcome {
   readonly stale: readonly { readonly name: string }[];
@@ -11,7 +12,7 @@ interface MarketplaceCheckOutcome {
     readonly plugin: string;
     readonly toolId: string;
   }[];
-  readonly skipped: readonly { readonly marketplace: string; readonly error: string }[];
+  readonly skipped: readonly { readonly marketplace: string; readonly error: unknown }[];
 }
 
 export function printCatalogEntries(
@@ -59,7 +60,9 @@ export function printMarketplaceRemoved(
 
 export function printRefreshResults(output: Output, results: readonly RefreshEntryResult[]): void {
   for (const result of results) {
-    output.print(`${result.name}: ${result.status}${result.error ? ` (${result.error})` : ""}`);
+    output.print(
+      `${result.name}: ${result.status}${result.error === undefined ? "" : ` (${render(result.error)})`}`
+    );
   }
 }
 
@@ -68,7 +71,8 @@ export function printMarketplaceCheck(output: Output, result: MarketplaceCheckOu
   for (const removed of result.upstreamRemoved) {
     output.print(`removed: ${removed.marketplace}/${removed.plugin} (${removed.toolId})`);
   }
-  for (const skip of result.skipped) output.warn(`skipped: ${skip.marketplace} — ${skip.error}`);
+  for (const skip of result.skipped)
+    output.warn(`skipped: ${skip.marketplace} — ${render(skip.error)}`);
   if (
     result.stale.length === 0 &&
     result.upstreamRemoved.length === 0 &&

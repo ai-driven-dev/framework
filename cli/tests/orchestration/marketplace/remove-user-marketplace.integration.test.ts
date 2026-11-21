@@ -225,7 +225,9 @@ for (const toolId of [TOOL.codex]) {
           addedAt: "2026-09-02T00:00:00.000Z",
         })
       );
-      await expect(f.useCase.execute(options())).rejects.toThrow(/Marketplace.*not registered/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        expect.objectContaining({ marketplace: ALIAS })
+      );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([

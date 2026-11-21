@@ -1,13 +1,13 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { bindContainer, createContainer } from "./composition/container.js";
-import { createOutput } from "./composition/shared.js";
+import { createOutput as createOutputWith } from "./composition/shared.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
 import { outputOf } from "./presentation/commands/global-options.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerCommands } from "./presentation/commands/register-commands.js";
-import { failCommand } from "./presentation/errors/error-translator.presenter.js";
+import { describeCause, failCommand } from "./presentation/errors/error-translator.presenter.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
@@ -18,6 +18,7 @@ function formatVersion(version: string): string {
 }
 
 const tools = wireTools();
+const createOutput = (verbose: boolean) => createOutputWith(verbose, describeCause);
 
 // The composition edge: commands receive these factories and never import the wiring.
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
@@ -25,7 +26,9 @@ const version = createContainer({ projectRoot: process.cwd(), verbose: false, to
 const createSlice = bindContainer(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
 const menuOfProject = (projectRoot: string) =>
-  createContainer({ projectRoot, verbose: false, tools }).menu(terminal);
+  createContainer({ projectRoot, verbose: false, tools, output: createOutput(false) }).menu(
+    terminal
+  );
 
 const program = new Command();
 

@@ -20,9 +20,13 @@ export class CapturingOutput extends OutputAdapter {
   readonly captured: CapturedLine[] = [];
 
   constructor(verbose = false) {
-    super(verbose, (code) => {
-      throw new ExitRequested(code);
-    });
+    super(
+      verbose,
+      (code) => {
+        throw new ExitRequested(code);
+      },
+      String
+    );
   }
 
   /** Every message, in order, whatever its level. */
