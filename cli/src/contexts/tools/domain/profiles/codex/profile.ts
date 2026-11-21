@@ -1,8 +1,10 @@
 import { join } from "node:path";
 import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import type { ShippedConfig } from "../../../contract/tool-profile.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks/routes.js";
+import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
@@ -52,100 +54,111 @@ function buildCodexSkillFilePath(fileName: string): string {
 
 const hooksSupport = nativeHooksSupport(CODEX_HOOKS);
 
-export const codex = defineAiTool({
-  toolId: "codex",
-  distributionProbes: {
-    manifest: [".codex-plugin/plugin.json"],
-    marketplace: [".agents/plugins/marketplace.json"],
+const CODEX_CONFIG_ASSETS: readonly ShippedConfig[] = [
+  {
+    name: "config.toml",
+    content: codexConfigToml,
+    destination: ".codex/config.toml",
+    delivery: "install",
   },
-  directory: DIRECTORY,
-  toolSuffix: TOOL_SUFFIX,
-  displayName: "Codex",
-  recommendedFor: (project) => project?.stack === "python" && !project.isMonorepo,
-  signalDir: `${DIRECTORY}commands`,
-  configAssets: [
-    {
-      name: "config.toml",
-      content: codexConfigToml,
-      destination: ".codex/config.toml",
-      delivery: "install",
-    },
-  ],
-  buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
+];
 
-  capabilities: (bound) => ({
-    agents: bound.agents({
-      format: "toml",
-      frontmatter: tomlAgentFrontmatter,
-      serialize: tomlAgentToml,
-    }),
-    skills: bound.skills({
-      agentsSkillsDirectory: true,
-      buildInstallPath: buildCodexSkillFilePath,
-      convertFrontmatter: stripCodexSkillFrontmatter,
-    }),
-    commands: bound.commands({
-      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
-    }),
-    rules: bound.rules({
-      buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: (fm) => fm,
-    }),
-    mcp: {
-      config: new McpConfigPart({
-        outputPath: ".codex/config.toml",
-        format: "toml",
-        mergeFn: mergeCodexConfigToml,
-        consumes: [MCP_CONFIG_REF],
-      }),
-      plugin: PLUGIN_MCP,
+const CODEX_LAYOUT = nativeLayout({
+  pluginsDir: ".codex/plugins/",
+  globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
+  // Codex only enables plugins from its user-global config plus its own plugin cache; a
+  // project-local settings file is inert, so the `codex` CLI is driven directly instead.
+  nativeActivation: {
+    binary: "codex",
+    upgradeVerb: "upgrade",
+    enableVerb: "add",
+    disableVerb: "remove",
+    // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
+    // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
+    // codex refuses a re-add from a different source itself, so there is no registry to
+    // reread: which is why `clean` proves this leftover safe to remove by its own
+    // emptiness instead.
+    pluginCacheDir: (h) => join(h, ".codex", "plugins", "cache"),
+    // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
+    // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
+    pluginRegistry: {
+      location: (h) => join(h, ".codex", "config.toml"),
+      layout: "toml-plugin-tables",
     },
-    hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
-    layout: nativeLayout({
-      pluginsDir: ".codex/plugins/",
-      globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
-      // Codex only enables plugins from its user-global config plus its own plugin cache; a
-      // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-      nativeActivation: {
-        binary: "codex",
-        upgradeVerb: "upgrade",
-        enableVerb: "add",
-        disableVerb: "remove",
-        // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
-        // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
-        // codex refuses a re-add from a different source itself, so there is no registry to
-        // reread: which is why `clean` proves this leftover safe to remove by its own
-        // emptiness instead.
-        pluginCacheDir: (h) => join(h, ".codex", "plugins", "cache"),
-        // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
-        // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
-        pluginRegistry: {
-          location: (h) => join(h, ".codex", "config.toml"),
-          layout: "toml-plugin-tables",
-        },
-        marketplaceSources: {
-          from: "list-command",
-          args: ["plugin", "marketplace", "list", "--json"],
-          layout: "marketplaces-with-source",
-          hostLabel: "Codex",
-          unavailableMessage:
-            "Codex marketplace list --json unavailable; inspect the host CLI and retry",
-          unverifiedMessage: "Codex marketplace list --json output shape is not verified",
-        },
-        // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
-        // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
-        userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
-      },
-    }),
-    manifest: manifestSection({
-      manifestRelativePath: "plugin.json",
-      pluginRootToken: hooksSupport.rootToken,
-    }),
-    models: new ModelsSection({ providers: ["openai"] }),
-  }),
-
-  rewriteContent(content: string): string {
-    return rewriteCodexContent(content);
+    marketplaceSources: {
+      from: "list-command",
+      args: ["plugin", "marketplace", "list", "--json"],
+      layout: "marketplaces-with-source",
+      hostLabel: "Codex",
+      unavailableMessage:
+        "Codex marketplace list --json unavailable; inspect the host CLI and retry",
+      unverifiedMessage: "Codex marketplace list --json output shape is not verified",
+    },
+    // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
+    // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
+    userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
   },
 });
+
+/** The Codex profile, writing its TOML files through `toml`. */
+export const codexProfile = (toml: TomlCodec) =>
+  defineAiTool({
+    toolId: "codex",
+    distributionProbes: {
+      manifest: [".codex-plugin/plugin.json"],
+      marketplace: [".agents/plugins/marketplace.json"],
+    },
+    directory: DIRECTORY,
+    toolSuffix: TOOL_SUFFIX,
+    displayName: "Codex",
+    recommendedFor: (project) => project?.stack === "python" && !project.isMonorepo,
+    signalDir: `${DIRECTORY}commands`,
+    configAssets: CODEX_CONFIG_ASSETS,
+    buildContracts: {
+      marketplace: () => buildCodexContract(toml),
+      flat: () => buildCodexFlatContract(toml),
+    },
+
+    capabilities: (bound) => ({
+      agents: bound.agents({
+        format: "toml",
+        frontmatter: tomlAgentFrontmatter,
+        serialize: tomlAgentToml(toml),
+      }),
+      skills: bound.skills({
+        agentsSkillsDirectory: true,
+        buildInstallPath: buildCodexSkillFilePath,
+        convertFrontmatter: stripCodexSkillFrontmatter,
+      }),
+      commands: bound.commands({
+        buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+        convertFrontmatter: (fm, relativeFileName) =>
+          convertCommandFrontmatter(fm, relativeFileName),
+      }),
+      rules: bound.rules({
+        buildInstallPath: bound.installUnder("rules/"),
+        convertFrontmatter: (fm) => fm,
+      }),
+      mcp: {
+        config: new McpConfigPart({
+          outputPath: ".codex/config.toml",
+          format: "toml",
+          toml,
+          mergeFn: mergeCodexConfigToml(toml),
+          consumes: [MCP_CONFIG_REF],
+        }),
+        plugin: PLUGIN_MCP,
+      },
+      hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
+      layout: CODEX_LAYOUT,
+      manifest: manifestSection({
+        manifestRelativePath: "plugin.json",
+        pluginRootToken: hooksSupport.rootToken,
+      }),
+      models: new ModelsSection({ providers: ["openai"] }),
+    }),
+
+    rewriteContent(content: string): string {
+      return rewriteCodexContent(content);
+    },
+  });

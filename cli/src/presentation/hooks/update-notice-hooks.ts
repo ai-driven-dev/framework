@@ -1,6 +1,6 @@
 import type { Command } from "commander";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import { outputOf } from "../commands/global-options.js";
-import type { DepsSliceFactory } from "../deps.js";
 
 /** What this command reads of the graph. */
 type UpdateNoticeKeys = "printUpdateNotice" | "logger" | "refreshUpdateCheck";

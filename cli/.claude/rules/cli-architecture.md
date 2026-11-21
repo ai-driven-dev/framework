@@ -10,7 +10,7 @@ paths:
 
 Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`.
 1. A context reads another through its `contract/` only, and `application/` is for presentation and orchestration: the `imports` rule of `kinds.arch.test.ts`, `biome.json`.
-2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `presentation/deps.ts` do not count: `contractReaderViolations`, in `kinds.rules.arch.test.ts`.
+2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `orchestration/deps.ts` do not count: `contractReaderViolations`, in `kinds.rules.arch.test.ts`.
 3. An edge absent from `ALLOWED` is an error: the `imports` rule of `kinds.arch.test.ts` and `biome-guards-bite.arch.test.ts`.
 4. No import cycle: Biome `noImportCycles`.
 5. Pure folders import no package and no Node builtin but `node:path` and `node:crypto`. Biome holds it for the `PURE_FOLDERS` of `biome-guards-bite.arch.test.ts`; in every other `domain/`, the kind gate (`kinds.ts`) holds it: a model imports models and `node:path` and `node:crypto` only, an inline `import("node:…")` included.
@@ -24,7 +24,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 - An adapter implements one port, lives in the owner's `infrastructure/`, is named `*Adapter`, and does I/O and format translation only.
 - A class takes its ports through the constructor, typed as the port, and `composition/` hands in the adapter.
 - `composition/` holds one module per context plus the root and the shared adapters: `composition-holds-one-module-per-context.arch.test.ts`.
-- A command receives its dependencies as the `DepsFactory` of `presentation/deps.ts`, built in `cli.ts`.
+- A command receives its dependencies as the `DepsFactory` of `orchestration/deps.ts`, built in `cli.ts`.
 - `createContainer` builds each context's wiring on its first read and keeps it for that container; a command keeps no second cache.
 - A port, a `contract/` port included, declares no method nobody calls: `ports-are-called.arch.test.ts`.
 - A tool id appears only in its profile and the registration list: `tool-addition-cost.arch.test.ts`.

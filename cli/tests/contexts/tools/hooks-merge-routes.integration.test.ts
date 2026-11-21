@@ -6,6 +6,7 @@ import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/prof
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
 import {
@@ -17,6 +18,8 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+
+const TOML = new SmolTomlCodec();
 
 /**
  * Every route that merges a plugin's hooks into a file the project already holds. The file
@@ -141,7 +144,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("codex: .codex/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".codex/hooks/";
-    const fs = await flatMerge(buildCodexFlatContract(), {
+    const fs = await flatMerge(buildCodexFlatContract(TOML), {
       [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
     });
     const file = fs.getFile(`${OUT}/.codex/hooks.json`);

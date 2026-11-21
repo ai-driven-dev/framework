@@ -1,7 +1,8 @@
 import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
+import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
-import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";

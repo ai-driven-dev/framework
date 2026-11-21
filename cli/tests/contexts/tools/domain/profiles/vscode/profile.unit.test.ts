@@ -11,8 +11,10 @@ describe("vscode profile", () => {
     ["vscodeKeybindings", ".vscode/keybindings.json", "none"],
     ["vscodeSettings", ".vscode/settings.json", "user-prime"],
   ])("writes %s to %s and merges it as %s", (name, path, strategy) => {
-    expect(consuming(name)?.outputPath()).toBe(path);
-    expect(consuming(name)?.mergeStrategy()).toBe(strategy);
+    expect(consuming(name)?.fileOf("{}")).toMatchObject({
+      relativePath: path,
+      mergeStrategy: strategy,
+    });
   });
 
   it("writes no file for a config name it does not know", () => {

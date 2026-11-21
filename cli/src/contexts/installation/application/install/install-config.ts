@@ -1,6 +1,5 @@
 import { join } from "node:path";
-import { FileHash } from "../../../../shared/domain/file-hash.js";
-import { InstallationFile } from "../../../../shared/domain/installation-file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -47,16 +46,9 @@ export class InstallConfig {
     const { contentFiles, projectRoot, platformName } = context;
     const rawContent = contentFiles.get(ref.path);
     if (rawContent === undefined) return null;
-    const outputPath = await this.resolveOutputPath(write, projectRoot);
-    if (outputPath === null) return null;
+    const relativePath = await this.resolveOutputPath(write, projectRoot);
     const content = this.applyTransforms(write, rawContent, platformName);
-    return new InstallationFile({
-      relativePath: outputPath,
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy: write.capability.mergeStrategy(),
-      frameworkPath: ref.path,
-    });
+    return write.capability.fileOf(content, { relativePath, frameworkPath: ref.path });
   }
 
   private processStaticWrite(
@@ -70,21 +62,18 @@ export class InstallConfig {
         : (fileName) => assetProvider.loadConfigAsset(toolId, fileName)
     );
     if (content === null) return null;
-    return new InstallationFile({
-      relativePath: capability.outputPath(),
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy: capability.mergeStrategy(),
-    });
+    return capability.fileOf(content);
   }
 
-  private async resolveOutputPath(write: ConfigWrite, projectRoot: string): Promise<string | null> {
-    if (write.kind === "mcp") {
-      return write.capability.resolveOutputPath((relativePath) =>
-        this.fs.fileExists(join(projectRoot, relativePath))
-      );
-    }
-    return write.capability.outputPath();
+  /** The mcp file a project already keeps, or undefined for a file that lands at its own path. */
+  private async resolveOutputPath(
+    write: ConfigWrite,
+    projectRoot: string
+  ): Promise<string | undefined> {
+    if (write.kind !== "mcp") return undefined;
+    return write.capability.resolveOutputPath((relativePath) =>
+      this.fs.fileExists(join(projectRoot, relativePath))
+    );
   }
 
   private applyTransforms(write: ConfigWrite, rawContent: string, platformName: string): string {

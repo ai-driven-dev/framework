@@ -1,4 +1,4 @@
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 const BANNER = `
    _    ___ ___  ___

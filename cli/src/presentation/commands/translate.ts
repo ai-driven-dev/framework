@@ -6,7 +6,8 @@ import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
 } from "../../contexts/translate/contract/build-targets.js";
-import type { DepsSliceFactory, Output } from "../deps.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import { printTranslateResult } from "../display/translate-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";

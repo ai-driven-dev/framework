@@ -1,4 +1,4 @@
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import { printPluginDrift, printScopeReport } from "./status-display.js";
 
 type PluginIssue = { pluginName: string; toolId: string; issue: string; filePath?: string };

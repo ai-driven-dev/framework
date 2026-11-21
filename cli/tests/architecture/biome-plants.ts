@@ -349,7 +349,7 @@ export const PLANTS: readonly Plant[] = [
       ["tools-application", "../../contexts/tools/application/x.js", 1],
       ["shared-infrastructure", "../../shared/infrastructure/http-client.js", 1],
       ["composition", "../../composition/auth.js", 1],
-      ["presentation", "../../presentation/deps.js", 1],
+      ["presentation", "../../presentation/terminal/output.adapter.js", 1],
     ] as const
   ).map(
     ([name, specifier, times]): Plant => [

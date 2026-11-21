@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
+import type { DepsFactory } from "../../../src/orchestration/deps.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");

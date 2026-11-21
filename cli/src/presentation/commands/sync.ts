@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { DepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,

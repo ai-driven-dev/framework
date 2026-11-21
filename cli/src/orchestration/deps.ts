@@ -37,38 +37,30 @@ import type {
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
-import type { SetAgentModels } from "../orchestration/agent-models/set-agent-models.js";
-import type { CleanProject } from "../orchestration/clean/clean-project.js";
-import type { CleanUserScope } from "../orchestration/clean/clean-user-scope.js";
-import type { RunDoctor } from "../orchestration/doctor/run-doctor.js";
-import type { RunUserScopeDoctor } from "../orchestration/doctor/run-user-scope-doctor.js";
-import type { DoctorAll } from "../orchestration/global/doctor-all.js";
-import type { ReportAllStatus } from "../orchestration/global/report-all-status.js";
-import type { UpdateTools } from "../orchestration/global/update-tools.js";
-import type { AddMarketplace } from "../orchestration/marketplace/add-marketplace.js";
-import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check-marketplace-upstream.js";
-import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remove-project-marketplace.js";
-import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user-marketplace.js";
-import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
-import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
-import type { RunSetup } from "../orchestration/setup/run-setup.js";
-import type { RunSync } from "../orchestration/sync/run-sync.js";
-import type { RunUserScopeSync } from "../orchestration/sync/run-user-scope-sync.js";
-import type { SyncNativeActivation } from "../orchestration/sync/sync-native-activation.js";
-import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
-
-/** Where a command's result and its failure go, and how the run ends. */
-export interface Output extends Logger {
-  print(message: string): void;
-  success(message: string): void;
-  error(message: string): void;
-  /** Ends the run with this exit code. */
-  exit(code: number): never;
-}
+import type { SetAgentModels } from "./agent-models/set-agent-models.js";
+import type { CleanProject } from "./clean/clean-project.js";
+import type { CleanUserScope } from "./clean/clean-user-scope.js";
+import type { RunDoctor } from "./doctor/run-doctor.js";
+import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.js";
+import type { Output } from "./domain/output.js";
+import type { DoctorAll } from "./global/doctor-all.js";
+import type { ReportAllStatus } from "./global/report-all-status.js";
+import type { UpdateTools } from "./global/update-tools.js";
+import type { AddMarketplace } from "./marketplace/add-marketplace.js";
+import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-upstream.js";
+import type { RemoveProjectMarketplace } from "./marketplace/remove-project-marketplace.js";
+import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.js";
+import type { InstallPlugin } from "./plugin/install-plugin.js";
+import type { UpdateUserPlugin } from "./plugin/update-user-plugin.js";
+import type { RunSetup } from "./setup/run-setup.js";
+import type { RunSync } from "./sync/run-sync.js";
+import type { RunUserScopeSync } from "./sync/run-user-scope-sync.js";
+import type { SyncNativeActivation } from "./sync/sync-native-activation.js";
+import type { SyncSettings } from "./sync/sync-settings.js";
 
 export interface FactoryOptions {
   verbose: boolean;
@@ -89,11 +81,11 @@ export interface TelemetryDeps {
   forgetTelemetry: Pick<ForgetTelemetry, "execute">;
 }
 
-/** What a telemetry command's request alone can answer, built with no I/O so a refusal comes
- * before the dependencies are wired. */
 /** Runs another `aidd` command in a child process and resolves with its exit code. */
 export type CommandRunner = (command: string[]) => Promise<number>;
 
+/** What a telemetry command's request alone can answer, built with no I/O so a refusal comes
+ * before the dependencies are wired. */
 export interface TelemetryRequests {
   resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
   resolveReportRequest: Pick<ResolveReportRequest, "execute">;

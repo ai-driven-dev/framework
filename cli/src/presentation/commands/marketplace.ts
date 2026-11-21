@@ -1,8 +1,9 @@
 import type { Command } from "commander";
+import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
-import type { CommandRunner, DepsSliceFactory, Output } from "../deps.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,

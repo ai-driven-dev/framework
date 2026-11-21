@@ -1,4 +1,4 @@
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 const STATUS_SYMBOL: Record<string, string> = {
   modified: "~",

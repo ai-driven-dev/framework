@@ -108,24 +108,25 @@ src/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
 │   │   ├── contract/
-│   │   └── domain/
-│   │       ├── bridges/
-│   │       ├── formats/
-│   │       │   └── hooks/
-│   │       ├── hooks/
-│   │       ├── models/
-│   │       ├── native-registration/
-│   │       ├── profile/
-│   │       ├── profiles/
-│   │       │   ├── antigravity/
-│   │       │   ├── claude/
-│   │       │   ├── codex/
-│   │       │   ├── copilot/
-│   │       │   ├── cursor/
-│   │       │   ├── kilo/
-│   │       │   ├── opencode/
-│   │       │   └── vscode/
-│   │       └── sections/
+│   │   ├── domain/
+│   │   │   ├── bridges/
+│   │   │   ├── formats/
+│   │   │   │   └── hooks/
+│   │   │   ├── hooks/
+│   │   │   ├── models/
+│   │   │   ├── native-registration/
+│   │   │   ├── profile/
+│   │   │   ├── profiles/
+│   │   │   │   ├── antigravity/
+│   │   │   │   ├── claude/
+│   │   │   │   ├── codex/
+│   │   │   │   ├── copilot/
+│   │   │   │   ├── cursor/
+│   │   │   │   ├── kilo/
+│   │   │   │   ├── opencode/
+│   │   │   │   └── vscode/
+│   │   │   └── sections/
+│   │   └── infrastructure/
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── sinks/

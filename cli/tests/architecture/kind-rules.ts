@@ -478,7 +478,7 @@ export function sizeViolations(files: Readonly<Record<string, string>>): Violati
     );
 }
 
-const DRIVING_PORT = "src/presentation/deps.ts";
+const DRIVING_PORT = "src/orchestration/deps.ts";
 
 /** The context imports of the driving port that are not an `import type` of an application or a
  * contract file. */

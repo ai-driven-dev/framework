@@ -1,5 +1,5 @@
 import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 interface TranslateOutcome {
   readonly pluginCount: number;

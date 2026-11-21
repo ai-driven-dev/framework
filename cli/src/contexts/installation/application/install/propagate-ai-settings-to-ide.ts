@@ -1,4 +1,3 @@
-import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
@@ -48,13 +47,7 @@ export class PropagateAiSettingsToIde {
     for (const cap of toMerge) {
       const [entry] = await this.trackedConfigFiles.execute({
         kind: "merge-and-track",
-        files: [
-          InstallationFile.hashing(
-            cap.outputPath(),
-            this.resolveCapabilityContent(cap, aiId),
-            cap.mergeStrategy()
-          ),
-        ],
+        files: [cap.fileOf(this.resolveCapabilityContent(cap, aiId))],
         projectRoot,
       });
       manifest.updateToolMergeFiles(aiId, this.replacing(existingEntries, entry));

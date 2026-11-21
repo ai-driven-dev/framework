@@ -1,6 +1,6 @@
 import { assertActivated } from "../../orchestration/domain/activation-outcome.model.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import type { ToolId } from "../../shared/domain/tool.js";
-import type { Output } from "../deps.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";
 
 interface ScopedError {

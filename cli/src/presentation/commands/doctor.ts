@@ -1,8 +1,9 @@
 import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
-import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
   printAllToolsDrift,
   printInventory,

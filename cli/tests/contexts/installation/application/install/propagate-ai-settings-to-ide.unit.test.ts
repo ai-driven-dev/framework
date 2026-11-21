@@ -98,7 +98,7 @@ describe("PropagateAiSettingsToIde", () => {
       appliesWith: (installed) => installed("other-ide"),
       requires: (toolId) => toolId === "other-ide",
       outputPath: () => ".other-ide/settings.json",
-      mergeStrategy: () => forVscode.mergeStrategy(),
+      fileOf: (content) => forVscode.fileOf(content, { relativePath: ".other-ide/settings.json" }),
       resolveStaticContent: () => '{"other": true}',
     };
     vi.spyOn(tools, "aiProfile").mockImplementation((id) =>

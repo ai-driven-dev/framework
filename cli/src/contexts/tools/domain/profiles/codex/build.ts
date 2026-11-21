@@ -12,7 +12,7 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
-import { parseToml, stringifyToml } from "../../formats/toml.js";
+import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
 import {
   OUTPUT_CODEX_AGENTS_DIR,
@@ -25,10 +25,10 @@ type TomlRecord = Record<string, unknown>;
 
 const MIN_PROJECT_DOC_MAX_BYTES = 262144;
 
-function parseSafe(content: string): TomlRecord {
+function parseSafe(toml: TomlCodec, content: string): TomlRecord {
   if (!content.trim()) return {};
   try {
-    return parseToml(content);
+    return toml.parse(content);
   } catch {
     return {};
   }
@@ -63,13 +63,17 @@ function ensureCodexHooks(existing: TomlRecord): void {
   existing.features = { ...(features ?? {}), hooks: true };
 }
 
-export function mergeCodexConfigToml(existing: string, aiddPayload: string): string {
-  const result = parseSafe(existing);
-  const payload = parseSafe(aiddPayload);
-  mergeMcpServers(result, payload);
-  ensureProjectDocMaxBytes(result, payload);
-  ensureCodexHooks(result);
-  return stringifyToml(result);
+export function mergeCodexConfigToml(
+  toml: TomlCodec
+): (existing: string, aiddPayload: string) => string {
+  return (existing, aiddPayload) => {
+    const result = parseSafe(toml, existing);
+    const payload = parseSafe(toml, aiddPayload);
+    mergeMcpServers(result, payload);
+    ensureProjectDocMaxBytes(result, payload);
+    ensureCodexHooks(result);
+    return toml.stringify(result);
+  };
 }
 
 export function stripCodexSkillFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
@@ -122,7 +126,7 @@ function transformCodexSkill(content: string): string {
   return serializeFrontmatter(stripCodexSkillFrontmatter(frontmatter), body);
 }
 
-export function buildCodexContract(): ToolBuildContract {
+export function buildCodexContract(toml: TomlCodec): ToolBuildContract {
   const manifestRelative = OUTPUT_CODEX_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CODEX_MARKETPLACE_RELATIVE;
   return {
@@ -142,7 +146,7 @@ export function buildCodexContract(): ToolBuildContract {
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) =>
           `${OUTPUT_CODEX_AGENTS_DIR}/${rel.replace(/^agents\//, "").replace(/\.md$/, ".toml")}`,
-        transform: tomlAgentMarkdownToToml,
+        transform: tomlAgentMarkdownToToml(toml),
       },
       mcp: {
         supported: true,
@@ -199,12 +203,12 @@ function collectPrefixedMcpServers(
 
 const CODEX_FLAT_CONFIG = ".codex/config.toml";
 
-function buildCodexConfigPayload(mcpServers: Record<string, unknown>): string {
+function buildCodexConfigPayload(toml: TomlCodec, mcpServers: Record<string, unknown>): string {
   if (Object.keys(mcpServers).length === 0) return "";
-  return stringifyToml({ mcp_servers: mcpServers });
+  return toml.stringify({ mcp_servers: mcpServers });
 }
 
-export function buildCodexFlatContract(): ToolBuildContract {
+export function buildCodexFlatContract(toml: TomlCodec): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -220,7 +224,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: codexFlatAgentPath,
-        transform: tomlAgentMarkdownToToml,
+        transform: tomlAgentMarkdownToToml(toml),
       },
       mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
       hooks: flatHooksArtifact(CODEX_HOOKS, { tool: "codex" }),
@@ -235,8 +239,11 @@ export function buildCodexFlatContract(): ToolBuildContract {
       assets: { tool: "codex", names: [] },
       emit: ({ builtPlugins, pluginMcp, existing }) => {
         const mcpServers = collectPrefixedMcpServers(builtPlugins, pluginMcp);
-        const aiddPayload = buildCodexConfigPayload(mcpServers);
-        const merged = mergeCodexConfigToml(existing.get(CODEX_FLAT_CONFIG) ?? "", aiddPayload);
+        const aiddPayload = buildCodexConfigPayload(toml, mcpServers);
+        const merged = mergeCodexConfigToml(toml)(
+          existing.get(CODEX_FLAT_CONFIG) ?? "",
+          aiddPayload
+        );
         return [{ path: CODEX_FLAT_CONFIG, content: merged }];
       },
     },

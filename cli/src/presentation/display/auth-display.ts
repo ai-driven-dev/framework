@@ -1,7 +1,7 @@
 import type { CheckStatusResult } from "../../contexts/auth/application/check-status.js";
 import type { LogOutResult } from "../../contexts/auth/application/log-out.js";
 import type { AuthLevel } from "../../contexts/auth/contract/credential.js";
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 export function printAuthenticated(output: Output, login: string, level: AuthLevel): void {
   output.success(`Authenticated as ${login} (${level})`);

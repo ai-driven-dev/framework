@@ -1,5 +1,6 @@
 import type { Command } from "commander";
-import type { Deps, DepsSliceFactory, Output } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";

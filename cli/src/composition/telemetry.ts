@@ -52,7 +52,7 @@ import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
-import type { TelemetryDeps, TelemetryRequests } from "../presentation/deps.js";
+import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
 import type { Prompter } from "../shared/ports/prompter.js";

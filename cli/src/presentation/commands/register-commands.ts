@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { CommandRunner, DepsFactory, TelemetryRequests } from "../deps.js";
+import type { CommandRunner, DepsFactory, TelemetryRequests } from "../../orchestration/deps.js";
 import { registerAuthCommand } from "./auth.js";
 import { registerCleanCommand } from "./clean.js";
 import { registerDoctorCommand } from "./doctor.js";

@@ -1,9 +1,10 @@
 import { homedir } from "node:os";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import type { Deps, FactoryOptions } from "../orchestration/deps.js";
+import type { Output } from "../orchestration/domain/output.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
-import type { Deps, FactoryOptions, Output } from "../presentation/deps.js";
 import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";
 import { wireDoctor } from "./orchestration/doctor.js";

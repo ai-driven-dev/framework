@@ -6,9 +6,12 @@ import {
   buildCodexMarketplace,
   buildCodexMarketplaceEntry,
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";
+
+const TOML = new SmolTomlCodec();
 
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
@@ -23,14 +26,14 @@ const NO_CONTENT = {
 };
 
 function configArtifactOf(): ConfigArtifact {
-  const step = buildCodexFlatContract().configArtifact;
+  const step = buildCodexFlatContract(TOML).configArtifact;
   if (step === undefined) throw new Error("codex flat declares no config artifact");
   return step;
 }
 
-describe("buildCodexContract()", () => {
+describe("buildCodexContract(TOML)", () => {
   it("declares Codex's own plugin manifest path, schema and root token", () => {
-    const contract = buildCodexContract();
+    const contract = buildCodexContract(TOML);
 
     expect({
       pluginRootToken: contract.pluginRootToken,
@@ -44,7 +47,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("synthesizes a manifest pointing skills at one directory, and naming no agents", () => {
-    const manifest = buildCodexContract().synthesizeManifest?.(
+    const manifest = buildCodexContract(TOML).synthesizeManifest?.(
       {
         name: "aidd-dev",
         description: "Development loop",
@@ -74,7 +77,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("omits from the manifest every field the source plugin never declared", () => {
-    const manifest = buildCodexContract().synthesizeManifest?.(
+    const manifest = buildCodexContract(TOML).synthesizeManifest?.(
       { name: "aidd-dev" },
       {
         hasAgents: false,
@@ -89,7 +92,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("copies an author given as a plain name into the manifest", () => {
-    const manifest = buildCodexContract().synthesizeManifest?.(
+    const manifest = buildCodexContract(TOML).synthesizeManifest?.(
       { name: "aidd-dev", author: "AIDD" },
       NO_CONTENT
     );
@@ -98,7 +101,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("copies an author given as an object into the manifest", () => {
-    const manifest = buildCodexContract().synthesizeManifest?.(
+    const manifest = buildCodexContract(TOML).synthesizeManifest?.(
       { name: "aidd-dev", author: { name: "AIDD", email: "team@example.test" } },
       NO_CONTENT
     );
@@ -110,7 +113,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("stages an agent as TOML beside the plugin tree and leaves every other artifact where it was", () => {
-    const { artifacts } = buildCodexContract();
+    const { artifacts } = buildCodexContract(TOML);
 
     expect({
       skill: supported(artifacts.skills).path("aidd-dev", "skills/01-plan/SKILL.md"),
@@ -126,7 +129,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("keeps only the three frontmatter fields Codex reads in a skill", () => {
-    const transform = supported(buildCodexContract().artifacts.skills).transform;
+    const transform = supported(buildCodexContract(TOML).artifacts.skills).transform;
 
     expect(
       transform?.(
@@ -138,7 +141,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("builds the catalog Codex discovers, at .agents/plugins/marketplace.json", async () => {
-    const built = await buildCodexContract().buildMarketplaceCatalog?.(
+    const built = await buildCodexContract(TOML).buildMarketplaceCatalog?.(
       { name: "aidd", displayName: "AI Driven Dev", plugins: [] },
       [{ name: "aidd-dev" }],
       new InMemoryFileAdapter()
@@ -156,7 +159,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("builds a catalog entry carrying the installation, authentication and category Codex requires", async () => {
-    const entry = await buildCodexContract().buildMarketplaceEntry?.({
+    const entry = await buildCodexContract(TOML).buildMarketplaceEntry?.({
       name: "aidd-dev",
       pluginSrc: "/src/plugins/aidd-dev",
       outDir: "/out",
@@ -173,9 +176,9 @@ describe("buildCodexContract()", () => {
   });
 });
 
-describe("buildCodexFlatContract()", () => {
+describe("buildCodexFlatContract(TOML)", () => {
   it("writes no manifest and no marketplace of its own", () => {
-    const contract = buildCodexFlatContract();
+    const contract = buildCodexFlatContract(TOML);
 
     expect({
       manifestFileRelative: contract.manifestFileRelative,
@@ -193,7 +196,7 @@ describe("buildCodexFlatContract()", () => {
   });
 
   it("sources skills, agents and hooks from the plugin tree, and leaves mcp to the config artifact", () => {
-    const { artifacts } = buildCodexFlatContract();
+    const { artifacts } = buildCodexFlatContract(TOML);
 
     expect({
       skills: sourceOf(artifacts.skills),
@@ -213,7 +216,7 @@ describe("buildCodexFlatContract()", () => {
   });
 
   it("nests a plugin's hook scripts under its own folder and merges its declaration into .codex/hooks.json", () => {
-    const hooks = supported(buildCodexFlatContract().artifacts.hooks);
+    const hooks = supported(buildCodexFlatContract(TOML).artifacts.hooks);
 
     expect({
       script: hooks.path("aidd-dev", "hooks/journal.cjs"),

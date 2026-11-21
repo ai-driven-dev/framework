@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+
+const TOML = new SmolTomlCodec();
+const codex = codexProfile(TOML);
 
 describe("codex mcp", () => {
   describe("capabilities.mcp", () => {
@@ -8,7 +12,7 @@ describe("codex mcp", () => {
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.section("mcp").config?.mergeStrategy()).toBe("user-prime");
+      expect(codex.section("mcp").config?.fileOf("{}").mergeStrategy).toBe("user-prime");
     });
 
     it("writes its config in TOML", () => {

@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
-import type { DepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import { renderRecipeValidation } from "../display/tool-config-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";

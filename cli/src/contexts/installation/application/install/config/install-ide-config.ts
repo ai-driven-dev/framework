@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { IdeToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
@@ -98,6 +98,6 @@ export class InstallIdeConfig {
     const fileName = basename(outputPath);
     const asset = this.assets.loadConfigAsset(options.toolId, fileName);
     const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-    return InstallationFile.hashing(outputPath, content, capability.mergeStrategy());
+    return capability.fileOf(content);
   }
 }

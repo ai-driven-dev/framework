@@ -1,4 +1,4 @@
-import { stringifyToml } from "./toml.js";
+import type { TomlCodec } from "./toml.js";
 
 interface StdioServer {
   command: string;
@@ -54,7 +54,7 @@ function mapServerToToml(raw: Record<string, unknown>): Record<string, unknown> 
   return {};
 }
 
-export function mcpJsonToToml(json: string): string {
+export function mcpJsonToToml(toml: TomlCodec, json: string): string {
   const parsed = JSON.parse(json) as { mcpServers?: Record<string, Record<string, unknown>> };
   const servers = parsed.mcpServers ?? {};
   if (Object.keys(servers).length === 0) return "";
@@ -62,7 +62,7 @@ export function mcpJsonToToml(json: string): string {
   for (const [name, raw] of Object.entries(servers)) {
     mcp_servers[name] = mapServerToToml(raw);
   }
-  return stringifyToml({ mcp_servers });
+  return toml.stringify({ mcp_servers });
 }
 
 export function mergeJsonUserPrime(existing: string, incoming: string): string {
