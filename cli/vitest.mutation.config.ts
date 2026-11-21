@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
-import { CheapestKillerFirst } from "./tests/setup/mutation-sequencer.js";
-import { UnloadableFileAsFailedTest } from "./tests/setup/unloadable-file-as-failed-test.js";
+import { CheapestKillerFirst } from "./tests/mutation/mutation-sequencer.js";
+import { UnloadableFileAsFailedTest } from "./tests/mutation/unloadable-file-as-failed-test.js";
 import { textLoader } from "./tests/setup/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;

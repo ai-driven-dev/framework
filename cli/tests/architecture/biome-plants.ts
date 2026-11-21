@@ -60,13 +60,13 @@ export const PLANTS: readonly Plant[] = [
   ],
   ["src/shared/domain/re-exports.ts", 'export type { A } from "./a.js";', "plugin", 1],
   [
-    "tests/helpers/launders.ts",
+    "tests/shared/testing/launders.ts",
     'export { x } from "../../src/contexts/b/domain/m.js";',
     "plugin",
     1,
   ],
   [
-    "tests/helpers/publishes.ts",
+    "tests/shared/testing/publishes.ts",
     'export { x } from "../../src/contexts/b/contract/m.js";',
     "plugin",
     0,

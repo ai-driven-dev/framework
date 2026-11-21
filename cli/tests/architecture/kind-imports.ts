@@ -25,10 +25,10 @@ const kitOwner = (path: string): string | undefined => {
   return at < 0 ? undefined : path.slice(0, at);
 };
 
-/** The tests of a context, and the helpers and shared kit that could hand a kit out, import their
+/** The tests of a context and the shared kit, which could hand a kit out, import their
  * own kit and the shared one. Orchestration, presentation, composition, e2e and golden tests compose
  * contexts and may import any kit. */
-const KIT_BOUND = /^tests\/(?:contexts\/[^/]+|helpers|shared)\//;
+const KIT_BOUND = /^tests\/(?:contexts\/[^/]+|shared)\//;
 
 const CONTEXT_KIT = /^tests\/contexts\/[^/]+\/testing\//;
 
@@ -121,7 +121,7 @@ const importsSetup = ({ file, target }: Edge): Break | undefined =>
   anyOf(SETUP_FOLDER, target) && !anyOf(SETUP_FOLDER, file)
     ? {
         what: "a setup file is imported by a test file or a source",
-        fix: "only a vitest config loads a file of tests/setup; move what a test needs to a kit",
+        fix: "only a vitest config loads a file of tests/setup or tests/mutation; move what a test needs to a kit",
       }
     : undefined;
 
