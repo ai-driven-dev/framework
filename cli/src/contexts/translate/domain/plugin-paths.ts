@@ -1,5 +1,3 @@
-import type { OutputFile } from "./output-file.js";
-
 export const PLUGIN_HOOKS_DIR = "hooks";
 const MARKDOWN_EXTENSION = ".md";
 
@@ -11,10 +9,6 @@ export function parentDirOf(path: string): string {
 // survive translation intact; flattening it breaks every such require.
 export function pathBelowHooks(path: string): string {
   return path.slice(PLUGIN_HOOKS_DIR.length + 1);
-}
-
-export function makeFile(relativePath: string, content: string): OutputFile {
-  return { relativePath, content };
 }
 
 /** Prose is translated; anything else a plugin ships is an artefact, carried byte for byte. The
