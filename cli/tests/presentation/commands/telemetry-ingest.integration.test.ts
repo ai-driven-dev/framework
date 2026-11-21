@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -152,5 +153,47 @@ describe("ingesting the transcripts of an opted-in clone", () => {
     expect(run.stdout).toContain("1 branch declaration snapshotted");
     const text = await readFile(join(box.telemetry, "bindings", "branches.jsonl"), "utf8");
     expect(JSON.parse(text.trim())).toMatchObject({ branch: "feat/a", task: "checkout-fix" });
+  });
+
+  it("keeps nothing of a clone that never opted in, and reports what it measured and could not store", async () => {
+    const elsewhere = box.repository("elsewhere");
+    git(elsewhere, box.gitEnv, "remote", "set-url", "origin", "git@github.com:acme/other.git");
+    const projects = join(box.claude, "projects", "sandbox");
+    await mkdir(projects, { recursive: true });
+    const call = (cwd: string, id: string, timestamp: string) =>
+      JSON.stringify({
+        type: "assistant",
+        sessionId: "a1b2c3d4-0000-4000-8000-0000000000a1",
+        requestId: `req_${id}`,
+        timestamp,
+        version: "2.1.0",
+        cwd,
+        message: {
+          id: `msg_${id}`,
+          model: "m-big",
+          usage: { input_tokens: 1, output_tokens: 10, cache_creation_input_tokens: 0 },
+        },
+      });
+    const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
+    const at = "2026-10-07T10:00:00.000Z";
+
+    await writeFile(
+      join(projects, "d4e5f6a7.jsonl"),
+      `${[call(elsewhere, "2", at), junk(elsewhere), call(elsewhere, "3", "not a time"), "{torn"].join("\n")}\n`
+    );
+    expect((await cli(["ingest", "--quiet"])).exitCode).toBe(0);
+    expect(existsSync(join(box.telemetry, "ledger", "left-out.txt"))).toBe(false);
+
+    await writeFile(
+      join(projects, "a1b2c3d4.jsonl"),
+      `${[call(repoA, "1", at), junk(repoA), call(repoA, "3", "not a time")].join("\n")}\n`
+    );
+    expect((await cli(["ingest", "--quiet"])).exitCode).toBe(0);
+    const report = await cli(["report", "--from", "2026-10-07", "--to", "2026-10-08", "--json"]);
+    expect(report.exitCode, report.stderr).toBe(0);
+    expect(JSON.parse(report.stdout)).toMatchObject({
+      coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
+      run: { files_read: 0 },
+    });
   });
 });
