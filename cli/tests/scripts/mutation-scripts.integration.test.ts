@@ -36,7 +36,7 @@ describe("the mutation scripts", () => {
       { length: 4000 },
       (_, i) => `docs/unrelated-${i}/a-long-enough-file-name.md`
     );
-    const changed = [...filler, "cli/src/shared/domain/anything.ts"].join("\n");
+    const changed = [...filler, "cli/src/shared/domain/errors.ts"].join("\n");
     const run = spawnSync("node", [join(CLI_ROOT, "scripts", "mutation-scopes-to-run.mjs")], {
       input: changed,
       env: { ...process.env, ALL: "false" },
