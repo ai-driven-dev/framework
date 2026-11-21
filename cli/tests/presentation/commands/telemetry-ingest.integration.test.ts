@@ -1,5 +1,5 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { writeUsageTranscripts } from "../../contexts/telemetry/testing/claude-usage-transcripts.builder.js";
 import {
@@ -45,7 +45,45 @@ async function ledgerLines(): Promise<string[]> {
   return text.split("\n").filter((line) => line !== "");
 }
 
+/** Every file under the telemetry directory with its bytes: what a run changed shows. */
+async function held(): Promise<Record<string, string>> {
+  const found: Record<string, string> = {};
+  for (const entry of await readdir(box.telemetry, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const path = join(entry.parentPath, entry.name);
+    found[relative(box.telemetry, path)] = await readFile(path, "utf8");
+  }
+  return found;
+}
+
 describe("ingesting the transcripts of an opted-in clone", () => {
+  it("stores each billed call once, and a second ingest adds nothing", async () => {
+    await writeTranscripts();
+    const first = await cli(["ingest"]);
+    expect(first.exitCode).toBe(0);
+    expect(first.stdout).toContain("4 calls added");
+    expect(first.stdout).toContain("1 call from a clone with no consent at that time");
+    const ledger = join(box.telemetry, "ledger", "2026-10-07.jsonl");
+    const before = await readFile(ledger, "utf8");
+    const keys = (await ledgerLines()).map((line) => JSON.parse(line).key).sort();
+    expect(keys).toEqual(["msg_A:req_A", "msg_B:req_B", "msg_B:req_B#advisor0", "msg_C:req_C"]);
+
+    const second = await cli(["ingest"]);
+    expect(second.stdout).toContain("Read 0 transcripts: 0 calls added, 0 updated");
+    expect(await readFile(ledger, "utf8")).toBe(before);
+  });
+
+  it("stores nothing and changes nothing under AIDD_TELEMETRY=0", async () => {
+    await writeTranscripts();
+    const before = await held();
+
+    const run = await cli(["ingest"], { AIDD_TELEMETRY: "0" });
+
+    expect(run.exitCode).toBe(0);
+    expect(run.stdout).toContain("AIDD_TELEMETRY=0");
+    expect(await held()).toEqual(before);
+  });
+
   it("ties each call to the repository id, never to its url or path", async () => {
     await writeTranscripts();
     await cli(["ingest"]);
