@@ -148,6 +148,25 @@ function written(
   ]);
 }
 
+/** Where the engine puts each canon file, a script a tool keeps in the project included. A file
+ * the layout generates has no canon file and is left out. */
+function placed(
+  dist: PluginDistribution,
+  layout: Parameters<typeof translate>[1]
+): Map<string, string> {
+  const { files, sources, projectHooks } = translate(dist, layout);
+  return new Map([
+    ...files.flatMap(({ relativePath }): [string, string][] => {
+      const source = sources.get(relativePath);
+      return source === undefined ? [] : [[source, relativePath]];
+    }),
+    ...projectHooks.scripts.map(({ source, relativePath }): [string, string] => [
+      source,
+      relativePath,
+    ]),
+  ]);
+}
+
 function withoutOneSided(
   cell: string,
   side: OneSided["side"],
@@ -228,6 +247,27 @@ describe("an install against a build of the same plugin", () => {
           .map((source) => `${name}/${source}`)
       );
       expect(unexplained).toEqual([]);
+    }
+  );
+
+  it.each(CELLS.filter((cell) => cell.mode === "flat"))(
+    "$cell: both put each file at the same path",
+    (cell) => {
+      const manifestPaths = registeredManifestPaths();
+      const moved = readdirSync(join(FRAMEWORK_SOURCE, "plugins")).flatMap((name) => {
+        const dist = distributionOf(tree, name);
+        const install = placed(dist, { kind: "install", tool: cell.tool, manifestPaths });
+        const build = placed(dist, {
+          kind: "build",
+          contract: cell.contract,
+          mode: cell.mode,
+          outDir: "out",
+        });
+        return [...install]
+          .filter(([source, path]) => build.has(source) && build.get(source) !== path)
+          .map(([source, path]) => `${name}/${source}: ${path} against ${build.get(source)}`);
+      });
+      expect(moved).toEqual([]);
     }
   );
 
