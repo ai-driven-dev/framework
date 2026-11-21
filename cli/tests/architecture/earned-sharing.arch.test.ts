@@ -63,6 +63,60 @@ function declaredBy(portText: string): string[] {
   return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => present(m[1]));
 }
 
+/** What the search for earned shared files holds: who imports each file, which files are earned so
+ * far, and the text of a file. */
+interface Sharing {
+  readonly importers: Map<string, Set<string>>;
+  readonly earned: Set<string>;
+  readonly textOf: (file: string) => string;
+}
+
+const importersOf = (file: string, { importers }: Sharing): string[] => [
+  ...(importers.get(file) ?? []),
+];
+
+const readByEarned =
+  (prefix: string) =>
+  (file: string, sharing: Sharing): boolean =>
+    importersOf(file, sharing).some((i) => i.startsWith(prefix) && sharing.earned.has(i));
+
+const readByEarnedAdapter = readByEarned("src/shared/infrastructure/");
+const readByEarnedPort = readByEarned("src/shared/ports/");
+
+const reachedByEarned = (file: string, sharing: Sharing): boolean =>
+  importersOf(file, sharing).some((i) => sharing.earned.has(i));
+
+const wiredTwice = (file: string, sharing: Sharing): boolean =>
+  importersOf(file, sharing).filter((i) => i.startsWith("src/composition/")).length >= 2;
+
+function implemented(file: string, sharing: Sharing): boolean {
+  const clause = /implements ([^{]+)\{/.exec(sharing.textOf(file))?.[1] ?? "";
+  return [...sharing.earned].some(
+    (port) =>
+      port.startsWith("src/shared/ports/") &&
+      declaredBy(sharing.textOf(port)).some((name) => new RegExp(`\\b${name}\\b`).test(clause))
+  );
+}
+
+const earnedInfrastructure = (file: string, sharing: Sharing): boolean =>
+  implemented(file, sharing) || wiredTwice(file, sharing) || reachedByEarned(file, sharing);
+
+interface Candidates {
+  readonly files: readonly string[];
+  readonly qualifies: (file: string, sharing: Sharing) => boolean;
+}
+
+/** Earns the candidates that qualify until none more does: one earned file can earn the next. */
+function growEarned(groups: readonly Candidates[], sharing: Sharing): void {
+  const joining = (): string[] =>
+    groups.flatMap(({ files, qualifies }) =>
+      files.filter((file) => !sharing.earned.has(file) && qualifies(file, sharing))
+    );
+  for (let next = joining(); next.length > 0; next = joining()) {
+    for (const file of next) sharing.earned.add(file);
+  }
+}
+
 /**
  * Every file under `src/shared/` that is not earned. Domain and ports are earned by two
  * contexts. An infrastructure file is earned when it implements an earned port, when an earned
@@ -76,6 +130,7 @@ function unearnedShared(
   textOf: (file: string) => string
 ): string[] {
   const shared = files.filter((file) => file.startsWith("src/shared/"));
+  const inside = (prefix: string): string[] => shared.filter((file) => file.startsWith(prefix));
   const earned = new Set(
     shared.filter(
       (file) =>
@@ -83,50 +138,14 @@ function unearnedShared(
         contextsImporting(file, importers).size >= 2
     )
   );
-  const infrastructure = shared.filter((file) => file.startsWith("src/shared/infrastructure/"));
-  const implemented = (file: string): boolean => {
-    const clause = /implements ([^{]+)\{/.exec(textOf(file))?.[1] ?? "";
-    return [...earned].some(
-      (port) =>
-        port.startsWith("src/shared/ports/") &&
-        declaredBy(textOf(port)).some((name) => new RegExp(`\\b${name}\\b`).test(clause))
-    );
-  };
-  const wiredTwice = (file: string): boolean =>
-    [...(importers.get(file) ?? [])].filter((i) => i.startsWith("src/composition/")).length >= 2;
-  const reachedByEarned = (file: string): boolean =>
-    [...(importers.get(file) ?? [])].some((i) => earned.has(i));
-  const readByEarnedAdapter = (file: string): boolean =>
-    [...(importers.get(file) ?? [])].some(
-      (i) => i.startsWith("src/shared/infrastructure/") && earned.has(i)
-    );
-  const ports = shared.filter((file) => file.startsWith("src/shared/ports/"));
-  const readByEarnedPort = (file: string): boolean =>
-    [...(importers.get(file) ?? [])].some(
-      (i) => i.startsWith("src/shared/ports/") && earned.has(i)
-    );
-  const types = shared.filter((file) => file.startsWith("src/shared/domain/"));
-
-  for (let grew = true; grew; ) {
-    grew = false;
-    for (const file of types) {
-      if (earned.has(file) || !readByEarnedPort(file)) continue;
-      earned.add(file);
-      grew = true;
-    }
-    for (const file of ports) {
-      if (earned.has(file) || !readByEarnedAdapter(file)) continue;
-      earned.add(file);
-      grew = true;
-    }
-    for (const file of infrastructure) {
-      if (earned.has(file)) continue;
-      if (implemented(file) || wiredTwice(file) || reachedByEarned(file)) {
-        earned.add(file);
-        grew = true;
-      }
-    }
-  }
+  growEarned(
+    [
+      { files: inside("src/shared/domain/"), qualifies: readByEarnedPort },
+      { files: inside("src/shared/ports/"), qualifies: readByEarnedAdapter },
+      { files: inside("src/shared/infrastructure/"), qualifies: earnedInfrastructure },
+    ],
+    { importers, earned, textOf }
+  );
   return shared.filter((file) => !earned.has(file));
 }
 

@@ -6,6 +6,13 @@
  */
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
+import {
+  DESCRIPTOR_TYPES,
+  descriptorKeys,
+  factsOutsideDescriptor,
+  hooksFacts,
+  PROFILE_FILE,
+} from "./hooks-facts.js";
 import { read, sourceFiles } from "./source-graph.js";
 
 /** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
@@ -53,10 +60,8 @@ const SOURCE_IMPORT_PATH = /(["'])[^"']*\/telemetry\/infrastructure\/sources\/[^
  * literal (`".cursor.md"`), and a string enumerating two or more tools. A string naming one tool
  * is not a list a sixth must join.
  */
-function toolsNamedIn(source: string, ids: readonly string[]): string[] {
+function namedByForms(body: string, ids: readonly string[]): string[] {
   const alternation = ids.join("|");
-  const named = new Set<string>();
-  const body = code(source).replace(SOURCE_IMPORT_PATH, '""');
   const forms = [
     new RegExp(`["'\`](${alternation})["'\`]`, "g"),
     new RegExp(`(?:^|[\\s{,(])(${alternation})\\s*:`, "gm"),
@@ -64,15 +69,21 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
     new RegExp(`["'\`]\\.(${alternation})["'\`]`, "g"),
     new RegExp(`["'\`]\\.(${alternation})\\.md["'\`]`, "g"),
   ];
-  for (const form of forms) {
-    for (const match of body.matchAll(form)) named.add(present(match[1]));
-  }
-  for (const literal of body.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)) {
+  return forms.flatMap((form) => [...body.matchAll(form)].map((match) => present(match[1])));
+}
+
+/** A string naming two or more tools is a list a sixth must join. */
+function namedByEnumeration(body: string, ids: readonly string[]): string[] {
+  return [...body.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)].flatMap((literal) => {
     const inside = present(literal[2]);
     const listed = ids.filter((id) => new RegExp(`\\b${id}\\b`).test(inside));
-    if (listed.length >= 2) for (const id of listed) named.add(id);
-  }
-  return [...named].sort();
+    return listed.length >= 2 ? listed : [];
+  });
+}
+
+function toolsNamedIn(source: string, ids: readonly string[]): string[] {
+  const body = code(source).replace(SOURCE_IMPORT_PATH, '""');
+  return [...new Set([...namedByForms(body, ids), ...namedByEnumeration(body, ids)])].sort();
 }
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
@@ -239,116 +250,6 @@ describe("a tool never names an identifier outside its profile, in the code ever
     ).toEqual([]);
   });
 });
-
-// A tool's hooks facts live in the `declareHooks(` call of its profile alone. Read lexically, with strings and
-// comments blanked, because `typescript` 7 ships no in-process parser.
-
-const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/[^/]+\.ts$/;
-const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks/descriptor.ts";
-
-const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g;
-const REFERENCE_OR_CALL =
-  /^(?!(?:true|false|null)\b)(?:new\s+)?[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*\s*(?:\(|,|;|\}|$)/;
-const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.freeze\()/;
-// A tool with no hooks declares its absence in its profile and its build model: no fact.
-const ABSENCE = /^(?:false\b|\{\s*supported:\s*false\b)/;
-
-// A hooks section naming the descriptor's builders by reference, never restating a fact.
-const HOOKS_SECTION_OF_REFERENCES = /^\{\s*(?:config:\s*[\w$.()]+|delivery:\s*[\w$.]+)\s*$/;
-
-const HOOKS_PATH = /^["'`][^"'`]*[/.{}"'`]hooks(?:\/|\.json)/;
-
-/** Each member of an interface in the descriptor's type file, true when its type is another of
- * them: a route, which only an object literal restates, so `scopeArgs.project` stays out. */
-function descriptorKeys(types: string): Map<string, boolean> {
-  const blocks = [...types.matchAll(/^export interface (\w+) \{([\s\S]*?)\n\}/gm)];
-  const names = new Set(blocks.map((block) => block[1]));
-  const keys = new Map<string, boolean>();
-  for (const [, , body = ""] of blocks) {
-    for (const [, name = "", type] of body.matchAll(/^\s+(?:readonly\s+)?(\w+)\??:\s*(\w+)?/gm)) {
-      keys.set(name, names.has(type));
-    }
-  }
-  return keys;
-}
-
-/** The name of each hooks fact a profile file declares, read outside type declarations. */
-function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[] {
-  const facts: string[] = [];
-  const raw = source.split("\n");
-  const lines = source
-    .replace(BLANKED, (text, quote?: string) =>
-      quote ? quote + text.slice(1, -1).replace(/[^\n]/g, " ") + quote : text.replace(/[^\n]/g, " ")
-    )
-    .split("\n");
-  let typeDepth = 0;
-  lines.forEach((line, index) => {
-    if (typeDepth > 0 || /^\s*(?:export\s+)?(?:type|interface)\b/.test(line)) {
-      typeDepth = Math.max(0, typeDepth + line.split("{").length - line.split("}").length);
-      return;
-    }
-    if (/\bnew HooksConfigPart\(/.test(line)) facts.push("HooksConfigPart");
-    for (const { 1: name = "", 2: rawValue = "", index } of line.matchAll(
-      /(?<=^|[{,])\s*(?:readonly\s+)?(\w+)\??\s*:\s*(?=([^,}]*))/g
-    )) {
-      const value = rawValue.trim();
-      const isRoute = keys.get(name);
-      // A hook-named key counts only leading its line: Codex's own `features: { hooks: true }`
-      // is a setting of the tool, not a hooks fact of ours.
-      const fact =
-        (/hook/i.test(name) && index === 0) || isRoute === false
-          ? !REFERENCE_OR_CALL.test(value)
-          : isRoute === true && value.startsWith("{");
-      // `config: [...]` is the profile's config section list; the descriptor's own `config`
-      // is an object literal and stays a fact.
-      const absent =
-        name === "hooksUnsupportedReason" ||
-        (name === "config" && value.startsWith("[")) ||
-        ((name === "acceptsHooks" || name === "hooks") && ABSENCE.test(value)) ||
-        (name === "hooks" && HOOKS_SECTION_OF_REFERENCES.test(value));
-      if (fact && !absent) facts.push(name);
-    }
-    // Found on the blanked line, so the text a bridge generates declares nothing; the path is
-    // read on the raw line, where the literal still holds it. A value may start on the next line.
-    const [, name = "", rest = ""] =
-      /^(?:export\s+)?const\s+(\w+)\s*(?::[^=]+)?=\s*(.*)$/.exec(line) ?? [];
-    if (!name) return;
-    const value = rest || (lines[index + 1] ?? "").trim();
-    const rawValue = rest
-      ? (raw[index] ?? "").slice(line.length - rest.length)
-      : (raw[index + 1] ?? "").trim();
-    if ((/hook|event/i.test(name) && LITERAL.test(value)) || HOOKS_PATH.test(rawValue)) {
-      facts.push(name);
-    }
-  });
-  return facts;
-}
-
-/** The source with every `declareHooks(` call blanked: the one place a profile states a fact. */
-function withoutDeclaredHooks(source: string): string {
-  const blank = source.replace(BLANKED, (text) => text.replace(/[^\n]/g, " "));
-  let out = source;
-  for (const { 0: opening, index } of blank.matchAll(/\bdeclare(?:Bridge)?Hooks\(/g)) {
-    let depth = 0;
-    let end = index + opening.length - 1;
-    do {
-      depth += blank[end] === "(" ? 1 : blank[end] === ")" ? -1 : 0;
-      end += 1;
-    } while (depth > 0 && end < blank.length);
-    out = out.slice(0, index) + out.slice(index, end).replace(/[^\n]/g, " ") + out.slice(end);
-  }
-  return out;
-}
-
-/** One `<file> (<facts>)` per profile file declaring a fact outside its `declareHooks(` call. */
-function factsOutsideDescriptor(bodies: ReadonlyMap<string, string>): string[] {
-  const keys = descriptorKeys(bodies.get(DESCRIPTOR_TYPES) ?? "");
-  return [...bodies]
-    .filter(([file]) => PROFILE_FILE.test(file))
-    .map(([file, body]) => `${file} (${hooksFacts(withoutDeclaredHooks(body), keys).length})`)
-    .filter((entry) => !entry.endsWith(" (0)"))
-    .sort();
-}
 
 const PROFILE = "src/contexts/tools/domain/profiles/claude/claude.profile.ts";
 

@@ -147,7 +147,7 @@ export function matchesGlob(glob: string, path: string): boolean {
   return scopeGlob(glob, path);
 }
 
-// The context graph. The edge table is `allowed-edges.ts`; `biome-guards-bite.arch.test.ts` holds
+// The context graph. The edge table is `allowed-edges.ts`; `biome-boundaries.arch.test.ts` holds
 // biome's per-context `noRestrictedImports` overrides to it.
 
 export function contextNames(): string[] {
@@ -206,23 +206,27 @@ function isArgumentLike(word: string, trailing: string): boolean {
 
 const INSTRUCTED_COMMAND = /\baidd ([a-z][a-z-]*)(?: ([a-z][a-z-]*)([^\s`]*))?/g;
 
+/** The command a mention names that the declared set does not have, when it names one.
+ * A bare verb needs only itself declared — `aidd setup --ai` reads as one, a flag being no word
+ * this pattern captures. A pair needs the pair, unless its first word is a declared verb followed
+ * by an argument: `aidd marketplace add` is a pair, `aidd update --force` is not. */
+function undeclaredMention(
+  declared: ReadonlySet<string>,
+  first: string,
+  second: string | undefined,
+  trailing: string | undefined
+): string | undefined {
+  if (second === undefined) return declared.has(present(first)) ? undefined : present(first);
+  if (declared.has(`${first} ${second}`)) return undefined;
+  const verbWithArgument = declared.has(present(first)) && isArgumentLike(second, trailing ?? "");
+  return verbWithArgument ? undefined : `${first} ${second}`;
+}
+
 /** `aidd <verb>` or `aidd <noun> <verb>` as it appears inside text, resolved against a
  * pair-aware declared set. */
 export function unresolvedCommandMentions(text: string, declared: ReadonlySet<string>): string[] {
-  const missing: string[] = [];
-  for (const match of text.matchAll(INSTRUCTED_COMMAND)) {
+  return [...text.matchAll(INSTRUCTED_COMMAND)].flatMap((match) => {
     const [, first, second, trailing] = match;
-    // A bare verb needs only itself declared — `aidd setup --ai` reads as one, a flag being
-    // no word this pattern captures. A pair needs the pair.
-    if (second === undefined) {
-      if (!declared.has(present(first))) missing.push(present(first));
-      continue;
-    }
-    if (declared.has(`${first} ${second}`)) continue;
-    // A declared verb followed by something else is that verb plus an argument:
-    // `aidd marketplace add` is a pair, `aidd update --force` is not.
-    if (declared.has(present(first)) && isArgumentLike(second, trailing ?? "")) continue;
-    missing.push(`${first} ${second}`);
-  }
-  return missing;
+    return undeclaredMention(declared, first, second, trailing) ?? [];
+  });
 }
