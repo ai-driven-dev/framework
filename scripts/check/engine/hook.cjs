@@ -250,6 +250,9 @@ function takeMarks(folder, id) {
   return found ? turn : null;
 }
 
+/** Heads every non-empty answer: the model fixes the findings without rewriting what they do not name. */
+const FIX_HINT = "These files break their AIDD contract. Fix each line below with a minimal edit; keep everything else as it is.";
+
 /** The line of a failure that stops a contract from judging, never silenced. */
 const brokenLine = (entry, error) => `${entry.name}: ${String(error?.message ?? error).split("\n")[0]}`;
 
@@ -286,7 +289,8 @@ function judge(cwd, entries, written) {
       }
     }
   }
-  return [...lines].join("\n");
+  if (lines.size === 0) return "";
+  return [FIX_HINT, ...lines].join("\n");
 }
 
 /**

@@ -21,7 +21,7 @@ function frontmatter(text) {
   match[1].split("\n").forEach((line, index) => {
     const field = /^([\w-]+):\s*(.*)$/u.exec(line);
     if (field && !(field[1] in fields)) {
-      fields[field[1]] = field[2];
+      fields[field[1]] = field[2].replace(/^(["'])(.*)\1$/u, "$2");
       fieldLine[field[1]] = index + 2;
     }
   });
