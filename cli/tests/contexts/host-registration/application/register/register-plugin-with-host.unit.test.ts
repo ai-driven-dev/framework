@@ -40,39 +40,41 @@ function setup(
   const logger = new CapturingLogger();
   const warnings: string[] = [];
   const command = new RegisterPluginWithHost(
-    new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) }),
-    new Map([["claude", activator]]),
     {
-      marketplaceRegistries: new Map([
-        [
-          TOOL.claude,
-          new FakeHostMarketplaceRegistry(
-            options.registry ?? { location: "r", entries: new Map() }
-          ),
-        ],
-      ]),
-      pluginRegistries: new Map([
-        [
-          TOOL.claude,
-          new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
-        ],
-      ]),
-      sources:
-        options.sources === "absent"
-          ? new Map()
-          : new Map([
-              [
-                TOOL.claude,
-                new FakeHostMarketplaceSources(
-                  activator,
-                  "registry",
-                  () => "aidd",
-                  options.sources ?? new Map()
-                ),
-              ],
-            ]),
+      fs: new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) }),
+      activators: new Map([["claude", activator]]),
+      hosts: {
+        marketplaceRegistries: new Map([
+          [
+            TOOL.claude,
+            new FakeHostMarketplaceRegistry(
+              options.registry ?? { location: "r", entries: new Map() }
+            ),
+          ],
+        ]),
+        pluginRegistries: new Map([
+          [
+            TOOL.claude,
+            new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
+          ],
+        ]),
+        sources:
+          options.sources === "absent"
+            ? new Map()
+            : new Map([
+                [
+                  TOOL.claude,
+                  new FakeHostMarketplaceSources(
+                    activator,
+                    "registry",
+                    () => "aidd",
+                    options.sources ?? new Map()
+                  ),
+                ],
+              ]),
+      },
+      platform: PLATFORM,
     },
-    PLATFORM,
     registeredTools()
   );
   const run = (toolId: ToolId = TOOL.claude) =>
@@ -109,10 +111,16 @@ describe("register plugin with host", () => {
 
   it("is unconfigured when no activator serves the binary", async () => {
     const command = new RegisterPluginWithHost(
-      new InMemoryFileAdapter(),
-      new Map(),
-      { marketplaceRegistries: new Map(), pluginRegistries: new Map(), sources: new Map() },
-      PLATFORM,
+      {
+        fs: new InMemoryFileAdapter(),
+        activators: new Map(),
+        hosts: {
+          marketplaceRegistries: new Map(),
+          pluginRegistries: new Map(),
+          sources: new Map(),
+        },
+        platform: PLATFORM,
+      },
       registeredTools()
     );
     const result = await command.execute({

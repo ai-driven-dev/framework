@@ -128,14 +128,16 @@ function nativeActivationOf(
   const { tools, fs, logger } = base;
   return new ActivateNativeTools(
     new RegisterPluginWithHost(
-      fs,
-      base.nativePluginActivators,
       {
-        marketplaceRegistries: base.hostMarketplaceRegistries,
-        pluginRegistries: base.hostPluginRegistries,
-        sources: base.nativeSources,
+        fs,
+        activators: base.nativePluginActivators,
+        hosts: {
+          marketplaceRegistries: base.hostMarketplaceRegistries,
+          pluginRegistries: base.hostPluginRegistries,
+          sources: base.nativeSources,
+        },
+        platform: process.platform,
       },
-      process.platform,
       tools
     ),
     build,

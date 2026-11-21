@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type {
-  NativeCatalogProof,
-  RegistrationRun,
-} from "../../../../../src/contexts/host-registration/application/register/catalog-source-guard.js";
 import {
   followsRequestedSource,
   untouchedReason,
 } from "../../../../../src/contexts/host-registration/application/register/marketplace-registration-guard.js";
+import type { NativeCatalogProof } from "../../../../../src/contexts/host-registration/application/register/native-catalog-proof.js";
+import type { RegistrationRun } from "../../../../../src/contexts/host-registration/application/register/registration-run.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";

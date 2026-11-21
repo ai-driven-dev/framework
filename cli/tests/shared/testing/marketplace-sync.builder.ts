@@ -1,6 +1,9 @@
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import { RegisterPluginWithHost } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
+import {
+  RegisterPluginWithHost,
+  type RegisterPluginWithHostDeps,
+} from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
 import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
 import {
   LoadSyncContext,
@@ -25,7 +28,7 @@ import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import { FakeCurrentVersion } from "./fake-current-version.fake.js";
 import { registeredTools } from "./registered-tools.builder.js";
 
-type Hosts = ConstructorParameters<typeof RegisterPluginWithHost>;
+type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
@@ -40,10 +43,10 @@ export interface MarketplaceSyncParts {
   userSourceReferences?: RecordSourceReferenceDeps["userSourceReferences"];
   currentVersionProvider?: RecordSourceReferenceDeps["currentVersionProvider"];
   userManifestRepo?: Loader["userManifestRepo"];
-  activators?: Hosts[1];
-  hostMarketplaceRegistries?: Hosts[2]["marketplaceRegistries"];
-  hostPluginRegistries?: Hosts[2]["pluginRegistries"];
-  nativeSources?: Hosts[2]["sources"];
+  activators?: Deps["activators"];
+  hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
+  hostPluginRegistries?: Deps["hosts"]["pluginRegistries"];
+  nativeSources?: Deps["hosts"]["sources"];
 }
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
@@ -67,14 +70,16 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
     ),
     new ActivateNativeTools(
       new RegisterPluginWithHost(
-        parts.fs,
-        parts.activators ?? new Map(),
         {
-          marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
-          pluginRegistries: parts.hostPluginRegistries ?? new Map(),
-          sources: parts.nativeSources ?? new Map(),
+          fs: parts.fs,
+          activators: parts.activators ?? new Map(),
+          hosts: {
+            marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
+            pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+            sources: parts.nativeSources ?? new Map(),
+          },
+          platform: process.platform,
         },
-        process.platform,
         registeredTools()
       ),
       build,

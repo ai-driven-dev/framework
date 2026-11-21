@@ -1,11 +1,8 @@
 import { samePath } from "../../../../shared/domain/paths.js";
-import {
-  type CatalogRequest,
-  guardAgainstConflict,
-  marketplaceRegistryOf,
-  type NativeCatalogProof,
-  type RegistrationRun,
-} from "./catalog-source-guard.js";
+import type { HostMarketplaceRegistryReading } from "../../domain/reading/marketplace-registry-reading.js";
+import { type CatalogRequest, guardAgainstConflict } from "./catalog-source-guard.js";
+import type { NativeCatalogProof } from "./native-catalog-proof.js";
+import { marketplaceRegistryOf, type RegistrationRun } from "./registration-run.js";
 
 /**
  * Why a marketplace the host may already hold is left untouched, or `undefined` when its
@@ -17,25 +14,36 @@ export async function untouchedReason(
   request: CatalogRequest,
   proof: NativeCatalogProof
 ): Promise<string | undefined> {
-  const { toolId } = run;
-  const hostName = request.identity.name;
+  const lead = `${run.toolId}: catalogue '${request.identity.name}'`;
   const reading = await marketplaceRegistryOf(run)?.read();
-  const heldByHost = reading?.entries?.has(hostName) === true;
-  if (proof.sourceStatus === "unproven" || (proof.sourceStatus === "owned" && !proof.source)) {
+  const heldByHost = reading?.entries?.has(request.identity.name) === true;
+  const unproven = sourceUnproven(proof);
+  const collision = heldByHost && !proof.canonical;
+  if (unproven || collision) {
     if (heldByHost) await guardAgainstConflict(run, request);
-    return `${toolId}: catalogue '${hostName}' host source unproven (${proof.sourceReason ?? "unknown"}); registration left untouched.`;
+    return unproven
+      ? `${lead} host source unproven (${proof.sourceReason ?? "unknown"}); registration left untouched.`
+      : `${lead} is already registered on the host without a canonical AIDD claim; same-name collision left untouched.`;
   }
-  if (heldByHost && !proof.canonical) {
-    await guardAgainstConflict(run, request);
-    return `${toolId}: catalogue '${hostName}' is already registered on the host without a canonical AIDD claim; same-name collision left untouched.`;
-  }
+  return unreadableRegistryReason(lead, reading, proof);
+}
+
+const sourceUnproven = (proof: NativeCatalogProof): boolean =>
+  proof.sourceStatus === "unproven" || (proof.sourceStatus === "owned" && !proof.source);
+
+/** Why a registry that cannot answer, or a ref that is not ours, leaves the registration alone. */
+function unreadableRegistryReason(
+  lead: string,
+  reading: HostMarketplaceRegistryReading | undefined,
+  proof: NativeCatalogProof
+): string | undefined {
   if (reading !== undefined && reading.entries === undefined && reading.absent !== true)
-    return `${toolId}: catalogue '${hostName}' host registry is unreadable; ownership unproven and registration left untouched.`;
-  if (!proof.hostReadable || proof.foreignRef !== undefined || proof.unreadable !== undefined)
-    return proof.foreignRef === undefined
-      ? `${toolId}: catalogue '${hostName}' collides with unreadable host plugin registry (${proof.unreadable}); registration left untouched.`
-      : `${toolId}: catalogue '${hostName}' carries foreign host ref '${proof.foreignRef}'; registration left untouched.`;
-  return undefined;
+    return `${lead} host registry is unreadable; ownership unproven and registration left untouched.`;
+  if (proof.hostReadable && proof.foreignRef === undefined && proof.unreadable === undefined)
+    return undefined;
+  return proof.foreignRef === undefined
+    ? `${lead} collides with unreadable host plugin registry (${proof.unreadable}); registration left untouched.`
+    : `${lead} carries foreign host ref '${proof.foreignRef}'; registration left untouched.`;
 }
 
 /** True when the host already follows exactly the catalog this run built. */
