@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ResolveMarketplaceCommand } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
 import type { MarketplaceView } from "../../../src/contexts/distribution/contract/marketplace-view.js";
-import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import {
   InteractiveOnlyError,
   NoMarketplacesRegisteredError,

@@ -45,13 +45,15 @@ export function buildAddPlugin(
     platform: nodePlatform(),
   };
   return new AddPlugin(
-    host.fs,
-    manifests,
-    new ResolveAddedPluginSource(
-      { distributionLoader: sources.distributionLoader, fs: host.fs, built },
-      tools
-    ),
-    new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
+    {
+      fs: host.fs,
+      manifests,
+      source: new ResolveAddedPluginSource(
+        { distributionLoader: sources.distributionLoader, fs: host.fs, built },
+        tools
+      ),
+      place: new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
+    },
     tools
   );
 }

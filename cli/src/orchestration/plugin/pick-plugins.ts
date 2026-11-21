@@ -9,7 +9,7 @@ import type {
   PluginCatalogEntry,
 } from "../../contexts/distribution/contract/catalog.js";
 import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
-import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
+import type { PluginAdd } from "../../contexts/installation/application/plugin/add/plugin-add.js";
 import { InvalidPluginManifestError } from "../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";

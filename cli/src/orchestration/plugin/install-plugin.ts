@@ -1,5 +1,5 @@
 import { isAbsolute } from "node:path";
-import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
+import type { PluginAdd } from "../../contexts/installation/application/plugin/add/plugin-add.js";
 import type {
   PlanPluginInstall,
   PlanPluginInstallCommand,

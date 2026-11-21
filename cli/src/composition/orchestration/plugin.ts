@@ -218,20 +218,22 @@ export function wirePlugin(base: Base, inst: Installation) {
   const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
   const { installRuntimeConfigUseCase, builtMaterializationDeps } = inst;
   const pluginAddUseCase = new AddPlugin(
-    fs,
-    { project: manifestRepo, user: userManifestRepo },
-    new ResolveAddedPluginSource(
-      {
-        distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-        fs,
-        built: builtMaterializationDeps,
-      },
-      tools
-    ),
-    new PlacePlugin(
-      { fs, logger, built: builtMaterializationDeps, pluginRuntime: installRuntimeConfigUseCase },
-      tools
-    ),
+    {
+      fs,
+      manifests: { project: manifestRepo, user: userManifestRepo },
+      source: new ResolveAddedPluginSource(
+        {
+          distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+          fs,
+          built: builtMaterializationDeps,
+        },
+        tools
+      ),
+      place: new PlacePlugin(
+        { fs, logger, built: builtMaterializationDeps, pluginRuntime: installRuntimeConfigUseCase },
+        tools
+      ),
+    },
     tools
   );
   const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(
