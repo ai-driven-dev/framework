@@ -132,7 +132,8 @@ src/
 │   │   │   └── sinks/
 │   │   ├── contract/
 │   │   ├── domain/
-│   │   │   └── build-layout/
+│   │   │   ├── build-layout/
+│   │   │   └── rules/    # the one rule set both sinks write content with
 │   │   ├── infrastructure/
 │   │   └── ports/
 │   └── update/    # replacing the installed CLI, and the notice that one exists

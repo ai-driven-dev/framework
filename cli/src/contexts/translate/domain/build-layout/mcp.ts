@@ -1,8 +1,8 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ArtifactContract } from "../../../tools/contract/build-contract.js";
-import { rewritePluginRootToken } from "../../../tools/contract/plugin-root-token.js";
 import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import type { OutputFile } from "../output-file.js";
+import { withRootToken } from "../rules/root-token.js";
 
 type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
@@ -20,7 +20,7 @@ export function marketplaceMcp(
       : content;
     return {
       relativePath: `plugins/${plugin}/${PLUGIN_MCP_RELATIVE}`,
-      content: pluginRootToken ? rewritePluginRootToken(transformed, pluginRootToken) : transformed,
+      content: withRootToken(transformed, pluginRootToken),
     };
   });
 }

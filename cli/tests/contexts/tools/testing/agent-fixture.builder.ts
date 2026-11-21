@@ -1,5 +1,6 @@
 import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
+import { builtAgentFile } from "../../../shared/testing/built-agent.builder.js";
 import type { WithSections } from "./with-sections.builder.js";
 
 /** A Claude-format agent carrying every key a host may translate. */
@@ -31,10 +32,7 @@ export function inMarketplace(
   tool: AiTool<WithSections<"agents">>,
   content: string
 ): { path: string; content: string } {
-  const agents = tool.buildContracts?.marketplace?.().artifacts.agents;
-  if (!agents?.supported) throw new Error(`${tool.toolId} builds no marketplace agent`);
-  return {
-    path: agents.path("aidd-dev", "agents/planner.md"),
-    content: agents.transform?.(content, "aidd-dev", "planner.md") ?? content,
-  };
+  const contract = tool.buildContracts?.marketplace?.();
+  if (contract === undefined) throw new Error(`${tool.toolId} builds no marketplace agent`);
+  return builtAgentFile(contract, "marketplace", content, "aidd-dev", "planner.md");
 }

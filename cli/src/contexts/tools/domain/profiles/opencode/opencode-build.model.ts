@@ -2,20 +2,18 @@
  * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type {
+  AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type {
   FlatHooksRoute,
   HooksDescriptor,
@@ -48,17 +46,9 @@ function opencodeFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(".opencode/skills/", plugin, rel.replace(/^skills\//, ""));
 }
 
-const opencodeFlatResolveTarget = flatTargetsOf(opencodeFlatAgentPath, opencodeFlatSkillPath);
-
-function transformOpencodeFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = opencodeFlatAgentPath(plugin, `agents/${outName}`);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => opencodeFlatResolveTarget(plugin, rel),
-  });
-  return serializeFrontmatter(opencodeAgentFrontmatter(frontmatter), rewrittenBody);
-}
+const opencodeAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => opencodeAgentFrontmatter(frontmatter),
+};
 
 const OPENCODE_JSONC = "opencode.jsonc";
 const OPENCODE_JSON = "opencode.json";
@@ -130,7 +120,7 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: opencodeFlatAgentPath,
-        transform: transformOpencodeFlatAgent,
+        agentMarkdown: opencodeAgentMarkdown,
       },
       mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)
       hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),

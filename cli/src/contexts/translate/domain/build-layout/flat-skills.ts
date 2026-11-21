@@ -1,5 +1,3 @@
-import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type {
   ArtifactContract,
@@ -8,6 +6,8 @@ import type {
 import { PLUGIN_SKILL_ENTRY_FILE } from "../canon-format.js";
 import { flatLinkTarget } from "../flat-layout.js";
 import type { OutputFile } from "../output-file.js";
+import { rewriteRelativeLinks } from "../rules/links.js";
+import { namedAfterFolder } from "../rules/skill-name.js";
 import { assertNoToolsPlaceholder } from "../tools-placeholder.js";
 
 type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
@@ -36,10 +36,4 @@ export function flatSkills(
         artifact.rewriteSkillName && isEntry ? namedAfterFolder(rewritten, flatPath) : rewritten,
     };
   });
-}
-
-function namedAfterFolder(content: string, flatPath: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const folder = flatPath.split("/").at(-2);
-  return folder ? serializeFrontmatter({ ...frontmatter, name: folder }, body) : content;
 }

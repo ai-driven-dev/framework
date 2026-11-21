@@ -1,6 +1,6 @@
 import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
-import { rewriteRelativeLinks } from "../../../../src/shared/domain/materialization/relative-link-rewrite.js";
+import { rewriteRelativeLinks } from "../../../../../src/contexts/translate/domain/rules/links.js";
 
 // One options object serves them all: the third branch is not reached by @./ or @../.
 const STABLE_OPTS = { currentFilePluginRelative: "skills/foo/SKILL.md" };

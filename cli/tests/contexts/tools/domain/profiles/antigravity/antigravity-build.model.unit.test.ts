@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
+import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
@@ -68,7 +69,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("rebuilds the agent's frontmatter and links its body from the nested directory", () => {
-    const agents = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
+    const transform = builtAgent(present(antigravity.buildContracts.flat)(), "flat");
     const source = [
       "---",
       "name: executor",
@@ -80,7 +81,7 @@ describe("buildAntigravityFlatContract", () => {
       "Follow @${CLAUDE_PLUGIN_ROOT}/skills/01-plan/SKILL.md",
     ].join("\n");
 
-    expect(agents.transform?.(source, "aidd-dev", "executor.md")).toBe(
+    expect(transform(source, "aidd-dev", "executor.md")).toBe(
       [
         "---",
         "name: 'aidd-dev-executor'",
@@ -116,7 +117,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("links an agent's body to another agent, to a skill and to a file in neither", () => {
-    const { transform } = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
+    const transform = builtAgent(present(antigravity.buildContracts.flat)(), "flat");
     const source = [
       "---",
       "name: executor",
@@ -126,7 +127,7 @@ describe("buildAntigravityFlatContract", () => {
       "@${CLAUDE_PLUGIN_ROOT}/agents/reviewer.md and @${CLAUDE_PLUGIN_ROOT}/rules/style.md",
     ].join("\n");
 
-    expect(transform?.(source, "aidd-dev", "executor.md")).toContain(
+    expect(transform(source, "aidd-dev", "executor.md")).toContain(
       "[reviewer.md](../aidd-dev-reviewer/agent.md) and [style.md](../../../rules/style.md)"
     );
   });

@@ -1,8 +1,8 @@
-import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ArtifactContract } from "../../../tools/contract/build-contract.js";
 import { PLUGIN_SKILL_ENTRY_FILE } from "../canon-format.js";
 import type { OutputFile } from "../output-file.js";
+import { rewriteRelativeLinks } from "../rules/links.js";
 import { assertNoToolsPlaceholder } from "../tools-placeholder.js";
 
 type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;

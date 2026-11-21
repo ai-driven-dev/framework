@@ -69,15 +69,33 @@ export class ModelsSection {
     const chosen = this.supportedProvider(toolId, provider);
     const agents = contract.artifacts.agents;
     if (!agents.supported) return contract;
+    const modelled = (
+      frontmatter: Record<string, unknown>,
+      fileName: string
+    ): Record<string, unknown> => {
+      const tier = roleTier(fileName);
+      return tier === undefined || frontmatter.model !== undefined
+        ? frontmatter
+        : { ...frontmatter, ...this.tierModel(chosen, tier) };
+    };
+    const shape = agents.agentMarkdown;
+    if (shape !== undefined) {
+      const agentMarkdown = {
+        ...shape,
+        frontmatter: (
+          frontmatter: Record<string, unknown>,
+          of: { plugin: string; outName: string }
+        ) => shape.frontmatter(modelled(frontmatter, of.outName), of),
+      };
+      return {
+        ...contract,
+        artifacts: { ...contract.artifacts, agents: { ...agents, agentMarkdown } },
+      };
+    }
     const write = agents.transform ?? ((content: string) => content);
     const transform = (content: string, plugin: string, fileName: string): string => {
       const { frontmatter, body } = parseFrontmatter(content);
-      const tier = roleTier(fileName);
-      if (tier === undefined || frontmatter.model !== undefined) {
-        return write(content, plugin, fileName);
-      }
-      const modelled = { ...frontmatter, ...this.tierModel(chosen, tier) };
-      return write(serializeFrontmatter(modelled, body), plugin, fileName);
+      return write(serializeFrontmatter(modelled(frontmatter, fileName), body), plugin, fileName);
     };
     return { ...contract, artifacts: { ...contract.artifacts, agents: { ...agents, transform } } };
   }

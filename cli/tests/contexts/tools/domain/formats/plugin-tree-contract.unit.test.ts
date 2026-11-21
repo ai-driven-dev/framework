@@ -7,17 +7,23 @@ import { supported } from "../../testing/build-artifacts.builder.js";
 const LAYOUT = {
   manifestRelative: ".tool-plugin/plugin.json",
   marketplaceRelative: ".tool-plugin/marketplace.json",
-  transformAgent: (content: string) => `rewritten:${content}`,
+  agentMarkdown: { frontmatter: (fm: Record<string, unknown>) => ({ ...fm, marker: "kept" }) },
 };
 
 const contract = pluginTreeContract(present(cursor.hooks), LAYOUT);
 
 describe("pluginTreeContract", () => {
-  it("names the tool's own manifest and sends agents through its own transform", () => {
+  it("names the tool's own manifest and shapes agents with its own frontmatter", () => {
     expect({
       manifest: contract.manifestFileRelative,
-      agent: supported(contract.artifacts.agents).transform?.("x", "p", "a.md"),
-    }).toStrictEqual({ manifest: ".tool-plugin/plugin.json", agent: "rewritten:x" });
+      agent: supported(contract.artifacts.agents).agentMarkdown?.frontmatter(
+        { a: 1 },
+        {
+          plugin: "p",
+          outName: "a.md",
+        }
+      ),
+    }).toStrictEqual({ manifest: ".tool-plugin/plugin.json", agent: { a: 1, marker: "kept" } });
   });
 
   it("keeps skills and agents where the plugin has them, and MCP at its root", () => {

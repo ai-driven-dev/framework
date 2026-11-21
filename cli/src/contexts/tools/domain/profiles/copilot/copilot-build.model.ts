@@ -4,15 +4,12 @@
  * `domain/formats/`; the contracts themselves are thin wiring.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
   genericFlatAgentPath,
   genericFlatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -42,7 +39,7 @@ export function buildCopilotMarketplaceContract(hooks: HooksRouting): ToolBuildC
     ...pluginTreeContract(hooks, {
       manifestRelative: OUTPUT_PLUGIN_MANIFEST_RELATIVE,
       marketplaceRelative: OUTPUT_MARKETPLACE_RELATIVE,
-      transformAgent: transformCopilotAgent,
+      agentMarkdown: copilotAgentMarkdown,
     }),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
@@ -87,26 +84,14 @@ function copilotFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(FLAT_GITHUB_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));
 }
 
-function transformCopilotAgent(content: string, _plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: `agents/${outName}`,
-  });
-  return serializeFrontmatter(copilotAgentFrontmatter(frontmatter), rewrittenBody);
-}
+const copilotAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => copilotAgentFrontmatter(frontmatter),
+};
 
-function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = copilotFlatAgentPath(plugin, outName);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
-  });
-  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(copilotAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
-}
-
-const copilotFlatResolveTarget = flatTargetsOf(copilotFlatAgentPath, copilotFlatSkillPath);
+const copilotFlatAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter, { plugin, outName }) =>
+    copilotAgentFrontmatter({ ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}` }),
+};
 
 export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
@@ -125,7 +110,7 @@ export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: copilotFlatAgentPath,
-        transform: transformCopilotFlatAgent,
+        agentMarkdown: copilotFlatAgentMarkdown,
       },
       mcp: {
         supported: true,

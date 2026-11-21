@@ -43,6 +43,15 @@ describe("the flat layout of a plugin's hooks", () => {
     });
   });
 
+  it("takes only the plugin's own manifest for a manifest: a hooks.json further down is a script", () => {
+    expect(
+      flatHooks({ [MANIFEST]: "{}", "hooks/sub/hooks.json": "n", "hooks/my-hooks.json": "m" })
+    ).toEqual({
+      "flat/hooks/sub/hooks.json": "n",
+      "flat/hooks/my-hooks.json": "m",
+    });
+  });
+
   it("builds nothing for a plugin declaring no hooks manifest", () => {
     expect(flatHooks({ "hooks/run.sh": "a" })).toEqual({});
   });

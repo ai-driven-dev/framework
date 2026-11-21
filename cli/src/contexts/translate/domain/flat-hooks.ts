@@ -7,7 +7,8 @@ import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
 import type { FlatPluginAnswers, PluginAnswers } from "../../tools/contract/tool-profile.js";
 import { flatHooksBridgeFile, sourceShipsHooksBridge } from "./flat-layout.js";
 import type { OutputFile } from "./output-file.js";
-import { makeFile, PLUGIN_HOOKS_DIR } from "./plugin-paths.js";
+import { makeFile } from "./plugin-paths.js";
+import { HOOKS_MANIFEST, hookScripts } from "./rules/hook-scripts.js";
 import type { TranslatedAiTool } from "./translate-profile.js";
 
 // hooks/hooks.json is a manifest a merge reads, never a runtime module a loader scans for, so
@@ -15,14 +16,10 @@ import type { TranslatedAiTool } from "./translate-profile.js";
 // plugin: unless it is that loader's own plugin module, delivered flat and renamed instead.
 export function flatHooksFiles(dist: PluginDistribution, plugins: FlatPluginAnswers): OutputFile[] {
   const { hooksBridge: flatHooksBridge } = plugins.flatLayout();
-  const scripts = dist.components.hooks
-    .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
-    .flatMap((file) => {
-      const path = plugins.hooksInstallPath(dist.manifest.name, file.relativePath);
-      return path === null
-        ? []
-        : [makeFile(path, plugins.hookScript(file.relativePath, file.content))];
-    });
+  const scripts = hookScripts(dist.components.hooks, (relativePath, content) => {
+    const path = plugins.hooksInstallPath(dist.manifest.name, relativePath);
+    return path === null ? null : makeFile(path, plugins.hookScript(relativePath, content));
+  });
   const bridge = installedHooksBridge(dist, flatHooksBridge);
   return bridge === null ? scripts : [...scripts, bridge];
 }
@@ -35,9 +32,7 @@ function installedHooksBridge(
   bridge: FlatHooksBridge | null
 ): OutputFile | null {
   if (bridge === null) return null;
-  const manifestFile = dist.components.hooks.find(
-    (f) => f.relativePath === `${PLUGIN_HOOKS_DIR}/hooks.json`
-  );
+  const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST);
   if (manifestFile === undefined) return null;
   const file = flatHooksBridgeFile({
     bridge,

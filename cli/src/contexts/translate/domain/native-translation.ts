@@ -4,11 +4,11 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../tools/contract/plugin-install-notice.js";
-import { rewritePluginRootToken } from "../../tools/contract/plugin-root-token.js";
 import type { NativePluginAnswers } from "../../tools/contract/tool-profile.js";
 import { type TranslatedFile, translateFile } from "./component-translation.js";
 import type { OutputFile } from "./output-file.js";
 import { isComponentFile, isProse, makeFile } from "./plugin-paths.js";
+import { withRootToken } from "./rules/root-token.js";
 import type { TranslatedAiTool } from "./translate-profile.js";
 
 /** A distribution translated for a tool that installs a plugin as a directory of its own. */
@@ -49,9 +49,7 @@ function installedContent(
   // The plugin-root variable is a path, not prose: a hook manifest and an mcp manifest both
   // name one, in JSON. Gating it on prose left every tool but Claude installing a hook that
   // points at a variable its own runtime never expands.
-  return translated.verbatim === true
-    ? rewritten
-    : rewritePluginRootToken(rewritten, plugins.rootToken());
+  return translated.verbatim === true ? rewritten : withRootToken(rewritten, plugins.rootToken());
 }
 
 function buildNativeFiles(

@@ -1,10 +1,7 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import { genericFlatSkillPath } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
@@ -24,20 +21,10 @@ function antigravityFlatAgentPath(plugin: string, rel: string): string {
   return `${ANTIGRAVITY_AGENTS_DIR}${agentName(plugin, rel)}/agent.md`;
 }
 
-const resolveTarget = flatTargetsOf(antigravityFlatAgentPath, antigravityFlatSkillPath);
-
-function transformAntigravityAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rel = `agents/${outName}`;
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: antigravityFlatAgentPath(plugin, rel),
-    resolveTargetPath: (target) => resolveTarget(plugin, target),
-  });
-  return serializeFrontmatter(
-    portableAgentFrontmatter(frontmatter, agentName(plugin, rel)),
-    rewrittenBody
-  );
-}
+const antigravityAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter, { plugin, outName }) =>
+    portableAgentFrontmatter(frontmatter, agentName(plugin, `agents/${outName}`)),
+};
 
 export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuildContract {
   return {
@@ -55,7 +42,7 @@ export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuild
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: antigravityFlatAgentPath,
-        transform: transformAntigravityAgent,
+        agentMarkdown: antigravityAgentMarkdown,
       },
       mcp: { supported: false },
       hooks: flatHooksArtifact(hooks, { tool: "antigravity" }, (existing, shipped) =>

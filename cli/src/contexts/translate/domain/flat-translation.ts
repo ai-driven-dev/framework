@@ -6,8 +6,10 @@ import type {
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { FlatPluginAnswers } from "../../tools/contract/tool-profile.js";
 import { collectHooksSkips, flatHooksFiles } from "./flat-hooks.js";
+import { flatLinkTarget } from "./flat-layout.js";
 import type { OutputFile } from "./output-file.js";
 import { basename, isProse, makeFile } from "./plugin-paths.js";
+import { agentContent } from "./rules/agent-markdown.js";
 import type { TranslatedAiTool } from "./translate-profile.js";
 
 type FlatSection = "agents" | "rules" | "skills";
@@ -56,13 +58,18 @@ function agentArtifactFile(
   content: string,
   { pluginName, tool }: FlatTarget
 ): OutputFile | null {
-  const artifact = tool.buildContract("flat")?.artifacts.agents;
-  if (!artifact?.supported) return null;
-  const fileName = file.relativePath.slice("agents/".length);
-  return makeFile(
-    artifact.path(pluginName, file.relativePath),
-    artifact.transform?.(content, pluginName, fileName) ?? content
-  );
+  const contract = tool.buildContract("flat");
+  const artifact = contract?.artifacts.agents;
+  if (contract === null || !artifact?.supported) return null;
+  const path = artifact.path(pluginName, file.relativePath);
+  const at = {
+    plugin: pluginName,
+    outName: file.relativePath.slice("agents/".length),
+    from: path,
+    resolveTarget: (rel: string) => flatLinkTarget(contract, pluginName, rel),
+    unshaped: "carry" as const,
+  };
+  return makeFile(path, agentContent(content, artifact, at));
 }
 
 function flatSectionFile(

@@ -1,7 +1,7 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ArtifactContract } from "../../../tools/contract/build-contract.js";
-import { rewritePluginRootToken } from "../../../tools/contract/plugin-root-token.js";
 import type { OutputFile } from "../output-file.js";
+import { withRootToken } from "../rules/root-token.js";
 
 type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
@@ -19,9 +19,7 @@ export function marketplaceHooks(
       artifact.transform && relativePath.endsWith(".json")
         ? artifact.transform(content, plugin, base)
         : content;
-    const rooted = pluginRootToken
-      ? rewritePluginRootToken(transformed, pluginRootToken)
-      : transformed;
+    const rooted = withRootToken(transformed, pluginRootToken);
     return {
       relativePath: `plugins/${plugin}/${relativePath}`,
       content: artifact.script?.(relativePath, rooted) ?? rooted,

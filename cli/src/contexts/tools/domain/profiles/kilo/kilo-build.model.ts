@@ -1,20 +1,18 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type {
+  AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
@@ -46,17 +44,9 @@ function kiloFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(`${KILO_DIRECTORY}skills/`, plugin, rel.replace(/^skills\//, ""));
 }
 
-const kiloFlatResolveTarget = flatTargetsOf(kiloFlatAgentPath, kiloFlatSkillPath);
-
-function transformKiloFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = kiloFlatAgentPath(plugin, `agents/${outName}`);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
-  });
-  return serializeFrontmatter(kiloAgentFrontmatter(frontmatter), rewrittenBody);
-}
+const kiloAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => kiloAgentFrontmatter(frontmatter),
+};
 
 function collectKiloMcp(
   builtPlugins: readonly string[],
@@ -110,7 +100,7 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: kiloFlatAgentPath,
-        transform: transformKiloFlatAgent,
+        agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false },
       hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),

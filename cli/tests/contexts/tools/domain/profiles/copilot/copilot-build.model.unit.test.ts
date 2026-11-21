@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
+import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
@@ -66,9 +67,7 @@ describe("present(copilot.buildContracts.marketplace)()", () => {
   });
 
   it("keeps what Copilot reads of an agent and links its plugin-root references from agents/", () => {
-    const transform = supported(
-      present(copilot.buildContracts.marketplace)().artifacts.agents
-    ).transform;
+    const transform = builtAgent(present(copilot.buildContracts.marketplace)(), "marketplace");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -241,7 +240,7 @@ describe("present(copilot.buildContracts.flat)()", () => {
   });
 
   it("renames a flat agent after its plugin, drops what Copilot cannot read, and points its references at their flat destinations", () => {
-    const transform = supported(present(copilot.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(copilot.buildContracts.flat)(), "flat");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -260,7 +259,7 @@ describe("present(copilot.buildContracts.flat)()", () => {
   });
 
   it("drops only the trailing .md from the name it gives a flat agent", () => {
-    const transform = supported(present(copilot.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(copilot.buildContracts.flat)(), "flat");
 
     expect(
       transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
@@ -272,9 +271,7 @@ describe("present(copilot.buildContracts.flat)()", () => {
   it.each([true, false])(
     "preserves repository instruction selection %s in flat agents",
     (include) => {
-      const transform = supported(
-        present(copilot.buildContracts.flat)().artifacts.agents
-      ).transform;
+      const transform = builtAgent(present(copilot.buildContracts.flat)(), "flat");
       const result = transform?.(
         `---\nname: reviewer\ninclude-custom-instructions: ${include}\n---\nReview.\n`,
         "aidd-dev",

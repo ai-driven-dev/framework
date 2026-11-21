@@ -29,13 +29,28 @@ export type ArtifactSource =
   | { readonly kind: "configFile"; readonly srcPath: string }
   | { readonly kind: "hooksBundle"; readonly jsonPath: string; readonly scriptDir: string };
 
+/** How a tool keeps an agent's markdown: the frontmatter it reads, from the agent's own and the
+ * plugin and file it is built for. The engine reads and writes the file and resolves the links of
+ * its body, the same for every tool. */
+export interface AgentMarkdown {
+  readonly frontmatter: (
+    frontmatter: Record<string, unknown>,
+    of: { readonly plugin: string; readonly outName: string }
+  ) => Record<string, unknown>;
+  /** `double` for a reader that keeps single quotes literally. */
+  readonly quote?: "double";
+}
+
 export type ArtifactContract =
   | { readonly supported: false }
   | {
       readonly supported: true;
       readonly source: ArtifactSource;
       readonly path: (plugin: string, relPath: string) => string;
-      /** Defaults to identity, a byte-copy. */
+      /** An agent's markdown, as the tool keeps it. Wins over `transform` for an agent. */
+      readonly agentMarkdown?: AgentMarkdown;
+      /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
+       * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
