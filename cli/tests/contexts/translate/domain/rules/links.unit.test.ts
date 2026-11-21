@@ -1,9 +1,16 @@
 import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  type LinkForm,
   rewriteLinks,
-  rewriteRelativeLinks,
 } from "../../../../../src/contexts/translate/domain/rules/links.js";
+
+type RelativeOptions = Omit<Extract<LinkForm, { kind: "relative" }>, "kind">;
+
+/** The relative reading of a document's links, through the one rule. */
+function rewriteRelativeLinks(content: string, options: RelativeOptions): string {
+  return rewriteLinks(content, { kind: "relative", ...options });
+}
 
 // One options object serves them all: the third branch is not reached by @./ or @../.
 const STABLE_OPTS = { currentFilePluginRelative: "skills/foo/SKILL.md" };

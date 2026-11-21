@@ -4,8 +4,8 @@ import claudeSettings from "../../../../../../assets/configs/claude/settings.jso
 };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-claude.cjs";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
-import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { declareHooks, ownNameEvents } from "../../formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../formats/hooks/routes.js";

@@ -5,7 +5,10 @@
  */
 
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
-import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import {
+  escapeRegExp,
+  rewritePluginRootInJson,
+} from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ShippedHooks } from "../../contract/build-contract.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
@@ -118,10 +121,6 @@ function rewriteRoot(
   ) as PluginHooksShape;
 }
 
-function escaped(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 /** Whether a command runs one of the plugin's scripts: its folder starts a path, at the start
  * of the command or after a space or a quote, bare, after `./` or after the tool's root token. */
 function runsPluginScript(
@@ -129,8 +128,8 @@ function runsPluginScript(
   plugin: string,
   { scriptsDir, rootToken }: HooksMergeTarget
 ): boolean {
-  const dir = escaped(pluginScriptDir(scriptsDir, plugin));
-  const prefix = rootToken === undefined ? "\\./" : `\\./|${escaped(rootToken)}/`;
+  const dir = escapeRegExp(pluginScriptDir(scriptsDir, plugin));
+  const prefix = rootToken === undefined ? "\\./" : `\\./|${escapeRegExp(rootToken)}/`;
   return new RegExp(`(?:^|[\\s"'])(?:${prefix})?${dir}`).test(command);
 }
 

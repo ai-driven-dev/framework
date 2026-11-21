@@ -1,3 +1,4 @@
+import { escapeRegExp } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
 import { rulePatterns } from "../../formats/rule-frontmatter.js";
 
@@ -16,10 +17,6 @@ const DOCS_DIR = "aidd_docs" as const;
 export const EXT_AGENT = ".agent.md";
 export const EXT_PROMPT = ".prompt.md";
 export const EXT_INSTRUCTIONS = ".instructions.md";
-
-function escapedRegex(literal: string): string {
-  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function basename(path: string): string {
   return path.split("/").at(-1) ?? path;
@@ -133,14 +130,14 @@ export function rewriteCopilotContent(content: string): string {
   return (
     content
       .replace(
-        new RegExp(`${escapedRegex(AT_TOOLS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
+        new RegExp(`${escapeRegExp(AT_TOOLS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
         (_match, path: string) => {
           const fullPath = resolveInstalledPath(path);
           return `[${fullPath}](../../${fullPath})`;
         }
       )
       .replace(
-        new RegExp(`${escapedRegex(AT_DOCS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
+        new RegExp(`${escapeRegExp(AT_DOCS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
         (_match, path: string) => {
           return `[${DOCS_DIR}/${path}](../../${DOCS_DIR}/${path})`;
         }

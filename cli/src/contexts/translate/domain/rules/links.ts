@@ -1,3 +1,8 @@
+import {
+  escapeRegExp,
+  SOURCE_PLUGIN_ROOT_TOKEN,
+} from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+
 // The same character class `rewriteCopilotContent` uses, so both recognise the same
 // reference.
 const REFERENCE_CHAR_CLASS = "[^\\s`'\">,]+";
@@ -6,7 +11,10 @@ const RELATIVE_CURRENT_RE = new RegExp(`@\\.\\/(${REFERENCE_CHAR_CLASS})`, "g");
 const RELATIVE_PARENT_RE = new RegExp(`@\\.\\.\\/(${REFERENCE_CHAR_CLASS})`, "g");
 
 // Only with a leading `@`: a bare ${CLAUDE_PLUGIN_ROOT} is left alone.
-const CLAUDE_ROOT_RE = new RegExp(`@\\$\\{CLAUDE_PLUGIN_ROOT\\}\\/(${REFERENCE_CHAR_CLASS})`, "g");
+const CLAUDE_ROOT_RE = new RegExp(
+  `@${escapeRegExp(SOURCE_PLUGIN_ROOT_TOKEN)}\\/(${REFERENCE_CHAR_CLASS})`,
+  "g"
+);
 
 export interface RewriteRelativeLinksOptions {
   readonly currentFilePluginRelative: string;
@@ -36,10 +44,7 @@ export function rewriteLinks(content: string, form: LinkForm): string {
  * One-way: the markdown links this produces are indistinguishable from ones a person wrote,
  * so the `@`-shorthand cannot be recovered from them.
  */
-export function rewriteRelativeLinks(
-  content: string,
-  options: RewriteRelativeLinksOptions
-): string {
+function rewriteRelativeLinks(content: string, options: RewriteRelativeLinksOptions): string {
   const afterParent = content.replace(RELATIVE_PARENT_RE, "[$1](../$1)");
   const afterCurrent = afterParent.replace(RELATIVE_CURRENT_RE, "[$1](./$1)");
   return afterCurrent.replace(CLAUDE_ROOT_RE, (_match, rel: string) =>
