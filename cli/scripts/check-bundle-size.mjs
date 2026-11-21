@@ -79,6 +79,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
 // 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
 // 814 KB: 813.5 KB, the kind rollout giving the plugin, removal and purge services their ports and named-object requests; 0.1% measured headroom.
+// 815 KB: 814.2 KB, the plugin add, update and file inputs passed as named objects; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
