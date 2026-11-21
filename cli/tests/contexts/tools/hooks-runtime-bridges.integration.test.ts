@@ -35,14 +35,17 @@ const RECORDER = `const fs = require("node:fs");
 const host = require("./lib/host.cjs");
 const event = host.readEvent();
 if (event !== undefined) {
-  fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
+  fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify({ pid: process.pid, ...event }) + "\\n");
   if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
   if (event.event === "Stop" && process.env.AIDD_STOP === "answer") host.answer({ level: 1, text: "go on" });
   else if (event.event === "Stop") host.continueTurn("go on");
+  const exitDelay = Number(process.env.AIDD_TEST_HOOK_EXIT_DELAY_MS ?? 0);
+  if (exitDelay > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, exitDelay);
 }
 `;
 
 interface Recorded {
+  readonly pid: number;
   readonly host: string;
   readonly event: string;
   readonly files: readonly { readonly path: string; readonly content?: string }[];
@@ -60,17 +63,132 @@ interface Workspace {
 
 const created: string[] = [];
 
+/** The bridges give hooks five seconds to run. Wait for those exact children before removing
+ * their cwd: Windows can keep a directory locked until its process has fully exited. */
+async function waitForRecordedHooks(dirs: readonly string[]): Promise<void> {
+  const pids = new Set<number>();
+  for (const dir of dirs) {
+    const contents = await readFile(join(dir, "record.jsonl"), "utf8").catch(() => "");
+    for (const line of contents.split("\n").filter(Boolean)) {
+      const record = JSON.parse(line) as { pid?: unknown };
+      if (typeof record.pid === "number") pids.add(record.pid);
+    }
+  }
+
+  const deadline = Date.now() + 5500;
+  while (pids.size > 0 && Date.now() < deadline) {
+    for (const pid of pids) {
+      try {
+        process.kill(pid, 0);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ESRCH") pids.delete(pid);
+        else throw error;
+      }
+    }
+    if (pids.size > 0) await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+
+  if (pids.size > 0) {
+    throw new Error(`hook process(es) still active after 5.5 seconds: ${[...pids].join(", ")}`);
+  }
+}
+
+async function cleanupHookFixtures(
+  dirs: readonly string[],
+  waitForHooks: (dirs: readonly string[]) => Promise<void> = waitForRecordedHooks,
+  removeDir: (dir: string) => Promise<void> = (dir) =>
+    rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 })
+): Promise<void> {
+  let waitFailed = false;
+  let waitError: unknown;
+  const cleanupErrors: unknown[] = [];
+
+  try {
+    await waitForHooks(dirs);
+  } catch (error) {
+    waitFailed = true;
+    waitError = error;
+  } finally {
+    const results = await Promise.allSettled(dirs.map(async (dir) => removeDir(dir)));
+    for (const result of results) {
+      if (result.status === "rejected") cleanupErrors.push(result.reason);
+    }
+  }
+
+  if (cleanupErrors.length > 0) {
+    const errors = [...(waitFailed ? [waitError] : []), ...cleanupErrors];
+    if (errors.length === 1) throw errors[0];
+    throw new AggregateError(errors, "Hook fixture cleanup failed");
+  }
+  if (waitFailed) throw waitError;
+}
+
 /** The adapter each build puts at `hooks/lib/host.cjs`. */
 const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.runtime.adapter };
 
 afterEach(async () => {
   vi.unstubAllEnvs();
-  // A SessionStart hook runs detached in `project/`; Windows refuses to remove a live process's cwd (EBUSY).
-  await Promise.all(
-    created
-      .splice(0)
-      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }))
-  );
+  const dirs = created.splice(0);
+  // Windows may release a detached hook's cwd shortly after the process exits.
+  await cleanupHookFixtures(dirs);
+});
+
+describe("hook fixture cleanup", () => {
+  it("removes every fixture and propagates a hook-wait failure", async () => {
+    const waitError = new Error("hook process still active");
+    const removed: string[] = [];
+
+    await expect(
+      cleanupHookFixtures(
+        ["first", "second"],
+        async () => {
+          throw waitError;
+        },
+        async (dir) => {
+          removed.push(dir);
+        }
+      )
+    ).rejects.toBe(waitError);
+
+    expect(removed).toEqual(["first", "second"]);
+  });
+
+  it("waits before removing fixtures on the normal path", async () => {
+    const events: string[] = [];
+
+    await cleanupHookFixtures(
+      ["first", "second"],
+      async () => {
+        events.push("wait");
+      },
+      async (dir) => {
+        events.push(`remove ${dir}`);
+      }
+    );
+
+    expect(events).toEqual(["wait", "remove first", "remove second"]);
+  });
+
+  it("attempts later removals and reports cleanup failures alongside a wait failure", async () => {
+    const waitError = new Error("hook process still active");
+    const cleanupError = new Error("first fixture is locked");
+    const attempted: string[] = [];
+
+    await expect(
+      cleanupHookFixtures(
+        ["first", "second"],
+        async () => {
+          throw waitError;
+        },
+        async (dir) => {
+          attempted.push(dir);
+          if (dir === "first") throw cleanupError;
+        }
+      )
+    ).rejects.toMatchObject({ errors: [waitError, cleanupError] });
+
+    expect(attempted).toEqual(["first", "second"]);
+  });
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
@@ -199,6 +317,18 @@ function kiloBridge(): string {
 }
 
 describe("OpenCode, through its bridge", () => {
+  it("waits for an asynchronous SessionStart hook to exit before removing its workspace", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_TEST_HOOK_EXIT_DELAY_MS", "500");
+    const [init] = await captured("opencode-server-init.json", ws.project);
+    await start(ws, init as Record<string, unknown>);
+
+    const [call] = await recorded(ws, 1);
+    if (call === undefined) throw new Error("SessionStart hook was not recorded");
+    expect(call?.pid).toEqual(expect.any(Number));
+    expect(() => process.kill(call.pid, 0)).not.toThrow();
+  });
+
   it("reads the server start as SessionStart, with no session yet", async () => {
     const ws = await workspace("opencode", opencodeBridge());
     const [init] = await captured("opencode-server-init.json", ws.project);

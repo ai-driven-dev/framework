@@ -8,6 +8,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { randomUUID } = require("node:crypto");
 const { markdownLines } = require("./lib/markdown.cjs");
 
 const PLUGIN = "aidd-context";
@@ -248,11 +249,108 @@ function pointedText(original, oldBlock, root) {
   return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
 }
 
-function tryWrite(file, text, shown, notSynced) {
+// Kilo's project memory must not follow a context file out of the project or through a hardlink.
+// The shared hook keeps its existing behavior for projects without a Kilo signal.
+function kiloProject(root) {
+  return [[".kilo", "directory"], [".kilocode", "directory"], ["kilo.json", "file"], ["kilo.jsonc", "file"]].some(([name, type]) => {
+    try {
+      const stat = fs.statSync(path.join(root, name));
+      return type === "directory" ? stat.isDirectory() : stat.isFile();
+    } catch (error) {
+      if (error.code === "ENOENT" || error.code === "ENOTDIR") return false;
+      throw error;
+    }
+  });
+}
+
+function kiloSnapshot(root, file, shown, notSynced) {
   try {
-    fs.writeFileSync(file, text, "utf8");
+    const resolved = fs.realpathSync(file);
+    const relative = path.relative(root, resolved);
+    if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) throw new Error("outside project");
+    const fd = fs.openSync(resolved, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    try {
+      const stat = fs.fstatSync(fd);
+      if (!stat.isFile() || stat.nlink !== 1 || fs.realpathSync(file) !== resolved) throw new Error("context changed while opening");
+      const bytes = fs.readFileSync(fd);
+      return { file, resolved, stat, bytes, text: new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes) };
+    } finally { fs.closeSync(fd); }
   } catch (error) {
-    notSynced.push(`${shown} not written (${error.code ?? error.message}), skipped`);
+    if (error.code !== "ENOENT" && error.code !== "ENOTDIR") notSynced.push(`${shown} not written (${error.code ?? error.message}), skipped`);
+    return null;
+  }
+}
+
+function writeKilo(snapshot, text) {
+  let started = false;
+  let completed = false;
+  let backup;
+  let backupFd;
+  const fd = fs.openSync(snapshot.resolved, fs.constants.O_RDWR | (fs.constants.O_NOFOLLOW || 0));
+  const unchanged = () => {
+    const stat = fs.fstatSync(fd);
+    if (stat.dev !== snapshot.stat.dev || stat.ino !== snapshot.stat.ino || stat.nlink !== 1 || stat.size !== snapshot.bytes.length || (stat.mode & 0o7777) !== (snapshot.stat.mode & 0o7777) || fs.realpathSync(snapshot.file) !== snapshot.resolved) return false;
+    const bytes = Buffer.alloc(stat.size);
+    let read = 0;
+    while (read < bytes.length) {
+      const count = fs.readSync(fd, bytes, read, bytes.length - read, read);
+      if (count === 0) return false;
+      read += count;
+    }
+    return bytes.equals(snapshot.bytes);
+  };
+  try {
+    if (!unchanged()) throw new Error("context changed before writing");
+    // Sync a private copy before the in-place write, which preserves ACLs and xattrs.
+    const candidate = path.join(path.dirname(snapshot.resolved), `.${path.basename(snapshot.resolved)}.aidd-recovery-${randomUUID()}`);
+    backupFd = fs.openSync(candidate, "wx", 0o600);
+    backup = candidate;
+    fs.writeFileSync(backupFd, snapshot.bytes);
+    fs.fsyncSync(backupFd);
+    fs.closeSync(backupFd);
+    backupFd = undefined;
+    if (!unchanged()) throw new Error("context changed before writing");
+    const bytes = Buffer.from(text, "utf8");
+    let written = 0;
+    while (written < bytes.length) {
+      started = true;
+      const count = fs.writeSync(fd, bytes, written, bytes.length - written, written);
+      if (count === 0) throw new Error("context write made no progress");
+      written += count;
+    }
+    started = true;
+    fs.ftruncateSync(fd, bytes.length);
+    started = false;
+    completed = true;
+    fs.unlinkSync(backup);
+    backup = undefined;
+  } catch (error) {
+    if (backupFd !== undefined) { try { fs.closeSync(backupFd); } catch {} backupFd = undefined; }
+    if (completed) {
+      error.writeCompleted = true;
+      error.recoveryPath = backup;
+    } else if (started) {
+      error.partialWrite = true;
+      error.recoveryPath = backup;
+    } else if (backup !== undefined) {
+      try { fs.unlinkSync(backup); } catch { error.recoveryCleanup = backup; }
+    }
+    throw error;
+  } finally {
+    if (backupFd !== undefined) fs.closeSync(backupFd);
+    fs.closeSync(fd);
+  }
+}
+
+function tryWrite(file, text, shown, notSynced, snapshot) {
+  try {
+    if (snapshot) writeKilo(snapshot, text);
+    else fs.writeFileSync(file, text, "utf8");
+  } catch (error) {
+    if (error.writeCompleted) notSynced.push(`${shown} written but recovery copy could not be removed: ${error.recoveryPath}`);
+    else if (error.partialWrite) notSynced.push(`${shown} write failed (${error.code ?? error.message}); file may be partially changed; recovery copy: ${error.recoveryPath}`);
+    else if (error.recoveryCleanup) notSynced.push(`${shown} not written (${error.code ?? error.message}); recovery copy could not be removed: ${error.recoveryCleanup}`);
+    else notSynced.push(`${shown} not written (${error.code ?? error.message}), skipped`);
   }
 }
 
@@ -266,28 +364,31 @@ function sync(root, { onlyMissing = false } = {}) {
   if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return notSynced;
   const lists = { rooted: rootFiles(absolute), onDemand: onDemandFiles(absolute), owned: ownedFolders(absolute) };
   const wanted = [...lists.rooted, ...lists.onDemand];
-  const settle = (shown, original, { text, problem, held }, file) => {
+  const kilo = kiloProject(absolute);
+  const settle = (shown, original, { text, problem, held }, file, snapshot) => {
     const misses = !onlyMissing || wanted.some((bankFile) => !original.includes(bankFile));
     if (problem !== undefined) {
       if (misses) notSynced.push(`${shown} ${problem}, not synced`);
     } else if (held !== undefined) {
       if (misses) notSynced.push(`${shown} holds a line the memory block would not write ("${held}"), not synced`);
-    } else if (text !== original) tryWrite(file, text, shown, notSynced);
+    } else if (text !== original) tryWrite(file, text, shown, notSynced, snapshot);
   };
 
   for (const target of existingTargets(absolute)) {
-    const original = readTextOrNull(target.file);
+    const snapshot = kilo ? kiloSnapshot(absolute, path.join(absolute, target.path), target.path, notSynced) : null;
+    const original = kilo ? snapshot?.text ?? null : readTextOrNull(target.file);
     if (original === null) continue;
-    settle(target.path, original, filledBlock(original, buildBlockLines(lists, target.syntax, target.prefix), absolute), target.file);
+    settle(target.path, original, filledBlock(original, buildBlockLines(lists, target.syntax, target.prefix), absolute), target.file, snapshot);
   }
 
   // Copilot reads AGENTS.md: an old block in its own file becomes the pointer, unless it is AGENTS.md itself.
   const copilot = path.join(absolute, COPILOT_FILE);
-  const original = readTextOrNull(copilot);
   const sharesTarget = ["CLAUDE.md", "AGENTS.md"].some((name) => realish(path.join(absolute, name)) === realish(copilot));
-  if (original !== null && !sharesTarget) {
+  const snapshot = kilo && !sharesTarget ? kiloSnapshot(absolute, copilot, COPILOT_FILE, notSynced) : null;
+  const original = sharesTarget ? null : kilo ? snapshot?.text ?? null : readTextOrNull(copilot);
+  if (original !== null) {
     const oldBlock = [...buildBlockLines(lists, "link", "../"), ...buildBlockLines(lists, "at")];
-    settle(COPILOT_FILE, original, pointedText(original, oldBlock, absolute), copilot);
+    settle(COPILOT_FILE, original, pointedText(original, oldBlock, absolute), copilot, snapshot);
   }
 
   return notSynced;

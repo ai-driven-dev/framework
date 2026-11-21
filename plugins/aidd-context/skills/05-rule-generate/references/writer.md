@@ -14,10 +14,13 @@ node "$writer" --project "$project_root" --tools "$host_ids" --input "$request_j
 | Option | Effect |
 | --- | --- |
 | `--input <file>` | Add or update: writes the source, then its copies; `--tools` required. |
-| `--remove <category>/<slug>` | Remove: deletes the source, its copies and its index line; host config entries stay. |
+| `--remove <category>/<slug>` | Remove: deletes the source, its copies and its index line; exact Kilo instruction entries are removed. Other host config entries stay. |
 | `--publish` | Republishes every source to its own `targets`. |
 | `--tools` | Adds hosts to a source's `targets`, never removes one. |
+| `--kilo-config <path>` | Select a Kilo config when more than one exists; the writer otherwise refuses ambiguity. |
 | `--plan` | Writes nothing; lists each file with `create`, `update` or `delete`. |
 | `--force` | Overwrites each copy the plan lists in `conflicts`; without it, the writer refuses. |
 
 The result is JSON: `files` lists each path and its operation, `conflicts` each copy the writer did not produce, `error` a `{code, message}`. Exit 0 means done; any other exit comes with `error`.
+
+Kilo targets reject `paths`: Kilo cannot enforce that scope. Existing JSONC comments and unrelated settings are preserved. The writer refuses ambiguous or unsafe config files and rolls back covered write failures.

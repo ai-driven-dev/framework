@@ -475,3 +475,162 @@ test("copilot-instructions.md linked to AGENTS.md is never given the pointer", (
   }
 });
 
+
+test("Kilo sync refuses an external AGENTS symlink without changing the target", (t) => {
+  const root = sandbox({});
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-outside-"));
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    const target = path.join(outside, "external.md");
+    fs.writeFileSync(target, EMPTY);
+    try { fs.symlinkSync(target, path.join(root, "AGENTS.md")); }
+    catch (error) { if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) return t.skip("symlink privilege unavailable"); throw error; }
+    assert.match(sync(root).join("\n"), /AGENTS\.md.*not written/u);
+    assert.equal(fs.readFileSync(target, "utf8"), EMPTY);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); }
+});
+
+test("Kilo sync refuses a hardlinked AGENTS without changing the target", () => {
+  const root = sandbox({});
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-outside-"));
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    const target = path.join(outside, "external.md");
+    fs.writeFileSync(target, EMPTY);
+    fs.linkSync(target, path.join(root, "AGENTS.md"));
+    assert.match(sync(root).join("\n"), /AGENTS\.md.*not written/u);
+    assert.equal(fs.readFileSync(target, "utf8"), EMPTY);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); }
+});
+
+test("Kilo sync keeps an internal AGENTS symlink and fills its target", (t) => {
+  const root = sandbox({ "context.md": EMPTY });
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    try { fs.symlinkSync("context.md", path.join(root, "AGENTS.md")); }
+    catch (error) { if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) return t.skip("symlink privilege unavailable"); throw error; }
+    assert.deepEqual(sync(root), []);
+    assert.ok(fs.lstatSync(path.join(root, "AGENTS.md")).isSymbolicLink());
+    assert.match(read(root, "context.md"), /\[aidd_docs\/memory\/architecture\.md\]/u);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test("non-Kilo sync retains its existing symlink behavior", (t) => {
+  const root = sandbox({});
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-outside-"));
+  try {
+    const target = path.join(outside, "external.md");
+    fs.writeFileSync(target, EMPTY);
+    try { fs.symlinkSync(target, path.join(root, "AGENTS.md")); }
+    catch (error) { if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) return t.skip("symlink privilege unavailable"); throw error; }
+    assert.deepEqual(sync(root), []);
+    assert.match(fs.readFileSync(target, "utf8"), /aidd_docs\/memory\/architecture\.md/u);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); }
+});
+
+test("Kilo sync preserves a Linux extended attribute on AGENTS", (t) => {
+  if (process.platform !== "linux") return t.skip("Linux extended attributes only");
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    const file = path.join(root, "AGENTS.md");
+    const set = spawnSync("python3", ["-c", "import os,sys; os.setxattr(sys.argv[1], 'user.aidd_test', b'kept')", file], { encoding: "utf8" });
+    if (set.error?.code === "ENOENT" || set.status !== 0) return t.skip("python3 or filesystem xattrs unavailable");
+    assert.deepEqual(sync(root), []);
+    const check = spawnSync("python3", ["-c", "import os,sys; print(os.getxattr(sys.argv[1], 'user.aidd_test').decode())", file], { encoding: "utf8" });
+    assert.equal(check.status, 0, check.stderr);
+    assert.equal(check.stdout.trim(), "kept");
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Kilo sync reports a potentially partial in-place write failure", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  const originalWrite = fs.writeSync;
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    fs.writeSync = (fd, buffer, offset, length, position) => {
+      if (!Number.isInteger(position)) return originalWrite(fd, buffer, offset, length, position);
+      originalWrite(fd, buffer, offset, Math.min(length, 5), position);
+      throw Object.assign(new Error("injected write failure"), { code: "ENOSPC" });
+    };
+    const message = sync(root).join("\n");
+    assert.match(message, /AGENTS\.md.*may be partially changed/u);
+    const backup = message.match(/recovery copy: (.+)$/u)?.[1];
+    assert.ok(backup, message);
+    assert.equal(fs.readFileSync(backup, "utf8"), EMPTY);
+    if (process.platform !== "win32") assert.equal(fs.statSync(backup).mode & 0o777, 0o600);
+  } finally { fs.writeSync = originalWrite; fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Kilo detection ignores markers of the wrong file type", (t) => {
+  for (const [name, kind] of [[".kilo", "file"], [".kilocode", "file"], ["kilo.json", "directory"], ["kilo.jsonc", "directory"]]) {
+    const root = sandbox({});
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-outside-"));
+    try {
+      const marker = path.join(root, name);
+      if (kind === "file") fs.writeFileSync(marker, "not a directory"); else fs.mkdirSync(marker);
+      const target = path.join(outside, "external.md");
+      fs.writeFileSync(target, EMPTY);
+      try { fs.symlinkSync(target, path.join(root, "AGENTS.md")); }
+      catch (error) { if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) return t.skip("symlink privilege unavailable"); throw error; }
+      assert.deepEqual(sync(root), [], name);
+      assert.match(fs.readFileSync(target, "utf8"), /aidd_docs\/memory\/architecture\.md/u, name);
+    } finally { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); }
+  }
+});
+
+test("Kilo detection recognizes marker links to directories inside or outside the project", (t) => {
+  for (const internal of [true, false]) {
+    const root = sandbox({});
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-outside-"));
+    try {
+      const target = path.join(outside, "external.md");
+      fs.writeFileSync(target, EMPTY);
+      const markerDir = internal ? path.join(root, "config") : path.join(outside, "config");
+      fs.mkdirSync(markerDir);
+      try {
+        fs.symlinkSync(markerDir, path.join(root, ".kilo"), "dir");
+        fs.symlinkSync(target, path.join(root, "AGENTS.md"));
+      } catch (error) { if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) return t.skip("symlink privilege unavailable"); throw error; }
+      const result = sync(root);
+      assert.match(result.join("\n"), /AGENTS\.md.*not written/u);
+      assert.equal(fs.readFileSync(target, "utf8"), EMPTY);
+    } finally { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); }
+  }
+});
+
+
+test("Kilo sync removes its recovery copy after success", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    assert.deepEqual(sync(root), []);
+    assert.equal(fs.readdirSync(root).some((name) => name.includes(".aidd-recovery-")), false);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Kilo sync writes nothing if the recovery copy cannot be synced", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  const originalFsync = fs.fsyncSync;
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    fs.fsyncSync = () => { throw Object.assign(new Error("injected fsync failure"), { code: "EIO" }); };
+    assert.match(sync(root).join("\n"), /AGENTS\.md.*not written/u);
+    assert.equal(read(root, "AGENTS.md"), EMPTY);
+    assert.equal(fs.readdirSync(root).some((name) => name.includes(".aidd-recovery-")), false);
+  } finally { fs.fsyncSync = originalFsync; fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Kilo sync reports a written file when recovery-copy cleanup fails", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  const originalUnlink = fs.unlinkSync;
+  try {
+    fs.mkdirSync(path.join(root, ".kilo"));
+    fs.unlinkSync = (file) => {
+      if (String(file).includes(".aidd-recovery-")) throw Object.assign(new Error("injected unlink failure"), { code: "EACCES" });
+      return originalUnlink(file);
+    };
+    assert.match(sync(root).join("\n"), /AGENTS\.md.*written.*recovery copy/u);
+    assert.match(read(root, "AGENTS.md"), /aidd_docs\/memory\/architecture\.md/u);
+  } finally { fs.unlinkSync = originalUnlink; fs.rmSync(root, { recursive: true, force: true }); }
+});

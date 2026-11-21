@@ -1,0 +1,4 @@
+{
+  "instruct\u0069ons": ["docs/old.md"],
+  "unrelated": "keep { braces } and // text"
+}

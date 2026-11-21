@@ -79,6 +79,27 @@ test("reports an effort a host cannot carry without a model", (t) => {
   assert.deepEqual(json(r).dropped, [{ tool: "cursor", field: "effort" }, { tool: "opencode", field: "effort" }]);
 });
 
+test("preserves requested Kilo temperature and permissions and reports them dropped elsewhere", (t) => {
+  const { run, read } = fixture(t);
+  const request = { name: "scout", description: "Finds files. Use to locate code.", body: "Find it.\n", temperature: 0.25, permission: { edit: "deny", bash: { "git *": "ask", "*": "deny" } } };
+  const result = run(request, "claude,kilo");
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const content = read(".kilo/agents/scout.md");
+  assert.match(content, /^temperature: 0\.25$/m);
+  assert.match(content, /^permission: \{"edit":"deny","bash":\{"git \*":"ask","\*":"deny"\}\}$/m);
+  assert.deepEqual(json(result).dropped, [{ tool: "claude", field: "temperature" }, { tool: "claude", field: "permission" }]);
+  assert.equal(json(run(request, "claude,kilo", ["--plan"])).files[1].operation, "unchanged");
+});
+
+test("refuses invalid Kilo temperature and permissions before writing", (t) => {
+  const { run, project } = fixture(t);
+  for (const fields of [{ temperature: "0.5" }, { permission: { bash: { "*": "maybe" } } }, { permission: ["allow"] }]) {
+    const r = run({ ...agent, ...fields }, "kilo");
+    assert.equal(r.status, 1, r.stdout);
+  }
+  assert.deepEqual(fs.readdirSync(project), []);
+});
+
 test("a minimal agent carries only name and description", (t) => {
   const { run, read } = fixture(t);
   const r = run({ name: "scout", description: "Finds files. Use to locate code.", body: "Find it.\n" }, "claude,copilot");

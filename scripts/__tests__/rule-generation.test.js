@@ -82,20 +82,20 @@ test("all-files native copies are pure and byte exact", (t) => {
 
 test("a body without a final newline is written with one", (t) => {
   const f = fixture(t);
-  const bare = { ...rule, body: rule.body.trimEnd() };
+  const bare = { ...rule, paths: [], body: rule.body.trimEnd() };
   assert.equal(f.run(bare, "claude,kilo").status, 0);
   assert.ok(f.read(SRC).endsWith("clear.\n"));
   assert.equal(f.read(CLAUDE).slice(-7), "clear.\n");
-  assert.ok(f.read(".kilo/rules/01-standards-1-naming.md").endsWith("clear.\n"));
+  assert.ok(f.read(".kilo/rules/01-standards/1-naming.md").endsWith("clear.\n"));
   assert.deepEqual(json(f.run(bare, "claude,kilo")).files, []);
 });
 
 test("a project checked out with CRLF line endings reads as its own output", (t) => {
   const f = fixture(t);
-  assert.equal(f.run(rule, "claude,codex,kilo").status, 0);
+  assert.equal(f.run({ ...rule, paths: [] }, "claude,codex,kilo").status, 0);
   f.put("AGENTS.md", `User text\n\n${f.read("AGENTS.md")}`);
   for (const [name, content] of Object.entries(f.snapshot())) f.put(name, content.replace(/\n/g, "\r\n"));
-  const again = f.run(rule, "claude,codex,kilo", [...input(f), "--plan"]);
+  const again = f.run({ ...rule, paths: [] }, "claude,codex,kilo", [...input(f), "--plan"]);
   assert.equal(again.status, 0, again.stdout);
   assert.deepEqual(json(again), { files: [], conflicts: [] });
   assert.deepEqual(json(f.run(null, null, ["--publish", "--plan"])).conflicts, []);
@@ -321,20 +321,20 @@ test("a file where a directory is expected blocks before any write", (t) => {
   assert.deepEqual(f.snapshot(), before);
 });
 
-const KILO = ".kilo/rules/01-standards-1-naming.md";
+const KILO = ".kilo/rules/01-standards/1-naming.md";
 const OPENCODE = ".opencode/rules/01-standards-1-naming.md";
 const scopeLine = "Applies to files matching `src/**/*.ts`, `test/**/*.ts`.\n\n";
 
 test("kilo gets rule copies and creates kilo.jsonc with its entry", (t) => {
   const f = fixture(t);
-  assert.equal(f.run(rule, "kilo").status, 0);
-  assert.equal(f.read(KILO), scopeLine + rule.body);
-  assert.equal(f.read("kilo.jsonc"), '{\n  "instructions": [".kilo/rules/*.md"]\n}\n');
+  assert.equal(f.run({ ...rule, paths: [] }, "kilo").status, 0);
+  assert.equal(f.read(KILO), rule.body);
+  assert.deepEqual(JSON.parse(f.read(".kilo/kilo.jsonc")).instructions, [KILO]);
   assert.ok(!f.has("AGENTS.md"));
   assert.equal(f.run({ ...rule, slug: "1-other", paths: [] }, "kilo").status, 0);
-  assert.equal(f.read(".kilo/rules/01-standards-1-other.md"), rule.body);
+  assert.equal(f.read(".kilo/rules/01-standards/1-other.md"), rule.body);
   const before = f.snapshot();
-  const again = f.run(rule, "kilo");
+  const again = f.run({ ...rule, paths: [] }, "kilo");
   assert.equal(again.status, 0);
   assert.deepEqual(json(again).files, []);
   assert.deepEqual(f.snapshot(), before);
@@ -352,8 +352,8 @@ test("opencode appends its entry to an existing config and keeps the rest", (t) 
 test("kilo appends its entry to a config under .kilo", (t) => {
   const f = fixture(t);
   f.put(".kilo/kilo.json", '{"$schema":"x"}\n');
-  assert.equal(f.run(rule, "kilo").status, 0);
-  assert.deepEqual(JSON.parse(f.read(".kilo/kilo.json")), { $schema: "x", instructions: [".kilo/rules/*.md"] });
+  assert.equal(f.run({ ...rule, paths: [] }, "kilo").status, 0);
+  assert.deepEqual(JSON.parse(f.read(".kilo/kilo.json")), { $schema: "x", instructions: [KILO] });
   assert.ok(!f.has("kilo.jsonc"));
 });
 
@@ -401,11 +401,11 @@ test("an instructions value that is not an array refuses", (t) => {
 
 test("a publish plan restores each removed host config entry", (t) => {
   const f = fixture(t);
-  assert.equal(f.run(rule, "kilo,opencode").status, 0);
+  assert.equal(f.run({ ...rule, paths: [] }, "kilo,opencode").status, 0);
   assert.deepEqual(json(f.run(null, null, ["--plan", "--publish"])).files, []);
   f.put("opencode.json", "{}\n");
-  f.put("kilo.jsonc", "{}\n");
-  assert.deepEqual(paths(json(f.run(null, null, ["--plan", "--publish"])).files, "update"), ["kilo.jsonc", "opencode.json"]);
+  f.put(".kilo/kilo.jsonc", "{}\n");
+  assert.deepEqual(paths(json(f.run(null, null, ["--plan", "--publish"])).files, "update"), [".kilo/kilo.jsonc", "opencode.json"]);
 });
 
 test("removing the last rule keeps the config entry", (t) => {

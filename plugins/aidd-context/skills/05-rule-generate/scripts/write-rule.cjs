@@ -6,11 +6,12 @@
 // Exit 0 ok, 1 refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
 const fs = require("node:fs");
 const path = require("node:path");
-const { createHash } = require("node:crypto");
+const { createHash, randomUUID } = require("node:crypto");
+const { inspectProject, prepareInstructionEdit, prepareInstructionRemoval } = require("./kilo-config.cjs");
 
 const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
 const FLAGS = ["--publish", "--plan", "--force"];
-const VALUES = ["--project", "--tools", "--input", "--remove"];
+const VALUES = ["--project", "--tools", "--input", "--remove", "--kilo-config"];
 const ACTIONS = ["--input", "--remove", "--publish"];
 const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
 const CATEGORY_NAMES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"];
@@ -75,8 +76,7 @@ const HOSTS = {
     config: { glob: ".opencode/rules/*.md", files: ["opencode.json", "opencode.jsonc"] },
   },
   kilo: {
-    path: (rule) => `.kilo/rules/${rule.category}-${rule.slug}.md`,
-    config: { glob: ".kilo/rules/*.md", files: ["kilo.jsonc", "kilo.json", ".kilo/kilo.jsonc", ".kilo/kilo.json"] },
+    path: (rule) => `.kilo/rules/${rule.category}/${rule.slug}.md`,
   },
 };
 const TOOLS = Object.keys(HOSTS);
@@ -128,7 +128,9 @@ function validateRule(rule) {
   if (!isSingleLine(rule.description)) refuse("Description must be a non-empty single line.");
   if (typeof rule.body !== "string" || !rule.body.trim()) refuse("Body must be non-empty.");
   if (!Array.isArray(rule.paths) || !rule.paths.every(isGlob)) refuse("Paths must be non-empty strings without commas or newlines.");
-  return { ...rule, targets: parseTools(rule.targets) };
+  const targets = parseTools(rule.targets);
+  if (targets.includes("kilo") && rule.paths.length) refuse('Kilo does not support enforceable path scoping; remove "paths" or remove "kilo" from targets.');
+  return { ...rule, targets };
 }
 
 function parseJson(text, message) {
@@ -280,7 +282,8 @@ function openProject(value) {
   // A Windows checkout may turn every line ending into CRLF; the writer reads and writes LF.
   const read = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8").replace(CRLF, "\n"), null);
   const list = (relativePath) => orWhenMissing(() => fs.readdirSync(resolve(relativePath)).sort(), []);
-  return { resolve, read, list };
+  const readRaw = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8"), null);
+  return { root, resolve, read, readRaw, list };
 }
 
 function orWhenMissing(action, fallback) {
@@ -313,7 +316,7 @@ function collectItems(options, sources) {
   const tools = options["--tools"] ? parseTools(options["--tools"].split(",")) : [];
   if (options["--input"]) return [itemFromRequest(options["--input"], tools, sources)];
   if (options["--remove"]) return [itemFromRemoval(options["--remove"], sources)];
-  return [...sources.values()].map((prior) => ({ rule: { ...prior, targets: parseTools([...prior.targets, ...tools]) }, prior }));
+  return [...sources.values()].map((prior) => ({ rule: validateRule({ ...prior, targets: parseTools([...prior.targets, ...tools]) }), prior }));
 }
 
 const withFinalNewline = (text) => (text.endsWith("\n") ? text : `${text}\n`);
@@ -323,7 +326,7 @@ function itemFromRequest(file, tools, sources) {
   if (!rule.body.startsWith(TITLE_PREFIX)) refuse("Body must start with a `# <title>` line.");
   const prior = sources.get(sourcePath(rule));
   const targets = parseTools([...(prior ? prior.targets : []), ...tools]);
-  return { rule: { ...rule, body: withFinalNewline(rule.body), targets }, prior };
+  return { rule: validateRule({ ...rule, body: withFinalNewline(rule.body), targets }), prior };
 }
 
 function itemFromRemoval(identity, sources) {
@@ -335,12 +338,13 @@ function itemFromRemoval(identity, sources) {
 function planChanges(project, options) {
   const sources = loadSources(project);
   const items = collectItems(options, sources);
-  const plan = { writes: new Map(), conflicts: [] };
+  const plan = { writes: new Map(), conflicts: [], configChoices: [] };
   const finalSources = planRuleFiles(plan, project, items, sources);
   for (const host of Object.values(HOSTS).filter((candidate) => candidate.config)) {
     const targeted = items.some((item) => !item.deleting && item.rule.targets.some((tool) => HOSTS[tool] === host));
     if (targeted) planConfig(plan, project, host.config);
   }
+  planKiloConfigs(plan, project, items, options["--kilo-config"]);
   // An existing block is rebuilt too, so lines for hosts that now take copies disappear.
   const indexed = items.some((item) => isIndexed(item.rule));
   if (indexed || INDEX_PRESENT.test(project.read(AGENTS) ?? "")) planIndex(plan, project, finalSources, indexed);
@@ -410,6 +414,42 @@ function planConfig(plan, project, config) {
   planChange(plan, found[0][0], found[0][1], `${JSON.stringify(parsed, null, 2)}\n`);
 }
 
+function planKiloConfigs(plan, project, items, selected) {
+  const touched = items.filter(({ rule }) => rule.targets.includes("kilo"));
+  if (selected && !touched.length) refuse("--kilo-config requires a Kilo target.");
+  const pending = new Map();
+  for (const { rule, deleting } of touched) {
+    const instruction = HOSTS.kilo.path(rule);
+    let choice;
+    let selectedForRule = selected;
+    try {
+      if (selected && touched.length > 1) {
+        const unselected = inspectProject(project.root, instruction);
+        if (!unselected.needsChoice) selectedForRule = undefined;
+      }
+      choice = inspectProject(project.root, instruction, selectedForRule);
+    }
+    catch (error) { refuse(error.message); }
+    if (choice.needsChoice) refuse(`Choose a Kilo config for ${instruction}: ${choice.candidates.map((item) => item.path).join(", ")}`);
+    if (deleting && choice.multipleOwners) refuse(`Multiple Kilo configs own ${instruction}; resolve references before deletion.`);
+    plan.configChoices.push({ instruction, selected: selectedForRule, choice });
+    const config = choice.selectedPath;
+    const alreadyPending = pending.has(config);
+    const original = alreadyPending ? pending.get(config) : project.readRaw(config);
+    if (!alreadyPending) {
+      const snapshot = choice.candidates.find((candidate) => candidate.path === config)?.snapshot;
+      let stat = null;
+      try { stat = fs.lstatSync(project.resolve(config)); } catch (error) { if (error.code !== "ENOENT") throw error; }
+      if (snapshot ? (!stat || original === null || stat.dev !== snapshot.dev || stat.ino !== snapshot.ino || (stat.mode & 0o7777) !== snapshot.mode || sha256(original) !== snapshot.hash) : original !== null) refuse(`Kilo config changed after inspection: ${config}`);
+    }
+    let result;
+    try { result = deleting ? (original === null ? null : prepareInstructionRemoval(original, instruction).content) : prepareInstructionEdit(original ?? "{}\n", instruction).content; }
+    catch (error) { refuse(error.message); }
+    pending.set(config, result);
+  }
+  for (const [file, text] of pending) planChange(plan, file, project.readRaw(file), text);
+}
+
 // ---------- effects ----------
 
 function operationOf({ current, wanted }) {
@@ -418,7 +458,7 @@ function operationOf({ current, wanted }) {
 }
 
 function toOperations(project, writes) {
-  return [...writes].map(([relativePath, change]) => ({ path: relativePath, file: project.resolve(relativePath), operation: operationOf(change), text: change.wanted }));
+  return [...writes].map(([relativePath, change]) => ({ path: relativePath, file: project.resolve(relativePath), operation: operationOf(change), text: change.wanted, current: change.current }));
 }
 
 function nearestExisting(file) {
@@ -463,10 +503,73 @@ function perform(operation) {
   }
 }
 
-function applyPlan(operations, conflicts, force) {
-  if (conflicts.length && !force) refuse(`Would overwrite ${conflicts.join(", ")}, which the writer did not produce; rerun with --force once approved.`);
+function applyPlan(project, plan, operations, force) {
+  if (plan.conflicts.length && !force) refuse(`Would overwrite ${plan.conflicts.join(", ")}, which the writer did not produce; rerun with --force once approved.`);
   assertWritable(operations);
-  for (const operation of operations) perform(operation);
+  if (!plan.configChoices.length) { for (const operation of operations) perform(operation); return; }
+  const pending = [], staged = [], applied = [], createdDirs = [];
+  const checkChoices = () => {
+    for (const { instruction, selected, choice } of plan.configChoices) {
+      let now;
+      try { now = inspectProject(project.root, instruction, selected); } catch (error) { refuse(error.message); }
+      if (JSON.stringify(now) !== JSON.stringify(choice)) refuse(`Kilo config changed during publication: ${instruction}`);
+    }
+  };
+  const stage = (item, text, file) => {
+    project.resolve(item.path);
+    const fd = fs.openSync(file, "wx", item.stat ? item.stat.mode & 0o7777 : 0o666);
+    staged.push(file);
+    try { fs.writeFileSync(fd, text); if (item.stat && process.platform !== "win32") fs.fchmodSync(fd, item.stat.mode & 0o7777); }
+    finally { fs.closeSync(fd); }
+  };
+  try {
+    for (const operation of operations) {
+      const file = project.resolve(operation.path);
+      let stat = null;
+      try { stat = fs.lstatSync(file); } catch (error) { if (error.code !== "ENOENT") throw error; }
+      if (stat && !stat.isFile()) refuse(`Unsafe output type: ${operation.path}`);
+      const raw = project.readRaw(operation.path);
+      // Regular rule reads normalize CRLF; config edits preserve the original bytes.
+      if (raw !== operation.current && raw?.replace(CRLF, "\n") !== operation.current) refuse(`Output changed during publication: ${operation.path}`);
+      pending.push({ ...operation, file, stat, original: raw });
+    }
+    checkChoices();
+    for (const item of pending) {
+      project.resolve(item.path);
+      let dir = path.dirname(item.file); const missing = [];
+      while (dir !== project.root && !fs.existsSync(dir)) { missing.push(dir); dir = path.dirname(dir); }
+      for (const name of missing.reverse()) { fs.mkdirSync(name); createdDirs.push(name); }
+      if (item.text !== null) { item.temporary = `${item.file}.${randomUUID()}.tmp`; stage(item, item.text, item.temporary); }
+    }
+    checkChoices();
+    for (const item of pending) {
+      project.resolve(item.path);
+      let stat = null;
+      try { stat = fs.lstatSync(item.file); } catch (error) { if (error.code !== "ENOENT") throw error; }
+      if (Boolean(stat) !== Boolean(item.stat) || (stat && (stat.dev !== item.stat.dev || stat.ino !== item.stat.ino || (stat.mode & 0o7777) !== (item.stat.mode & 0o7777))) || project.readRaw(item.path) !== item.original) refuse(`Output changed during publication: ${item.path}`);
+      item.publishedStat = item.text === null ? null : fs.lstatSync(item.temporary);
+      if (item.text === null) fs.rmSync(item.file); else fs.renameSync(item.temporary, item.file);
+      applied.push(item);
+    }
+  } catch (error) {
+    const failures = [];
+    for (const item of applied.reverse()) {
+      try {
+        project.resolve(item.path);
+        let current = null;
+        try { current = fs.lstatSync(item.file); } catch (error) { if (error.code !== "ENOENT") throw error; }
+        const published = item.publishedStat;
+        if (Boolean(current) !== Boolean(published) || (current && (current.dev !== published.dev || current.ino !== published.ino || (current.mode & 0o7777) !== (published.mode & 0o7777) || project.readRaw(item.path) !== item.text))) throw new Error(`Output changed before rollback: ${item.path}`);
+        if (item.original === null) fs.rmSync(item.file, { force: true });
+        else { const restore = `${item.file}.${randomUUID()}.tmp`; stage(item, item.original, restore); project.resolve(item.path); fs.renameSync(restore, item.file); }
+      } catch (rollback) { failures.push(rollback.message); }
+    }
+    if (failures.length) throw Object.assign(new Error(`${error.message}; rollback failed: ${failures.join("; ")}`), { code: error.code || "EIO" });
+    throw error;
+  } finally {
+    for (const file of staged) fs.rmSync(file, { force: true });
+    for (const dir of createdDirs.reverse()) { try { fs.rmdirSync(dir); } catch (error) { if (error.code !== "ENOTEMPTY" && error.code !== "ENOENT") throw error; } }
+  }
 }
 
 // ---------- output ----------
@@ -476,7 +579,7 @@ function main(argv) {
   const project = openProject(options["--project"]);
   const plan = planChanges(project, options);
   const operations = toOperations(project, plan.writes);
-  if (!options["--plan"]) applyPlan(operations, plan.conflicts, options["--force"]);
+  if (!options["--plan"]) applyPlan(project, plan, operations, options["--force"]);
   return { files: operations.map((operation) => ({ path: operation.path, operation: operation.operation })), conflicts: plan.conflicts };
 }
 
@@ -484,7 +587,7 @@ function failureOf(error) {
   if (error instanceof UsageError) return { code: EXIT.USAGE, error: { code: "USAGE", message: error.message } };
   if (error instanceof Refusal) return { code: EXIT.REFUSED, error: { code: "REFUSED", message: error.message } };
   if (error.code) return { code: EXIT.FILESYSTEM, error: { code: error.code, message: error.message } };
-  throw error;
+  return { code: EXIT.FILESYSTEM, error: { code: "EIO", message: error.message } };
 }
 
 function run() {

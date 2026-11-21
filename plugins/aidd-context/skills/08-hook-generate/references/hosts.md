@@ -12,13 +12,13 @@ Detect by listing the project root with hidden entries, since a file search miss
 | GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/hooks/` | `toolName`, `toolArgs`, an object or a JSON string |
 | Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | `toolCall.name`, `toolCall.args` |
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `tool`, `args` |
-| Kilo Code / `kilo` | `.kilo/`, `kilo.jsonc` or `kilo.json` | `tool`, `args` |
+| Kilo Code / `kilo` | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or legacy `.kilocode/` | `tool`, `args` |
 
 The script starts in the project root, except on Codex, in the session's folder, and on Antigravity, in `.agents/`.
 
 ## Moment to event
 
-A `-` means the host has no event for that moment.
+A `-` means the writer has no mapping for that moment. Kilo documents `session.created` for session start, but it is guidance only and is not a writer target; see [Kilo plugins](https://kilo.ai/docs/automate/extending/plugins), verified 2026-09-25.
 
 | Moment | Claude, Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- |
@@ -51,3 +51,5 @@ Claude and Codex read decisions under `hookSpecificOutput`. Antigravity reads JS
 | Claude, Cursor | trust the workspace |
 | Codex | review the hook in `/hooks`, again after each change; an unreviewed hook is skipped silently |
 | Copilot | admit the workspace; it also runs `.claude/settings.json`, so a hook for Claude and Copilot runs twice there |
+
+`AGENTS.md` alone does not identify Kilo; `opencode.json` or `opencode.jsonc` alone does not identify Kilo. New Kilo artifacts use `.kilo/`, never `.kilocode/`. Kilo paths verified 2026-09-25: [settings](https://kilo.ai/docs/getting-started/settings).

@@ -10,9 +10,11 @@ Where each host AI tool keeps a project's agents, and how to tell it is installe
 | Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` | `.agents/agents/<name>/agent.md` |
 | Codex CLI / `codex` | `.codex/` | `.codex/agents/<name>.toml` |
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `.opencode/agents/<name>.md` |
-| Kilo Code / `kilo` | `.kilo/` | `.kilo/agents/<name>.md` |
+| Kilo Code / `kilo` | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc` or `.kilocode/` | `.kilo/agents/<name>.md` |
 
 Every host reads `AGENTS.md`, so it signals none. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host. When no signal matches, confirm the host.
+
+`.kilocode/` identifies legacy Kilo projects; new agents still go in `.kilo/`. `opencode.json` or `opencode.jsonc` alone does not identify Kilo.
 
 A plugin source is one canonical agent: the draft as one file in the Claude Code format, at `agents/<name>.md` under the plugin root, with no per-host copy.
 
@@ -21,3 +23,5 @@ Facts the writer cannot enforce:
 - The Codex `workspace-write` sandbox denies writes under `.agents/`, so an Antigravity target fails when run from Codex.
 
 Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Cursor](https://cursor.com/docs/subagents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Antigravity](https://antigravity.google/docs/subagents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode V2](https://opencode.ai/v2/docs/agents), [Kilo](https://kilo.ai/docs/customize/custom-subagents).
+
+Kilo agent path and frontmatter verified 2026-09-25: [Kilo custom subagents](https://kilo.ai/docs/customize/custom-subagents), [settings](https://kilo.ai/docs/getting-started/settings), and [legacy fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md).

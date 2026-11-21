@@ -167,3 +167,15 @@ test("a project checked out with CRLF line endings reads as its own output", (t)
   assert.deepEqual(json(again).files.map((file) => file.operation), written.map(() => "unchanged"));
   assert.equal(run().status, 0);
 });
+
+test("Kilo workflow keeps optional variant and boolean subtask without leaking them to Claude", (t) => {
+  const { run, read } = fixture(t);
+  const result = run({ ...command, variant: "high", subtask: true }, "claude,kilo");
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(read(".kilo/commands/ship-release.md"), /\nvariant: high\nsubtask: true\n/u);
+  assert.doesNotMatch(read(".claude/commands/ship-release.md"), /\n(?:variant|subtask):/u);
+  assert.deepEqual(json(result).dropped.filter(({ field }) => ["variant", "subtask"].includes(field)), [
+    { tool: "claude", field: "variant" }, { tool: "claude", field: "subtask" },
+  ]);
+  assert.equal(json(run({ ...command, variant: "high", subtask: true }, "claude,kilo", ["--plan"])).files.every(({ operation }) => operation === "unchanged"), true);
+});

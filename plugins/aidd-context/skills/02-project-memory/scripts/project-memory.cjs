@@ -5,8 +5,10 @@
 // It writes no memory fact, and nothing between the markers.
 
 const { spawnSync } = require("node:child_process");
+const { randomUUID } = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
+const { TextDecoder } = require("node:util");
 const { ERROR, rootFiles, lintFile, formatFindings } = require("./lib/memory-lint.cjs");
 
 const MEMORY_DIR = "aidd_docs/memory";
@@ -30,6 +32,7 @@ const TOOL_FILES = Object.freeze({
   codex: "AGENTS.md",
   cursor: "AGENTS.md",
   opencode: "AGENTS.md",
+  kilo: "AGENTS.md",
   antigravity: "AGENTS.md",
   copilot: "AGENTS.md",
 });
@@ -123,6 +126,107 @@ function wireContext(root, file) {
   return `${file}: marker pair added`;
 }
 
+/** Kilo shares AGENTS.md, but must not change a file outside the project or another hard link. */
+function wireKiloContext(root) {
+  const file = "AGENTS.md";
+  const full = path.join(root, file);
+  const realRoot = fs.realpathSync(root);
+  let resolved;
+  try { resolved = fs.realpathSync(full); }
+  catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    try { fs.lstatSync(full); throw new UsageError(`${file} is a dangling link; wire it manually.`); }
+    catch (missing) { if (missing.code !== "ENOENT") throw missing; }
+  }
+  const safeFlags = process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0);
+  let fd;
+  let writable;
+  let temp;
+  let keepBackup = false;
+  try {
+    let opened, original, text;
+    if (resolved !== undefined) {
+      const relative = path.relative(realRoot, resolved);
+      if (relative === "" || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+        throw new UsageError(`${file} resolves outside the project; wire it manually.`);
+      }
+      try { fd = fs.openSync(resolved, fs.constants.O_RDWR | safeFlags); }
+      catch (error) {
+        if (error.code === "EACCES" || error.code === "EPERM") throw new UsageError(`${file} cannot be opened for writing; wire it manually.`);
+        throw error;
+      }
+      opened = fs.fstatSync(fd);
+      if (!opened.isFile() || opened.nlink !== 1) throw new UsageError(`${file} must be a regular file with one hard link.`);
+      original = fs.readFileSync(fd);
+      try { text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(original); }
+      catch { throw new UsageError(`${file} is not valid UTF-8; wire it manually.`); }
+      if (MARKERS.some((marker) => text.includes(marker))) return `${file}: kept, it holds the markers`;
+      if (process.platform !== "win32" && !(opened.mode & 0o222)) throw new UsageError(`${file} is read-only; wire it manually.`);
+      writable = fd;
+    } else {
+      text = fs.readFileSync(path.join(TEMPLATES, "AGENTS.md"), "utf8");
+    }
+    const bytes = Buffer.from(resolved === undefined ? text : appended(text, `${BLOCK_OPEN}\n${BLOCK_CLOSE}`));
+    const backup = resolved === undefined ? bytes : original;
+    temp = path.join(path.dirname(resolved ?? full), `.aidd-memory-${randomUUID()}.tmp`);
+    let staged;
+    try {
+      staged = fs.openSync(temp, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | safeFlags, 0o600);
+      let offset = 0;
+      while (offset < backup.length) {
+        const written = fs.writeSync(staged, backup, offset, backup.length - offset, offset);
+        if (written === 0) throw new Error(`Could not finish wiring ${file}.`);
+        offset += written;
+      }
+      if (opened && process.platform !== "win32") {
+        const tempStat = fs.fstatSync(staged);
+        if (tempStat.uid !== opened.uid || tempStat.gid !== opened.gid) fs.fchownSync(staged, opened.uid, opened.gid);
+      }
+      fs.fsyncSync(staged);
+    } finally { if (staged !== undefined) fs.closeSync(staged); }
+    if (resolved === undefined) {
+      // Link is atomic and refuses an existing path, including a dangling symlink.
+      fs.linkSync(temp, full);
+      return `${file}: created`;
+    }
+    const current = fs.statSync(full);
+    const descriptor = fs.fstatSync(fd);
+    const now = Buffer.alloc(original.length);
+    let read = 0;
+    while (read < now.length) {
+      const count = fs.readSync(fd, now, read, now.length - read, read);
+      if (count === 0) break;
+      read += count;
+    }
+    if (fs.realpathSync(full) !== resolved || current.dev !== opened.dev || current.ino !== opened.ino || current.nlink !== 1 || current.size !== opened.size || current.mtimeMs !== opened.mtimeMs || current.ctimeMs !== opened.ctimeMs || descriptor.dev !== opened.dev || descriptor.ino !== opened.ino || descriptor.nlink !== 1 || read !== original.length || !now.equals(original)) {
+      throw new UsageError(`${file} changed while wiring; try again.`);
+    }
+    function writeAll(content) {
+      let offset = 0;
+      while (offset < content.length) {
+        const written = fs.writeSync(writable, content, offset, content.length - offset, offset);
+        if (written === 0) throw new Error(`Could not finish wiring ${file}.`);
+        offset += written;
+      }
+      fs.ftruncateSync(writable, content.length);
+    }
+    try { writeAll(bytes); }
+    catch (error) {
+      // A failed write can have changed bytes, while another process may also
+      // have edited the same inode. Do not overwrite either without proof.
+      keepBackup = true;
+      throw new Error(`${error.message}; ${file} may be incomplete or changed concurrently. Original content retained at ${temp}.`);
+    }
+    return `${file}: marker pair added`;
+  } finally {
+    try { if (writable !== undefined && writable !== fd) fs.closeSync(writable); }
+    finally {
+      try { if (fd !== undefined) fs.closeSync(fd); }
+      finally { if (temp !== undefined && !keepBackup) fs.rmSync(temp, { force: true }); }
+    }
+  }
+}
+
 /** Copilot reads one pointer line to AGENTS.md; a copilot file linked to AGENTS.md holds the markers by then. */
 function wireCopilot(root) {
   const full = path.join(root, COPILOT_FILE);
@@ -144,7 +248,9 @@ function wire(root, tools) {
   const unknown = tools.filter((tool) => !Object.hasOwn(TOOL_FILES, tool));
   if (unknown.length > 0) throw new UsageError(`unknown tool ${unknown.join(", ")}; known: ${Object.keys(TOOL_FILES).join(", ")}`);
   // A file linked to another holds the markers once the first is wired, so it is kept.
-  const lines = [...new Set(tools.map((tool) => TOOL_FILES[tool]))].map((file) => wireContext(root, file));
+  // Check the shared Kilo target before touching another selected host.
+  const kiloResult = tools.includes("kilo") ? wireKiloContext(root) : null;
+  const lines = [...new Set(tools.map((tool) => TOOL_FILES[tool]))].map((file) => file === "AGENTS.md" && kiloResult !== null ? kiloResult : wireContext(root, file));
   if (tools.includes("copilot")) lines.push(wireCopilot(root));
   return lines;
 }

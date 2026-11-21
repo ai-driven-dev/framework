@@ -13,6 +13,7 @@ The request, or the revision asked in plan.
    - Update or remove: name the existing hook, found by its script under a host's `hooks/` folder.
 3. Confirm the hosts per [hosts.md](../references/hosts.md): offer the detected ones, and add or drop any the user names, skipped on remove.
    - Update: start from the hosts that already carry the hook.
+   - Kilo: give guidance only. Kilo uses JavaScript or TypeScript plugins under `.kilo/plugin/` or `.kilo/plugins/`; do not generate a declarative hook or plugin runtime for Kilo. Name `session.created` for session start only; for other moments cite a documented typed hook or event only when equivalence is proven. See [Kilo plugins](https://kilo.ai/docs/automate/extending/plugins), verified 2026-09-25. Drop Kilo from writer targets.
 4. Confirm the intent per [hook-authoring.md](../references/hook-authoring.md), skipped on remove.
 5. Map the intent to each host's event and matcher per [hosts.md](../references/hosts.md), dropping a host that cannot carry it with its reason, skipped on remove.
    - No host left: stop, unsupported.

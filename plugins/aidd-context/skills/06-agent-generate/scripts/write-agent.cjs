@@ -77,8 +77,8 @@ const HOSTS = {
   },
   kilo: {
     path: (name) => `.kilo/agents/${name}.md`,
-    fields: (a) => ({ description: a.description, model: a.model, variant: a.effort, mode: "subagent" }),
-    uses: ["model", "effort"],
+    fields: (a) => ({ description: a.description, model: a.model, variant: a.effort, mode: "subagent", temperature: a.temperature, permission: a.permission }),
+    uses: ["model", "effort", "temperature", "permission"],
   },
 };
 const TOOLS = Object.keys(HOSTS);
@@ -128,10 +128,20 @@ function readAgent(file) {
 const isSingleLine = (value) => typeof value === "string" && !LINE_BREAK.test(value);
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
 const isStringList = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
+const isPermissionAction = (value) => ["allow", "ask", "deny"].includes(value);
+const isPermission = (value) => isPermissionAction(value) || (
+  value !== null && typeof value === "object" && !Array.isArray(value) &&
+  Object.values(value).every((entry) => isPermissionAction(entry) || (
+    entry !== null && typeof entry === "object" && !Array.isArray(entry) &&
+    Object.values(entry).every(isPermissionAction)
+  ))
+);
 
 function valueAccepted(key, value) {
   if (key === "tools" && isStringList(value)) return true;
   if (key === "include-custom-instructions") return typeof value === "boolean";
+  if (key === "temperature") return typeof value === "number" && Number.isFinite(value);
+  if (key === "permission") return isPermission(value);
   return typeof value === "string";
 }
 
@@ -153,7 +163,7 @@ function toolList(tools) {
 }
 
 function yamlScalar(value) {
-  if (typeof value === "boolean") return String(value);
+  if (typeof value !== "string") return JSON.stringify(value);
   const plain = PLAIN_SCALAR.test(value) && !value.endsWith(" ") && !YAML_KEYWORD.test(value);
   return plain ? value : JSON.stringify(value);
 }

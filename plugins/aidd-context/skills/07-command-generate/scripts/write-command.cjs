@@ -14,7 +14,7 @@ const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const LINE_BREAK = /[\r\n]/;
 const CRLF = /\r\n/g;
 const BODY = "body";
-const BOOLEAN_KEYS = ["disable-model-invocation"];
+const BOOLEAN_KEYS = ["disable-model-invocation", "subtask"];
 // A YAML plain scalar that reads back as the same string; anything else is double-quoted.
 const PLAIN_SCALAR = /^[A-Za-z0-9][A-Za-z0-9 ._/,'()-]*$/;
 const YAML_KEYWORD = /^(true|false|null|yes|no|on|off)$/i;
@@ -30,7 +30,7 @@ const HOSTS = {
   cursor: { path: (name) => `.cursor/commands/${name}.md`, keys: [] },
   copilot: { path: (name) => `.github/prompts/${name}.prompt.md`, keys: ["description", "argument-hint", "agent", "model"] },
   opencode: { path: (name) => `.opencode/commands/${name}.md`, keys: ["description", "agent", "model"] },
-  kilo: { path: (name) => `.kilo/commands/${name}.md`, keys: ["description", "agent", "model"] },
+  kilo: { path: (name) => `.kilo/commands/${name}.md`, keys: ["description", "agent", "model", "variant", "subtask"] },
 };
 const TOOLS = Object.keys(HOSTS);
 
