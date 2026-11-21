@@ -265,7 +265,9 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
 
     it("retains the machine claim if the host refuses unregister", async () => {
       const f = fixture({ failOnUninstall: true });
-      await expect(execute(f.remove, REF)).rejects.toThrow(/not installed/);
+      await expect(execute(f.remove, REF)).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringMatching(/not installed/) })
+      );
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);

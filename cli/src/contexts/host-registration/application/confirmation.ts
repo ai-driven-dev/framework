@@ -24,7 +24,7 @@ export function bestEffortNativeCall(
     return { confirmed: true };
   } catch (error) {
     if (!(error instanceof NativePluginCliError)) throw error;
-    const refused = { confirmed: false, warning: warningFor(error.message) } as const;
+    const refused = { confirmed: false, warning: warningFor(error.detail) } as const;
     warn(refused.warning);
     return refused;
   }

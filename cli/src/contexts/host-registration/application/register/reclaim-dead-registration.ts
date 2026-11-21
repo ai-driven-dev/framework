@@ -37,20 +37,20 @@ export async function reclaimOrReport(
     const foreignRef = judged.reconcile;
     warn(
       `Native plugin activation — catalogue '${hostName}' collides with unproven AIDD ownership` +
-        `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.message}`
+        `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.detail}`
     );
     return false;
   }
   if (!(await builtByThisCli(run, marketplace, hostName))) {
     warn(
       `Native plugin activation — catalogue '${hostName}' host catalogue source is unproven; ` +
-        `host registration left untouched. ${addError.message}`
+        `host registration left untouched. ${addError.detail}`
     );
     return false;
   }
   if (activator.registrationState(hostName) !== "dead") {
     warn(
-      `Native plugin activation — register marketplace '${hostName}' skipped: ${addError.message}`
+      `Native plugin activation — register marketplace '${hostName}' skipped: ${addError.detail}`
     );
     return false;
   }

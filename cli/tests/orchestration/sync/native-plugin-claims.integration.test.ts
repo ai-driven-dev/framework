@@ -314,7 +314,9 @@ for (const [toolId, catalogPath] of [
             projectRoot: "/A",
             scope: "user",
           })
-        ).rejects.toThrow(/plugin update.*failed/);
+        ).rejects.toThrow(
+          expect.objectContaining({ detail: expect.stringMatching(/plugin update.*failed/) })
+        );
         expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
           { ref, dependents: ["/A", "/B"] },
         ]);

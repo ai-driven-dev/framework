@@ -6,15 +6,15 @@ import { AiddError } from "../../../shared/domain/shared.error.js";
  * refused. */
 export class MarketplaceSourceConflictError extends AiddError {
   readonly code = "marketplace-source-conflict";
-  constructor(message: string) {
-    super(message);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class NativePluginCliError extends AiddError {
   readonly code = "native-plugin-cli";
-  constructor(message: string) {
-    super(message);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
@@ -24,10 +24,7 @@ export class NativePluginCliError extends AiddError {
  * host was never asked to hold. */
 export class UnreadableBuiltCatalogError extends AiddError {
   readonly code = "unreadable-built-catalog";
-  constructor(path: string) {
-    super(
-      `Cannot read the marketplace catalog this project just built, at ${path} — nothing was ` +
-        "registered for it. Run `aidd sync` again once the source is fixed."
-    );
+  constructor(readonly path: string) {
+    super();
   }
 }

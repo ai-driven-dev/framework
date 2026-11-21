@@ -1,5 +1,6 @@
 import type * as auth from "../../contexts/auth/domain/auth.error.js";
 import type * as distribution from "../../contexts/distribution/domain/distribution.error.js";
+import type * as hostRegistration from "../../contexts/host-registration/domain/host-registration.error.js";
 import { MAX_IDENTITY_LENGTH } from "../../contexts/telemetry/contract/identity-limit.js";
 import type * as telemetry from "../../contexts/telemetry/domain/telemetry.error.js";
 import type * as tools from "../../contexts/tools/domain/tools.error.js";
@@ -18,6 +19,7 @@ type Catalogued = InstanceType<
   | Classes<typeof translate>
   | Classes<typeof tools>
   | Classes<typeof orchestration>
+  | Classes<typeof hostRegistration>
 >;
 type ByCode = { [Error in Catalogued as Error["code"]]: Error };
 
@@ -30,6 +32,11 @@ const entries: {
   [Code in keyof ByCode]: (error: ByCode[Code], words: (cause: unknown) => string) => string;
 } = {
   "auth-storage": (error) => error.detail,
+  "marketplace-source-conflict": (error) => error.detail,
+  "native-plugin-cli": (error) => error.detail,
+  "unreadable-built-catalog": (error) =>
+    `Cannot read the marketplace catalog this project just built, at ${error.path} — nothing was ` +
+    "registered for it. Run `aidd sync` again once the source is fixed.",
   "ambiguous-plugin-match": (error) =>
     `Plugin '${error.plugin}' matches multiple marketplaces: ${error.marketplaces.join(", ")}. Use --from <marketplace>.`,
   "category-mismatch": (error) => {

@@ -144,7 +144,9 @@ describe("HostCliAdapter (codex)", () => {
         upgradeVerb: "upgrade",
         enableVerb: "add",
       }).enablePlugin("ghost@m1")
-    ).toThrow("plugin `ghost` was not found");
+    ).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("plugin `ghost` was not found") })
+    );
   });
 
   it("uninstalls a plugin via `codex plugin remove <ref>`", () => {

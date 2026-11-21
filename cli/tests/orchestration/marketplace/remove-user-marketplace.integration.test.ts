@@ -351,7 +351,9 @@ for (const toolId of [TOOL.codex]) {
 
     it("keeps the canonical claim and registry if the host refuses unregister", async () => {
       const f = await fixture(enabled(), { failOnUninstall: true });
-      await expect(f.useCase.execute(options())).rejects.toThrow(/not installed/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringMatching(/not installed/) })
+      );
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);
@@ -361,7 +363,9 @@ for (const toolId of [TOOL.codex]) {
 
     it("retains the claim and catalogue record if catalogue removal fails after ref uninstall", async () => {
       const f = await fixture(enabled(), { throwOnRemove: true });
-      await expect(f.useCase.execute(options())).rejects.toThrow(/marketplace remove.*failed/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringMatching(/marketplace remove.*failed/) })
+      );
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
