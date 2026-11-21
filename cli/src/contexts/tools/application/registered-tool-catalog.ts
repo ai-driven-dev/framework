@@ -4,7 +4,7 @@ import {
   UnregisteredToolError,
 } from "../../../shared/domain/errors.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../contract/tool-catalog.js";
+import type { RecommendationContext, ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
 import { agentProviders } from "../domain/models/agent-models.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
@@ -100,6 +100,16 @@ export class RegisteredToolCatalog implements ToolCatalog {
       )
     );
     return agentProviders().filter((provider) => run.has(provider));
+  }
+
+  recommended(category: "ai", project?: RecommendationContext): readonly AiToolId[];
+  recommended(category: "ide", project?: RecommendationContext): readonly IdeToolId[];
+  recommended(category: ToolCategory, project?: RecommendationContext): readonly ToolId[] {
+    if (project?.hasFramework === true) return [];
+    const recommended = [...this.#byId.values()].filter(
+      (profile) => profile.recommendedFor?.(project) === true
+    );
+    return idsOf(recommended, category);
   }
 }
 

@@ -94,7 +94,8 @@ describe("PropagateAiSettingsToIde", () => {
     const forOtherIde: SettingsFileAnswers = {
       consumes: () => false,
       consumedRefs: () => [],
-      requiredTool: () => "other-ide",
+      appliesWith: (installed) => installed("other-ide"),
+      requires: (toolId) => toolId === "other-ide",
       outputPath: () => ".other-ide/settings.json",
       mergeStrategy: () => forVscode.mergeStrategy(),
       resolveStaticContent: () => '{"other": true}',

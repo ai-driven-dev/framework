@@ -4,7 +4,7 @@ import { codex } from "../../../../../../src/contexts/tools/domain/profiles/code
 describe("codex mcp", () => {
   describe("capabilities.mcp", () => {
     it("outputs to .codex/config.toml", () => {
-      expect(codex.section("mcp").config?.outputPath()).toBe(".codex/config.toml");
+      expect(codex.section("mcp").config?.accepts(".codex/config.toml")).toBe(true);
     });
 
     it("uses user-prime merge strategy", () => {

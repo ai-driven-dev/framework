@@ -126,7 +126,7 @@ export class InstallRuntimeConfig {
     options: InstallRuntimeConfigCommand
   ): Promise<string> {
     const mcp = profile.mcpConfig();
-    if (mcp === null || mcp.outputPath() !== fileName) return outputPath;
+    if (mcp === null || !mcp.accepts(fileName)) return outputPath;
     return mcp.resolveOutputPath((relativePath) =>
       this.fs.fileExists(join(options.projectRoot, relativePath))
     );
@@ -157,8 +157,7 @@ export class InstallRuntimeConfig {
     cap: SettingsFileAnswers,
     options: InstallRuntimeConfigCommand
   ): InstallationFile | null {
-    const requiredTool = cap.requiredTool();
-    if (requiredTool !== null && !options.manifest.hasTool(requiredTool)) return null;
+    if (!cap.appliesWith((toolId) => options.manifest.hasTool(toolId))) return null;
     const content = cap.resolveStaticContent((fileName) =>
       this.assets.loadConfigAsset(options.toolId, fileName)
     );

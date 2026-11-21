@@ -147,8 +147,8 @@ export interface McpConfigAnswers {
   ): McpPluginMerge;
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string;
-  /** The project-relative file the tool's mcp servers live in. */
-  outputPath(): string;
+  /** Whether `relativePath` is the project file the tool's mcp servers live in by default. */
+  accepts(relativePath: string): boolean;
   /** Whether the config asset named `fileName` is that file, merged over what a person keeps. */
   isFrameworkPrimeJson(fileName: string): boolean;
   /** The file a project already keeps its mcp servers in, `exists` asking the project. */
@@ -167,8 +167,10 @@ export interface SettingsFileAnswers {
   consumes(configName: string): boolean;
   /** Every config artifact this file takes in, with where the canonical source keeps it. */
   consumedRefs(): readonly ConfigRef[];
-  /** The tool that must be installed for this file to apply, or null. */
-  requiredTool(): string | null;
+  /** Whether this file applies, `installed` telling which tools are there. */
+  appliesWith(installed: (toolId: string) => boolean): boolean;
+  /** Whether this file applies only because `toolId` is installed. */
+  requires(toolId: string): boolean;
   outputPath(): string;
   mergeStrategy(): MergeStrategy;
   /** The file's fixed content, loaded through `loadAsset` when it lives in an asset. */

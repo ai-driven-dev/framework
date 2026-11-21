@@ -4,7 +4,7 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 describe("claude mcp", () => {
   describe("capabilities.mcp", () => {
     it("outputs to .mcp.json", () => {
-      expect(claude.section("mcp").config?.outputPath()).toBe(".mcp.json");
+      expect(claude.section("mcp").config?.accepts(".mcp.json")).toBe(true);
     });
 
     it("writes its servers as JSON under `mcpServers`", () => {

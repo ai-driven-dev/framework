@@ -101,7 +101,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
       })
     ).toBe("{}");
     expect(loaded).toStrictEqual(["vscode-settings.json"]);
-    expect(settings.requiredTool()).toBe("vscode");
+    expect(settings.requires("vscode")).toBe(true);
   });
 });
 

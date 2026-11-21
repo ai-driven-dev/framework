@@ -24,6 +24,8 @@ export const vscode = defineIdeTool({
   toolId: "vscode",
   directory: DIRECTORY,
   signalDir: null,
+  recommendedFor: (project) =>
+    project !== undefined && (project.isMonorepo || project.stack === "typescript"),
   configAssets: [
     {
       name: "settings.json",

@@ -99,9 +99,8 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
 
 /**
  * Files naming a tool outside its profile today, with how many they name; the list may only
- * shrink, and a listed file may not take on another tool. One is not debt:
- * `tool-recommendations.ts`, naming a tool for a reason no profile carries. The rest is host
- * wiring and words shown to a user. `foreign-suffix-filter.ts` is the foreign-file suffix
+ * shrink, and a listed file may not take on another tool. The rest is host wiring and words
+ * shown to a user. `foreign-suffix-filter.ts` is the foreign-file suffix
  * vocabulary, held equal to the registered AI profiles by conformance, and vanishes when the
  * profiles hand each section its own filter. `usage-record.ts` carries the contract's tool
  * vocabulary: `codex` is admitted so a second tool's reader needs no change to the record, and is

@@ -4,7 +4,7 @@ import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/co
 describe("copilot mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps mcp to .vscode/mcp.json", () => {
-      expect(copilot.section("mcp").config?.outputPath()).toBe(".vscode/mcp.json");
+      expect(copilot.section("mcp").config?.accepts(".vscode/mcp.json")).toBe(true);
     });
   });
 

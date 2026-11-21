@@ -57,11 +57,9 @@
     "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration",
     "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.mergeStrategy",
     "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath",
-    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.requiredTool",
     "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.mergeStrategy",
     "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.outputPath",
-    "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.mergeStrategy",
-    "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.outputPath"
+    "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.mergeStrategy"
   ],
   "repository": [],
   "translate": [],
@@ -119,7 +117,6 @@
     "one class per file :: src/shared/domain/file.ts"
   ],
   "toolNames": [
-    "src/orchestration/setup/tool-recommendations.ts: 4",
     "src/contexts/tools/domain/profile/foreign-suffix-filter.ts: 7",
     "src/contexts/telemetry/contract/usage-record.ts: 1"
   ],
