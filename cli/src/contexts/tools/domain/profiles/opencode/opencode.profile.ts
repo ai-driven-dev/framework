@@ -3,7 +3,8 @@ import opencodeJson from "../../../../../../assets/configs/opencode/opencode.jso
   type: "json",
 };
 import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
-import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import { CONFIG_PREFIX, type ConfigRef, MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import { declareBridgeHooks } from "../../bridges/event-bridge.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -11,21 +12,47 @@ import {
 import { flatHooksSupport } from "../../formats/hooks/routes.js";
 import { toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { flatPlacement } from "../../sections/layout-section.js";
+import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { DualConfigError } from "../../tools.error.js";
-import { buildOpencodeFlatContract } from "./build.js";
-import { OPENCODE_CONFIG_REF } from "./config-refs.js";
-import { OPENCODE_HOOKS } from "./hooks.js";
-import { opencodeAgentFrontmatter } from "./opencode-agent.js";
-import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
-import { OPENCODE_DIRECTORY, opencodeGlobalFilePath } from "./opencode-paths.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
+import { buildOpencodeFlatContract } from "./opencode-build.model.js";
+import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
-const DIRECTORY = OPENCODE_DIRECTORY;
+const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
 
-const hooksDelivery = flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge);
+const OPENCODE_CONFIG_REF: ConfigRef = {
+  name: "opencode",
+  path: `${CONFIG_PREFIX}.opencode/opencode.json`,
+};
+
+/** A machine-scope install puts a plugin's skills and agents where OpenCode loads them for every
+ * project: its global config directory. */
+const globalFilePath = flatGlobalFilePath(DIRECTORY);
+
+// No family OpenCode's loader scans is named "hooks", so a plugin's scripts land under
+// `hooks/`, namespaced per plugin, and nothing there is ever imported.
+const hooks = declareBridgeHooks(
+  { toolId: "opencode", directory: DIRECTORY },
+  ["server-init", "tool.execute.after", "session.idle"],
+  {
+    // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or
+    // the bridge generated for it, belongs there, renamed so two plugins cannot collide.
+    loaderEntry: {
+      dir: `${DIRECTORY}plugin/`,
+      // The one hook filename that is, by convention, a plugin's own OpenCode plugin module.
+      baseName: "opencode-plugin.js",
+    },
+    bridgeRuntime: {
+      asset: "opencode-events.js",
+      path: `${DIRECTORY}hooks/opencode-events.js`,
+    },
+  }
+);
+
+const hooksDelivery = flatHooksSupport(hooks, generateOpencodeHooksBridge);
 
 export const opencode = defineAiTool({
   toolId: "opencode",
@@ -44,13 +71,14 @@ export const opencode = defineAiTool({
       delivery: "install",
     },
     {
-      name: OPENCODE_HOOKS.bridgeRuntime.asset,
+      name: hooks.bridgeRuntime.asset,
       content: opencodeEvents,
-      destination: OPENCODE_HOOKS.bridgeRuntime.path,
+      destination: hooks.bridgeRuntime.path,
       delivery: "runtime",
     },
   ],
-  buildContracts: { flat: buildOpencodeFlatContract },
+  hooks,
+  buildContracts: { flat: () => buildOpencodeFlatContract(hooks) },
 
   capabilities: (bound) => ({
     agents: bound.agents({
@@ -98,7 +126,7 @@ export const opencode = defineAiTool({
       namespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "opencode"),
-        map: opencodeGlobalFilePath,
+        map: globalFilePath,
       },
     }),
     // OpenCode loads opencode.json, then opencode.jsonc over it: the model goes in the .jsonc.

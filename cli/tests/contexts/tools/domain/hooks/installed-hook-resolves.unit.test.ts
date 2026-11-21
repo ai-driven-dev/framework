@@ -8,7 +8,7 @@ import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/
 import { buildCopilotMarketplaceContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";

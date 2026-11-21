@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { opencodeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-agent.js";
+import { opencodeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-agent.model.js";
 
 describe("opencodeAgentFrontmatter", () => {
   it("writes the effort as the model's variant and marks the agent a subagent", () => {

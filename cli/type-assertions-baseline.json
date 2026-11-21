@@ -29,7 +29,7 @@
   "src/contexts/tools/domain/profiles/copilot/profile.ts": 2,
   "src/contexts/tools/domain/profiles/cursor/cursor-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/kilo/build.ts": 1,
-  "src/contexts/tools/domain/profiles/opencode/build.ts": 1,
+  "src/contexts/tools/domain/profiles/opencode/opencode-build.model.ts": 1,
   "src/contexts/tools/domain/sections/mcp-section.ts": 2,
   "src/contexts/tools/domain/sections/models-section.ts": 1,
   "src/contexts/translate/application/build-native-tree.ts": 2,

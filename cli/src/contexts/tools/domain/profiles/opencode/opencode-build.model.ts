@@ -3,6 +3,7 @@
  */
 
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
+import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
@@ -14,11 +15,23 @@ import type {
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
+import type {
+  FlatHooksRoute,
+  HooksDescriptor,
+  HooksRouting,
+} from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/routes.js";
 import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
-import { OPENCODE_HOOKS } from "./hooks.js";
-import { opencodeAgentFrontmatter } from "./opencode-agent.js";
-import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
+import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
+
+/** OpenCode's hooks as the profile declares them: a loader with no hooks file, and the runtime
+ * its bridges import. */
+type OpencodeHooks = HooksRouting & {
+  readonly file?: never;
+  readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
+  readonly bridgeRuntime: NonNullable<HooksDescriptor["bridgeRuntime"]>;
+};
 
 function opencodeFlatAgentPath(plugin: string, rel: string): string {
   return genericFlatAgentPath({
@@ -72,18 +85,15 @@ function collectOpencodeMcp(
 }
 
 /** A built plugin's own loader or its generated bridge: either means OpenCode will run hooks. */
-function pluginLoaders(plugin: string): readonly string[] {
-  const { loaderEntry } = OPENCODE_HOOKS.flat;
+function pluginLoaders(hooks: OpencodeHooks, plugin: string): readonly string[] {
+  const { loaderEntry } = hooks.flat;
   return [`${loaderEntry.dir}${plugin}.js`, hooksBridgePath(loaderEntry, plugin)];
 }
 
-function emitOpencodeConfig({
-  builtPlugins,
-  pluginMcp,
-  existing,
-  present,
-  assets,
-}: ConfigArtifactInput): readonly ConfigArtifactFile[] {
+function emitOpencodeConfig(
+  hooks: OpencodeHooks,
+  { builtPlugins, pluginMcp, existing, present, assets }: ConfigArtifactInput
+): readonly ConfigArtifactFile[] {
   const configPath = existing.has(OPENCODE_JSONC) ? OPENCODE_JSONC : OPENCODE_JSON;
   const incoming = collectOpencodeMcp(builtPlugins, pluginMcp);
   const baseAsset = assets.get(OPENCODE_JSON);
@@ -97,16 +107,16 @@ function emitOpencodeConfig({
     }),
   };
   const runsHooks = builtPlugins.some((plugin) =>
-    pluginLoaders(plugin).some((loader) => present.has(loader))
+    pluginLoaders(hooks, plugin).some((loader) => present.has(loader))
   );
   if (!runsHooks) return [config];
-  const runtime = OPENCODE_HOOKS.bridgeRuntime;
+  const runtime = hooks.bridgeRuntime;
   const events = assets.get(runtime.asset);
   if (typeof events !== "string") throw new TypeError("OpenCode event adapter must be source text");
   return [config, { path: runtime.path, content: events }];
 }
 
-export function buildOpencodeFlatContract(): ToolBuildContract {
+export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -125,7 +135,7 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
         transform: transformOpencodeFlatAgent,
       },
       mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)
-      hooks: flatHooksArtifact(OPENCODE_HOOKS, { bridge: generateOpencodeHooksBridge }),
+      hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -133,9 +143,9 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
     buildMarketplaceEntry: null,
     configArtifact: {
       reads: () => [OPENCODE_JSONC, OPENCODE_JSON],
-      probes: (builtPlugins) => builtPlugins.flatMap(pluginLoaders),
-      assets: { tool: "opencode", names: [OPENCODE_JSON, OPENCODE_HOOKS.bridgeRuntime.asset] },
-      emit: emitOpencodeConfig,
+      probes: (builtPlugins) => builtPlugins.flatMap((plugin) => pluginLoaders(hooks, plugin)),
+      assets: { tool: "opencode", names: [OPENCODE_JSON, hooks.bridgeRuntime.asset] },
+      emit: (input) => emitOpencodeConfig(hooks, input),
     },
   };
 }

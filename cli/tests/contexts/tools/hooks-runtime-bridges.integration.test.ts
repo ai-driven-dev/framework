@@ -11,8 +11,9 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
 import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
-import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
-import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
+import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
+import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.model.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
@@ -61,7 +62,10 @@ interface Workspace {
 const created: string[] = [];
 
 /** The adapter each build puts at `hooks/lib/host.cjs`. */
-const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.runtime.adapter };
+const ADAPTERS = {
+  opencode: present(present(opencode.hooks).runtime).adapter,
+  kilo: KILO_HOOKS.runtime.adapter,
+};
 
 afterEach(async () => {
   vi.unstubAllEnvs();

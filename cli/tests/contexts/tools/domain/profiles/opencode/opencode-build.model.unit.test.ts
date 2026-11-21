@@ -4,7 +4,8 @@ import type {
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
-import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
+import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";
 
@@ -23,7 +24,7 @@ const AGENT_SOURCE = [
 ].join("\n");
 
 function configArtifactOf(): ConfigArtifact {
-  const step = buildOpencodeFlatContract().configArtifact;
+  const step = present(opencode.buildContracts.flat)().configArtifact;
   if (step === undefined) throw new Error("opencode flat declares no config artifact");
   return step;
 }
@@ -95,7 +96,7 @@ describe("toTypedMcpSection()", () => {
   });
 });
 
-describe("buildOpencodeFlatContract()", () => {
+describe("present(opencode.buildContracts.flat)()", () => {
   it("reads both config spellings, and only checks each plugin's native and generated loader exists", () => {
     expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([
       "opencode.jsonc",
@@ -145,7 +146,7 @@ describe("buildOpencodeFlatContract()", () => {
   });
 
   it("writes no manifest and no marketplace of its own", () => {
-    const contract = buildOpencodeFlatContract();
+    const contract = present(opencode.buildContracts.flat)();
 
     expect({
       manifestFileRelative: contract.manifestFileRelative,
@@ -163,7 +164,7 @@ describe("buildOpencodeFlatContract()", () => {
   });
 
   it("sources skills, agents and hooks from the plugin tree, and leaves mcp to the config artifact", () => {
-    const { artifacts } = buildOpencodeFlatContract();
+    const { artifacts } = present(opencode.buildContracts.flat)();
 
     expect({
       skills: sourceOf(artifacts.skills),
@@ -183,7 +184,7 @@ describe("buildOpencodeFlatContract()", () => {
   });
 
   it("declares an agent a subagent, leaves its ID to the file name, and points its references at their flat destinations", () => {
-    const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
+    const transform = supported(present(opencode.buildContracts.flat)().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -200,7 +201,7 @@ describe("buildOpencodeFlatContract()", () => {
   });
 
   it("delivers a plugin's own OpenCode module where the loader scans, and every other script apart", () => {
-    const hooks = supported(buildOpencodeFlatContract().artifacts.hooks);
+    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
 
     expect({
       loaderEntry: hooks.path("aidd-dev", "hooks/opencode-plugin.js"),
@@ -218,7 +219,7 @@ describe("buildOpencodeFlatContract()", () => {
   });
 
   it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
-    const hooks = supported(buildOpencodeFlatContract().artifacts.hooks);
+    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
 
     expect(
       hooks.hooksBridge?.generate(
@@ -262,5 +263,29 @@ describe("buildOpencodeFlatContract()", () => {
     expect(JSON.parse(files[0]?.content ?? "null")).toStrictEqual({
       $schema: "https://opencode.ai/config.json",
     });
+  });
+});
+
+describe("opencode flat hooks path", () => {
+  const path = supported(present(opencode.buildContracts.flat)().artifacts.hooks).path;
+
+  it("namespaces a plain hook script under .opencode/hooks/<plugin>/", () => {
+    expect(path("aidd-context", "hooks/update_memory.js")).toBe(
+      ".opencode/hooks/aidd-context/update_memory.js"
+    );
+  });
+
+  it("renames a plugin's own opencode-plugin.js flat into .opencode/plugin/<plugin>.js", () => {
+    expect(path("aidd-telemetry", "hooks/opencode-plugin.js")).toBe(
+      ".opencode/plugin/aidd-telemetry.js"
+    );
+  });
+
+  it("keeps two plugins' same-named hook script from colliding", () => {
+    const a = path("plugin-a", "hooks/x.js");
+    const b = path("plugin-b", "hooks/x.js");
+    expect(a).toBe(".opencode/hooks/plugin-a/x.js");
+    expect(b).toBe(".opencode/hooks/plugin-b/x.js");
+    expect(a).not.toBe(b);
   });
 });
