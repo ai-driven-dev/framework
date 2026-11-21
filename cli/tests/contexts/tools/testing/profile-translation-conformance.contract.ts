@@ -13,10 +13,14 @@ const PERSON_KEY = "personal";
 const PERSON_SERVER = JSON.stringify({ mcpServers: { mine: { command: "node" } } });
 const PLUGIN_SERVER = JSON.stringify({ mcpServers: { added: { command: "node" } } });
 
-function filesOf(profile: AiTool, name: string, arrival: "given" | "reversed" = "given") {
+function filesOf(
+  profile: AiTool,
+  { translate = translatePlugin }: ConformanceSubject,
+  name: string,
+  arrival: "given" | "reversed" = "given"
+) {
   const plugin = referencePlugin(name);
-  const { files } = translatePlugin(arrival === "given" ? plugin : reversed(plugin), profile);
-  return files;
+  return translate(arrival === "given" ? plugin : reversed(plugin), profile).files;
 }
 
 function withPersonKey(content: string): string {
@@ -32,15 +36,15 @@ const PRESENCE = {
 };
 
 export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
-  aiCheck("writes its files sorted by path, whatever order its files arrive in", (p) => {
-    const given = filesOf(p, "alpha");
+  aiCheck("writes its files sorted by path, whatever order its files arrive in", (p, s) => {
+    const given = filesOf(p, s, "alpha");
     const paths = given.map((file) => file.relativePath);
     expect(paths).toEqual([...paths].sort());
-    expect(filesOf(p, "alpha", "reversed")).toEqual(given);
+    expect(filesOf(p, s, "alpha", "reversed")).toEqual(given);
   }),
-  aiCheck("writes no path that two distinct plugins share", (p) => {
-    const alpha = filesOf(p, "alpha").map((file) => file.relativePath);
-    const beta = filesOf(p, "beta").map((file) => file.relativePath);
+  aiCheck("writes no path that two distinct plugins share", (p, s) => {
+    const alpha = filesOf(p, s, "alpha").map((file) => file.relativePath);
+    const beta = filesOf(p, s, "beta").map((file) => file.relativePath);
     expect(alpha.filter((path) => beta.includes(path))).toEqual([]);
   }),
   aiCheck("builds only manifests that name the plugin and its version", (p) => {

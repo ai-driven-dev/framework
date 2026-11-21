@@ -27,6 +27,7 @@ import {
   PROFILE_FILE_CHECKS,
 } from "../../testing/profile-file-conformance.contract.js";
 import { PROFILE_TRANSLATION_CHECKS } from "../../testing/profile-translation-conformance.contract.js";
+import { translatePlugin } from "../../testing/translate-plugin.builder.js";
 
 /**
  * A conformance check that nothing fails is a comment. For each check, one subject broken in
@@ -218,8 +219,6 @@ function withHooksMergeForgetting(profile: AiTool): AiTool {
   };
 }
 
-let counter = 0;
-
 /** What each check is fed so that it, and only it, has a case to fail. */
 const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "is registered once, under its own id": () =>
@@ -289,7 +288,12 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "comes with one captured payload per event it relays": () =>
     subjectOf(NATIVE, { payloadFixtures: [] }),
   "writes its files sorted by path, whatever order its files arrive in": () => {
-    return subjectOf(flatPathIgnoring(FLAT, (name) => `${name}-${counter++}`));
+    return subjectOf(FLAT, {
+      translate: (distribution, tool) => {
+        const written = translatePlugin(distribution, tool);
+        return { ...written, files: [...written.files].reverse() };
+      },
+    });
   },
   "writes no path that two distinct plugins share": () =>
     subjectOf(flatPathIgnoring(FLAT, () => "shared")),

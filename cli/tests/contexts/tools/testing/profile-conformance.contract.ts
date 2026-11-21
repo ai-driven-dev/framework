@@ -11,11 +11,14 @@ import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profi
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
 import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
+import type { translatePlugin } from "./translate-plugin.builder.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */
 export interface ConformanceSubject {
   readonly profile: AiTool | IdeToolConfig;
   readonly registration: readonly (AiTool | IdeToolConfig)[];
+  /** What translates a plugin for the profile: the engine's, unless a proof swaps it. */
+  readonly translate?: typeof translatePlugin;
 }
 
 /** A check is a pure assertion, so a proof can run it against a subject built to break it. */
