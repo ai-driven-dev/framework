@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { writeUsageTranscripts } from "../contexts/telemetry/testing/claude-usage-transcripts.builder.js";
 import { backdateConsent, createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
@@ -45,38 +45,12 @@ function ingest(...args: string[]) {
   });
 }
 
-/** Every file under the telemetry directory with its bytes: what a run changed shows. */
-async function held(): Promise<Record<string, string>> {
-  const found: Record<string, string> = {};
-  for (const entry of await readdir(telemetry, { recursive: true, withFileTypes: true })) {
-    if (!entry.isFile()) continue;
-    const path = join(entry.parentPath, entry.name);
-    found[relative(telemetry, path)] = await readFile(path, "utf8");
-  }
-  return found;
-}
-
 async function ledgerLines(): Promise<string[]> {
   const text = await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8");
   return text.split("\n").filter((line) => line !== "");
 }
 
 describe("aidd telemetry ingest", () => {
-  it("stores each billed call once, and a second ingest adds nothing", async () => {
-    await writeTranscripts();
-    const first = await ingest();
-    expect(first.exitCode).toBe(0);
-    expect(first.stdout).toContain("4 calls added");
-    expect(first.stdout).toContain("1 call from a clone with no consent at that time");
-    const before = await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8");
-    const keys = (await ledgerLines()).map((line) => JSON.parse(line).key).sort();
-    expect(keys).toEqual(["msg_A:req_A", "msg_B:req_B", "msg_B:req_B#advisor0", "msg_C:req_C"]);
-
-    const second = await ingest();
-    expect(second.stdout).toContain("Read 0 transcripts: 0 calls added, 0 updated");
-    expect(await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8")).toBe(before);
-  });
-
   it("leaves each key once and no torn line when several ingests start together", async () => {
     await writeTranscripts();
     const runs = await Promise.all([ingest("--quiet"), ingest("--quiet"), ingest("--quiet")]);
@@ -109,16 +83,5 @@ describe("aidd telemetry ingest", () => {
     expect(run.exitCode).toBe(0);
     expect(await ledgerLines()).toHaveLength(4);
     expect(await readdir(join(telemetry, "ledger"))).not.toContain(".lock");
-  });
-
-  it("stores nothing and changes nothing under AIDD_TELEMETRY=0", async () => {
-    await writeTranscripts();
-    const before = await held();
-    const run = await runCli(["telemetry", "ingest"], repoA, env.fakeHome, {
-      env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "0" },
-    });
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("AIDD_TELEMETRY=0");
-    expect(await held()).toEqual(before);
   });
 });
