@@ -155,7 +155,9 @@ export async function runInProcess(
     });
 
     const { outputOf } = await import("../../../src/presentation/commands/global-options.js");
-    const { failCommand } = await import("../../../src/presentation/errors/error-translator.js");
+    const { failCommand } = await import(
+      "../../../src/presentation/errors/error-translator.presenter.js"
+    );
 
     try {
       await program.parseAsync(["node", "aidd", ...args]).catch((error: unknown) => {

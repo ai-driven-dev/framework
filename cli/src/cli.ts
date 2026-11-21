@@ -7,7 +7,7 @@ import { wireTools } from "./composition/tools.js";
 import { outputOf } from "./presentation/commands/global-options.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerCommands } from "./presentation/commands/register-commands.js";
-import { failCommand } from "./presentation/errors/error-translator.js";
+import { failCommand } from "./presentation/errors/error-translator.presenter.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
