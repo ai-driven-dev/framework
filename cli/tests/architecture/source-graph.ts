@@ -147,7 +147,7 @@ export function matchesGlob(glob: string, path: string): boolean {
   return scopeGlob(glob, path);
 }
 
-// The context graph. The edge table is `allowed-edges.ts`; `biome-guards-bite.arch.test.ts` holds
+// The context graph. The edge table is `allowed-edges.ts`; `biome-boundaries.arch.test.ts` holds
 // biome's per-context `noRestrictedImports` overrides to it.
 
 export function contextNames(): string[] {

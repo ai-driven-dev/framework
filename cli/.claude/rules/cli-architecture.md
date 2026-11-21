@@ -11,7 +11,7 @@ paths:
 Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`.
 1. A context reads another through its `contract/` only, and `application/` is for presentation and orchestration: the `imports` rule of `kinds.arch.test.ts`, `biome.json`.
 2. A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `orchestration/deps.ts` do not count: `contractReaderViolations`, in `kinds.rules.arch.test.ts`.
-3. An edge absent from `ALLOWED` is an error: the `imports` rule of `kinds.arch.test.ts` and `biome-guards-bite.arch.test.ts`.
+3. An edge absent from `ALLOWED` is an error: the `imports` rule of `kinds.arch.test.ts` and `biome-boundaries.arch.test.ts`.
 4. No import cycle: Biome `noImportCycles`.
 5. Pure folders import no package and no Node builtin but `node:path` and `node:crypto`. Biome holds it for the `PURE_FOLDERS` of `biome-guards-bite.arch.test.ts`; in every other `domain/`, the kind gate (`kinds.ts`) holds it: a model imports models and `node:path` and `node:crypto` only, an inline `import("node:…")` included.
 6. Orchestration imports the `application/` and `contract/` of contexts only, reads no file and starts no process: `biome.json`.
@@ -37,7 +37,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 - An empty catch is a failure unless a `biome-ignore lint/plugin: <reason>` above its `try` says why (`biome-plugins/no-swallowed-catch.grit`).
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
 - `process.exit` stays in the composition root, which hands presentation an `Output` port ending the run: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
-- File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `biome-guards-bite.arch.test.ts`.
+- File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `biome-size-guards.arch.test.ts`.
 - The kind gate tolerates no violation: `kinds.arch.test.ts` and `kinds.rules.arch.test.ts`.
 - Exports are named and nothing re-exports: `biome-plugins/no-inline-re-export.grit`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.
 - Import from the defining module, relative, with the `.js` extension, and `import type` for a type-only import.
