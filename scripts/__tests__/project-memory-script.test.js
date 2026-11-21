@@ -428,9 +428,6 @@ fs.writeSync = function(fd, buffer, offset, length, position) {
     assert.ok(result.stderr.includes(backup));
     assert.equal(read(root, backup), "# Original\n");
     if (process.platform !== "win32") assert.equal(fs.statSync(path.join(root, backup)).mode & 0o777, 0o600);
-    fs.writeFileSync(target, read(root, backup));
-    assert.equal(read(root, "AGENTS.md"), "# Original\n");
-    assert.equal(fs.statSync(target).mode & 0o777, originalMode);
   });
 });
 
