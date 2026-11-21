@@ -30,7 +30,6 @@ import { isRecord, parseJsonRecord } from "../shared/testing/json-value.builder.
 import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED, HELD_BY_BIOME } from "./allowed-edges.js";
 import { PLANTS } from "./biome-plants.js";
-import { loadDebt } from "./kinds.js";
 import {
   branches,
   constants,
@@ -444,25 +443,29 @@ describe("the generator", () => {
   });
 });
 
-/** The files and folders a Biome rule spares on purpose, each listed in the debt file under its
- * own name: a new exemption is a new entry, and `debt-only-shrinks` refuses it. */
-const EXEMPTIONS = [
-  { debt: "exemptProcessExit", carrier: (o: Override) => o.plugins?.includes(`./${PLUGIN}`) },
-  { debt: "exemptGithubUrl", carrier: (o: Override) => o.plugins?.includes(`./${GITHUB_PLUGIN}`) },
+/** An ambient module declaration needs `export default`: declaration files are the one kind
+ * `noDefaultExport` spares. */
+const DEFAULT_EXPORT_EXEMPT_DECLARATIONS = ["**/*.d.ts"];
+
+type Carrier = (o: Override) => boolean | undefined;
+const hasPlugin =
+  (plugin: string): Carrier =>
+  (o) =>
+    o.plugins?.includes(plugin) ?? false;
+
+/** The files and folders a Biome rule spares on purpose, by the rule's name: a new exemption is a
+ * new entry here, written with its reason. */
+const EXEMPTIONS: readonly { rule: string; carrier: Carrier; spared?: readonly string[] }[] = [
+  { rule: "exemptProcessExit", carrier: hasPlugin(`./${PLUGIN}`) },
+  { rule: "exemptGithubUrl", carrier: hasPlugin(`./${GITHUB_PLUGIN}`) },
   {
-    debt: "exemptDefaultExport",
-    carrier: (o: Override) => "noDefaultExport" in (o.linter?.rules?.style ?? {}),
+    rule: "exemptDefaultExport",
+    carrier: (o) => "noDefaultExport" in (o.linter?.rules?.style ?? {}),
+    spared: DEFAULT_EXPORT_EXEMPT_DECLARATIONS,
   },
-  {
-    debt: "exemptProfileImport",
-    carrier: (o: Override) =>
-      o.plugins?.includes("./biome-plugins/whole-profile-import.grit") ?? false,
-  },
-  {
-    debt: "exemptProfileList",
-    carrier: (o: Override) => o.plugins?.includes("./biome-plugins/no-profile-list.grit") ?? false,
-  },
-] as const;
+  { rule: "exemptProfileImport", carrier: hasPlugin("./biome-plugins/whole-profile-import.grit") },
+  { rule: "exemptProfileList", carrier: hasPlugin("./biome-plugins/no-profile-list.grit") },
+];
 
 const exemptionsOf = (
   carrier: (o: Override) => boolean | undefined,
@@ -473,13 +476,13 @@ const exemptionsOf = (
     .flatMap((o) => (o.includes ?? []).filter((entry) => entry.startsWith("!")))
     .map((entry) => entry.slice(1));
 
-describe("biome spares only what the debt file lists", () => {
-  for (const { debt, carrier } of EXEMPTIONS) {
-    it(`${debt} lists exactly the exclusions of its override`, () => {
+describe("biome spares only what is written here", () => {
+  for (const { rule, carrier, spared } of EXEMPTIONS) {
+    it(`${rule} excludes exactly what it spares`, () => {
       expect(
         exemptionsOf(carrier),
-        `${debt} in kinds-debt.json repeats the negated includes of its override: a new exemption is not added`
-      ).toEqual([...loadDebt()[debt]]);
+        `${rule} spares what the negated includes of its override say: a new exemption is not added`
+      ).toEqual([...(spared ?? [])]);
     });
   }
 
@@ -565,15 +568,6 @@ function baselineOf(guard: SizeGuard): string[] {
     .sort();
 }
 
-/** The exclusions of a guard in `limits` of the debt file, `<guard> :: <file>` each. */
-function debtOf(guard: SizeGuard): string[] {
-  const prefix = `${guard.name} :: `;
-  return loadDebt()
-    .limits.filter((entry) => entry.startsWith(prefix))
-    .map((entry) => entry.slice(prefix.length))
-    .sort();
-}
-
 /** The finding id biome prints for a guard: a rule's path, or `plugin`. */
 const findingId = (guard: SizeGuard): string =>
   guard.kind === "rule" ? `lint/${guard.group}/${guard.rule}` : "plugin";
@@ -601,12 +595,11 @@ describe("biome carries the size guards", () => {
         });
       });
 
-      it("lists exactly the exclusions the debt file names", () => {
-        const listed = debtOf(guard);
+      it("excludes no file", () => {
         expect(
           baselineOf(guard),
-          `${guard.name} exclusions are \`limits\` in kinds-debt.json: a new violator is fixed, never listed; a fixed file leaves both`
-        ).toEqual(listed);
+          `${guard.name} excludes nothing: a new violator is fixed, never excluded`
+        ).toEqual([]);
       });
 
       it("applies to src/** and excludes exact, sorted, unique files only", () => {

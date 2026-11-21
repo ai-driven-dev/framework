@@ -1,7 +1,6 @@
 /**
  * The content rules of the kind gate (`kind-rules.ts`), each held to the case it names and then to
- * the real tree, up to the debt in `kinds-debt.json`. A listed entry that no longer violates
- * fails, so the fix removes it.
+ * the real tree, which holds every rule with no violation tolerated.
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -27,7 +26,7 @@ import {
   storedValueViolations,
   translateViolations,
 } from "./kind-rules.js";
-import { debtVerdict, loadDebt, type Rule, type Violation } from "./kinds.js";
+import type { Violation } from "./kinds.js";
 import {
   CATALOG_PROFILE_METHODS,
   HANDS_PROFILE_ON,
@@ -39,17 +38,8 @@ import { CLI_ROOT, contextNames, declaredCommands, tsFilesUnder } from "./source
 
 const entries = (found: readonly Violation[]): string[] => found.map((v) => v.entry);
 
-function expectUpToDebt(found: readonly Violation[], rule: Rule): void {
-  const { unlisted, stale } = debtVerdict(found, loadDebt(), [rule]);
-  expect(unlisted.map((violation) => violation.message)).toEqual([]);
-  expect(stale).toEqual([]);
-}
-
-/** The `imports` debt is held entry by entry by the import test of `kinds.arch.test.ts`; a rule
- * beside it owes only that nothing it finds is unlisted, and the debt lists none of its own. */
-function expectNoneBeyondDebt(found: readonly Violation[]): void {
-  const { unlisted } = debtVerdict(found, loadDebt(), ["imports"]);
-  expect(unlisted.map((violation) => violation.message)).toEqual([]);
+function expectNone(found: readonly Violation[]): void {
+  expect(found.map((violation) => violation.message)).toEqual([]);
 }
 
 const textsOf = (paths: readonly string[]): Record<string, string> =>
@@ -128,7 +118,7 @@ describe("an error class is thrown", () => {
     const files = src();
     const declaring = Object.keys(files).filter((path) => path.endsWith(".error.ts"));
     expect(declaring.length, "the catalog moved").toBeGreaterThan(0);
-    expectUpToDebt(errorViolations(files, declaring), "thrown");
+    expectNone(errorViolations(files, declaring));
   });
 });
 
@@ -154,7 +144,7 @@ describe("a message that instructs names a command that exists", () => {
         ([path]) => path.startsWith("src/presentation/") || path.includes("/application/")
       )
     );
-    expectUpToDebt(instructionViolations(surface, declaredCommands()), "instructs");
+    expectNone(instructionViolations(surface, declaredCommands()));
   });
 });
 
@@ -178,7 +168,7 @@ describe("composition holds one module per context", () => {
   });
 
   it("holds the composition folder of the tree", () => {
-    expectUpToDebt(compositionViolations(Object.keys(src()), contextNames()), "composition");
+    expectNone(compositionViolations(Object.keys(src()), contextNames()));
   });
 });
 
@@ -221,7 +211,7 @@ describe("a port declares nothing nobody calls", () => {
   it("holds the ports of the tree, and finds them", () => {
     const files = src();
     expect(Object.keys(files).filter(isPortFile).length, "the scope is stale").toBeGreaterThan(10);
-    expectUpToDebt(portViolations(new Map(Object.entries(files))), "ports");
+    expectNone(portViolations(new Map(Object.entries(files))));
   });
 });
 
@@ -265,7 +255,7 @@ describe("a section declares nothing nobody calls", () => {
       Object.keys(files).filter((path) => /\/domain\/sections\//.test(path)).length,
       "the scope is stale"
     ).toBeGreaterThan(5);
-    expectUpToDebt(sectionViolations(new Map(Object.entries(files))), "sections");
+    expectNone(sectionViolations(new Map(Object.entries(files))));
   });
 });
 
@@ -288,7 +278,7 @@ describe("translate holds no list of the other hosts' manifest paths", () => {
   });
 
   it("holds the translate context of the tree", () => {
-    expectUpToDebt(translateViolations(src()), "translate");
+    expectNone(translateViolations(src()));
   });
 });
 
@@ -331,7 +321,7 @@ describe("a plugin answer is asked, never read", () => {
   });
 
   it("holds the plugin answers of the tree", () => {
-    expectUpToDebt(answerViolations(src()), "answers");
+    expectNone(answerViolations(src()));
   });
 });
 
@@ -364,7 +354,7 @@ describe("a test reaches the repository through one helper", () => {
   });
 
   it("holds the tests of the tree", () => {
-    expectUpToDebt(repositoryViolations(textsOf(tsFilesUnder("tests"))), "repository");
+    expectNone(repositoryViolations(textsOf(tsFilesUnder("tests"))));
   });
 });
 
@@ -384,7 +374,7 @@ describe("a test file stays small enough to hold in mind", () => {
   it("holds the tests of the tree", () => {
     const paths = tsFilesUnder("tests").filter((path) => path.endsWith(".test.ts"));
     expect(paths.length, "the scope is stale").toBeGreaterThan(300);
-    expectUpToDebt(sizeViolations(textsOf(paths)), "size");
+    expectNone(sizeViolations(textsOf(paths)));
   });
 });
 
@@ -413,7 +403,7 @@ describe("the driving port names context types only", () => {
 
   it("holds the tree", () => {
     expect(src()[port], "the driving port moved").toBeDefined();
-    expectNoneBeyondDebt(drivingPortViolations(src()));
+    expectNone(drivingPortViolations(src()));
   });
 });
 
@@ -453,7 +443,7 @@ describe("a contract file is read from outside its context", () => {
     expect(Object.keys(files).filter((path) => path.includes("/contract/")).length).toBeGreaterThan(
       0
     );
-    expectNoneBeyondDebt(contractReaderViolations(files));
+    expectNone(contractReaderViolations(files));
   });
 });
 
@@ -485,7 +475,7 @@ describe("the project-or-user union has one spelling", () => {
         (path) => !path.startsWith("tests/architecture/")
       )
     );
-    expectUpToDebt(scopeViolations(files), "scope");
+    expectNone(scopeViolations(files));
   });
 });
 
@@ -523,20 +513,20 @@ describe("presentation builds no command and no adapter", () => {
   it("holds the tree", () => {
     const tree = src();
     expect(Object.keys(tree).some((path) => path.startsWith("src/presentation/"))).toBe(true);
-    expectUpToDebt(constructionViolations(tree), "composition");
+    expectNone(constructionViolations(tree));
   });
 });
 
 const FLOW_TIMEOUT_MS = 30_000;
 
 describe("a reader names the sections of a tool it reads", () => {
-  it("holds the tree, up to the debt", { timeout: FLOW_TIMEOUT_MS }, () => {
+  it("holds the tree, with no violation", { timeout: FLOW_TIMEOUT_MS }, () => {
     const tree = src();
     expect(
       profileReaders(tree).handsOn.length,
       "no file hands the profile on: the exemption reads nothing"
     ).toBeGreaterThan(0);
-    expectUpToDebt(profileViolations(tree, CLI_ROOT), "profile");
+    expectNone(profileViolations(tree, CLI_ROOT));
   });
 
   it("lists every catalog method that answers a whole profile", () => {
@@ -686,6 +676,6 @@ describe("a controller builds no error", () => {
   it("holds the tree", () => {
     const files = textsOf(tsFilesUnder("src/presentation"));
     expect(Object.keys(files).length).toBeGreaterThan(0);
-    expectUpToDebt(controllerBuildsErrorViolations(files), "controllerBuildsError");
+    expectNone(controllerBuildsErrorViolations(files));
   });
 });

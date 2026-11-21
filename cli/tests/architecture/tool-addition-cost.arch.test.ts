@@ -6,18 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
-import { loadDebt } from "./kinds.js";
-import { expectRatchet, read, sourceFiles } from "./source-graph.js";
-
-const DEBT = loadDebt();
-
-/** A debt entry `path: n`, the file with the number it was measured with. */
-function counted(entries: readonly string[]): { readonly path: string; readonly named: number }[] {
-  return entries.map((entry) => {
-    const cut = entry.lastIndexOf(": ");
-    return { path: entry.slice(0, cut), named: Number(entry.slice(cut + 2)) };
-  });
-}
+import { read, sourceFiles } from "./source-graph.js";
 
 /** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
 function toolIds(files: readonly string[]): string[] {
@@ -36,24 +25,6 @@ function toolIds(files: readonly string[]): string[] {
  * reader adds a value to it, which is the stored data changing, not a branch on the name.
  */
 const STORED_VOCABULARY = { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 };
-
-/**
- * A measured tool is a few files of readers. A file listed here names its own tool and no other,
- * so a tool is added by new files and one registration, never by an edit to a neighbour. A new
- * file naming a tool is red until written down here; a listed one naming none, until removed.
- * The list is `toolOwn` in `kinds-debt.json`.
- */
-const OWN_TOOL_FILES: Readonly<Record<string, string>> = Object.fromEntries(
-  DEBT.toolOwn.map((entry): [string, string] => {
-    const [file = "", tool = ""] = entry.split(": ");
-    return [file, tool];
-  })
-);
-
-function namesOnlyItsOwnTool(file: string, named: readonly string[]): boolean {
-  const own = OWN_TOOL_FILES[file];
-  return own !== undefined && named.every((id) => id === own);
-}
 
 /** A telemetry source reads one tool's files, so its folder is named for that tool, as a profile's is. */
 function isAllowed(file: string, ids: readonly string[], named: readonly string[] = []): boolean {
@@ -104,15 +75,6 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
   return [...named].sort();
 }
 
-/**
- * Files naming a tool outside its profile today, with how many they name; the list may only
- * shrink, and a listed file may not take on another tool. The rest is host wiring and words
- * shown to a user. `foreign-suffix-filter.ts` is the foreign-file suffix
- * vocabulary, held equal to the registered AI profiles by conformance, and vanishes when the
- * profiles hand each section its own filter. The list is `toolNames` in `kinds-debt.json`.
- */
-const NAMING_DEBT = counted(DEBT.toolNames);
-
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
 const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
 const ISOLATED_FROM_TOOLS =
@@ -141,13 +103,6 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
   return [...named].sort();
 }
 
-/**
- * Files under `ISOLATED_FROM_TOOLS` still naming a tool in an identifier, with how many
- * distinct identifiers; the list may only shrink, and a listed file may not take on another. The
- * list is `toolIdentifiers` in `kinds-debt.json`.
- */
-const IDENTIFIER_DEBT = counted(DEBT.toolIdentifiers);
-
 describe("a tool identifier stays inside its own profile", () => {
   it("no file outside a profile names a tool in a form a new tool would have to join", () => {
     const files = sourceFiles();
@@ -159,34 +114,22 @@ describe("a tool identifier stays inside its own profile", () => {
 
     const violations = files.filter((file) => {
       const named = toolsNamedIn(read(file), ids);
-      return named.length > 0 && !isAllowed(file, ids, named) && !namesOnlyItsOwnTool(file, named);
+      return named.length > 0 && !isAllowed(file, ids, named);
     });
 
-    const { added, fixed } = expectRatchet(
-      violations,
-      NAMING_DEBT.map((entry) => entry.path)
+    expect(violations, "tool named outside its profile — read it from the profile instead").toEqual(
+      []
     );
-    expect(added, "tool named outside its profile — read it from the profile instead").toEqual([]);
-    expect(fixed, "fixed — remove these from toolNames in kinds-debt.json").toEqual([]);
   });
 
-  it("lists only files that still name their own tool", () => {
+  it("holds the admitted file to the number of tools its reason was written around", () => {
     const ids = toolIds(sourceFiles());
-    const unneeded = Object.keys(OWN_TOOL_FILES).filter(
-      (file) => !toolsNamedIn(read(file), ids).includes(present(OWN_TOOL_FILES[file]))
-    );
-    expect(unneeded, "names no tool — take it off OWN_TOOL_FILES").toEqual([]);
-  });
+    const { path, named } = STORED_VOCABULARY;
 
-  it("holds each admitted file to the number of tools its reason was written around", () => {
-    const ids = toolIds(sourceFiles());
-    const held = [...NAMING_DEBT, STORED_VOCABULARY];
-    const recorded = held.map(({ path, named }) => `${path}: ${named}`);
-    const actual = held.map(({ path }) => `${path}: ${toolsNamedIn(read(path), ids).length}`);
-
-    expect(actual, "an admitted file took on another tool — fix the count and its reason").toEqual(
-      recorded
-    );
+    expect(
+      toolsNamedIn(read(path), ids).length,
+      "the admitted file took on another tool — fix the count and its reason"
+    ).toBe(named);
   });
 });
 
@@ -268,25 +211,10 @@ describe("a tool never names an identifier outside its profile, in the code ever
     const ids = toolIds(sourceFiles());
     const violations = scoped().filter((file) => toolIdentifiersIn(read(file), ids).length > 0);
 
-    const { added, fixed } = expectRatchet(
-      violations,
-      IDENTIFIER_DEBT.map((entry) => entry.path)
-    );
     expect(
-      added,
+      violations,
       "tool-named identifier outside its profile — read it from the capability"
     ).toEqual([]);
-    expect(fixed, "fixed — remove these from toolIdentifiers in kinds-debt.json").toEqual([]);
-  });
-
-  it("holds each listed file to the identifiers it was measured with", () => {
-    const ids = toolIds(sourceFiles());
-    const recorded = IDENTIFIER_DEBT.map(({ path, named }) => `${path}: ${named}`);
-    const actual = IDENTIFIER_DEBT.map(
-      ({ path }) => `${path}: ${toolIdentifiersIn(read(path), ids).length}`
-    );
-
-    expect(actual, "a listed file took on another tool-named identifier").toEqual(recorded);
   });
 
   it("scopes the scenarios of src/orchestration", () => {

@@ -1,7 +1,6 @@
 /**
  * The file-kind gate. `kinds.ts` is the table; this file holds the tree to it and holds each rule
- * to the case it names. Debt is `kinds-debt.json`: every violation the tree has today, and it
- * only shrinks. A listed entry that no longer violates fails, so the fix removes it.
+ * to the case it names. No violation is tolerated: the tree holds every rule.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
@@ -21,16 +20,13 @@ import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
 import {
   classificationViolations,
-  debtVerdict,
   importViolations,
   isInCatalog,
   isUseCase,
   KINDS,
   type Kind,
   kindsOf,
-  loadDebt,
   mirrorViolations,
-  noDebt,
   type Shape,
   shapeViolations,
   strayViolations,
@@ -171,18 +167,14 @@ describe("every file is exactly one kind", () => {
     ).toEqual(["src/a.ts-E"]);
   });
 
-  it("holds every file of the tree, up to the debt", () => {
+  it("holds every file of the tree, with no violation", () => {
     const everyFile = readdirSync(join(CLI_ROOT, "src"), { recursive: true, encoding: "utf8" })
       .filter((entry) => statSync(join(CLI_ROOT, "src", entry)).isFile())
       .map((entry) => canonicalPath(join("src", entry)));
     expect(strayViolations(everyFile).map((violation) => violation.message)).toEqual([]);
     const paths = [...codeFilesUnder("src"), ...codeFilesUnder("tests")].filter(isInCatalog);
     expect(paths.length, "the scope is stale").toBeGreaterThan(500);
-    const { unlisted, stale } = debtVerdict(classificationViolations(paths), loadDebt(), [
-      "classification",
-    ]);
-    expect(unlisted.map((violation) => violation.message)).toEqual([]);
-    expect(stale).toEqual([]);
+    expect(classificationViolations(paths).map((violation) => violation.message)).toEqual([]);
   });
 });
 
@@ -460,14 +452,12 @@ describe("a file imports only the kinds its kind allows", () => {
     ).toEqual([]);
   });
 
-  it("holds every import of the tree, up to the debt", () => {
+  it("holds every import of the tree, with no violation", () => {
     const files: Record<string, string> = {};
     for (const path of [...codeFilesUnder("src"), ...codeFilesUnder("tests")]) {
       files[path] = readFileSync(join(CLI_ROOT, path), "utf8");
     }
-    const { unlisted, stale } = debtVerdict(importViolations(files), loadDebt(), ["imports"]);
-    expect(unlisted.map((violation) => violation.message)).toEqual([]);
-    expect(stale).toEqual([]);
+    expect(importViolations(files).map((violation) => violation.message)).toEqual([]);
   });
 });
 
@@ -554,7 +544,7 @@ describe("a source owes a test at its mirror path", () => {
     expect(shapes.get("src/klass.ts")).toEqual({ typeOnly: false, behaviour: true });
   });
 
-  it("holds every source of the tree, up to the debt", () => {
+  it("holds every source of the tree, with no violation", () => {
     const sources = codeFilesUnder("src").filter(isInCatalog);
     const tests = codeFilesUnder("tests").filter((path) => matchesGlob("tests/**/*.test.ts", path));
     const found = mirrorViolations(sources, tests, (candidates) =>
@@ -564,9 +554,7 @@ describe("a source owes a test at its mirror path", () => {
         )
       )
     );
-    const { unlisted, stale } = debtVerdict(found, loadDebt(), ["mirror"]);
-    expect(unlisted.map((violation) => violation.message)).toEqual([]);
-    expect(stale).toEqual([]);
+    expect(found.map((violation) => violation.message)).toEqual([]);
   });
 });
 
@@ -654,67 +642,14 @@ describe("a use case holds one shape", () => {
     expect(isUseCase("tests/contexts/a/application/x.unit.test.ts")).toBe(false);
   });
 
-  it("holds every use case of the tree, up to the debt", () => {
+  it("holds every use case of the tree, with no violation", () => {
     const files: Record<string, string> = {};
     for (const path of codeFilesUnder("src").filter(isUseCase)) {
       files[path] = readFileSync(join(CLI_ROOT, path), "utf8");
     }
     expect(Object.keys(files).length, "the scope is stale").toBeGreaterThan(100);
-    const { unlisted, stale } = debtVerdict(
-      shapeViolations(useCaseShapeBreaks(files)),
-      loadDebt(),
-      ["shape"]
-    );
-    expect(unlisted.map((violation) => violation.message)).toEqual([]);
-    expect(stale).toEqual([]);
-  });
-});
-
-describe("debt only shrinks", () => {
-  const violation = (rule: Violation["rule"], entry: string): Violation => ({
-    rule,
-    entry,
-    message: `${entry} breaks ${rule}`,
-  });
-  const debt = {
-    ...noDebt(),
-    classification: ["a.ts"],
-    imports: ["b.ts -> c.ts"],
-    mirror: ["d.ts"],
-  };
-
-  it("passes when the violations are the debt", () => {
-    const found = [
-      violation("classification", "a.ts"),
-      violation("imports", "b.ts -> c.ts"),
-      violation("mirror", "d.ts"),
-    ];
-    expect(debtVerdict(found, debt)).toEqual({ unlisted: [], stale: [] });
-  });
-
-  it("flags a violation the debt does not list", () => {
-    const found = [
-      violation("classification", "a.ts"),
-      violation("classification", "new.ts"),
-      violation("imports", "b.ts -> c.ts"),
-      violation("mirror", "d.ts"),
-    ];
-    expect(debtVerdict(found, debt).unlisted.map((v) => v.entry)).toEqual(["new.ts"]);
-  });
-
-  it("flags a listed entry that no longer violates", () => {
-    const found = [violation("classification", "a.ts"), violation("mirror", "d.ts")];
-    expect(debtVerdict(found, debt).stale).toEqual(["imports: b.ts -> c.ts"]);
-  });
-
-  it("keys an entry by its rule, so one file can be listed under two rules", () => {
-    const found = [
-      violation("mirror", "a.ts"),
-      violation("imports", "b.ts -> c.ts"),
-      violation("mirror", "d.ts"),
-    ];
-    const verdict = debtVerdict(found, debt);
-    expect(verdict.unlisted.map((v) => v.entry)).toEqual(["a.ts"]);
-    expect(verdict.stale).toEqual(["classification: a.ts"]);
+    expect(
+      shapeViolations(useCaseShapeBreaks(files)).map((violation) => violation.message)
+    ).toEqual([]);
   });
 });

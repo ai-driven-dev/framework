@@ -1,16 +1,14 @@
 /**
  * The file-kind table: every file of `src/` and `tests/` is exactly one kind, and a kind says where
- * it lives, what it may import and which test it owes. `kinds.arch.test.ts` holds the tree to it;
- * `kinds-debt.json` lists what the tree still gets wrong.
+ * it lives, what it may import and which test it owes. `kinds.arch.test.ts` holds the tree to it,
+ * with no violation tolerated.
  *
  * A file is recognised by its suffix (`<name>.use-case.ts`). A file with no kind suffix falls back
  * to the folder that owns a kind today, so the suffix rollout is not a violation of its own.
  * Written limits: an import is read by the one extractor in `source-graph.ts`, so a specifier quoted in
  * a comment counts; an import that resolves to no file of the tree is not judged.
  */
-import { readFileSync } from "node:fs";
-import { join, posix } from "node:path";
-import { parseJsonRecord, stringList } from "../shared/testing/json-value.builder.js";
+import { posix } from "node:path";
 import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
 import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./source-graph.js";
@@ -287,7 +285,7 @@ export type Rule =
 
 export interface Violation {
   readonly rule: Rule;
-  /** What the debt file lists: the file, or `file -> target` for an import. */
+  /** What the violation names: the file, or `file -> target` for an import. */
   readonly entry: string;
   readonly message: string;
 }
@@ -592,96 +590,3 @@ export function mirrorViolations(
 }
 
 const escapeRegExp = (literal: string): string => literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-/**
- * The lists the debt file holds beside the kind rules. Each is read by the test that owns the data:
- * size-limit and rule exclusions by `biome-guards-bite`, tool names outside a profile by
- * `tool-addition-cost`.
- */
-export type ListedDebt =
-  | "limits"
-  | "exemptProcessExit"
-  | "exemptGithubUrl"
-  | "exemptDefaultExport"
-  | "exemptProfileImport"
-  | "exemptProfileList"
-  | "toolNames"
-  | "toolSites"
-  | "toolOwn"
-  | "toolIdentifiers";
-
-export type Debt = Readonly<Record<Rule | ListedDebt, readonly string[]>>;
-
-const RULES: readonly Rule[] = [
-  "classification",
-  "imports",
-  "mirror",
-  "shape",
-  "thrown",
-  "instructs",
-  "composition",
-  "ports",
-  "sections",
-  "answers",
-  "repository",
-  "translate",
-  "scope",
-  "profile",
-  "controllerBuildsError",
-  "size",
-];
-
-/** A debt that lists nothing. */
-export const noDebt = (): Debt => ({
-  classification: [],
-  imports: [],
-  mirror: [],
-  shape: [],
-  thrown: [],
-  instructs: [],
-  composition: [],
-  ports: [],
-  sections: [],
-  answers: [],
-  repository: [],
-  translate: [],
-  scope: [],
-  profile: [],
-  controllerBuildsError: [],
-  size: [],
-  limits: [],
-  exemptProcessExit: [],
-  exemptGithubUrl: [],
-  exemptDefaultExport: [],
-  exemptProfileImport: [],
-  exemptProfileList: [],
-  toolNames: [],
-  toolSites: [],
-  toolOwn: [],
-  toolIdentifiers: [],
-});
-
-/** The debt file, a rule it does not name counting as none. */
-export function loadDebt(): Debt {
-  const raw = parseJsonRecord(readFileSync(join(import.meta.dirname, "kinds-debt.json"), "utf8"));
-  const none = noDebt();
-  const named = Object.keys(none)
-    .filter((key) => raw[key] !== undefined)
-    .map((key) => [key, stringList(raw[key], key)]);
-  return { ...none, ...Object.fromEntries(named) };
-}
-
-/** `unlisted`: violations the debt does not hold. `stale`: debt entries that no longer violate.
- * A check that finds the violations of some rules only names those rules. */
-export function debtVerdict(
-  found: readonly Violation[],
-  debt: Debt,
-  rules: readonly Rule[] = RULES
-): { unlisted: Violation[]; stale: string[] } {
-  const listed = new Set(rules.flatMap((rule) => debt[rule].map((entry) => `${rule}: ${entry}`)));
-  const present = new Set(found.map((violation) => `${violation.rule}: ${violation.entry}`));
-  return {
-    unlisted: found.filter((violation) => !listed.has(`${violation.rule}: ${violation.entry}`)),
-    stale: [...listed].filter((key) => !present.has(key)),
-  };
-}

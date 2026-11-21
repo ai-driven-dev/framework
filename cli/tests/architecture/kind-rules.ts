@@ -2,8 +2,8 @@
  * The rules of the kind gate that read a file's content rather than its name: an error class is
  * thrown, a message names a command that exists, a port method has a caller, a plugin answer is
  * asked and not read, a test reaches the repository through its helper. Each takes the files as
- * text and returns violations; `kinds.rules.arch.test.ts` holds the tree to them, up to
- * `kinds-debt.json`.
+ * text and returns violations; `kinds.rules.arch.test.ts` holds the tree to them,
+ * with no violation tolerated.
  *
  * Written limits: a call is spelled as `.method(` in another file and nothing proves a real path
  * reaches it; an error thrown through a variable (`throw error`) is not seen; a plugin answer held

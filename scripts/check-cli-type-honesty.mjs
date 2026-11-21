@@ -157,7 +157,7 @@ const BASELINE_PATH = "type-assertions-baseline.json";
 
 /**
  * The baseline at the merge-base with `ARCH_BASE_REF`, else with `origin/` and the branch a pull
- * request targets, else with `origin/next`, as `debt-only-shrinks` resolves it, and the files
+ * request targets, else with `origin/next`, and the files
  * the change renamed, old cli path to new. Only the change that adds the baseline file may meet a
  * base without it; any other base without it, or one git cannot give, fails: a
  * ratchet that skips is not one.
