@@ -61,6 +61,23 @@ const KNOWN_LINE_TYPES = [
   "world_state",
 ];
 
+/** Every `type` or `type:payload.type` a line of any observed session carries. */
+function lineTypesOfSessions(): Set<string> {
+  const types = new Set<string>();
+  const rollouts = readdirSync(SESSIONS, { recursive: true, encoding: "utf8" }).filter(
+    (file) => file.includes("rollout-") && !(NO_ZSTD && file.endsWith(".zst"))
+  );
+  for (const file of rollouts) {
+    const raw = readFileSync(join(SESSIONS, file));
+    const text = (file.endsWith(".zst") ? zlib.zstdDecompressSync(raw) : raw).toString();
+    for (const line of text.split("\n").filter(Boolean)) {
+      const { type, payload } = JSON.parse(line);
+      types.add(payload?.type ? `${type}:${payload.type}` : type);
+    }
+  }
+  return types;
+}
+
 describe("the Codex journal as each observed tool version writes it", () => {
   for (const [version, model, calls, input, output, cacheRead, cacheWrite] of GROUPS) {
     it.skipIf(NO_ZSTD && version === COMPRESSED)(
@@ -95,18 +112,7 @@ describe("the Codex journal as each observed tool version writes it", () => {
   });
 
   it("holds no line type but the known ones, the compressed file included", () => {
-    const types = new Set<string>();
-    for (const file of readdirSync(SESSIONS, { recursive: true, encoding: "utf8" })) {
-      if (!file.includes("rollout-")) continue;
-      if (NO_ZSTD && file.endsWith(".zst")) continue;
-      const raw = readFileSync(join(SESSIONS, file));
-      const text = (file.endsWith(".zst") ? zlib.zstdDecompressSync(raw) : raw).toString();
-      for (const line of text.split("\n").filter(Boolean)) {
-        const { type, payload } = JSON.parse(line);
-        types.add(payload?.type ? `${type}:${payload.type}` : type);
-      }
-    }
-    const seen = [...types].sort();
+    const seen = [...lineTypesOfSessions()].sort();
     expect(seen.filter((type) => !KNOWN_LINE_TYPES.includes(type))).toEqual([]);
     if (!NO_ZSTD) expect(seen).toEqual(KNOWN_LINE_TYPES);
   });

@@ -365,6 +365,17 @@ function declare(branch: string, task: string): void {
   );
 }
 
+/** A directory by its mtime, a file by its mtime and bytes. */
+function stateOf(path: string, isDirectory: boolean): string {
+  if (isDirectory) return `dir ${statSync(path).mtimeMs}`;
+  const fd = openSync(path, "r");
+  try {
+    return `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
+  } finally {
+    closeSync(fd);
+  }
+}
+
 /** Every file under the sandbox with its bytes and mtime, and every directory with its mtime. */
 function snapshot(): Record<string, string> {
   const found: Record<string, string> = {};
@@ -372,17 +383,8 @@ function snapshot(): Record<string, string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
       if (path.includes(`${join(".git")}`)) continue;
-      if (entry.isDirectory()) {
-        found[path] = `dir ${statSync(path).mtimeMs}`;
-        walk(path);
-        continue;
-      }
-      const fd = openSync(path, "r");
-      try {
-        found[path] = `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
-      } finally {
-        closeSync(fd);
-      }
+      found[path] = stateOf(path, entry.isDirectory());
+      if (entry.isDirectory()) walk(path);
     }
   };
   walk(box.root);
