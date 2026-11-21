@@ -8,6 +8,22 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 
+/** Everything a translator needs to place one plugin. The optional fields default per strategy. */
+export interface AddPluginRequest {
+  dist: PluginDistribution;
+  tool: AiToolProfile;
+  source: PluginSource;
+  projectRoot: string;
+  manifest: Manifest;
+  marketplace: string | undefined;
+  previousMcpEntries?: ReadonlyMap<string, string>;
+  userScopeDirTaken?: boolean;
+  previousProjectHooks?: ProjectHooksProvenance;
+  hooksGuard?: ProjectHooksGuard;
+}
+
+export type AddPluginResult = { skipped: ReadonlySkipList; written?: number };
+
 /** A translator strategy contract, not a hexagonal port adapter. */
 export interface PluginTranslator {
   readonly mode: PluginTranslationMode;
@@ -19,16 +35,5 @@ export interface PluginTranslator {
    * `previousMcpEntries` carries the plugin's previous entries when replacing an existing install,
    * for an idempotent re-merge of OpenCode MCP servers.
    */
-  addPlugin(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    source: PluginSource,
-    projectRoot: string,
-    manifest: Manifest,
-    marketplace: string | undefined,
-    previousMcpEntries?: ReadonlyMap<string, string>,
-    userScopeDirTaken?: boolean,
-    previousProjectHooks?: ProjectHooksProvenance,
-    hooksGuard?: ProjectHooksGuard
-  ): Promise<{ skipped: ReadonlySkipList; written?: number }>;
+  addPlugin(request: AddPluginRequest): Promise<AddPluginResult>;
 }

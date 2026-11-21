@@ -27,14 +27,14 @@ export function buildDist(): PluginDistribution {
 }
 
 export async function installViaModeA(manifest: Manifest): Promise<void> {
-  await new ModeAMarketplaceTranslator().addPlugin(
-    buildDist(),
-    registeredTools().aiProfile(claude),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
+  await new ModeAMarketplaceTranslator().addPlugin({
+    dist: buildDist(),
+    tool: registeredTools().aiProfile(claude),
+    source: { kind: "local", path: "/plugin-source" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    MARKETPLACE_NAME
-  );
+    marketplace: MARKETPLACE_NAME,
+  });
   manifest.setNativeRegistrations(claude, {
     binary: "claude",
     marketplaces: [

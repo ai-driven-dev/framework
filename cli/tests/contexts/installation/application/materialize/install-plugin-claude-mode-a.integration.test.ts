@@ -84,14 +84,14 @@ describe("install claude plugin via Mode A (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      MARKETPLACE_NAME
-    );
+      marketplace: MARKETPLACE_NAME,
+    });
     await manifestRepo.save(manifest);
     registry.seed(PROJECT_ROOT, {
       name: MARKETPLACE_NAME,
@@ -130,14 +130,14 @@ describe("install claude plugin via Mode A (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      MARKETPLACE_NAME
-    );
+      marketplace: MARKETPLACE_NAME,
+    });
     await manifestRepo.save(manifest);
     registry.seed(PROJECT_ROOT, {
       name: MARKETPLACE_NAME,

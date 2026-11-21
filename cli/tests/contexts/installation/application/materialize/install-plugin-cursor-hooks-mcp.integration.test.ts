@@ -92,14 +92,14 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    const { skipped } = await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const { skipped } = await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
     expect(fs.has(hooksPath)).toBe(true);
@@ -123,14 +123,14 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
     const content = await fs.readFile(hooksPath);
@@ -149,14 +149,14 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const mcpPath = join(EXPECTED_BASE, PLUGIN_NAME, "mcp.json");
     expect(fs.has(mcpPath)).toBe(true);
@@ -176,14 +176,14 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const plugins = manifest.getPlugins(TOOL.cursor);
     const installed = plugins.find((p) => p.name === PLUGIN_NAME);
@@ -203,14 +203,14 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    const { skipped } = await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const { skipped } = await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     expect(skipped).toHaveLength(0);
   });

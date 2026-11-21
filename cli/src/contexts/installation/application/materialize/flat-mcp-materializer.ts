@@ -11,13 +11,14 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
 
-export async function refreshTrackedMcpConfigHash(
-  fs: FileReader,
-  manifest: Manifest,
-  toolId: AiToolId,
-  projectRoot: string,
-  outputRelPath: string | undefined
-): Promise<void> {
+export async function refreshTrackedMcpConfigHash(refresh: {
+  fs: FileReader;
+  manifest: Manifest;
+  toolId: AiToolId;
+  projectRoot: string;
+  outputRelPath: string | undefined;
+}): Promise<void> {
+  const { fs, manifest, toolId, projectRoot, outputRelPath } = refresh;
   if (outputRelPath === undefined || !manifest.isFileTracked(outputRelPath)) return;
   const outputPath = join(projectRoot, outputRelPath);
   if (await fs.fileExists(outputPath)) {
@@ -25,17 +26,18 @@ export async function refreshTrackedMcpConfigHash(
   }
 }
 
-export async function materializeFlatMcp(
-  fs: FileReader & FileWriter,
-  dist: PluginDistribution,
-  tool: FlatMcpSection,
-  projectRoot: string,
-  previousMcpEntries: ReadonlyMap<string, string>
-): Promise<{
+export async function materializeFlatMcp(materialization: {
+  fs: FileReader & FileWriter;
+  dist: PluginDistribution;
+  tool: FlatMcpSection;
+  projectRoot: string;
+  previousMcpEntries: ReadonlyMap<string, string>;
+}): Promise<{
   mcpEntries: ReadonlyMap<string, string>;
   mcpSkips: ReadonlySkipList;
   outputRelPath?: string;
 }> {
+  const { fs, dist, tool, projectRoot, previousMcpEntries } = materialization;
   const mcpCap = dist.components.mcp.length === 0 ? null : tool.flatPluginMcp();
   if (mcpCap === null) {
     return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };

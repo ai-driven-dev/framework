@@ -73,13 +73,13 @@ export class MainSessionModels {
       }
       if (provider === undefined || current === undefined || models === null) continue;
       try {
-        const plan = this.settings.planInstall(
-          current,
-          await this.readIfAny(current),
-          models.mainSettingsValues(provider),
-          mainModels[host],
-          models.mainSettings()?.schema
-        );
+        const plan = this.settings.planInstall({
+          path: current,
+          content: await this.readIfAny(current),
+          values: models.mainSettingsValues(provider),
+          record: mainModels[host],
+          schema: models.mainSettings()?.schema,
+        });
         mainModels[host] = plan.record;
         changes.push({ host, path: current, content: plan.content });
       } catch (error) {

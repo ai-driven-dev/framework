@@ -97,7 +97,7 @@ function harness(given: Case = {}) {
     },
   };
   const settings: MainSessionSettings = {
-    planInstall: (path, current, values, previous, schema) => {
+    planInstall: ({ path, content: current, values, record: previous, schema }) => {
       installs.push({ path, current, values, previous, schema });
       const answer = given.install ?? { content: "installed", record: record(A, "new") };
       if (answer instanceof Error) throw answer;

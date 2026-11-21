@@ -110,17 +110,17 @@ export class PlacePlugin {
     const { dist, source, projectRoot, manifest, marketplace } = command;
     const adapter = resolvePluginTranslator(tool, { fs: this.fs, built: this.built });
     if (adapter?.mode === "flat") {
-      const result = await adapter.addPlugin(
+      const result = await adapter.addPlugin({
         dist,
         tool,
         source,
         projectRoot,
         manifest,
         marketplace,
-        command.previousMcpEntries.get(tool.toolId) ?? new Map(),
+        previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
         userScopeDirTaken,
-        command.previousProjectHooks.get(tool.toolId)
-      );
+        previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
+      });
       return { ...result, notices: [] };
     }
     const output = this.built.translate.execute({ distribution: dist, tool });
@@ -148,14 +148,14 @@ export class PlacePlugin {
     const { files, componentPaths, skipped, notices } = translated;
     if (files.length === 0) return { skipped, notices };
     if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
-      const result = await adapter.addPlugin(
+      const result = await adapter.addPlugin({
         dist,
         tool,
         source,
         projectRoot,
         manifest,
-        marketplace
-      );
+        marketplace,
+      });
       return { ...result, notices };
     }
     await writePluginFiles(files, projectRoot, this.fs);

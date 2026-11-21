@@ -41,14 +41,14 @@ describe("install cursor plugin via Mode B (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist("aidd-context"),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist("aidd-context"),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     expect(fs.listAll().every((p) => !p.startsWith(PROJECT_ROOT))).toBe(true);
   });
@@ -63,14 +63,14 @@ describe("install cursor plugin via Mode B (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist("aidd-context"),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist("aidd-context"),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const plugins = manifest.getPlugins(TOOL.cursor);
     const installed = plugins.find((p) => p.name === "aidd-context");
@@ -92,14 +92,14 @@ describe("install cursor plugin via Mode B (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist("aidd-context"),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist("aidd-context"),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const plugins = manifest.getPlugins(TOOL.cursor);
     const installed = plugins.find((p) => p.name === "aidd-context");

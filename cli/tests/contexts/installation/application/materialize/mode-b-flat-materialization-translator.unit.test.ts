@@ -56,14 +56,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.opencode, "test", []);
       const dist = buildDist("test-plugin");
-      await adapter.addPlugin(
+      await adapter.addPlugin({
         dist,
-        registeredTools().aiProfile(TOOL.opencode),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
       const expectedPath = join(PROJECT_ROOT, ".opencode/commands/test-plugin/hello.md");
       expect(fs.has(expectedPath)).toBe(true);
     });
@@ -73,14 +73,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.opencode, "test", []);
       const dist = buildDist("test-plugin");
-      await adapter.addPlugin(
+      await adapter.addPlugin({
         dist,
-        registeredTools().aiProfile(TOOL.opencode),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
       const plugins = manifest.getPlugins(TOOL.opencode);
       const installed = plugins.find((p) => p.name === "test-plugin");
       expect(installed).toBeDefined();
@@ -99,14 +99,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
         files: [],
         components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
       });
-      await adapter.addPlugin(
-        emptyDist,
-        registeredTools().aiProfile(TOOL.opencode),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+      await adapter.addPlugin({
+        dist: emptyDist,
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
       expect(fs.listAll().length).toBe(0);
       const plugins = manifest.getPlugins(TOOL.opencode);
       expect(plugins.find((p) => p.name === "empty-plugin")).toBeUndefined();
@@ -120,14 +120,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
       manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("test-plugin");
       await expect(
-        adapter.addPlugin(
+        adapter.addPlugin({
           dist,
-          registeredTools().aiProfile(TOOL.claude),
-          { kind: "local", path: "/plugin-source" },
-          PROJECT_ROOT,
+          tool: registeredTools().aiProfile(TOOL.claude),
+          source: { kind: "local", path: "/plugin-source" },
+          projectRoot: PROJECT_ROOT,
           manifest,
-          undefined
-        )
+          marketplace: undefined,
+        })
       ).rejects.toThrow(ProjectScopeUnsupportedError);
     });
   });
@@ -137,14 +137,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
       manifest.addTool(TOOL.antigravity, "test", []);
-      const added = adapter.addPlugin(
-        buildDist("test-plugin"),
-        registeredTools().aiProfile(TOOL.antigravity),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+      const added = adapter.addPlugin({
+        dist: buildDist("test-plugin"),
+        tool: registeredTools().aiProfile(TOOL.antigravity),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
 
       await expect(added).resolves.toEqual({ skipped: [] });
     });
@@ -169,14 +169,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
           mcp: [{ relativePath: ".mcp.json", content: "{}" }],
         },
       });
-      await adapter.addPlugin(
-        mcpOnlyDist,
-        registeredTools().aiProfile(TOOL.opencode),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+      await adapter.addPlugin({
+        dist: mcpOnlyDist,
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
       expect(fs.listAll().length).toBe(0);
       const plugins = manifest.getPlugins(TOOL.opencode);
       expect(plugins.find((p) => p.name === "mcp-plugin")).toBeUndefined();
@@ -220,29 +220,29 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const manifest = cursorManifest();
       const source = { kind: "local", path: "/plugin-source" } as const;
       const scriptPath = join(PROJECT_ROOT, ".cursor/hooks/hooks-plugin/pre.js");
-      await adapter.addPlugin(
-        hooksDist(),
-        registeredTools().aiProfile(TOOL.cursor),
+      await adapter.addPlugin({
+        dist: hooksDist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
         source,
-        PROJECT_ROOT,
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
       const installed = manifest.getPlugins(TOOL.cursor).find((p) => p.name === "hooks-plugin");
       fs.setFile(scriptPath, "user edit");
       const reinstall = (guard?: { overwriteEdited: boolean }) =>
-        adapter.addPlugin(
-          hooksDist(),
-          registeredTools().aiProfile(TOOL.cursor),
+        adapter.addPlugin({
+          dist: hooksDist(),
+          tool: registeredTools().aiProfile(TOOL.cursor),
           source,
-          PROJECT_ROOT,
-          cursorManifest(),
-          undefined,
-          new Map(),
-          false,
-          installed?.projectHooks,
-          guard
-        );
+          projectRoot: PROJECT_ROOT,
+          manifest: cursorManifest(),
+          marketplace: undefined,
+          previousMcpEntries: new Map(),
+          userScopeDirTaken: false,
+          previousProjectHooks: installed?.projectHooks,
+          hooksGuard: guard,
+        });
 
       await expect(reinstall()).rejects.toThrow(/edited after install/);
       expect(fs.getFile(scriptPath)).toBe("user edit");
@@ -279,15 +279,15 @@ describe("ModeBFlatMaterializationTranslator", () => {
       manifest.addTool(TOOL.opencode, "test", []);
 
       await expect(
-        adapter.addPlugin(
-          mcpDist({}),
-          registeredTools().aiProfile(TOOL.opencode),
-          { kind: "local", path: "/plugin-source" },
-          PROJECT_ROOT,
+        adapter.addPlugin({
+          dist: mcpDist({}),
+          tool: registeredTools().aiProfile(TOOL.opencode),
+          source: { kind: "local", path: "/plugin-source" },
+          projectRoot: PROJECT_ROOT,
           manifest,
-          undefined,
-          new Map([["old-tool", "digest-of-old-tool"]])
-        )
+          marketplace: undefined,
+          previousMcpEntries: new Map([["old-tool", "digest-of-old-tool"]]),
+        })
       ).rejects.toThrow(/edited after install/);
 
       expect(fs.getFile(configPath)).toBe(userContent);
@@ -306,14 +306,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
       manifest.addTool(TOOL.opencode, "test", []);
 
       await expect(
-        adapter.addPlugin(
-          mcpDist({ "local-tool": { command: "node", args: ["./server.js"] } }),
-          registeredTools().aiProfile(TOOL.opencode),
-          { kind: "local", path: "/plugin-source" },
-          PROJECT_ROOT,
+        adapter.addPlugin({
+          dist: mcpDist({ "local-tool": { command: "node", args: ["./server.js"] } }),
+          tool: registeredTools().aiProfile(TOOL.opencode),
+          source: { kind: "local", path: "/plugin-source" },
+          projectRoot: PROJECT_ROOT,
           manifest,
-          undefined
-        )
+          marketplace: undefined,
+        })
       ).rejects.toThrow("EACCES: planted by the test");
     });
   });

@@ -75,14 +75,14 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
       translate: translateDistribution,
     });
 
-    await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/skills/aidd-vcs/01-commit/SKILL.md`)).toBe(skill);
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/agents/aidd-vcs-helper.md`)).toBe("agent body");
@@ -112,14 +112,14 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
       translate: translateDistribution,
     });
 
-    await translator.addPlugin(
-      distWithHooks(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: distWithHooks(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/hooks/aidd-vcs/journal.cjs`)).toBe("// journal");
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/hooks/aidd-vcs/lib/host.cjs`)).toBe("// host");
@@ -146,14 +146,14 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
       marketplaceRegistry: await makeRegistry(),
       translate: translateDistribution,
     });
-    return translator.addPlugin(
-      distribution,
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    return translator.addPlugin({
+      dist: distribution,
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
   }
 
   it("reports no skip for a tool that keeps hooks inside its own plugin tree", async () => {
@@ -242,14 +242,14 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
       },
     });
 
-    await translator.addPlugin(
-      distribution,
-      registeredTools().aiProfile(TOOL.kilo),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: distribution,
+      tool: registeredTools().aiProfile(TOOL.kilo),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     expect(fs.getFile(`${PROJECT_ROOT}/.kilo/skills/aidd-vcs/01-commit/SKILL.md`)).toBe("skill");
     expect(fs.getFile(`${PROJECT_ROOT}/.kilo/agents/aidd-vcs-helper.md`)).toBe("agent");

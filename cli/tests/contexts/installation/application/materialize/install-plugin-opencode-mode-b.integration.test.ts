@@ -49,14 +49,14 @@ describe("install opencode plugin via Mode B (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const written = fs.listAll();
     expect(
@@ -75,14 +75,14 @@ describe("install opencode plugin via Mode B (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     expect(fs.listAll().every((p) => !p.startsWith(STUB_HOME))).toBe(true);
   });
@@ -97,14 +97,14 @@ describe("install opencode plugin via Mode B (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === "aidd-context");
     expect(installed).toBeDefined();

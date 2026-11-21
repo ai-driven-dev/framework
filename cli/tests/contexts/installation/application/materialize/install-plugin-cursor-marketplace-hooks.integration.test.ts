@@ -74,14 +74,14 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
       translate: translateDistribution,
     });
 
-    const { skipped } = await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const { skipped } = await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
     expect(fs.has(hooksPath)).toBe(true);
@@ -104,14 +104,14 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
       translate: translateDistribution,
     });
 
-    await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     const base = `${HOME}/.cursor/plugins/local/${PLUGIN_NAME}`;
     const written = fs.listUnder(base);
@@ -129,14 +129,14 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
       () => HOME,
       translateDistribution
     );
-    await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     return fs;
   }
 
@@ -153,14 +153,14 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
       marketplaceRegistry: await makeRegistry(),
       translate: translateDistribution,
     });
-    await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
     return fs;
   }
 
