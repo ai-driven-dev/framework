@@ -54,11 +54,12 @@ export class UpdateTool {
     return async (relativePath: string) => {
       const diskPath = join(command.projectRoot, relativePath);
       const manifestHash = hashes.get(relativePath);
-      const isModified = await this.resolveSyncConflict.isConflictOnDisk(
-        diskPath,
-        relativePath,
-        manifestHash !== undefined ? new Map([[relativePath, manifestHash]]) : new Map()
-      );
+      const isModified = await this.resolveSyncConflict.execute({
+        diskTargetPath: diskPath,
+        targetRelativePath: relativePath,
+        targetManifestMap:
+          manifestHash !== undefined ? new Map([[relativePath, manifestHash]]) : new Map(),
+      });
       if (!isModified) return "write";
       return (await command.overwriteModified(relativePath)) ? "write" : "skip";
     };

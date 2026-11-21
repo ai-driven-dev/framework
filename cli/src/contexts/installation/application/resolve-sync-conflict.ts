@@ -1,84 +1,28 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import { driftOf } from "../domain/manifest/drift.js";
 
+export interface ResolveSyncConflictRequest {
+  readonly diskTargetPath: string;
+  readonly targetRelativePath: string;
+  readonly targetManifestMap: ReadonlyMap<string, { value: string }>;
+}
+
 /** Decides a conflict, never prompts: recording one is the caller's. */
 export class ResolveSyncConflict {
   constructor(private readonly fs: FileReader) {}
 
   /** Whether the file on disk was changed since the manifest recorded it; a missing file was not. */
-  async isConflictOnDisk(
-    diskTargetPath: string,
-    targetRelativePath: string,
-    targetManifestMap: Map<string, { value: string }>
-  ): Promise<boolean> {
-    return this.isConflict(
-      diskTargetPath,
-      await this.fs.fileExists(diskTargetPath),
-      targetRelativePath,
-      targetManifestMap
-    );
-  }
-
-  private async isConflict(
-    diskTargetPath: string,
-    diskTargetExists: boolean,
-    targetRelativePath: string,
-    targetManifestMap: Map<string, { value: string }>
-  ): Promise<boolean> {
-    if (!diskTargetExists) return false;
+  async execute({
+    diskTargetPath,
+    targetRelativePath,
+    targetManifestMap,
+  }: ResolveSyncConflictRequest): Promise<boolean> {
+    if (!(await this.fs.fileExists(diskTargetPath))) return false;
     const diskTargetHash = await this.fs.readFileHash(diskTargetPath);
     const targetManifestHash = targetManifestMap.get(targetRelativePath);
     return (
       targetManifestHash !== undefined &&
       driftOf(targetManifestHash.value, diskTargetHash) === "modified"
     );
-  }
-
-  /** `conflict` is true even for a `"write"`, when `force` overrode a detected conflict. */
-  async resolveWriteOutcome(opts: {
-    diskTargetPath: string;
-    diskTargetExists: boolean;
-    targetRelativePath: string;
-    targetManifestMap: Map<string, { value: string }>;
-    targetContent: string;
-    force: boolean;
-  }): Promise<{ outcome: "skipped" | "conflict" | "write"; conflict: boolean }> {
-    const {
-      diskTargetPath,
-      diskTargetExists,
-      targetRelativePath,
-      targetManifestMap,
-      targetContent,
-      force,
-    } = opts;
-
-    if (diskTargetExists && (await this.fs.readFile(diskTargetPath)) === targetContent) {
-      return { outcome: "skipped", conflict: false };
-    }
-
-    const conflict = await this.isConflict(
-      diskTargetPath,
-      diskTargetExists,
-      targetRelativePath,
-      targetManifestMap
-    );
-
-    if (conflict && !force) return { outcome: "conflict", conflict: true };
-    return { outcome: "write", conflict };
-  }
-
-  /** Plugin propagation has no manifest hash to compare, so any existing target file counts
-   * as a potential overwrite. */
-  async resolvePluginWriteOutcome(opts: {
-    diskTargetPath: string;
-    targetContent: string;
-    force: boolean;
-  }): Promise<"skipped" | "conflict" | "write"> {
-    const { diskTargetPath, targetContent, force } = opts;
-    const exists = await this.fs.fileExists(diskTargetPath);
-
-    if (exists && (await this.fs.readFile(diskTargetPath)) === targetContent) return "skipped";
-    if (!force && exists) return "conflict";
-    return "write";
   }
 }

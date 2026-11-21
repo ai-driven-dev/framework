@@ -5,7 +5,6 @@ import { BuildMarketplaceForTool } from "../../../src/contexts/installation/appl
 import { LoadSyncContext } from "../../../src/contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
 import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.js";
-import { TrackedSettingsFile } from "../../../src/contexts/installation/application/sync/tracked-settings-file.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordSourceReference } from "../../../src/contexts/machine-claims/application/record-source-reference.js";
 import { SharedFrameworkSource } from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
@@ -49,7 +48,8 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       parts.userManifestRepo
     ),
     new SyncToolSettingsFiles(
-      new TrackedSettingsFile(parts.fs, parts.logger),
+      parts.fs,
+      parts.logger,
       build,
       registrationRecordRules,
       registeredTools()

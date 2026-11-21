@@ -90,12 +90,13 @@ export class SyncSettings {
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
     if (
       scope === "project" &&
-      (await this.settingsFiles.syncProjectTools(
+      (await this.settingsFiles.execute({
+        kind: "project-tools",
         projectRoot,
         manifest,
         marketplaces,
-        context.toolIds
-      ))
+        toolIds: context.toolIds,
+      }))
     )
       await context.save();
     const activation = await this.activateNativeTools.execute({
@@ -107,12 +108,13 @@ export class SyncSettings {
     });
     if (
       scope === "project" &&
-      (await this.settingsFiles.syncProvenPlugins(
+      (await this.settingsFiles.execute({
+        kind: "proven-plugins",
         projectRoot,
         manifest,
         marketplaces,
-        activation.outcomes
-      ))
+        outcomes: activation.outcomes,
+      }))
     )
       await context.save();
     // A refused or unproven host registration cannot establish a new shared-source claim.
@@ -125,24 +127,27 @@ export class SyncSettings {
         outcomes: activation.outcomes,
       });
     }
-    const wroteHashes = await this.recordActivation.recordWhatActivationWrote(
+    const wroteHashes = await this.recordActivation.execute({
+      kind: "settings-written-by-host",
       projectRoot,
       manifest,
-      [...activation.outcomes.keys()]
-    );
-    const wroteRegistrations = this.recordActivation.recordNativeRegistrations(
+      activated: [...activation.outcomes.keys()],
+    });
+    const wroteRegistrations = await this.recordActivation.execute({
+      kind: "native-registrations",
       manifest,
-      activation.outcomes,
-      options.marketplaceNames !== undefined
-    );
+      activated: activation.outcomes,
+      narrowed: options.marketplaceNames !== undefined,
+    });
     if (wroteHashes || wroteRegistrations) await context.save();
-    await this.recordActivation.recordMachinePluginClaims(
-      manifest,
-      activation.outcomes,
+    await this.recordActivation.execute({
+      kind: "machine-claims",
+      project: manifest,
+      outcomes: activation.outcomes,
       marketplaces,
       scope,
-      scope === "project" ? projectRoot : undefined
-    );
+      projectRoot: scope === "project" ? projectRoot : undefined,
+    });
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
       await this.sharedSource.execute({
         kind: "purge-stale-project-cache",

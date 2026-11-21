@@ -23,6 +23,28 @@ import {
 
 const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
 
+export interface ProjectHooksMaterializerRequest {
+  readonly dist: PluginDistribution;
+  readonly tool: ProjectHooksSection;
+  readonly projectRoot: string;
+  readonly previous?: ProjectHooksProvenance;
+  readonly guard?: ProjectHooksGuard;
+}
+
+export interface ProjectHooksMaterialized {
+  readonly skipped: ReadonlySkipList;
+  readonly projectHooks?: ProjectHooksProvenance;
+}
+
+/** One delivery of a plugin's hooks to the destination its tool declares. */
+interface HooksDelivery {
+  readonly dist: PluginDistribution;
+  readonly projectRoot: string;
+  readonly location: ProjectHooksLocation;
+  readonly previous?: ProjectHooksProvenance;
+  readonly guard: ProjectHooksGuard;
+}
+
 /**
  * Delivers a plugin's hooks to the destination a `hooksDestination: "project"` capability names -
  * merged into the project's own hooks file, scripts copied beside it: rather than into the
@@ -32,23 +54,15 @@ const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
 export class ProjectHooksMaterializer {
   constructor(private readonly fs: FileWriter & FileReader) {}
 
-  async materialize(
-    dist: PluginDistribution,
-    tool: ProjectHooksSection,
-    projectRoot: string
-  ): Promise<ReadonlySkipList> {
-    return (await this.materializeWithProvenance(dist, tool, projectRoot)).skipped;
-  }
-
-  async materializeWithProvenance(
-    dist: PluginDistribution,
-    tool: ProjectHooksSection,
-    projectRoot: string,
-    previous?: ProjectHooksProvenance,
-    guard: ProjectHooksGuard = {}
-  ): Promise<{ skipped: ReadonlySkipList; projectHooks?: ProjectHooksProvenance }> {
-    const delivery = tool.projectHooksDelivery();
-    if (delivery === null) return { skipped: [] };
+  async execute({
+    dist,
+    tool,
+    projectRoot,
+    previous,
+    guard = {},
+  }: ProjectHooksMaterializerRequest): Promise<ProjectHooksMaterialized> {
+    const location = tool.projectHooksDelivery();
+    if (location === null) return { skipped: [] };
     const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST_PATH);
     if (manifestFile === undefined) {
       if (previous !== undefined) {
@@ -71,15 +85,11 @@ export class ProjectHooksMaterializer {
       projectRoot,
       guard
     );
-    await this.assertScriptsNotUserOwned(dist, projectRoot, delivery, previous);
-    const { warnings, entries } = await this.mergeProjectHooksJson(
-      dist,
-      manifestFile,
-      projectRoot,
-      delivery
-    );
-    const scripts = await this.writeProjectHooksScripts(dist, projectRoot, delivery);
-    await this.removeObsoleteScripts(previous, scripts, projectRoot, delivery, guard);
+    const delivery: HooksDelivery = { dist, projectRoot, location, previous, guard };
+    await this.assertScriptsNotUserOwned(delivery);
+    const { warnings, entries } = await this.mergeProjectHooksJson(delivery, manifestFile);
+    const scripts = await this.writeProjectHooksScripts(delivery);
+    await this.removeObsoleteScripts(delivery, scripts);
     return {
       skipped: warnings.map(
         (reason): PluginTranslationSkip => ({
@@ -94,14 +104,12 @@ export class ProjectHooksMaterializer {
   }
 
   private async mergeProjectHooksJson(
-    dist: PluginDistribution,
-    manifestFile: PluginComponentFile,
-    projectRoot: string,
-    delivery: ProjectHooksLocation
+    { dist, projectRoot, location }: HooksDelivery,
+    manifestFile: PluginComponentFile
   ): Promise<{ warnings: readonly string[]; entries: ProjectHooksProvenance["entries"] }> {
-    const destPath = join(projectRoot, delivery.relativePath);
+    const destPath = join(projectRoot, location.relativePath);
     const existing = await this.readExistingJson(destPath);
-    const { content, warnings } = delivery.format.merge(
+    const { content, warnings } = location.format.merge(
       existing,
       manifestFile.content,
       dist.manifest.name
@@ -109,40 +117,40 @@ export class ProjectHooksMaterializer {
     await this.fs.writeFile(destPath, content);
     return {
       warnings,
-      entries: recordedProjectHookEntries(delivery.format, content, dist.manifest.name),
+      entries: recordedProjectHookEntries(location.format, content, dist.manifest.name),
     };
   }
 
-  private async assertScriptsNotUserOwned(
-    dist: PluginDistribution,
-    projectRoot: string,
-    delivery: ProjectHooksLocation,
-    previous?: ProjectHooksProvenance
-  ): Promise<void> {
+  private async assertScriptsNotUserOwned({
+    dist,
+    projectRoot,
+    location,
+    previous,
+  }: HooksDelivery): Promise<void> {
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const relativePath = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
+      const relativePath = location.format.scriptPath(dist.manifest.name, file.relativePath);
       if (previous?.scripts.has(relativePath) === true) continue;
       if (await this.fs.fileExists(join(projectRoot, relativePath))) {
         throw new Error(
-          `${delivery.toolName} hook script '${relativePath}' is user-owned; install refused.`
+          `${location.toolName} hook script '${relativePath}' is user-owned; install refused.`
         );
       }
     }
   }
 
-  private async writeProjectHooksScripts(
-    dist: PluginDistribution,
-    projectRoot: string,
-    delivery: ProjectHooksLocation
-  ): Promise<ReadonlyMap<string, string>> {
+  private async writeProjectHooksScripts({
+    dist,
+    projectRoot,
+    location,
+  }: HooksDelivery): Promise<ReadonlyMap<string, string>> {
     const scripts = new Map<string, string>();
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const dest = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
+      const dest = location.format.scriptPath(dist.manifest.name, file.relativePath);
       await this.fs.writeFile(
         join(projectRoot, dest),
-        delivery.hookScript(file.relativePath, file.content)
+        location.hookScript(file.relativePath, file.content)
       );
       scripts.set(dest, (await this.fs.readFileHash(join(projectRoot, dest))).value);
     }
@@ -150,20 +158,17 @@ export class ProjectHooksMaterializer {
   }
 
   private async removeObsoleteScripts(
-    previous: ProjectHooksProvenance | undefined,
-    current: ReadonlyMap<string, string>,
-    projectRoot: string,
-    delivery: ProjectHooksLocation,
-    { overwriteEdited = false }: ProjectHooksGuard
+    { projectRoot, location, previous, guard }: HooksDelivery,
+    current: ReadonlyMap<string, string>
   ): Promise<void> {
     if (previous === undefined) return;
     for (const [relativePath, digest] of previous.scripts) {
       if (current.has(relativePath)) continue;
       const path = join(projectRoot, relativePath);
       if (!(await this.fs.fileExists(path))) continue;
-      if (!overwriteEdited && (await this.fs.readFileHash(path)).value !== digest) {
+      if (guard.overwriteEdited !== true && (await this.fs.readFileHash(path)).value !== digest) {
         throw new Error(
-          `${delivery.toolName} hook script '${relativePath}' was edited during reinstall; removal refused. ${OVERWRITE_EDITED_HINT}`
+          `${location.toolName} hook script '${relativePath}' was edited during reinstall; removal refused. ${OVERWRITE_EDITED_HINT}`
         );
       }
       await this.fs.deleteFile(path);

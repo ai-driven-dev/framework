@@ -238,18 +238,18 @@ describe("plugin install merging a plugin into the project's hooks file again", 
       }),
     });
     const materializer = new ProjectHooksMaterializer(fs);
-    const first = await materializer.materializeWithProvenance(
-      dist(),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT
-    );
+    const first = await materializer.execute({
+      dist: dist(),
+      tool: registeredAiProfile(TOOL.cursor),
+      projectRoot: PROJECT,
+    });
 
-    await materializer.materializeWithProvenance(
-      dist(),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT,
-      first.projectHooks
-    );
+    await materializer.execute({
+      dist: dist(),
+      tool: registeredAiProfile(TOOL.cursor),
+      projectRoot: PROJECT,
+      previous: first.projectHooks,
+    });
     const file = fs.getFile(HOOKS);
 
     expect(commands(file, "sessionStart")).toStrictEqual([

@@ -83,7 +83,7 @@ describe("native activation: recorded refs", () => {
     });
   });
 
-  // `recordNativeRegistrations`'s keyed merge applies only to a narrowed run: an unnarrowed one
+  // the native-registrations record's keyed merge applies only to a narrowed run: an unnarrowed one
   // replaces the whole entry, or a ref the registry no longer carries is retained forever.
   describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1)", () => {
     const LIVE_MARKETPLACE = "market-live";

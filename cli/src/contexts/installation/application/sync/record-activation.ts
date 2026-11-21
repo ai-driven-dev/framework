@@ -13,6 +13,31 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
 
+/** What a run observed or caused. Each answer says whether it changed a manifest. */
+export type RecordActivationRequest =
+  | {
+      readonly kind: "native-registrations";
+      readonly manifest: Manifest;
+      readonly activated: ReadonlyMap<ToolId, HostRegistrationOutcome>;
+      readonly narrowed: boolean;
+    }
+  | {
+      readonly kind: "settings-written-by-host";
+      readonly projectRoot: string;
+      readonly manifest: Manifest;
+      readonly activated: readonly ToolId[];
+    }
+  | {
+      readonly kind: "machine-claims";
+      readonly project: Manifest;
+      readonly outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
+      readonly marketplaces: readonly DeclaredMarketplace[];
+      readonly scope: Scope;
+      readonly projectRoot?: string;
+    };
+
+type Of<K extends RecordActivationRequest["kind"]> = Extract<RecordActivationRequest, { kind: K }>;
+
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
   constructor(
@@ -22,12 +47,23 @@ export class RecordActivation {
     private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
+  async execute(request: RecordActivationRequest): Promise<boolean> {
+    switch (request.kind) {
+      case "native-registrations":
+        return this.recordNativeRegistrations(request);
+      case "settings-written-by-host":
+        return this.recordWhatActivationWrote(request);
+      case "machine-claims":
+        return this.recordMachinePluginClaims(request);
+    }
+  }
+
   /** Only for a tool this run actually activated. */
-  recordNativeRegistrations(
-    manifest: Manifest,
-    activated: ReadonlyMap<ToolId, HostRegistrationOutcome>,
-    narrowed: boolean
-  ): boolean {
+  private recordNativeRegistrations({
+    manifest,
+    activated,
+    narrowed,
+  }: Of<"native-registrations">): boolean {
     let changed = false;
     for (const [toolId, outcome] of activated) {
       const binary = this.nativeActivationBinary(toolId);
@@ -49,11 +85,11 @@ export class RecordActivation {
    * the hash is re-read from disk after activation rather than re-derived: what is stored is
    * then the observation, not a guess at what the host would have written.
    */
-  async recordWhatActivationWrote(
-    projectRoot: string,
-    manifest: Manifest,
-    activated: readonly ToolId[]
-  ): Promise<boolean> {
+  private async recordWhatActivationWrote({
+    projectRoot,
+    manifest,
+    activated,
+  }: Of<"settings-written-by-host">): Promise<boolean> {
     let changed = false;
     for (const toolId of activated) {
       const settingsPath = this.marketplaceSettingsOf(toolId)?.sharedSettingsFile();
@@ -80,42 +116,53 @@ export class RecordActivation {
     return this.tools.aiProfileIfAny(toolId)?.nativeActivation()?.hostBinary();
   }
 
-  async recordMachinePluginClaims(
-    project: Manifest,
-    outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>,
-    marketplaces: readonly DeclaredMarketplace[],
-    scope: Scope,
-    projectRoot?: string
-  ): Promise<void> {
-    if (this.userManifestRepo === undefined) return;
+  private async recordMachinePluginClaims(request: Of<"machine-claims">): Promise<boolean> {
+    if (this.userManifestRepo === undefined) return false;
     const machine = (await this.userManifestRepo.load()) ?? Manifest.create();
-    const root = projectRoot === undefined ? undefined : await this.fs.realpath(projectRoot);
+    const root =
+      request.projectRoot === undefined ? undefined : await this.fs.realpath(request.projectRoot);
     let changed = false;
-    for (const [toolId, outcome] of outcomes) {
-      const machineRefs =
-        scope === "user" || this.enablementIsMachineGlobal(toolId) ? outcome.pluginRefs : [];
-      const machineMarketplaces = outcome.catalogClaims.filter((registration) =>
-        marketplaces.some(
-          (marketplace) =>
-            marketplace.name === registration.alias &&
-            (marketplace.scope === "user" || this.enablementIsMachineGlobal(toolId))
-        )
-      );
-      if (machineRefs.length === 0 && machineMarketplaces.length === 0) continue;
-      if (!machine.hasTool(toolId)) {
-        const version = project.getToolVersion(toolId);
-        if (version === undefined) continue;
-        machine.addTool(toolId, version, []);
-      }
+    for (const [toolId, outcome] of request.outcomes) {
+      const claims = this.machineClaimsOf(toolId, outcome, request);
+      if (claims.refs.length === 0 && claims.marketplaces.length === 0) continue;
+      if (!this.machineTracks(machine, request.project, toolId)) continue;
       const merged = this.records.mergeCatalogueClaims(
         machine.getNativeRegistrations(toolId),
-        { marketplaces: machineMarketplaces, refs: machineRefs, dependent: root },
+        { ...claims, dependent: root },
         this.nativeActivationBinary(toolId) ?? toolId
       );
       changed ||= merged.changed;
       if (changed) machine.setNativeRegistrations(toolId, merged.record);
     }
     if (changed) await this.userManifestRepo.save(machine);
+    return changed;
+  }
+
+  /** Adds the tool to the machine record at the project's version; false when the project has none. */
+  private machineTracks(machine: Manifest, project: Manifest, toolId: ToolId): boolean {
+    if (machine.hasTool(toolId)) return true;
+    const version = project.getToolVersion(toolId);
+    if (version === undefined) return false;
+    machine.addTool(toolId, version, []);
+    return true;
+  }
+
+  /** What of one tool's outcome reaches the machine record. */
+  private machineClaimsOf(
+    toolId: ToolId,
+    outcome: HostRegistrationOutcome,
+    { scope, marketplaces }: Pick<Of<"machine-claims">, "scope" | "marketplaces">
+  ) {
+    const global = this.enablementIsMachineGlobal(toolId);
+    return {
+      refs: scope === "user" || global ? outcome.pluginRefs : [],
+      marketplaces: outcome.catalogClaims.filter((registration) =>
+        marketplaces.some(
+          (marketplace) =>
+            marketplace.name === registration.alias && (marketplace.scope === "user" || global)
+        )
+      ),
+    };
   }
 
   /** Whether enabling a plugin acts on the whole machine; true for an editor. */

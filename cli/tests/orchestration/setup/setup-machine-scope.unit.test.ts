@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
+import type {
+  ConfigureMachineScope,
+  ConfigureMachineScopeRequest,
+} from "../../../src/contexts/installation/application/install/configure-machine-scope.js";
 import type { NativeActivationReport } from "../../../src/contexts/installation/application/install/install-ai-tool.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.js";
@@ -35,13 +39,13 @@ function build(initialized: boolean) {
       calls.push(name);
       return value;
     });
-  const configure = {
-    whileLocked: async <T>(action: () => Promise<T>) => {
-      calls.push("lock");
-      return action();
+  const configuredTools: string[] = [];
+  const configure: Pick<ConfigureMachineScope, "execute"> = {
+    execute: <T>({ toolIds, whileHeld }: ConfigureMachineScopeRequest<T>) => {
+      calls.push("configure");
+      configuredTools.push(...toolIds);
+      return whileHeld(initialized);
     },
-    initialize: record("initialize", initialized),
-    registerTools: record("registerTools", undefined),
   };
   const resolveSource = { execute: record("resolveSource", SOURCE) };
   const register = record("register", undefined);
@@ -56,34 +60,26 @@ function build(initialized: boolean) {
     }),
   };
   const useCase = new SetupMachineScope(configure, resolveSource, register, sync, installPlugins);
-  return { useCase, calls, register, sync, installPlugins, configure };
+  return { useCase, calls, register, sync, installPlugins, configuredTools };
 }
 
 describe("SetupMachineScope", () => {
-  it("resolves the source first, then works under the machine lock in order", async () => {
+  it("resolves the source first, then works inside the machine configuration in order", async () => {
     const { useCase, calls } = build(true);
 
     await useCase.execute(flow());
 
-    expect(calls).toEqual([
-      "resolveSource",
-      "lock",
-      "initialize",
-      "register",
-      "registerTools",
-      "installPlugins",
-      "sync",
-    ]);
+    expect(calls).toEqual(["resolveSource", "configure", "register", "installPlugins", "sync"]);
   });
 
   it("registers the resolved source, installs the named plugins and enables them machine-wide", async () => {
-    const { useCase, register, installPlugins, sync, configure } = build(true);
+    const { useCase, register, installPlugins, sync, configuredTools } = build(true);
     const f = flow();
 
     const result = await useCase.execute(f);
 
     expect(register).toHaveBeenCalledWith(f, SOURCE);
-    expect(configure.registerTools).toHaveBeenCalledWith([TOOL.claude]);
+    expect(configuredTools).toEqual([TOOL.claude]);
     expect(installPlugins.execute).toHaveBeenCalledWith({
       projectRoot: PROJECT,
       toolIds: [TOOL.claude],
