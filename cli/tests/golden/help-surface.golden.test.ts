@@ -36,16 +36,24 @@ function subcommandsOf(help: string): string[] {
   const body = lines.slice(start + 1);
   const first = body.find((line) => line.trim() !== "");
   if (first === undefined) return [];
-  const indent = first.length - first.trimStart().length;
+  const indent = indentOf(first);
 
   const names: string[] = [];
   for (const line of body) {
     if (line.trim() === "") break;
-    if (line.length - line.trimStart().length !== indent) continue;
-    const match = /^\s+([a-z][a-z-]*)(?:\||\s|$)/.exec(line);
-    if (match && match[1] !== "help") names.push(match[1]);
+    const name = indent === indentOf(line) ? commandName(line) : undefined;
+    if (name !== undefined) names.push(name);
   }
   return names;
+}
+
+function indentOf(line: string): number {
+  return line.length - line.trimStart().length;
+}
+
+function commandName(line: string): string | undefined {
+  const name = /^\s+([a-z][a-z-]*)(?:\||\s|$)/.exec(line)?.[1];
+  return name === "help" ? undefined : name;
 }
 
 /** Depth-first walk of the command tree, capturing each node's help. */

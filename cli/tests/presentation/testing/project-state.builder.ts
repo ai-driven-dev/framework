@@ -18,23 +18,23 @@ export async function gitStatusPorcelain(cwd: string): Promise<string> {
 /** Every file under `dir`, relative to it, recursively: `[]` for a directory that no longer
  * exists, the honest "nothing left" answer rather than a thrown ENOENT. */
 export async function listFilesUnder(dir: string): Promise<string[]> {
-  let entries: Array<{ name: string; isDirectory(): boolean }>;
+  const found = await Promise.all(
+    (await entriesOf(dir)).map(async (entry) =>
+      entry.isDirectory()
+        ? (await listFilesUnder(join(dir, entry.name))).map((nested) => join(entry.name, nested))
+        : [entry.name]
+    )
+  );
+  return found.flat();
+}
+
+async function entriesOf(dir: string): Promise<Array<{ name: string; isDirectory(): boolean }>> {
   try {
-    entries = await readdir(dir, { withFileTypes: true });
+    return await readdir(dir, { withFileTypes: true });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
     throw error;
   }
-  const results: string[] = [];
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      for (const nested of await listFilesUnder(full)) results.push(join(entry.name, nested));
-    } else {
-      results.push(entry.name);
-    }
-  }
-  return results;
 }
 
 /** Whether a directory is still there at all: `listFilesUnder` answers `[]` for an empty one
