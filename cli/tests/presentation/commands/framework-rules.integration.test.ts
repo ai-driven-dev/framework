@@ -1,19 +1,24 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { TOOL } from "../shared/testing/catalog-of.builder.js";
-import { cliPath, execFileAsync } from "../shared/testing/cli-sandbox.builder.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { TOOL } from "../../shared/testing/catalog-of.builder.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 
-/**
- * Run against the built binary, which is what the skill invokes: a use case passing in
- * isolation says nothing about the subcommand being reachable.
- */
-describe("aidd framework rules — the inventory a rule scan reads", () => {
-  let project: string;
+let project: string;
+let home: string;
+let cleanup: () => Promise<void>;
 
-  beforeAll(async () => {
-    project = await mkdtemp(join(tmpdir(), "aidd-framework-rules-"));
+beforeEach(async () => {
+  ({ projectDir: project, fakeHome: home, cleanup } = await createTestEnv("framework-rules"));
+});
+
+afterEach(async () => {
+  await cleanup();
+});
+
+describe("aidd framework rules, the inventory a rule scan reads", () => {
+  it("answers with every rule installed, whatever tool installed it", async () => {
     await mkdir(join(project, ".claude/rules/01-standards"), { recursive: true });
     await mkdir(join(project, ".codex/rules"), { recursive: true });
     await mkdir(join(project, ".cursor/rules"), { recursive: true });
@@ -24,17 +29,13 @@ describe("aidd framework rules — the inventory a rule scan reads", () => {
     await writeFile(join(project, ".codex/rules/2-imports.md"), "---\n---\n\n# Imports\n");
     // Beside a rule, and not one: only the extension the tool installs makes it a rule.
     await writeFile(join(project, ".cursor/rules/README.md"), "# not a rule\n");
-  });
 
-  afterAll(async () => {
-    await rm(project, { recursive: true, force: true });
-  });
-
-  it("answers with every rule installed, whatever tool installed it", async () => {
-    const { stdout } = await execFileAsync("node", [cliPath(), "framework", "rules", "--json"], {
+    const { stdout, exitCode } = await runInProcess(["framework", "rules", "--json"], {
       cwd: project,
+      home,
     });
 
+    expect(exitCode).toBe(0);
     expect(JSON.parse(stdout)).toEqual([
       {
         tool: TOOL.claude,

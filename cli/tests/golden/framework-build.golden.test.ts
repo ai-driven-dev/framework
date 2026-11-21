@@ -10,7 +10,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
-import { runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
 import { expectGolden } from "./testing/expect-golden.builder.js";
 import { twoCaptures } from "./testing/two-captures.builder.js";
 
@@ -91,7 +91,7 @@ async function captureTarget(
   await mkdir(outDir, { recursive: true });
   const args = ["translate", FRAMEWORK_FIXTURE, "--to", target, "--out", outDir];
   if (flat) args.push("--as", "flat");
-  const result = await runCli(args, projectDir, fakeHome);
+  const result = await runInProcess(args, { cwd: projectDir, home: fakeHome });
   if (result.exitCode !== 0) {
     throw new Error(`translate --to ${target}${flat ? " --as flat" : ""} failed: ${result.stderr}`);
   }

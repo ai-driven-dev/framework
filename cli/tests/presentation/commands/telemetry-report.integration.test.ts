@@ -164,3 +164,28 @@ describe("aidd telemetry report, attribution and text", () => {
     );
   });
 });
+
+describe("aidd telemetry report --json in another time zone", () => {
+  /** UTC, and two zones 25 hours apart: a call at 21:00 UTC is on another local day in each. */
+  const ZONES = ["Pacific/Kiritimati", "America/Adak"];
+
+  async function figures(axis: string, zone: string) {
+    const run = await world().aidd(["report", ...WINDOW, "--axis", axis, "--json"], { TZ: zone });
+    expect(run.exitCode, run.stderr).toBe(0);
+    const { run: facts, ...rest } = Object.fromEntries(Object.entries(JSON.parse(run.stdout)));
+    return { figures: JSON.stringify(rest, null, 2), facts };
+  }
+
+  it("prints the same figures as UTC, and reads no transcript again, in any zone", async () => {
+    await world().declareBranch();
+    for (const axis of ["day", "task"]) {
+      const first = await figures(axis, "UTC");
+      for (const zone of ZONES) {
+        const later = await figures(axis, zone);
+        expect(later.figures, `${axis} in ${zone}`).toBe(first.figures);
+        expect(later.facts).toMatchObject({ files_read: 0 });
+      }
+      expect(first.facts).toMatchObject({ files_read: axis === "day" ? 2 : 0 });
+    }
+  });
+});

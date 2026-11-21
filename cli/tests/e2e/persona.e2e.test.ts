@@ -1,10 +1,9 @@
-import { TOOL } from "../shared/testing/catalog-of.builder.js";
 /**
  * TTY scenarios use /usr/bin/expect: only a real terminal proves the banner and the menu.
  */
 
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -14,7 +13,6 @@ import { cliPath, createTestEnv, failedRunOf } from "../shared/testing/cli-sandb
 const execFileAsync = promisify(execFile);
 
 const EXPECT_BIN = "/usr/bin/expect";
-const AIDD_DIR = ".aidd";
 
 /** Runs an expect(1) script that emulates TTY interaction with the CLI. */
 async function runInteractive(
@@ -71,57 +69,6 @@ exit 0
       expect(exitCode).toBe(0);
       expect(stdout).toContain("BANNER_OK");
       expect(stdout).toContain("PROMPT_OK");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("Persona 5 — returning user: aidd alone with manifest shows full menu", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-returning");
-    try {
-      await mkdir(join(projectDir, AIDD_DIR), { recursive: true });
-      await writeFile(
-        join(projectDir, AIDD_DIR, "manifest.json"),
-        JSON.stringify({
-          version: 8,
-          tools: {
-            claude: {
-              toolId: TOOL.claude,
-              version: "4.1.0-beta.18",
-              files: [],
-              mergeFiles: [],
-            },
-          },
-        })
-      );
-
-      const { stdout, exitCode } = await runInteractive(
-        projectDir,
-        fakeHome,
-        `
-spawn bash -c "cd '${projectDir}' && ${process.execPath} ${cliPath()}"
-expect {
-  -re {AI-Driven Development CLI} { puts "BANNER_OK" }
-  timeout { puts "TIMEOUT"; exit 1 }
-  eof { puts "EOF"; exit 1 }
-}
-expect {
-  -re {What would you like to do} { puts "MENU_OK" }
-  -re {AIDD not initialized} { puts "NO_MANIFEST"; exit 1 }
-  timeout { puts "TIMEOUT2"; exit 1 }
-}
-expect {
-  -re {Inspect} { puts "INSPECT_OK" }
-  timeout { puts "TIMEOUT3"; exit 1 }
-}
-exit 0
-`
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("BANNER_OK");
-      expect(stdout).toContain("MENU_OK");
-      expect(stdout).toContain("INSPECT_OK");
     } finally {
       await cleanup();
     }

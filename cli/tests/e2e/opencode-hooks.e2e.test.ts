@@ -1,17 +1,55 @@
 /**
- * The bridge is only observable in a real translate output tree. The fixture plugin is
- * extended in a private copy of the source, never in the checked-in one other suites share.
+ * What OpenCode's own loader does with a translate output tree, which is only observable in a real
+ * build. The fixture plugin is extended in a private copy of the source, never in the checked-in
+ * one other suites share. OpenCode's plugin loader imports every file one level under
+ * `.opencode/plugin/` in-process, so a script calling `process.exit` there kills the host
+ * uncatchably.
  */
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import {
+  createTestEnv,
+  FRAMEWORK_PATH,
+  failedRunOf,
+  runCli,
+} from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
+
+// Imports its one argument as a module in THIS process, under a non-empty `process.argv` —
+// the same shape a real host provides, inherited by what the import evaluates.
+const IMPORT_HARNESS =
+  'import(process.argv[2]).then(() => { console.log("HOST ALIVE"); process.exit(0); })' +
+  ".catch((err) => { console.error(String(err)); process.exit(1); });\n";
+
+// A `process.exit` at module scope, no export: OpenCode's loader catches a thrown error,
+// never a process exit.
+const HOSTILE_SCRIPT = "(() => {\n  process.exit(1);\n})();\n";
+
+// A well-formed OpenCode plugin module: a function export, nothing else.
+const BENIGN_PLUGIN_SCRIPT = "export const OpencodePlugin = async () => ({});\n";
+
+async function importSurvives(
+  harnessPath: string,
+  modulePath: string
+): Promise<{ exitCode: number; stdout: string }> {
+  try {
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [harnessPath, pathToFileURL(modulePath).href, "some-non-empty-argv"],
+      { timeout: 5000 }
+    );
+    return { exitCode: 0, stdout };
+  } catch (error) {
+    const { stdout, code } = failedRunOf(error);
+    return { exitCode: code ?? 1, stdout };
+  }
+}
 
 const HOOK_SCRIPT = `let input = "";
 process.stdin.on("data", (chunk) => { input += chunk; });
@@ -25,10 +63,6 @@ process.stdin.on("end", () => {
 // Concatenated, since biome reads a plain string holding "${...}" as a forgotten template
 // literal.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-
-const IMPORT_ONLY_HARNESS =
-  'import(process.argv[2]).then(() => { console.log("HOST ALIVE"); process.exit(0); })' +
-  ".catch((err) => { console.error(String(err)); process.exit(1); });\n";
 
 async function waitForFile(path: string, timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
@@ -82,7 +116,7 @@ describe("opencode's generated event bridge, against the real build", () => {
 
       // A live, non-empty argv is the shape a real host provides.
       const harnessPath = join(tempDir, "import-only.mjs");
-      await writeFile(harnessPath, IMPORT_ONLY_HARNESS, "utf-8");
+      await writeFile(harnessPath, IMPORT_HARNESS, "utf-8");
       const { stdout } = await execFileAsync(
         process.execPath,
         [harnessPath, pathToFileURL(bridgePath).href, "some-non-empty-argv"],
@@ -171,6 +205,50 @@ describe("opencode's generated event bridge, against the real build", () => {
           tool_name: host === "v1" ? "bash" : "Bash",
           tool_input: { command: "echo task" },
         });
+      }
+    } finally {
+      await cleanup();
+    }
+  });
+});
+
+describe("opencode flat build — nothing hostile lands where the loader imports it", () => {
+  it("relocates a hook script out of .opencode/plugin/; whatever remains survives import with a live argv", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("oc-hooks-guard");
+    try {
+      const sourceDir = join(tempDir, "source");
+      await cp(FRAMEWORK_PATH, sourceDir, { recursive: true });
+
+      const hooksDir = join(sourceDir, "plugins", "aidd-test", "hooks");
+      await writeFile(join(hooksDir, "hostile.js"), HOSTILE_SCRIPT, "utf-8");
+      await writeFile(join(hooksDir, "opencode-plugin.js"), BENIGN_PLUGIN_SCRIPT, "utf-8");
+
+      const harnessPath = join(tempDir, "import-harness.mjs");
+      await writeFile(harnessPath, IMPORT_HARNESS, "utf-8");
+
+      const outDir = join(tempDir, "dist");
+      await mkdir(outDir, { recursive: true });
+      const build = await runCli(
+        ["translate", sourceDir, "--to", "opencode", "--as", "flat", "--out", outDir],
+        projectDir,
+        fakeHome
+      );
+      expect(build.exitCode).toBe(0);
+
+      // (a) namespaced under .opencode/hooks/<plugin>/, never under .opencode/plugin/.
+      expect(existsSync(join(outDir, ".opencode", "hooks", "aidd-test", "hostile.js"))).toBe(true);
+      expect(existsSync(join(outDir, ".opencode", "plugin", "hostile.js"))).toBe(false);
+
+      // (b) exactly the renamed loader entry remains — not zero files, which would make the
+      // import loop below pass over nothing — and it survives import with a live argv.
+      const pluginDir = join(outDir, ".opencode", "plugin");
+      const remaining = existsSync(pluginDir) ? await readdir(pluginDir) : [];
+      expect(remaining).toEqual(["aidd-test.js"]);
+
+      for (const name of remaining) {
+        const result = await importSurvives(harnessPath, join(pluginDir, name));
+        expect(result.stdout, name).toContain("HOST ALIVE");
+        expect(result.exitCode, name).toBe(0);
       }
     } finally {
       await cleanup();

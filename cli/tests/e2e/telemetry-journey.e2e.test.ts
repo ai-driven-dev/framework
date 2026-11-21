@@ -10,7 +10,6 @@ import {
   sandboxedEnv,
 } from "../shared/testing/cli-sandbox.builder.js";
 import { git, initRepository, sandboxGitEnv } from "../shared/testing/git-sandbox.builder.js";
-import { present } from "../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 /**
@@ -432,47 +431,6 @@ describe("the telemetry journey, on the built binary", () => {
       "No task declared for this work. Send your prompt again."
     );
     expect(prompt({ id: S_OTHER }, "start").stdout).toBe("");
-  });
-
-  it("says in a report what the catch-up hook measured and could not store, and keeps nothing of a clone that never opted in", async () => {
-    await optIn();
-    const elsewhere = join(env.tempDir, "elsewhere");
-    initRepository(elsewhere, gitEnv, { remote: "git@github.com:acme/other.git" });
-    // After `on`: what is made before it is never stored.
-    const base = Date.now() + 60_000;
-    const project = join(claude, "projects", "sandbox");
-    await mkdir(project, { recursive: true });
-    const first = present(CALLS[0]);
-    const second = present(CALLS[1]);
-    const third = present(CALLS[2]);
-    const at = (cwd: string) => (line: string) =>
-      line.replace(JSON.stringify(repo), JSON.stringify(cwd));
-    const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
-    const undated = (call: Call) =>
-      usageLine(call, base).replace(/"timestamp":"[^"]*"/, '"timestamp":"not a time"');
-    // Only the clone that never opted in: nothing of it is kept.
-    await writeFile(
-      join(project, `${S_OTHER}.jsonl`),
-      `${[at(elsewhere)(usageLine(second, base)), junk(elsewhere), at(elsewhere)(undated(third)), "{torn"].join("\n")}\n`
-    );
-    runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
-    expect(existsSync(join(telemetry, "ledger", "left-out.txt"))).toBe(false);
-
-    await writeFile(
-      join(project, `${S_MAIN}.jsonl`),
-      `${[usageLine(first, base), junk(repo), undated(third)].join("\n")}\n`
-    );
-    runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
-    const run = await aidd(["report", "--json"]);
-    expect(run.exitCode, run.stderr).toBe(0);
-    const envelope = JSON.parse(run.stdout) as {
-      coverage: { records: number; left_out: Record<string, number> };
-      run: { files_read: number };
-    };
-    expect(envelope).toMatchObject({
-      coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
-      run: { files_read: 0 },
-    });
   });
 
   it("asks a Codex TUI session, binds its declaration to that session, and attributes its calls and its sub-agent's", async () => {

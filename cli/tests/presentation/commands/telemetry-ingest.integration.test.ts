@@ -1,5 +1,6 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { writeUsageTranscripts } from "../../contexts/telemetry/testing/claude-usage-transcripts.builder.js";
 import {
@@ -45,7 +46,45 @@ async function ledgerLines(): Promise<string[]> {
   return text.split("\n").filter((line) => line !== "");
 }
 
+/** Every file under the telemetry directory with its bytes: what a run changed shows. */
+async function held(): Promise<Record<string, string>> {
+  const found: Record<string, string> = {};
+  for (const entry of await readdir(box.telemetry, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const path = join(entry.parentPath, entry.name);
+    found[relative(box.telemetry, path)] = await readFile(path, "utf8");
+  }
+  return found;
+}
+
 describe("ingesting the transcripts of an opted-in clone", () => {
+  it("stores each billed call once, and a second ingest adds nothing", async () => {
+    await writeTranscripts();
+    const first = await cli(["ingest"]);
+    expect(first.exitCode).toBe(0);
+    expect(first.stdout).toContain("4 calls added");
+    expect(first.stdout).toContain("1 call from a clone with no consent at that time");
+    const ledger = join(box.telemetry, "ledger", "2026-10-07.jsonl");
+    const before = await readFile(ledger, "utf8");
+    const keys = (await ledgerLines()).map((line) => JSON.parse(line).key).sort();
+    expect(keys).toEqual(["msg_A:req_A", "msg_B:req_B", "msg_B:req_B#advisor0", "msg_C:req_C"]);
+
+    const second = await cli(["ingest"]);
+    expect(second.stdout).toContain("Read 0 transcripts: 0 calls added, 0 updated");
+    expect(await readFile(ledger, "utf8")).toBe(before);
+  });
+
+  it("stores nothing and changes nothing under AIDD_TELEMETRY=0", async () => {
+    await writeTranscripts();
+    const before = await held();
+
+    const run = await cli(["ingest"], { AIDD_TELEMETRY: "0" });
+
+    expect(run.exitCode).toBe(0);
+    expect(run.stdout).toContain("AIDD_TELEMETRY=0");
+    expect(await held()).toEqual(before);
+  });
+
   it("ties each call to the repository id, never to its url or path", async () => {
     await writeTranscripts();
     await cli(["ingest"]);
@@ -114,5 +153,47 @@ describe("ingesting the transcripts of an opted-in clone", () => {
     expect(run.stdout).toContain("1 branch declaration snapshotted");
     const text = await readFile(join(box.telemetry, "bindings", "branches.jsonl"), "utf8");
     expect(JSON.parse(text.trim())).toMatchObject({ branch: "feat/a", task: "checkout-fix" });
+  });
+
+  it("keeps nothing of a clone that never opted in, and reports what it measured and could not store", async () => {
+    const elsewhere = box.repository("elsewhere");
+    git(elsewhere, box.gitEnv, "remote", "set-url", "origin", "git@github.com:acme/other.git");
+    const projects = join(box.claude, "projects", "sandbox");
+    await mkdir(projects, { recursive: true });
+    const call = (cwd: string, id: string, timestamp: string) =>
+      JSON.stringify({
+        type: "assistant",
+        sessionId: "a1b2c3d4-0000-4000-8000-0000000000a1",
+        requestId: `req_${id}`,
+        timestamp,
+        version: "2.1.0",
+        cwd,
+        message: {
+          id: `msg_${id}`,
+          model: "m-big",
+          usage: { input_tokens: 1, output_tokens: 10, cache_creation_input_tokens: 0 },
+        },
+      });
+    const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
+    const at = "2026-10-07T10:00:00.000Z";
+
+    await writeFile(
+      join(projects, "d4e5f6a7.jsonl"),
+      `${[call(elsewhere, "2", at), junk(elsewhere), call(elsewhere, "3", "not a time"), "{torn"].join("\n")}\n`
+    );
+    expect((await cli(["ingest", "--quiet"])).exitCode).toBe(0);
+    expect(existsSync(join(box.telemetry, "ledger", "left-out.txt"))).toBe(false);
+
+    await writeFile(
+      join(projects, "a1b2c3d4.jsonl"),
+      `${[call(repoA, "1", at), junk(repoA), call(repoA, "3", "not a time")].join("\n")}\n`
+    );
+    expect((await cli(["ingest", "--quiet"])).exitCode).toBe(0);
+    const report = await cli(["report", "--from", "2026-10-07", "--to", "2026-10-08", "--json"]);
+    expect(report.exitCode, report.stderr).toBe(0);
+    expect(JSON.parse(report.stdout)).toMatchObject({
+      coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
+      run: { files_read: 0 },
+    });
   });
 });
