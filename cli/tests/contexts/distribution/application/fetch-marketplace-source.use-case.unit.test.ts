@@ -2,11 +2,10 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
 import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
+import { InMemoryRawCatalog, unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const LOCAL_PATH = "/local/marketplace";
@@ -40,15 +39,13 @@ function makeGitHubMarketplace(ref?: string): Marketplace {
   });
 }
 
-class SpyRawCatalogFetcher implements RawCatalogFetcher {
-  calls: Array<{ source: PluginSourceGitHub; catalogPath: string }> = [];
-
-  constructor(private readonly body = ABSOLUTE_CATALOG_JSON) {}
-
-  async fetchCatalog(source: PluginSourceGitHub, catalogPath: string): Promise<string> {
-    this.calls.push({ source, catalogPath });
-    return this.body;
-  }
+function recordingCatalog(body = ABSOLUTE_CATALOG_JSON) {
+  const calls: Array<{ source: PluginSourceGitHub; catalogPath: string }> = [];
+  const fetcher = new InMemoryRawCatalog((source, catalogPath) => {
+    calls.push({ source, catalogPath });
+    return body;
+  });
+  return { fetcher, calls };
 }
 
 function makeSpyFileAdapter(
@@ -81,11 +78,11 @@ describe("FetchMarketplaceSource", () => {
 
   describe("github source through rawCatalogFetcher", () => {
     it("routes github sources through rawCatalogFetcher and returns cacheDir", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = recordingCatalog();
       const fetcher = new FixturePluginFetcher();
       const uc = new FetchMarketplaceSource({
         pluginFetcher: fetcher,
-        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+        rawCatalog: { fetcher: spy.fetcher, fs: makeSpyFileAdapter() },
       });
 
       const result = await uc.execute({
@@ -98,10 +95,10 @@ describe("FetchMarketplaceSource", () => {
     });
 
     it("preserves ref when routing github source to rawCatalogFetcher", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = recordingCatalog();
       const uc = new FetchMarketplaceSource({
         pluginFetcher: new FixturePluginFetcher(),
-        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+        rawCatalog: { fetcher: spy.fetcher, fs: makeSpyFileAdapter() },
       });
 
       await uc.execute({
@@ -113,10 +110,10 @@ describe("FetchMarketplaceSource", () => {
     });
 
     it("passes undefined ref to rawCatalogFetcher when no ref set", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = recordingCatalog();
       const uc = new FetchMarketplaceSource({
         pluginFetcher: new FixturePluginFetcher(),
-        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+        rawCatalog: { fetcher: spy.fetcher, fs: makeSpyFileAdapter() },
       });
 
       await uc.execute({
@@ -130,11 +127,11 @@ describe("FetchMarketplaceSource", () => {
 
   describe("catalog cache write", () => {
     it("writes the fetched catalog body at cacheDir/.claude-plugin/marketplace.json", async () => {
-      const spy = new SpyRawCatalogFetcher(ABSOLUTE_CATALOG_JSON);
+      const spy = recordingCatalog(ABSOLUTE_CATALOG_JSON);
       const fsAdapter = makeSpyFileAdapter();
       const uc = new FetchMarketplaceSource({
         pluginFetcher: new FixturePluginFetcher(),
-        rawCatalog: { fetcher: spy, fs: fsAdapter },
+        rawCatalog: { fetcher: spy.fetcher, fs: fsAdapter },
       });
 
       await uc.execute({ marketplace: makeGitHubMarketplace("v3.9.0"), cacheDir: CACHE_DIR });
@@ -145,14 +142,14 @@ describe("FetchMarketplaceSource", () => {
 
   describe("github source with relative plugin sources (probe trips)", () => {
     it("calls deleteFile on the raw marketplace.json before falling back to pluginFetcher", async () => {
-      const spy = new SpyRawCatalogFetcher(RELATIVE_CATALOG_JSON);
+      const spy = recordingCatalog(RELATIVE_CATALOG_JSON);
       const fetcher = new FixturePluginFetcher({
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
       const uc = new FetchMarketplaceSource({
         pluginFetcher: fetcher,
-        rawCatalog: { fetcher: spy, fs: fsAdapter },
+        rawCatalog: { fetcher: spy.fetcher, fs: fsAdapter },
       });
 
       await uc.execute({ marketplace: makeGitHubMarketplace(), cacheDir: CACHE_DIR });
@@ -161,14 +158,14 @@ describe("FetchMarketplaceSource", () => {
     });
 
     it("returns the path from pluginFetcher fallback (subdir), not cacheDir", async () => {
-      const spy = new SpyRawCatalogFetcher(RELATIVE_CATALOG_JSON);
+      const spy = recordingCatalog(RELATIVE_CATALOG_JSON);
       const fetcher = new FixturePluginFetcher({
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
       const uc = new FetchMarketplaceSource({
         pluginFetcher: fetcher,
-        rawCatalog: { fetcher: spy, fs: fsAdapter },
+        rawCatalog: { fetcher: spy.fetcher, fs: fsAdapter },
       });
 
       const result = await uc.execute({
@@ -180,14 +177,14 @@ describe("FetchMarketplaceSource", () => {
     });
 
     it("invokes pluginFetcher.fetch with the marketplace github source", async () => {
-      const spy = new SpyRawCatalogFetcher(RELATIVE_CATALOG_JSON);
+      const spy = recordingCatalog(RELATIVE_CATALOG_JSON);
       const fetchSpy = vi.fn().mockResolvedValue(FALLBACK_PATH);
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
       const uc = new FetchMarketplaceSource({
         pluginFetcher: fetcher,
-        rawCatalog: { fetcher: spy, fs: fsAdapter },
+        rawCatalog: { fetcher: spy.fetcher, fs: fsAdapter },
       });
 
       await uc.execute({ marketplace: makeGitHubMarketplace("HEAD"), cacheDir: CACHE_DIR });
@@ -203,14 +200,14 @@ describe("FetchMarketplaceSource", () => {
 
   describe("github source with absolute-only plugin sources (probe does not trip)", () => {
     it("returns cacheDir without calling pluginFetcher.fetch", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = recordingCatalog();
       const fetchSpy = vi.fn().mockResolvedValue(FALLBACK_PATH);
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: ABSOLUTE_CATALOG_JSON });
       const uc = new FetchMarketplaceSource({
         pluginFetcher: fetcher,
-        rawCatalog: { fetcher: spy, fs: fsAdapter },
+        rawCatalog: { fetcher: spy.fetcher, fs: fsAdapter },
       });
 
       const result = await uc.execute({
@@ -226,14 +223,14 @@ describe("FetchMarketplaceSource", () => {
 
   describe("probe error handling (fail-open)", () => {
     it("returns cacheDir when catalog file contains invalid JSON", async () => {
-      const spy = new SpyRawCatalogFetcher("not-json");
+      const spy = recordingCatalog("not-json");
       const fetchSpy = vi.fn();
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: "not-json" });
       const uc = new FetchMarketplaceSource({
         pluginFetcher: fetcher,
-        rawCatalog: { fetcher: spy, fs: fsAdapter },
+        rawCatalog: { fetcher: spy.fetcher, fs: fsAdapter },
       });
 
       const result = await uc.execute({

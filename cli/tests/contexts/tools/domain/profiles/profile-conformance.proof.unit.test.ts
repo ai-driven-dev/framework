@@ -6,6 +6,7 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type {
   FlatPluginAnswers,
+  McpConfigAnswers,
   NativePluginAnswers,
   SettingsFileAnswers,
 } from "../../../../../src/contexts/tools/contract/tool-profile.js";
@@ -25,6 +26,8 @@ import {
   type FileConformanceSubject,
   PROFILE_FILE_CHECKS,
 } from "../../testing/profile-file-conformance.contract.js";
+import { PROFILE_TRANSLATION_CHECKS } from "../../testing/profile-translation-conformance.contract.js";
+import { translatePlugin } from "../../testing/translate-plugin.builder.js";
 
 /**
  * A conformance check that nothing fails is a comment. For each check, one subject broken in
@@ -34,6 +37,7 @@ import {
 const ALL_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
   ...PROFILE_CHECKS,
   ...PROFILE_FILE_CHECKS,
+  ...PROFILE_TRANSLATION_CHECKS,
 ];
 
 function aiTool(toolId: string): AiTool {
@@ -46,6 +50,8 @@ function aiTool(toolId: string): AiTool {
  * subject it does not skip. */
 const NATIVE = aiTool("claude");
 const FLAT = aiTool("opencode");
+const HOOKED = aiTool("cursor");
+const SCHEMED = aiTool("codex");
 
 /** One captured payload per native event the tool declares: what the repository's fixtures hold. */
 function capturedPayloadsOf(profile: AiTool): string[] {
@@ -172,6 +178,47 @@ function withoutEvent(profile: AiTool, event: string): FileConformanceSubject["h
   return { ...hooks, events: new Map([...hooks.events].filter(([name]) => name !== event)) };
 }
 
+function flatPathIgnoring(profile: AiTool, name: (pluginName: string) => string): AiTool {
+  return {
+    ...profile,
+    flatInstallPath: (section, pluginName, fileName) =>
+      profile.flatInstallPath(section, name(pluginName), fileName),
+  };
+}
+
+function withManifest(profile: AiTool, manifest: Record<string, unknown>): AiTool {
+  const marketplace = (): ToolBuildContract => {
+    const built = profile.buildContracts.marketplace?.();
+    if (built === undefined) throw new Error(`${profile.toolId} builds no marketplace`);
+    return { ...built, synthesizeManifest: () => manifest };
+  };
+  return { ...profile, buildContracts: { ...profile.buildContracts, marketplace } };
+}
+
+function withMcpMergeForgetting(profile: AiTool): AiTool {
+  const mcp = profile.flatPluginMcp();
+  if (mcp === null) throw new Error(`${profile.toolId} merges no plugin mcp`);
+  const merge: McpConfigAnswers["mergePluginServers"] = (_existing, incoming, previous) =>
+    mcp.mergePluginServers(null, incoming, previous);
+  const forgetting = new Proxy(mcp, {
+    get: (target, key) =>
+      key === "mergePluginServers" ? merge : Reflect.get(target, key).bind(target),
+  });
+  return { ...profile, flatPluginMcp: () => forgetting };
+}
+
+function withHooksMergeForgetting(profile: AiTool): AiTool {
+  const location = profile.projectHooksDelivery();
+  if (location === null) throw new Error(`${profile.toolId} merges no project hooks`);
+  const { format } = location;
+  const merge = (_existing: string | null, hooks: string, name: string) =>
+    format.merge(null, hooks, name);
+  return {
+    ...profile,
+    projectHooksDelivery: () => ({ ...location, format: { ...format, merge } }),
+  };
+}
+
 /** What each check is fed so that it, and only it, has a case to fail. */
 const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "is registered once, under its own id": () =>
@@ -240,6 +287,22 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(withBridgeGeneratingNothing(FLAT)),
   "comes with one captured payload per event it relays": () =>
     subjectOf(NATIVE, { payloadFixtures: [] }),
+  "writes its files sorted by path, whatever order its files arrive in": () => {
+    return subjectOf(FLAT, {
+      translate: (distribution, tool) => {
+        const written = translatePlugin(distribution, tool);
+        return { ...written, files: [...written.files].reverse() };
+      },
+    });
+  },
+  "writes no path that two distinct plugins share": () =>
+    subjectOf(flatPathIgnoring(FLAT, () => "shared")),
+  "builds only manifests that name the plugin and its version": () =>
+    subjectOf(withManifest(SCHEMED, {})),
+  "keeps a person's mcp servers and keys when a plugin's are merged in, and again": () =>
+    subjectOf(withMcpMergeForgetting(FLAT)),
+  "keeps a person's hooks and keys when a plugin's are merged in, and removed again": () =>
+    subjectOf(withHooksMergeForgetting(HOOKED)),
 };
 
 function failuresOf(subject: FileConformanceSubject): string[] {
@@ -255,8 +318,9 @@ function failuresOf(subject: FileConformanceSubject): string[] {
 
 describe("the profile conformance checks, each against a subject broken for it alone", () => {
   it("passes every check on the subjects it is broken from", () => {
-    expect(failuresOf(subjectOf(NATIVE))).toEqual([]);
-    expect(failuresOf(subjectOf(FLAT))).toEqual([]);
+    for (const profile of [NATIVE, FLAT, HOOKED, SCHEMED]) {
+      expect(failuresOf(subjectOf(profile))).toEqual([]);
+    }
   });
 
   it("breaks every check, and no check is broken twice", () => {
