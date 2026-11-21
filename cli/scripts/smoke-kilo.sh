@@ -121,6 +121,9 @@ import { join } from "node:path";
 export default { id: "runtime-observer", server: async ({ directory }) => ({ event: async ({ event }) => appendFileSync(join(directory, "events.jsonl"), JSON.stringify(event) + "\n") }) };
 JS
 
+check "the translated config keeps the model" '[[ "$(node -e "console.log(JSON.parse(require(\"fs\").readFileSync(process.argv[1],\"utf8\")).model)" "$GEN/kilo.jsonc")" == "openai-compatible/fake" ]]'
+cp "$GEN/kilo.jsonc" "$TMP/delivered-kilo.jsonc"
+
 (cd "$GEN" && kilo serve --hostname 127.0.0.1 --port 0) >"$TMP/kilo.log" 2>&1 &
 KILO_PID=$!
 for _ in $(seq 1 150); do grep -q "kilo server listening" "$TMP/kilo.log" && break; sleep 0.1; done
@@ -140,7 +143,7 @@ for event in SessionStart PostToolUse Stop; do
 done
 check "the read tool completed once" '[[ "$(grep -c "\"status\":\"completed\"" "$GEN/events.jsonl")" -ge 1 ]]'
 check "the hook feedback reached the model" 'grep -q "KILO_HOOK_FEEDBACK" "$TMP/kilo.log" "$GEN/events.jsonl"'
-check "the delivered config is untouched" 'grep -q "\"model\":\"openai-compatible/fake\"" "$GEN/kilo.jsonc"'
+check "the delivered config is untouched" 'cmp -s "$TMP/delivered-kilo.jsonc" "$GEN/kilo.jsonc"'
 
 echo
 if [[ "$FAIL" -eq 0 ]]; then echo "kilo smoke: all passed"; else echo "kilo smoke: $FAIL failed"; exit 1; fi
