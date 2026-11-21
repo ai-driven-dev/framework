@@ -22,6 +22,8 @@ export const translator = {
     });
     return { files, componentPaths, skipped, notices };
   },
+  mcp: (dist: PluginDistribution, tool: ToolProfile) =>
+    translate(dist, { kind: "install", tool, manifestPaths }).installedMcp,
   flatHookPaths: (dist: PluginDistribution, tool: ToolProfile) =>
     translate(dist, { kind: "install", tool, manifestPaths }).flatHookPaths,
 };

@@ -44,7 +44,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     }
     const mode = tool.frameworkBuildMode();
     const { files, hooks } = await this.readBuiltContent(request, { marketplace: resolved, mode });
-    const mcp = await materializeRequestedMcp(this.fs, request);
+    const mcp = await this.mergeMcp(request);
     const scope = resolveScopeForInstall(tool);
     const owned = request.userScopeDirTaken === true ? [] : files;
     const written = await writeChangedPluginFiles(
@@ -115,6 +115,12 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       guard: hooksGuard,
     });
     return { files: withoutHooksPrefix(builtFiles, dist.manifest.name), hooks };
+  }
+
+  private mergeMcp(request: AddPluginRequest) {
+    const { dist, tool } = request;
+    const { installedMcp } = this.built.translate.execute({ distribution: dist, tool });
+    return materializeRequestedMcp(this.fs, request, installedMcp);
   }
 
   private baseDirOf(request: AddPluginRequest, mode: FrameworkBuildMode, scope: Scope): string {

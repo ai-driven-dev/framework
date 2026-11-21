@@ -10,7 +10,7 @@ import type { OutputFile } from "./output-file.js";
 import { applyPlan, type ComponentPlan } from "./rules/component-pipeline.js";
 import { flatMcp, type PluginMcp } from "./rules/flat-mcp.js";
 import { HOOKS_MANIFEST } from "./rules/hook-scripts.js";
-import type { TranslateProfile } from "./translate-profile.js";
+import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
 
 /** Where a translation lands: one tool's install, or one tool's build. The rules are the same;
  * the layout chooses where each file goes. `manifestPaths` is every place a host keeps a plugin
@@ -43,6 +43,9 @@ export interface Translation {
   /** The plugin's hooks manifest, as a flat build merges it into the tool's shared file. */
   readonly hooks: string | null;
   readonly mcp: PluginMcp | null;
+  /** The plugin's MCP declaration in the shape the tool's own config holds, for an install to
+   * merge into that file. Null when the plugin declares none or the tool's plugins carry their own. */
+  readonly installedMcp: string | null;
   /** What merging the plugin's hooks into its own file reported. */
   readonly warnings: readonly string[];
 }
@@ -76,7 +79,7 @@ const UNTRANSLATED = {
   notices: [],
 };
 
-const NOTHING_FOLDED = { hooks: null, mcp: null, warnings: [] };
+const NOTHING_FOLDED = { hooks: null, mcp: null, installedMcp: null, warnings: [] };
 
 function buildLayoutPlan(
   dist: PluginDistribution,
@@ -90,6 +93,7 @@ function buildLayoutPlan(
     ...UNTRANSLATED,
     plans: own ? [...plans, own.plan] : plans,
     hooks: own === null ? hooksManifestOf(dist) : null,
+    installedMcp: null,
     mcp: flatMcpOf(dist, layout),
     warnings: own?.warnings ?? [],
   };
@@ -116,5 +120,17 @@ function installLayoutPlan(
   manifestPaths: readonly string[]
 ): LayoutPlan {
   if (tool.kind !== "ai") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans: [] };
-  return { ...installPlan(dist, { tool, manifestPaths }), ...NOTHING_FOLDED };
+  return {
+    ...installPlan(dist, { tool, manifestPaths }),
+    ...NOTHING_FOLDED,
+    installedMcp: installedMcpOf(dist, tool),
+  };
+}
+
+function installedMcpOf(dist: PluginDistribution, tool: TranslatedAiTool): string | null {
+  const [declaration] = dist.components.mcp;
+  const config = declaration === undefined ? null : tool.flatPluginMcp();
+  return declaration === undefined || config === null
+    ? null
+    : config.transform(declaration.content);
 }

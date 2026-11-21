@@ -21,6 +21,8 @@ export interface TranslatedAiTool {
   plugins(): PluginAnswers | null;
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
   skillsSection(): SkillsSectionAnswers | null;
+  /** The config a flat install folds the plugin's servers into, or null when plugins carry their own. */
+  flatPluginMcp(): { transform(mcpJson: string): string } | null;
 }
 
 /** An editor has nothing to translate: the engine answers it with no files. */

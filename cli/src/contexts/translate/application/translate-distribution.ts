@@ -17,6 +17,7 @@ export interface TranslateDistributionResult {
   readonly flatHookPaths: ReadonlySet<string>;
   readonly skipped: ReadonlySkipList;
   readonly notices: ReadonlyNoticeList;
+  readonly installedMcp: string | null;
 }
 
 export class TranslateDistribution {
@@ -27,11 +28,14 @@ export class TranslateDistribution {
   }
 
   execute({ distribution, tool }: TranslateDistributionCommand): TranslateDistributionResult {
-    const { files, componentPaths, flatHookPaths, skipped, notices } = translate(distribution, {
-      kind: "install",
-      tool,
-      manifestPaths: this.manifestPaths,
-    });
-    return { files, componentPaths, flatHookPaths, skipped, notices };
+    const { files, componentPaths, flatHookPaths, skipped, notices, installedMcp } = translate(
+      distribution,
+      {
+        kind: "install",
+        tool,
+        manifestPaths: this.manifestPaths,
+      }
+    );
+    return { files, componentPaths, flatHookPaths, skipped, notices, installedMcp };
   }
 }

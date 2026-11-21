@@ -21,6 +21,8 @@ export interface PluginTranslationResult {
   readonly flatHookPaths: ReadonlySet<string>;
   readonly skipped: ReadonlySkipList;
   readonly notices: ReadonlyNoticeList;
+  /** The plugin's MCP servers in the shape the tool's own config holds, for the install to merge. */
+  readonly installedMcp: string | null;
 }
 
 /** A plugin's distribution turned into the files one tool installs. */
