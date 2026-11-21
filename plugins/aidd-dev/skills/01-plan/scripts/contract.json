@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "kind": "plan",
+  "unit": "folder",
+  "marker": "plan.md",
+  "rules": {
+    "PLAN-01": {
+      "op": "template",
+      "in": "plan.md",
+      "template": "../assets/plan-template.md",
+      "optional": [
+        "Rules",
+        "Decisions"
+      ],
+      "why": "the implementer reads every plan the same way",
+      "fix": "follow plan-template.md"
+    },
+    "PLAN-02": {
+      "op": "template",
+      "in": "phase-*.md",
+      "template": "../assets/phase-template.md",
+      "optional": [
+        "Wireframe"
+      ],
+      "why": "the implementer reads every phase the same way",
+      "fix": "follow phase-template.md"
+    },
+    "PLAN-03": {
+      "op": "custom",
+      "in": "plan.md",
+      "check": "phases",
+      "why": "the phase table is the order the implementer runs"
+    },
+    "PLAN-04": {
+      "op": "custom",
+      "in": "plan.md",
+      "check": "sources",
+      "why": "a source without a URL cannot be re-read"
+    },
+    "PLAN-05": {
+      "op": "custom",
+      "in": "plan.md",
+      "check": "projection",
+      "why": "a phase that modifies a missing file cannot run"
+    },
+    "PLAN-06": {
+      "op": "custom",
+      "in": "phase-*.md",
+      "check": "wireframe",
+      "why": "an unnumbered wireframe cannot be referred to"
+    },
+    "PLAN-07": {
+      "op": "custom",
+      "in": "phase-*.md",
+      "check": "tasks",
+      "why": "each criterion must point at a task"
+    },
+    "PLAN-08": {
+      "op": "sections",
+      "in": "phase-*.md",
+      "required": [
+        "Test Scope"
+      ],
+      "why": "implement checks each criterion from the phase's Test Scope",
+      "fix": "add the section {allowed}"
+    }
+  }
+}

@@ -16,18 +16,38 @@ const HOOK = path.join(ROOT, "plugins", "aidd-context", "hooks", "memory.cjs");
 
 const BLOCK_OPEN = "<!-- aidd_project_memory:start -->";
 const BLOCK_CLOSE = "<!-- aidd_project_memory:end -->";
-
 const TARGET_ENTRY = /\{\s*path:\s*"([^"]+)"\s*,\s*syntax:\s*"(at|link)"\s*\}/gu;
 const AT_REFERENCE = /^@(\S+)$/u;
 const LINK_REFERENCE = /^\[[^\]]+\]\([^)]+\)$/u;
 
+const declaredTargets = (hookSource) => [...hookSource.matchAll(TARGET_ENTRY)].map(([, file, syntax]) => ({ path: file, syntax }));
+
+/** `null` when the line is not a reference at all: prose, an html comment and the read-on-demand list share the block. */
+function referenceForm(line) {
+  if (AT_REFERENCE.test(line)) return "at";
+  if (LINK_REFERENCE.test(line)) return "link";
+  return null;
+}
+
+/** A file with no block, and one whose markers are unpaired, yield nothing: the memory hook reports the unpaired case itself. */
+function referenceFormProblems(content, expected) {
+  const lines = content.split("\n");
+  const opensAt = lines.findIndex((line) => line.includes(BLOCK_OPEN));
+  if (opensAt === -1) return [];
+  const closesAt = lines.findIndex((line, index) => index > opensAt && line.includes(BLOCK_CLOSE));
+  if (closesAt === -1) return [];
+  const problems = [];
+  for (let index = opensAt + 1; index < closesAt; index += 1) {
+    const found = referenceForm(lines[index].trim());
+    if (found !== null && found !== expected) problems.push({ line: index + 1, reference: lines[index].trim(), found });
+  }
+  return problems;
+}
+
 /** Throws rather than returning nothing: a check that passes because it compared against
  * nothing is worse than no check. */
 function readDeclaredTargets(hookSource) {
-  const targets = [...hookSource.matchAll(TARGET_ENTRY)].map(([, file, syntax]) => ({
-    path: file,
-    syntax,
-  }));
+  const targets = declaredTargets(hookSource);
   if (targets.length === 0) {
     throw new Error(
       `No TARGET_FILES entries found in ${path.relative(ROOT, HOOK)}. ` +
@@ -35,34 +55,6 @@ function readDeclaredTargets(hookSource) {
     );
   }
   return targets;
-}
-
-/** `null` when the line is not a reference at all — prose, an html comment and the
- * read-on-demand list all share the block. */
-function referenceForm(line) {
-  if (AT_REFERENCE.test(line)) return "at";
-  if (LINK_REFERENCE.test(line)) return "link";
-  return null;
-}
-
-/** A file with no block, and one whose markers are unpaired, both yield nothing:
- * the memory hook reports the unpaired case itself, and two voices for one fault
- * help nobody. */
-function referenceFormProblems(content, expected) {
-  const lines = content.split("\n");
-  const opensAt = lines.findIndex((line) => line.includes(BLOCK_OPEN));
-  if (opensAt === -1) return [];
-  const closesAt = lines.findIndex((line, index) => index > opensAt && line.includes(BLOCK_CLOSE));
-  if (closesAt === -1) return [];
-
-  const problems = [];
-  for (let index = opensAt + 1; index < closesAt; index += 1) {
-    const found = referenceForm(lines[index].trim());
-    if (found !== null && found !== expected) {
-      problems.push({ line: index + 1, reference: lines[index].trim(), found });
-    }
-  }
-  return problems;
 }
 
 function readFileIfPresent(relPath) {

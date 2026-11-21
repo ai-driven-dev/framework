@@ -91,7 +91,7 @@ function render(decision, supersedes) {
   const template = fs.readFileSync(TEMPLATE, "utf8").replace(CRLF, "\n");
   const lines = template.split("\n").filter((line) => !line.startsWith("> Fill") && (supersedes || !line.startsWith("- Supersedes:")));
   const values = { ...decision, supersedes };
-  const text = lines.join("\n").replace(/<(title|date|supersedes|context|decision|alternatives|consequences)>/g, (_, key) => String(values[key]).trim());
+  const text = lines.join("\n").replace(/\{\{(title|date|supersedes|context|decision|alternatives|consequences)\}\}/g, (_, key) => String(values[key]).trim());
   return `${text.trimEnd()}\n`;
 }
 

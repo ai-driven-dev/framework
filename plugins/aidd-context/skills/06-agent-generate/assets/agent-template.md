@@ -1,23 +1,23 @@
 ---
-name: <name>
-description: <what it does>. Use to <when to call it>.
+name: {{name}}
+description: {{what it does}}. Use to {{when to call it}}.
 ---
 
 # Role
 
-<responsibility>
+{{responsibility}}
 
 # Behavior
 
-- <capability or constraint>
-- <what it keeps unchanged or leaves to the caller>
+- {{capability or constraint}}
+- {{what it keeps unchanged or leaves to the caller}}
 
 # Output
 
-<how concise the result is>
+{{how concise the result is}}
 
 ```markdown
-**<field>:** <value>
+**{{field}}:** {{value}}
 ```
 
-> Fill every `<...>` and delete this line.
+> Fill every `{{...}}` and delete this line.

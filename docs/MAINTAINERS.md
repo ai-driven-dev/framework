@@ -31,6 +31,7 @@ flowchart LR
 | Branch protection | `.github/rulesets/main.json` |
 | Releases | `ci.yml` and `release-please-config.json` |
 | Pre-commit checks | `lefthook.yml` and `scripts/` |
+| Content checks | `scripts/check/`: engine, repository contracts, `baseline.json` |
 | Labels | `.github/labels.yml`, not synced: edit both by hand |
 
 ## Board fields
@@ -92,3 +93,4 @@ Release rules: [Release](../RELEASE.md#rules).
 | Tables and plugin cards in the README, `COMPATIBILITY.md`, `CATALOG.md` | `node scripts/sync-generated-docs.mjs` |
 | Counts in the README | `scripts/sync-readme-counts.mjs` |
 | Each plugin's `CATALOG.md` | `scripts/summarize-markdown.js` |
+| `skills/*/scripts/lib/` | `node scripts/check/engine/sync.cjs`, from `scripts/check/engine/` |

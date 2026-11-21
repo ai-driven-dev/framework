@@ -27,17 +27,17 @@ AI instructions:
 
 > Clear description of the solution or expected behavior.
 
-1. <Small actionable step 1>
-2. <Small actionable step 2>
-3. <...>
+1. {{Small actionable step 1}}
+2. {{Small actionable step 2}}
+3. {{...}}
 
 ## 🔍 Context / Technical Constraints (Optional)
 
 <!-- Are there technical points to consider? -->
 
-- <Constraint 1>
-- <Constraint 2>
-- <...>
+- {{Constraint 1}}
+- {{Constraint 2}}
+- {{...}}
 
 ## 📎 Attachments / References (Optional)
 

@@ -8,7 +8,7 @@ The files written.
 
 ## Process
 
-1. List the findings of [check-skill.cjs](../scripts/check-skill.cjs) on each written skill folder.
+1. List the findings of [validate-skill.cjs](../scripts/validate-skill.cjs) on each written skill folder.
 2. List each written file's breaches of [skill-authoring.md](../references/skill-authoring.md), compared with the rules and with the skill's other files and scripts.
    - A breach in a file the plan does not list: add it to the plan and confirm it with the user.
 3. Find each kept item and each change in the written files with its `file:line`.

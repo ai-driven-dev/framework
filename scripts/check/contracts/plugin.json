@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "kind": "plugin",
+  "unit": "file",
+  "targets": "plugins/*/.claude-plugin/plugin.json",
+  "rules": {
+    "PLUGIN-01": {
+      "op": "json",
+      "in": "plugin.json",
+      "schema": "schemas/plugin-schema.json",
+      "why": "hosts read the manifest before anything else",
+      "fix": "{problem}"
+    },
+    "PLUGIN-02": {
+      "op": "custom",
+      "in": "plugin.json",
+      "check": "coherence",
+      "why": "an unlisted skill never installs, a listed missing one breaks the install"
+    },
+    "PLUGIN-03": {
+      "op": "json",
+      "in": "plugin.json",
+      "schema": "schemas/official/claude-code-plugin-manifest.json",
+      "why": "the host rejects a manifest that breaks its published schema",
+      "fix": "{problem}"
+    }
+  }
+}

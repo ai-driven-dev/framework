@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 
-const { checkArchitecture, classifyFile } = require("../lib/architecture-rules.js");
+const { checkArchitecture, checkOrthogonality, classifyFile } = require("../lib/architecture-rules.js");
 
 const ROOT = path.resolve(__dirname, "../..");
 const FIXTURES = path.join(__dirname, "fixtures/architecture-rules");
@@ -675,4 +675,31 @@ test("a fence nobody closed is not read as a fence at all", () => {
     ["01-first.md"]
   );
   assert.deepEqual(violations, []);
+});
+
+/**
+ * Rule one has two holes, both deliberate, both in `isExemptFromOrthogonality`. The 00-onboard one
+ * is load-bearing only while that skill still hardcodes the addresses it hands a person to type.
+ * Once it resolves its providers at runtime the hole protects nothing and should go, and nothing
+ * else would say so.
+ */
+test("the 00-onboard exemption still protects something", () => {
+  const files = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".md")) files.push(full);
+    }
+  };
+  walk(path.join(ROOT, "plugins/aidd-context/skills/00-onboard"));
+
+  // Judged under a path the exemption does not cover, so the rule speaks instead of skipping.
+  const probePath = "plugins/aidd-context/skills/99-exemption-probe/SKILL.md";
+  const wouldViolate = files.filter((file) => checkOrthogonality(probePath, fs.readFileSync(file, "utf8")).length > 0);
+
+  assert.ok(
+    wouldViolate.length > 0,
+    "00-onboard no longer hardcodes a sibling address. Delete ONBOARD_EXEMPT_PREFIX from scripts/lib/architecture-rules.js and this test."
+  );
 });

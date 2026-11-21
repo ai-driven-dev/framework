@@ -3,36 +3,36 @@ type: defect
 status: reported
 ---
 
-# Defect: <observed mismatch>
+# Defect: {{observed mismatch}}
 
 ## Context
 
-<affected workflow and environment>
+{{affected workflow and environment}}
 
 ## Expected
 
-<observable expected behavior>
+{{observable expected behavior}}
 
 ## Actual
 
-<observable actual behavior>
+{{observable actual behavior}}
 
 ## Reproduction
 
-<minimal steps that show the mismatch>
+{{minimal steps that show the mismatch}}
 
 ## Impact
 
-<affected users, workflow, or outcome>
+{{affected users, workflow, or outcome}}
 
 ## Evidence
 
-- <stable source or observation>
+- {{stable source or observation}}
 
 ## Verification
 
-<evidence that expected behavior is restored>
+{{evidence that expected behavior is restored}}
 
 ## Cancellation
 
-<why it is no longer pursued>
+{{why it is no longer pursued}}
