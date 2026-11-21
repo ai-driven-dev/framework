@@ -10,11 +10,12 @@ import {
 } from "../../../../src/contexts/tools/domain/tools.error.js";
 
 describe("CapabilityConfigError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new CapabilityConfigError("cap broke");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "CapabilityConfigError",
-      message: "cap broke",
+      detail: "cap broke",
+      message: "",
     });
   });
 
@@ -24,11 +25,12 @@ describe("CapabilityConfigError", () => {
 });
 
 describe("DuplicateToolIdError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new DuplicateToolIdError("t");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, toolId: error.toolId, message: error.message }).toStrictEqual({
       name: "DuplicateToolIdError",
-      message: "Tool 't' is registered twice.",
+      toolId: "t",
+      message: "",
     });
   });
 
@@ -38,11 +40,18 @@ describe("DuplicateToolIdError", () => {
 });
 
 describe("InvalidAgentFrontmatterError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidAgentFrontmatterError("a", "d");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      agentName: error.agentName,
+      detail: error.detail,
+      message: error.message,
+    }).toStrictEqual({
       name: "InvalidAgentFrontmatterError",
-      message: "Agent 'a' has invalid frontmatter: d.",
+      agentName: "a",
+      detail: "d",
+      message: "",
     });
   });
 
@@ -52,11 +61,20 @@ describe("InvalidAgentFrontmatterError", () => {
 });
 
 describe("InvalidHooksDescriptorError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidHooksDescriptorError("t", "unknown-event", "d");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      toolId: error.toolId,
+      invariant: error.invariant,
+      detail: error.detail,
+      message: error.message,
+    }).toStrictEqual({
       name: "InvalidHooksDescriptorError",
-      message: "The hooks descriptor of 't' breaks 'unknown-event': d",
+      toolId: "t",
+      invariant: "unknown-event",
+      detail: "d",
+      message: "",
     });
   });
 
@@ -68,11 +86,16 @@ describe("InvalidHooksDescriptorError", () => {
 });
 
 describe("InvalidMcpServerConfigError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidMcpServerConfigError("db");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      serverName: error.serverName,
+      message: error.message,
+    }).toStrictEqual({
       name: "InvalidMcpServerConfigError",
-      message: 'MCP server "db" must have either a "command" or "url" field',
+      serverName: "db",
+      message: "",
     });
   });
 
@@ -82,11 +105,20 @@ describe("InvalidMcpServerConfigError", () => {
 });
 
 describe("InvalidToolProfileError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidToolProfileError("t", "unknown-section", "d");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      toolId: error.toolId,
+      invariant: error.invariant,
+      detail: error.detail,
+      message: error.message,
+    }).toStrictEqual({
       name: "InvalidToolProfileError",
-      message: "The profile of 't' breaks 'unknown-section': d",
+      toolId: "t",
+      invariant: "unknown-section",
+      detail: "d",
+      message: "",
     });
   });
 
@@ -101,18 +133,26 @@ describe("DualConfigError", () => {
   const kilo = "Kilo JSON and JSONC config variants exist at the same location";
   const opencode = "opencode.json and opencode.jsonc exist";
 
-  it("says exactly what went wrong for kilo", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new DualConfigError("kilo", kilo);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      toolId: error.toolId,
+      detail: error.detail,
+      message: error.message,
+    }).toStrictEqual({
       name: "DualConfigError",
-      message: "Both Kilo JSON and JSONC config variants exist at the same location. Remove one.",
+      toolId: "kilo",
+      detail: kilo,
+      message: "",
     });
   });
 
-  it("says exactly what went wrong for opencode", () => {
-    expect(new DualConfigError("opencode", opencode).message).toBe(
-      "Both opencode.json and opencode.jsonc exist. Remove one."
-    );
+  it("carries its data and says nothing itself for opencode", () => {
+    expect(new DualConfigError("opencode", opencode)).toMatchObject({
+      toolId: "opencode",
+      detail: opencode,
+    });
   });
 
   it("carries its tool and its stable code", () => {

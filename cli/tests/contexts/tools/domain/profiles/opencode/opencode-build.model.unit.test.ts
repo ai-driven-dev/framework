@@ -81,7 +81,7 @@ describe("toTypedMcpSection()", () => {
 
   it("refuses a server that names neither a command nor a url", () => {
     expect(() => toTypedMcpSection(JSON.stringify({ mcpServers: { broken: {} } }))).toThrow(
-      /broken/
+      expect.objectContaining({ serverName: "broken" })
     );
   });
 

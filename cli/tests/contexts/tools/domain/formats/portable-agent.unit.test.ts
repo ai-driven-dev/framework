@@ -68,7 +68,7 @@ describe("portableAgentFrontmatter", () => {
         InvalidAgentFrontmatterError
       );
       expect(() => portableAgentFrontmatter({ description }, "aidd-dev-executor")).toThrow(
-        /aidd-dev-executor/
+        expect.objectContaining({ agentName: "aidd-dev-executor" })
       );
     }
   );

@@ -45,7 +45,9 @@ describe("ToolSuffix", () => {
 
   it("names the refused value and the expected shape", () => {
     expect(() => new ToolSuffix("claude")).toThrow(
-      '"claude" is not a tool suffix, expected ".<tool>.md".'
+      expect.objectContaining({
+        detail: expect.stringContaining('"claude" is not a tool suffix, expected ".<tool>.md".'),
+      })
     );
   });
 

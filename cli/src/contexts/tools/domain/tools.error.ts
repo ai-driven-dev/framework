@@ -2,22 +2,25 @@ import { AiddError } from "../../../shared/domain/shared.error.js";
 
 export class CapabilityConfigError extends AiddError {
   readonly code = "capability-config";
-  constructor(message: string) {
-    super(message);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class DuplicateToolIdError extends AiddError {
   readonly code = "duplicate-tool-id";
-  constructor(toolId: string) {
-    super(`Tool '${toolId}' is registered twice.`);
+  constructor(readonly toolId: string) {
+    super();
   }
 }
 
 export class InvalidAgentFrontmatterError extends AiddError {
   readonly code = "invalid-agent-frontmatter";
-  constructor(agentName: string, detail: string) {
-    super(`Agent '${agentName}' has invalid frontmatter: ${detail}.`);
+  constructor(
+    readonly agentName: string,
+    readonly detail: string
+  ) {
+    super();
   }
 }
 
@@ -37,16 +40,16 @@ export class InvalidHooksDescriptorError extends AiddError {
   constructor(
     readonly toolId: string,
     readonly invariant: HooksInvariant,
-    detail: string
+    readonly detail: string
   ) {
-    super(`The hooks descriptor of '${toolId}' breaks '${invariant}': ${detail}`);
+    super();
   }
 }
 
 export class InvalidMcpServerConfigError extends AiddError {
   readonly code = "invalid-mcp-server-config";
-  constructor(name: string) {
-    super(`MCP server "${name}" must have either a "command" or "url" field`);
+  constructor(readonly serverName: string) {
+    super();
   }
 }
 
@@ -63,9 +66,9 @@ export class InvalidToolProfileError extends AiddError {
   constructor(
     readonly toolId: string,
     readonly invariant: ProfileInvariant,
-    detail: string
+    readonly detail: string
   ) {
-    super(`The profile of '${toolId}' breaks '${invariant}': ${detail}`);
+    super();
   }
 }
 
@@ -73,8 +76,8 @@ export class DualConfigError extends AiddError {
   readonly code = "dual-config";
   constructor(
     readonly toolId: string,
-    detail: string
+    readonly detail: string
   ) {
-    super(`Both ${detail}. Remove one.`);
+    super();
   }
 }

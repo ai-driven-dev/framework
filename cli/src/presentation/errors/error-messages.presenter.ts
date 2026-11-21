@@ -2,6 +2,7 @@ import type * as auth from "../../contexts/auth/domain/auth.error.js";
 import type * as distribution from "../../contexts/distribution/domain/distribution.error.js";
 import { MAX_IDENTITY_LENGTH } from "../../contexts/telemetry/contract/identity-limit.js";
 import type * as telemetry from "../../contexts/telemetry/domain/telemetry.error.js";
+import type * as tools from "../../contexts/tools/domain/tools.error.js";
 import type * as translate from "../../contexts/translate/domain/translate.error.js";
 import type * as update from "../../contexts/update/domain/update.error.js";
 import type { AiddError } from "../../shared/domain/shared.error.js";
@@ -14,6 +15,7 @@ type Catalogued = InstanceType<
   | Classes<typeof telemetry>
   | Classes<typeof distribution>
   | Classes<typeof translate>
+  | Classes<typeof tools>
 >;
 type ByCode = { [Error in Catalogued as Error["code"]]: Error };
 
@@ -78,6 +80,17 @@ const entries: { [Code in keyof ByCode]: (error: ByCode[Code]) => string } = {
     "Re-run with --force to overwrite files this build produces, or choose an empty --out directory.",
   "out-dir-not-directory": (error) =>
     `Refusing to build: --out '${error.outDir}' does not exist or is not a directory.`,
+  "capability-config": (error) => error.detail,
+  "duplicate-tool-id": (error) => `Tool '${error.toolId}' is registered twice.`,
+  "invalid-agent-frontmatter": (error) =>
+    `Agent '${error.agentName}' has invalid frontmatter: ${error.detail}.`,
+  "invalid-hooks-descriptor": (error) =>
+    `The hooks descriptor of '${error.toolId}' breaks '${error.invariant}': ${error.detail}`,
+  "invalid-mcp-server-config": (error) =>
+    `MCP server "${error.serverName}" must have either a "command" or "url" field`,
+  "invalid-tool-profile": (error) =>
+    `The profile of '${error.toolId}' breaks '${error.invariant}': ${error.detail}`,
+  "dual-config": (error) => `Both ${error.detail}. Remove one.`,
   update: () =>
     "Update failed. If you saw a 403 error above, ensure your GitHub token includes both repo and read:packages scopes.\n" +
     "Update your token at https://github.com/settings/tokens, then re-run `aidd auth login`.",

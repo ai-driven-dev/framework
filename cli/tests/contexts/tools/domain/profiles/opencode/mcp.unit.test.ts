@@ -123,9 +123,7 @@ describe("opencode mcp", () => {
 
     it("throws when a server has neither command nor url", () => {
       const input = JSON.stringify({ mcpServers: { bad: { token: "abc" } } });
-      expect(() => transform("mcp", input)).toThrow(
-        'MCP server "bad" must have either a "command" or "url" field'
-      );
+      expect(() => transform("mcp", input)).toThrow(expect.objectContaining({ serverName: "bad" }));
     });
 
     it("returns non-mcp content unchanged", () => {

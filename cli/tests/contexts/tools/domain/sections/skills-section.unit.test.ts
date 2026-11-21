@@ -23,7 +23,11 @@ describe("SkillsSection construction and equality details", () => {
 
   it("names the two options it needs", () => {
     expect(() => new SkillsSection(params)).toThrow(
-      "SkillsSection requires either agentsSkillsDirectory or directory"
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "SkillsSection requires either agentsSkillsDirectory or directory"
+        ),
+      })
     );
   });
 });

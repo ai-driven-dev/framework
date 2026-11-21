@@ -35,7 +35,13 @@ describe("ConfigSection", () => {
             consumes: [{ name: "mySignal", path: "config/my.json" }],
             staticContent: '{"key": true}',
           })
-      ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: set either 'consumes' or 'staticContent', not both."
+          ),
+        })
+      );
     });
 
     it("throws when both staticContent and staticContentAssetFile are provided", () => {
@@ -47,7 +53,13 @@ describe("ConfigSection", () => {
             staticContent: '{"key": true}',
             staticContentAssetFile: "vscode-settings.json",
           })
-      ).toThrow("ConfigSection: set either 'staticContent' or 'staticContentAssetFile', not both.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: set either 'staticContent' or 'staticContentAssetFile', not both."
+          ),
+        })
+      );
     });
 
     it("throws when consumes and staticContentAssetFile are both provided", () => {
@@ -59,7 +71,13 @@ describe("ConfigSection", () => {
             consumes: [{ name: "mySignal", path: "config/my.json" }],
             staticContentAssetFile: "vscode-settings.json",
           })
-      ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: set either 'consumes' or 'staticContent', not both."
+          ),
+        })
+      );
     });
 
     it("accepts neither consumes nor staticContent (empty capability)", () => {
@@ -104,7 +122,13 @@ describe("ConfigSection", () => {
             mergeStrategy: "framework-prime",
             requiresTool: TOOL.vscode,
           })
-      ).toThrow("ConfigSection: 'requiresTool' is only meaningful with 'staticContent'.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: 'requiresTool' is only meaningful with 'staticContent'."
+          ),
+        })
+      );
     });
 
     it("accepts staticContentAssetFile with requiresTool", () => {
