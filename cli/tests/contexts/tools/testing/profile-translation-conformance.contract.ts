@@ -1,0 +1,118 @@
+import { describe, expect, it } from "vitest";
+import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
+import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance.contract.js";
+import { referenceHooks, referencePlugin, reversed } from "./reference-plugin.builder.js";
+import { translatePlugin } from "./translate-plugin.builder.js";
+
+const PERSON_KEY = "personal";
+const PERSON_SERVER = JSON.stringify({ mcpServers: { mine: { command: "node" } } });
+const PLUGIN_SERVER = JSON.stringify({ mcpServers: { added: { command: "node" } } });
+
+function aiCheck(
+  title: string,
+  holds: (profile: AiTool) => void
+): ConformanceCheck<ConformanceSubject> {
+  return {
+    title,
+    holds: ({ profile }) => {
+      if (profile.kind === "ai") holds(profile);
+    },
+  };
+}
+
+function filesOf(profile: AiTool, name: string, arrival: "given" | "reversed" = "given") {
+  const plugin = referencePlugin(name);
+  const { files } = translatePlugin(arrival === "given" ? plugin : reversed(plugin), profile);
+  return files;
+}
+
+function byPath(files: readonly { relativePath: string; content: string }[]) {
+  return files.map((file) => [file.relativePath, file.content]).sort();
+}
+
+function withPersonKey(content: string): string {
+  return JSON.stringify({ ...JSON.parse(content), [PERSON_KEY]: 1 });
+}
+
+function buildContracts(profile: AiTool): ToolBuildContract[] {
+  const { marketplace, flat } = profile.buildContracts ?? {};
+  return [marketplace?.(), flat?.()].filter((contract) => contract !== undefined);
+}
+
+const PRESENCE = {
+  hasAgents: true,
+  agentsList: ["reviewer.md"],
+  skillsList: ["hello"],
+  hasHooksJson: true,
+  hasMcpJson: true,
+};
+
+export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
+  aiCheck("writes the same files for the same plugin, whatever order its files arrive in", (p) => {
+    expect(filesOf(p, "alpha")).toEqual(filesOf(p, "alpha"));
+    expect(byPath(filesOf(p, "alpha", "reversed"))).toEqual(byPath(filesOf(p, "alpha")));
+  }),
+  aiCheck("writes no path that two distinct plugins share", (p) => {
+    const alpha = filesOf(p, "alpha").map((file) => file.relativePath);
+    const beta = filesOf(p, "beta").map((file) => file.relativePath);
+    expect(alpha.filter((path) => beta.includes(path))).toEqual([]);
+  }),
+  aiCheck("writes only JSON that parses", (p) => {
+    for (const file of filesOf(p, "alpha")) {
+      if (file.relativePath.endsWith(".json")) expect(() => JSON.parse(file.content)).not.toThrow();
+    }
+  }),
+  aiCheck("builds only manifests that name the plugin and its version", (p) => {
+    for (const { synthesizeManifest } of buildContracts(p)) {
+      if (synthesizeManifest === null) continue;
+      const manifest = synthesizeManifest({ name: "alpha", version: "1.0.0" }, PRESENCE);
+      expect(JSON.parse(JSON.stringify(manifest))).toMatchObject({
+        name: "alpha",
+        version: "1.0.0",
+      });
+    }
+  }),
+  aiCheck("keeps a person's mcp servers and keys when a plugin's are merged in, and again", (p) => {
+    const mcp = p.flatPluginMcp();
+    if (mcp === null) return;
+    const person = mcp.mergePluginServers(null, mcp.transform(PERSON_SERVER), new Map());
+    const existing = withPersonKey(person.mergedContent);
+    const first = mcp.mergePluginServers(existing, mcp.transform(PLUGIN_SERVER), new Map());
+    const again = mcp.mergePluginServers(
+      first.mergedContent,
+      mcp.transform(PLUGIN_SERVER),
+      first.contributedEntries
+    );
+    expect(first.mergedContent).toContain("mine");
+    expect(first.mergedContent).toContain(PERSON_KEY);
+    expect(again.mergedContent).toBe(first.mergedContent);
+  }),
+  aiCheck(
+    "keeps a person's hooks and keys when a plugin's are merged in, and removed again",
+    (p) => {
+      const location = p.projectHooksDelivery();
+      if (location === null) return;
+      const { format } = location;
+      const plugin = referenceHooks(`node ./${format.scriptPath("alpha", "hooks/check.cjs")}`);
+      const person = withPersonKey(
+        format.merge(null, referenceHooks("echo mine"), "person").content
+      );
+      const merged = format.merge(person, plugin, "alpha").content;
+      const removed = format.unmerge(merged, "alpha");
+      expect(JSON.parse(removed)).toEqual(JSON.parse(person));
+      expect(format.merge(removed, plugin, "alpha").content).toBe(merged);
+    }
+  ),
+];
+
+export function describeProfileTranslationConformance(
+  profile: AiTool | IdeToolConfig,
+  registration: readonly (AiTool | IdeToolConfig)[]
+): void {
+  describe(`${profile.toolId} translation`, () => {
+    for (const check of PROFILE_TRANSLATION_CHECKS) {
+      it(check.title, () => check.holds({ profile, registration }));
+    }
+  });
+}
