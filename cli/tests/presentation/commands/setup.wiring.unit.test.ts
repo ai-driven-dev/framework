@@ -10,7 +10,9 @@ import { InitProject } from "../../../src/contexts/installation/application/init
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -104,6 +106,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerSetupCommand(program, CATALOG, createDeps);
@@ -474,6 +477,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
 describe("aidd setup — the help surface", () => {
   function setupCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerSetupCommand(program, CATALOG, createDeps);
     const setup = program.commands.find((command) => command.name() === "setup");
     if (setup === undefined) throw new Error("setup command was not registered");

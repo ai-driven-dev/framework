@@ -1,5 +1,5 @@
 import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 interface TranslateOutcome {
   readonly pluginCount: number;
@@ -8,7 +8,7 @@ interface TranslateOutcome {
 }
 
 export function printTranslateResult(
-  output: CLIOutput,
+  output: Output,
   mode: FrameworkBuildMode,
   outcome: TranslateOutcome
 ): void {

@@ -128,10 +128,10 @@ describe("every file is exactly one kind", () => {
   });
 
   it("flags a file no kind claims, naming the file, the rule and the fix", () => {
-    const [violation] = violationsOf("src/presentation/exit.ts");
-    expect(violation?.entry).toBe("src/presentation/exit.ts");
+    const [violation] = violationsOf("src/presentation/stray.ts");
+    expect(violation?.entry).toBe("src/presentation/stray.ts");
     expect(violation?.rule).toBe("classification");
-    expect(violation?.message).toContain("src/presentation/exit.ts");
+    expect(violation?.message).toContain("src/presentation/stray.ts");
     expect(violation?.message).toMatch(/matches no kind/);
     expect(violation?.message).toMatch(/Fix:/);
   });

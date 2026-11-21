@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import type { Scope } from "../../shared/domain/scope.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
-import type { CommandRunner, DepsSliceFactory } from "../deps.js";
+import type { CommandRunner, DepsSliceFactory, Output } from "../deps.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -12,7 +12,6 @@ import {
 } from "../display/marketplace-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -26,13 +25,11 @@ type MarketplaceKeys =
   | "marketplaceCheckUseCase"
   | "syncNativeActivation";
 
-export function registerMarketplaceCommand(
-  program: Command,
+function registerMenu(
+  marketplace: Command,
   createDeps: DepsSliceFactory<MarketplaceKeys>,
   runCommand: CommandRunner
 ): void {
-  const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
-
   marketplace.action(async () => {
     if (!process.stdout.isTTY) {
       marketplace.help();
@@ -48,7 +45,22 @@ export function registerMarketplaceCommand(
     ]);
     await runCommand(["marketplace", choice]);
   });
+}
 
+/** Absent means project; anything but `project` or `user` ends the run. */
+function parseRegistrationScope(raw: string | undefined, output: Output): Scope {
+  if (raw !== undefined && raw !== "project" && raw !== "user") {
+    output.error(`Invalid --scope '${raw}'. Expected 'project' or 'user'.`);
+    return output.exit(1);
+  }
+  return raw === "user" ? "user" : "project";
+}
+
+function registerAdd(
+  program: Command,
+  marketplace: Command,
+  createDeps: DepsSliceFactory<MarketplaceKeys>
+): void {
   marketplace
     .command("add [name] [source]")
     .description("Register a plugin marketplace")
@@ -71,18 +83,10 @@ export function registerMarketplaceCommand(
         const interactive = process.stdout.isTTY;
         if (!interactive && (!nameArg || !sourceArg)) {
           output.error("name and source are required in non-interactive mode.");
-          exitWith(1);
+          output.exit(1);
         }
-        if (
-          cmdOptions.scope !== undefined &&
-          cmdOptions.scope !== "project" &&
-          cmdOptions.scope !== "user"
-        ) {
-          output.error(`Invalid --scope '${cmdOptions.scope}'. Expected 'project' or 'user'.`);
-          exitWith(1);
-        }
+        const scope = parseRegistrationScope(cmdOptions.scope, output);
         try {
-          const scope: Scope = cmdOptions.scope === "user" ? "user" : "project";
           const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
@@ -108,7 +112,13 @@ export function registerMarketplaceCommand(
         }
       }
     );
+}
 
+function registerList(
+  program: Command,
+  marketplace: Command,
+  createDeps: DepsSliceFactory<MarketplaceKeys>
+): void {
   marketplace
     .command("list")
     .description("List registered plugin marketplaces")
@@ -126,7 +136,13 @@ export function registerMarketplaceCommand(
         failCommand(output, error);
       }
     });
+}
 
+function registerRemove(
+  program: Command,
+  marketplace: Command,
+  createDeps: DepsSliceFactory<MarketplaceKeys>
+): void {
   marketplace
     .command("remove <name>")
     .description("Remove a registered plugin marketplace")
@@ -154,7 +170,13 @@ export function registerMarketplaceCommand(
         failCommand(output, error);
       }
     });
+}
 
+function registerRefresh(
+  program: Command,
+  marketplace: Command,
+  createDeps: DepsSliceFactory<MarketplaceKeys>
+): void {
   marketplace
     .command("refresh [name]")
     .description(
@@ -172,12 +194,18 @@ export function registerMarketplaceCommand(
         });
         reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         printRefreshResults(output, results);
-        if (failedCount > 0) exitWith(1);
+        if (failedCount > 0) output.exit(1);
       } catch (error) {
         failCommand(output, error);
       }
     });
+}
 
+function registerCheck(
+  program: Command,
+  marketplace: Command,
+  createDeps: DepsSliceFactory<MarketplaceKeys>
+): void {
   marketplace
     .command("check")
     .description("Report stale marketplaces and upstream-removed plugins")
@@ -191,4 +219,18 @@ export function registerMarketplaceCommand(
         failCommand(output, error);
       }
     });
+}
+
+export function registerMarketplaceCommand(
+  program: Command,
+  createDeps: DepsSliceFactory<MarketplaceKeys>,
+  runCommand: CommandRunner
+): void {
+  const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
+  registerMenu(marketplace, createDeps, runCommand);
+  registerAdd(program, marketplace, createDeps);
+  registerList(program, marketplace, createDeps);
+  registerRemove(program, marketplace, createDeps);
+  registerRefresh(program, marketplace, createDeps);
+  registerCheck(program, marketplace, createDeps);
 }

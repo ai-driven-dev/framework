@@ -1,36 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { failCommand } from "../../../src/presentation/errors/error-translator.js";
 import { AuthenticationError, InputRequiredError } from "../../../src/shared/domain/errors.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-
-/**
- * `process.exit` returns `never`, and so does `failCommand`: a double that returns
- * normally lets a test walk through code the real process would never reach.
- */
-class ProcessExited extends Error {
-  constructor(readonly code: number | string | null | undefined) {
-    super(`process.exit(${String(code)})`);
-  }
-}
+import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 
 describe("failCommand", () => {
   let output: CapturingOutput;
 
   /** Asserts the failure ran to the exit it promises, and hands the test the rest. */
   function failing(error: unknown): void {
-    expect(() => failCommand(output, error)).toThrow(ProcessExited);
-    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(() => failCommand(output, error)).toThrow(new ExitRequested(1));
   }
 
   beforeEach(() => {
     output = new CapturingOutput(false);
-    vi.spyOn(process, "exit").mockImplementation((code) => {
-      throw new ProcessExited(code);
-    });
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it("routes AuthenticationError message to output.error", () => {

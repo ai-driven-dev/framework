@@ -1,4 +1,4 @@
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 interface ToolInstallOutcome {
   readonly toolId: string;
@@ -15,7 +15,7 @@ interface SetupOutcome {
 }
 
 function displayInstall(
-  output: CLIOutput,
+  output: Output,
   results: readonly ToolInstallOutcome[],
   verbose: boolean
 ): void {
@@ -37,7 +37,7 @@ function displayInstall(
   }
 }
 
-export function printSetupOutcome(output: CLIOutput, result: SetupOutcome, verbose: boolean): void {
+export function printSetupOutcome(output: Output, result: SetupOutcome, verbose: boolean): void {
   if (result.globalPlugins !== undefined) {
     output.success(
       result.globalPlugins.length === 0
@@ -60,11 +60,11 @@ export function printSetupOutcome(output: CLIOutput, result: SetupOutcome, verbo
   }
 }
 
-export function printDetectedContext(output: CLIOutput, description: string): void {
+export function printDetectedContext(output: Output, description: string): void {
   output.info(`Detected: ${description}.`);
 }
 
-export function printWelcomeBanner(output: CLIOutput): void {
+export function printWelcomeBanner(output: Output): void {
   output.print("");
   output.print("AI-Driven Development setup");
   output.print("Wires your AI tools, registers the framework marketplace, installs plugins.");
@@ -72,7 +72,7 @@ export function printWelcomeBanner(output: CLIOutput): void {
   output.print("");
 }
 
-export function printNextSteps(output: CLIOutput, installedAnything: boolean): void {
+export function printNextSteps(output: Output, installedAnything: boolean): void {
   output.print("");
   output.print("Next steps:");
   if (installedAnything) output.print("  aidd doctor             # verify drift");

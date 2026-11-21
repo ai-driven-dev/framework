@@ -36,7 +36,7 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 - A message naming a command names a real one: `errors-that-instruct.arch.test.ts`.
 - An empty catch is a failure unless a `biome-ignore lint/plugin: <reason>` above its `try` says why (`biome-plugins/no-swallowed-catch.grit`).
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
-- `process.exit` stays in `presentation/exit.ts`: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
+- `process.exit` stays in the composition root, which hands presentation an `Output` port ending the run: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
 - File length, function length, cognitive complexity, parameter counts and one class per file are capped by `biome.json`; the baselines only shrink: `biome-guards-bite.arch.test.ts`.
 - Tolerated debt is `tests/architecture/kinds-debt.json`, and it only shrinks: `debt-only-shrinks.arch.test.ts`.
 - Exports are named and nothing re-exports: `biome-plugins/no-inline-re-export.grit`, Biome `noDefaultExport`, `noBarrelFile`, `noReExportAll`.

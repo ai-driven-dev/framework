@@ -1,5 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const cleanProject = vi.fn();
@@ -63,6 +65,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerCleanCommand(program, createDeps);
@@ -247,6 +250,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 describe("aidd clean — the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerCleanCommand(program, createDeps);
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");

@@ -5,6 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
+import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { sandboxedEnv } from "./cli-sandbox.builder.js";
 
 /**
@@ -150,6 +151,7 @@ export async function runInProcess(
       createSlice: depsFactory,
       telemetryRequests: wireTelemetryRequests(),
       runCommand: async () => 0,
+      createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code)),
     });
 
     try {

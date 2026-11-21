@@ -3,7 +3,7 @@ import type { DoctorReport } from "../../contexts/installation/contract/doctor-i
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
   printAllToolsDrift,
   printInventory,
@@ -14,8 +14,6 @@ import {
   printUserScopeTools,
 } from "../display/doctor-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -29,18 +27,32 @@ type DoctorKeys =
   | "environment"
   | "doctorRegistrationUseCase";
 
-async function runFullDoctor(
-  deps: Pick<Deps, DoctorKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  pluginName: string | undefined
-): Promise<void> {
+interface DoctorRun {
+  deps: Pick<Deps, DoctorKeys>;
+  output: Output;
+  projectRoot: string;
+}
+
+async function runFullDoctor({
+  deps,
+  output,
+  projectRoot,
+  pluginName,
+}: DoctorRun & { pluginName: string | undefined }): Promise<void> {
   const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, pluginName);
   const statusResult = await deps.statusAllUseCase.execute(projectRoot);
   printReportErrors(output, doctorResult.errors);
 
-  printInventory(output, "AI", doctorResult.ai, statusResult.aiTools.tools);
-  printInventory(output, "IDE", doctorResult.ide, statusResult.ideTools.tools);
+  printInventory(output, {
+    label: "AI",
+    doctorReport: doctorResult.ai,
+    statusTools: statusResult.aiTools.tools,
+  });
+  printInventory(output, {
+    label: "IDE",
+    doctorReport: doctorResult.ide,
+    statusTools: statusResult.ideTools.tools,
+  });
 
   printAllToolsDrift(output, statusResult);
 
@@ -61,17 +73,21 @@ async function runFullDoctor(
     output.success("\nInstallation is healthy");
     return;
   }
-  exitWith(1);
+  output.exit(1);
 }
 
-async function runScopedDoctor(
-  deps: Pick<Deps, DoctorKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  toolId: string,
-  tools: ToolCatalog,
-  pluginName: string | undefined
-): Promise<void> {
+async function runScopedDoctor({
+  deps,
+  output,
+  projectRoot,
+  toolId,
+  tools,
+  pluginName,
+}: DoctorRun & {
+  toolId: string;
+  tools: ToolCatalog;
+  pluginName: string | undefined;
+}): Promise<void> {
   const category: ToolCategory = tools.isAiTool(toolId) ? "ai" : "ide";
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
@@ -90,7 +106,11 @@ async function runScopedDoctor(
     ...doctorReport,
     toolHealth: doctorReport.toolHealth.filter((h) => h.toolId === toolId),
   };
-  printInventory(output, toolId, scopedReport, statusReport.tools);
+  printInventory(output, {
+    label: toolId,
+    doctorReport: scopedReport,
+    statusTools: statusReport.tools,
+  });
 
   printToolDrift(output, statusReport);
 
@@ -107,19 +127,19 @@ async function runScopedDoctor(
     output.success("\nInstallation is healthy");
     return;
   }
-  exitWith(1);
+  output.exit(1);
 }
 
 /** A user-scope install writes nothing under any project, so the only check left is
  * `doctorRegistrationUseCase` against the user manifest: registrations versus a host's own
  * registry file, the one check that is not project-file-shaped. */
-async function runUserScopeDoctor(
-  tools: ToolCatalog,
-  deps: Pick<Deps, DoctorKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  cmdOptions: DoctorCmdOptions
-): Promise<void> {
+async function runUserScopeDoctor({
+  tools,
+  deps,
+  output,
+  projectRoot,
+  cmdOptions,
+}: DoctorRun & { tools: ToolCatalog; cmdOptions: DoctorCmdOptions }): Promise<void> {
   // At user scope doctor checks registrations, not plugin files: there is nothing `--plugin`
   // could narrow: so it is refused rather than silently read and discarded.
   if (cmdOptions.plugin !== undefined) {
@@ -161,7 +181,7 @@ async function runUserScopeDoctor(
     output.success("\nUser-scope installation is healthy");
     return;
   }
-  exitWith(1);
+  output.exit(1);
 }
 
 interface DoctorCmdOptions {
@@ -195,18 +215,18 @@ export function registerDoctorCommand(
         const deps = await createDeps(projectRoot, { verbose }, output);
         const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
-          await runUserScopeDoctor(tools, deps, output, projectRoot, cmdOptions);
+          await runUserScopeDoctor({ tools, deps, output, projectRoot, cmdOptions });
         } else if (cmdOptions.tool !== undefined) {
-          await runScopedDoctor(
+          await runScopedDoctor({
             deps,
             output,
             projectRoot,
-            cmdOptions.tool,
+            toolId: cmdOptions.tool,
             tools,
-            cmdOptions.plugin
-          );
+            pluginName: cmdOptions.plugin,
+          });
         } else {
-          await runFullDoctor(deps, output, projectRoot, cmdOptions.plugin);
+          await runFullDoctor({ deps, output, projectRoot, pluginName: cmdOptions.plugin });
         }
       } catch (error) {
         failCommand(output, error);

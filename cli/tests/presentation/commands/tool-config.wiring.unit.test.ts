@@ -1,5 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const installAiTool = vi.fn();
@@ -72,6 +74,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerToolConfigCommand(program, CATALOG, createDeps);
@@ -361,6 +364,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerToolConfigCommand(program, CATALOG, createDeps);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");

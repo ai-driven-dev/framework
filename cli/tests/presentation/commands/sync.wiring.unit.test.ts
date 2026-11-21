@@ -1,11 +1,13 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import {
   ManifestUnavailableError,
   UnregisteredToolError,
 } from "../../../src/shared/domain/errors.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -79,6 +81,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerSyncCommand(program, CATALOG, createDeps);

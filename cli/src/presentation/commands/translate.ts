@@ -6,11 +6,9 @@ import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
 } from "../../contexts/translate/contract/build-targets.js";
-import type { DepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory, Output } from "../deps.js";
 import { printTranslateResult } from "../display/translate-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -20,7 +18,7 @@ interface TranslateExecutionParams {
   createDeps: DepsSliceFactory<TranslateKeys>;
   projectRoot: string;
   verbose: boolean;
-  output: CLIOutput;
+  output: Output;
   sourceDir: string;
   outDir: string;
   target: FrameworkBuildTarget;
@@ -43,7 +41,7 @@ async function runTranslateCore(params: TranslateExecutionParams): Promise<void>
       params.output.error(
         `Unsupported target/mode combination: ${params.target} (${params.mode}).`
       );
-      exitWith(1);
+      params.output.exit(1);
     }
     const result = await useCase.execute({
       sourceDir: params.sourceDir,
@@ -92,7 +90,7 @@ export function registerTranslateCommand(
         output.error(
           `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`
         );
-        exitWith(1);
+        return output.exit(1);
       }
       if (
         cmdOptions.as !== undefined &&
@@ -100,7 +98,7 @@ export function registerTranslateCommand(
         cmdOptions.as !== "flat"
       ) {
         output.error(`Invalid --as '${cmdOptions.as}'. Expected 'marketplace' or 'flat'.`);
-        exitWith(1);
+        output.exit(1);
       }
       const mode: FrameworkBuildMode = cmdOptions.as === "flat" ? "flat" : "marketplace";
 

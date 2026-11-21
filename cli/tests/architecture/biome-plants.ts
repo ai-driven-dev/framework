@@ -91,7 +91,7 @@ export const PLANTS: readonly Plant[] = [
     0,
   ],
   [`${APPLICATION}/lists.ts`, "export type L = readonly AiToolProfile[];", "plugin", 1],
-  ["src/presentation/lists.ts", "export type L = readonly AiToolProfile[];", "plugin", 0],
+  ["src/presentation/lists.ts", "export type L = readonly AiToolProfile[];", "plugin", 1],
   [
     "tests/shared/domain/seeds.unit.test.ts",
     'import { seed } from "./seed-from-directory.js";',
@@ -135,13 +135,12 @@ export const PLANTS: readonly Plant[] = [
     2,
   ],
 
-  // process.exit: shared, contexts and presentation throw; presentation's exit function exits.
+  // process.exit: shared, contexts and presentation never call it; the composition root does.
   ["src/shared/domain/exit.ts", exits, "plugin", 1],
   ["src/shared/infrastructure/exit.ts", exits, "plugin", 1],
-  ["src/presentation/exit.ts", exits, "plugin", 0],
   ["src/presentation/commands/exit.ts", exits, "plugin", 1],
   ["src/presentation/project-root.ts", exits, "plugin", 1],
-  ["src/presentation/terminal/prompter-adapter.ts", exits, "plugin", 1],
+  ["src/presentation/terminal/inquirer-prompter.adapter.ts", exits, "plugin", 1],
   // export default, under src/ and tests/ alike.
   ["src/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],
   ["tests/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],

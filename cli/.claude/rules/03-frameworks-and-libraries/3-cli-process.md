@@ -22,4 +22,4 @@ paths:
 - Exit `1` on a thrown error, an invalid `--scope`, an invalid `translate` flag, an unhealthy `doctor`, a guard needing a TTY, no argument without a TTY (commander prints help to stderr), or a result that reports a failure: a refused telemetry step, a failed marketplace refresh, recipe findings.
 - A thrown error becomes a code through `failCommand`; a command whose result reports a failure sets exit `1` itself.
 - A command may exit before the use case runs on a refusal: a missing flag or a non-interactive guard.
-- `process.exit` stays out of `shared/`, `contexts/` and `presentation/`, except `presentation/exit.ts`, the one function that ends the process: `biome-plugins/no-process-exit.grit`.
+- `process.exit` stays out of `shared/`, `contexts/` and `presentation/`; presentation ends a run with `output.exit`, which the composition root wires to the process: `biome-plugins/no-process-exit.grit`.

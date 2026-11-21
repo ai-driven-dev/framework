@@ -14,7 +14,7 @@ import {
   type ReportRow,
   type Tally,
 } from "../../../contexts/telemetry/contract/usage-report.js";
-import type { CLIOutput } from "../../output.js";
+import type { Output } from "../../deps.js";
 import { count, grouped, leftOutLines } from "../telemetry-display.js";
 
 const SHORT = 8;
@@ -139,31 +139,27 @@ function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
   ];
 }
 
-export function printUsageReport(output: CLIOutput, result: RequestReportResult): void {
+type Reported = Extract<RequestReportResult, { status: "reported" }>;
+
+function printNotReported(output: Output, result: Exclude<RequestReportResult, Reported>): void {
   if (result.status === "refused") {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
-    return;
-  }
-  if (result.status === "conflicting") {
+  } else if (result.status === "conflicting") {
     output.error(conflictWords(result));
-    return;
-  }
-  if (result.status === "not-a-repository") {
+  } else if (result.status === "not-a-repository") {
     output.error(
       "--repository . names the repository this directory is in, and it is in none: not a git repository, unreadable, or with neither an origin nor a commit."
     );
-    return;
-  }
-  if (result.status === "ambiguous") {
+  } else {
     const { flag, typed, ids } = result;
     const many = flag === "session" ? "sessions" : "repositories";
     output.error(
       `--${flag} ${typed} starts ${ids.length} ${many} of this period: ${ids.join(", ")}. Type more of it.`
     );
-    return;
   }
-  const { report, coverage, run, period, selected } = result;
-  output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
+}
+
+function printReportBody(output: Output, { report, selected }: Reported): void {
   const selection = selectionLine(selected);
   if (selection !== null) output.print(selection);
   if (report.totals.records === 0) {
@@ -172,17 +168,27 @@ export function printUsageReport(output: CLIOutput, result: RequestReportResult)
         ? "No calls in this period."
         : "No call in this period matches these filters."
     );
-  } else {
-    output.print("");
-    for (const line of table(report.axis, report.rows, report.totals)) output.print(line);
-    const unknown = report.totals.total.unknownRecords;
-    if (unknown > 0) {
-      output.print("");
-      output.print(
-        `${count(unknown, "call", "calls")} had an unknown counter: ${unknown === 1 ? "it is" : "they are"} left out of the sums marked +?, never counted as zero.`
-      );
-    }
+    return;
   }
+  output.print("");
+  for (const line of table(report.axis, report.rows, report.totals)) output.print(line);
+  const unknown = report.totals.total.unknownRecords;
+  if (unknown > 0) {
+    output.print("");
+    output.print(
+      `${count(unknown, "call", "calls")} had an unknown counter: ${unknown === 1 ? "it is" : "they are"} left out of the sums marked +?, never counted as zero.`
+    );
+  }
+}
+
+export function printUsageReport(output: Output, result: RequestReportResult): void {
+  if (result.status !== "reported") {
+    printNotReported(output, result);
+    return;
+  }
+  const { report, coverage, run, period } = result;
+  output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
+  printReportBody(output, result);
   output.print("");
   for (const line of coverageLines(coverage, run)) output.print(line);
 }

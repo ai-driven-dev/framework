@@ -1,5 +1,5 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 interface ProjectCleanResult {
   readonly manifestFound: boolean;
@@ -29,7 +29,7 @@ interface UserScopeCleanResult {
   };
 }
 
-function printProjectPreview(output: CLIOutput, preview: ProjectCleanResult["preview"]): void {
+function printProjectPreview(output: Output, preview: ProjectCleanResult["preview"]): void {
   output.print("The following will be removed:");
   for (const tool of preview.tools) {
     output.print(`  ${tool.toolId}: ${tool.fileCount} files`);
@@ -51,7 +51,7 @@ function printProjectPreview(output: CLIOutput, preview: ProjectCleanResult["pre
 }
 
 export function printProjectCleanOutcome(
-  output: CLIOutput,
+  output: Output,
   result: ProjectCleanResult,
   interactive: boolean
 ): void {
@@ -78,7 +78,7 @@ export function printProjectCleanOutcome(
 
 /** Names what `--scope user` is about to purge before anything is removed: the shared
  * source's versions and the projects `references.json` names, existing paths only. */
-function printUserScopePreview(output: CLIOutput, result: UserScopeCleanResult): void {
+function printUserScopePreview(output: Output, result: UserScopeCleanResult): void {
   const { preview } = result;
   output.print("The following will be removed for this machine:");
   for (const toolId of preview.toolIds) {
@@ -95,7 +95,7 @@ function printUserScopePreview(output: CLIOutput, result: UserScopeCleanResult):
 }
 
 export function printUserScopeCleanOutcome(
-  output: CLIOutput,
+  output: Output,
   result: UserScopeCleanResult,
   interactive: boolean
 ): void {

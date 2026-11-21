@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { ValidateRecipesResult } from "../../contexts/recipes/application/validate-recipes.js";
 import type { ToolId } from "../../shared/domain/tool.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 import { printScopedFailures } from "./sync-display.js";
 
 interface ScopedFailure {
@@ -14,26 +14,28 @@ interface UpdatedTool {
   readonly fileCount: number;
 }
 
-export function printToolAlreadyInstalled(output: CLIOutput, toolId: ToolId): void {
+export function printToolAlreadyInstalled(output: Output, toolId: ToolId): void {
   output.warn(`${toolId} is already installed. Use \`--force\` to reinstall.`);
 }
 
 export function printToolInstalled(
-  output: CLIOutput,
-  toolId: ToolId,
-  fileCount: number,
-  warnings: readonly string[]
+  output: Output,
+  {
+    toolId,
+    fileCount,
+    warnings,
+  }: { toolId: ToolId; fileCount: number; warnings: readonly string[] }
 ): void {
   for (const warning of warnings) output.warn(warning);
   output.success(`Installed ${toolId} (${fileCount} files)`);
 }
 
-export function printToolRemoved(output: CLIOutput, toolId: ToolId, fileCount: number): void {
+export function printToolRemoved(output: Output, toolId: ToolId, fileCount: number): void {
   output.success(`Removed ${toolId} (${fileCount} files removed)`);
 }
 
 export function printUpdateResult(
-  output: CLIOutput,
+  output: Output,
   updatedTools: readonly UpdatedTool[],
   errors: readonly ScopedFailure[]
 ): void {

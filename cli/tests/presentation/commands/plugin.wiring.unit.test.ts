@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -71,6 +73,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
@@ -365,6 +368,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");

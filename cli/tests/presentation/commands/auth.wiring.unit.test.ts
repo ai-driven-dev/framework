@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const login = vi.fn();
@@ -61,6 +63,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerAuthCommand(program, createDeps);
@@ -253,6 +256,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
 describe("aidd auth, the help surface", () => {
   function authCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerAuthCommand(program, createDeps);
     const auth = program.commands.find((command) => command.name() === "auth");
     if (auth === undefined) throw new Error("auth command was not registered");

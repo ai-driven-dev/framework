@@ -30,7 +30,6 @@ import {
   printTelemetryStatus,
 } from "../display/telemetry-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -110,7 +109,7 @@ function registerOn({ telemetry, program, createDeps, requests }: TelemetrySurfa
               ? await deps.telemetry.readTranscriptRetention.execute({ root: result.root })
               : undefined;
           printOnResult(output, result, retention);
-          if (result.status === "refused") exitWith(1);
+          if (result.status === "refused") output.exit(1);
         }
       );
     });
@@ -125,7 +124,7 @@ function registerOff({ telemetry, program, createDeps }: TelemetrySurface): void
       await run(async (deps) => {
         const result = await deps.telemetry.disableTelemetry.execute({ cwd: projectRoot });
         printOffResult(output, result);
-        if (result.status === "refused") exitWith(1);
+        if (result.status === "refused") output.exit(1);
       });
     });
 }
@@ -192,7 +191,7 @@ function registerTask({ telemetry, program, createDeps, requests }: TelemetrySur
               by: cmdOptions.by,
             });
             printDeclareResult(output, result);
-            if (result.status === "refused") exitWith(1);
+            if (result.status === "refused") output.exit(1);
           }
         );
       }
@@ -298,7 +297,7 @@ function registerReport({ telemetry, program, createDeps, requests }: TelemetryS
             result.status === "ambiguous"
           ) {
             printUsageReport(output, result);
-            exitWith(1);
+            return output.exit(1);
           }
           if (!cmdOptions.json) return printUsageReport(output, result);
           output.print(
@@ -335,7 +334,7 @@ function registerIdentity({ telemetry, program, createDeps }: TelemetrySurface):
                 : { action: "set", typed: id }
           );
           printIdentityResult(output, result);
-          if (result.status === "refused") exitWith(1);
+          if (result.status === "refused") output.exit(1);
         }
       );
     });

@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 
@@ -37,6 +39,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerUpdateCommand(program, createDeps);
@@ -125,6 +128,7 @@ describe("aidd update — what it asks the self-updater", () => {
 describe("aidd update — the help surface", () => {
   function updateCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerUpdateCommand(program, createDeps);
     const update = program.commands.find((command) => command.name() === "update");
     if (update === undefined) throw new Error("update command was not registered");

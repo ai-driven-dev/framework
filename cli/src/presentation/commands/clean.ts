@@ -1,8 +1,7 @@
 import type { Command } from "commander";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -14,12 +13,19 @@ interface CleanCmdOptions {
   global?: boolean;
 }
 
-async function runProjectScopeClean(
-  deps: Pick<Deps, CleanKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  cmdOptions: CleanCmdOptions
-): Promise<void> {
+interface CleanRun {
+  deps: Pick<Deps, CleanKeys>;
+  output: Output;
+  projectRoot: string;
+  cmdOptions: CleanCmdOptions;
+}
+
+async function runProjectScopeClean({
+  deps,
+  output,
+  projectRoot,
+  cmdOptions,
+}: CleanRun): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUseCase.execute({
     projectRoot,
@@ -30,12 +36,12 @@ async function runProjectScopeClean(
   printProjectCleanOutcome(output, result, interactive);
 }
 
-async function runUserScopeClean(
-  deps: Pick<Deps, CleanKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  cmdOptions: CleanCmdOptions
-): Promise<void> {
+async function runUserScopeClean({
+  deps,
+  output,
+  projectRoot,
+  cmdOptions,
+}: CleanRun): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUserScopeUseCase.execute({
     projectRoot,
@@ -83,9 +89,9 @@ export function registerCleanCommand(
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         if (scope === "user") {
-          await runUserScopeClean(deps, output, projectRoot, cmdOptions);
+          await runUserScopeClean({ deps, output, projectRoot, cmdOptions });
         } else {
-          await runProjectScopeClean(deps, output, projectRoot, cmdOptions);
+          await runProjectScopeClean({ deps, output, projectRoot, cmdOptions });
         }
       } catch (error) {
         failCommand(output, error);

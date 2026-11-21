@@ -1,6 +1,7 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { bindContainer, createContainer } from "./composition/container.js";
+import { createOutput } from "./composition/shared.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
@@ -37,6 +38,7 @@ registerCommands(program, {
   createSlice,
   telemetryRequests: wireTelemetryRequests(),
   runCommand: spawnCliCommand,
+  createOutput,
 });
 registerUpdateNoticeHooks(program, createSlice);
 
@@ -49,7 +51,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop(menuOfProject, resolveProjectRoot());
+  runMenuLoop(menuOfProject, resolveProjectRoot(), createOutput(false));
 } else {
   program.parse(process.argv);
 }

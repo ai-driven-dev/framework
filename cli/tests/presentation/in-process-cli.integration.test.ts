@@ -163,13 +163,13 @@ describe("running a command in process", () => {
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(async () => {
           const { bindContainer } = await import("../../src/composition/container.js");
-          const { CLIOutput } = await import("../../src/presentation/output.js");
+          const { createOutput } = await import("../../src/composition/shared.js");
           const { registeredTools } = await import("../shared/testing/registered-tools.builder.js");
           built.push(
             await bindContainer(registeredTools())(
               process.cwd(),
               { verbose: false },
-              new CLIOutput(false)
+              createOutput(false)
             )
           );
         });

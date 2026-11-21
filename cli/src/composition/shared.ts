@@ -6,12 +6,10 @@ import { PluginDistributionReaderAdapter } from "../contexts/installation/infras
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
-import type { FactoryOptions } from "../presentation/deps.js";
-import { CLIOutput } from "../presentation/output.js";
-import {
-  InquirerPrompterAdapter,
-  SilentPrompterAdapter,
-} from "../presentation/terminal/prompter-adapter.js";
+import type { FactoryOptions, Output } from "../presentation/deps.js";
+import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-prompter.adapter.js";
+import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
+import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
@@ -28,15 +26,20 @@ export function currentVersion(): string {
   return new CurrentVersionAdapter().get();
 }
 
+/** The output of a run: it writes to the terminal and ends the process. */
+export function createOutput(verbose: boolean): Output {
+  return new OutputAdapter(verbose, (code) => process.exit(code));
+}
+
 /** The adapters and context wirings every area reads: the file system, the manifests, auth, host
  * registration and distribution. Built once per graph. */
 export function wireBase(
   projectRoot: string,
   options: FactoryOptions,
-  output: CLIOutput | undefined,
+  output: Output | undefined,
   tools: ToolCatalog
 ) {
-  const logger = output ?? new CLIOutput(options.verbose);
+  const logger = output ?? createOutput(options.verbose);
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,

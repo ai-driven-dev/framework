@@ -25,11 +25,7 @@
     "exemptProfileList": "the folder stops listing profiles",
     "profile": "the reader names the sections of the tool it reads in its own ports, never the whole profile"
   },
-  "classification": [
-    "src/presentation/deps.ts",
-    "src/presentation/exit.ts",
-    "src/presentation/output.ts"
-  ],
+  "classification": ["src/presentation/deps.ts"],
   "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
   "mirror": [
     "src/contexts/installation/application/install/content/install-content-section.ts",
@@ -76,9 +72,6 @@
     "cognitive complexity :: src/contexts/installation/application/shared/detect-plugin-drift.ts",
     "cognitive complexity :: src/contexts/installation/application/shared/remove-project-hooks.ts",
     "cognitive complexity :: src/contexts/installation/domain/manifest.ts",
-    "cognitive complexity :: src/presentation/commands/setup.ts",
-    "cognitive complexity :: src/presentation/display/telemetry-display.ts",
-    "cognitive complexity :: src/presentation/display/telemetry/telemetry-report-display.ts",
     "cognitive complexity :: src/shared/domain/markdown.ts",
     "cognitive complexity :: src/shared/domain/reading/jsonc.ts",
     "cognitive complexity :: src/shared/domain/source.ts",
@@ -94,10 +87,6 @@
     "function length :: src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
     "function length :: src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
     "function length :: src/orchestration/sync/sync-settings.ts",
-    "function length :: src/presentation/commands/marketplace.ts",
-    "function length :: src/presentation/commands/plugin.ts",
-    "function length :: src/presentation/commands/setup.ts",
-    "function length :: src/presentation/commands/tool-config.ts",
     "function parameters :: src/composition/installation.ts",
     "function parameters :: src/composition/orchestration/global.ts",
     "function parameters :: src/composition/orchestration/setup.ts",
@@ -124,16 +113,8 @@
     "function parameters :: src/orchestration/doctor/check-registration.ts",
     "function parameters :: src/orchestration/setup/run-setup.ts",
     "function parameters :: src/orchestration/setup/setup-flow.ts",
-    "function parameters :: src/presentation/commands/clean.ts",
-    "function parameters :: src/presentation/commands/doctor.ts",
-    "function parameters :: src/presentation/commands/setup.ts",
-    "function parameters :: src/presentation/commands/sync.ts",
-    "function parameters :: src/presentation/commands/tool-config.ts",
-    "function parameters :: src/presentation/display/doctor-display.ts",
-    "function parameters :: src/presentation/display/tool-config-display.ts",
     "function parameters :: src/shared/domain/layout/aidd-layout.ts",
     "function parameters :: src/shared/domain/materialization/flat-paths.ts",
-    "one class per file :: src/presentation/terminal/prompter-adapter.ts",
     "one class per file :: src/shared/domain/errors.ts",
     "one class per file :: src/shared/domain/file.ts"
   ],
@@ -145,10 +126,10 @@
   "toolSites": ["src/composition/telemetry.ts: 2"],
   "toolOwn": [],
   "toolIdentifiers": [],
-  "exemptProcessExit": ["src/presentation/exit.ts"],
+  "exemptProcessExit": [],
   "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],
   "exemptDefaultExport": ["**/*.d.ts"],
   "exemptProfileImport": ["src/composition/**"],
-  "exemptProfileList": ["src/presentation/**"],
+  "exemptProfileList": [],
   "profile": []
 }

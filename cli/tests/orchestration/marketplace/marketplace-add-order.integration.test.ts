@@ -13,7 +13,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.js";
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.js";
-import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
+import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,

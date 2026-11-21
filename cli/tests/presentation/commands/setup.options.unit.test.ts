@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   expandAllKeyword,
   parsePluginsFlag,
@@ -7,18 +7,8 @@ import {
   parseToolIds,
   requireAgentHosts,
 } from "../../../src/presentation/commands/setup.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { catalogOf, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
-
-function refuseByThrowing() {
-  return vi.spyOn(process, "exit").mockImplementation(() => {
-    throw new Error("process.exit");
-  });
-}
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("parseSourceFlag", () => {
   it("chooses no source at all when --source was not given", () => {
@@ -45,12 +35,10 @@ describe("parseSourceFlag", () => {
 
   it("refuses a local source with no --path, naming the flag it needs", () => {
     const output = new CapturingOutput(false);
-    const exit = refuseByThrowing();
 
-    expect(() => parseSourceFlag({ source: "local" }, output)).toThrow("process.exit");
+    expect(() => parseSourceFlag({ source: "local" }, output)).toThrow(new ExitRequested(1));
 
     expect(output.at("error")).toEqual(["--source local requires --path <dir>"]);
-    expect(exit).toHaveBeenCalledWith(1);
   });
 });
 

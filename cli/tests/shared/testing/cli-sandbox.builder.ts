@@ -14,10 +14,10 @@ import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
 import { bindContainer } from "../../../src/composition/container.js";
+import { createOutput } from "../../../src/composition/shared.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/domain/git-environment.js";
-import { CLIOutput } from "../../../src/presentation/output.js";
 import { catalogOf } from "./catalog-of.builder.js";
 
 export const execFileAsync = promisify(execFile);
@@ -290,7 +290,7 @@ export async function runCli(
 }
 
 export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
-  const output = new CLIOutput(false);
+  const output = createOutput(false);
   const deps = await bindContainer(catalogOf())(projectDir, { verbose: false }, output);
   await new InitProject(
     deps.fs,

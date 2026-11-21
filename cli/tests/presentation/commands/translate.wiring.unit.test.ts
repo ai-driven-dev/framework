@@ -3,6 +3,8 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { REGISTERED_PROFILES, wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
@@ -45,6 +47,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerTranslateCommand(program, CATALOG, createDeps);
@@ -160,6 +163,7 @@ describe("aidd translate — what it refuses", () => {
 describe("aidd translate — the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerTranslateCommand(program, CATALOG, createDeps);
     const translate = program.commands.find((command) => command.name() === "translate");
     if (translate === undefined) throw new Error("translate command was not registered");

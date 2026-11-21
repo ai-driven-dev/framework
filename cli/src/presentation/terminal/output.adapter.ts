@@ -1,9 +1,13 @@
-import type { Logger } from "../shared/ports/logger.js";
+import type { Output } from "../deps.js";
 
-export class CLIOutput implements Logger {
-  readonly verbose: boolean;
+export class OutputAdapter implements Output {
+  private readonly verbose: boolean;
 
-  constructor(verbose = false) {
+  /** `end` is how this process stops: the composition hands it in, so no presentation file exits. */
+  constructor(
+    verbose: boolean,
+    private readonly end: (code: number) => never
+  ) {
     this.verbose = verbose || process.env.AIDD_VERBOSE === "true";
   }
 
@@ -29,5 +33,9 @@ export class CLIOutput implements Logger {
 
   error(message: string): void {
     process.stderr.write(`Error: ${message}\n`);
+  }
+
+  exit(code: number): never {
+    return this.end(code);
   }
 }

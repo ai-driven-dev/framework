@@ -2,8 +2,10 @@ import { Command } from "commander";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { registerTranslateCommand } from "../../../src/presentation/commands/translate.js";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 /**
  * The help text names targets in prose nothing derives, while the validation beside it reads
@@ -18,6 +20,7 @@ describe("translate --to help text", () => {
     const tools = wireTools();
     const targets: readonly string[] = supportedBuildTargets(tools);
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerTranslateCommand(program, tools, noDeps);
 
     const translate = program.commands.find((command) => command.name() === "translate");

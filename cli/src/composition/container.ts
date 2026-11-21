@@ -3,8 +3,7 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
-import type { Deps, FactoryOptions } from "../presentation/deps.js";
-import type { CLIOutput } from "../presentation/output.js";
+import type { Deps, FactoryOptions, Output } from "../presentation/deps.js";
 import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";
 import { wireDoctor } from "./orchestration/doctor.js";
@@ -21,7 +20,7 @@ import { wireUpdate } from "./update.js";
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
 export interface ContainerOptions extends FactoryOptions {
   projectRoot: string;
-  output?: CLIOutput;
+  output?: Output;
   tools: ToolCatalog;
 }
 
@@ -133,7 +132,7 @@ export function bindContainer(tools: ToolCatalog) {
   return async (
     projectRoot: string,
     options: FactoryOptions,
-    output: CLIOutput | undefined
+    output: Output | undefined
   ): Promise<Graph> => {
     const container = createContainer({ projectRoot, ...options, output, tools });
     return {
