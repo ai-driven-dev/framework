@@ -118,7 +118,7 @@ describe("aidd-ui showcase", () => {
       const html = pagesOf()["button.html"];
       assert.match(html, /\n\.tabs \{[^}]*overflow-x: auto/);
       const phone = html.match(/@media \(max-width: 768px\) \{[\s\S]*?\n\}/)[0];
-      assert.match(phone, /\.tabs \{[^}]*mask-image: linear-gradient\(to right, #000 calc\(100% - [^)]*\), transparent\)/);
+      assert.match(phone, /\.tabs \{[^}]*mask-image: linear-gradient\(to right, black calc\(100% - [^)]*\), transparent\)/);
     });
 
     it("draws a journey as a storyboard: a card per step, linking its page, its action numbered under it, the last one too", () => {
@@ -359,7 +359,7 @@ describe("aidd-ui showcase", () => {
 
     it("keeps every text colour readable on every ground it sits on, and a control edge visible", () => {
       const tokens = rootOf(pagesOf()["index.html"]);
-      for (const front of ["text", "muted", "faint", "accent-text"]) {
+      for (const front of ["text", "muted", "faint"]) {
         for (const back of ["bg", "surface", "sunken"]) assert.ok(ratio(tokens, front, back) >= 4.5, `${front} on ${back}: ${ratio(tokens, front, back).toFixed(2)}`);
       }
       assert.ok(ratio(tokens, "ok", "ok-soft") >= 4.5, "ok on its soft ground");
@@ -677,8 +677,8 @@ describe("aidd-ui showcase", () => {
 
     it("fills the chosen verdict of a record, with a mark, and leaves the other outlined", () => {
       const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
-      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="ok"\]\[aria-pressed="true"\] \{[^}]*background: var\(--ok\);/);
-      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="revise"\]\[aria-pressed="true"\] \{[^}]*background: var\(--revise\);/);
+      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="ok"\]\[aria-pressed="true"\] \{[^}]*background: var\(--ok-soft\);/);
+      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="revise"\]\[aria-pressed="true"\] \{[^}]*background: var\(--revise-soft\);/);
       assert.match(style, /\.verdict-bar \.verdict\[aria-pressed="true"\]::before \{ content: "/);
       assert.match(style, /\.verdict-bar \.verdict \{[^}]*border: 1px solid var\(--control\);/);
     });
@@ -762,7 +762,7 @@ describe("aidd-ui showcase", () => {
         const ruleOf = (selector) => html.match(new RegExp(`\\n${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`))[1];
         assert.match(ruleOf(".doc"), /max-width: 68ch/);
         assert.doesNotMatch(ruleOf(".doc"), /background|border: 1px/);
-        assert.match(ruleOf(".appears ul"), /grid-template-columns: repeat\(auto-fill, minmax\(200px, 1fr\)\)/);
+        assert.match(ruleOf(".appears ul"), /grid-template-columns: repeat\(auto-fill, minmax\(260px, 1fr\)\)/);
       });
     });
 
@@ -1066,8 +1066,8 @@ describe("aidd-ui showcase", () => {
       assert.ok(push, "a push rule");
       assert.equal(Number(push[1]), 1280 + 400);
       assert.match(push[2], /padding-right: calc\(var\(--s7\) \+ var\(--drawer\)\)/);
-      assert.match(html, /\.scrim \{ display: none; \}/);
-      assert.match(html, /body\[data-drawer="open"\] \.scrim \{ display: block; position: fixed;/);
+      assert.match(html, /\.scrim \{ display: none; opacity: 0;/);
+      assert.match(html, /body\[data-drawer="open"\] \.scrim \{ display: block; opacity: 1; position: fixed;/);
       assert.match(html, /@media \(min-width: 1680px\) \{[^@]*\.scrim \{ display: none !important; \}/);
       assert.match(html, /<div class="scrim" id="scrim"><\/div>/);
     });
@@ -1229,7 +1229,7 @@ describe("aidd-ui showcase", () => {
       const html = pagesOf()["onboarding.html"];
       assert.match(rule(html, ".review-foot"), /^\s*flex: none;\s*$/);
       assert.match(rule(html, ".open-review"), /position: fixed/);
-      assert.match(html, /@media \(min-width: 769px\) \{[^\n]*\.shell > main \{ padding-bottom: calc\(var\(--s6\) \+ 64px\); \}/);
+      assert.match(html, /\nmain, main\.wide \{ padding-bottom: calc\(var\(--s5\) \+ var\(--h-touch\) \+ var\(--s6\)\); \}/);
     });
 
     it("splits the elements by category, in the order of the table, a record under its role", () => {
@@ -1509,7 +1509,7 @@ describe("aidd-ui showcase", () => {
     });
 
     it("writes the count in the review button in light text", () => {
-      assert.match(ruleOf(pagesOf()["index.html"], ".open-review .pending"), /color: #fff/);
+      assert.match(ruleOf(pagesOf()["index.html"], ".open-review .pending"), /color: var\(--on-accent\)/);
     });
 
     it("names the headings of the brand in French, the Project one and the Glossary", () => {

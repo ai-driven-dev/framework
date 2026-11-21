@@ -134,7 +134,7 @@ describe("aidd-ui showcase overview", () => {
     assert.doesNotMatch(icon, /<iframe/);
     assert.match(icon, /<span class="thumb m blank" aria-hidden="true"><\/span>/);
     assert.match(index, /\n\.ovcards\.comps \{ grid-template-columns: repeat\(auto-fill, minmax\(min\(100%, 150px\), 1fr\)\); gap: var\(--s3\); \}/);
-    assert.match(index, /\n\.thumb\.m \{ --k: 0\.3; \}/);
+    assert.match(index, /\n\.thumb\.m \{ --k: 0\.42; --w: 320px; --h: 240px; \}/);
   });
 
   it("gives the charter a card of its colours and the identity a compact card, no empty thumbnail", () => {

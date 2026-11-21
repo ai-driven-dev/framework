@@ -186,7 +186,7 @@ describe("aidd-ui showcase trust", () => {
       const hover = css().match(/nav li > a:not\(\[aria-current="page"\]\):hover[^{]*\{([^}]*)\}/)[1];
       const current = css().match(/nav li:has\(> a\[aria-current="page"\]\)[^{]*\{([^}]*)\}/)[1];
       assert.match(current, /background: var\(--accent-soft\)/);
-      assert.match(css().match(/nav a\[aria-current="page"\] \{([^}]*)\}/)[1], /color: var\(--accent-text\)/);
+      assert.match(css().match(/nav a\[aria-current="page"\] \{([^}]*)\}/)[1], /color: var\(--text\)/);
       assert.match(hover, /background: var\(--bg\)/);
       assert.doesNotMatch(hover, /--accent-soft|--sunken/);
     });

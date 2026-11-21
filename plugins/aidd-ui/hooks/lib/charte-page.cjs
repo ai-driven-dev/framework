@@ -212,7 +212,7 @@ main section[id] li { min-width: 0; }
 .cites { color: var(--muted); font-size: var(--t-sm); }
 .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: var(--s4) var(--s3); }
 .swatches li, .squares li, .tiles li, .sizes li { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); }
-.swatch { display: block; inline-size: 100%; block-size: 56px; border-radius: var(--r2); border: 1px solid var(--line-strong); background: repeating-conic-gradient(#8883 0 25%, transparent 0 50%) 0 0 / 12px 12px; }
+.swatch { display: block; inline-size: 100%; block-size: 56px; border-radius: var(--r2); border: 1px solid var(--line-strong); background: repeating-conic-gradient(color-mix(in srgb, var(--faint) 20%, transparent) 0 25%, transparent 0 50%) 0 0 / 12px 12px; }
 .squares, .tiles, .sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s5) var(--s5); }
 .square { display: block; max-inline-size: 100%; background: var(--text); }
 .tile { display: block; inline-size: 64px; block-size: 64px; background: var(--sunken); border: 2px solid var(--text); }

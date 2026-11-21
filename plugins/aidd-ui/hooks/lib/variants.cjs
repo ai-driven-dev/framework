@@ -263,41 +263,43 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
 /** The look of a set's page, added to the shell's. */
 const STYLE = `
 .variants { display: grid; grid-template-columns: repeat(var(--count), minmax(0, 1fr)); gap: var(--s5); align-items: start; }
+.variant:has(.colvote[data-verdict="discard"][aria-pressed="true"]) { opacity: 0.6; }
 .variant { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; padding: var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); }
 .column-head { position: sticky; top: 0; z-index: 2; display: flex; flex-direction: column; gap: var(--s2); padding-block: var(--s2); background: var(--surface); }
 .variant h2 { margin: 0; font-size: var(--t-xl); }
 .variant h3 { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--muted); }
 .variant .intent { margin: 0; color: var(--muted); }
-.axes { border-collapse: collapse; width: 100%; font-size: 13px; }
+.axes { border-collapse: collapse; width: 100%; font-size: var(--t-md); }
 .axes, .axes tbody, .axes tr { display: block; }
 .axes th, .axes td { display: block; }
 main.wide { padding-bottom: 72px; }
-.axes th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
+.axes th { text-align: left; font-weight: 500; font-size: var(--t-xs); color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
 .round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
 .axes td[data-changed] { box-shadow: inset 3px 0 0 var(--revise); }
-.take { display: block; inline-size: 100%; height: auto; line-height: 1.4; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r1); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.take { display: block; inline-size: 100%; height: auto; line-height: 1.4; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r1); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color var(--d1) var(--ease); }
 .take:hover { border-color: var(--accent); }
-.take-cta { display: block; margin-top: 2px; font-size: var(--t-xs); font-weight: 600; text-align: right; color: var(--accent-text); }
+.take-cta { display: block; margin-top: 2px; font-size: var(--t-xs); font-weight: 600; text-align: right; color: var(--text); }
 .take[aria-pressed="true"] { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
 .take[aria-pressed="true"] .take-cta::before { content: "\\2713 "; color: var(--ok); }
 .axes .value { display: block; padding: var(--s1) var(--s2); color: var(--muted); }
-.choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 500; color: var(--muted); }
 .choice { border-bottom: 1px solid var(--line); }
-.choice summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: 13px; font-weight: 600; }
-.choice .done { margin-left: auto; color: var(--faint); font-weight: 500; font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+.choice summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: var(--t-sm); font-weight: 600; }
+.choice .done { margin-left: auto; color: var(--faint); font-weight: 500; font-size: var(--t-xs); }
 .choice ol { padding: 0 var(--s3) var(--s3); }
 .pvariant { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: 6px var(--s2); border-radius: var(--r1); }
-.pvariant .pick { min-width: 0; flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pvariant .pick { min-width: 0; flex: 1; font-size: var(--t-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pvariant .comment { flex-basis: 100%; }
-.choose .vote { height: 24px; padding: 0 var(--s2); border: 0; background: transparent; color: var(--muted); font-size: var(--t-xs); }
+.choose .vote { flex: 1; height: var(--h-control); padding: 0 var(--s2); border: 0; background: transparent; color: var(--muted); font-size: var(--t-xs); }
 .vote[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow-1); color: var(--text); }
-.vote[data-verdict="keep"][aria-pressed="true"] { color: var(--ok); }
-.vote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
+.vote[data-verdict="keep"][aria-pressed="true"] { background: var(--ok-soft); box-shadow: inset 0 0 0 1.5px var(--ok); color: var(--ok); }
+.vote[data-verdict="revise"][aria-pressed="true"] { background: var(--revise-soft); box-shadow: inset 0 0 0 1.5px var(--revise); color: var(--revise); }
+.vote[data-verdict="discard"][aria-pressed="true"] { background: var(--sunken); box-shadow: none; color: var(--muted); }
 .tone { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: 0 6px 6px 0; vertical-align: top; }
 .axes .swatch { display: block; inline-size: 44px; block-size: 44px; border: 1px solid var(--line-strong); border-radius: var(--r1); }
 .axes td code { font-size: 10px; }
-.sample { display: inline-block; padding: 6px 14px; border-radius: 8px; font-size: 13px; vertical-align: top; }
+.sample { display: inline-block; padding: 6px 14px; border-radius: var(--r2); font-size: var(--t-sm); vertical-align: top; }
 .specimen { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
 .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin: 0 0 var(--s4); }
 .screen-pick { font-size: var(--t-sm); color: var(--muted); }
@@ -306,11 +308,11 @@ main.wide { padding-bottom: 72px; }
 .same-tag { font-weight: 400; font-style: italic; }
 .large { align-self: flex-start; }
 #large { padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r3); max-inline-size: 96vw; background: var(--surface); }
-#large::backdrop { background: rgba(24, 24, 20, 0.5); }
+#large::backdrop { background: var(--scrim); }
 .large-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); }
 .large-head strong { flex: 1; text-align: center; }
 .large-fit { position: relative; overflow: hidden; margin-inline: auto; }
-.large-fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
+.large-fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: var(--paper); }
 .fulltext > summary { cursor: pointer; font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
 .fulltext[open] > summary { margin-bottom: var(--s3); }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
@@ -320,10 +322,10 @@ main.wide { padding-bottom: 72px; }
 .compare .seg { display: flex; gap: var(--s1); min-width: 0; overflow-x: auto; }
 .compare .size { margin-left: auto; }
 .compare .tab[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
-.no-state { margin: 0; padding: var(--s5) var(--s3); border: 1px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); font-size: var(--t-sm); text-align: center; }
+.no-state { margin: 0; padding: var(--s5) var(--s3); border: 1px dashed var(--line-strong); border-radius: var(--r2); background: var(--sunken); color: var(--muted); font-size: var(--t-sm); text-align: center; }
 .frame { margin: 0; display: flex; flex-direction: column; gap: var(--s1); }
-.fit { position: relative; overflow: hidden; margin-inline: auto; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
-.fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
+.fit { position: relative; overflow: hidden; margin-inline: auto; border-radius: var(--r2); box-shadow: var(--shadow-frame); background: var(--paper); }
+.fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: var(--paper); }
 @media (max-width: 900px) { .variants { grid-template-columns: minmax(0, 1fr); } }
 `;
 
