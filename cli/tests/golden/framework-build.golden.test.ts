@@ -8,9 +8,17 @@ import { readFileSync } from "node:fs";
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
+import { AjvSchemaValidatorAdapter } from "../../src/contexts/translate/infrastructure/schema-validator.js";
+import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
+import { buildTree } from "../contexts/translate/testing/build-tree.builder.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
 import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
+import { registeredTools } from "../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 import { expectGolden } from "./testing/expect-golden.builder.js";
 import { twoCaptures } from "./testing/two-captures.builder.js";
 
@@ -20,6 +28,10 @@ const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/framework-build/golden.
 
 type TargetSnapshot = Record<string, string>; // rel-path → sha256
 type GoldenSnapshot = Record<string, TargetSnapshot>; // key → files
+
+function storedBaseline(): GoldenSnapshot {
+  return JSON.parse(readFileSync(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
+}
 
 const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
 const FLAT_TARGETS = catalogOf().idsInCanonicalOrder("ai");
@@ -115,12 +127,66 @@ async function captureAllCells(
   return captured;
 }
 
+const OUT = resolve("/aidd-golden-out").replaceAll("\\", "/");
+
+/** One cell built in memory, as `aidd translate` builds it: the real sink and the real assets. */
+async function captureInMemory(
+  seeded: InMemoryFileAdapter,
+  target: string,
+  mode: FrameworkBuildMode
+): Promise<TargetSnapshot> {
+  const tools = registeredTools();
+  const fs = new InMemoryFileAdapter();
+  for (const path of seeded.listAll()) fs.setFile(path, seeded.getFile(path) ?? "");
+  await fs.createDirectory(OUT);
+  const id = tools.aiToolId(target);
+  if (id === null) throw new Error(`${target} is not an AI tool`);
+  const contract = tools.aiProfile(id).buildContract(mode);
+  if (contract === null) throw new Error(`no ${mode} contract for ${target}`);
+  const assets = new BundledAssetProviderAdapter(tools);
+  const build = buildTree(
+    fs,
+    new AjvSchemaValidatorAdapter(),
+    assets,
+    new CapturingLogger(),
+    contract,
+    mode
+  );
+  await build.execute({ sourceDir: FRAMEWORK_FIXTURE, outDir: OUT, target: id, mode });
+  return Object.fromEntries(
+    fs
+      .listUnder(OUT)
+      .map((path): [string, string] => [
+        path.slice(OUT.length + 1).replaceAll("\\", "/"),
+        createHash("sha256")
+          .update(fs.getFile(path) ?? "", "utf-8")
+          .digest("hex"),
+      ])
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  );
+}
+
 const captures = twoCaptures("fb-golden-det", (env) =>
   captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
 );
 
 describe.concurrent(`Framework build golden - ${CELL_COUNT}-cell matrix`, () => {
   afterAll(captures.cleanup);
+
+  let seeded: InMemoryFileAdapter;
+  beforeAll(async () => {
+    seeded = new InMemoryFileAdapter();
+    await seedFromDirectory(seeded, FRAMEWORK_FIXTURE, { useAbsolutePaths: true });
+  });
+
+  it.each([
+    ...MARKETPLACE_TARGETS.map((target) => [target, "marketplace"] as const),
+    ...FLAT_TARGETS.map((target) => [target, "flat"] as const),
+  ])("%s %s built in memory is byte-identical to its stored baseline", async (target, mode) => {
+    const stored = storedBaseline();
+    const key = mode === "flat" ? `${target}:flat` : target;
+    expect(await captureInMemory(seeded, target, mode)).toStrictEqual(stored[key]);
+  });
 
   // Two full builds of every cell measured just past the 60s default on a Windows runner, not a
   // hang. Raised per test so no other e2e file's budget moves.
@@ -164,7 +230,7 @@ describe.concurrent(`Framework build golden - ${CELL_COUNT}-cell matrix`, () => 
   }, 120_000);
 
   it("the stored baseline holds a cell for every tool the CLI builds for, and nothing else", () => {
-    const stored = JSON.parse(readFileSync(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
+    const stored = storedBaseline();
     const expectedCells = [...MARKETPLACE_TARGETS, ...FLAT_TARGETS.map((t) => `${t}:flat`)];
     expect(Object.keys(stored).sort()).toEqual([...expectedCells].sort());
     for (const key of expectedCells) {
