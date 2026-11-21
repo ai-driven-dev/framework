@@ -92,7 +92,7 @@ How it is enforced deterministically, given that `noRestrictedImports` cannot us
 
 - `BASELINE` (in `tests/architecture/helpers.ts`) holds the deviations from the target that are tolerated today. A PR may remove entries, never add one.
 - The size of each tolerated list is read at the merge-base and at the head; the test fails when a list grew, and a shrink needs no second edit. No `src/` or `tests/` area may be recreated under the name of a folder already gone.
-- Base resolution, the entries compared and what the ratchet does not hold are in [the test's docblock](../../../../../cli/tests/architecture/debt-only-shrinks.arch.test.ts).
+- The kind gate has since dropped its tolerated list: it holds every rule strict, with no debt file and no shrink-only test.
 - Known limit: the ratchet reads only `cli/tests/architecture`. A tolerated list elsewhere, such as the one in `cli/scripts/profile-copies.mjs`, is held by its own script.
 - Volume caps that do not guard drift are dropped (comments, orchestrator collaborator cap): a cap that was only ever raised measures nothing. Folder size is open, for the guideline PR (section 9).
 - A new rule enters with the PR that makes it true, together with a planted tree (a minimal tree that violates it) proving that the rule bites. A rule whose planted tree stays green is not a guard. No rule ships with exceptions: either the violation count is zero and the rule is `error`, or the rule enters with the move that makes it true.
