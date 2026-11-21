@@ -38,7 +38,6 @@ describe("splitting a scope into shards", () => {
       "shared",
       "telemetry",
       "tools",
-      "tools-codex",
       "translate",
     ]);
     expect(scopes.canary?.shards).toBeUndefined();
@@ -76,7 +75,7 @@ describe("splitting a scope into shards", () => {
   });
 
   it("weighs each file of a scope by the mutants it holds, as mutantCountOf counts them", async () => {
-    const scope = present(scopes["tools-codex"]);
+    const scope = present(scopes.tools);
     const files = sourceFiles();
     const mutantsIn = await scopeWeights(scope.mutate, files);
     for (const file of scopeFiles(scope.mutate, files)) {
@@ -197,6 +196,7 @@ describe("running one shard", () => {
       "incremental",
       "incrementalFile",
       "tempDirName",
+      "ignoreStatic",
       "htmlReporter",
       "jsonReporter",
     ];
@@ -206,6 +206,7 @@ describe("running one shard", () => {
     expect(config).toMatchObject({
       mutate: ["src/shared/a.ts"],
       incremental: true,
+      ignoreStatic: true,
       incrementalFile: "reports/mutation/shared/shard-1-of-3/incremental.json",
       tempDirName: ".stryker-tmp-shared-1",
       jsonReporter: { fileName: "reports/mutation/shared/shard-1-of-3/mutation.json" },

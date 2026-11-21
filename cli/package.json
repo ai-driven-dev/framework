@@ -82,13 +82,6 @@
     "test:mutation:auth": "node scripts/run-mutation.mjs auth",
     "test:mutation:update": "node scripts/run-mutation.mjs update",
     "test:mutation:shared-infrastructure": "node scripts/run-mutation.mjs shared-infrastructure",
-    "test:mutation:tools-claude": "node scripts/run-mutation.mjs tools-claude",
-    "test:mutation:tools-codex": "node scripts/run-mutation.mjs tools-codex",
-    "test:mutation:tools-copilot": "node scripts/run-mutation.mjs tools-copilot",
-    "test:mutation:tools-cursor": "node scripts/run-mutation.mjs tools-cursor",
-    "test:mutation:tools-opencode": "node scripts/run-mutation.mjs tools-opencode",
-    "test:mutation:tools-antigravity": "node scripts/run-mutation.mjs tools-antigravity",
-    "test:mutation:tools-kilo": "node scripts/run-mutation.mjs tools-kilo",
     "test:mutation:canary": "node scripts/run-mutation.mjs canary",
     "knip": "knip"
   },
