@@ -12,6 +12,7 @@ import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
  */
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import type { PluginTranslationResult } from "../../ports/plugin/plugin-translation.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
@@ -43,8 +44,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       return this.fallback().addPlugin(request);
     }
     const mode = tool.frameworkBuildMode();
-    const { files, hooks } = await this.readBuiltContent(request, { marketplace: resolved, mode });
-    const mcp = await this.mergeMcp(request);
+    const { files, hooks, mcp } = await this.readTranslated(request, resolved, mode);
     const scope = resolveScopeForInstall(tool);
     const owned = request.userScopeDirTaken === true ? [] : files;
     const written = await writeChangedPluginFiles(
@@ -70,11 +70,30 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };
   }
 
+  // One translation of the request feeds both the built-tree read and the MCP merge.
+  private async readTranslated(
+    request: AddPluginRequest,
+    marketplace: MarketplaceToBuild,
+    mode: FrameworkBuildMode
+  ) {
+    const translated = this.built.translate.execute({
+      distribution: request.dist,
+      tool: request.tool,
+    });
+    const { files, hooks } = await this.readBuiltContent(request, translated, {
+      marketplace,
+      mode,
+    });
+    const mcp = await materializeRequestedMcp(this.fs, request, translated.installedMcp);
+    return { files, hooks, mcp };
+  }
+
   // The built tree still carries a plugin's hooks for a capability declaring `hooksDestination:
   // "project"`: dropped from the plugin's files, recorded once, by the project-hooks side channel
   // the local-source route uses, so both land where the tool's own declaration says.
   private async readBuiltContent(
     request: AddPluginRequest,
+    translated: PluginTranslationResult,
     build: { marketplace: MarketplaceToBuild; mode: FrameworkBuildMode }
   ): Promise<{
     files: InstallationFile[];
@@ -87,7 +106,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       target: tool.toolId,
       mode: build.mode,
     });
-    const translated = this.built.translate.execute({ distribution: dist, tool });
     const deliversHooksToProject = tool.plugins()?.deliversHooksToProject() === true;
     const read =
       build.mode === "flat"
@@ -116,12 +134,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       guard: hooksGuard,
     });
     return { files, hooks };
-  }
-
-  private mergeMcp(request: AddPluginRequest) {
-    const { dist, tool } = request;
-    const { installedMcp } = this.built.translate.execute({ distribution: dist, tool });
-    return materializeRequestedMcp(this.fs, request, installedMcp);
   }
 
   private baseDirOf(request: AddPluginRequest, mode: FrameworkBuildMode, scope: Scope): string {
