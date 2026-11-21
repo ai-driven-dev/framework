@@ -100,7 +100,9 @@ export class InstallAiTool {
     const propagated: string[] = [];
     const warnings: string[] = [];
     for (const plugin of plugins) {
-      await this.propagatePlugin(plugin, toolId, projectRoot, propagated, warnings);
+      const outcome = await this.propagatePlugin({ plugin, toolId, projectRoot });
+      if (outcome.propagated !== undefined) propagated.push(outcome.propagated);
+      if (outcome.warning !== undefined) warnings.push(outcome.warning);
     }
     const activation =
       propagated.length > 0 ? await this.activatePropagated.execute({ projectRoot }) : undefined;
@@ -131,16 +133,14 @@ export class InstallAiTool {
     return result;
   }
 
-  private async propagatePlugin(
-    plugin: InstalledPlugin,
-    toolId: AiToolId,
-    projectRoot: string,
-    propagated: string[],
-    warnings: string[]
-  ): Promise<void> {
+  private async propagatePlugin(request: {
+    plugin: InstalledPlugin;
+    toolId: AiToolId;
+    projectRoot: string;
+  }): Promise<{ propagated?: string; warning?: string }> {
+    const { plugin, toolId, projectRoot } = request;
     if (plugin.marketplace === undefined) {
-      this.warnNoMarketplace(plugin.name, toolId, warnings);
-      return;
+      return { warning: this.warnNoMarketplace(plugin.name, toolId) };
     }
     try {
       await this.pluginInstallFromMarketplace.execute({
@@ -154,17 +154,17 @@ export class InstallAiTool {
         replace: true,
         requestedVersionPolicy: "prefer-catalog",
       });
-      propagated.push(plugin.name);
+      return { propagated: plugin.name };
     } catch (err) {
       const msg = `Plugin '${plugin.name}' could not be propagated to ${toolId}: ${err instanceof Error ? err.message : String(err)}`;
       this.logger.warn(msg);
-      warnings.push(msg);
+      return { warning: msg };
     }
   }
 
-  private warnNoMarketplace(pluginName: string, toolId: AiToolId, warnings: string[]): void {
+  private warnNoMarketplace(pluginName: string, toolId: AiToolId): string {
     const msg = `Plugin '${pluginName}' has no marketplace — cannot propagate to ${toolId}. Add it manually.`;
     this.logger.warn(msg);
-    warnings.push(msg);
+    return msg;
   }
 }

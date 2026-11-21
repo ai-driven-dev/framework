@@ -130,14 +130,14 @@ describe("InstallUserPlugins", () => {
     const seed = defaultManifest();
     seed.addPlugin(
       TOOL.opencode,
-      InstalledPlugin.fromMetadata(
-        "aidd-dev",
-        "1.0.0",
-        { kind: "local", path: "/moved-away" },
-        true,
-        "user",
-        "aidd-framework"
-      ).withFiles(new Map([["agents/old.md", HASH]]))
+      InstalledPlugin.fromMetadata({
+        name: "aidd-dev",
+        version: "1.0.0",
+        source: { kind: "local", path: "/moved-away" },
+        strict: true,
+        scope: "user",
+        marketplace: "aidd-framework",
+      }).withFiles(new Map([["agents/old.md", HASH]]))
     );
     const { useCase, planUpdate } = setup(seed);
 

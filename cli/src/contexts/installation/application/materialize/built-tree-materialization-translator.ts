@@ -121,15 +121,15 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     manifest.addPlugin(
       tool.toolId,
       InstalledPlugin.withProjectHooks(
-        InstalledPlugin.fromDistributionWithMcp(
+        InstalledPlugin.fromDistributionWithMcp({
           dist,
           source,
-          owned,
-          mcp.mcpEntries,
+          files: owned,
+          mcpEntries: mcp.mcpEntries,
           scope,
-          new Map(),
-          marketplace
-        ),
+          componentPaths: new Map(),
+          marketplace,
+        }),
         hooks.projectHooks
       )
     );

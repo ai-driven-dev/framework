@@ -71,12 +71,12 @@ export class ReportStatus implements StatusQuery {
 
     const installedToolIds = this.resolveToolIds(filterToolId, category, manifest);
     const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
-    const pluginDrift = await this.checkAllPlugins(
-      installedToolIds,
+    const pluginDrift = await this.checkAllPlugins({
+      toolIds: installedToolIds,
       manifest,
       projectRoot,
-      pluginName
-    );
+      pluginName,
+    });
     const inSync = tools.every((t) => t.drifted.length === 0) && pluginDrift.length === 0;
     return { tools, pluginDrift, inSync };
   }
@@ -120,22 +120,28 @@ export class ReportStatus implements StatusQuery {
     const dir = tool.directory;
     const trackedSet = manifest.getTrackedPathsInDirectory(dir);
     drifted.push(
-      ...(await this.detectAddedFiles(dir, trackedSet, projectRoot, tool.machineLocalFiles()))
+      ...(await this.detectAddedFiles({
+        directory: dir,
+        trackedSet,
+        projectRoot,
+        machineLocal: tool.machineLocalFiles(),
+      }))
     );
     return { toolId, version, drifted };
   }
 
-  private async detectAddedFiles(
-    directory: string,
-    trackedSet: Set<string>,
-    projectRoot: string,
+  // User-scope plugin dirs (e.g. ~/.cursor/plugins/local/) are not scanned for added files;
+  // only tracked-file drift is detected for user-scope plugins.
+  private async detectAddedFiles(scan: {
+    directory: string;
+    trackedSet: Set<string>;
+    projectRoot: string;
     // Written by this CLI on purpose and never tracked: reporting one as something the user added
     // would be a lie. The `.backup` skip below is not the same thing: nothing here writes such a
     // file, so it only spares one an older version left behind.
-    machineLocal: readonly string[]
-    // User-scope plugin dirs (e.g. ~/.cursor/plugins/local/) are not scanned for added files;
-    // only tracked-file drift is detected for user-scope plugins.
-  ): Promise<FileDrift[]> {
+    machineLocal: readonly string[];
+  }): Promise<FileDrift[]> {
+    const { directory, trackedSet, projectRoot, machineLocal } = scan;
     const toolDir = join(projectRoot, directory);
     if (!(await this.fs.fileExists(toolDir))) return [];
     const added: FileDrift[] = [];
@@ -212,18 +218,13 @@ export class ReportStatus implements StatusQuery {
     return drifted;
   }
 
-  private async checkAllPlugins(
-    toolIds: ToolId[],
-    manifest: Manifest,
-    projectRoot: string,
-    pluginName?: string
-  ): Promise<PluginDriftEntry[]> {
-    const drifts = await this.detectPluginDrift.execute({
-      manifest,
-      projectRoot,
-      toolIds,
-      pluginName,
-    });
+  private async checkAllPlugins(scope: {
+    toolIds: ToolId[];
+    manifest: Manifest;
+    projectRoot: string;
+    pluginName?: string;
+  }): Promise<PluginDriftEntry[]> {
+    const drifts = await this.detectPluginDrift.execute(scope);
     return drifts.map((drift) => ({
       toolId: drift.toolId,
       pluginName: drift.pluginName,

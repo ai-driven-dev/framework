@@ -5,6 +5,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 
 export type PluginFileDriftKind = "missing" | "hash-mismatch";
@@ -52,20 +53,28 @@ export class DetectPluginDrift {
       const plugins = manifest.getPlugins(toolId);
       const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
       for (const plugin of targets) {
-        const profile = this.tools.aiProfile(toolId);
-        const baseDir = scopeBaseOf(profile, { scope: plugin.scope, projectRoot, homedir });
-        const files = await this.driftedFiles(plugin.files, baseDir);
-        if (files.length === 0) continue;
-        const allMissing =
-          files.length === plugin.files.size && files.every((f) => f.kind === "missing");
-        if (allMissing && plugin.scope === "user") {
-          drifts.push({ toolId, pluginName: plugin.name, files: [], notInstalledOnMachine: true });
-        } else {
-          drifts.push({ toolId, pluginName: plugin.name, files, notInstalledOnMachine: false });
-        }
+        const drift = await this.driftOfPlugin(plugin, toolId, projectRoot);
+        if (drift !== null) drifts.push(drift);
       }
     }
     return drifts;
+  }
+
+  private async driftOfPlugin(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    projectRoot: string
+  ): Promise<PluginDrift | null> {
+    const profile = this.tools.aiProfile(toolId);
+    const baseDir = scopeBaseOf(profile, { scope: plugin.scope, projectRoot, homedir });
+    const files = await this.driftedFiles(plugin.files, baseDir);
+    if (files.length === 0) return null;
+    const allMissing =
+      files.length === plugin.files.size && files.every((f) => f.kind === "missing");
+    if (allMissing && plugin.scope === "user") {
+      return { toolId, pluginName: plugin.name, files: [], notInstalledOnMachine: true };
+    }
+    return { toolId, pluginName: plugin.name, files, notInstalledOnMachine: false };
   }
 
   private async driftedFiles(

@@ -76,14 +76,14 @@ export class PluginMaterializer implements UserPluginMaterialization {
       baseDir,
       files,
       oldSafe,
-      next: InstalledPlugin.fromDistribution(
+      next: InstalledPlugin.fromDistribution({
         dist,
-        plugin.source,
+        source: plugin.source,
         files,
-        "user",
+        scope: "user",
         componentPaths,
-        plugin.marketplace
-      ).withDependents(plugin.dependents),
+        marketplace: plugin.marketplace,
+      }).withDependents(plugin.dependents),
     };
   }
 

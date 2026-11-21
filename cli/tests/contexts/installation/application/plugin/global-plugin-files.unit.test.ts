@@ -169,13 +169,13 @@ describe("assertGlobalFilesWritable", () => {
 
   it("allows rewriting a file the plugin owns", async () => {
     const fs = new InMemoryFileAdapter({ [under("agents", "owned.md")]: "old" });
-    const owned = InstalledPlugin.fromMetadata(
-      "aidd-dev",
-      "1.0.0",
-      { kind: "local", path: "/fw/plugins/aidd-dev" },
-      true,
-      "user"
-    ).withFiles(new Map([["agents/owned.md", "0".repeat(32)]]));
+    const owned = InstalledPlugin.fromMetadata({
+      name: "aidd-dev",
+      version: "1.0.0",
+      source: { kind: "local", path: "/fw/plugins/aidd-dev" },
+      strict: true,
+      scope: "user",
+    }).withFiles(new Map([["agents/owned.md", "0".repeat(32)]]));
 
     await expect(
       assertGlobalFilesWritable({

@@ -169,14 +169,14 @@ for (const [toolId, catalogPath] of [
           .withTool(toolId, [])
           .withPlugin(
             toolId,
-            InstalledPlugin.fromMetadata(
-              "test-plugin",
-              "1.0.0",
-              { kind: "local", path: "/src" },
-              false,
-              "project",
-              alias
-            )
+            InstalledPlugin.fromMetadata({
+              name: "test-plugin",
+              version: "1.0.0",
+              source: { kind: "local", path: "/src" },
+              strict: false,
+              scope: "project",
+              marketplace: alias,
+            })
           )
           .build();
         return new InMemoryManifestRepository(manifest);

@@ -199,14 +199,14 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     );
     manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata(
-        "aidd-telemetry",
-        "1.0.0",
-        { kind: "github", repo: "ai-driven-dev/framework" },
-        true,
-        "project",
-        MARKETPLACE
-      )
+      InstalledPlugin.fromMetadata({
+        name: "aidd-telemetry",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        strict: true,
+        scope: "project",
+        marketplace: MARKETPLACE,
+      })
     );
     const catalog = new InMemoryFileAdapter(
       {
@@ -251,14 +251,14 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     );
     manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata(
-        "aidd-telemetry",
-        "1.0.0",
-        { kind: "github", repo: "ai-driven-dev/framework" },
-        true,
-        "project",
-        MARKETPLACE
-      )
+      InstalledPlugin.fromMetadata({
+        name: "aidd-telemetry",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        strict: true,
+        scope: "project",
+        marketplace: MARKETPLACE,
+      })
     );
     const fs = new InMemoryFileAdapter(
       {

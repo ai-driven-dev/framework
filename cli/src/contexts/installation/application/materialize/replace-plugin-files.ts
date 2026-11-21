@@ -55,13 +55,13 @@ export class ReplacePluginFiles {
     await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       tool.toolId,
-      InstalledPlugin.fromDistribution(
+      InstalledPlugin.fromDistribution({
         dist,
-        plugin.source,
-        newFiles,
-        plugin.scope,
-        translated.componentPaths
-      )
+        source: plugin.source,
+        files: newFiles,
+        scope: plugin.scope,
+        componentPaths: translated.componentPaths,
+      })
     );
   }
 

@@ -208,26 +208,36 @@ describe("InstalledPlugin", () => {
 
     it("is strict only where the distribution's manifest says so", () => {
       expect(
-        InstalledPlugin.fromDistribution(makeDistribution(true), source, [], "project").strict
+        InstalledPlugin.fromDistribution({
+          dist: makeDistribution(true),
+          source,
+          files: [],
+          scope: "project",
+        }).strict
       ).toBe(true);
     });
 
     it("is lenient where the distribution's manifest says nothing", () => {
       expect(
-        InstalledPlugin.fromDistribution(makeDistribution(), source, [], "project").strict
+        InstalledPlugin.fromDistribution({
+          dist: makeDistribution(),
+          source,
+          files: [],
+          scope: "project",
+        }).strict
       ).toBe(false);
     });
 
     it("keeps each installed path's component path", () => {
       const componentPaths = new Map([[".claude/rules/naming.md", "rules/naming.md"]]);
 
-      const plugin = InstalledPlugin.fromDistribution(
-        makeDistribution(),
+      const plugin = InstalledPlugin.fromDistribution({
+        dist: makeDistribution(),
         source,
-        [],
-        "project",
-        componentPaths
-      );
+        files: [],
+        scope: "project",
+        componentPaths,
+      });
 
       expect([...plugin.componentPaths]).toStrictEqual([
         [".claude/rules/naming.md", "rules/naming.md"],
@@ -235,7 +245,12 @@ describe("InstalledPlugin", () => {
     });
 
     it("keeps no component path when handed none", () => {
-      const plugin = InstalledPlugin.fromDistribution(makeDistribution(), source, [], "project");
+      const plugin = InstalledPlugin.fromDistribution({
+        dist: makeDistribution(),
+        source,
+        files: [],
+        scope: "project",
+      });
 
       expect([...plugin.componentPaths]).toStrictEqual([]);
     });

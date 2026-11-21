@@ -381,13 +381,13 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     );
     expect(fs.getFile(AGENTS_HOOKS)).toBe(afterFirst);
 
-    await removeRecordedProjectHooks(
+    await removeRecordedProjectHooks({
       fs,
-      PLUGIN_NAME,
-      second.projectHooks,
-      registeredTools().aiProfile(TOOL.antigravity),
-      PROJECT_ROOT
-    );
+      pluginName: PLUGIN_NAME,
+      provenance: second.projectHooks,
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fs.getFile(AGENTS_HOOKS)).toBe(USER_HOOKS);
     expect(fs.getFile(join(PROJECT_ROOT, ".agents/hooks", PLUGIN_NAME, "pre.js"))).toBeUndefined();
@@ -402,13 +402,13 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
       projectRoot: PROJECT_ROOT,
     });
 
-    await removeRecordedProjectHooks(
+    await removeRecordedProjectHooks({
       fs,
-      PLUGIN_NAME,
-      projectHooks,
-      registeredTools().aiProfile(TOOL.antigravity),
-      PROJECT_ROOT
-    );
+      pluginName: PLUGIN_NAME,
+      provenance: projectHooks,
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(await fs.fileExists(AGENTS_HOOKS)).toBe(false);
   });

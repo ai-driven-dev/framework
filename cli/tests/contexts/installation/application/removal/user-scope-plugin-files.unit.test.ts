@@ -8,13 +8,13 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 
 const HOME = "/fake-home";
 const tool = registeredTools().aiProfile(TOOL.cursor);
-const plugin = InstalledPlugin.fromMetadata(
-  "aidd-context",
-  "1.0.0",
-  { kind: "local", path: "/p" },
-  false,
-  "user"
-);
+const plugin = InstalledPlugin.fromMetadata({
+  name: "aidd-context",
+  version: "1.0.0",
+  source: { kind: "local", path: "/p" },
+  strict: false,
+  scope: "user",
+});
 
 describe("UserScopePluginFiles.proven", () => {
   it("answers what the proof answers for this plugin, tool and home", async () => {

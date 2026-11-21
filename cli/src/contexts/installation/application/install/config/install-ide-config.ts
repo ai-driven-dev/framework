@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { IdeToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
@@ -41,17 +41,20 @@ export class InstallIdeConfig {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
     const { regularFiles, mergeFiles } = await this.buildSettingsFiles(options);
-    const allTracked = await this.trackedConfigFiles.writeAndTrack(
-      regularFiles,
-      options.projectRoot,
-      options.onBeforeWriteRegularFile
-    );
-    const mergeEntries = await this.trackedConfigFiles.mergeAndTrack(
-      mergeFiles,
-      options.projectRoot
-    );
+    const allTracked = await this.trackedConfigFiles.execute({
+      kind: "write-and-track",
+      files: regularFiles,
+      projectRoot: options.projectRoot,
+      onBeforeWrite: options.onBeforeWriteRegularFile,
+    });
+    const mergeEntries = await this.trackedConfigFiles.execute({
+      kind: "merge-and-track",
+      files: mergeFiles,
+      projectRoot: options.projectRoot,
+    });
     const allFiles = [...regularFiles, ...mergeFiles];
-    manifest.addTool(toolId, options.version, allTracked, mergeEntries);
+    manifest.addTool(toolId, options.version, allTracked);
+    manifest.updateToolMergeFiles(toolId, mergeEntries);
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest,
@@ -85,13 +88,16 @@ export class InstallIdeConfig {
     options: InstallIdeConfigCommand
   ): Promise<InstallationFile | null> {
     const outputPath = capability.outputPath();
-    if (
-      await this.trackedConfigFiles.isUserOwned(outputPath, options.projectRoot, options.manifest)
-    )
-      return null;
+    const userOwned = await this.trackedConfigFiles.execute({
+      kind: "is-user-owned",
+      relativePath: outputPath,
+      projectRoot: options.projectRoot,
+      manifest: options.manifest,
+    });
+    if (userOwned) return null;
     const fileName = basename(outputPath);
     const asset = this.assets.loadConfigAsset(options.toolId, fileName);
     const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-    return this.trackedConfigFiles.fileOf(outputPath, content, capability.mergeStrategy());
+    return InstallationFile.hashing(outputPath, content, capability.mergeStrategy());
   }
 }

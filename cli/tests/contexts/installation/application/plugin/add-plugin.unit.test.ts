@@ -42,7 +42,13 @@ function addTo(manifest: Manifest) {
         for (const toolId of command.toolIds) {
           command.manifest.addPlugin(
             toolId,
-            InstalledPlugin.fromMetadata("sample-plugin", "1.0.0", SOURCE, false, "project")
+            InstalledPlugin.fromMetadata({
+              name: "sample-plugin",
+              version: "1.0.0",
+              source: SOURCE,
+              strict: false,
+              scope: "project",
+            })
           );
         }
       },

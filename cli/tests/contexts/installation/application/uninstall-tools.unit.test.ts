@@ -115,7 +115,8 @@ describe("UninstallTools — merge files", () => {
 
   it("deletes a merge file an AI tool alone owns, even one it cannot parse", async () => {
     const target = project({ [MCP]: "not json" });
-    target.manifest.addTool(TOOL.claude, "test", [], [merging(MCP, { hub: HUB })]);
+    target.manifest.addTool(TOOL.claude, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.claude, [merging(MCP, { hub: HUB })]);
 
     const results = await remove(target, [TOOL.claude]);
 
@@ -125,8 +126,10 @@ describe("UninstallTools — merge files", () => {
 
   it("deletes a section-scoped merge file an AI tool alone owns even when it tracks no key in it", async () => {
     const target = project({ [MCP]: '{"x":1}', "codex.json": "{}" });
-    target.manifest.addTool(TOOL.claude, "test", [], [merging(MCP, {}, "mcpServers")]);
-    target.manifest.addTool(TOOL.codex, "test", [], [merging("codex.json", {})]);
+    target.manifest.addTool(TOOL.claude, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.claude, [merging(MCP, {}, "mcpServers")]);
+    target.manifest.addTool(TOOL.codex, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.codex, [merging("codex.json", {})]);
 
     const results = await remove(target, [TOOL.claude]);
 
@@ -136,13 +139,13 @@ describe("UninstallTools — merge files", () => {
 
   it("strips its own keys from a merge file a remaining tool owns and does not count it", async () => {
     const target = project({ [MCP]: JSON.stringify({ hub: HUB, playwright: PLAYWRIGHT }) });
-    target.manifest.addTool(TOOL.claude, "test", [], [merging(MCP, { hub: HUB })]);
-    target.manifest.addTool(
-      TOOL.codex,
-      "test",
-      [],
-      [merging("codex.json", {}), merging(MCP, { playwright: PLAYWRIGHT })]
-    );
+    target.manifest.addTool(TOOL.claude, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.claude, [merging(MCP, { hub: HUB })]);
+    target.manifest.addTool(TOOL.codex, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.codex, [
+      merging("codex.json", {}),
+      merging(MCP, { playwright: PLAYWRIGHT }),
+    ]);
 
     const results = await remove(target, [TOOL.claude]);
 
@@ -154,9 +157,12 @@ describe("UninstallTools — merge files", () => {
 
   it("keeps a merge file when any remaining tool owns it, not only when all do", async () => {
     const target = project({ [MCP]: JSON.stringify({ hub: HUB, playwright: PLAYWRIGHT }) });
-    target.manifest.addTool(TOOL.claude, "test", [], [merging(MCP, { hub: HUB })]);
-    target.manifest.addTool(TOOL.codex, "test", [], [merging(MCP, { playwright: PLAYWRIGHT })]);
-    target.manifest.addTool(TOOL.copilot, "test", [], [merging("copilot.json", {})]);
+    target.manifest.addTool(TOOL.claude, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.claude, [merging(MCP, { hub: HUB })]);
+    target.manifest.addTool(TOOL.codex, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.codex, [merging(MCP, { playwright: PLAYWRIGHT })]);
+    target.manifest.addTool(TOOL.copilot, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.copilot, [merging("copilot.json", {})]);
 
     await remove(target, [TOOL.claude]);
 
@@ -167,7 +173,8 @@ describe("UninstallTools — merge files", () => {
 
   it("does not count a merge file already gone from disk", async () => {
     const target = project({});
-    target.manifest.addTool(TOOL.claude, "test", [], [merging(MCP, { hub: HUB })]);
+    target.manifest.addTool(TOOL.claude, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.claude, [merging(MCP, { hub: HUB })]);
 
     const results = await remove(target, [TOOL.claude]);
 
@@ -176,7 +183,8 @@ describe("UninstallTools — merge files", () => {
 
   it("leaves an IDE merge file byte-identical when it tracks no key in it", async () => {
     const target = project({ ".vscode/settings.json": '{"a":1}' });
-    target.manifest.addTool(TOOL.vscode, "test", [], [merging(".vscode/settings.json", {})]);
+    target.manifest.addTool(TOOL.vscode, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.vscode, [merging(".vscode/settings.json", {})]);
 
     const results = await remove(target, [TOOL.vscode]);
 
@@ -186,12 +194,10 @@ describe("UninstallTools — merge files", () => {
 
   it("strips an IDE tool's keys and deletes the file once nothing is left", async () => {
     const target = project({ ".vscode/extensions.json": '{"recommendations":["a"]}' });
-    target.manifest.addTool(
-      TOOL.vscode,
-      "test",
-      [],
-      [merging(".vscode/extensions.json", { recommendations: ["a"] })]
-    );
+    target.manifest.addTool(TOOL.vscode, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.vscode, [
+      merging(".vscode/extensions.json", { recommendations: ["a"] }),
+    ]);
 
     const results = await remove(target, [TOOL.vscode]);
 
@@ -203,12 +209,10 @@ describe("UninstallTools — merge files", () => {
 
   it("strips an IDE tool's keys and keeps the user's own", async () => {
     const target = project({ ".vscode/settings.json": '{"editor.tabSize":2,"user.key":7}' });
-    target.manifest.addTool(
-      TOOL.vscode,
-      "test",
-      [],
-      [merging(".vscode/settings.json", { "editor.tabSize": 2 })]
-    );
+    target.manifest.addTool(TOOL.vscode, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.vscode, [
+      merging(".vscode/settings.json", { "editor.tabSize": 2 }),
+    ]);
 
     const results = await remove(target, [TOOL.vscode]);
 
@@ -229,13 +233,13 @@ describe("UninstallTools — a project's tools", () => {
       const project = deps.manifestRepo.getCurrent();
       if (project === null) throw new Error("fixture missing project");
       const record = (name: string, scope: Scope) =>
-        InstalledPlugin.fromMetadata(
+        InstalledPlugin.fromMetadata({
           name,
-          "1.0.0",
-          { kind: "local", path: "/shared" },
-          false,
-          scope
-        );
+          version: "1.0.0",
+          source: { kind: "local", path: "/shared" },
+          strict: false,
+          scope,
+        });
       project.addPlugin(TOOL.cursor, record("shared", "user"));
       project.addPlugin(TOOL.cursor, record("local-only", "project"));
       const registration = {

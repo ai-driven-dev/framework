@@ -5863,14 +5863,7 @@
       }
     },
     {
-      "includes": [
-        "src/**",
-        "!src/contexts/installation/application/agents/main-session-models.ts",
-        "!src/contexts/installation/application/install/install-user-plugins.ts",
-        "!src/contexts/installation/application/shared/detect-plugin-drift.ts",
-        "!src/contexts/installation/application/shared/remove-project-hooks.ts",
-        "!src/contexts/installation/domain/manifest.ts"
-      ],
+      "includes": ["src/**"],
       "linter": {
         "rules": {
           "complexity": {
@@ -5918,10 +5911,6 @@
     {
       "includes": [
         "src/**",
-        "!src/contexts/installation/application/install/config/install-runtime-config.ts",
-        "!src/contexts/installation/application/install/content/install-content-section.ts",
-        "!src/contexts/installation/application/install/install-ai-tool.ts",
-        "!src/contexts/installation/application/install/install-config.ts",
         "!src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
         "!src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.ts",
         "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
@@ -5929,12 +5918,6 @@
         "!src/contexts/installation/application/materialize/mode-a-marketplace-translator.ts",
         "!src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
         "!src/contexts/installation/application/materialize/plugin-translator.ts",
-        "!src/contexts/installation/application/report-status.ts",
-        "!src/contexts/installation/application/shared/remove-project-hooks.ts",
-        "!src/contexts/installation/application/uninstall-tools.ts",
-        "!src/contexts/installation/domain/installed-rule.ts",
-        "!src/contexts/installation/domain/manifest.ts",
-        "!src/contexts/installation/domain/plugins/installed-plugin.ts",
         "!src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
         "!src/contexts/installation/ports/main-session-settings.ts"
       ],

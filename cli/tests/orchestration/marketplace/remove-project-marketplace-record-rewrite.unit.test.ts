@@ -34,14 +34,14 @@ describe("the record a project marketplace removal writes", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata(
-          "sample",
-          "1.0.0",
-          { kind: "github", repo: "owner/sample" },
-          false,
-          "project",
-          "awesome"
-        )
+        InstalledPlugin.fromMetadata({
+          name: "sample",
+          version: "1.0.0",
+          source: { kind: "github", repo: "owner/sample" },
+          strict: false,
+          scope: "project",
+          marketplace: "awesome",
+        })
       )
       .build();
     manifest.setNativeRegistrations(TOOL.claude, {

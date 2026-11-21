@@ -49,6 +49,27 @@ export interface ProjectCleanPlan {
   userPlugins: Array<{ toolId: AiToolId; name: string }>;
 }
 
+export interface PlanProjectCleanCommand {
+  kind: "plan";
+}
+
+export interface AssertProjectRemovableCommand {
+  kind: "assert-removable";
+  projectRoot: string;
+  force: boolean;
+}
+
+export interface RemoveProjectFilesCommand {
+  kind: "remove";
+  projectRoot: string;
+  force: boolean;
+}
+
+export type CleanProjectFilesCommand =
+  | PlanProjectCleanCommand
+  | AssertProjectRemovableCommand
+  | RemoveProjectFilesCommand;
+
 /**
  * The project-local half of `aidd clean`: reads what this project installed, proves each part
  * removable, then deletes the files, the merged keys and AIDD's own state. Undoing the host's
@@ -63,8 +84,24 @@ export class CleanProjectFiles {
     private readonly tools: ToolCatalog
   ) {}
 
-  /** `null` when this project installed nothing. */
-  async plan(): Promise<ProjectCleanPlan | null> {
+  /** `plan` answers `null` when this project installed nothing. `assert-removable` refuses while a
+   * hook or an MCP entry of a tracked plugin could not be removed cleanly. `remove` answers how
+   * many files it deleted. */
+  async execute(command: PlanProjectCleanCommand): Promise<ProjectCleanPlan | null>;
+  async execute(command: AssertProjectRemovableCommand): Promise<void>;
+  async execute(command: RemoveProjectFilesCommand): Promise<number>;
+  async execute(command: CleanProjectFilesCommand): Promise<unknown> {
+    switch (command.kind) {
+      case "plan":
+        return this.plan();
+      case "assert-removable":
+        return this.assertRemovable(command.projectRoot, command.force);
+      case "remove":
+        return this.removeProjectFiles.remove(command.projectRoot, command.force);
+    }
+  }
+
+  private async plan(): Promise<ProjectCleanPlan | null> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return null;
     const home = this.asks.homeDir();
@@ -82,25 +119,25 @@ export class CleanProjectFiles {
     };
   }
 
-  /** Refuses while a hook or an MCP entry of a tracked plugin could not be removed cleanly. */
-  async assertRemovable(projectRoot: string, force: boolean): Promise<void> {
+  private async assertRemovable(projectRoot: string, force: boolean): Promise<void> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return;
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         const tool = this.tools.aiProfile(toolId);
-        await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot, {
-          overwriteEdited: force,
+        await assertProjectHooksRemovable({
+          fs: this.fs,
+          plugin,
+          tool,
+          projectRoot,
+          guard: {
+            overwriteEdited: force,
+          },
         });
         await this.asks.assertMcpRemovable(plugin, tool, projectRoot);
       }
     }
-  }
-
-  /** Deletes what this project installed and returns how many files that was. */
-  remove(projectRoot: string, force: boolean): Promise<number> {
-    return this.removeProjectFiles.remove(projectRoot, force);
   }
 
   private nativeRefs(manifest: Manifest): ReadonlyMap<ToolId, readonly string[]> {

@@ -152,7 +152,8 @@ describe("Manifest", () => {
 
     it("answers from the entries it holds, naming the keys of a merge file", () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles, mergeFiles);
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
+      manifest.updateToolMergeFiles(TOOL.claude, mergeFiles);
 
       expect(manifest.ownerOf(".mcp.json")).toStrictEqual({
         owner: "co-owned",
@@ -175,7 +176,8 @@ describe("Manifest", () => {
 
     it("addTool stores mergeFiles entries", () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles, mergeFiles);
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
+      manifest.updateToolMergeFiles(TOOL.claude, mergeFiles);
       expect(manifest.getMergeFiles(TOOL.claude)).toHaveLength(1);
       expect(manifest.getMergeFiles(TOOL.claude)[0].relativePath).toBe(".mcp.json");
     });
@@ -193,13 +195,15 @@ describe("Manifest", () => {
 
     it("isFileTracked returns true for merge file paths", () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles, mergeFiles);
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
+      manifest.updateToolMergeFiles(TOOL.claude, mergeFiles);
       expect(manifest.isFileTracked(".mcp.json")).toBe(true);
     });
 
     it("serialization round-trip preserves mergeFiles", () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles, mergeFiles);
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
+      manifest.updateToolMergeFiles(TOOL.claude, mergeFiles);
       const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
       const restoredMerge = restored.getMergeFiles(TOOL.claude);
       expect(restoredMerge).toHaveLength(1);
@@ -224,7 +228,8 @@ describe("Manifest", () => {
         entries: { playwright: makeHash("aabb") },
       };
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles, [mergeEntry]);
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
+      manifest.updateToolMergeFiles(TOOL.claude, [mergeEntry]);
       const updatedMerge: MergeFileEntry = {
         relativePath: ".mcp.json",
         sectionKey: "mcpServers",
@@ -507,15 +512,14 @@ describe("Manifest", () => {
   describe("getTrackedPathsInDirectory()", () => {
     it("lists the tracked, merged and plugin files under the directory, across tools, and no other", () => {
       const manifest = Manifest.create();
-      manifest.addTool(
-        TOOL.claude,
-        "3.0.0",
-        [makeFile(".claude/rules/a.md", "aa"), makeFile("CLAUDE.md", "bb")],
-        [
-          { relativePath: ".claude/settings.json", sectionKey: "hooks", entries: {} },
-          { relativePath: ".mcp.json", sectionKey: "mcpServers", entries: {} },
-        ]
-      );
+      manifest.addTool(TOOL.claude, "3.0.0", [
+        makeFile(".claude/rules/a.md", "aa"),
+        makeFile("CLAUDE.md", "bb"),
+      ]);
+      manifest.updateToolMergeFiles(TOOL.claude, [
+        { relativePath: ".claude/settings.json", sectionKey: "hooks", entries: {} },
+        { relativePath: ".mcp.json", sectionKey: "mcpServers", entries: {} },
+      ]);
       manifest.addTool(TOOL.cursor, "1.0.0", [makeFile(".cursor/rules/b.mdc", "cc")]);
       manifest.addPlugin(
         TOOL.claude,

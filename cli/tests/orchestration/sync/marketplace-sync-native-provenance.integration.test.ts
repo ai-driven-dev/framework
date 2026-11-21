@@ -70,14 +70,14 @@ function makeSync(
     .withTool(toolId, [])
     .withPlugin(
       toolId,
-      InstalledPlugin.fromMetadata(
-        "aidd-dev",
-        "1.0.0",
-        { kind: "local", path: "/framework" },
-        true,
-        "project",
-        CATALOG
-      )
+      InstalledPlugin.fromMetadata({
+        name: "aidd-dev",
+        version: "1.0.0",
+        source: { kind: "local", path: "/framework" },
+        strict: true,
+        scope: "project",
+        marketplace: CATALOG,
+      })
     )
     .build();
   if (options.projectNativePluginRefs !== undefined) {
@@ -260,19 +260,17 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
             addedAt: "2026-09-15T00:00:00Z",
           })
         );
-        f.projectRepo
-          .getCurrent()
-          ?.addPlugin(
-            toolId,
-            InstalledPlugin.fromMetadata(
-              "sibling-plugin",
-              "1.0.0",
-              { kind: "local", path: "/framework" },
-              true,
-              "project",
-              other.alias
-            )
-          );
+        f.projectRepo.getCurrent()?.addPlugin(
+          toolId,
+          InstalledPlugin.fromMetadata({
+            name: "sibling-plugin",
+            version: "1.0.0",
+            source: { kind: "local", path: "/framework" },
+            strict: true,
+            scope: "project",
+            marketplace: other.alias,
+          })
+        );
       }
       f.projectRepo.getCurrent()?.setNativeRegistrations(toolId, {
         binary: toolId,

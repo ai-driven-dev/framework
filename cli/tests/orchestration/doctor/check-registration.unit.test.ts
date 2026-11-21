@@ -161,14 +161,14 @@ function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude
     .withTool(toolId, [], { version: "test" })
     .withPlugin(
       toolId,
-      InstalledPlugin.fromMetadata(
-        marketplace === undefined ? "hand-copied" : "aidd-context",
-        "1.0.0",
-        { kind: "github", repo: "ai-driven-dev/framework" },
-        true,
-        "user",
-        marketplace
-      )
+      InstalledPlugin.fromMetadata({
+        name: marketplace === undefined ? "hand-copied" : "aidd-context",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        strict: true,
+        scope: "user",
+        marketplace,
+      })
     )
     .build();
   return manifest;

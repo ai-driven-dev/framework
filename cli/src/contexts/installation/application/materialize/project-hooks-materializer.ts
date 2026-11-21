@@ -66,25 +66,25 @@ export class ProjectHooksMaterializer {
     const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST_PATH);
     if (manifestFile === undefined) {
       if (previous !== undefined) {
-        await removeRecordedProjectHooks(
-          this.fs,
-          dist.manifest.name,
-          previous,
+        await removeRecordedProjectHooks({
+          fs: this.fs,
+          pluginName: dist.manifest.name,
+          provenance: previous,
           tool,
           projectRoot,
-          guard
-        );
+          guard,
+        });
       }
       return { skipped: [] };
     }
-    await assertProjectHooksUnchanged(
-      this.fs,
-      dist.manifest.name,
-      previous,
+    await assertProjectHooksUnchanged({
+      fs: this.fs,
+      pluginName: dist.manifest.name,
+      provenance: previous,
       tool,
       projectRoot,
-      guard
-    );
+      guard,
+    });
     const delivery: HooksDelivery = { dist, projectRoot, location, previous, guard };
     await this.assertScriptsNotUserOwned(delivery);
     const { warnings, entries } = await this.mergeProjectHooksJson(delivery, manifestFile);

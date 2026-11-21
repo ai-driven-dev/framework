@@ -37,14 +37,14 @@ export function manifestWithPlugin(marketplace: string = MARKETPLACE): InMemoryM
   manifest.addTool(claude, "test", []);
   manifest.addPlugin(
     claude,
-    InstalledPlugin.fromMetadata(
-      PLUGIN,
-      "1.0.0",
-      { kind: "github", repo: "ai-driven-dev/framework" },
-      true,
-      "project",
-      marketplace
-    )
+    InstalledPlugin.fromMetadata({
+      name: PLUGIN,
+      version: "1.0.0",
+      source: { kind: "github", repo: "ai-driven-dev/framework" },
+      strict: true,
+      scope: "project",
+      marketplace,
+    })
   );
   return new InMemoryManifestRepository(manifest);
 }

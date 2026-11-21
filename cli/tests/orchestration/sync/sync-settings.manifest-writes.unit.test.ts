@@ -101,14 +101,14 @@ async function build(setup: Setup = {}) {
   for (const toolId of toolIds)
     manifest.addTool(toolId, "test", toolId === "claude" ? tracked : []);
   const installedPlugin = () =>
-    InstalledPlugin.fromMetadata(
-      PLUGIN,
-      "1.0.0",
-      { kind: "github", repo: "ai-driven-dev/framework" },
-      true,
-      "project",
-      MARKETPLACE
-    );
+    InstalledPlugin.fromMetadata({
+      name: PLUGIN,
+      version: "1.0.0",
+      source: { kind: "github", repo: "ai-driven-dev/framework" },
+      strict: true,
+      scope: "project",
+      marketplace: MARKETPLACE,
+    });
   if (setup.withPlugin === true) manifest.addPlugin(TOOL.claude, installedPlugin());
   if (setup.existingRegistrations !== undefined) {
     manifest.setNativeRegistrations(TOOL.claude, setup.existingRegistrations);

@@ -1,7 +1,7 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { AgentModelStore } from "../../ports/agent-model-store.js";
-import type { MainSessionSettings } from "../../ports/main-session-settings.js";
+import type { AgentModelStore, MainModels } from "../../ports/agent-model-store.js";
+import type { MainModelRecord, MainSessionSettings } from "../../ports/main-session-settings.js";
 import type { MainSessionLocator } from "./main-session-locator.js";
 
 /** A tool whose main session's settings file a run changed, and that file. */
@@ -56,35 +56,9 @@ export class MainSessionModels {
     const changes: FileChange[] = [];
     const skipped: MainSessionSkip[] = [];
     for (const host of hosts) {
-      const provider = chosen.get(host);
-      const record = mainModels[host];
-      const { models, path: current } = await this.mainSessionLocator.locate(host);
-      // Restored where it was written, once unset or once the host reads another file.
-      if (record !== undefined && (provider === undefined || record.path !== current)) {
-        try {
-          const content = await this.readIfAny(record.path);
-          const next = this.settings.planRemoval(content, record);
-          delete mainModels[host];
-          if (next !== content) changes.push({ host, path: record.path, content: next });
-        } catch (error) {
-          skipped.push({ host, path: record.path, reason: (error as Error).message });
-          continue;
-        }
-      }
-      if (provider === undefined || current === undefined || models === null) continue;
-      try {
-        const plan = this.settings.planInstall(
-          current,
-          await this.readIfAny(current),
-          models.mainSettingsValues(provider),
-          mainModels[host],
-          models.mainSettings()?.schema
-        );
-        mainModels[host] = plan.record;
-        changes.push({ host, path: current, content: plan.content });
-      } catch (error) {
-        skipped.push({ host, path: current, reason: (error as Error).message });
-      }
+      const planned = await this.planHost(host, chosen.get(host), mainModels);
+      changes.push(...planned.changes);
+      skipped.push(...planned.skipped);
     }
     const outcome = { changed: changes.map(({ host, path }) => ({ host, path })), skipped };
     if (dryRun) return outcome;
@@ -96,6 +70,54 @@ export class MainSessionModels {
       else await this.fs.writeFile(path, content);
     }
     return outcome;
+  }
+
+  private async planHost(
+    host: string,
+    provider: string | undefined,
+    mainModels: MainModels
+  ): Promise<{ changes: FileChange[]; skipped: MainSessionSkip[] }> {
+    const record = mainModels[host];
+    const { models, path: current } = await this.mainSessionLocator.locate(host);
+    const changes: FileChange[] = [];
+    // Restored where it was written, once unset or once the host reads another file.
+    if (record !== undefined && (provider === undefined || record.path !== current)) {
+      const restored = await this.restore(host, record, mainModels);
+      if (restored.skip !== undefined) return { changes, skipped: [restored.skip] };
+      if (restored.change !== undefined) changes.push(restored.change);
+    }
+    if (provider === undefined || current === undefined || models === null) {
+      return { changes, skipped: [] };
+    }
+    try {
+      const plan = this.settings.planInstall(
+        current,
+        await this.readIfAny(current),
+        models.mainSettingsValues(provider),
+        mainModels[host],
+        models.mainSettings()?.schema
+      );
+      mainModels[host] = plan.record;
+      changes.push({ host, path: current, content: plan.content });
+      return { changes, skipped: [] };
+    } catch (error) {
+      return { changes, skipped: [{ host, path: current, reason: (error as Error).message }] };
+    }
+  }
+
+  private async restore(
+    host: string,
+    record: MainModelRecord,
+    mainModels: MainModels
+  ): Promise<{ change?: FileChange; skip?: MainSessionSkip }> {
+    try {
+      const content = await this.readIfAny(record.path);
+      const next = this.settings.planRemoval(content, record);
+      delete mainModels[host];
+      return next === content ? {} : { change: { host, path: record.path, content: next } };
+    } catch (error) {
+      return { skip: { host, path: record.path, reason: (error as Error).message } };
+    }
   }
 
   private async readIfAny(path: string): Promise<string | null> {

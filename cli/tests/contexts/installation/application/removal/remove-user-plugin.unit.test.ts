@@ -102,13 +102,13 @@ describe("RemoveUserPlugin", () => {
   });
 
   it("leaves a project-scope plugin of the same name in place", async () => {
-    const projectScoped = InstalledPlugin.fromMetadata(
-      NAME,
-      "1.0.0",
-      { kind: "local", path: "/fixture" },
-      false,
-      "project"
-    );
+    const projectScoped = InstalledPlugin.fromMetadata({
+      name: NAME,
+      version: "1.0.0",
+      source: { kind: "local", path: "/fixture" },
+      strict: false,
+      scope: "project",
+    });
     const manifest = aManifest()
       .withTool(TOOL.claude, [])
       .withPlugin(TOOL.claude, projectScoped)

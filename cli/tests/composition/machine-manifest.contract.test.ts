@@ -45,9 +45,13 @@ const real: MachineManifestKind = {
     return manifest;
   },
   aUserPlugin: (name, dependents) =>
-    InstalledPlugin.fromMetadata(name, PLUGIN_VERSION, PLUGIN_SOURCE, false, "user").withDependents(
-      dependents
-    ),
+    InstalledPlugin.fromMetadata({
+      name,
+      version: PLUGIN_VERSION,
+      source: PLUGIN_SOURCE,
+      strict: false,
+      scope: "user",
+    }).withDependents(dependents),
 };
 
 const REGISTRATIONS: MachineNativeRegistrations & Record<string, unknown> = {

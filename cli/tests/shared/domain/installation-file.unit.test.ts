@@ -12,4 +12,15 @@ describe("InstallationFile", () => {
   it("defaults to no merge strategy", () => {
     expect(file("a.md").mergeStrategy).toBe("none");
   });
+
+  it("hashes the content it is built from and defaults to no merge strategy", () => {
+    const built = InstallationFile.hashing("a.json", "{}");
+
+    expect(built.hash).toStrictEqual(FileHash.of("{}"));
+    expect(built.mergeStrategy).toBe("none");
+  });
+
+  it("carries the merge strategy it is given", () => {
+    expect(InstallationFile.hashing("a.json", "{}", "user-prime").mergeStrategy).toBe("user-prime");
+  });
 });

@@ -28,12 +28,13 @@ function nameOf(path: string, extension: string): string {
   return basename.endsWith(extension) ? basename.slice(0, -extension.length) : basename;
 }
 
-export function toInstalledRule(
-  tool: AiToolId,
-  path: string,
-  extension: string,
-  content: string
-): InstalledRule {
+export function toInstalledRule(source: {
+  tool: AiToolId;
+  path: string;
+  extension: string;
+  content: string;
+}): InstalledRule {
+  const { tool, path, extension, content } = source;
   const { frontmatter } = parseFrontmatter(content);
   const description = frontmatter.description;
   const paths = scopeOf(frontmatter);

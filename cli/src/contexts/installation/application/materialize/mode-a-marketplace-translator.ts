@@ -27,14 +27,14 @@ export class ModeAMarketplaceTranslator implements PluginTranslator {
   ): Promise<{ skipped: ReadonlySkipList }> {
     manifest.addPlugin(
       tool.toolId,
-      InstalledPlugin.fromDistribution(
+      InstalledPlugin.fromDistribution({
         dist,
         source,
-        [],
-        resolveScopeForInstall(tool),
-        new Map(),
-        marketplace
-      )
+        files: [],
+        scope: resolveScopeForInstall(tool),
+        componentPaths: new Map(),
+        marketplace,
+      })
     );
     return { skipped: [] };
   }

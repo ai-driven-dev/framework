@@ -88,7 +88,8 @@ describe("RemoveToolFiles.remove", () => {
   it("keeps a file another installed tool merges into", async () => {
     const target = projectWith({ [MCP]: '{"hub":{}}' });
     target.manifest.addTool(TOOL.claude, "test", [tracked(MCP, '{"hub":{}}')]);
-    target.manifest.addTool(TOOL.codex, "test", [], [merging(MCP, { hub: {} })]);
+    target.manifest.addTool(TOOL.codex, "test", []);
+    target.manifest.updateToolMergeFiles(TOOL.codex, [merging(MCP, { hub: {} })]);
 
     const deleted = await removal(target, TOOL.claude, [TOOL.claude]);
 

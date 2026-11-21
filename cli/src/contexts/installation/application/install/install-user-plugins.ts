@@ -1,6 +1,7 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { UserPluginChoice } from "../../ports/marketplace-sources.js";
@@ -43,37 +44,52 @@ export class InstallUserPlugins {
     }
     const plans: PlannedUserPluginFileUpdate[] = [];
     for (const toolId of command.toolIds) {
-      const tool = this.tools.profile(toolId);
-      if (tool.kind !== "ai" || tool.plugins()?.copiesFilesGlobally() !== true) continue;
-      for (const { entry, source, marketplaceName } of command.plugins) {
-        const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === entry.name);
-        const resolved = InstalledPlugin.fromMetadata(
-          entry.name,
-          entry.version ?? "0.0.0",
-          source,
-          entry.strict,
-          "user",
-          marketplaceName
-        );
-        const plugin =
-          owned === undefined
-            ? resolved
-            : resolved.withFiles(owned.files).withDependents(owned.dependents);
-        const plan = await this.materializer.planUpdate({
-          plugin,
-          tool,
-          projectRoot: command.projectRoot,
-          logger: this.logger,
-          rebuild: true,
-        });
-        if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;
-        plans.push(plan);
-      }
+      plans.push(...(await this.planTool(toolId, manifest, command)));
     }
     for (const plan of plans) {
       const next = await this.materializer.applyUpdate(plan, this.logger);
       manifest.withPlugin(plan.tool.toolId, next);
       await this.repo.save(manifest);
     }
+  }
+
+  private async planTool(
+    toolId: ToolId,
+    manifest: Manifest,
+    command: InstallUserPluginsCommand
+  ): Promise<PlannedUserPluginFileUpdate[]> {
+    const tool = this.tools.profile(toolId);
+    if (tool.kind !== "ai" || tool.plugins()?.copiesFilesGlobally() !== true) return [];
+    const plans: PlannedUserPluginFileUpdate[] = [];
+    for (const choice of command.plugins) {
+      const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === choice.entry.name);
+      const plan = await this.materializer.planUpdate({
+        plugin: this.resolvedPlugin(choice, owned),
+        tool,
+        projectRoot: command.projectRoot,
+        logger: this.logger,
+        rebuild: true,
+      });
+      if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;
+      plans.push(plan);
+    }
+    return plans;
+  }
+
+  private resolvedPlugin(
+    { entry, source, marketplaceName }: UserPluginChoice,
+    owned: InstalledPlugin | undefined
+  ): InstalledPlugin {
+    const resolved = InstalledPlugin.fromMetadata({
+      name: entry.name,
+      version: entry.version ?? "0.0.0",
+      source,
+      strict: entry.strict,
+      scope: "user",
+      marketplace: marketplaceName,
+    });
+    return owned === undefined
+      ? resolved
+      : resolved.withFiles(owned.files).withDependents(owned.dependents);
   }
 }

@@ -39,22 +39,28 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
 }
 
 function localPlugin(name: string, scope: Scope = "project"): InstalledPlugin {
-  return InstalledPlugin.fromMetadata(name, "1.0.0", { kind: "local", path: "/p" }, false, scope);
+  return InstalledPlugin.fromMetadata({
+    name,
+    version: "1.0.0",
+    source: { kind: "local", path: "/p" },
+    strict: false,
+    scope,
+  });
 }
 
-describe("CleanProjectFiles.assertRemovable", () => {
+describe("CleanProjectFiles assert-removable", () => {
   it("refuses a hook script edited after install unless forced", async () => {
     const script = `${cursorHookScriptDir("aidd-context")}run.js`;
     const installed = FileHash.of("// installed").value;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
-    const plugin = InstalledPlugin.fromMetadata(
-      "aidd-context",
-      "1.0.0",
-      { kind: "local", path: "/p" },
-      false,
-      "project"
-    );
+    const plugin = InstalledPlugin.fromMetadata({
+      name: "aidd-context",
+      version: "1.0.0",
+      source: { kind: "local", path: "/p" },
+      strict: false,
+      scope: "project",
+    });
     manifest.addPlugin(
       TOOL.cursor,
       InstalledPlugin.withProjectHooks(plugin, {
@@ -66,17 +72,23 @@ describe("CleanProjectFiles.assertRemovable", () => {
     fs.setFile(join(ROOT, script), "// edited");
     const clean = cleanOver(manifest, fs);
 
-    await expect(clean.assertRemovable(ROOT, false)).rejects.toThrow("edited after install");
-    await expect(clean.assertRemovable(ROOT, true)).resolves.toBeUndefined();
+    await expect(
+      clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: false })
+    ).rejects.toThrow("edited after install");
+    await expect(
+      clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: true })
+    ).resolves.toBeUndefined();
   });
 });
 
-describe("CleanProjectFiles.assertRemovable on a project that installed nothing", () => {
+describe("CleanProjectFiles assert-removable on a project that installed nothing", () => {
   it("proves nothing removable", async () => {
     const fs = new InMemoryFileAdapter();
     const clean = cleanOver(null, fs);
 
-    await expect(clean.assertRemovable(ROOT, false)).resolves.toBeUndefined();
+    await expect(
+      clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: false })
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -92,19 +104,21 @@ describe("CleanProjectFiles over a tool that is not an AI tool", () => {
   it("asks no AI profile of it when proving removal", async () => {
     const clean = cleanOver(manifestWithIdePlugin("project"), new InMemoryFileAdapter());
 
-    await expect(clean.assertRemovable(ROOT, false)).resolves.toBeUndefined();
+    await expect(
+      clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: false })
+    ).resolves.toBeUndefined();
   });
 
   it("leaves it out of the user plugins a plan lists", async () => {
     const clean = cleanOver(manifestWithIdePlugin("user"), new InMemoryFileAdapter());
 
-    const plan = await clean.plan();
+    const plan = await clean.execute({ kind: "plan" });
 
     expect(plan?.userPlugins).toEqual([]);
   });
 });
 
-describe("CleanProjectFiles.plan registrations", () => {
+describe("CleanProjectFiles plan registrations", () => {
   it("keys a ref scope only for a plugin the host registered", async () => {
     const manifest = aManifest()
       .withTool(TOOL.codex, [])
@@ -116,7 +130,7 @@ describe("CleanProjectFiles.plan registrations", () => {
       pluginRefs: [],
     });
 
-    const plan = await cleanOver(manifest, new InMemoryFileAdapter()).plan();
+    const plan = await cleanOver(manifest, new InMemoryFileAdapter()).execute({ kind: "plan" });
 
     expect(plan?.withdrawals.map((w) => w.refScopes.size)).toEqual([0]);
   });

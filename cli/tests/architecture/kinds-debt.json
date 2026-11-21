@@ -29,8 +29,6 @@
   "classification": ["src/presentation/deps.ts"],
   "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
   "mirror": [
-    "src/contexts/installation/application/install/content/install-content-section.ts",
-    "src/contexts/installation/application/install/install-config.ts",
     "src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
     "src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
     "src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.ts",
@@ -42,10 +40,7 @@
     "src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "src/contexts/installation/infrastructure/manifest-file-io.ts"
   ],
-  "shape": [
-    "src/contexts/installation/application/clean-project-files.ts",
-    "src/contexts/installation/application/install/config/tracked-config-files.ts"
-  ],
+  "shape": [],
   "thrown": [],
   "instructs": [],
   "composition": [],
@@ -66,17 +61,8 @@
   "translate": [],
   "size": [],
   "limits": [
-    "cognitive complexity :: src/contexts/installation/application/agents/main-session-models.ts",
-    "cognitive complexity :: src/contexts/installation/application/install/install-user-plugins.ts",
-    "cognitive complexity :: src/contexts/installation/application/shared/detect-plugin-drift.ts",
-    "cognitive complexity :: src/contexts/installation/application/shared/remove-project-hooks.ts",
-    "cognitive complexity :: src/contexts/installation/domain/manifest.ts",
     "function length :: src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
     "function length :: src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
-    "function parameters :: src/contexts/installation/application/install/config/install-runtime-config.ts",
-    "function parameters :: src/contexts/installation/application/install/content/install-content-section.ts",
-    "function parameters :: src/contexts/installation/application/install/install-ai-tool.ts",
-    "function parameters :: src/contexts/installation/application/install/install-config.ts",
     "function parameters :: src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
     "function parameters :: src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.ts",
     "function parameters :: src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
@@ -84,12 +70,6 @@
     "function parameters :: src/contexts/installation/application/materialize/mode-a-marketplace-translator.ts",
     "function parameters :: src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     "function parameters :: src/contexts/installation/application/materialize/plugin-translator.ts",
-    "function parameters :: src/contexts/installation/application/report-status.ts",
-    "function parameters :: src/contexts/installation/application/shared/remove-project-hooks.ts",
-    "function parameters :: src/contexts/installation/application/uninstall-tools.ts",
-    "function parameters :: src/contexts/installation/domain/installed-rule.ts",
-    "function parameters :: src/contexts/installation/domain/manifest.ts",
-    "function parameters :: src/contexts/installation/domain/plugins/installed-plugin.ts",
     "function parameters :: src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "function parameters :: src/contexts/installation/ports/main-session-settings.ts"
   ],

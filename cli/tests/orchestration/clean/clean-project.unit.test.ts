@@ -426,12 +426,10 @@ describe("clean", () => {
     it("counts each tool's tracked and merged files, and totals them", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifest = seedTrackedFiles(fs, ["a.md", "b.md"]);
-      manifest.addTool(
-        TOOL.claude,
-        "1.0.0",
-        [fileEntry("a.md"), fileEntry("b.md")],
-        [{ relativePath: ".claude/settings.json", sectionKey: null, entries: { owned: hash() } }]
-      );
+      manifest.addTool(TOOL.claude, "1.0.0", [fileEntry("a.md"), fileEntry("b.md")]);
+      manifest.updateToolMergeFiles(TOOL.claude, [
+        { relativePath: ".claude/settings.json", sectionKey: null, entries: { owned: hash() } },
+      ]);
       manifest.addTool(TOOL.codex, "1.0.0", [fileEntry("c.md")]);
       const useCase = new CleanWithKnownHostSource(
         fs,
@@ -605,12 +603,10 @@ describe("clean", () => {
         const manifest = Manifest.create();
         const entries: Record<string, FileHash> = {};
         for (const key of ownedKeys) entries[key] = hash();
-        manifest.addTool(
-          TOOL.claude,
-          "1.0.0",
-          [],
-          [{ relativePath: MERGED, sectionKey: null, entries }]
-        );
+        manifest.addTool(TOOL.claude, "1.0.0", []);
+        manifest.updateToolMergeFiles(TOOL.claude, [
+          { relativePath: MERGED, sectionKey: null, entries },
+        ]);
         if (content !== null) fs.setFile(join(PROJECT_ROOT, MERGED), content);
         return manifest;
       }

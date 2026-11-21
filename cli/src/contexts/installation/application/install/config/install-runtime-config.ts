@@ -1,13 +1,16 @@
 import { join } from "node:path";
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
-import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
-import type { SettingsFileAnswers } from "../../../../tools/contract/tool-profile.js";
+import type {
+  McpConfigAnswers,
+  SettingsFileAnswers,
+} from "../../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import type { RuntimeConfigSection } from "../../../ports/tool-sections.js";
 import type { RunPostInstallPipeline } from "../run-post-install-pipeline.js";
@@ -74,16 +77,19 @@ export class InstallRuntimeConfig {
     mergeFiles: InstallationFile[],
     options: InstallRuntimeConfigCommand
   ): Promise<void> {
-    const allTracked = await this.trackedConfigFiles.writeAndTrack(
-      regularFiles,
-      options.projectRoot,
-      options.onBeforeWriteRegularFile
-    );
-    const mergeEntries = await this.trackedConfigFiles.mergeAndTrack(
-      mergeFiles,
-      options.projectRoot
-    );
-    options.manifest.addTool(options.toolId, options.version, allTracked, mergeEntries);
+    const allTracked = await this.trackedConfigFiles.execute({
+      kind: "write-and-track",
+      files: regularFiles,
+      projectRoot: options.projectRoot,
+      onBeforeWrite: options.onBeforeWriteRegularFile,
+    });
+    const mergeEntries = await this.trackedConfigFiles.execute({
+      kind: "merge-and-track",
+      files: mergeFiles,
+      projectRoot: options.projectRoot,
+    });
+    options.manifest.addTool(options.toolId, options.version, allTracked);
+    options.manifest.updateToolMergeFiles(options.toolId, mergeEntries);
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest: options.manifest,
@@ -96,17 +102,21 @@ export class InstallRuntimeConfig {
     const profile = this.tools.aiProfile(options.toolId);
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(profile.configFiles())) {
-      const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
+      const resolvedPath = await this.resolveConfigPath({
+        mcp: profile.mcpConfig(),
+        fileName,
+        outputPath,
+        projectRoot: options.projectRoot,
+      });
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      if (
-        await this.trackedConfigFiles.isUserOwned(
-          resolvedPath,
-          options.projectRoot,
-          options.manifest
-        )
-      )
-        continue;
+      const userOwned = await this.trackedConfigFiles.execute({
+        kind: "is-user-owned",
+        relativePath: resolvedPath,
+        projectRoot: options.projectRoot,
+        manifest: options.manifest,
+      });
+      if (userOwned) continue;
       const mcp = profile.mcpConfig();
       if (mcp?.isFrameworkPrimeJson(fileName)) {
         content = mcp.frameworkConfigOver(
@@ -115,21 +125,21 @@ export class InstallRuntimeConfig {
           {}
         );
       }
-      files.push(this.trackedConfigFiles.fileOf(resolvedPath, content));
+      files.push(InstallationFile.hashing(resolvedPath, content));
     }
     return files;
   }
 
-  private async resolveConfigPath(
-    profile: RuntimeConfigSection,
-    fileName: string,
-    outputPath: string,
-    options: InstallRuntimeConfigCommand
-  ): Promise<string> {
-    const mcp = profile.mcpConfig();
+  private async resolveConfigPath(config: {
+    mcp: McpConfigAnswers | null;
+    fileName: string;
+    outputPath: string;
+    projectRoot: string;
+  }): Promise<string> {
+    const { mcp, fileName, outputPath, projectRoot } = config;
     if (mcp === null || !mcp.accepts(fileName)) return outputPath;
     return mcp.resolveOutputPath((relativePath) =>
-      this.fs.fileExists(join(options.projectRoot, relativePath))
+      this.fs.fileExists(join(projectRoot, relativePath))
     );
   }
 
@@ -163,6 +173,6 @@ export class InstallRuntimeConfig {
       this.assets.loadConfigAsset(options.toolId, fileName)
     );
     if (content === null) return null;
-    return this.trackedConfigFiles.fileOf(cap.outputPath(), content, cap.mergeStrategy());
+    return InstallationFile.hashing(cap.outputPath(), content, cap.mergeStrategy());
   }
 }

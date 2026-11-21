@@ -142,20 +142,20 @@ describe("UpdatePlugin — built-tree materialization", () => {
       ...native,
       pluginClaims: [...(native.pluginClaims ?? []), { ref: otherRef, dependents: ["/B"] }],
     });
-    const unselected = InstalledPlugin.fromMetadata(
-      "unselected-plugin",
-      "0.0.1",
-      { kind: "local", path: "/unselected/source" },
-      false,
-      "user"
-    ).withDependents([PROJECT_ROOT, "/B"]);
-    const projectOnly = InstalledPlugin.fromMetadata(
-      "project-only",
-      "0.0.1",
-      { kind: "local", path: "/project/source" },
-      false,
-      "project"
-    );
+    const unselected = InstalledPlugin.fromMetadata({
+      name: "unselected-plugin",
+      version: "0.0.1",
+      source: { kind: "local", path: "/unselected/source" },
+      strict: false,
+      scope: "user",
+    }).withDependents([PROJECT_ROOT, "/B"]);
+    const projectOnly = InstalledPlugin.fromMetadata({
+      name: "project-only",
+      version: "0.0.1",
+      source: { kind: "local", path: "/project/source" },
+      strict: false,
+      scope: "project",
+    });
     machine.addPlugin(cursor, unselected);
     machine.addPlugin(cursor, projectOnly);
     const owned = machine.getPlugins(cursor).find((plugin) => plugin.name === "sample-plugin");
@@ -391,13 +391,13 @@ describe("UpdatePlugin — built-tree materialization", () => {
     machine.addTool(cursor, "1.0.0", []);
     machine.addPlugin(
       cursor,
-      InstalledPlugin.fromMetadata(
-        "sample-plugin",
-        "0.0.1",
-        { kind: "local", path: PLUGIN_FIXTURE },
-        false,
-        "user"
-      ).withDependents([PROJECT_ROOT])
+      InstalledPlugin.fromMetadata({
+        name: "sample-plugin",
+        version: "0.0.1",
+        source: { kind: "local", path: PLUGIN_FIXTURE },
+        strict: false,
+        scope: "user",
+      }).withDependents([PROJECT_ROOT])
     );
     await deps.userManifestRepo.save(machine);
     expect(

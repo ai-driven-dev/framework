@@ -209,13 +209,13 @@ describe("AddPlugin", () => {
         const manifest = await deps.manifestRepo.load();
         manifest?.addPlugin(
           cursor,
-          InstalledPlugin.fromMetadata(
-            "other-plugin",
-            "1.0.0",
-            GIT_SUBDIR_SOURCE,
-            false,
-            "user"
-          ).withFiles(new Map([["other-plugin/skills/demo.md", "recorded-hash"]]))
+          InstalledPlugin.fromMetadata({
+            name: "other-plugin",
+            version: "1.0.0",
+            source: GIT_SUBDIR_SOURCE,
+            strict: false,
+            scope: "user",
+          }).withFiles(new Map([["other-plugin/skills/demo.md", "recorded-hash"]]))
         );
         if (manifest) await deps.manifestRepo.save(manifest);
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");

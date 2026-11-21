@@ -41,14 +41,14 @@ async function replaceOnClaude(marketplace: string | undefined) {
   deps.fs.setFile(join(PROJECT_ROOT, STALE_FILE), "old");
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
-  const installed = InstalledPlugin.fromMetadata(
-    "sample-plugin",
-    "0.0.1",
-    SOURCE,
-    false,
-    "project",
-    marketplace
-  ).withFiles(new Map([[STALE_FILE, "old-hash"]]));
+  const installed = InstalledPlugin.fromMetadata({
+    name: "sample-plugin",
+    version: "0.0.1",
+    source: SOURCE,
+    strict: false,
+    scope: "project",
+    marketplace,
+  }).withFiles(new Map([[STALE_FILE, "old-hash"]]));
   manifest.addPlugin(TOOL.claude, installed);
   await new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()).execute({
     plugin: installed,

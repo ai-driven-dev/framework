@@ -629,7 +629,8 @@ describe("restore — the file selection", () => {
       (relativePath) =>
         new InstallationFile({ relativePath, content: "", hash: FileHash.of(relativePath) })
     );
-    manifest.addTool(TOOL.claude, "test", ghosts, [...manifest.getMergeFiles(TOOL.claude)]);
+    manifest.addTool(TOOL.claude, "test", ghosts);
+    manifest.updateToolMergeFiles(TOOL.claude, [...manifest.getMergeFiles(TOOL.claude)]);
     return deps;
   }
 

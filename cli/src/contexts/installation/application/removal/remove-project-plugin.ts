@@ -69,7 +69,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     projectRoot: string
   ): Promise<void> {
     await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
-    await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
+    await assertProjectHooksRemovable({ fs: this.fs, plugin, tool, projectRoot });
   }
 
   async removeLocalIntegration(
@@ -78,7 +78,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     projectRoot: string
   ): Promise<void> {
     const mcpUpdate = await planProjectMcpRemoval(this.fs, { plugin, tool, projectRoot });
-    await removeProjectHooks(this.fs, plugin, tool, projectRoot);
+    await removeProjectHooks({ fs: this.fs, plugin, tool, projectRoot });
     if (mcpUpdate !== undefined) {
       await assertProjectPathWithinRoot(this.fs, projectRoot, mcpUpdate.output);
       await this.fs.writeFile(mcpUpdate.output, mcpUpdate.content);

@@ -94,14 +94,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
         .withTool(claude, [])
         .withPlugin(
           claude,
-          InstalledPlugin.fromMetadata(
-            "test-plugin",
-            "1.0.0",
-            { kind: "local", path: "/source" },
-            true,
-            "project",
-            marketplaceName
-          )
+          InstalledPlugin.fromMetadata({
+            name: "test-plugin",
+            version: "1.0.0",
+            source: { kind: "local", path: "/source" },
+            strict: true,
+            scope: "project",
+            marketplace: marketplaceName,
+          })
         )
         .build();
       const machine = Manifest.create();
@@ -225,14 +225,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       .withTool(claude, [])
       .withPlugin(
         claude,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "user",
-          alias
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "user",
+          marketplace: alias,
+        })
       )
       .build();
     const userRepo = new InMemoryManifestRepository(user);
@@ -391,14 +391,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       .withTool(codex, [])
       .withPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          marketplaceName
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: marketplaceName,
+        })
       )
       .build();
     const projectRepo = new InMemoryManifestRepository(project);
@@ -498,14 +498,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
     for (const alias of ["market-a", "market-b"]) {
       project.addPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          `plugin-${alias.at(-1)}`,
-          "1.0.0",
-          { kind: "local", path: `/source/${alias}` },
-          true,
-          "project",
-          alias
-        )
+        InstalledPlugin.fromMetadata({
+          name: `plugin-${alias.at(-1)}`,
+          version: "1.0.0",
+          source: { kind: "local", path: `/source/${alias}` },
+          strict: true,
+          scope: "project",
+          marketplace: alias,
+        })
       );
     }
     const projectRepo = new InMemoryManifestRepository(project);
@@ -591,14 +591,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       .withTool(codex, [])
       .withPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          alias
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: alias,
+        })
       )
       .build();
     const projectRepo = new InMemoryManifestRepository(project);
@@ -668,14 +668,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       .withTool(codex, [])
       .withPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          alias
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: alias,
+        })
       )
       .build();
     const projectRepo = new InMemoryManifestRepository(project);
@@ -731,14 +731,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       .withTool(codex, [])
       .withPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          alias
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: alias,
+        })
       )
       .build();
     const projectRepo = new InMemoryManifestRepository(project);
