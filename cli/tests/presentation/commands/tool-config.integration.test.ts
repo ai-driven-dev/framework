@@ -48,6 +48,17 @@ describe("framework install into a project with no tool yet", () => {
   });
 });
 
+describe("framework update of an installed tool nothing edited", () => {
+  it("exits 0 and reports the tool as updated", async () => {
+    await aidd(["framework", "install", "--tool", "claude"]);
+
+    const { stdout, exitCode } = await aidd(["framework", "update"]);
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Updated claude");
+  });
+});
+
 describe("framework update of an installed editor tool whose tracked file was edited", () => {
   beforeEach(async () => {
     await aidd(["framework", "install", "--tool", "vscode"]);
