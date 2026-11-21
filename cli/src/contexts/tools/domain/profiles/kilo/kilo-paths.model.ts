@@ -5,8 +5,6 @@ import type { McpOutputPathCandidates } from "../../sections/mcp-section.js";
 import { DualConfigError } from "../../tools.error.js";
 
 export const KILO_DIRECTORY = ".kilo/";
-export const KILO_PLUGIN_DIR = `${KILO_DIRECTORY}plugin/`;
-export const KILO_PLUGIN_ENTRY_BASENAME = "kilo-plugin.js";
 export const KILO_PROJECT_CONFIG_JSON = `${KILO_DIRECTORY}kilo.json`;
 export const KILO_PROJECT_CONFIG_JSONC = `${KILO_DIRECTORY}kilo.jsonc`;
 

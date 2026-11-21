@@ -3,13 +3,14 @@ import type {
   ConfigArtifact,
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
-import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
+import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
 function configArtifactOf(): ConfigArtifact {
-  const step = buildKiloFlatContract().configArtifact;
+  const step = present(kilo.buildContracts.flat)().configArtifact;
   if (step === undefined) throw new Error("kilo flat declares no config artifact");
   return step;
 }
@@ -31,7 +32,7 @@ function emit(input: {
 
 describe("buildKiloFlatContract", () => {
   it("places agents, skills, hook scripts and its generated bridge under .kilo", () => {
-    const { artifacts } = buildKiloFlatContract();
+    const { artifacts } = present(kilo.buildContracts.flat)();
     expect(supported(artifacts.agents).path("aidd-dev", "agents/reviewer.md")).toBe(
       ".kilo/agents/aidd-dev-reviewer.md"
     );
@@ -47,7 +48,7 @@ describe("buildKiloFlatContract", () => {
   });
 
   it("drops the name from a flat agent: Kilo names it after its file", () => {
-    const transform = supported(buildKiloFlatContract().artifacts.agents).transform;
+    const transform = supported(present(kilo.buildContracts.flat)().artifacts.agents).transform;
     expect(transform?.("---\nname: x\ndescription: Reads\n---\nBody.\n", "aidd-dev", "x.md")).toBe(
       "---\ndescription: 'Reads'\nmode: 'subagent'\n---\nBody.\n"
     );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateKiloHooksBridge } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
+import { generateKiloHooksBridge } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.model.js";
 
 const STOP_HOOK = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/a.cjs" }] }] },

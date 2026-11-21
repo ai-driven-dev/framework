@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   chooseKiloConfigPath,
   KILO_OUTPUT_PATH_CANDIDATES,
-} from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-paths.js";
+} from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-paths.model.js";
 import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 
 const existing =

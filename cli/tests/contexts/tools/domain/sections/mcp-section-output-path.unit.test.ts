@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { DualConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";

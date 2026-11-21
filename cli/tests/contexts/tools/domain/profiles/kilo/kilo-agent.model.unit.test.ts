@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kiloAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-agent.js";
+import { kiloAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-agent.model.js";
 
 describe("kiloAgentFrontmatter", () => {
   it("reads the effort as the model's variant and marks the agent a subagent", () => {

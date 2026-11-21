@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import kiloJson from "../../../../../../assets/configs/kilo/kilo.json" with { type: "json" };
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import { declareBridgeHooks } from "../../bridges/event-bridge.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -11,15 +12,19 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
-import { buildKiloFlatContract } from "./build.js";
-import { KILO_HOOKS } from "./hooks.js";
-import { kiloAgentFrontmatter } from "./kilo-agent.js";
-import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.js";
+import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
+import { buildKiloFlatContract } from "./kilo-build.model.js";
+import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
+import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.model.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
-const hooksDelivery = flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge);
+const hooks = declareBridgeHooks(
+  { toolId: "kilo", directory: KILO_DIRECTORY },
+  ["session.created", "tool.execute.after", "session.idle"],
+  { loaderEntry: { dir: `${KILO_DIRECTORY}plugin/`, baseName: "kilo-plugin.js" } }
+);
+const hooksDelivery = flatHooksSupport(hooks, generateKiloHooksBridge);
 
 export const kilo = defineAiTool({
   toolId: "kilo",
@@ -31,7 +36,8 @@ export const kilo = defineAiTool({
   configAssets: [
     { name: "kilo.json", content: kiloJson, destination: ".kilo/kilo.jsonc", delivery: "install" },
   ],
-  buildContracts: { flat: buildKiloFlatContract },
+  hooks,
+  buildContracts: { flat: () => buildKiloFlatContract(hooks) },
 
   capabilities: (bound) => ({
     agents: bound.agents({

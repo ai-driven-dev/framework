@@ -9,7 +9,7 @@ import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
 import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
-import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
+import { kilo } from "../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
@@ -202,7 +202,7 @@ const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
   copilot: COPILOT_HOOKS,
   cursor: present(cursor.hooks),
   opencode: present(opencode.hooks),
-  kilo: KILO_HOOKS,
+  kilo: present(kilo.hooks),
 };
 
 /** Each tool's host adapter by content, so a delivered copy names the one it is: an asset file

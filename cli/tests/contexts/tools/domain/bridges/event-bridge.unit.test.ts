@@ -4,7 +4,7 @@ import {
   pascalCasePluginName,
   replaysNothing,
 } from "../../../../../src/contexts/tools/domain/bridges/event-bridge.js";
-import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
+import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.model.js";
 import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.model.js";
 
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";

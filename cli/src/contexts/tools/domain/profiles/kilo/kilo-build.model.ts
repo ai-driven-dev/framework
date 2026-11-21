@@ -2,6 +2,7 @@
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
+import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
@@ -9,12 +10,22 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/routes.js";
 import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
-import { KILO_HOOKS } from "./hooks.js";
-import { kiloAgentFrontmatter } from "./kilo-agent.js";
-import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import { chooseKiloConfigPath, KILO_CONFIG_CANDIDATES, KILO_DIRECTORY } from "./kilo-paths.js";
+import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
+import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
+import {
+  chooseKiloConfigPath,
+  KILO_CONFIG_CANDIDATES,
+  KILO_DIRECTORY,
+} from "./kilo-paths.model.js";
+
+/** Kilo's hooks as the profile declares them: a loader with no hooks file. */
+type KiloHooks = HooksRouting & {
+  readonly file?: never;
+  readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
+};
 
 function kiloFlatAgentPath(plugin: string, rel: string): string {
   return genericFlatAgentPath({
@@ -63,7 +74,7 @@ function collectKiloMcp(
   return incoming;
 }
 
-export function buildKiloFlatContract(): ToolBuildContract {
+export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -82,7 +93,7 @@ export function buildKiloFlatContract(): ToolBuildContract {
         transform: transformKiloFlatAgent,
       },
       mcp: { supported: false },
-      hooks: flatHooksArtifact(KILO_HOOKS, { bridge: generateKiloHooksBridge }),
+      hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
       rules: { supported: false },
       commands: { supported: false },
     },
