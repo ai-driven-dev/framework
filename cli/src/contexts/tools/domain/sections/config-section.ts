@@ -80,6 +80,11 @@ export class ConfigSection {
     });
   }
 
+  /** Whether this section writes the file at `destination`. */
+  writes(destination: string): boolean {
+    return this.#params.outputPath === destination;
+  }
+
   outputPath(): string {
     return this.#params.outputPath;
   }

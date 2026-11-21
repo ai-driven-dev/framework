@@ -160,6 +160,19 @@ describe("ConfigSection", () => {
     });
   });
 
+  describe("writes", () => {
+    it("answers whether the section writes the destination", () => {
+      const cap = new ConfigSection({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+      });
+      expect([cap.writes(".vscode/settings.json"), cap.writes(".vscode/other.json")]).toEqual([
+        true,
+        false,
+      ]);
+    });
+  });
+
   describe("outputPath", () => {
     it("returns the configured output path", () => {
       const cap = new ConfigSection({

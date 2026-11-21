@@ -353,9 +353,61 @@ export const isPluginAnswerFile = (path: string): boolean =>
   /^src\/contexts\/tools\/domain\/(?:sections|native-registration)\/[^/]+\.ts$/.test(path) ||
   path === "src/contexts/tools/domain/profile/plugin-answers.ts";
 
-/** A class of a plugin answer that leaves a stored value readable instead of answering. A stored
- * value a caller needs as it is stays in the debt, with the caller that reads it. */
+const ANSWER_FILE = "src/contexts/tools/domain";
+
+/** The stored values a caller needs as they are, because the raw value crosses a file boundary
+ * unchanged: a path read, written and hashed, a binary looked up by name, a declaration handed to
+ * an adapter. A permanent list, never debt: each entry names its caller and why no method can
+ * answer in its place. A question a method can answer is asked, not listed. */
+export const STORED_ANSWERS: readonly {
+  readonly file: string;
+  readonly member: string;
+  readonly caller: string;
+  readonly reason: string;
+}[] = [
+  {
+    file: `${ANSWER_FILE}/sections/config-section.ts`,
+    member: "ConfigSection.outputPath",
+    caller: "installation/application/install/config/install-ide-config.ts",
+    reason: "the path is checked against the manifest and its basename names the asset to load",
+  },
+  {
+    file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
+    member: "MarketplaceRegistration.sharedSettingsFile",
+    caller:
+      "installation/application/sync/sync-tool-settings-files.ts, installation/application/sync/record-activation.ts",
+    reason: "the path is read, written, hashed and matched against the manifest",
+  },
+  {
+    file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
+    member: "NativeActivation.hostBinary",
+    caller:
+      "host-registration/application, installation/application/sync/record-activation.ts, composition/host-registration.ts",
+    reason: "the binary is looked up on the PATH and keys the host's activator",
+  },
+  {
+    file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
+    member: "NativeActivation.cliShape",
+    caller: "composition/host-registration.ts",
+    reason: "the host CLI adapter is built from the verbs themselves",
+  },
+  {
+    file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
+    member: "NativeActivation.marketplaceSourcesDeclaration",
+    caller: "composition/host-registration.ts",
+    reason: "the source readers are built from the declaration itself",
+  },
+];
+
+/** A class of a plugin answer that leaves a stored value readable instead of answering, minus
+ * the stored values a caller needs as they are. */
 export function answerViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const kept = new Set(STORED_ANSWERS.map((a) => `${a.file} :: ${a.member}`));
+  return storedValueViolations(files).filter((v) => !kept.has(v.entry));
+}
+
+/** Every plugin answer class leaving a stored value readable, kept or not. */
+export function storedValueViolations(files: Readonly<Record<string, string>>): Violation[] {
   const out: Violation[] = [];
   for (const [file, source] of Object.entries(files)) {
     if (!isPluginAnswerFile(file)) continue;

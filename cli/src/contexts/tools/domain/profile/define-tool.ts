@@ -226,14 +226,17 @@ function refuseDisagreeingShippedConfig(
   assets: readonly ShippedConfig[] | undefined,
   sections: ProfileSections
 ): void {
-  const written = settingsOf(sections).map((section) => section.outputPath());
+  const settings = settingsOf(sections);
   const seen = new Set<string>();
   for (const asset of assets ?? []) {
     if (seen.has(asset.name)) {
       refuseShipped(toolId, `'${asset.name}' is shipped twice.`);
     }
     seen.add(asset.name);
-    if (asset.delivery === "section" && !written.includes(asset.destination)) {
+    if (
+      asset.delivery === "section" &&
+      !settings.some((section) => section.writes(asset.destination))
+    ) {
       refuseShipped(
         toolId,
         `'${asset.name}' lands at ${asset.destination}, which no settings section writes.`

@@ -35,13 +35,7 @@
   "composition": [],
   "ports": [],
   "sections": [],
-  "answers": [
-    "src/contexts/tools/domain/native-registration/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile",
-    "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.cliShape",
-    "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.hostBinary",
-    "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration",
-    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath"
-  ],
+  "answers": [],
   "repository": [],
   "translate": [],
   "size": [],
