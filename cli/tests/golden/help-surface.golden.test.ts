@@ -29,22 +29,23 @@ function normalize(text: string): string {
 /** Commander wraps a long description past the name column, so only lines at the first entry's
  * exact indentation are commands — reading a wrapped word as one hangs on the interactive menu. */
 function subcommandsOf(help: string): string[] {
+  const entries = commandEntries(help);
+  if (entries.length === 0) return [];
+  const indent = indentOf(entries[0]);
+  return entries
+    .filter((line) => indentOf(line) === indent)
+    .map(commandName)
+    .filter((name): name is string => name !== undefined);
+}
+
+/** The lines of the "Commands:" block, up to its first blank line. */
+function commandEntries(help: string): string[] {
   const lines = help.split("\n");
   const start = lines.findIndex((line) => line.trim() === "Commands:");
   if (start === -1) return [];
-
   const body = lines.slice(start + 1);
-  const first = body.find((line) => line.trim() !== "");
-  if (first === undefined) return [];
-  const indent = indentOf(first);
-
-  const names: string[] = [];
-  for (const line of body) {
-    if (line.trim() === "") break;
-    const name = indent === indentOf(line) ? commandName(line) : undefined;
-    if (name !== undefined) names.push(name);
-  }
-  return names;
+  const end = body.findIndex((line) => line.trim() === "");
+  return end === -1 ? body : body.slice(0, end);
 }
 
 function indentOf(line: string): number {
