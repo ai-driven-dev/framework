@@ -34,16 +34,14 @@ function world(
   const remembered = new RememberedResolutions(
     new Map(options.remembered ? [[resolutionKey(DIR, A), sighting]] : [])
   );
-  const run = new ResolutionRun(
+  const run = new ResolutionRun({
     locator,
-    consents,
-    { caseInsensitiveFileSystem: false, now: () => new Date(CALL) },
-    {
-      remembered,
-      consents: new ConsentLog({ events: options.events ?? [], damaged: options.damaged ?? false }),
-      unreadable: new Set(options.unreadable ?? []),
-    }
-  );
+    consentSource: consents,
+    environment: { caseInsensitiveFileSystem: false, now: () => new Date(CALL) },
+    remembered,
+    consents: new ConsentLog({ events: options.events ?? [], damaged: options.damaged ?? false }),
+    unreadable: new Set(options.unreadable ?? []),
+  });
   return { run, locator, consents };
 }
 

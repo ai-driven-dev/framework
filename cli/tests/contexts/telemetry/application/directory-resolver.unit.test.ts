@@ -13,9 +13,15 @@ function world() {
   const consents = new FakeConsents();
   const resolutions = new InMemoryResolutions();
   const history = new InMemoryConsentHistory();
-  const resolver = new DirectoryResolver(locator, consents, resolutions, history, {
-    caseInsensitiveFileSystem: false,
-    now: () => NOW,
+  const resolver = new DirectoryResolver({
+    locator,
+    consentSource: consents,
+    store: resolutions,
+    history,
+    environment: {
+      caseInsensitiveFileSystem: false,
+      now: () => NOW,
+    },
   });
   return { locator, consents, resolutions, history, resolver };
 }

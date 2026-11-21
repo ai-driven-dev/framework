@@ -9,6 +9,14 @@ import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
 import { type ResolutionEnvironment, ResolutionRun } from "./resolution-run.js";
 
+interface DirectoryResolverDeps {
+  readonly locator: RepositoryLocator;
+  readonly consentSource: ConsentSource;
+  readonly store: ResolutionStore;
+  readonly history: ConsentHistory;
+  readonly environment: ResolutionEnvironment;
+}
+
 /** Decides, for a billed call, whether it is stored: the rule is in the usage contract. The
  * directory it was made in must have been seen alive, in a clone, and that clone must have had
  * an open consent interval at the call's time. A clone is told from another made at the same
@@ -16,27 +24,24 @@ import { type ResolutionEnvironment, ResolutionRun } from "./resolution-run.js";
  * the call: the intervals are the truth, and an interval is closed as soon as anything sees the
  * key stop naming it. */
 export class DirectoryResolver {
-  constructor(
-    private readonly locator: RepositoryLocator,
-    private readonly consentSource: ConsentSource,
-    private readonly store: ResolutionStore,
-    private readonly history: ConsentHistory,
-    private readonly environment: ResolutionEnvironment
-  ) {}
+  constructor(private readonly deps: DirectoryResolverDeps) {}
 
   /** One run, under the ledger's lock: `work` asks it for verdicts, and what it learned is kept
    * once `work` is done. Every open interval is looked at first, so that a clone that stopped
    * consenting, or went, is closed whether or not a call of it is read. */
   async execute<T>(work: (run: ResolutionRun) => Promise<T>): Promise<T> {
-    const remembered = new RememberedResolutions(await this.store.load());
+    const remembered = new RememberedResolutions(await this.deps.store.load());
     const { consents, unreadable } = await this.observeOpenConsents();
-    const run = new ResolutionRun(this.locator, this.consentSource, this.environment, {
+    const run = new ResolutionRun({
+      locator: this.deps.locator,
+      consentSource: this.deps.consentSource,
+      environment: this.deps.environment,
       remembered,
       consents,
       unreadable,
     });
     const done = await work(run);
-    if (run.learned.changed) await this.store.save(run.learned.sightings);
+    if (run.learned.changed) await this.deps.store.save(run.learned.sightings);
     return done;
   }
 
@@ -49,10 +54,10 @@ export class DirectoryResolver {
     consents: ConsentLog;
     unreadable: ReadonlySet<string>;
   }> {
-    let consents = new ConsentLog(await this.history.read());
+    let consents = new ConsentLog(await this.deps.history.read());
     const unreadable = new Set<string>();
     for (const interval of consents.openIntervals()) {
-      const reading = await this.consentSource.readClone(interval.clone);
+      const reading = await this.deps.consentSource.readClone(interval.clone);
       if (reading.kind === "unreadable") {
         unreadable.add(cloneKey(interval.clone));
         continue;
@@ -60,8 +65,8 @@ export class DirectoryResolver {
       if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
       if (!named) {
-        await this.history.append(closeEvent(interval.token, this.environment.now()));
-        consents = new ConsentLog(await this.history.read());
+        await this.deps.history.append(closeEvent(interval.token, this.deps.environment.now()));
+        consents = new ConsentLog(await this.deps.history.read());
       }
     }
     return { consents, unreadable };

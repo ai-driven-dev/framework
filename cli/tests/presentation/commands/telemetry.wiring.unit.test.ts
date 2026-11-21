@@ -41,7 +41,12 @@ const createDeps = vi.fn(async () => ({
     requestReport: new RequestReport({ execute: report }),
     manageIdentity: identity,
     proposeIdentity,
-    chooseIdentity: new ChooseIdentity(identity, proposeIdentity, new CheckIdentity(), prompter),
+    chooseIdentity: new ChooseIdentity({
+      manageIdentity: identity,
+      proposeIdentity,
+      checkIdentity: new CheckIdentity(),
+      prompter,
+    }),
   },
 }));
 

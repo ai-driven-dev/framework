@@ -182,29 +182,39 @@ function machine() {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const snapshots = new SnapshotBindings(
-    new FakeBindings(),
-    new InMemorySnapshots(),
-    new InMemoryBindingsLock(),
-    () => NOW
-  );
-  const ingest = new IngestUsage(
-    [new ReadUsage(transcripts)],
+  const snapshots = new SnapshotBindings({
+    source: new FakeBindings(),
+    store: new InMemorySnapshots(),
+    lock: new InMemoryBindingsLock(),
+    now: () => NOW,
+  });
+  const ingest = new IngestUsage({
+    readers: [new ReadUsage(transcripts)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
-      now: () => NOW,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
     }),
     snapshots,
-    { environment: { get: () => undefined } }
-  );
-  const report = new ReportUsage(
+    options: { environment: { get: () => undefined } },
+  });
+  const report = new ReportUsage({
     ingest,
     ledger,
-    new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots(), new InMemoryIdentity()),
+    declared: new DeclaredBindings(
+      new InMemorySessions(),
+      new InMemorySnapshots(),
+      new InMemoryIdentity()
+    ),
     locator,
-    { get: () => undefined }
-  );
+    environment: { get: () => undefined },
+  });
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   /** Git refuses, or reads again, the clone at `/work/locked`. */
   const lock = (refused: boolean) =>

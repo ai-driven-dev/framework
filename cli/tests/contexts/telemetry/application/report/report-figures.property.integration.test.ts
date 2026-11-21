@@ -274,13 +274,13 @@ async function report(
     execute: async () => ingestResultOf(facts),
   };
   return inZone(zone, async () => {
-    const result = await new ReportUsage(
+    const result = await new ReportUsage({
       ingest,
       ledger,
-      new DeclaredBindings(sessions, new InMemorySnapshots(), identity),
-      new FakeLocator(),
-      { get: () => undefined }
-    ).execute(request);
+      declared: new DeclaredBindings(sessions, new InMemorySnapshots(), identity),
+      locator: new FakeLocator(),
+      environment: { get: () => undefined },
+    }).execute(request);
     const envelope = result.status === "reported" ? reportEnvelopeOf(result) : result;
     return { envelope, figures: figuresOf(envelope) };
   });

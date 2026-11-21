@@ -6,9 +6,15 @@ import { deleted, MAIN, setup, T1, T2, T3 } from "../../testing/telemetry-switch
 
 describe("aidd telemetry off, kept as the end of an interval", () => {
   async function resolvedWhenGone(s: ReturnType<typeof setup>, cwd: string, at: string) {
-    return new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
-      caseInsensitiveFileSystem: false,
-      now: () => s.clock.now,
+    return new DirectoryResolver({
+      locator: s.locator,
+      consentSource: s.consents,
+      store: s.resolutions,
+      history: s.history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => s.clock.now,
+      },
     }).execute(async (run) => run.resolve(cwd, at));
   }
 

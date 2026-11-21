@@ -134,12 +134,12 @@ function wireGit(stores: Stores) {
     branchSource,
     branchStore: new GitBranchBindingStoreAdapter(gitEnv),
     repositories: new ConsentedRepositories(locator, consents, stores.consentHistory),
-    snapshotBindings: new SnapshotBindings(
-      branchSource,
-      stores.snapshotStore,
-      stores.bindingsLock,
-      () => new Date()
-    ),
+    snapshotBindings: new SnapshotBindings({
+      source: branchSource,
+      store: stores.snapshotStore,
+      lock: stores.bindingsLock,
+      now: () => new Date(),
+    }),
   };
 }
 
@@ -162,20 +162,20 @@ function wireDeclaration(stores: Stores, git: Git) {
     now: () => new Date(),
   };
   return {
-    declareTask: new DeclareTask(
-      git.repositories,
-      stores.sessions,
-      declareOnBranch,
-      stores.bindingsLock,
-      declaration
-    ),
-    readTelemetryStatus: new ReadTelemetryStatus(
-      git.repositories,
-      stores.sessions,
-      readCurrentBranch,
-      declaration,
-      stores.identity
-    ),
+    declareTask: new DeclareTask({
+      repositories: git.repositories,
+      sessions: stores.sessions,
+      branches: declareOnBranch,
+      lock: stores.bindingsLock,
+      options: declaration,
+    }),
+    readTelemetryStatus: new ReadTelemetryStatus({
+      repositories: git.repositories,
+      sessions: stores.sessions,
+      branches: readCurrentBranch,
+      options: declaration,
+      identities: stores.identity,
+    }),
   };
 }
 
@@ -188,27 +188,27 @@ function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
       roots: codexSessionRoots(process.env.CODEX_HOME, homedir()),
     }),
   ];
-  const ingestUsage = new IngestUsage(
-    usageSources.map((source) => new ReadUsage(source)),
-    stores.ledger,
-    new DirectoryResolver(
-      git.locator,
-      git.consents,
-      stores.resolutionStore,
-      stores.consentHistory,
-      environment
-    ),
-    git.snapshotBindings,
-    { environment: processEnvironment }
-  );
+  const ingestUsage = new IngestUsage({
+    readers: usageSources.map((source) => new ReadUsage(source)),
+    ledger: stores.ledger,
+    directories: new DirectoryResolver({
+      locator: git.locator,
+      consentSource: git.consents,
+      store: stores.resolutionStore,
+      history: stores.consentHistory,
+      environment,
+    }),
+    snapshots: git.snapshotBindings,
+    options: { environment: processEnvironment },
+  });
   const requestReport = new RequestReport(
-    new ReportUsage(
-      ingestUsage,
-      stores.ledger,
-      new DeclaredBindings(stores.sessions, stores.snapshotStore, stores.identity),
-      git.locator,
-      processEnvironment
-    )
+    new ReportUsage({
+      ingest: ingestUsage,
+      ledger: stores.ledger,
+      declared: new DeclaredBindings(stores.sessions, stores.snapshotStore, stores.identity),
+      locator: git.locator,
+      environment: processEnvironment,
+    })
   );
   return { ingestUsage, requestReport };
 }
@@ -223,12 +223,12 @@ function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
   return {
     manageIdentity,
     proposeIdentity,
-    chooseIdentity: new ChooseIdentity(
+    chooseIdentity: new ChooseIdentity({
       manageIdentity,
       proposeIdentity,
-      new CheckIdentity(),
-      prompter
-    ),
+      checkIdentity: new CheckIdentity(),
+      prompter,
+    }),
   };
 }
 
@@ -240,23 +240,34 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
     readTranscriptRetention: new ReadTranscriptRetention(
       new ClaudeSettingsAdapter(claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir()))
     ),
-    enableTelemetry: new EnableTelemetry(
+    enableTelemetry: new EnableTelemetry({
       locator,
       consents,
-      new GrantConsent(consents, consents, consentHistory, ledger, () => ({
-        token: randomUUID(),
-        at: environment.now(),
-      })),
-      new RememberOwnRoot(ledger, resolutionStore, environment),
-      stores.identity
-    ),
+      grant: new GrantConsent({
+        consents,
+        writer: consents,
+        history: consentHistory,
+        ledger,
+        newInterval: () => ({
+          token: randomUUID(),
+          at: environment.now(),
+        }),
+      }),
+      roots: new RememberOwnRoot(ledger, resolutionStore, environment),
+      identities: stores.identity,
+    }),
     disableTelemetry: new DisableTelemetry(
       locator,
       consents,
-      new WithdrawConsent(consents, consentHistory, ledger, environment.now)
+      new WithdrawConsent({
+        writer: consents,
+        history: consentHistory,
+        ledger,
+        now: environment.now,
+      })
     ),
-    forgetTelemetry: new ForgetTelemetry(
-      new MeasurementErasureAdapter(
+    forgetTelemetry: new ForgetTelemetry({
+      erasure: new MeasurementErasureAdapter(
         stores.root,
         legacyLocations({
           env: process.env,
@@ -265,10 +276,10 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
           telemetryDir: stores.root,
         })
       ),
-      new RepositoryDeclarationsAdapter(gitEnv),
-      new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
-      ledger
-    ),
+      declarations: new RepositoryDeclarationsAdapter(gitEnv),
+      remembered: new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
+      ledger,
+    }),
   };
 }
 

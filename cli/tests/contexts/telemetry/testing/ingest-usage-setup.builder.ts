@@ -89,26 +89,32 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
   const history = new InMemoryConsentHistory();
   const bindings = new FakeBindings();
   const snapshotStore = new InMemorySnapshots();
-  const snapshots = new SnapshotBindings(
-    bindings,
-    snapshotStore,
-    new InMemoryBindingsLock(),
-    () => new Date()
-  );
-  const ingest = new IngestUsage(
-    [
+  const snapshots = new SnapshotBindings({
+    source: bindings,
+    store: snapshotStore,
+    lock: new InMemoryBindingsLock(),
+    now: () => new Date(),
+  });
+  const ingest = new IngestUsage({
+    readers: [
       new ReadUsage(transcripts),
       // Another tool's format: the same lines, its own name on every record.
       new ReadUsage(other),
     ],
     ledger,
-    new DirectoryResolver(locator, consents, resolutions, history, {
-      caseInsensitiveFileSystem: options.caseInsensitive ?? false,
-      now: () => NOW,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: resolutions,
+      history,
+      environment: {
+        caseInsensitiveFileSystem: options.caseInsensitive ?? false,
+        now: () => NOW,
+      },
     }),
     snapshots,
-    { environment: { get: () => (options.refused ? "0" : undefined) } }
-  );
+    options: { environment: { get: () => (options.refused ? "0" : undefined) } },
+  });
   locator.directories.set("/work/a", repository("/work/a"));
   /** The clone at `path` consents: it says so now, and it opted in once. */
   const optIn = (path: string) => {
@@ -118,16 +124,22 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
   optIn(A.path);
   /** The same ingest, with readers that read every transcript whatever its age. */
   const ingestReadingAll = () =>
-    new IngestUsage(
-      [transcripts, other].map((source) => new ReadUsage(source)),
+    new IngestUsage({
+      readers: [transcripts, other].map((source) => new ReadUsage(source)),
       ledger,
-      new DirectoryResolver(locator, consents, resolutions, history, {
-        caseInsensitiveFileSystem: options.caseInsensitive ?? false,
-        now: () => NOW,
+      directories: new DirectoryResolver({
+        locator,
+        consentSource: consents,
+        store: resolutions,
+        history,
+        environment: {
+          caseInsensitiveFileSystem: options.caseInsensitive ?? false,
+          now: () => NOW,
+        },
       }),
       snapshots,
-      { environment: { get: () => undefined } }
-    );
+      options: { environment: { get: () => undefined } },
+    });
   return {
     ingestReadingAll,
     transcripts,

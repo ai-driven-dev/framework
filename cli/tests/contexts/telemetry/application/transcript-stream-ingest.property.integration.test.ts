@@ -127,21 +127,27 @@ function machine(source: UsageSource) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsage(
-    [new ReadUsage(source)],
+  const ingest = new IngestUsage({
+    readers: [new ReadUsage(source)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
       now: () => NOW,
     }),
-    new SnapshotBindings(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      () => NOW
-    ),
-    { environment: { get: () => undefined } }
-  );
+    options: { environment: { get: () => undefined } },
+  });
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   const lock = (refused: boolean) =>
     refused ? consents.unreadableClones.add(locked) : consents.unreadableClones.delete(locked);

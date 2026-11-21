@@ -47,22 +47,31 @@ export interface ResolutionState {
   readonly unreadable: ReadonlySet<string>;
 }
 
+interface ResolutionRunDeps extends ResolutionState {
+  readonly locator: RepositoryLocator;
+  readonly consentSource: ConsentSource;
+  readonly environment: ResolutionEnvironment;
+}
+
+type Owned = Exclude<Directory, { skipped: NotStoredReason }>;
+
 /** The verdicts of one run on the directories a billed call was made in. */
 export class ResolutionRun {
   private readonly directories = new Map<string, Directory>();
   private remembered: RememberedResolutions;
   private readonly consents: ConsentLog;
   private readonly unreadable: ReadonlySet<string>;
+  private readonly locator: RepositoryLocator;
+  private readonly consentSource: ConsentSource;
+  private readonly environment: ResolutionEnvironment;
 
-  constructor(
-    private readonly locator: RepositoryLocator,
-    private readonly consentSource: ConsentSource,
-    private readonly environment: ResolutionEnvironment,
-    state: ResolutionState
-  ) {
-    this.remembered = state.remembered;
-    this.consents = state.consents;
-    this.unreadable = state.unreadable;
+  constructor(deps: ResolutionRunDeps) {
+    this.remembered = deps.remembered;
+    this.consents = deps.consents;
+    this.unreadable = deps.unreadable;
+    this.locator = deps.locator;
+    this.consentSource = deps.consentSource;
+    this.environment = deps.environment;
   }
 
   /** What this run learned about the directories it saw. */
@@ -98,6 +107,10 @@ export class ResolutionRun {
         ? this.unreadableAt(cwd, at)
         : { skipped: directory.skipped };
     }
+    return this.judgeOwner(directory, cwd, at);
+  }
+
+  private async judgeOwner(directory: Owned, cwd: string, at: string): Promise<DirectoryOutcome> {
     const instant = Date.parse(at);
     const owner = ownerAt(directory.owners, instant);
     if (this.unreadable.has(cloneKey(owner.clone))) return this.unreadableAt(cwd, at);

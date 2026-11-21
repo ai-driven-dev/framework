@@ -14,15 +14,17 @@ export interface ChooseIdentityCommand {
   readonly onRefused: () => void;
 }
 
+interface ChooseIdentityDeps {
+  readonly manageIdentity: Pick<ManageIdentity, "execute">;
+  readonly proposeIdentity: Pick<ProposeIdentity, "execute">;
+  readonly checkIdentity: Pick<CheckIdentity, "execute">;
+  readonly prompter: Prompter;
+}
+
 /** Who the clone is measured as: a flag's answer, the identity already set, or the person's
  * answer. Refused when `--yes` leaves none of them. */
 export class ChooseIdentity {
-  constructor(
-    private readonly manageIdentity: Pick<ManageIdentity, "execute">,
-    private readonly proposeIdentity: Pick<ProposeIdentity, "execute">,
-    private readonly checkIdentity: Pick<CheckIdentity, "execute">,
-    private readonly prompter: Prompter
-  ) {}
+  constructor(private readonly deps: ChooseIdentityDeps) {}
 
   async execute({
     cwd,
@@ -33,7 +35,8 @@ export class ChooseIdentity {
   }: ChooseIdentityCommand): Promise<IdentityChoice> {
     if (as !== undefined) return { set: as };
     if (anonymous) return "none";
-    if ((await this.manageIdentity.execute({ action: "show" })).status === "set") return "keep";
+    if ((await this.deps.manageIdentity.execute({ action: "show" })).status === "set")
+      return "keep";
     if (yes) {
       throw new InputRequiredError(
         "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."
@@ -44,8 +47,8 @@ export class ChooseIdentity {
   }
 
   private async ask(cwd: string): Promise<IdentityChoice | "another"> {
-    const proposal = await this.proposeIdentity.execute({ cwd });
-    return this.prompter.select<IdentityChoice | "another">(
+    const proposal = await this.deps.proposeIdentity.execute({ cwd });
+    return this.deps.prompter.select<IdentityChoice | "another">(
       "How should your own measurement name you? The identity stays on this machine.",
       [
         ...(proposal === null
@@ -59,10 +62,10 @@ export class ChooseIdentity {
 
   private async typed(onRefused: () => void): Promise<IdentityChoice> {
     for (;;) {
-      const typed = await this.prompter.input(
+      const typed = await this.deps.prompter.input(
         "Identifier (one non-empty line, at most 128 characters):"
       );
-      if (this.checkIdentity.execute({ typed }).status === "valid") return { set: typed };
+      if (this.deps.checkIdentity.execute({ typed }).status === "valid") return { set: typed };
       onRefused();
     }
   }

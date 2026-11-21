@@ -40,23 +40,23 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
   const lock = new InMemoryBindingsLock(events);
   const source = new FakeBindings();
   const snapshotStore = new InMemorySnapshots(events);
-  const snapshots = new SnapshotBindings(
+  const snapshots = new SnapshotBindings({
     source,
-    snapshotStore,
+    store: snapshotStore,
     lock,
-    () => new Date("2026-10-09T10:00:01.000Z")
-  );
-  const useCase = new DeclareTask(
-    new ConsentedRepositories(locator, consents, history),
+    now: () => new Date("2026-10-09T10:00:01.000Z"),
+  });
+  const useCase = new DeclareTask({
+    repositories: new ConsentedRepositories(locator, consents, history),
     sessions,
-    new DeclareOnBranch(branches, snapshots),
+    branches: new DeclareOnBranch(branches, snapshots),
     lock,
-    {
+    options: {
       environment: { get: () => (options.refusedByEnvironment ? "0" : undefined) },
       sessionId: options.sessionId === undefined ? "sess-1234567890" : options.sessionId,
       now: () => new Date("2026-10-09T10:00:00.000Z"),
-    }
-  );
+    },
+  });
   return {
     useCase,
     locator,

@@ -63,26 +63,32 @@ function machine(sessions: string, projects?: string) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsage(
-    [
+  const ingest = new IngestUsage({
+    readers: [
       new ReadUsage(new CodexTranscriptSourceAdapter({ roots: [sessions] })),
       ...(projects === undefined
         ? []
         : [new ReadUsage(new ClaudeTranscriptSourceAdapter(projects))]),
     ],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
       now: () => NOW,
     }),
-    new SnapshotBindings(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      () => NOW
-    ),
-    { environment: { get: () => undefined } }
-  );
+    options: { environment: { get: () => undefined } },
+  });
   return { dir, ingest };
 }
 

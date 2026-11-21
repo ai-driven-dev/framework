@@ -69,21 +69,27 @@ function setup(options: { refused?: boolean } = {}) {
   const snapshotStore = new InMemorySnapshots(events);
   const sessions = new InMemorySessions(events);
   const identity = new InMemoryIdentity();
-  const ingest = new IngestUsage(
-    [new ReadUsage(transcripts)],
+  const ingest = new IngestUsage({
+    readers: [new ReadUsage(transcripts)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => new Date("2026-10-09T00:00:00.000Z"),
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: bindings,
+      store: snapshotStore,
+      lock: new InMemoryBindingsLock(),
       now: () => new Date("2026-10-09T00:00:00.000Z"),
     }),
-    new SnapshotBindings(
-      bindings,
-      snapshotStore,
-      new InMemoryBindingsLock(),
-      () => new Date("2026-10-09T00:00:00.000Z")
-    ),
-    { environment: { get: () => (options.refused ? "0" : undefined) } }
-  );
+    options: { environment: { get: () => (options.refused ? "0" : undefined) } },
+  });
   locator.directories.set("/work/a", {
     status: "repository",
     root: "/work/a",
@@ -94,13 +100,15 @@ function setup(options: { refused?: boolean } = {}) {
   });
   consents.cloneSays(cloneOf("/work/a/.git"), grantedBy(cloneOf("/work/a/.git")));
   history.consented(cloneOf("/work/a/.git"));
-  const report = new ReportUsage(
+  const report = new ReportUsage({
     ingest,
     ledger,
-    new DeclaredBindings(sessions, snapshotStore, identity),
+    declared: new DeclaredBindings(sessions, snapshotStore, identity),
     locator,
-    { get: (name) => (name === "AIDD_TELEMETRY" && options.refused ? "0" : undefined) }
-  );
+    environment: {
+      get: (name) => (name === "AIDD_TELEMETRY" && options.refused ? "0" : undefined),
+    },
+  });
   return { transcripts, ledger, bindings, sessions, identity, report, events, locator, consents };
 }
 

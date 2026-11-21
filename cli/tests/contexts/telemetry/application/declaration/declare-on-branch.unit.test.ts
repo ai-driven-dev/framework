@@ -27,7 +27,12 @@ function setup(head: string | null) {
   ]);
   const useCase = new DeclareOnBranch(
     store,
-    new SnapshotBindings(source, snapshots, new InMemoryBindingsLock(events), () => new Date())
+    new SnapshotBindings({
+      source,
+      store: snapshots,
+      lock: new InMemoryBindingsLock(events),
+      now: () => new Date(),
+    })
   );
   return { events, store, useCase };
 }

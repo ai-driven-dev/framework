@@ -82,12 +82,12 @@ describe("the bindings lock", () => {
       },
     ]);
     const snapshotter = () =>
-      new SnapshotBindings(
+      new SnapshotBindings({
         source,
-        new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
-        new BindingsLockAdapter(dir, storage),
-        () => new Date("2026-10-09T09:00:00.000Z")
-      );
+        store: new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
+        lock: new BindingsLockAdapter(dir, storage),
+        now: () => new Date("2026-10-09T09:00:00.000Z"),
+      });
     const added = await Promise.all([
       snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),
       snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),

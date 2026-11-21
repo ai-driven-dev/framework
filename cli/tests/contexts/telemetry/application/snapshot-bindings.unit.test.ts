@@ -11,12 +11,12 @@ function setup() {
   const events: string[] = [];
   const source = new FakeBindings(events);
   const store = new InMemorySnapshots(events);
-  const useCase = new SnapshotBindings(
+  const useCase = new SnapshotBindings({
     source,
     store,
-    new InMemoryBindingsLock(events),
-    () => new Date(0)
-  );
+    lock: new InMemoryBindingsLock(events),
+    now: () => new Date(0),
+  });
   const run = () => useCase.execute({ repositoryId: "r", root: ROOT });
   return { source, store, events, run };
 }

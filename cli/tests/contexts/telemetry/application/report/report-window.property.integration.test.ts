@@ -204,24 +204,24 @@ const NOTHING_NEW: IngestUsageResult = {
 /** An ingest that reads no tool, so it finds nothing new: `NOTHING_NEW`. */
 function ingestOf(ledger: UsageLedger): IngestUsage {
   const now = () => new Date("2026-10-09T00:00:00.000Z");
-  return new IngestUsage(
-    [],
+  return new IngestUsage({
+    readers: [],
     ledger,
-    new DirectoryResolver(
-      new FakeLocator(),
-      new FakeConsents(),
-      new InMemoryResolutions(),
-      new InMemoryConsentHistory(),
-      { caseInsensitiveFileSystem: false, now }
-    ),
-    new SnapshotBindings(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      now
-    ),
-    { environment: { get: () => undefined } }
-  );
+    directories: new DirectoryResolver({
+      locator: new FakeLocator(),
+      consentSource: new FakeConsents(),
+      store: new InMemoryResolutions(),
+      history: new InMemoryConsentHistory(),
+      environment: { caseInsensitiveFileSystem: false, now },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
+      now,
+    }),
+    options: { environment: { get: () => undefined } },
+  });
 }
 
 describe("a report on a bounded period", () => {
@@ -239,13 +239,13 @@ describe("a report on a bounded period", () => {
 
         const settled = await ledgerWith(files);
         await settled.leftOut.add(leftOut);
-        const bounded = await new ReportUsage(
-          ingestOf(settled),
-          settled,
+        const bounded = await new ReportUsage({
+          ingest: ingestOf(settled),
+          ledger: settled,
           declared,
-          new FakeLocator(),
-          { get: () => undefined }
-        ).execute({ axis, period, filters });
+          locator: new FakeLocator(),
+          environment: { get: () => undefined },
+        }).execute({ axis, period, filters });
 
         const fullLedger = await ledgerWith(files);
         await fullLedger.leftOut.add(leftOut);

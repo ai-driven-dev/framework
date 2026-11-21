@@ -13,12 +13,12 @@ function chooser(identity: ManageIdentityResult, proposal: string | null = "Ada 
   const input = vi.fn();
   const propose = vi.fn(async () => proposal);
   const manage = vi.fn(async () => identity);
-  const choose = new ChooseIdentity(
-    { execute: manage },
-    { execute: propose },
-    new CheckIdentity(),
-    prompterAnswering({ select, input })
-  );
+  const choose = new ChooseIdentity({
+    manageIdentity: { execute: manage },
+    proposeIdentity: { execute: propose },
+    checkIdentity: new CheckIdentity(),
+    prompter: prompterAnswering({ select, input }),
+  });
   return { choose, select, input, propose, manage };
 }
 

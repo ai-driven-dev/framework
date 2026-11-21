@@ -36,13 +36,13 @@ function setup(
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
   const identities = new InMemoryIdentity();
-  const useCase = new ReadTelemetryStatus(
-    new ConsentedRepositories(locator, consents, history),
+  const useCase = new ReadTelemetryStatus({
+    repositories: new ConsentedRepositories(locator, consents, history),
     sessions,
-    new ReadCurrentBranch(branches, source),
-    { environment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
-    identities
-  );
+    branches: new ReadCurrentBranch(branches, source),
+    options: { environment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
+    identities,
+  });
   return { useCase, locator, consents, history, sessions, branches, source, identities };
 }
 

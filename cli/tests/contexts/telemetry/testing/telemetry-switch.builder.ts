@@ -60,21 +60,27 @@ export function setup() {
       }
     },
   };
-  const grant = new GrantConsent(consents, writer, history, ledger, () => ({
-    token: `tok-${++minted}`,
-    at: clock.now,
-  }));
-  const withdraw = new WithdrawConsent(writer, history, ledger, () => clock.now);
-  const on = new EnableTelemetry(
+  const grant = new GrantConsent({
+    consents,
+    writer,
+    history,
+    ledger,
+    newInterval: () => ({
+      token: `tok-${++minted}`,
+      at: clock.now,
+    }),
+  });
+  const withdraw = new WithdrawConsent({ writer, history, ledger, now: () => clock.now });
+  const on = new EnableTelemetry({
     locator,
     consents,
     grant,
-    new RememberOwnRoot(ledger, resolutions, {
+    roots: new RememberOwnRoot(ledger, resolutions, {
       caseInsensitiveFileSystem: false,
       now: () => clock.now,
     }),
-    identities
-  );
+    identities,
+  });
   const off = new DisableTelemetry(locator, consents, withdraw);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
   return {

@@ -159,9 +159,15 @@ describe("aidd telemetry on", () => {
     ) {
       s.resolutions.resolutions.set(resolutionKey(entry.dir, entry.clone), entry);
       await s.on.execute({ cwd: "/w/repo", choice: "keep" });
-      return new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
-        caseInsensitiveFileSystem: false,
-        now: () => s.clock.now,
+      return new DirectoryResolver({
+        locator: s.locator,
+        consentSource: s.consents,
+        store: s.resolutions,
+        history: s.history,
+        environment: {
+          caseInsensitiveFileSystem: false,
+          now: () => s.clock.now,
+        },
       }).execute(async (run) => run.resolve(entry.dir, at));
     }
 
