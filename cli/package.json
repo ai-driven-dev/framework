@@ -50,7 +50,7 @@
     "test:golden": "vitest run --project=golden",
     "golden:update": "node scripts/golden-update.mjs",
     "test:foreign-clock": "node scripts/test-foreign-clock.mjs",
-    "test:e2e:kilo": "KILO_RUNTIME_SMOKE=1 vitest run --project=e2e tests/e2e/kilo-runtime.e2e.test.ts",
+    "smoke:kilo": "pnpm build && bash scripts/smoke-kilo.sh",
     "test:coverage": "vitest run --coverage",
     "test:kanban": "pnpm --dir ../kanban test",
     "test:watch": "vitest",
