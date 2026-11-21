@@ -68,14 +68,20 @@ interface LayoutPlan extends Omit<Translation, "files" | "sources"> {
   readonly plans: ComponentPlan[];
 }
 
+function compareText(a: string, b: string): number {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
 /** The one translation both sinks call: a plugin's canon, laid out for an install or a build. A
  * layout plans each file as data, and `applyPlan` runs the rules, so a rule is written once. */
 export function translate(dist: PluginDistribution, layout: TranslateLayout): Translation {
   const { plans, ...rest } = planLayout(dist, layout);
-  const files = plans.map(applyPlan);
+  const applied = plans.map(applyPlan);
   const sources = new Map(
-    plans.flatMap(({ source }, at) => (source === "" ? [] : [[files[at].relativePath, source]]))
+    plans.flatMap(({ source }, at) => (source === "" ? [] : [[applied[at].relativePath, source]]))
   );
+  const files = [...applied].sort((a, b) => compareText(a.relativePath, b.relativePath));
   return { ...rest, files, sources };
 }
 
