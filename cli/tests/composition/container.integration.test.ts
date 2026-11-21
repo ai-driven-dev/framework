@@ -11,7 +11,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/cont
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import type { Output } from "../../src/presentation/deps.js";
+import type { Output } from "../../src/orchestration/domain/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/silent-prompter.adapter.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../src/shared/domain/scope.js";

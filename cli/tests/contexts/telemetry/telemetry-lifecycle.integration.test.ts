@@ -17,7 +17,7 @@ import {
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTelemetry } from "../../../src/composition/telemetry.js";
-import type { TelemetryDeps } from "../../../src/presentation/deps.js";
+import type { TelemetryDeps } from "../../../src/orchestration/deps.js";
 import { git } from "../../shared/testing/git-sandbox.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import {

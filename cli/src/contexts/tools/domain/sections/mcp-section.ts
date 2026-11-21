@@ -1,5 +1,6 @@
 import type { ConfigRef } from "../../contract/config-refs.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
+import type { TomlCodec } from "../formats/toml.js";
 import {
   buildTypedMcpFlatConfig,
   mergeTypedMcp,
@@ -15,9 +16,9 @@ export type McpOutputPathCandidates = {
   readonly conflict: () => never;
 };
 
-export type McpConfigParams = {
+/** A TOML file is written through the codec the profile was given. */
+export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: TomlCodec }) & {
   outputPath: string;
-  format: "json" | "toml";
   mergeStrategy?: "user-prime" | "framework-prime" | "none";
   mergeFn?: (existing: string, incoming: string) => string;
   transformContent?: (content: string) => string;
@@ -89,7 +90,7 @@ export class McpConfigPart {
       ? this.#params.transformContent(mcpJson)
       : mcpJson;
     if (this.#params.format === "toml") {
-      return mcpJsonToToml(afterTransform);
+      return mcpJsonToToml(this.#params.toml, afterTransform);
     }
     return afterTransform;
   }

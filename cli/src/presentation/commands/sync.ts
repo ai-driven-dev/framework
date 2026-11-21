@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { Deps, DepsSliceFactory, Output } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,

@@ -1,5 +1,5 @@
+import type { Output } from "../../orchestration/domain/output.js";
 import type { MenuLoop } from "../../orchestration/menu/menu-loop.js";
-import type { Output } from "../deps.js";
 import { printBanner } from "../display/menu-display.js";
 import { failCommand } from "../errors/error-translator.js";
 

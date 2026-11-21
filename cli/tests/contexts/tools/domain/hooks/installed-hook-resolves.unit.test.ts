@@ -4,17 +4,21 @@ import type { AiTool, WithSections } from "../../../../../src/contexts/tools/dom
 import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { buildCopilotMarketplaceContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
 import { translatePlugin } from "../../testing/translate-plugin.builder.js";
+
+const TOML = new SmolTomlCodec();
+const codex = codexProfile(TOML);
 
 /**
  * A hook command pointing at nothing installs clean and does nothing, so the command is read
@@ -115,7 +119,7 @@ const BUILT_BY: ReadonlyArray<
   [claude, buildClaudeContract],
   [cursor, buildCursorContract],
   [copilot, buildCopilotMarketplaceContract],
-  [codex, buildCodexContract],
+  [codex, () => buildCodexContract(TOML)],
 ];
 
 describe("the two ways a plugin gets installed", () => {

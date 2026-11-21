@@ -5,7 +5,7 @@ import type { IngestUsageResult } from "../../contexts/telemetry/application/ing
 import type { ReadTelemetryStatusResult } from "../../contexts/telemetry/application/read-telemetry-status.js";
 import { MAX_IDENTITY_LENGTH } from "../../contexts/telemetry/contract/identity-limit.js";
 import type { NotStoredReason } from "../../contexts/telemetry/contract/repository-resolution.js";
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 /** What a shape the reader did not recognise came to: a call lacking a counter is stored with it
  * unknown, never zero; a line that is no usage line is no call (what is kept of it is said

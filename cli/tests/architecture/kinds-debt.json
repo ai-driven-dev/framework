@@ -26,8 +26,8 @@
     "controllerBuildsError": "the decision moves to the scenario and the translator renders it: A26 for SyncFailedError, A24 for the rest",
     "profile": "the reader names the sections of the tool it reads in its own ports, never the whole profile"
   },
-  "classification": ["src/presentation/deps.ts"],
-  "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
+  "classification": [],
+  "imports": [],
   "mirror": [
     "src/contexts/installation/application/install/content/install-content-section.ts",
     "src/contexts/installation/application/install/install-config.ts",

@@ -18,7 +18,6 @@
   "src/contexts/tools/domain/formats/base64.ts": 1,
   "src/contexts/tools/domain/formats/hooks/declaration.ts": 1,
   "src/contexts/tools/domain/formats/mcp-format.ts": 5,
-  "src/contexts/tools/domain/formats/toml.ts": 2,
   "src/contexts/tools/domain/formats/typed-mcp-merge.ts": 8,
   "src/contexts/tools/domain/hooks/hooks-merge.ts": 4,
   "src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.ts": 6,

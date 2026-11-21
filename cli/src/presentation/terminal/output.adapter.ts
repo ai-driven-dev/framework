@@ -1,4 +1,4 @@
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 export class OutputAdapter implements Output {
   private readonly verbose: boolean;

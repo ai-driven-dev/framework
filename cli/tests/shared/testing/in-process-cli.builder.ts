@@ -4,7 +4,7 @@ import { relative, sep } from "node:path";
 import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
+import type { DepsFactory } from "../../../src/orchestration/deps.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { sandboxedEnv } from "./cli-sandbox.builder.js";
 

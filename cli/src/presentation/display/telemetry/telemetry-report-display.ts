@@ -14,7 +14,7 @@ import {
   type ReportRow,
   type Tally,
 } from "../../../contexts/telemetry/contract/usage-report.js";
-import type { Output } from "../../deps.js";
+import type { Output } from "../../../orchestration/domain/output.js";
 import { count, grouped, leftOutLines } from "../telemetry-display.js";
 
 const SHORT = 8;

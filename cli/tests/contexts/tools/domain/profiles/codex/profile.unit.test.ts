@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PLUGIN_TREE_SOURCES, supported } from "../../../testing/build-artifacts.builder.js";
 import { contractOf, marketplaceSourcesOf } from "../../../testing/profile-tables.builder.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
+
+const codex = codexProfile(new SmolTomlCodec());
 
 describe("codex profile", () => {
   it("declares its directory, tool suffix, signal directory and the one config file it reads", () => {

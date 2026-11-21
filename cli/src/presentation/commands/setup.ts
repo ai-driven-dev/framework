@@ -9,6 +9,8 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 // biome-ignore lint/plugin: filters the catalog's whole profiles to the AI tools active at user scope with a type guard, then reads five members; presentation has no ports/ to name a section in
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import { type PluginInstallMode, SetupFlow } from "../../orchestration/setup/setup-flow.js";
 import {
   agentModelsRequest,
@@ -16,7 +18,6 @@ import {
   selectTools,
 } from "../../orchestration/setup/setup-request.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { DepsSliceFactory, Output } from "../deps.js";
 import {
   printDetectedContext,
   printNextSteps,

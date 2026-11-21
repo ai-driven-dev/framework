@@ -371,7 +371,7 @@ describe("a test file stays small enough to hold in mind", () => {
 });
 
 describe("the driving port names context types only", () => {
-  const port = "src/presentation/deps.ts";
+  const port = "src/orchestration/deps.ts";
   const found = (text: string) => entries(drivingPortViolations({ [port]: text }));
 
   it("reports a value import and an import type of an interior file", () => {
@@ -409,7 +409,7 @@ describe("a contract file is read from outside its context", () => {
         [contract]: "export const C = 1;",
         "src/contexts/a/application/x.use-case.ts": 'import { C } from "../contract/c.model.js";',
         "src/composition/a.ts": 'import { C } from "../contexts/a/contract/c.model.js";',
-        "src/presentation/deps.ts": 'import type { C } from "../contexts/a/contract/c.model.js";',
+        "src/orchestration/deps.ts": 'import type { C } from "../contexts/a/contract/c.model.js";',
       })
     ).toEqual([contract]);
   });

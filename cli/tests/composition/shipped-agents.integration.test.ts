@@ -1,11 +1,13 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { parseToml } from "../../src/contexts/tools/domain/formats/toml.js";
+import { SmolTomlCodec } from "../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
 import { createTestEnv } from "../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
+
+const TOML = new SmolTomlCodec();
 
 const PLUGIN = "aidd-orchestrator";
 const SOURCE_DIR = join(REPOSITORY_ROOT, "plugins", PLUGIN, "agents");
@@ -62,7 +64,7 @@ describe("the shipped agents, built flat for each host", () => {
             ? (({ developer_instructions, ...rest }) => ({
                 ...rest,
                 body: developer_instructions,
-              }))(parseToml(content))
+              }))(TOML.parse(content))
             : { ...parseFrontmatter(content).frontmatter, body: parseFrontmatter(content).body };
         expect(frontmatter, `${host} ${file}`).toStrictEqual({
           description: source.frontmatter.description,

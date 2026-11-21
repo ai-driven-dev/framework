@@ -1,6 +1,6 @@
 import type { Command } from "commander";
+import type { Output } from "../../orchestration/domain/output.js";
 import type { Scope } from "../../shared/domain/scope.js";
-import type { Output } from "../deps.js";
 
 export interface GlobalOptions {
   verbose: boolean;

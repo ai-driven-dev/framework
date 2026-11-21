@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { CommandRunner, DepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,

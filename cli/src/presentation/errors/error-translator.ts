@@ -1,4 +1,4 @@
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 /** Reports the error and ends the process with a failure code. */
 export function failCommand(output: Output, error: unknown): never {

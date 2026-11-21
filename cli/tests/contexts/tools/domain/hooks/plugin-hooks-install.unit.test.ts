@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { flatOf, hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
 import { translatePlugin } from "../../testing/translate-plugin.builder.js";
+
+const codex = codexProfile(new SmolTomlCodec());
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */

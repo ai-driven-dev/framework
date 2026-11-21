@@ -1,5 +1,5 @@
 import type { SelfUpdateResult } from "../../contexts/update/application/self-update.js";
-import type { Output } from "../deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 export function printSelfUpdateResult(output: Output, result: SelfUpdateResult): void {
   switch (result.kind) {

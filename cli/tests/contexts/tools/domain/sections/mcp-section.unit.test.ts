@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+
+const TOML = new SmolTomlCodec();
 
 const sampleMcpJson = JSON.stringify({
   mcpServers: {
@@ -33,7 +36,7 @@ describe("McpConfigPart", () => {
     });
 
     it("converts JSON to TOML when format is toml", () => {
-      const cap = new McpConfigPart({ outputPath: "config.toml", format: "toml" });
+      const cap = new McpConfigPart({ outputPath: "config.toml", format: "toml", toml: TOML });
       const result = cap.transform(sampleMcpJson);
       expect(result).toContain("my-server");
       expect(result).not.toContain('"mcpServers"');
@@ -86,7 +89,7 @@ describe("McpConfigPart", () => {
 
     it("returns false when format differs", () => {
       const a = new McpConfigPart({ outputPath: "config.toml", format: "json" });
-      const b = new McpConfigPart({ outputPath: "config.toml", format: "toml" });
+      const b = new McpConfigPart({ outputPath: "config.toml", format: "toml", toml: TOML });
       expect(a.equals(b)).toBe(false);
     });
   });
@@ -138,7 +141,9 @@ describe("McpSection isFrameworkPrimeJson", () => {
 
   it("refuses a file that is not JSON", () => {
     expect(
-      new McpConfigPart({ ...prime, format: "toml" }).isFrameworkPrimeJson("opencode.json")
+      new McpConfigPart({ ...prime, format: "toml", toml: TOML }).isFrameworkPrimeJson(
+        "opencode.json"
+      )
     ).toBe(false);
   });
 });

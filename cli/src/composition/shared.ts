@@ -6,7 +6,8 @@ import { PluginDistributionReaderAdapter } from "../contexts/installation/infras
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
-import type { FactoryOptions, Output } from "../presentation/deps.js";
+import type { FactoryOptions } from "../orchestration/deps.js";
+import type { Output } from "../orchestration/domain/output.js";
 import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-prompter.adapter.js";
 import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
 import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
