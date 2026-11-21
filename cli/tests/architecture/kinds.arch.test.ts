@@ -228,6 +228,24 @@ describe("a file imports only the kinds its kind allows", () => {
     ).toEqual([]);
   });
 
+  it("passes a model, a profile and a presenter that read an error, and flags a controller", () => {
+    const error = { "src/shared/domain/shared.error.ts": "export class E {}" };
+    const importing = (file: string, up: string) => ({
+      ...error,
+      [file]: `import { E } from "${up}shared/domain/shared.error.js";`,
+    });
+    expect(importsOf(importing("src/contexts/tools/domain/x.model.ts", "../../../"))).toEqual([]);
+    expect(
+      importsOf(importing("src/contexts/tools/domain/profiles/x/x.profile.ts", "../../../../../"))
+    ).toEqual([]);
+    expect(importsOf(importing("src/presentation/presenters/x.presenter.ts", "../../"))).toEqual(
+      []
+    );
+    expect(importsOf(importing("src/presentation/controllers/x.controller.ts", "../../"))).toEqual([
+      "src/presentation/controllers/x.controller.ts -> src/shared/domain/shared.error.ts",
+    ]);
+  });
+
   it("flags a node builtin a model may not use, and passes node:path", () => {
     const files = (builtin: string) => ({
       "src/contexts/a/domain/x.model.ts": `import { f } from "${builtin}";`,
