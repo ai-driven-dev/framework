@@ -1,4 +1,4 @@
-import type { NativePluginCliError } from "../../../../shared/domain/errors.js";
+import type { NativePluginCliError } from "../../../../shared/domain/errors/native-plugin-cli-error.js";
 import { samePathSegment } from "../../../../shared/domain/paths.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import {

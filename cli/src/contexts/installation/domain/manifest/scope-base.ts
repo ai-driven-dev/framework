@@ -1,4 +1,4 @@
-import { UnresolvableUserScopeError } from "../../../../shared/domain/errors.js";
+import { UnresolvableUserScopeError } from "../../../../shared/domain/errors/unresolvable-user-scope-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 

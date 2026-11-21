@@ -7,7 +7,7 @@ import type {
 } from "../../../src/contexts/tools/contract/tool-profile.js";
 import type { BuiltToolConfig } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../src/contexts/tools/domain/profile.js";
-import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
+import { UnregisteredToolError } from "../../../src/shared/domain/errors/unregistered-tool-error.js";
 import type { AiToolId, ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";
 import {
   TOOL as REGISTERED_TOOL_IDS,

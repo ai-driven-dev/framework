@@ -1,12 +1,10 @@
 import type { IncomingMessage } from "node:http";
 import * as http from "node:http";
 import * as https from "node:https";
-import {
-  AuthenticationError,
-  HttpError,
-  HttpNotFoundError,
-  HttpRedirectError,
-} from "../domain/errors.js";
+import { AuthenticationError } from "../domain/errors/authentication-error.js";
+import { HttpError } from "../domain/errors/http-error.js";
+import { HttpNotFoundError } from "../domain/errors/http-not-found-error.js";
+import { HttpRedirectError } from "../domain/errors/http-redirect-error.js";
 import type { HttpGet, HttpGetOptions, HttpResponse } from "../ports/http-get.js";
 
 function collectBuffer(response: IncomingMessage): Promise<Buffer> {

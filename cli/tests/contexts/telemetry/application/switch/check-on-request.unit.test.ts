@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { CheckIdentity } from "../../../../../src/contexts/telemetry/application/identity/check-identity.js";
 import { CheckOnRequest } from "../../../../../src/contexts/telemetry/application/switch/check-on-request.js";
-import {
-  ConflictingIdentityFlagsError,
-  InputRequiredError,
-  InvalidIdentityError,
-} from "../../../../../src/shared/domain/errors.js";
+import { ConflictingIdentityFlagsError } from "../../../../../src/shared/domain/errors/conflicting-identity-flags-error.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors/input-required-error.js";
+import { InvalidIdentityError } from "../../../../../src/shared/domain/errors/invalid-identity-error.js";
 
 const check = new CheckOnRequest(new CheckIdentity());
 const GIVEN = { yes: true, anonymous: false, interactive: true };

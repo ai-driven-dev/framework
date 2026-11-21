@@ -1,5 +1,5 @@
 import { dirname, join, posix } from "node:path";
-import { FileHash } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";

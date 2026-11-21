@@ -9,11 +9,9 @@ import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/conf
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
-import {
-  InteractiveOnlyError,
-  InvalidPluginScopeError,
-  TrustDeniedError,
-} from "../../../src/shared/domain/errors.js";
+import { InteractiveOnlyError } from "../../../src/shared/domain/errors/interactive-only-error.js";
+import { InvalidPluginScopeError } from "../../../src/shared/domain/errors/invalid-plugin-scope-error.js";
+import { TrustDeniedError } from "../../../src/shared/domain/errors/trust-denied-error.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

@@ -1,4 +1,4 @@
-import { InvalidPluginScopeError } from "../../../shared/domain/errors.js";
+import { InvalidPluginScopeError } from "../../../shared/domain/errors/invalid-plugin-scope-error.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 

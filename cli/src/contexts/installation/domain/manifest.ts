@@ -1,5 +1,7 @@
-import { InvalidManifestDataError, ToolNotInManifestError } from "../../../shared/domain/errors.js";
-import type { FileHash, InstallationFile } from "../../../shared/domain/file.js";
+import { InvalidManifestDataError } from "../../../shared/domain/errors/invalid-manifest-data-error.js";
+import { ToolNotInManifestError } from "../../../shared/domain/errors/tool-not-in-manifest-error.js";
+import type { FileHash } from "../../../shared/domain/file-hash.js";
+import type { InstallationFile } from "../../../shared/domain/installation-file.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";

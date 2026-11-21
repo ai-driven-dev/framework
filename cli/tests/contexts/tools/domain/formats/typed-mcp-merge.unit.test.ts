@@ -4,7 +4,7 @@ import {
   mergeTypedMcp,
   unmergeTypedMcp,
 } from "../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 
 const LOCAL_SERVER = { type: "local", command: ["node", "server.js"], enabled: true };
 const REMOTE_SERVER = { type: "remote", url: "https://example.com/mcp", enabled: true };

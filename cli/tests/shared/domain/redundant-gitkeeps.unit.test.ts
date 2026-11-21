@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ManifestValidationError } from "../../../src/shared/domain/errors.js";
-import {
-  FileHash,
-  InstallationFile,
-  removeRedundantGitkeeps,
-} from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
+import { removeRedundantGitkeeps } from "../../../src/shared/domain/redundant-gitkeeps.js";
 
 const HASH = new FileHash("d41d8cd98f00b204e9800998ecf8427e");
 
@@ -15,20 +12,6 @@ function file(relativePath: string): InstallationFile {
 function pathsOf(files: readonly InstallationFile[]): string[] {
   return files.map((f) => f.relativePath);
 }
-
-describe("FileHash", () => {
-  it("names the value it refused and the shape it wanted", () => {
-    expect(() => new FileHash("abc")).toThrow(
-      new ManifestValidationError('Invalid MD5 hash: "abc". Expected 32 lowercase hex characters.')
-    );
-  });
-});
-
-describe("InstallationFile", () => {
-  it("defaults to no merge strategy", () => {
-    expect(file("a.md").mergeStrategy).toBe("none");
-  });
-});
 
 describe("removeRedundantGitkeeps", () => {
   it("drops a .gitkeep from a directory that holds another file", () => {

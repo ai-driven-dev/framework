@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FindMarketplaceToRemove } from "../../../../../src/contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import { MarketplaceNotFoundError } from "../../../../../src/shared/domain/errors/marketplace-not-found-error.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
 

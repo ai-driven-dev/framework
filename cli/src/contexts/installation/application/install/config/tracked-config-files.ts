@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { FileHash, InstallationFile } from "../../../../../shared/domain/file.js";
+import { FileHash } from "../../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import {
   extractMergeEntries,
   type MergeFileEntry,

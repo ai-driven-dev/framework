@@ -1,4 +1,5 @@
-import { type FileHash, InstallationFile } from "../../../../shared/domain/file.js";
+import type { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

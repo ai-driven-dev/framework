@@ -1,7 +1,5 @@
-import {
-  NativePluginCliError,
-  UnreadableBuiltCatalogError,
-} from "../../../../shared/domain/errors.js";
+import { NativePluginCliError } from "../../../../shared/domain/errors/native-plugin-cli-error.js";
+import { UnreadableBuiltCatalogError } from "../../../../shared/domain/errors/unreadable-built-catalog-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

@@ -5,11 +5,9 @@ import {
   Marketplace,
   type MarketplaceData,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import {
-  InvalidMarketplaceNameError,
-  InvalidMarketplaceScopeError,
-  InvalidPluginSourceError,
-} from "../../../../src/shared/domain/errors.js";
+import { InvalidMarketplaceNameError } from "../../../../src/shared/domain/errors/invalid-marketplace-name-error.js";
+import { InvalidMarketplaceScopeError } from "../../../../src/shared/domain/errors/invalid-marketplace-scope-error.js";
+import { InvalidPluginSourceError } from "../../../../src/shared/domain/errors/invalid-plugin-source-error.js";
 
 const makeData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome-plugins",

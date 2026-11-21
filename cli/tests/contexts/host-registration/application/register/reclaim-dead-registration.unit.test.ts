@@ -4,7 +4,7 @@ import { reclaimOrReport } from "../../../../../src/contexts/host-registration/a
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { NativePluginCliError } from "../../../../../src/shared/domain/errors.js";
+import { NativePluginCliError } from "../../../../../src/shared/domain/errors/native-plugin-cli-error.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,

@@ -8,10 +8,8 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
-import {
-  JsonSchemaValidationError,
-  MarketplaceOutDirNotEmptyError,
-} from "../../../../../src/shared/domain/errors.js";
+import { JsonSchemaValidationError } from "../../../../../src/shared/domain/errors/json-schema-validation-error.js";
+import { MarketplaceOutDirNotEmptyError } from "../../../../../src/shared/domain/errors/marketplace-out-dir-not-empty-error.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { failCommand } from "../../../src/presentation/errors/error-translator.js";
-import { AuthenticationError, InputRequiredError } from "../../../src/shared/domain/errors.js";
+import { AuthenticationError } from "../../../src/shared/domain/errors/authentication-error.js";
+import { InputRequiredError } from "../../../src/shared/domain/errors/input-required-error.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
 /**

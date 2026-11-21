@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { DuplicatePluginError } from "../../../../../src/shared/domain/errors.js";
+import { DuplicatePluginError } from "../../../../../src/shared/domain/errors/duplicate-plugin-error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildInstallationDeps,

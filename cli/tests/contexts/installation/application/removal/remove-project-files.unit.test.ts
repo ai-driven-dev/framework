@@ -4,7 +4,7 @@ import { RemoveProjectFiles } from "../../../../../src/contexts/installation/app
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";

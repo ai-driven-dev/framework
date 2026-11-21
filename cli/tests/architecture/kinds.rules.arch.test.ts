@@ -80,13 +80,26 @@ describe("an error class is thrown", () => {
     ).toEqual([`${catalog} :: GhostError`]);
   });
 
+  it("gives every error a kebab-case code no other error carries", () => {
+    const codes = Object.entries(src())
+      .filter(([path]) => path.startsWith("src/shared/domain/errors/"))
+      .flatMap(([, text]) => [
+        ...[...text.matchAll(/readonly code = "([^"]+)"/g)].map((match) => match[1] ?? ""),
+        ...[...(/type \w+Code = ([^;]+);/.exec(text)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
+          (match) => match[1] ?? ""
+        ),
+      ]);
+    expect(codes.length).toBeGreaterThan(0);
+    expect(codes.filter((code) => !/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(code))).toEqual([]);
+    expect(codes.filter((code, index) => codes.indexOf(code) !== index)).toEqual([]);
+  });
+
   it("holds the catalog of the tree", () => {
     const files = src();
-    const declaring = [
-      "src/shared/domain/errors.ts",
-      ...Object.keys(files).filter((path) => path.endsWith(".error.ts")),
-    ];
-    expect(files[declaring[0] ?? ""], "the catalog moved").toBeDefined();
+    const declaring = Object.keys(files).filter(
+      (path) => path.startsWith("src/shared/domain/errors/") || path.endsWith(".error.ts")
+    );
+    expect(declaring.length, "the catalog moved").toBeGreaterThan(0);
     expectUpToDebt(errorViolations(files, declaring), "thrown");
   });
 });

@@ -1,4 +1,5 @@
-import { InputRequiredError, ToolNotInstalledError } from "../../../shared/domain/errors.js";
+import { InputRequiredError } from "../../../shared/domain/errors/input-required-error.js";
+import { ToolNotInstalledError } from "../../../shared/domain/errors/tool-not-installed-error.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";

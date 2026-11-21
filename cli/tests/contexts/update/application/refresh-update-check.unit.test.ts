@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
+import { FrameworkResolutionError } from "../../../../src/shared/domain/errors/framework-resolution-error.js";
 import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.fake.js";
 import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
 import { aRefreshUpdateCheck } from "../testing/update.builder.js";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PlanPluginInstall } from "../../../../../src/contexts/installation/application/plugin/plan-plugin-install.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InvalidPluginScopeError } from "../../../../../src/shared/domain/errors.js";
+import { InvalidPluginScopeError } from "../../../../../src/shared/domain/errors/invalid-plugin-scope-error.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { present } from "../../../../shared/testing/present.builder.js";
 import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";

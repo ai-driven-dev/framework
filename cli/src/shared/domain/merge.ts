@@ -1,5 +1,5 @@
-import { JsonParseError } from "./errors.js";
-import { FileHash } from "./file.js";
+import { JsonParseError } from "./errors/json-parse-error.js";
+import { FileHash } from "./file-hash.js";
 import { isErrnoException } from "./reading/json-file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
 import { asPlainObject } from "./reading/plain-object.js";

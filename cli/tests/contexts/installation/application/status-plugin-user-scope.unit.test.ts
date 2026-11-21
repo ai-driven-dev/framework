@@ -5,7 +5,7 @@ import { DetectPluginDrift } from "../../../../src/contexts/installation/applica
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../testing/manifest.builder.js";

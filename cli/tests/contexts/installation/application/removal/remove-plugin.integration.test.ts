@@ -6,8 +6,8 @@ import {
   InstalledPlugin,
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { PluginNotFoundError } from "../../../../../src/shared/domain/errors/plugin-not-found-error.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";

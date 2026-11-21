@@ -1,5 +1,5 @@
 import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
-import type { GlobalExecutionError } from "../../shared/domain/errors.js";
+import type { GlobalExecutionError } from "../../shared/domain/errors/global-execution-error.js";
 import type { RunDoctor } from "../doctor/run-doctor.js";
 
 export interface DoctorAllResult {

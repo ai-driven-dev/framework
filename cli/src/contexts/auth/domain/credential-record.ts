@@ -1,4 +1,4 @@
-import { AuthenticationError } from "../../../shared/domain/errors.js";
+import { AuthenticationError } from "../../../shared/domain/errors/authentication-error.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { AuthLevel, AuthMethod, Credential } from "../contract/credential.js";
 

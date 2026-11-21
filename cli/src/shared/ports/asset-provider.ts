@@ -1,4 +1,4 @@
-import type { ConfigAsset, SchemaName } from "../domain/file.js";
+import type { ConfigAsset, SchemaName } from "../domain/tool.js";
 
 export interface AssetProvider {
   loadConfigAsset(toolId: string, fileName: string): ConfigAsset;

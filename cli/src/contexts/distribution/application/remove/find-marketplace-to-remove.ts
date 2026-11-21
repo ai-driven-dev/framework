@@ -1,7 +1,5 @@
-import {
-  InvalidMarketplaceNameError,
-  MarketplaceNotFoundError,
-} from "../../../../shared/domain/errors.js";
+import { InvalidMarketplaceNameError } from "../../../../shared/domain/errors/invalid-marketplace-name-error.js";
+import { MarketplaceNotFoundError } from "../../../../shared/domain/errors/marketplace-not-found-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
 import type { RemovableMarketplace } from "../../contract/marketplace-removal.js";

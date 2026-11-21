@@ -1,4 +1,4 @@
-import type { FileHash } from "../../../shared/domain/file.js";
+import type { FileHash } from "../../../shared/domain/file-hash.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../shared/domain/merge.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";

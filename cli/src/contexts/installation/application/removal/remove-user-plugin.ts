@@ -1,7 +1,5 @@
-import {
-  ActiveMachineDependentsError,
-  PluginNotFoundError,
-} from "../../../../shared/domain/errors.js";
+import { ActiveMachineDependentsError } from "../../../../shared/domain/errors/active-machine-dependents-error.js";
+import { PluginNotFoundError } from "../../../../shared/domain/errors/plugin-not-found-error.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";

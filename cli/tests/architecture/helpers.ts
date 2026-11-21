@@ -153,7 +153,7 @@ export function expectRatchet(
 
 /**
  * The subset of glob syntax this suite declares: a literal prefix, `/**\/` for any number of
- * directories *including none* — `src/shared/**\/*.ts` must match `src/shared/errors.ts` too,
+ * directories *including none* — `src/shared/domain/**\/*.ts` must match `src/shared/domain/tool.ts` too,
  * or a scope silently covers only its subdirectories — and `*` within one segment.
  */
 export function matchesGlob(glob: string, path: string): boolean {

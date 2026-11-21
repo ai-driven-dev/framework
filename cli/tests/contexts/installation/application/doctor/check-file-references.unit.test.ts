@@ -3,7 +3,8 @@ import { CheckFileReferences } from "../../../../../src/contexts/installation/ap
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";

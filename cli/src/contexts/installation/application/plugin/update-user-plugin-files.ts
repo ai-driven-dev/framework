@@ -1,4 +1,4 @@
-import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
+import { PluginNotFoundError } from "../../../../shared/domain/errors/plugin-not-found-error.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";

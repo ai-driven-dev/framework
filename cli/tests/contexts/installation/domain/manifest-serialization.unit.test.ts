@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseManifestTools } from "../../../../src/contexts/installation/domain/manifest-serialization.js";
-import {
-  InvalidManifestDataError,
-  InvalidManifestToolIdError,
-} from "../../../../src/shared/domain/errors.js";
+import { InvalidManifestDataError } from "../../../../src/shared/domain/errors/invalid-manifest-data-error.js";
+import { InvalidManifestToolIdError } from "../../../../src/shared/domain/errors/invalid-manifest-tool-id-error.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("parseManifestTools — the tools section of a manifest document", () => {

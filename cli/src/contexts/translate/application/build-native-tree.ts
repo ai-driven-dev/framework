@@ -1,9 +1,7 @@
 import { join, resolve } from "node:path";
 import { describeError } from "../../../shared/domain/describe-error.js";
-import {
-  InvalidBuildPathsError,
-  InvalidSourceMarketplaceError,
-} from "../../../shared/domain/errors.js";
+import { InvalidBuildPathsError } from "../../../shared/domain/errors/invalid-build-paths-error.js";
+import { InvalidSourceMarketplaceError } from "../../../shared/domain/errors/invalid-source-marketplace-error.js";
 import { pathsOverlap } from "../../../shared/domain/paths.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";

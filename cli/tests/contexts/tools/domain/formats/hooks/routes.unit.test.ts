@@ -14,7 +14,7 @@ import {
   pluginTreeHooksArtifact,
   projectHooksSupport,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/routes.js";
-import { CapabilityConfigError } from "../../../../../../src/shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../../../src/shared/domain/errors/capability-config-error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const SOURCE = { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" };

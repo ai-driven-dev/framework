@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { ProjectScopeUnsupportedError } from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { ProjectScopeUnsupportedError } from "../../../../shared/domain/errors/project-scope-unsupported-error.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { Scope } from "../../../../shared/domain/scope.js";

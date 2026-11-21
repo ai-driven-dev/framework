@@ -5,7 +5,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";

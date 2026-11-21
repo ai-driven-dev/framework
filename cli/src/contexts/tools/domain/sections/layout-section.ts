@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type {
   MarketplaceSettings,

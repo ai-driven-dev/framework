@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 

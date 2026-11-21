@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import {
   extractMergeEntries,
   hashJsonEntries,

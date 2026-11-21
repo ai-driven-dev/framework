@@ -2,7 +2,7 @@ import { isAbsolute } from "node:path";
 import {
   type HooksInvariant,
   InvalidHooksDescriptorError,
-} from "../../../../../shared/domain/errors.js";
+} from "../../../../../shared/domain/errors/invalid-hooks-descriptor-error.js";
 import {
   CANONICAL_HOOK_EVENTS,
   type CanonicalHookEvent,

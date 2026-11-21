@@ -1,4 +1,4 @@
-import { SyncFailedError } from "../../shared/domain/errors.js";
+import { SyncFailedError } from "../../shared/domain/errors/sync-failed-error.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { CLIOutput } from "../output.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";

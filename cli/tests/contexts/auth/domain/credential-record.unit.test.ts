@@ -8,7 +8,7 @@ import {
   removalHint,
   storedTokenOf,
 } from "../../../../src/contexts/auth/domain/credential-record.js";
-import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
+import { AuthenticationError } from "../../../../src/shared/domain/errors/authentication-error.js";
 import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
 
 describe("parsing a stored record", () => {

@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { FileHash } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";

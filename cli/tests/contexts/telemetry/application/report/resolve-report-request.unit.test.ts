@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ResolveReportRequest } from "../../../../../src/contexts/telemetry/application/report/resolve-report-request.js";
-import { InvalidReportPeriodError } from "../../../../../src/shared/domain/errors.js";
+import { InvalidReportPeriodError } from "../../../../../src/shared/domain/errors/invalid-report-period-error.js";
 
 const resolve = new ResolveReportRequest(() => new Date("2026-10-09T12:00:00.000Z"));
 const BASE = { axis: "day", filters: {}, cwd: "/work/a" } as const;

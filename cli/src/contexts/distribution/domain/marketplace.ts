@@ -1,7 +1,5 @@
-import {
-  InvalidMarketplaceNameError,
-  InvalidMarketplaceScopeError,
-} from "../../../shared/domain/errors.js";
+import { InvalidMarketplaceNameError } from "../../../shared/domain/errors/invalid-marketplace-name-error.js";
+import { InvalidMarketplaceScopeError } from "../../../shared/domain/errors/invalid-marketplace-scope-error.js";
 import { isScope, type Scope } from "../../../shared/domain/scope.js";
 import {
   type PluginSource,

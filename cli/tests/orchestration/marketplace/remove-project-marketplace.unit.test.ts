@@ -6,11 +6,9 @@ import { RemoveProjectPlugin } from "../../../src/contexts/installation/applicat
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
-import {
-  InvalidMarketplaceNameError,
-  MarketplaceNotFoundError,
-} from "../../../src/shared/domain/errors.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { InvalidMarketplaceNameError } from "../../../src/shared/domain/errors/invalid-marketplace-name-error.js";
+import { MarketplaceNotFoundError } from "../../../src/shared/domain/errors/marketplace-not-found-error.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

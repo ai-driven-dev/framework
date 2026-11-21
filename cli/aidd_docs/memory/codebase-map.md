@@ -159,6 +159,7 @@ src/
 │   └── terminal/
 └── shared/    # what two or more contexts need
     ├── domain/    # the vocabulary
+    │   ├── errors/
     │   ├── layout/
     │   ├── materialization/
     │   ├── plugin/

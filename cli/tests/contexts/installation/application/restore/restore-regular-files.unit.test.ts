@@ -1,8 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { restoreRegularFiles } from "../../../../../src/contexts/installation/application/restore/restore-regular-files.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors/input-required-error.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { buildInstallationDeps } from "../../../../shared/testing/installation-deps.builder.js";
 import {
   KeepPrompter,

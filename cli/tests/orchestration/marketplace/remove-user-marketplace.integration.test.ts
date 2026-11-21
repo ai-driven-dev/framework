@@ -11,7 +11,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import {
   REWRITTEN_BINARY,

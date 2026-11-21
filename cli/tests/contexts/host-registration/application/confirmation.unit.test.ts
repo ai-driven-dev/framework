@@ -3,7 +3,7 @@ import {
   bestEffortNativeCall,
   skippedWarning,
 } from "../../../../src/contexts/host-registration/application/confirmation.js";
-import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
+import { NativePluginCliError } from "../../../../src/shared/domain/errors/native-plugin-cli-error.js";
 
 const refused = (): never => {
   throw new NativePluginCliError("exit 1");

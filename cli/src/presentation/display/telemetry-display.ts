@@ -4,7 +4,7 @@ import type { ManageIdentityResult } from "../../contexts/telemetry/application/
 import type { IngestUsageResult } from "../../contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatusResult } from "../../contexts/telemetry/application/read-telemetry-status.js";
 import type { NotStoredReason } from "../../contexts/telemetry/contract/repository-resolution.js";
-import { IDENTITY_RULE } from "../../shared/domain/errors.js";
+import { IDENTITY_RULE } from "../../shared/domain/errors/invalid-identity-error.js";
 import type { CLIOutput } from "../output.js";
 
 /** What a shape the reader did not recognise came to: a call lacking a counter is stored with it

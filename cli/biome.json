@@ -5903,12 +5903,7 @@
       }
     },
     {
-      "includes": [
-        "src/**",
-        "!src/presentation/terminal/prompter-adapter.ts",
-        "!src/shared/domain/errors.ts",
-        "!src/shared/domain/file.ts"
-      ],
+      "includes": ["src/**", "!src/presentation/terminal/prompter-adapter.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -5923,7 +5918,7 @@
       }
     },
     {
-      "includes": ["src/**", "!src/shared/domain/errors.ts"],
+      "includes": ["src/**"],
       "linter": {
         "rules": {
           "style": {

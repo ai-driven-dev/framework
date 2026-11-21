@@ -6,11 +6,9 @@ import {
   type McpDigestMap,
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../../../../../src/shared/domain/errors.js";
+import { InvalidPluginNameError } from "../../../../../src/shared/domain/errors/invalid-plugin-name-error.js";
+import { InvalidPluginVersionError } from "../../../../../src/shared/domain/errors/invalid-plugin-version-error.js";
+import { MalformedPluginScopeError } from "../../../../../src/shared/domain/errors/malformed-plugin-scope-error.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 

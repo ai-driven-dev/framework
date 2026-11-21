@@ -107,7 +107,6 @@
     "cognitive complexity :: src/presentation/commands/setup.ts",
     "cognitive complexity :: src/presentation/display/telemetry-display.ts",
     "cognitive complexity :: src/presentation/display/telemetry/telemetry-report-display.ts",
-    "file length :: src/shared/domain/errors.ts",
     "function length :: src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
     "function length :: src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
     "function length :: src/contexts/installation/application/plugin/update-user-plugin-files.ts",
@@ -163,9 +162,7 @@
     "function parameters :: src/presentation/commands/tool-config.ts",
     "function parameters :: src/presentation/display/doctor-display.ts",
     "function parameters :: src/presentation/display/tool-config-display.ts",
-    "one class per file :: src/presentation/terminal/prompter-adapter.ts",
-    "one class per file :: src/shared/domain/errors.ts",
-    "one class per file :: src/shared/domain/file.ts"
+    "one class per file :: src/presentation/terminal/prompter-adapter.ts"
   ],
   "toolNames": [
     "src/orchestration/setup/tool-recommendations.ts: 4",

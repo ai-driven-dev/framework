@@ -1,4 +1,4 @@
-import { InputRequiredError } from "../../../../shared/domain/errors.js";
+import { InputRequiredError } from "../../../../shared/domain/errors/input-required-error.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 
 interface ResolveRestoreDecisionCommand {

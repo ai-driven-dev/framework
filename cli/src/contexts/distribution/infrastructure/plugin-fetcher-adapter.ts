@@ -2,7 +2,7 @@ import { execFile as execFileCb } from "node:child_process";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { simpleGit } from "simple-git";
-import { PluginFetchError } from "../../../shared/domain/errors.js";
+import { PluginFetchError } from "../../../shared/domain/errors/plugin-fetch-error.js";
 import type {
   PluginSource,
   PluginSourceGitHub,

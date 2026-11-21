@@ -1,9 +1,7 @@
-import {
-  DuplicatePluginError,
-  MissingPluginMetadataError,
-  ToolNotInManifestError,
-  VersionMismatchError,
-} from "../../../../shared/domain/errors.js";
+import { DuplicatePluginError } from "../../../../shared/domain/errors/duplicate-plugin-error.js";
+import { MissingPluginMetadataError } from "../../../../shared/domain/errors/missing-plugin-metadata-error.js";
+import { ToolNotInManifestError } from "../../../../shared/domain/errors/tool-not-in-manifest-error.js";
+import { VersionMismatchError } from "../../../../shared/domain/errors/version-mismatch-error.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";

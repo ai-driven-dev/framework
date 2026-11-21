@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { answeredRegistry } from "../../../src/contexts/host-registration/domain/reading/host-registration-answers.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";

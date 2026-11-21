@@ -4,7 +4,7 @@ import {
   askWhichMatch,
   type WhichMatchQuestion,
 } from "../../../src/orchestration/setup/plugin-questions.js";
-import { AmbiguousPluginMatchError } from "../../../src/shared/domain/errors.js";
+import { AmbiguousPluginMatchError } from "../../../src/shared/domain/errors/ambiguous-plugin-match-error.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 

@@ -1,6 +1,6 @@
 import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../../shared/domain/source.js";

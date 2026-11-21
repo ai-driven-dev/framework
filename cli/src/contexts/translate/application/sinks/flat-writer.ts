@@ -1,10 +1,8 @@
 import { basename, dirname, join, relative } from "node:path";
 import { describeError } from "../../../../shared/domain/describe-error.js";
-import {
-  FlatMergeTargetNotJsonError,
-  FlatTargetExistsError,
-  McpConfigError,
-} from "../../../../shared/domain/errors.js";
+import { FlatMergeTargetNotJsonError } from "../../../../shared/domain/errors/flat-merge-target-not-json-error.js";
+import { FlatTargetExistsError } from "../../../../shared/domain/errors/flat-target-exists-error.js";
+import { McpConfigError } from "../../../../shared/domain/errors/mcp-config-error.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { flatMcpKeyPrefix } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";

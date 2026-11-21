@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { SyncFailedError, UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
+import { SyncFailedError } from "../../shared/domain/errors/sync-failed-error.js";
+import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors/user-scope-filter-unsupported-error.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,

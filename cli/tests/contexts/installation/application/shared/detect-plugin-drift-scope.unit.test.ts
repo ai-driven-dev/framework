@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 

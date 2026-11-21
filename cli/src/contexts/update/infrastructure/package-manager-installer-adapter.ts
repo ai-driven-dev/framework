@@ -1,9 +1,7 @@
 import { execSync } from "node:child_process";
-import {
-  ElevatedPermissionUpdateError,
-  PackageManagerDetectionError,
-  UpdateError,
-} from "../../../shared/domain/errors.js";
+import { ElevatedPermissionUpdateError } from "../../../shared/domain/errors/elevated-permission-update-error.js";
+import { PackageManagerDetectionError } from "../../../shared/domain/errors/package-manager-detection-error.js";
+import { UpdateError } from "../../../shared/domain/errors/update-error.js";
 import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 

@@ -6,7 +6,8 @@ import {
   toTrackedFiles,
   withUpdatedHash,
 } from "../../../../../src/contexts/installation/domain/manifest/tracked-files.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 
 const HASH_A = new FileHash("a".repeat(32));
 const HASH_B = new FileHash("b".repeat(32));

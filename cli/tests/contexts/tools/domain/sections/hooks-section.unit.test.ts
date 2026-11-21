@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
-import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../../src/shared/domain/errors/capability-config-error.js";
 
 describe("HooksConfigPart", () => {
   const params = { outputPath: ".codex/hooks.json" };

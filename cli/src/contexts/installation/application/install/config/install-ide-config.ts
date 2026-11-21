@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { IdeToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";

@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
+import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors/user-scope-filter-unsupported-error.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {

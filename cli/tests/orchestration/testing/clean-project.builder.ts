@@ -5,7 +5,8 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.js";
-import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";

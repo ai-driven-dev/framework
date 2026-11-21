@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 
 const TOOL_SUFFIX = /^\.[a-z]+\.md$/;
 

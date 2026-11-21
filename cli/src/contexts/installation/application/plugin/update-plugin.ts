@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { InvalidPluginScopeError } from "../../../../shared/domain/errors.js";
+import { InvalidPluginScopeError } from "../../../../shared/domain/errors/invalid-plugin-scope-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";

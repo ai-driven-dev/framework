@@ -3,12 +3,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { PluginTreeSink } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
-import {
-  FrameworkPlaceholderInPluginError,
-  InvalidBuildPathsError,
-  InvalidSourceMarketplaceError,
-  JsonSchemaValidationError,
-} from "../../../../src/shared/domain/errors.js";
+import { FrameworkPlaceholderInPluginError } from "../../../../src/shared/domain/errors/framework-placeholder-in-plugin-error.js";
+import { InvalidBuildPathsError } from "../../../../src/shared/domain/errors/invalid-build-paths-error.js";
+import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/errors/invalid-source-marketplace-error.js";
+import { JsonSchemaValidationError } from "../../../../src/shared/domain/errors/json-schema-validation-error.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

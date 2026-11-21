@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

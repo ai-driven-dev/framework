@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ResolvePluginSource } from "../../../../../src/contexts/distribution/application/plugin-source/resolve-plugin-source.js";
 import type { PluginCatalog } from "../../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginNotInMarketplaceError } from "../../../../../src/shared/domain/errors.js";
+import { PluginNotInMarketplaceError } from "../../../../../src/shared/domain/errors/plugin-not-in-marketplace-error.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { fetchedPathOf, resolvingCatalogs } from "../../testing/catalog-resolver.builder.js";

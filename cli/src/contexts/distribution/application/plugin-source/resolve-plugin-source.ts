@@ -1,4 +1,4 @@
-import { PluginNotInMarketplaceError } from "../../../../shared/domain/errors.js";
+import { PluginNotInMarketplaceError } from "../../../../shared/domain/errors/plugin-not-in-marketplace-error.js";
 import type { PluginSourceMatch } from "../../contract/plugin-source-match.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugin-source-resolver.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";

@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import {
-  InvalidPluginManifestError,
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-} from "../../../../src/shared/domain/errors.js";
+import { InvalidPluginManifestError } from "../../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
+import { InvalidPluginNameError } from "../../../../src/shared/domain/errors/invalid-plugin-name-error.js";
+import { InvalidPluginVersionError } from "../../../../src/shared/domain/errors/invalid-plugin-version-error.js";
 import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { MANIFEST_PROBES } from "../testing/manifest-probes.builder.js";

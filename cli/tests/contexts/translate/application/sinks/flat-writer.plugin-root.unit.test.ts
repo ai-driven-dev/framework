@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
-import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
+import { McpConfigError } from "../../../../../src/shared/domain/errors/mcp-config-error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";

@@ -1,6 +1,6 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { homedir } from "node:os";
-import { NativePluginCliError } from "../../../shared/domain/errors.js";
+import { NativePluginCliError } from "../../../shared/domain/errors/native-plugin-cli-error.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { HostActions } from "../ports/host-actions.js";

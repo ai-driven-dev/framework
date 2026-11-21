@@ -1,8 +1,6 @@
 import { basename, join, relative } from "node:path";
-import {
-  MarketplaceOutDirNotEmptyError,
-  OutDirNotDirectoryError,
-} from "../../../../shared/domain/errors.js";
+import { MarketplaceOutDirNotEmptyError } from "../../../../shared/domain/errors/marketplace-out-dir-not-empty-error.js";
+import { OutDirNotDirectoryError } from "../../../../shared/domain/errors/out-dir-not-directory-error.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

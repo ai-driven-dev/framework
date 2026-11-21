@@ -1,6 +1,6 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
+import { PluginNotFoundError } from "../../../../shared/domain/errors/plugin-not-found-error.js";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

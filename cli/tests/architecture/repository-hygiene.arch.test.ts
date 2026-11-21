@@ -174,7 +174,7 @@ describe("architecture paths select the same files on every platform", () => {
   });
 
   it("keeps relative-import lookups connected to the source-file keys", () => {
-    expect(importersByFile().get("src/shared/domain/file.ts")).toContain(
+    expect(importersByFile().get("src/shared/domain/file-hash.ts")).toContain(
       "src/shared/ports/file-reader.ts"
     );
   });

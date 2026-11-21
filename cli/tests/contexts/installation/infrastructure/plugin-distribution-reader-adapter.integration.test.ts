@@ -3,10 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import {
-  InvalidPluginManifestError,
-  InvalidPluginNameError,
-} from "../../../../src/shared/domain/errors.js";
+import { InvalidPluginManifestError } from "../../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
+import { InvalidPluginNameError } from "../../../../src/shared/domain/errors/invalid-plugin-name-error.js";
 import type {
   PluginComponentFile,
   PluginDistribution,

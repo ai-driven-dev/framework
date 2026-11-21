@@ -3,11 +3,10 @@ import { InitProject } from "../../../../src/contexts/installation/application/i
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import {
-  ManifestUnavailableError,
-  ToolNotInstalledError,
-} from "../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { ManifestUnavailableError } from "../../../../src/shared/domain/errors/manifest-unavailable-error.js";
+import { ToolNotInstalledError } from "../../../../src/shared/domain/errors/tool-not-installed-error.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { FileHash } from "../../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
 import { flatOf } from "../../../testing/plugin-mode.builder.js";

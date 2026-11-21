@@ -1,5 +1,5 @@
 import { isAbsolute, join } from "node:path";
-import { InvalidToolProfileError } from "../../../../shared/domain/errors.js";
+import { InvalidToolProfileError } from "../../../../shared/domain/errors/invalid-tool-profile-error.js";
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type {
   ConfigWrite,

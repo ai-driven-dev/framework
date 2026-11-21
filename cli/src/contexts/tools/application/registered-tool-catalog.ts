@@ -1,8 +1,6 @@
-import {
-  DuplicateToolIdError,
-  ToolListMismatchError,
-  UnregisteredToolError,
-} from "../../../shared/domain/errors.js";
+import { DuplicateToolIdError } from "../../../shared/domain/errors/duplicate-tool-id-error.js";
+import { ToolListMismatchError } from "../../../shared/domain/errors/tool-list-mismatch-error.js";
+import { UnregisteredToolError } from "../../../shared/domain/errors/unregistered-tool-error.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";

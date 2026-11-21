@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { HostActions } from "../../../../src/contexts/host-registration/ports/host-actions.js";
-import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
+import { NativePluginCliError } from "../../../../src/shared/domain/errors/native-plugin-cli-error.js";
 
 /** How the host's CLI behaves: not installed, installed and accepting, installed and refusing. */
 export type HostActionsScenario = "absent" | "accepting" | "refusing";

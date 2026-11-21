@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
-import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
+import { FrameworkResolutionError } from "../../../../src/shared/domain/errors/framework-resolution-error.js";
 import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
 import {

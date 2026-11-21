@@ -1,9 +1,7 @@
 import { join } from "node:path";
-import {
-  InvalidPluginManifestError,
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-} from "../../../shared/domain/errors.js";
+import { InvalidPluginManifestError } from "../../../shared/domain/errors/invalid-plugin-manifest-error.js";
+import { InvalidPluginNameError } from "../../../shared/domain/errors/invalid-plugin-name-error.js";
+import { InvalidPluginVersionError } from "../../../shared/domain/errors/invalid-plugin-version-error.js";
 import {
   type PluginComponentFile,
   type PluginComponents,

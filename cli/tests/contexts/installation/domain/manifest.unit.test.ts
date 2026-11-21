@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  InvalidManifestDataError,
-  ToolNotInManifestError,
-} from "../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { InvalidManifestDataError } from "../../../../src/shared/domain/errors/invalid-manifest-data-error.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/errors/tool-not-in-manifest-error.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 

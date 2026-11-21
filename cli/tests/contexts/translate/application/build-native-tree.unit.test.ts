@@ -1,10 +1,8 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.js";
-import {
-  InvalidBuildPathsError,
-  InvalidSourceMarketplaceError,
-} from "../../../../src/shared/domain/errors.js";
+import { InvalidBuildPathsError } from "../../../../src/shared/domain/errors/invalid-build-paths-error.js";
+import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/errors/invalid-source-marketplace-error.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";

@@ -25,7 +25,7 @@ import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machin
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
-import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js";
+import { UserScopeUnavailableError } from "../../../src/shared/domain/errors/user-scope-unavailable-error.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";

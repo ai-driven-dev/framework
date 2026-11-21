@@ -1,4 +1,4 @@
-import { MarketplaceSourceConflictError } from "../../../../shared/domain/errors.js";
+import { MarketplaceSourceConflictError } from "../../../../shared/domain/errors/marketplace-source-conflict-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

@@ -63,8 +63,11 @@ function declaredBy(portText: string): string[] {
   return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => present(m[1]));
 }
 
+/** The one error catalogue, deliberately central: one class per file, each thrown where it is needed. */
+const CATALOGUE_DIRECTORY = "src/shared/domain/errors/";
+
 /**
- * Every file under `src/shared/` that is not earned. Domain and ports are earned by two
+ * Every file under `src/shared/` that is not earned, the error catalogue aside. Domain and ports are earned by two
  * contexts. An infrastructure file is earned when it implements an earned port, when an earned
  * infrastructure file imports it, or when two compositions wire it: no context reaches it. A
  * port is also earned when an earned infrastructure file reads it: that adapter is the second
@@ -75,7 +78,9 @@ function unearnedShared(
   importers: Map<string, Set<string>>,
   textOf: (file: string) => string
 ): string[] {
-  const shared = files.filter((file) => file.startsWith("src/shared/"));
+  const shared = files.filter(
+    (file) => file.startsWith("src/shared/") && !file.startsWith(CATALOGUE_DIRECTORY)
+  );
   const earned = new Set(
     shared.filter(
       (file) =>

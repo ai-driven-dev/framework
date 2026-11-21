@@ -1,5 +1,5 @@
 import path from "node:path";
-import { InputRequiredError } from "../../../shared/domain/errors.js";
+import { InputRequiredError } from "../../../shared/domain/errors/input-required-error.js";
 import {
   headingAnchors,
   normalizedAnchor,

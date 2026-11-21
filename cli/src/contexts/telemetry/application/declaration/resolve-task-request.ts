@@ -1,7 +1,5 @@
-import {
-  TaskDeclaredNoneWithNameError,
-  TaskNameMissingError,
-} from "../../../../shared/domain/errors.js";
+import { TaskDeclaredNoneWithNameError } from "../../../../shared/domain/errors/task-declared-none-with-name-error.js";
+import { TaskNameMissingError } from "../../../../shared/domain/errors/task-name-missing-error.js";
 import type { DeclarationRequest } from "../../contract/task-declaration.js";
 import { requestOf } from "../../domain/declaration/task-declaration.js";
 

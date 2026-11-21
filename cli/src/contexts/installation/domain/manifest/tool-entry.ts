@@ -1,5 +1,6 @@
-import { DuplicatePluginError, PluginNotFoundError } from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { DuplicatePluginError } from "../../../../shared/domain/errors/duplicate-plugin-error.js";
+import { PluginNotFoundError } from "../../../../shared/domain/errors/plugin-not-found-error.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import { InstalledPlugin, type PluginEntryData } from "../plugins/installed-plugin.js";

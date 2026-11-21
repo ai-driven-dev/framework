@@ -3,7 +3,7 @@ import { CheckPluginDrift } from "../../../../../src/contexts/installation/appli
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";

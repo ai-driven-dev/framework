@@ -1,8 +1,6 @@
-import {
-  FileHash,
-  InstallationFile,
-  removeRedundantGitkeeps,
-} from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
+import { removeRedundantGitkeeps } from "../../../../shared/domain/redundant-gitkeeps.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
 import type { Platform } from "../../ports/platform.js";

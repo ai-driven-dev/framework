@@ -6,11 +6,9 @@ import {
 } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  DuplicatePluginError,
-  MissingPluginMetadataError,
-  VersionMismatchError,
-} from "../../../../../src/shared/domain/errors.js";
+import { DuplicatePluginError } from "../../../../../src/shared/domain/errors/duplicate-plugin-error.js";
+import { MissingPluginMetadataError } from "../../../../../src/shared/domain/errors/missing-plugin-metadata-error.js";
+import { VersionMismatchError } from "../../../../../src/shared/domain/errors/version-mismatch-error.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";

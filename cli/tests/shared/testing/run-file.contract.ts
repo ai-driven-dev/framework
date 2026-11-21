@@ -1,6 +1,6 @@
 import { join, sep } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 

@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   FlatLayout,

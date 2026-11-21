@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CheckIdentity } from "../../../../../src/contexts/telemetry/application/identity/check-identity.js";
 import { ChooseIdentity } from "../../../../../src/contexts/telemetry/application/identity/choose-identity.js";
 import type { ManageIdentityResult } from "../../../../../src/contexts/telemetry/application/identity/manage-identity.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors/input-required-error.js";
 import { prompterAnswering } from "../../../../shared/testing/partial-ports.builder.js";
 
 const NAMED: ManageIdentityResult = { status: "set", personId: "Ada Example" };

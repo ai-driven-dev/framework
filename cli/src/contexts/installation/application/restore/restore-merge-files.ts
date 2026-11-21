@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import {
   extractMergeEntries,
   type MergeFileEntry,

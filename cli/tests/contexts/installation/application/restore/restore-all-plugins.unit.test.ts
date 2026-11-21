@@ -4,7 +4,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginFetcher } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";

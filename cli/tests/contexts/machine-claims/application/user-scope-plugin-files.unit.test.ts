@@ -5,7 +5,8 @@ import {
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
 } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import {
   errnoError,

@@ -1,5 +1,6 @@
 import { join, posix } from "node:path";
-import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import { posixRelative } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";

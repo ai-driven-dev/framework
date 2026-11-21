@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { ProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors.js";
+import { ProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors/project-scope-unsupported-error.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import {
   errnoError,

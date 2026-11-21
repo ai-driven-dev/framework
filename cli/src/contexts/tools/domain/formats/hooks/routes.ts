@@ -1,6 +1,6 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
-import { CapabilityConfigError } from "../../../../../shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../../shared/domain/errors/capability-config-error.js";
 import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,

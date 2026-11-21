@@ -8,8 +8,9 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
+import { NativePluginCliError } from "../../../src/shared/domain/errors/native-plugin-cli-error.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,

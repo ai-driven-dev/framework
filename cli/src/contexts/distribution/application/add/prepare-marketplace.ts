@@ -1,7 +1,5 @@
-import {
-  InvalidPluginManifestError,
-  MarketplaceAlreadyRegisteredError,
-} from "../../../../shared/domain/errors.js";
+import { InvalidPluginManifestError } from "../../../../shared/domain/errors/invalid-plugin-manifest-error.js";
+import { MarketplaceAlreadyRegisteredError } from "../../../../shared/domain/errors/marketplace-already-registered-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import { assertNotReservedMarketplaceName } from "../../contract/marketplace.js";

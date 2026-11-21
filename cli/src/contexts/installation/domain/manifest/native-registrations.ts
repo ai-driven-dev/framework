@@ -1,4 +1,4 @@
-import { InvalidManifestDataError } from "../../../../shared/domain/errors.js";
+import { InvalidManifestDataError } from "../../../../shared/domain/errors/invalid-manifest-data-error.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 export interface NativePluginClaim {

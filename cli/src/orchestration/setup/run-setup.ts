@@ -6,7 +6,7 @@ import type {
   InstallToolsResult,
 } from "../../contexts/installation/application/install/install-tools.js";
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
-import { UserScopeUnavailableError } from "../../shared/domain/errors.js";
+import { UserScopeUnavailableError } from "../../shared/domain/errors/user-scope-unavailable-error.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
 import type { ResolveSetupSource } from "./resolve-setup-source.js";

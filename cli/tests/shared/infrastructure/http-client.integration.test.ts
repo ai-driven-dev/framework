@@ -1,10 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { describe, expect, it } from "vitest";
-import {
-  AuthenticationError,
-  HttpError,
-  HttpRedirectError,
-} from "../../../src/shared/domain/errors.js";
+import { AuthenticationError } from "../../../src/shared/domain/errors/authentication-error.js";
+import { HttpError } from "../../../src/shared/domain/errors/http-error.js";
+import { HttpRedirectError } from "../../../src/shared/domain/errors/http-redirect-error.js";
 import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
 
 function startServer(handler: (req: IncomingMessage, res: ServerResponse) => void) {

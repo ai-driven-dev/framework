@@ -8,11 +8,9 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distributi
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
-import {
-  AmbiguousPluginMatchError,
-  PluginNotInMarketplaceError,
-  VersionMismatchError,
-} from "../../../src/shared/domain/errors.js";
+import { AmbiguousPluginMatchError } from "../../../src/shared/domain/errors/ambiguous-plugin-match-error.js";
+import { PluginNotInMarketplaceError } from "../../../src/shared/domain/errors/plugin-not-in-marketplace-error.js";
+import { VersionMismatchError } from "../../../src/shared/domain/errors/version-mismatch-error.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";

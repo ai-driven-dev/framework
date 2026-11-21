@@ -1,4 +1,4 @@
-import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
+import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors/unreadable-user-source-references-error.js";
 import { samePathSegment } from "../../../shared/domain/paths.js";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { Scope } from "../../../shared/domain/scope.js";

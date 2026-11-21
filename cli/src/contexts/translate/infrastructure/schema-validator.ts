@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { JsonSchemaValidationError } from "../../../shared/domain/errors.js";
+import { JsonSchemaValidationError } from "../../../shared/domain/errors/json-schema-validation-error.js";
 import type { JsonSchemaValidator } from "../ports/json-schema-validator.js";
 
 // CJS interop: ajv v8 + ajv-formats are CommonJS; NodeNext requires createRequire.

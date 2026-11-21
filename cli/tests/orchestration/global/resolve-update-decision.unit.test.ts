@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { BulkConflictState } from "../../../src/orchestration/domain/bulk-conflict-state.js";
 import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.js";
-import { InputRequiredError } from "../../../src/shared/domain/errors.js";
+import { InputRequiredError } from "../../../src/shared/domain/errors/input-required-error.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 
 function buildFakePrompter(

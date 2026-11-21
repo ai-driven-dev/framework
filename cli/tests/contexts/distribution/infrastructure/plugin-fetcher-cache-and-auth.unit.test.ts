@@ -42,7 +42,7 @@ vi.mock("node:child_process", () => ({
 
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
+import { PluginFetchError } from "../../../../src/shared/domain/errors/plugin-fetch-error.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 

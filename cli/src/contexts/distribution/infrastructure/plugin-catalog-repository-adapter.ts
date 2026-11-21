@@ -1,5 +1,5 @@
 import { isAbsolute, join, resolve } from "node:path";
-import { MalformedMarketplaceCatalogError } from "../../../shared/domain/errors.js";
+import { MalformedMarketplaceCatalogError } from "../../../shared/domain/errors/malformed-marketplace-catalog-error.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { PluginCatalog } from "../contract/catalog.js";

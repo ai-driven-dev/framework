@@ -1,5 +1,5 @@
 import { dirname, join } from "node:path";
-import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
+import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors/unreadable-user-source-references-error.js";
 import { USER_SOURCE_REFERENCES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import { dedupePathSegments, samePathSegment } from "../../../shared/domain/paths.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";

@@ -1,9 +1,7 @@
 import { join } from "node:path";
-import {
-  AiddFilesDetectedError,
-  AlreadyInitializedError,
-  ManifestUnavailableError,
-} from "../../../shared/domain/errors.js";
+import { AiddFilesDetectedError } from "../../../shared/domain/errors/aidd-files-detected-error.js";
+import { AlreadyInitializedError } from "../../../shared/domain/errors/already-initialized-error.js";
+import { ManifestUnavailableError } from "../../../shared/domain/errors/manifest-unavailable-error.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";

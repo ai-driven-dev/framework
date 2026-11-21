@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { ToolNotInstalledError } from "../../../shared/domain/errors.js";
-import type { FileHash } from "../../../shared/domain/file.js";
+import { ToolNotInstalledError } from "../../../shared/domain/errors/tool-not-installed-error.js";
+import type { FileHash } from "../../../shared/domain/file-hash.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";

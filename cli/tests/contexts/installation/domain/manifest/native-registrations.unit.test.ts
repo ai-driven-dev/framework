@@ -4,7 +4,7 @@ import {
   parseNativeRegistrations,
   serializeNativeRegistrations,
 } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { InvalidManifestDataError } from "../../../../../src/shared/domain/errors.js";
+import { InvalidManifestDataError } from "../../../../../src/shared/domain/errors/invalid-manifest-data-error.js";
 
 const claims = [{ ref: "plugin@declared", dependents: ["/project-a"] }];
 

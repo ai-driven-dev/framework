@@ -6,10 +6,8 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
-import {
-  FlatMergeTargetNotJsonError,
-  FrameworkPlaceholderInPluginError,
-} from "../../../../../src/shared/domain/errors.js";
+import { FlatMergeTargetNotJsonError } from "../../../../../src/shared/domain/errors/flat-merge-target-not-json-error.js";
+import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors/framework-placeholder-in-plugin-error.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

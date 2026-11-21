@@ -1,5 +1,5 @@
 import { isAbsolute } from "node:path";
-import { InvalidPluginSourceError } from "./errors.js";
+import { InvalidPluginSourceError } from "./errors/invalid-plugin-source-error.js";
 import { asPlainObject } from "./reading/plain-object.js";
 export const GITHUB_REPO_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 

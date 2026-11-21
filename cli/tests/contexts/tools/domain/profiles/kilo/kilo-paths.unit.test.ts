@@ -3,7 +3,7 @@ import {
   chooseKiloConfigPath,
   KILO_OUTPUT_PATH_CANDIDATES,
 } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-paths.js";
-import { KiloDualConfigError } from "../../../../../../src/shared/domain/errors.js";
+import { KiloDualConfigError } from "../../../../../../src/shared/domain/errors/kilo-dual-config-error.js";
 
 const existing =
   (...paths: string[]) =>

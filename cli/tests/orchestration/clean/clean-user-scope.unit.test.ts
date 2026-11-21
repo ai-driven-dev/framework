@@ -7,7 +7,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";

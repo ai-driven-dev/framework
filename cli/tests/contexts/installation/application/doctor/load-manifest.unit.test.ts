@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
-import { ManifestUnavailableError } from "../../../../../src/shared/domain/errors.js";
+import { ManifestUnavailableError } from "../../../../../src/shared/domain/errors/manifest-unavailable-error.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 
 function failingWith(error: Error): ManifestRepository {

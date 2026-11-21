@@ -6,7 +6,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
-import type { FileHash } from "../../../src/shared/domain/file.js";
+import type { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

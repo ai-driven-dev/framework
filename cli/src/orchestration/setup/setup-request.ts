@@ -1,5 +1,5 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { CategoryMismatchError } from "../../shared/domain/errors.js";
+import { CategoryMismatchError } from "../../shared/domain/errors/category-mismatch-error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 
 /** The tools of this run that run the framework's agents, the provider asked for, and every tool

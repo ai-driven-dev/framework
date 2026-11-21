@@ -6,7 +6,7 @@ import { RemoveProjectFiles } from "../../../../src/contexts/installation/applic
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

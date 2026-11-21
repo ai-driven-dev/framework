@@ -4,11 +4,9 @@ import type { PluginCatalogEntry } from "../../../src/contexts/distribution/cont
 import type { MarketplaceView } from "../../../src/contexts/distribution/contract/marketplace-view.js";
 import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.js";
-import {
-  InteractiveOnlyError,
-  InvalidPluginManifestError,
-  NoMarketplacesRegisteredError,
-} from "../../../src/shared/domain/errors.js";
+import { InteractiveOnlyError } from "../../../src/shared/domain/errors/interactive-only-error.js";
+import { InvalidPluginManifestError } from "../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
+import { NoMarketplacesRegisteredError } from "../../../src/shared/domain/errors/no-marketplaces-registered-error.js";
 import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 

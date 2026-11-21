@@ -1,4 +1,4 @@
-import { InvalidReportPeriodError } from "../../../../shared/domain/errors.js";
+import { InvalidReportPeriodError } from "../../../../shared/domain/errors/invalid-report-period-error.js";
 import type { ReportFilters } from "../../contract/report-filter.js";
 import type { ReportAxis } from "../../contract/usage-report.js";
 import { periodOf } from "../../domain/report/period.js";

@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  AuthenticationError,
-  CatalogFetchAuthError,
-  CatalogFetchError,
-  HttpNotFoundError,
-} from "../../../src/shared/domain/errors.js";
+import { AuthenticationError } from "../../../src/shared/domain/errors/authentication-error.js";
+import { CatalogFetchAuthError } from "../../../src/shared/domain/errors/catalog-fetch-auth-error.js";
+import { CatalogFetchError } from "../../../src/shared/domain/errors/catalog-fetch-error.js";
+import { HttpNotFoundError } from "../../../src/shared/domain/errors/http-not-found-error.js";
 import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
 import type { HttpGet } from "../../../src/shared/ports/http-get.js";
 

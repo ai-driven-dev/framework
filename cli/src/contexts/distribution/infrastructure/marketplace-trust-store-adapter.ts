@@ -1,6 +1,6 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { FileHash } from "../../../shared/domain/file.js";
+import { FileHash } from "../../../shared/domain/file-hash.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import { type PluginSource, serializePluginSource } from "../../../shared/domain/source.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";

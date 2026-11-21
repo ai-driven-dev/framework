@@ -1,5 +1,5 @@
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
-import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
+import { NativePluginCliError } from "../../../src/shared/domain/errors/native-plugin-cli-error.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 
 /** Records native plugin CLI calls instead of shelling out. Two measured shapes: a real

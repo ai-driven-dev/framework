@@ -11,3 +11,14 @@ export type ToolCategory = "ai" | "ide";
 
 /** Answers a written id with the tool it names, or `null` when no registered tool bears it. */
 export type ToolIdResolver = (raw: string) => ToolId | null;
+
+/** A bundled config asset, as the asset provider hands it over. */
+export type ConfigAsset = Record<string, unknown> | readonly unknown[] | string;
+
+/** The bundled schemas a build validates against. */
+export type SchemaName =
+  | "plugin-manifest"
+  | "marketplace"
+  | "claude-marketplace"
+  | "codex-marketplace"
+  | "codex-plugin-manifest";
