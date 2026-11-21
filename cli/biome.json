@@ -29,7 +29,11 @@
       },
       "style": {
         "noExportedImports": "error",
-        "useTemplate": "error"
+        "useTemplate": "error",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": { "filenameCases": ["kebab-case"] }
+        }
       }
     }
   },

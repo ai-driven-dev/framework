@@ -4,6 +4,7 @@
  */
 const IMPORT = "lint/style/noRestrictedImports";
 const GLOBAL = "lint/style/noRestrictedGlobals";
+const FILE_NAME = "lint/style/useFilenamingConvention";
 const FLOATING = "lint/nursery/noFloatingPromises";
 const PROFILE_MODULE = "../../../tools/contract/tool-profile.js";
 const OF_INSTALLATION = "tests/contexts/installation/application";
@@ -146,6 +147,10 @@ export const PLANTS: readonly Plant[] = [
   ["src/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],
   ["tests/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],
   ["src/shared/domain/clean.ts", "export const one = 1;\n", "lint/style/noDefaultExport", 0],
+  // A file is named in kebab-case, each dot-separated part.
+  ["src/shared/domain/BadName.ts", "export const one = 1;\n", FILE_NAME, 1],
+  ["src/shared/domain/bad_name.ts", "export const one = 1;\n", FILE_NAME, 1],
+  ["tests/shared/domain/good-name.unit.test.ts", "export const one = 1;\n", FILE_NAME, 0],
   // A GitHub API URL is written by the GitHub adapter only.
   ["src/contexts/update/infrastructure/builds-github-url.ts", githubUrl, "plugin", 1],
   [
