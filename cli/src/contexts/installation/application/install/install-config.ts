@@ -21,6 +21,10 @@ export class InstallConfig {
   constructor(private readonly fs: FileReader) {}
 
   async execute(options: InstallConfigCommand): Promise<InstallationFile[]> {
+    return [...(await this.referencedFiles(options)), ...this.staticFiles(options)];
+  }
+
+  private async referencedFiles(options: InstallConfigCommand): Promise<InstallationFile[]> {
     const { writes, configRefs, contentFiles, projectRoot, platform } = options;
     const platformName = platform.current();
     const results: InstallationFile[] = [];
@@ -30,12 +34,17 @@ export class InstallConfig {
       const file = await this.processRef(ref, write, { contentFiles, projectRoot, platformName });
       if (file !== null) results.push(file);
     }
-    for (const write of writes) {
+    return results;
+  }
+
+  private staticFiles(options: InstallConfigCommand): InstallationFile[] {
+    const files: InstallationFile[] = [];
+    for (const write of options.writes) {
       if (write.kind !== "settings") continue;
       const file = this.processStaticWrite(write.capability, options);
-      if (file !== null) results.push(file);
+      if (file !== null) files.push(file);
     }
-    return results;
+    return files;
   }
 
   private async processRef(

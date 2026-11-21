@@ -31,16 +31,17 @@ export class CheckFileReferences {
     trackedFiles: { relativePath: string; toolId: ToolId | null }[],
     allowedIds: Set<string> | null
   ): { relativePath: string; toolId: ToolId | null }[] {
-    const result = [...trackedFiles];
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (allowedIds && !allowedIds.has(toolId)) continue;
-      for (const plugin of manifest.getPlugins(toolId)) {
-        for (const relativePath of plugin.files.keys()) {
-          result.push({ relativePath, toolId });
-        }
-      }
-    }
-    return result;
+    const pluginFiles = manifest
+      .getInstalledToolIds()
+      .filter((toolId) => allowedIds === null || allowedIds.has(toolId))
+      .flatMap((toolId) =>
+        manifest
+          .getPlugins(toolId)
+          .flatMap((plugin) =>
+            [...plugin.files.keys()].map((relativePath) => ({ relativePath, toolId }))
+          )
+      );
+    return [...trackedFiles, ...pluginFiles];
   }
 
   private async checkBrokenReferences(
