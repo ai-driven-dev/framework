@@ -50,6 +50,7 @@ describe("the mutation scripts", () => {
   const scopes = {
     shared: { mutate: "src/shared/**/*.ts", break: 70 },
     tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },
+    canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100, harnessOnly: true },
   };
 
   it("rejects a canary run that skipped its covering test or ran a neighbour", () => {
@@ -78,8 +79,10 @@ describe("the mutation scripts", () => {
       "--incremental",
       "--incrementalFile",
       "reports/mutation/shared/incremental.json",
+      "--ignoreStatic",
     ]);
     expect(strykerArgs("tools", scopes, { force: true })).toContain("--force");
+    expect(strykerArgs("canary", scopes)).not.toContain("--ignoreStatic");
     expect(() => strykerArgs("nowhere", scopes)).toThrow('Unknown scope "nowhere"');
   });
 
@@ -263,6 +266,7 @@ describe("the mutation scripts", () => {
       "run",
       "--mutate",
       "src/a.ts:10-12,src/b.ts:1-5",
+      "--ignoreStatic",
     ]);
   });
 

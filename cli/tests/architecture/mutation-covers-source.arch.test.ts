@@ -8,7 +8,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import { strykerArgs } from "../../scripts/run-mutation.mjs";
-import { wireTools } from "../../src/composition/tools.js";
 import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./source-graph.js";
 
 interface Scope {
@@ -39,6 +38,12 @@ function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
     globs.some((glob) => !glob.startsWith("!") && matchesGlob(glob, path)) &&
     !globs.some((glob) => glob.startsWith("!") && matchesGlob(glob.slice(1), path))
   );
+}
+
+function aimsAtOneProfile(mutate: Scope["mutate"]): boolean {
+  return [mutate]
+    .flat()
+    .some((glob) => /^!?src\/contexts\/tools\/domain\/profiles\/[^*/]+\//.test(glob));
 }
 
 function isCovered(path: string, { scopes, excluded }: ScopeDeclaration): boolean {
@@ -114,41 +119,24 @@ describe("mutation covers every source file", () => {
     expect(scripted.sort()).toEqual(Object.keys(declaration().scopes).sort());
   });
 
+  it("no scope mutates a single tool profile: a profile is a declaration, held by the conformance suite", () => {
+    const aimed = Object.entries(declaration().scopes)
+      .filter(([, scope]) => aimsAtOneProfile(scope.mutate))
+      .map(([name]) => name);
+
+    expect(aimed).toEqual([]);
+  });
+
+  it("recognises a scope that mutates or carves out one profile folder", () => {
+    const folder = "src/contexts/tools/domain/profiles/claude/**/*.ts";
+    expect(aimsAtOneProfile(folder)).toBe(true);
+    expect(aimsAtOneProfile(["src/contexts/tools/**/*.ts", `!${folder}`])).toBe(true);
+    expect(aimsAtOneProfile("src/contexts/tools/**/*.ts")).toBe(false);
+  });
+
   it("no other file lists what mutation covers", () => {
     const stryker = JSON.parse(read("stryker.conf.json")) as Record<string, unknown>;
     expect("mutate" in stryker, "stryker.conf.json declares its own mutate again").toBe(false);
-  });
-});
-
-describe("every AI tool is mutated in a scope of its own", () => {
-  const aiIds = () => [...wireTools().idsInCanonicalOrder("ai")].sort();
-  const profileFolder = (id: string) => `src/contexts/tools/domain/profiles/${id}/**/*.ts`;
-
-  it("declares one tools-<id> scope per registered AI tool, each over its profile folder", () => {
-    const { scopes } = declaration();
-    const scoped = Object.keys(scopes)
-      .filter((name) => name.startsWith("tools-"))
-      .map((name) => name.slice("tools-".length));
-
-    expect(scoped.sort()).toEqual(aiIds());
-    for (const id of aiIds()) expect(scopes[`tools-${id}`]?.mutate).toBe(profileFolder(id));
-  });
-
-  it("carves exactly those profile folders out of the tools scope", () => {
-    const negated = [declaration().scopes.tools?.mutate ?? []]
-      .flat()
-      .filter((glob) => glob.startsWith("!src/contexts/tools/domain/profiles/"))
-      .map((glob) => glob.slice(1));
-
-    expect(negated.sort()).toEqual(aiIds().map(profileFolder));
-  });
-
-  it("scripts test:mutation:tools-<id> for each, and for no other tool", () => {
-    const scripted = packageScripts()
-      .filter((name) => name.startsWith("test:mutation:tools-"))
-      .map((name) => name.slice("test:mutation:tools-".length));
-
-    expect(scripted.sort()).toEqual(aiIds());
   });
 });
 

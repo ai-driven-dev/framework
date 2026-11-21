@@ -29,7 +29,10 @@ function loadScopes(root = CLI_ROOT) {
   return JSON.parse(readFileSync(join(root, "mutation-scopes.json"), "utf8")).scopes;
 }
 
-/** One incremental file per scope: what a run learned about `kernel` says nothing about
+/** Static mutants run only while a file loads, so each reloads the environment and reruns every
+ * test; `--ignoreStatic` reports them Ignored, outside the score. The canary keeps them: its static
+ * mutant is what proves an unloadable file fails a test.
+ * One incremental file per scope: what a run learned about `kernel` says nothing about
  * `tools`, and a shared file would let one scope's result skip another's mutants. */
 export function strykerArgs(scope, scopes, { force = false } = {}) {
   const declared = scopes[scope];
@@ -44,6 +47,7 @@ export function strykerArgs(scope, scopes, { force = false } = {}) {
     "--incrementalFile",
     `reports/mutation/${scope}/incremental.json`,
   ];
+  if (declared.harnessOnly !== true) args.push("--ignoreStatic");
   if (force) args.push("--force");
   return args;
 }
@@ -56,6 +60,7 @@ export function shardConfig(base, { files, dir, tempDirName }) {
     ...base,
     mutate: files,
     incremental: true,
+    ignoreStatic: true,
     incrementalFile: `${dir}/incremental.json`,
     tempDirName,
     htmlReporter: { ...base.htmlReporter, fileName: `${dir}/report.html` },
@@ -129,7 +134,7 @@ export function changedRanges(diff) {
 
 /** No scope, no incremental file and no floor: a check on a branch must never move a gate. */
 export function changedArgs(ranges) {
-  return ["run", "--mutate", ranges.join(",")];
+  return ["run", "--mutate", ranges.join(","), "--ignoreStatic"];
 }
 
 export function survivorsOf(report) {
