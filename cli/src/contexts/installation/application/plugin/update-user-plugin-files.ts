@@ -2,8 +2,6 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { PluginNotFoundError } from "../../domain/installation.error.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -13,30 +11,20 @@ import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
 } from "../../ports/plugin/user-plugin-materialization.js";
-import type { ActivatedTool } from "../../ports/tool-sections.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
+import {
+  assertSelectionResolves,
+  nativeTargets,
+  type RefreshNativeRef,
+  refreshNativeRefs,
+} from "./update-native-refs.js";
 import type { UpdatePluginCommand } from "./update-plugin.js";
-
-/** A host refresh whose proofs all held: applying it is the only step left. */
-export interface ProvenNativeRefresh {
-  apply(): void;
-}
-
-/** Proves, then refreshes, one AIDD-owned native ref on its host. The scenario supplies it. */
-export type RefreshNativeRef = (request: {
-  readonly tool: ActivatedTool;
-  readonly ref: string;
-  readonly projectRoot: string;
-  readonly registrations: NativeRegistrations | undefined;
-}) => Promise<ProvenNativeRefresh>;
 
 /** What a machine-scope update needs beyond the plugins it names. */
 export interface UpdateUserPluginFilesCommand extends UpdatePluginCommand {
   readonly isWithinUserScope: ContainmentCheck;
   readonly refreshNative: RefreshNativeRef;
 }
-
-type NativeTargets = ReturnType<UpdateUserPluginFiles["nativeTargets"]>;
 
 /** What UpdateUserPluginFiles is built from. */
 export interface UpdateUserPluginFilesDeps {
@@ -67,8 +55,8 @@ export class UpdateUserPluginFiles {
     const manifest = Manifest.fromJSON(loaded.toJSON(), (raw) => this.tools.toolId(raw));
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
-    const nativeTargets = this.nativeTargets(manifest, toolIds, options);
-    this.assertSelectionResolves(options, { files: targets.length, native: nativeTargets });
+    const natives = nativeTargets(this.deps.records, manifest, { toolIds, options });
+    assertSelectionResolves(this.deps.records, options, { files: targets.length, native: natives });
     // One plan at a time: plans for one tool share its built tree, which the first one builds.
     const filePlans = [];
     for (const { toolId, plugin } of targets) {
@@ -82,7 +70,10 @@ export class UpdateUserPluginFiles {
       });
       filePlans.push({ toolId, plugin, plan });
     }
-    const updated = await this.refreshNativeRefs(nativeTargets, options);
+    const updated = await refreshNativeRefs(this.deps.logger, this.tools, {
+      targets: natives,
+      options,
+    });
     for (const { toolId, plugin, plan } of filePlans) {
       if (plan === null) continue;
       manifest.updatePlugin(toolId, await this.applyFilePlan({ toolId, plugin, plan }, options));
@@ -107,75 +98,6 @@ export class UpdateUserPluginFiles {
         )
         .map((plugin) => ({ toolId, plugin }))
     );
-  }
-
-  // A rebuild re-materializes the files aidd wrote; a host enabling plugins itself picks the
-  // rebuilt tree up through its own marketplace refresh, which activation drives.
-  private nativeTargets(
-    manifest: Manifest,
-    toolIds: readonly AiToolId[],
-    options: UpdatePluginCommand
-  ) {
-    return (options.rebuild === true ? [] : toolIds).flatMap((toolId) =>
-      (manifest.getNativeRegistrations(toolId)?.pluginClaims ?? [])
-        .filter(
-          (claim) =>
-            options.pluginNames === undefined ||
-            options.pluginNames.some((name) => this.deps.records.refSelectedBy(claim.ref, name))
-        )
-        .map((claim) => ({ toolId, claim, registrations: manifest.getNativeRegistrations(toolId) }))
-    );
-  }
-
-  private assertSelectionResolves(
-    options: UpdatePluginCommand,
-    selected: { files: number; native: NativeTargets }
-  ): void {
-    const { pluginNames } = options;
-    if (pluginNames === undefined) return;
-    if (selected.files === 0 && selected.native.length === 0) {
-      throw new PluginNotFoundError(pluginNames.join(", "));
-    }
-    if (
-      pluginNames.some(
-        (name) =>
-          !this.deps.records.isQualifiedRef(name) &&
-          selected.native.filter(({ claim }) => this.deps.records.refSelectedBy(claim.ref, name))
-            .length > 1
-      )
-    ) {
-      throw new Error(
-        "Multiple native catalogues match this plugin name; use an exact <plugin>@<catalogue> ref for targeted update."
-      );
-    }
-  }
-
-  private async refreshNativeRefs(
-    targets: NativeTargets,
-    options: UpdateUserPluginFilesCommand
-  ): Promise<string[]> {
-    const refreshes = await Promise.all(
-      targets.map(async ({ toolId, claim, registrations }) => ({
-        toolId,
-        claim,
-        refresh: await options.refreshNative({
-          tool: this.tools.aiProfile(toolId),
-          ref: claim.ref,
-          projectRoot: options.projectRoot,
-          registrations,
-        }),
-      }))
-    );
-    const updated: string[] = [];
-    for (const { toolId, claim, refresh } of refreshes) {
-      if (claim.dependents.length > 0)
-        this.deps.logger.warn(
-          `${toolId}: updating native ref '${claim.ref}' affects ${claim.dependents.join(", ")}; projects must refresh their local integrations afterward.`
-        );
-      refresh.apply();
-      updated.push(claim.ref);
-    }
-    return updated;
   }
 
   private async applyFilePlan(

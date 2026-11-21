@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
+import type { ProvenNativeRefresh } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
 import {
-  type ProvenNativeRefresh,
   UpdateUserPluginFiles,
   type UpdateUserPluginFilesCommand,
 } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
