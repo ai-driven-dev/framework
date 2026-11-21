@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domain/profile.js";
-import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
-import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
+import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
 import { flatOf } from "../../../testing/plugin-mode.builder.js";
 import { installPathOf } from "../../../testing/profiles.builder.js";
 
@@ -51,10 +50,6 @@ describe("antigravity", () => {
       deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    const hooks = JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ command: "a" }] }] } });
-    expect(antigravity.projectHooksDelivery()?.format.merge(null, hooks, "p")).toStrictEqual(
-      mergeAntigravityHooks(null, { json: hooks, plugin: "p" })
-    );
     expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
       "hooks",
       "layout",

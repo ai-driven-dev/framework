@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildAntigravityFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/build.js";
+import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
 describe("buildAntigravityFlatContract", () => {
   it("sits a skill one level under .agents/skills, the plugin hyphenated onto its name", () => {
-    const skills = supported(buildAntigravityFlatContract().artifacts.skills);
+    const skills = supported(present(antigravity.buildContracts.flat)().artifacts.skills);
     expect(skills.path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
       ".agents/skills/aidd-dev-01-plan/SKILL.md"
     );
@@ -13,7 +14,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("copies hook scripts under .agents/hooks/<plugin>/ and merges their commands into .agents/hooks.json", () => {
-    const hooks = supported(buildAntigravityFlatContract().artifacts.hooks);
+    const hooks = supported(present(antigravity.buildContracts.flat)().artifacts.hooks);
     const incoming = JSON.stringify({
       hooks: {
         SessionStart: [
@@ -56,7 +57,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("writes an agent only in the nested layout, named after its plugin", () => {
-    const agents = supported(buildAntigravityFlatContract().artifacts.agents);
+    const agents = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
 
     expect(agents.path("aidd-dev", "agents/executor.md")).toBe(
       ".agents/agents/aidd-dev-executor/agent.md"
@@ -67,7 +68,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("rebuilds the agent's frontmatter and links its body from the nested directory", () => {
-    const agents = supported(buildAntigravityFlatContract().artifacts.agents);
+    const agents = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
     const source = [
       "---",
       "name: executor",
@@ -92,7 +93,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("places a path outside skills/ and agents/ by the skills rule only for a skills/ prefix", () => {
-    const { path } = supported(buildAntigravityFlatContract().artifacts.skills);
+    const { path } = supported(present(antigravity.buildContracts.flat)().artifacts.skills);
 
     expect(path("aidd-dev", "docs/skills/01-plan/SKILL.md")).toBe(
       ".agents/skills/aidd-dev-docs/skills/01-plan/SKILL.md"
@@ -100,7 +101,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("names an agent by stripping only a trailing .md or .agent.md and a leading agents/", () => {
-    const { path } = supported(buildAntigravityFlatContract().artifacts.agents);
+    const { path } = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
 
     expect(path("aidd-dev", "agents/a.md.agent.md")).toBe(".agents/agents/aidd-dev-a.md/agent.md");
     expect(path("aidd-dev", "docs/agents/a.md")).toBe(
@@ -109,13 +110,13 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("reads agents from agents/ as .md files only", () => {
-    const { source } = supported(buildAntigravityFlatContract().artifacts.agents);
+    const { source } = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
 
     expect(source).toEqual({ kind: "filteredTree", srcDir: "agents", inputExt: ".md" });
   });
 
   it("links an agent's body to another agent, to a skill and to a file in neither", () => {
-    const { transform } = supported(buildAntigravityFlatContract().artifacts.agents);
+    const { transform } = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
     const source = [
       "---",
       "name: executor",
@@ -131,7 +132,7 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("prefixes a hooks warning with antigravity", () => {
-    const { hooksFile } = supported(buildAntigravityFlatContract().artifacts.hooks);
+    const { hooksFile } = supported(present(antigravity.buildContracts.flat)().artifacts.hooks);
     const incoming = JSON.stringify({
       hooks: { Stop: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
     });
@@ -143,11 +144,11 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it.each(["mcp", "rules", "commands"] as const)("declares %s unsupported", (kind) => {
-    expect(buildAntigravityFlatContract().artifacts[kind].supported).toBe(false);
+    expect(present(antigravity.buildContracts.flat)().artifacts[kind].supported).toBe(false);
   });
 
   it("writes no manifest, catalog or config artifact", () => {
-    const contract = buildAntigravityFlatContract();
+    const contract = present(antigravity.buildContracts.flat)();
     expect(contract.manifestFileRelative).toBeNull();
     expect(contract.buildMarketplaceCatalog).toBeNull();
     expect(contract.configArtifact).toBeUndefined();

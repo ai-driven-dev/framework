@@ -6,9 +6,10 @@ import { rewriteRelativeLinks } from "../../../../../shared/domain/materializati
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks/routes.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
-import { mergeAntigravityHooks } from "./antigravity-hooks.js";
-import { ANTIGRAVITY_AGENTS_DIR, ANTIGRAVITY_SKILLS_DIR } from "./antigravity-paths.js";
-import { ANTIGRAVITY_HOOKS } from "./hooks.js";
+import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
+
+const ANTIGRAVITY_SKILLS_DIR = ".agents/skills/";
+const ANTIGRAVITY_AGENTS_DIR = ".agents/agents/";
 
 function antigravityFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(ANTIGRAVITY_SKILLS_DIR, plugin, rel.replace(/^skills\//, ""));
@@ -41,7 +42,7 @@ function transformAntigravityAgent(content: string, plugin: string, outName: str
   );
 }
 
-export function buildAntigravityFlatContract(): ToolBuildContract {
+export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -60,7 +61,9 @@ export function buildAntigravityFlatContract(): ToolBuildContract {
         transform: transformAntigravityAgent,
       },
       mcp: { supported: false },
-      hooks: flatHooksArtifact(ANTIGRAVITY_HOOKS, { tool: "antigravity" }, mergeAntigravityHooks),
+      hooks: flatHooksArtifact(hooks, { tool: "antigravity" }, (existing, shipped) =>
+        mergeAntigravityHooks(hooks, existing, shipped)
+      ),
       rules: { supported: false },
       commands: { supported: false },
     },

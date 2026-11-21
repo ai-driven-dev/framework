@@ -1,7 +1,7 @@
 import { RegisteredToolCatalog } from "../contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
-import { antigravity } from "../contexts/tools/domain/profiles/antigravity/profile.js";
+import { antigravity } from "../contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
 import { claude } from "../contexts/tools/domain/profiles/claude/claude.profile.js";
 import { codexProfile } from "../contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../contexts/tools/domain/profiles/copilot/profile.js";
