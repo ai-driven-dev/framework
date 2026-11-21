@@ -28,15 +28,9 @@
   "classification": [
     "src/presentation/deps.ts",
     "src/presentation/exit.ts",
-    "src/presentation/output.ts",
-    "src/presentation/project-root.ts"
+    "src/presentation/output.ts"
   ],
-  "imports": [
-    "src/contexts/tools/domain/formats/toml.ts -> smol-toml",
-    "src/presentation/commands/auth.ts -> src/shared/ports/prompter.ts",
-    "src/presentation/commands/marketplace.ts -> src/presentation/terminal/child-command.ts",
-    "src/presentation/commands/plugin.ts -> src/presentation/terminal/child-command.ts"
-  ],
+  "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
   "mirror": [
     "src/contexts/installation/application/agents/agent-providers.ts",
     "src/contexts/installation/application/install/content/install-content-section.ts",
@@ -69,24 +63,7 @@
     "src/contexts/installation/infrastructure/agent-model-store-adapter.ts",
     "src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "src/contexts/installation/infrastructure/manifest-file-io.ts",
-    "src/contexts/installation/infrastructure/platform-adapter.ts",
-    "src/orchestration/clean/clean-project.ts",
-    "src/orchestration/clean/clean-user-scope.ts",
-    "src/orchestration/global/restore-all.ts",
-    "src/orchestration/marketplace/add-marketplace.ts",
-    "src/orchestration/marketplace/check-marketplace-upstream.ts",
-    "src/orchestration/marketplace/remove-user-marketplace.ts",
-    "src/orchestration/menu/build-menu.ts",
-    "src/orchestration/menu/menu-tree.ts",
-    "src/orchestration/plugin/install-from-marketplace.ts",
-    "src/orchestration/plugin/pick-plugins.ts",
-    "src/orchestration/setup/setup-machine-scope.ts",
-    "src/orchestration/setup/setup-marketplace-registration.ts",
-    "src/orchestration/sync/activate-native-tools.ts",
-    "src/orchestration/sync/sync-settings.ts",
-    "src/presentation/commands/recipes.ts",
-    "src/presentation/terminal/child-command.ts",
-    "src/presentation/terminal/wait-for-enter.ts"
+    "src/contexts/installation/infrastructure/platform-adapter.ts"
   ],
   "shape": [
     "src/contexts/installation/application/agents/agent-providers.ts",
@@ -105,8 +82,7 @@
     "src/contexts/installation/application/resolve-sync-conflict.ts",
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
-    "src/contexts/installation/application/sync/tracked-settings-file.ts",
-    "src/orchestration/setup/setup-marketplace-registration.ts"
+    "src/contexts/installation/application/sync/tracked-settings-file.ts"
   ],
   "thrown": [],
   "instructs": [],
@@ -129,11 +105,6 @@
   "repository": [],
   "translate": [],
   "size": [
-    "tests/orchestration/clean/clean-native-cache.integration.test.ts",
-    "tests/orchestration/clean/clean-use-case.unit.test.ts",
-    "tests/orchestration/clean/clean-user-scope.integration.test.ts",
-    "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts",
-    "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts",
     "tests/contexts/installation/application/plugin/add-plugin.integration.test.ts",
     "tests/contexts/installation/application/plugin/plugin-update-built-tree.integration.test.ts"
   ],
@@ -228,14 +199,12 @@
     "function parameters :: src/presentation/display/tool-config-display.ts",
     "function parameters :: src/shared/domain/layout/aidd-layout.ts",
     "function parameters :: src/shared/domain/materialization/flat-paths.ts",
-    "function parameters :: src/shared/domain/merge.ts",
     "one class per file :: src/presentation/terminal/prompter-adapter.ts",
     "one class per file :: src/shared/domain/errors.ts",
     "one class per file :: src/shared/domain/file.ts"
   ],
   "toolNames": [
     "src/orchestration/setup/tool-recommendations.ts: 4",
-    "src/presentation/commands/setup.ts: 2",
     "src/contexts/tools/domain/profile/foreign-suffix-filter.ts: 7",
     "src/contexts/telemetry/contract/usage-record.ts: 1"
   ],

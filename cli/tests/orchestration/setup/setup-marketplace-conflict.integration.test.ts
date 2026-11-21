@@ -116,7 +116,7 @@ async function buildUseCaseWithConflict() {
     deps.fs,
     deps.manifestRepo,
     {
-      registration: setupMarketplaceRegistration,
+      ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => syncSettingsUseCase.execute(options),
       version: CURRENT_VERSION,

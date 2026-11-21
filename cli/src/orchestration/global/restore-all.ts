@@ -23,8 +23,8 @@ export interface RestoreAllResult {
 export class RestoreAll {
   constructor(
     private readonly prompter: Prompter,
-    private readonly reportStatus: ReportStatus,
-    private readonly restoreGlobal: RestoreGlobal
+    private readonly reportStatus: Pick<ReportStatus, "execute">,
+    private readonly restoreGlobal: Pick<RestoreGlobal, "open">
   ) {}
 
   async execute(

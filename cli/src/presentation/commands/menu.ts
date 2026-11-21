@@ -3,7 +3,6 @@ import { printBanner } from "../display/menu-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
 import { CLIOutput } from "../output.js";
-import { resolveProjectRoot } from "../project-root.js";
 
 /** The name inquirer gives the error it throws when the user hits Ctrl-C at a prompt. */
 const USER_ABORT_ERROR_NAME = "ExitPromptError";
@@ -18,11 +17,12 @@ export function routeMenuError(error: unknown, output: CLIOutput): never {
 }
 
 export async function runMenuLoop(
-  menuOf: (projectRoot: string) => Pick<MenuLoop, "execute">
+  menuOf: (projectRoot: string) => Pick<MenuLoop, "execute">,
+  projectRoot: string
 ): Promise<never> {
   const output = new CLIOutput();
   printBanner(output);
-  const menuLoop = menuOf(resolveProjectRoot());
+  const menuLoop = menuOf(projectRoot);
   const exitCode = await menuLoop
     .execute()
     .catch((error: unknown) => routeMenuError(error, output));

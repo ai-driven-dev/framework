@@ -246,7 +246,6 @@ describe("cacheBuildFor", () => {
   });
 });
 
-type Steps = Parameters<typeof setupStepsOf>[1];
 type Guards = Parameters<typeof setupStepsOf>[2];
 type Base = Parameters<typeof setupStepsOf>[0];
 type Questions = ReturnType<typeof setupQuestionsOf>;
@@ -325,7 +324,8 @@ describe("askedFrom", () => {
 });
 
 describe("setupStepsOf", () => {
-  const registration = {} as Steps["setupMarketplaceRegistration"];
+  const resolveSource = { execute: vi.fn() };
+  const register = vi.fn();
   const installTools = {} as Guards["setupToolsUseCase"];
   const detectContext = {} as Guards["projectContextDetector"];
   const machineScope = {} as Guards["setupMachineScope"];
@@ -335,7 +335,8 @@ describe("setupStepsOf", () => {
     const steps = setupStepsOf(
       { currentVersionProvider: version },
       {
-        setupMarketplaceRegistration: registration,
+        resolveSetupSource: resolveSource,
+        registerSetupSource: register,
         syncSettingsUseCase: { execute: vi.fn() },
       },
       {
@@ -346,7 +347,8 @@ describe("setupStepsOf", () => {
     );
 
     expect(steps).toMatchObject({
-      registration,
+      resolveSource,
+      register,
       installTools,
       version,
       detectContext,
@@ -359,7 +361,8 @@ describe("setupStepsOf", () => {
     const steps = setupStepsOf(
       { currentVersionProvider: version },
       {
-        setupMarketplaceRegistration: registration,
+        resolveSetupSource: resolveSource,
+        registerSetupSource: register,
         syncSettingsUseCase: { execute },
       },
       {

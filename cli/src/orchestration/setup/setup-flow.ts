@@ -13,6 +13,13 @@ import {
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
 
+/** Registers the chosen framework source for a setup. The registration sequence is not the setup's own:
+ * composition hands it in. */
+export type RegisterFrameworkSource = (
+  flow: Pick<SetupFlow, "projectRoot" | "scope">,
+  source: FrameworkSource | null
+) => Promise<void>;
+
 /** What a setup did: `initialized` when this run created the manifest it works on, `up-to-date`
  * when one was already there. */
 export interface SetupResult {

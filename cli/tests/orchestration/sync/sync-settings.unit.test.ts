@@ -17,6 +17,7 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { parseJsonRecord } from "../../shared/testing/json-value.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -199,7 +200,7 @@ async function sync(setup: SyncSetup = {}) {
   });
   const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
   const written = (await fs.fileExists(SHARED_SETTINGS))
-    ? (JSON.parse(await fs.readFile(SHARED_SETTINGS)) as Record<string, unknown>)
+    ? parseJsonRecord(await fs.readFile(SHARED_SETTINGS))
     : undefined;
   return { written, logger, fs, activator, result };
 }

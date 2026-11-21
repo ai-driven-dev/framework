@@ -9,16 +9,19 @@ import type { ProjectContext } from "../../contexts/installation/contract/projec
 import { UserScopeUnavailableError } from "../../shared/domain/errors.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
-import type { PluginInstallMode, SetupFlow, SetupResult } from "./setup-flow.js";
+import type { ResolveSetupSource } from "./resolve-setup-source.js";
+import type {
+  PluginInstallMode,
+  RegisterFrameworkSource,
+  SetupFlow,
+  SetupResult,
+} from "./setup-flow.js";
 import type { SetupMachineScope } from "./setup-machine-scope.js";
-import type { SetupMarketplaceRegistration } from "./setup-marketplace-registration.js";
 
 /** What a project-scope setup does, one entry per stage. */
 export interface SetupSteps {
-  readonly registration: Pick<
-    SetupMarketplaceRegistration,
-    "resolveSourceIfNeeded" | "registerIfPresent"
-  >;
+  readonly resolveSource: Pick<ResolveSetupSource, "execute">;
+  readonly register: RegisterFrameworkSource;
   readonly installTools: Pick<InstallTools, "execute">;
   /** Drives native activation for this project. */
   readonly syncSettings: (options: {
@@ -63,9 +66,9 @@ export class RunSetup {
     const context = await this.detectContext(flow);
     // Resolved before the manifest is initialized: a non-interactive run with no --source must
     // reject before it ever writes .aidd/manifest.json or touches .gitignore, not after.
-    const source = await this.steps.registration.resolveSourceIfNeeded(flow);
+    const source = await this.steps.resolveSource.execute(flow);
     const isNew = await this.initProject.initializeIfAbsent({ projectRoot: flow.projectRoot });
-    await this.steps.registration.registerIfPresent(flow, source);
+    await this.steps.register(flow, source);
     const install = await this.installTools(flow, context);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     const activation = await this.steps.syncSettings({ projectRoot: flow.projectRoot });

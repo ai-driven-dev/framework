@@ -8,7 +8,8 @@ import { RecordSourceReference } from "../../../src/contexts/machine-claims/appl
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { AskMarketplaceSource } from "../../../src/orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../../src/orchestration/setup/register-marketplace.js";
-import { SetupMarketplaceRegistration } from "../../../src/orchestration/setup/setup-marketplace-registration.js";
+import { ResolveSetupSource } from "../../../src/orchestration/setup/resolve-setup-source.js";
+import type { RegisterFrameworkSource } from "../../../src/orchestration/setup/setup-flow.js";
 import type { Environment } from "../../../src/shared/ports/environment.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
@@ -26,7 +27,7 @@ export function setupMarketplaceRegistrar(
   tokenProvider?: TokenProvider,
   releaseResolver?: RepositoryVisibility,
   userSourceReferences?: UserSourceReferences
-): SetupMarketplaceRegistration {
+): { resolveSource: ResolveSetupSource; register: RegisterFrameworkSource } {
   const registration = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
     new RecordSourceReference(
@@ -39,9 +40,9 @@ export function setupMarketplaceRegistrar(
     refresh,
     environment
   );
-  return new SetupMarketplaceRegistration(
-    (options) => source.execute(options),
-    (flow, chosen) =>
-      registration.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source: chosen })
-  );
+  return {
+    resolveSource: new ResolveSetupSource((options) => source.execute(options)),
+    register: (flow, chosen) =>
+      registration.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source: chosen }),
+  };
 }

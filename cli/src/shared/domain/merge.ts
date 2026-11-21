@@ -80,11 +80,15 @@ export interface MergeTarget {
   writeFile(path: string, content: string): Promise<void>;
 }
 
+export interface JsonMerge {
+  readonly path: string;
+  readonly content: string;
+  readonly strategy: MergeStrategy;
+}
+
 export async function mergeIntoJsonFile(
   files: MergeTarget,
-  path: string,
-  content: string,
-  strategy: MergeStrategy
+  { path, content, strategy }: JsonMerge
 ): Promise<void> {
   // Limit: a file whose root is not an object merges as an empty one; no such file has been seen.
   let existing: Record<string, unknown> = {};

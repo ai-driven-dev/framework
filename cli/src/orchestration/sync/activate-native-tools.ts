@@ -59,7 +59,7 @@ export interface ActivationMarketplace {
 export class ActivateNativeTools {
   constructor(
     private readonly registerPluginWithHost: Pick<RegisterPluginWithHost, "execute">,
-    private readonly buildMarketplace: BuildMarketplaceForTool,
+    private readonly buildMarketplace: Pick<BuildMarketplaceForTool, "forTool">,
     private readonly logger: Logger,
     private readonly marketplace: ActivationMarketplace,
     private readonly records: RefRules

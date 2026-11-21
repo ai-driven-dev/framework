@@ -26,8 +26,8 @@ export interface CheckMarketplaceUpstreamResult {
  * stale, which plugins the catalog dropped, and which catalogs could not be read. */
 export class CheckMarketplaceUpstream {
   constructor(
-    private readonly marketplaces: CheckMarketplaces,
-    private readonly sources: ListPluginSources
+    private readonly marketplaces: Pick<CheckMarketplaces, "execute">,
+    private readonly sources: Pick<ListPluginSources, "execute">
   ) {}
 
   async execute(command: CheckMarketplaceUpstreamCommand): Promise<CheckMarketplaceUpstreamResult> {

@@ -15,9 +15,9 @@ export interface RemoveUserMarketplaceCommand {
  * purges what the machine holds for it, then forgets it. */
 export class RemoveUserMarketplace {
   constructor(
-    private readonly find: FindUserMarketplace,
-    private readonly purge: PurgeMarketplacePlugins,
-    private readonly remove: RemoveMarketplace,
+    private readonly find: Pick<FindUserMarketplace, "execute">,
+    private readonly purge: Pick<PurgeMarketplacePlugins, "execute">,
+    private readonly remove: Pick<RemoveMarketplace, "execute">,
     private readonly home: string
   ) {}
 

@@ -124,7 +124,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     deps.fs,
     deps.manifestRepo,
     {
-      registration: setupMarketplaceRegistration,
+      ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => makeNoOpSyncSettings().execute(options),
       version: CURRENT_VERSION,

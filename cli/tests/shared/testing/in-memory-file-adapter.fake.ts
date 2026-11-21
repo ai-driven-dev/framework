@@ -124,7 +124,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
-    return mergeIntoJsonFile(this, path, content, strategy);
+    return mergeIntoJsonFile(this, { path, content, strategy });
   }
 
   async deleteDirectory(dirPath: string): Promise<void> {

@@ -18,7 +18,7 @@ vi.mock("node:readline", () => ({
 
 const { runMenuLoop } = await import("../../../src/presentation/commands/menu.js");
 const { waitForEnter } = await import("../../../src/presentation/terminal/wait-for-enter.js");
-const { resolveProjectRoot } = await import("../../../src/presentation/project-root.js");
+const { resolveProjectRoot } = await import("../../../src/presentation/terminal/project-root.js");
 
 const menuOf = vi.fn(() => {
   const prompter = prompterAnswering({
@@ -67,7 +67,7 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop(menuOf)).rejects.toThrow(/^exit /);
+  await expect(runMenuLoop(menuOf, resolveProjectRoot())).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {

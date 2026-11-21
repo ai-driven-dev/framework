@@ -83,6 +83,9 @@ export interface TelemetryDeps {
 
 /** What a telemetry command's request alone can answer, built with no I/O so a refusal comes
  * before the dependencies are wired. */
+/** Runs another `aidd` command in a child process and resolves with its exit code. */
+export type CommandRunner = (command: string[]) => Promise<number>;
+
 export interface TelemetryRequests {
   resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
   resolveReportRequest: Pick<ResolveReportRequest, "execute">;

@@ -30,7 +30,8 @@ const createDeps = vi.fn(async () => {
   return {
     runSetup: new RunSetup(
       {
-        registration: { resolveSourceIfNeeded, registerIfPresent },
+        resolveSource: { execute: resolveSourceIfNeeded },
+        register: registerIfPresent,
         installTools: { execute: setupTools },
         syncSettings: activation,
         version: { get: () => "5.2.2" },

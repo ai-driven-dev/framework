@@ -25,10 +25,6 @@ const createDeps = vi.fn(async () => ({
   prompter: prompterAnswering({ input: promptInput, select: menuSelect }),
 }));
 
-vi.mock("../../../src/presentation/terminal/child-command.js", () => ({
-  spawnCliCommand: spawn,
-}));
-
 const { registerMarketplaceCommand } = await import(
   "../../../src/presentation/commands/marketplace.js"
 );
@@ -85,7 +81,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerMarketplaceCommand(program, createDeps);
+  registerMarketplaceCommand(program, createDeps, spawn);
   await program.parseAsync(["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -392,7 +388,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
 describe("aidd marketplace — the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
-    registerMarketplaceCommand(program, createDeps);
+    registerMarketplaceCommand(program, createDeps, spawn);
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");
     return marketplace;
