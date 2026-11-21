@@ -53,11 +53,11 @@ describe("translate with a build layout", () => {
     expect(result.mcp?.servers).toEqual({ "plug-db": { args: ["/out/hooks/plug/hooks/run.sh"] } });
   });
 
-  it("hands the sink the plugin's whole MCP declaration, pointed at the plugin's root", () => {
+  it("hands the sink the plugin's whole MCP declaration, pointed at the plugin's root and its keys prefixed", () => {
     const declared = JSON.stringify({ mcpServers: { db: { args: [`${ROOT}/hooks/run.sh`] } } });
 
     expect(JSON.parse(build({ ".mcp.json": declared }).mcp?.declared ?? "")).toEqual({
-      mcpServers: { db: { args: ["/out/hooks/plug/hooks/run.sh"] } },
+      mcpServers: { "plug-db": { args: ["/out/hooks/plug/hooks/run.sh"] } },
     });
   });
 
