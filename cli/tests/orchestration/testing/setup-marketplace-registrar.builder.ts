@@ -30,13 +30,13 @@ export function setupMarketplaceRegistrar(
 ): { resolveSource: ResolveSetupSource; register: RegisterFrameworkSource } {
   const registration = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
-    new RecordSourceReference(
+    new RecordSourceReference({
       fs,
       currentVersionProvider,
       logger,
-      FRAMEWORK_MARKETPLACE_NAME,
-      userSourceReferences
-    ),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      userSourceReferences,
+    }),
     refresh,
     environment
   );

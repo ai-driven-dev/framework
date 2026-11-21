@@ -9,8 +9,14 @@ import {
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
 import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { RecordSourceReference } from "../../../src/contexts/machine-claims/application/record-source-reference.js";
-import { SharedFrameworkSource } from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
+import {
+  RecordSourceReference,
+  type RecordSourceReferenceDeps,
+} from "../../../src/contexts/machine-claims/application/record-source-reference.js";
+import {
+  SharedFrameworkSource,
+  type SharedFrameworkSourceDeps,
+} from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
@@ -24,15 +30,15 @@ type Loader = LoadSyncContextDeps;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
 export interface MarketplaceSyncParts {
-  fs: ConstructorParameters<typeof SharedFrameworkSource>[0];
+  fs: SharedFrameworkSourceDeps["fs"];
   manifestRepo: Loader["manifestRepo"];
   marketplaceRegistry: Loader["marketplaceRegistry"];
-  logger: ConstructorParameters<typeof SharedFrameworkSource>[1];
+  logger: SharedFrameworkSourceDeps["logger"];
   ensureBuilt: ConstructorParameters<typeof BuildMarketplaceForTool>[0];
   userCacheRoot?: ActivationMarketplace["userCacheRoot"];
   marketplaceRegisterFrameworkUseCase?: Loader["marketplaceRegisterFrameworkUseCase"];
-  userSourceReferences?: ConstructorParameters<typeof RecordSourceReference>[4];
-  currentVersionProvider?: ConstructorParameters<typeof RecordSourceReference>[1];
+  userSourceReferences?: RecordSourceReferenceDeps["userSourceReferences"];
+  currentVersionProvider?: RecordSourceReferenceDeps["currentVersionProvider"];
   userManifestRepo?: Loader["userManifestRepo"];
   activators?: Hosts[1];
   hostMarketplaceRegistries?: Hosts[2]["marketplaceRegistries"];
@@ -80,18 +86,18 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       { fs: parts.fs, records: registrationRecordRules, userManifestRepo: parts.userManifestRepo },
       registeredTools()
     ),
-    new SharedFrameworkSource(
-      parts.fs,
-      parts.logger,
-      new RecordSourceReference(
-        parts.fs,
-        parts.currentVersionProvider ?? new FakeCurrentVersion(),
-        parts.logger,
-        FRAMEWORK_MARKETPLACE_NAME,
-        parts.userSourceReferences
-      ),
-      new PurgeDeclaredCache(parts.fs, parts.logger),
-      FRAMEWORK_MARKETPLACE_NAME
-    )
+    new SharedFrameworkSource({
+      fs: parts.fs,
+      logger: parts.logger,
+      recordReference: new RecordSourceReference({
+        fs: parts.fs,
+        currentVersionProvider: parts.currentVersionProvider ?? new FakeCurrentVersion(),
+        logger: parts.logger,
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        userSourceReferences: parts.userSourceReferences,
+      }),
+      purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    })
   );
 }

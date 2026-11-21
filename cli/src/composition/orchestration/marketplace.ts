@@ -155,13 +155,13 @@ function wireMarketplaceSync(base: Base, inst: Installation) {
     logger,
     tools
   );
-  const recordSourceReference = new RecordSourceReference(
+  const recordSourceReference = new RecordSourceReference({
     fs,
     currentVersionProvider,
     logger,
-    FRAMEWORK_MARKETPLACE_NAME,
-    base.userSourceReferences
-  );
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    userSourceReferences: base.userSourceReferences,
+  });
   const syncSettingsUseCase = new SyncSettings(
     new LoadSyncContext({
       manifestRepo,
@@ -176,13 +176,13 @@ function wireMarketplaceSync(base: Base, inst: Installation) {
     ),
     nativeActivationOf(base, inst, buildMarketplaceForTool),
     new RecordActivation({ fs, records: registrationRecordRules, userManifestRepo }, tools),
-    new SharedFrameworkSource(
+    new SharedFrameworkSource({
       fs,
       logger,
-      recordSourceReference,
-      new PurgeDeclaredCache(fs, logger),
-      FRAMEWORK_MARKETPLACE_NAME
-    )
+      recordReference: recordSourceReference,
+      purgeCache: new PurgeDeclaredCache(fs, logger),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+    })
   );
   return {
     recordSourceReference,

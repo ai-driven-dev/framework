@@ -10,13 +10,13 @@ const REGISTERED_AS_SHARED = new Map([
 ]);
 
 function source(recorded: unknown[]) {
-  return new SharedFrameworkSource(
-    new InMemoryFileAdapter(),
-    new CapturingLogger(),
-    { execute: async (request) => void recorded.push(request) },
-    { resolveCandidate: async () => null },
-    "aidd-framework"
-  );
+  return new SharedFrameworkSource({
+    fs: new InMemoryFileAdapter(),
+    logger: new CapturingLogger(),
+    recordReference: { execute: async (request) => void recorded.push(request) },
+    purgeCache: { resolveCandidate: async () => null },
+    frameworkMarketplaceName: "aidd-framework",
+  });
 }
 
 describe("recording this project's claim on the shared source", () => {

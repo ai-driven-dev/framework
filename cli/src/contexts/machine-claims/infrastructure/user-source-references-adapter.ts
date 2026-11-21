@@ -23,6 +23,42 @@ function findVersionFor(
   return undefined;
 }
 
+/** A project root recorded under one version, its paths compared by the platform's rules. */
+interface RootRecord {
+  readonly version: string;
+  readonly projectRoot: string;
+  readonly platform: string;
+}
+
+function isRecordedOnlyAt(
+  references: ReferencesFile,
+  { version, projectRoot, platform }: RootRecord
+): boolean {
+  const holdsRoot = (roots: readonly string[]) =>
+    roots.some((root) => samePathSegment(root, projectRoot, platform));
+  return (
+    holdsRoot(references[version] ?? []) &&
+    Object.entries(references).every(([key, roots]) => key === version || !holdsRoot(roots))
+  );
+}
+
+/** The references with `projectRoot` recorded under `version` alone, and every other version
+ * keeping only the roots it still has. */
+function recordedAt(
+  references: ReferencesFile,
+  { version, projectRoot, platform }: RootRecord
+): ReferencesFile {
+  const withoutRoot = (roots: readonly string[]) =>
+    roots.filter((root) => !samePathSegment(root, projectRoot, platform));
+  const next: Record<string, string[]> = {};
+  for (const [key, roots] of Object.entries(references)) {
+    const remaining = withoutRoot(roots);
+    if (key !== version && remaining.length > 0) next[key] = remaining;
+  }
+  next[version] = [...withoutRoot(references[version] ?? []), projectRoot];
+  return next;
+}
+
 export class UserSourceReferencesAdapter implements UserSourceReferences {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -32,26 +68,9 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
 
   async addReference(version: string, projectRoot: string): Promise<void> {
     const references = await this.readAll();
-    const alreadyOnlyHere =
-      (references[version] ?? []).some((root) =>
-        samePathSegment(root, projectRoot, this.platform)
-      ) &&
-      Object.entries(references).every(
-        ([key, roots]) =>
-          key === version ||
-          !roots.some((root) => samePathSegment(root, projectRoot, this.platform))
-      );
-    if (alreadyOnlyHere) return;
-    const next: Record<string, string[]> = {};
-    for (const [key, roots] of Object.entries(references)) {
-      if (key === version) continue;
-      const filtered = roots.filter((root) => !samePathSegment(root, projectRoot, this.platform));
-      if (filtered.length > 0) next[key] = filtered;
-    }
-    const existingAtVersion = (references[version] ?? []).filter(
-      (root) => !samePathSegment(root, projectRoot, this.platform)
-    );
-    next[version] = [...existingAtVersion, projectRoot];
+    const record = { version, projectRoot, platform: this.platform };
+    if (isRecordedOnlyAt(references, record)) return;
+    const next = recordedAt(references, record);
     // `projectRoot` is protected from the prune below: a project vanishing between being recorded
     // and this very write finishing would otherwise drop the claim `addReference` was just asked
     // to add.
@@ -103,18 +122,26 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
     await this.fs.writeFile(this.path, JSON.stringify(pruned, null, 2));
   }
 
+  private async survivingRoots(
+    roots: readonly string[],
+    protectedRoot: string | undefined
+  ): Promise<string[]> {
+    const existing: string[] = [];
+    for (const root of roots) {
+      const protectedFromPrune =
+        protectedRoot !== undefined && samePathSegment(root, protectedRoot, this.platform);
+      if (protectedFromPrune || (await this.fs.fileExists(root))) existing.push(root);
+    }
+    return existing;
+  }
+
   private async pruneVanishedRoots(
     references: ReferencesFile,
     protectedRoot: string | undefined
   ): Promise<ReferencesFile> {
     const result: ReferencesFile = {};
     for (const [version, roots] of Object.entries(references)) {
-      const existing: string[] = [];
-      for (const root of roots) {
-        const protectedFromPrune =
-          protectedRoot !== undefined && samePathSegment(root, protectedRoot, this.platform);
-        if (protectedFromPrune || (await this.fs.fileExists(root))) existing.push(root);
-      }
+      const existing = await this.survivingRoots(roots, protectedRoot);
       if (existing.length > 0) result[version] = existing;
     }
     return result;
