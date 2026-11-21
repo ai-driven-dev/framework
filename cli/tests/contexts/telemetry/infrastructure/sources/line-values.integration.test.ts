@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { counter, expected, text } from "../../../../src/contexts/telemetry/domain/line-values.js";
+import {
+  counter,
+  expected,
+  text,
+} from "../../../../../src/contexts/telemetry/infrastructure/sources/line-values.js";
 
 describe("counter", () => {
   it("accepts a non-negative integer and nothing else", () => {

@@ -4,13 +4,7 @@ import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { UsageTool } from "../../../contract/usage-record.js";
-import { decodeCodexLine } from "../../../domain/codex-transcript-usage.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
-import {
-  declaredContentSize,
-  FRAME_HEADER_BYTES,
-  FrameSizeMismatch,
-} from "../../../domain/zstd-frame.js";
 import type {
   EachTranscriptLine,
   LineUsage,
@@ -28,6 +22,8 @@ import {
   readTranscript,
   withModifiedAt,
 } from "../transcript-files.js";
+import { decodeCodexLine } from "./codex-transcript-usage.js";
+import { declaredContentSize, FRAME_HEADER_BYTES, FrameSizeMismatch } from "./zstd-frame.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
 /** The id the records carry. */

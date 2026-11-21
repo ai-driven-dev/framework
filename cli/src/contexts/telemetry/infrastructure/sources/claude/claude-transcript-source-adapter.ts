@@ -1,4 +1,3 @@
-import { readClaudeUsageLine } from "../../../domain/claude-transcript-usage.js";
 import type {
   EachTranscriptLine,
   LineUsage,
@@ -13,6 +12,7 @@ import {
   readTranscript,
   withModifiedAt,
 } from "../transcript-files.js";
+import { readClaudeUsageLine } from "./claude-transcript-usage.js";
 
 const TRANSCRIPT_NAME = /\.jsonl(\.superseded-.+)?$/;
 

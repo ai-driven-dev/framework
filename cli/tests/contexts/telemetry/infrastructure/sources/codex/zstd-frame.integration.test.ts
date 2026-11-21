@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { declaredContentSize } from "../../../../src/contexts/telemetry/domain/zstd-frame.js";
+import { declaredContentSize } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/zstd-frame.js";
 
 const MAGIC = [0x28, 0xb5, 0x2f, 0xfd];
 

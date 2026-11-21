@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
 

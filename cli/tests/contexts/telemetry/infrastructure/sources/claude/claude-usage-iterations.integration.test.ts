@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   cacheWrites,
   messageIterations,
-} from "../../../../src/contexts/telemetry/domain/claude-usage-iterations.js";
+} from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-iterations.js";
 
 describe("the iterations of a message", () => {
   it("are none when the usage lists none", () => {

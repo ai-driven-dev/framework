@@ -1,4 +1,4 @@
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import type {
   EachTranscriptLine,
   TranscriptRead,

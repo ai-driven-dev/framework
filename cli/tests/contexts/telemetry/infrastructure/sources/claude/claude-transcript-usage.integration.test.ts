@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
+import { readClaudeUsageLine } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 
 const USAGE = {
   input_tokens: 3,
