@@ -1,8 +1,10 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -77,7 +79,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
-  await program.parseAsync(["node", "aidd", "plugin", ...args]);
+  await parseToExit(program, ["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -119,11 +121,11 @@ describe("aidd plugin list", () => {
   });
 
   it("refuses a tool no profile declares, before any use case runs", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("list", "--tool", "emacs")).rejects.toThrow("exited");
+    await expect(run("list", "--tool", "emacs")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Error: Unknown AI tool: emacs. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity\n"
@@ -167,11 +169,11 @@ describe("aidd plugin remove", () => {
       errors: [{ scope: "claude", message: "claude CLI refused" }],
       failed: true,
     });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("remove", "aidd-dev")).rejects.toThrow("exited");
+    await expect(run("remove", "aidd-dev")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Warning: [claude] claude CLI refused\nError: Sync failed for: claude. See the warnings above.\n"
@@ -249,11 +251,11 @@ describe("aidd plugin install", () => {
   });
 
   it("refuses a scope that is neither project nor user, before any use case runs", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("install", "aidd-dev", "--scope", "machine")).rejects.toThrow("exited");
+    await expect(run("install", "aidd-dev", "--scope", "machine")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: Invalid scope 'machine'. Expected 'project' or 'user'.\n");
     expect(pluginInstall).not.toHaveBeenCalled();
@@ -273,11 +275,11 @@ describe("aidd plugin search", () => {
 
   it("names a failed search on stderr and fails the process", async () => {
     pluginSearch.mockRejectedValue(new Error("catalog is unreachable"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("search", "dev")).rejects.toThrow("exited");
+    await expect(run("search", "dev")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: catalog is unreachable\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -328,11 +330,11 @@ describe("aidd plugin update", () => {
 
   it("names a failed update on stderr and fails the process", async () => {
     pluginUpdate.mockRejectedValue(new Error("plugin source moved"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("update")).rejects.toThrow("exited");
+    await expect(run("update")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: plugin source moved\n");
     expect(exit).toHaveBeenCalledWith(1);

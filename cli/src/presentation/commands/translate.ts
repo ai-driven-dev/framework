@@ -9,7 +9,6 @@ import {
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { printTranslateResult } from "../display/translate-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -30,34 +29,28 @@ interface TranslateExecutionParams {
 /** The build+report core, once `--to`/`--as`/`--out` flags are validated and resolved. */
 async function runTranslateCore(params: TranslateExecutionParams): Promise<void> {
   const { createDeps } = params;
-  try {
-    const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
-    const useCase = deps.frameworkBuild({
-      target: params.target,
-      mode: params.mode,
-      outDir: params.outDir,
-      force: params.force,
-    });
-    if (useCase === undefined) {
-      params.output.error(
-        `Unsupported target/mode combination: ${params.target} (${params.mode}).`
-      );
-      params.output.exit(1);
-    }
-    const result = await useCase.execute({
-      sourceDir: params.sourceDir,
-      outDir: params.outDir,
-      target: params.target,
-      mode: params.mode,
-    });
-    printTranslateResult(params.output, params.mode, {
-      pluginCount: result.plugins.length,
-      totalFiles: result.totalFiles,
-      outDir: result.outDir,
-    });
-  } catch (error) {
-    failCommand(params.output, error);
+  const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
+  const useCase = deps.frameworkBuild({
+    target: params.target,
+    mode: params.mode,
+    outDir: params.outDir,
+    force: params.force,
+  });
+  if (useCase === undefined) {
+    params.output.error(`Unsupported target/mode combination: ${params.target} (${params.mode}).`);
+    params.output.exit(1);
   }
+  const result = await useCase.execute({
+    sourceDir: params.sourceDir,
+    outDir: params.outDir,
+    target: params.target,
+    mode: params.mode,
+  });
+  printTranslateResult(params.output, params.mode, {
+    pluginCount: result.plugins.length,
+    totalFiles: result.totalFiles,
+    outDir: result.outDir,
+  });
 }
 
 interface TranslateCmdOptions {

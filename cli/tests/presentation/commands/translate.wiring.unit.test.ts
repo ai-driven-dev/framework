@@ -4,7 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { REGISTERED_PROFILES, wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
@@ -51,7 +53,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerTranslateCommand(program, CATALOG, createDeps);
-  await program.parseAsync(["node", "aidd", ...args]);
+  await parseToExit(program, ["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -102,12 +104,12 @@ describe("aidd translate — what it hands the build", () => {
 describe("aidd translate — what it refuses", () => {
   it("refuses a target no profile declares, and lists the ones that do", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
     await expect(
       run("translate", "framework", "--to", "emacs", "--out", "dist-plugins")
-    ).rejects.toThrow("exited");
+    ).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools()).join(", ")}.\n`
@@ -118,12 +120,12 @@ describe("aidd translate — what it refuses", () => {
 
   it("refuses a layout that is neither marketplace nor flat", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
     await expect(
       run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--as", "zip")
-    ).rejects.toThrow("exited");
+    ).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: Invalid --as 'zip'. Expected 'marketplace' or 'flat'.\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -133,12 +135,12 @@ describe("aidd translate — what it refuses", () => {
   it("names the target and layout together when no strategy pairs them", async () => {
     buildUseCase = undefined;
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
     await expect(
       run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--as", "flat")
-    ).rejects.toThrow("exited");
+    ).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: Unsupported target/mode combination: claude (flat).\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -148,12 +150,12 @@ describe("aidd translate — what it refuses", () => {
   it("names a failed build on stderr and fails the process", async () => {
     build.mockRejectedValue(new Error("source directory is empty"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
     await expect(
       run("translate", "framework", "--to", "claude", "--out", "dist-plugins")
-    ).rejects.toThrow("exited");
+    ).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: source directory is empty\n");
     expect(exit).toHaveBeenCalledWith(1);

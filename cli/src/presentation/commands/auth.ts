@@ -4,7 +4,6 @@ import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -61,11 +60,7 @@ function reportingErrors(
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
-    try {
-      await run(await createDeps(projectRoot, { verbose }, output), output);
-    } catch (error) {
-      failCommand(output, error);
-    }
+    await run(await createDeps(projectRoot, { verbose }, output), output);
   };
 }
 
@@ -87,15 +82,11 @@ export function registerAuthCommand(
 
       refuseInvalidOptions(cmdOptions, output);
 
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const level = await askLevel(deps.prompter, cmdOptions.level);
-        const credential = await askCredential(deps.prompter, cmdOptions);
-        const result = await deps.logIn.execute({ credential, level });
-        printAuthenticated(output, result.login, result.level);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const level = await askLevel(deps.prompter, cmdOptions.level);
+      const credential = await askCredential(deps.prompter, cmdOptions);
+      const result = await deps.logIn.execute({ credential, level });
+      printAuthenticated(output, result.login, result.level);
     });
 
   authCmd

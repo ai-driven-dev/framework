@@ -44,23 +44,21 @@ describe("parseSourceFlag", () => {
 
 describe("parseToolIds", () => {
   it("selects no tool at all when neither category was given", () => {
-    expect(parseToolIds({}, new CapturingOutput(false), registeredCatalog())).toEqual({
+    expect(parseToolIds({}, registeredCatalog())).toEqual({
       aiTools: [],
       ideTools: [],
     });
   });
 
   it("splits the ids given per category", () => {
-    expect(
-      parseToolIds({ ai: "claude", ide: "vscode" }, new CapturingOutput(false), registeredCatalog())
-    ).toEqual({
+    expect(parseToolIds({ ai: "claude", ide: "vscode" }, registeredCatalog())).toEqual({
       aiTools: ["claude"],
       ideTools: ["vscode"],
     });
   });
 
   it("expands --ai all into every AI tool and no IDE tool", () => {
-    expect(parseToolIds({ ai: "all" }, new CapturingOutput(false), registeredCatalog())).toEqual({
+    expect(parseToolIds({ ai: "all" }, registeredCatalog())).toEqual({
       aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
       ideTools: [],
     });

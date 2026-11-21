@@ -14,7 +14,6 @@ import {
   printToolRemoved,
   printUpdateResult,
 } from "../display/tool-config-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { type RecipesKeys, registerRecipesCommand } from "./recipes.js";
 
@@ -177,19 +176,15 @@ function registerInstall(
     .option("--no-plugins", "Skip propagation of already-installed plugins onto the new tool")
     .action(async (cmdOptions: { tool: string; force: boolean; plugins: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await installTool({
-          deps,
-          output,
-          projectRoot,
-          raw: cmdOptions.tool,
-          cmdOptions,
-          catalog,
-        });
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      await installTool({
+        deps,
+        output,
+        projectRoot,
+        raw: cmdOptions.tool,
+        cmdOptions,
+        catalog,
+      });
     });
 }
 
@@ -206,12 +201,8 @@ function registerRemove(
     .requiredOption("--tool <tool>", "AI or IDE tool ID")
     .action(async (cmdOptions: { tool: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await removeTool({ deps, output, projectRoot, raw: cmdOptions.tool, catalog });
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      await removeTool({ deps, output, projectRoot, raw: cmdOptions.tool, catalog });
     });
 }
 
@@ -229,19 +220,15 @@ function registerUpdate(
     .option("-f, --force", "Overwrite modified files without prompting", false)
     .action(async (cmdOptions: { tool?: string; force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await updateTools({
-          deps,
-          output,
-          projectRoot,
-          raw: cmdOptions.tool,
-          cmdOptions,
-          catalog,
-        });
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      await updateTools({
+        deps,
+        output,
+        projectRoot,
+        raw: cmdOptions.tool,
+        cmdOptions,
+        catalog,
+      });
     });
 }
 
@@ -256,16 +243,12 @@ function registerRules(
     .option("--json", "Print the inventory as JSON")
     .action(async (cmdOptions: { json?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { rules } = await deps.listInstalledRulesUseCase.execute({
-          projectRoot,
-        });
-        if (cmdOptions.json) printInstalledRulesJson(output, rules);
-        else printInstalledRules(output, rules);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const { rules } = await deps.listInstalledRulesUseCase.execute({
+        projectRoot,
+      });
+      if (cmdOptions.json) printInstalledRulesJson(output, rules);
+      else printInstalledRules(output, rules);
     });
 }
 

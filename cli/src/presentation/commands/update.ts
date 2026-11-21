@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import { printSelfUpdateResult } from "../display/update-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -23,19 +22,15 @@ async function runUpdateAction(
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
-  try {
-    const deps = await createDeps(projectRoot, { verbose }, output);
+  const deps = await createDeps(projectRoot, { verbose }, output);
 
-    const result = await deps.selfUpdate.execute({
-      check: cmdOptions.check,
-      dryRun: cmdOptions.dryRun,
-      force: cmdOptions.force,
-    });
+  const result = await deps.selfUpdate.execute({
+    check: cmdOptions.check,
+    dryRun: cmdOptions.dryRun,
+    force: cmdOptions.force,
+  });
 
-    printSelfUpdateResult(output, result);
-  } catch (error) {
-    failCommand(output, error);
-  }
+  printSelfUpdateResult(output, result);
 }
 
 export function registerUpdateCommand(

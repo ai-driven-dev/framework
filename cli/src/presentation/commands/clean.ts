@@ -2,7 +2,6 @@ import type { Command } from "commander";
 import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -87,15 +86,11 @@ export function registerCleanCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        if (scope === "user") {
-          await runUserScopeClean({ deps, output, projectRoot, cmdOptions });
-        } else {
-          await runProjectScopeClean({ deps, output, projectRoot, cmdOptions });
-        }
-      } catch (error) {
-        failCommand(output, error);
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      if (scope === "user") {
+        await runUserScopeClean({ deps, output, projectRoot, cmdOptions });
+      } else {
+        await runProjectScopeClean({ deps, output, projectRoot, cmdOptions });
       }
     });
 }

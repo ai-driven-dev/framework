@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
 const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
 const refresh = vi.fn(async () => ({ checkedAt: 0, latest: "0.0.0" }));
@@ -15,7 +17,11 @@ const { registerUpdateNoticeHooks } = await import(
 const createDeps = vi.fn<Parameters<typeof registerUpdateNoticeHooks>[1]>();
 
 /** Runs `path` as nested commands (`marketplace list` is a `list` under `marketplace`). */
-async function run(path: string, extraArgs: string[] = []): Promise<void> {
+async function run(
+  path: string,
+  extraArgs: string[] = [],
+  action: () => void = () => undefined
+): Promise<void> {
   const program = new Command("aidd");
   bindOutput(program, processOutputFactory());
   program.option("--verbose");
@@ -24,8 +30,8 @@ async function run(path: string, extraArgs: string[] = []): Promise<void> {
   let parent = program;
   const names = path.split(" ");
   for (const name of names.slice(0, -1)) parent = parent.command(name);
-  parent.command(names[names.length - 1] as string).action(() => undefined);
-  await program.parseAsync(["node", "aidd", ...extraArgs, ...names]);
+  parent.command(names[names.length - 1] as string).action(action);
+  await parseToExit(program, ["node", "aidd", ...extraArgs, ...names]);
 }
 
 beforeEach(() => {
@@ -150,5 +156,29 @@ describe("the update refresh hook", () => {
     refresh.mockRejectedValueOnce("nope");
     await run("sync");
     expect(debug).toHaveBeenCalledWith("CLI update refresh failed: nope");
+  });
+});
+
+describe("a command that fails", () => {
+  it("reports the failure at the one exit, with code 1, and refreshes nothing", async () => {
+    const written: string[] = [];
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+      written.push(String(chunk));
+      return true;
+    });
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code));
+    });
+
+    await expect(
+      run("marketplace refresh", [], () => {
+        throw new Error("registry unreachable");
+      })
+    ).rejects.toThrow(ExitRequested);
+
+    expect(written.join("")).toBe("Error: registry unreachable\n");
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(refresh).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 });

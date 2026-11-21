@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const cleanProject = vi.fn();
@@ -69,7 +71,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerCleanCommand(program, createDeps);
-  await program.parseAsync(["node", "aidd", ...args]);
+  await parseToExit(program, ["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -209,11 +211,11 @@ describe("aidd clean --scope", () => {
   });
 
   it("refuses a scope it does not know before building anything", async () => {
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("clean", "--scope", "machine")).rejects.toThrow("exited");
+    await expect(run("clean", "--scope", "machine")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       'Error: Invalid --scope "machine" — expected "project" or "user".\n'
@@ -236,11 +238,11 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 
   it("names the failure on stderr and fails the process", async () => {
     cleanProject.mockRejectedValue(new Error("registry locked"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("clean")).rejects.toThrow("exited");
+    await expect(run("clean")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: registry locked\n");
     expect(exit).toHaveBeenCalledWith(1);

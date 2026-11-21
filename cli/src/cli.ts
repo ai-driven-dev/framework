@@ -4,8 +4,10 @@ import { bindContainer, createContainer } from "./composition/container.js";
 import { createOutput } from "./composition/shared.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
+import { outputOf } from "./presentation/commands/global-options.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerCommands } from "./presentation/commands/register-commands.js";
+import { failCommand } from "./presentation/errors/error-translator.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
 import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
@@ -53,5 +55,5 @@ const cliArgs = process.argv.slice(2);
 if (cliArgs.length === 0 && process.stdout.isTTY) {
   runMenuLoop(menuOfProject, resolveProjectRoot(), createOutput(false));
 } else {
-  program.parse(process.argv);
+  program.parseAsync(process.argv).catch((error: unknown) => failCommand(outputOf(program), error));
 }

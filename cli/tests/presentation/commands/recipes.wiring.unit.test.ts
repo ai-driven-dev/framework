@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
 const validate = vi.fn();
 const createDeps = vi.fn(async () => ({ validateRecipes: { execute: validate } }));
@@ -41,7 +42,7 @@ async function run(...args: string[]): Promise<void> {
   program.option("--verbose");
   const toolConfig = program.command("framework");
   registerRecipesCommand(toolConfig, program, createDeps);
-  await program.parseAsync(["node", "aidd", "framework", "validate-recipes", ...args]);
+  await parseToExit(program, ["node", "aidd", "framework", "validate-recipes", ...args]);
 }
 
 describe("aidd framework validate-recipes: what it hands the validation", () => {

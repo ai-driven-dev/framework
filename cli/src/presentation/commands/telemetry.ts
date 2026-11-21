@@ -28,7 +28,6 @@ import {
   printIngestResult,
   printTelemetryStatus,
 } from "../display/telemetry-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -43,28 +42,20 @@ interface TelemetrySurface {
 }
 
 /** A command's output and directory, and how it runs: `run` wires the dependencies for some
- * work, `runChecked` first checks what the request alone can answer, before any are wired. Both
- * report any failure the one way. */
+ * work, `runChecked` first checks what the request alone can answer, before any are wired. A
+ * failure of either reaches the program's one exit. */
 function commandOf(program: Command, createDeps: DepsSliceFactory<TelemetryCommandKeys>) {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const attempt = async (body: () => Promise<void>): Promise<void> => {
-    try {
-      await body();
-    } catch (error) {
-      failCommand(output, error);
-    }
-  };
   const wire = () => createDeps(projectRoot, { verbose }, output);
-  const run = (work: (deps: Pick<Deps, TelemetryCommandKeys>) => Promise<void>) =>
-    attempt(async () => work(await wire()));
-  const runChecked = <Checked>(
+  const run = async (work: (deps: Pick<Deps, TelemetryCommandKeys>) => Promise<void>) =>
+    work(await wire());
+  const runChecked = async <Checked>(
     validate: () => Checked,
     work: (deps: Pick<Deps, TelemetryCommandKeys>, checked: Checked) => Promise<void>
-  ) =>
-    attempt(async () => {
-      const checked = validate();
-      await work(await wire(), checked);
-    });
+  ): Promise<void> => {
+    const checked = validate();
+    await work(await wire(), checked);
+  };
   return { output, projectRoot, run, runChecked };
 }
 

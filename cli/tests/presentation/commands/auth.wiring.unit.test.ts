@@ -2,8 +2,10 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const login = vi.fn();
@@ -67,13 +69,13 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerAuthCommand(program, createDeps);
-  await program.parseAsync(["node", "aidd", "auth", ...args]);
+  await parseToExit(program, ["node", "aidd", "auth", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
 function refusing(): MockInstance<typeof process.exit> {
-  return vi.spyOn(process, "exit").mockImplementation(() => {
-    throw new Error("exited");
+  return vi.spyOn(process, "exit").mockImplementation((code) => {
+    throw new ExitRequested(Number(code ?? 0));
   });
 }
 
@@ -144,7 +146,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
   it("refuses a run that names two ways of authenticating at once", async () => {
     const exit = refusing();
 
-    await expect(run("login", "--gh", "--token", "ghp_x")).rejects.toThrow("exited");
+    await expect(run("login", "--gh", "--token", "ghp_x")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: --gh and --token are mutually exclusive.\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -154,7 +156,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
   it("refuses to prompt for a credential off a terminal", async () => {
     refusing();
 
-    await expect(run("login", "--level", "user")).rejects.toThrow("exited");
+    await expect(run("login", "--level", "user")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: Use --gh or --token <value> in non-interactive mode.\n");
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -163,7 +165,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
   it("refuses to prompt for a storage level off a terminal", async () => {
     refusing();
 
-    await expect(run("login", "--token", "ghp_x")).rejects.toThrow("exited");
+    await expect(run("login", "--token", "ghp_x")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: Use --level <user|project> in non-interactive mode.\n");
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -173,7 +175,9 @@ describe("aidd auth login, what it refuses before building anything", () => {
     pretendTerminal(true);
     refusing();
 
-    await expect(run("login", "--token", "ghp_x", "--level", "machine")).rejects.toThrow("exited");
+    await expect(run("login", "--token", "ghp_x", "--level", "machine")).rejects.toThrow(
+      ExitRequested
+    );
 
     expect(errors[0]).toBe("Error: --level must be 'user' or 'project'.\n");
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -205,7 +209,7 @@ describe("aidd auth logout, a store that refuses", () => {
     logout.mockRejectedValue(new Error("auth.json is read-only"));
     const exit = refusing();
 
-    await expect(run("logout")).rejects.toThrow("exited");
+    await expect(run("logout")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: auth.json is read-only\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -243,7 +247,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
     status.mockRejectedValue(new Error("auth.json is unreadable"));
     const exit = refusing();
 
-    await expect(run("status")).rejects.toThrow("exited");
+    await expect(run("status")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: auth.json is unreadable\n");
     expect(exit).toHaveBeenCalledWith(1);

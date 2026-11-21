@@ -25,7 +25,6 @@ import {
   printWelcomeBanner,
 } from "../display/setup-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -157,17 +156,11 @@ export function requireAgentHosts(
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
   cmdOptions: SetupCmdOptions,
-  output: Output,
   tools: ToolCatalog
-): { aiTools: string[]; ideTools: string[] } | null {
+): { aiTools: string[]; ideTools: string[] } {
   const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
   const ids = expandAllKeyword(cmdOptions.ide, tools.idsInCanonicalOrder());
-  try {
-    return selectTools(aiIds, ids, tools);
-  } catch (e) {
-    failCommand(output, e);
-    return null;
-  }
+  return selectTools(aiIds, ids, tools);
 }
 
 function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
@@ -207,11 +200,10 @@ function parseSetupRequest(
   cmdOptions: SetupCmdOptions,
   output: Output,
   catalog: ToolCatalog
-): SetupRequest | null {
+): SetupRequest {
   const source = parseSourceFlag(cmdOptions, output);
   const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
-  const toolIds = parseToolIds(cmdOptions, output, catalog);
-  if (toolIds === null) return null;
+  const toolIds = parseToolIds(cmdOptions, catalog);
 
   const interactive = isInteractiveRun(process.stdout.isTTY, [
     cmdOptions.source,
@@ -266,47 +258,42 @@ interface SetupRun {
 async function runSetupAction(run: SetupRun): Promise<void> {
   const { verbose, output, projectRoot, catalog, createDeps, cmdOptions } = run;
   const request = parseSetupRequest(cmdOptions, output, catalog);
-  if (request === null) return;
   const { interactive, scope } = request;
-  try {
-    const flow = buildSetupFlow(run, request);
-    const { runnable, ...agents } = agentModelsRequest(
-      cmdOptions.provider,
-      request.toolIds.aiTools,
-      catalog
-    );
-    requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
+  const flow = buildSetupFlow(run, request);
+  const { runnable, ...agents } = agentModelsRequest(
+    cmdOptions.provider,
+    request.toolIds.aiTools,
+    catalog
+  );
+  requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
 
-    if (interactive) printWelcomeBanner(output);
+  if (interactive) printWelcomeBanner(output);
 
-    const deps = await createDeps(projectRoot, { verbose }, output);
-    const result = await deps.runSetup.execute(flow);
+  const deps = await createDeps(projectRoot, { verbose }, output);
+  const result = await deps.runSetup.execute(flow);
 
-    if (interactive && result.context !== undefined) {
-      printDetectedContext(output, result.context.describe());
-    }
-    printSetupOutcome(output, result, verbose);
-    // Once the install has succeeded: the provider and the main session's model hold for
-    // every project on the machine, so a failed install leaves both as they were.
-    if (cmdOptions.provider !== undefined) {
-      const main = await deps.setAgentModels.execute({
-        projectRoot,
-        ...agents,
-        scope: scope ?? "project",
-      });
-      reportAgentModels({
-        output,
-        catalog,
-        provider: agents.provider,
-        hosts: agents.hosts,
-        main,
-      });
-    }
-    if (interactive) printNextSteps(output, result.install.results.length > 0);
-    reportNativeActivation(output, result.activation);
-  } catch (error) {
-    failCommand(output, error);
+  if (interactive && result.context !== undefined) {
+    printDetectedContext(output, result.context.describe());
   }
+  printSetupOutcome(output, result, verbose);
+  // Once the install has succeeded: the provider and the main session's model hold for
+  // every project on the machine, so a failed install leaves both as they were.
+  if (cmdOptions.provider !== undefined) {
+    const main = await deps.setAgentModels.execute({
+      projectRoot,
+      ...agents,
+      scope: scope ?? "project",
+    });
+    reportAgentModels({
+      output,
+      catalog,
+      provider: agents.provider,
+      hosts: agents.hosts,
+      main,
+    });
+  }
+  if (interactive) printNextSteps(output, result.install.results.length > 0);
+  reportNativeActivation(output, result.activation);
 }
 
 export function registerSetupCommand(

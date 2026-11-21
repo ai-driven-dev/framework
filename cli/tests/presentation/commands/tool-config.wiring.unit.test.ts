@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const installAiTool = vi.fn();
@@ -78,7 +80,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerToolConfigCommand(program, CATALOG, createDeps);
-  await program.parseAsync(["node", "aidd", "framework", ...args]);
+  await parseToExit(program, ["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -136,11 +138,11 @@ describe("aidd framework install", () => {
         failed: true,
       },
     });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("install", "--tool", "claude")).rejects.toThrow("exited");
+    await expect(run("install", "--tool", "claude")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Warning: [claude] claude CLI refused\nError: Sync failed for: claude. See the warnings above.\n"
@@ -174,11 +176,11 @@ describe("aidd framework install", () => {
   });
 
   it("refuses a tool neither category declares, and lists every one it would have taken", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("install", "--tool", "emacs")).rejects.toThrow("exited");
+    await expect(run("install", "--tool", "emacs")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Error: Unknown tool: emacs. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n"
@@ -203,11 +205,11 @@ describe("aidd framework remove", () => {
 
   it("names a failed removal on stderr and fails the process", async () => {
     uninstallTools.mockRejectedValue(new Error("manifest is locked"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("remove", "--tool", "claude")).rejects.toThrow("exited");
+    await expect(run("remove", "--tool", "claude")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: manifest is locked\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -260,11 +262,11 @@ describe("aidd framework update", () => {
 
   it("names a failed update on stderr and fails the process", async () => {
     updateTools.mockRejectedValue(new Error("bundled assets are missing"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("update")).rejects.toThrow("exited");
+    await expect(run("update")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: bundled assets are missing\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -287,11 +289,11 @@ describe("aidd framework update", () => {
   });
 
   it("refuses a tool it does not know before asking the updater", async () => {
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("update", "--tool", "nope")).rejects.toThrow("exited");
+    await expect(run("update", "--tool", "nope")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe(
       "Error: Unknown tool: nope. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n"
@@ -350,11 +352,11 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 
   it("names a failed rules read on stderr and fails the process", async () => {
     listInstalledRules.mockRejectedValue(new Error("manifest unreadable"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("rules")).rejects.toThrow("exited");
+    await expect(run("rules")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: manifest unreadable\n");
     expect(exit).toHaveBeenCalledWith(1);
