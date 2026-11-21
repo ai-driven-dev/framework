@@ -28,7 +28,7 @@ const STORED_VOCABULARY = { path: "src/contexts/telemetry/contract/usage-record.
 
 /** A telemetry source reads one tool's files, so its folder is named for that tool, as a profile's is. */
 function isAllowed(file: string, ids: readonly string[], named: readonly string[] = []): boolean {
-  if (file === "src/composition/tools.ts" || file === STORED_VOCABULARY.path) return true;
+  if (file === "src/composition/tool-profiles.ts" || file === STORED_VOCABULARY.path) return true;
   return ids.some(
     (id) =>
       file.startsWith(`src/contexts/tools/domain/profiles/${id}/`) ||

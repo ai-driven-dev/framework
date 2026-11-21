@@ -3,6 +3,7 @@ description: Apply when a tool the CLI targets is added or changed, or when code
 paths:
   - "src/contexts/tools/**/*.ts"
   - "src/composition/tools.ts"
+  - "src/composition/tool-profiles.ts"
   - "tests/contexts/tools/**/*.ts"
 ---
 
@@ -15,7 +16,7 @@ paths:
 
 ## Ports
 
-- `ToolCatalog` (`contract/tool-catalog.ts`): the registered tools, asked by id or walked in a named order; `wireTools()` in `src/composition/tools.ts` builds the one catalog.
+- `ToolCatalog` (`contract/tool-catalog.ts`): the registered tools, asked by id or walked in a named order; `wireTools()` in `src/composition/tools.ts` builds the one catalog from `REGISTERED_PROFILES` in `src/composition/tool-profiles.ts`.
 - `AiToolProfile`, `IdeToolProfile` (`contract/tool-profile.ts`) and `ToolBuildContract` (`contract/build-contract.ts`): the answers a caller asks.
 
 ## Rules
@@ -23,7 +24,7 @@ paths:
 - Outside callers import `contract/` only; Biome shuts `domain/` and `application/` (`HELD_BY_BIOME` in `tests/architecture/allowed-edges.ts`, `APPLICATION_CLOSED` in `tests/architecture/source-graph.ts`).
 - A class takes the catalog in its constructor (the `shape` rule of `kinds.ts`), asks a profile a question and never reads its structure.
 - Adding a tool: the `tools` skill.
-- `src/composition/tools.ts` and `src/composition/host-registration.ts` are the only readers of `domain/`.
+- `src/composition/tool-profiles.ts` and `src/composition/host-registration.ts` are the only readers of `domain/`.
 - Exceptions to the context shape are in the exceptions table of `reference-context.md`.
 
 ## Tests

@@ -21,7 +21,7 @@ import { DuplicateToolIdError } from "../contexts/tools/domain/tools.error.js";
 import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
-import { REGISTERED_PROFILES } from "./tools.js";
+import { REGISTERED_PROFILES } from "./tool-profiles.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {

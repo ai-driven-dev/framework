@@ -1,4 +1,4 @@
-import { REGISTERED_PROFILES } from "../../../src/composition/tools.js";
+import { REGISTERED_PROFILES } from "../../../src/composition/tool-profiles.js";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type {

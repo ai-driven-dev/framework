@@ -1,7 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/composition/tools.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.js";
 import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { describeProfileFileConformance } from "../../testing/profile-file-conformance.contract.js";

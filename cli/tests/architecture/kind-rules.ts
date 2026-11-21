@@ -176,7 +176,7 @@ export function instructionViolations(
 
 // Composition holds one module per context.
 
-const FIXED_MODULES = ["container", "shared"];
+const FIXED_MODULES = ["container", "shared", "tool-profiles"];
 const ALLOWED_SUBFOLDERS = ["orchestration"];
 
 /** The root, the shared module and one module per context, and only `orchestration/` as a folder. */
@@ -198,7 +198,7 @@ export function compositionViolations(
       "composition",
       entry,
       what,
-      "composition holds container, shared and one module per context, and an orchestration folder",
+      "composition holds container, shared, the tool registration list and one module per context, and an orchestration folder",
       "add the module of the context, or remove the one no context owns"
     );
   return [
