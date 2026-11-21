@@ -96,15 +96,18 @@ export function upsertUsage(
   let updated = 0;
   for (const record of records) {
     const was = before.get(id(record));
-    if (was !== undefined && was === record) continue;
+    if (was === record) continue;
     if (was === undefined) added += 1;
     else updated += 1;
-    for (const moved of [record, was]) {
-      const day = moved === undefined ? null : dayOf(moved.at);
-      if (day !== null) days.add(day);
-    }
+    for (const day of daysOf(record, was)) days.add(day);
   }
   return { records, added, updated, days };
+}
+
+/** The days a record and the one it replaced fall on. */
+function daysOf(record: StoredUsage, was: StoredUsage | undefined): string[] {
+  const found = [dayOf(record.at), was === undefined ? null : dayOf(was.at)];
+  return found.filter((day): day is string => day !== null);
 }
 
 /** Records grouped by the day of their own time, each day in time order then key, so the

@@ -54,6 +54,17 @@ function instantText(value: unknown): string | null {
   return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null;
 }
 
+function openEventOf(object: Record<string, unknown>, token: string): ConsentEvent | null {
+  const clone = parseCloneIdentity(object.clone);
+  const at = instantText(object.open);
+  return clone === null || at === null ? null : { kind: "open", token, clone, at };
+}
+
+function closeEventOf(object: Record<string, unknown>, token: string): ConsentEvent | null {
+  const at = instantText(object.close);
+  return at === null ? null : { kind: "close", token, at };
+}
+
 /** A line that is not exactly an event is `null`, never guessed at. */
 export function parseConsentEvent(line: string): ConsentEvent | null {
   const parsed = tryParseJson(line);
@@ -61,15 +72,8 @@ export function parseConsentEvent(line: string): ConsentEvent | null {
   if (object === null) return null;
   const { token } = object;
   if (typeof token !== "string" || !/^\S+$/u.test(token)) return null;
-  if (sameKeys(object, ["token", "clone", "open"])) {
-    const clone = parseCloneIdentity(object.clone);
-    const at = instantText(object.open);
-    return clone === null || at === null ? null : { kind: "open", token, clone, at };
-  }
-  if (sameKeys(object, ["token", "close"])) {
-    const at = instantText(object.close);
-    return at === null ? null : { kind: "close", token, at };
-  }
+  if (sameKeys(object, ["token", "clone", "open"])) return openEventOf(object, token);
+  if (sameKeys(object, ["token", "close"])) return closeEventOf(object, token);
   return null;
 }
 
@@ -97,12 +101,7 @@ export function parseConsentRecords(text: string | null): ConsentRecords {
  * its lines says nothing about the order of events. A close of a token never opened changes
  * nothing. */
 export function foldConsent(events: readonly ConsentEvent[]): ConsentInterval[] {
-  const closes = new Map<string, number>();
-  for (const event of events) {
-    if (event.kind !== "close") continue;
-    const at = Date.parse(event.at);
-    closes.set(event.token, Math.min(at, closes.get(event.token) ?? at));
-  }
+  const closes = earliestCloses(events);
   const intervals = new Map<string, ConsentInterval>();
   for (const event of events) {
     if (event.kind !== "open" || intervals.has(event.token)) continue;
@@ -114,6 +113,16 @@ export function foldConsent(events: readonly ConsentEvent[]): ConsentInterval[] 
     });
   }
   return [...intervals.values()];
+}
+
+function earliestCloses(events: readonly ConsentEvent[]): Map<string, number> {
+  const closes = new Map<string, number>();
+  for (const event of events) {
+    if (event.kind !== "close") continue;
+    const at = Date.parse(event.at);
+    closes.set(event.token, Math.min(at, closes.get(event.token) ?? at));
+  }
+  return closes;
 }
 
 export function isOpen(interval: ConsentInterval): boolean {

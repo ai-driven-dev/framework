@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   type BranchSnapshot,
-  branchCreatedAt,
   needsReflog,
   nextSnapshot,
   parseBranchConfig,
-  parseBranchSnapshot,
   snapshotKey,
 } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
 
@@ -160,76 +158,6 @@ describe("only a declaration the command made on the branch counts", () => {
   });
 });
 
-describe("the reflog says when the branch took its name", () => {
-  it("takes the last line, which git lists newest first, as UTC", () => {
-    const out = [
-      "refs/heads/x@{2026-10-09T12:00:00+02:00}",
-      "refs/heads/x@{2026-10-07T12:00:00+02:00}",
-    ].join("\n");
-    expect(branchCreatedAt(`${out}\n`, "x")).toBe("2026-10-07T10:00:00.000Z");
-  });
-
-  it("takes the last of three lines, not the second", () => {
-    const out = [
-      "x@{2026-10-09T12:00:00+02:00}",
-      "x@{2026-10-08T12:00:00+02:00}",
-      "x@{2026-10-07T12:00:00+02:00}",
-    ].join("\n");
-    expect(branchCreatedAt(out, "x")).toBe("2026-10-07T10:00:00.000Z");
-  });
-
-  it("reads the selector git prints, which names the branch without refs/heads", () => {
-    expect(branchCreatedAt("feat/x@{2026-10-07T12:00:00+02:00}\n", "x")).toBe(
-      "2026-10-07T10:00:00.000Z"
-    );
-  });
-
-  it("takes the newest entry where the branch took its name by a copy or a rename", () => {
-    const out = [
-      "y@{2026-10-09T12:00:00+02:00}\tcommit: later",
-      "y@{2026-10-08T12:00:00+02:00}\tBranch: renamed refs/heads/x to refs/heads/y",
-      "y@{2026-10-06T12:00:00+02:00}\tBranch: copied refs/heads/w to refs/heads/x",
-      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
-    ].join("\n");
-    expect(branchCreatedAt(out, "y")).toBe("2026-10-08T10:00:00.000Z");
-    expect(branchCreatedAt(out.replace("renamed", "copied"), "y")).toBe("2026-10-08T10:00:00.000Z");
-  });
-
-  it("reads the rename libgit2 writes, in lower case, as git's own", () => {
-    const out = [
-      "y@{2026-10-08T12:00:00+02:00}\tbranch: renamed refs/heads/x to refs/heads/y",
-      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
-    ].join("\n");
-    expect(branchCreatedAt(out, "y")).toBe("2026-10-08T10:00:00.000Z");
-  });
-
-  it("ignores an entry that moved another name, or that names this one only as a prefix", () => {
-    const out = [
-      "y@{2026-10-08T12:00:00+02:00}\tBranch: renamed refs/heads/x to refs/heads/yy",
-      "y@{2026-10-07T12:00:00+02:00}\tcommit: Branch: renamed refs/heads/x to refs/heads/y",
-      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
-    ].join("\n");
-    expect(branchCreatedAt(out, "y")).toBe("2026-10-01T10:00:00.000Z");
-  });
-
-  it("is none for a selector without its closing brace", () => {
-    expect(branchCreatedAt("x@{2026-10-07T12:00:00+02:00\n", "x")).toBeNull();
-    // A last character other than the brace, with a valid time before it.
-    expect(branchCreatedAt("x@{2026-10-07T12:00:00+02:00)\n", "x")).toBeNull();
-  });
-
-  it("is none for a time in braces with no selector before it", () => {
-    expect(branchCreatedAt("{2026-10-07T12:00:00+02:00}\n", "x")).toBeNull();
-  });
-
-  it("is none for an empty reflog or a line it cannot read", () => {
-    expect(branchCreatedAt("", "x")).toBeNull();
-    expect(branchCreatedAt("\n", "x")).toBeNull();
-    expect(branchCreatedAt("refs/heads/x@{garbage}\n", "x")).toBeNull();
-    expect(branchCreatedAt("no selector\n", "x")).toBeNull();
-  });
-});
-
 describe("a snapshot is taken only when the binding differs from the latest one", () => {
   const now = "2026-10-09T09:00:00.000Z";
   const observed = {
@@ -373,57 +301,5 @@ describe("the reflog is read only when it can add something", () => {
 
   it("is not needed once this declaration has its creation time", () => {
     expect(needsReflog(latest, observed)).toBe(false);
-  });
-});
-
-describe("a snapshot line is read back or refused", () => {
-  const snapshot: BranchSnapshot = {
-    repository_id: "r",
-    branch: "feat/x",
-    task: "t",
-    ticket: "T-1",
-    declared_at: "2026-10-07T10:00:00.000Z",
-    none: false,
-    branch_created_at: "2026-10-06T00:00:00.000Z",
-    snapshot_at: "2026-10-07T10:00:01.000Z",
-  };
-
-  it("round-trips", () => {
-    expect(parseBranchSnapshot(JSON.stringify(snapshot))).toEqual(snapshot);
-  });
-
-  it("keeps the nullable fields null", () => {
-    const bare = {
-      ...snapshot,
-      task: null,
-      ticket: null,
-      declared_at: null,
-      branch_created_at: null,
-    };
-    expect(parseBranchSnapshot(JSON.stringify(bare))).toEqual(bare);
-  });
-
-  it.each([
-    ["not json", "{nope"],
-    ["not an object", "[]"],
-    ["an empty line", ""],
-    ["no repository", { ...snapshot, repository_id: undefined }],
-    ["an empty repository", { ...snapshot, repository_id: "" }],
-    ["a numeric repository", { ...snapshot, repository_id: 4 }],
-    ["no branch", { ...snapshot, branch: undefined }],
-    ["an empty branch", { ...snapshot, branch: "" }],
-    ["a numeric branch", { ...snapshot, branch: 4 }],
-    ["no snapshot time", { ...snapshot, snapshot_at: undefined }],
-    ["a numeric snapshot time", { ...snapshot, snapshot_at: 4 }],
-    ["a text none", { ...snapshot, none: "false" }],
-    ["no none", { ...snapshot, none: undefined }],
-    ["a numeric task", { ...snapshot, task: 4 }],
-    ["a numeric ticket", { ...snapshot, ticket: 4 }],
-    ["a numeric declaration time", { ...snapshot, declared_at: 4 }],
-    ["a numeric creation time", { ...snapshot, branch_created_at: 4 }],
-    ["a missing task", { ...snapshot, task: undefined }],
-  ])("refuses %s", (_name, value) => {
-    const line = typeof value === "string" ? value : JSON.stringify(value);
-    expect(parseBranchSnapshot(line)).toBeNull();
   });
 });

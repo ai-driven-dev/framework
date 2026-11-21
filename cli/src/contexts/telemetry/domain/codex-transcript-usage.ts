@@ -45,7 +45,10 @@ export function decodeCodexLine(line: string, before: unknown, tool: UsageTool):
       ? unrecognisedCall(context, `a line holding ${CALL} is not JSON`, null)
       : NONE;
   }
-  const root = asPlainObject(parsed);
+  return decodeObject(asPlainObject(parsed), context, tool);
+}
+
+function decodeObject(root: Json | null, context: CodexContext, tool: UsageTool): CodexUsageLine {
   const payload = asPlainObject(root?.payload);
   if (root?.type === "session_meta") {
     if (context.session !== null) return NONE;
@@ -87,11 +90,6 @@ function decodeCall(from: {
   }
 
   const notes: string[] = [];
-  const countOf = expected("usage", notes);
-  const count = (field: string) => countOf(usage, field);
-  const input = count("input_tokens");
-  const cacheRead = count("cached_input_tokens");
-  const cacheWrite = count("cache_write_input_tokens");
   const { session, turn } = context;
   const record: UsageRecord = {
     tool,
@@ -101,6 +99,27 @@ function decodeCall(from: {
     agent: thread === sessionId ? "main" : "subagent",
     at,
     model: text(turn?.model),
+    ...tokensOf(usage, notes),
+    cwd: context.cwd,
+    git_branch: text(asPlainObject(session?.git)?.branch),
+  };
+  return { records: [record], unrecognised: notes };
+}
+
+/** `input` is what the call read beyond the cache: the cache's share is taken off the total. */
+function tokensOf(
+  usage: Json,
+  notes: string[]
+): Pick<
+  UsageRecord,
+  "input" | "output" | "cache_read" | "cache_write" | "cache_write_1h" | "reasoning"
+> {
+  const countOf = expected("usage", notes);
+  const count = (field: string) => countOf(usage, field);
+  const input = count("input_tokens");
+  const cacheRead = count("cached_input_tokens");
+  const cacheWrite = count("cache_write_input_tokens");
+  return {
     input:
       input === null || cacheRead === null || cacheWrite === null
         ? null
@@ -110,8 +129,5 @@ function decodeCall(from: {
     cache_write: cacheWrite,
     cache_write_1h: null,
     reasoning: count("reasoning_output_tokens"),
-    cwd: context.cwd,
-    git_branch: text(asPlainObject(session?.git)?.branch),
   };
-  return { records: [record], unrecognised: notes };
 }

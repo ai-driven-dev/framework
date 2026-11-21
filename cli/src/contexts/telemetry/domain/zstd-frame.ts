@@ -18,6 +18,11 @@ export function declaredContentSize(header: Buffer): number | null {
   const width = flag === 0 && singleSegment ? 1 : CONTENT_SIZE_BYTES[flag];
   const at = 5 + (singleSegment ? 0 : 1) + DICTIONARY_ID_BYTES[descriptor & 0b11];
   if (width === 0 || header.length < at + width) return null;
+  return readSize(header, at, width);
+}
+
+/** The size field of `width` bytes at `at`; a two-byte size counts from 256. */
+function readSize(header: Buffer, at: number, width: number): number {
   if (width === 1) return header.readUInt8(at);
   if (width === 2) return header.readUInt16LE(at) + 256;
   if (width === 4) return header.readUInt32LE(at);
