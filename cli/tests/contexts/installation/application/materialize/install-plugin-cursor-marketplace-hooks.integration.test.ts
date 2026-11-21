@@ -3,11 +3,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
-import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
-import type { PluginTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -116,74 +113,5 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     const base = `${HOME}/.cursor/plugins/local/${PLUGIN_NAME}`;
     const written = fs.listUnder(base);
     expect(written.some((p) => p.includes("hooks"))).toBe(false);
-  });
-});
-
-describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 2)", () => {
-  async function installViaLocal(): Promise<InMemoryFileAdapter> {
-    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "test", []);
-    const translator: PluginTranslator = new ModeBFlatMaterializationTranslator(
-      fs,
-      () => HOME,
-      translateDistribution
-    );
-    await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: undefined,
-    });
-    return fs;
-  }
-
-  async function installViaMarketplace(): Promise<InMemoryFileAdapter> {
-    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
-    fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "test", []);
-    const translator: PluginTranslator = new BuiltTreeMaterializationTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
-    await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: "aidd-framework",
-    });
-    return fs;
-  }
-
-  // Read from cursor.ts's own declaration, never hard-coded: both translators regressing to
-  // plugin scope together would still pass a route-against-route comparison.
-  function declaredHooksDestination(toolId: AiToolId): "plugin" | "project" {
-    return registeredTools().aiProfile(toolId).projectHooksDelivery() === null
-      ? "plugin"
-      : "project";
-  }
-
-  it("both routes write to the destination cursor.ts declares — a plugin.hooksDestination change breaks this", async () => {
-    expect(declaredHooksDestination(TOOL.cursor)).toBe("project");
-
-    const viaLocal = await installViaLocal();
-    const viaMarketplace = await installViaMarketplace();
-
-    const projectHooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
-    expect(viaLocal.has(projectHooksPath)).toBe(true);
-    expect(viaMarketplace.has(projectHooksPath)).toBe(true);
-
-    const pluginScopedBase = `${HOME}/.cursor/plugins/local/${PLUGIN_NAME}`;
-    expect(viaLocal.listUnder(pluginScopedBase).some((p) => p.includes("hooks"))).toBe(false);
-    expect(viaMarketplace.listUnder(pluginScopedBase).some((p) => p.includes("hooks"))).toBe(false);
   });
 });

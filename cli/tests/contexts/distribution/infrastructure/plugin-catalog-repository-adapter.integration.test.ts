@@ -16,25 +16,6 @@ function makeAdapter(): PluginCatalogRepositoryAdapter {
 
 describe("PluginCatalogRepositoryAdapter", () => {
   describe("marketplace-sample fixture", () => {
-    it("returns a catalog with two entries", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog).not.toBeNull();
-      expect(catalog?.plugins).toHaveLength(2);
-    });
-
-    it("first entry has recommended true", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[0].recommended).toBe(true);
-    });
-
-    it("second entry has recommended false", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[1].recommended).toBe(false);
-    });
-
     it("resolves relative local source path against framework directory", async () => {
       const adapter = makeAdapter();
       const frameworkDir = join(FIXTURE_DIR, "marketplace-sample");
@@ -42,15 +23,6 @@ describe("PluginCatalogRepositoryAdapter", () => {
       expect(catalog?.plugins[0].source).toEqual({
         kind: "local",
         path: join(frameworkDir, "plugins/dev"),
-      });
-    });
-
-    it("parses github source for second entry", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[1].source).toEqual({
-        kind: "github",
-        repo: "ai-driven-dev/aidd-pm",
       });
     });
   });

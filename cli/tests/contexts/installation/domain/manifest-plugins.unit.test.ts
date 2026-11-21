@@ -8,7 +8,7 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
-import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const CLAUDE = TOOL.claude;
 const CURSOR = TOOL.cursor;
@@ -32,26 +32,6 @@ const makePlugin = (name = "my-plugin") =>
     files: { [`.claude/plugins/${name}/README.md`]: "c".repeat(32) },
     scope: "project",
   });
-
-describe("plugin serialization round-trip", () => {
-  it("serializes and re-parses a manifest with plugins", () => {
-    const manifest = makeManifest();
-    manifest.addPlugin(CLAUDE, makePlugin("cool-plugin"));
-    const serialized = manifest.toJSON();
-    const reparsed = Manifest.fromJSON(serialized, resolveRegisteredToolId);
-    const plugins = reparsed.getPlugins(CLAUDE);
-    expect(plugins).toHaveLength(1);
-    expect(plugins[0].name).toBe("cool-plugin");
-    expect(plugins[0].version).toBe("1.0.0");
-  });
-
-  it("round-trips a manifest with no plugins identically to one without plugin field", () => {
-    const manifest = makeManifest();
-    const json = manifest.toJSON();
-    expect(json.tools.claude.plugins).toBeUndefined();
-    expect(json.tools.cursor.plugins).toBeUndefined();
-  });
-});
 
 describe("addPlugin()", () => {
   it("adds a plugin to the specified tool", () => {

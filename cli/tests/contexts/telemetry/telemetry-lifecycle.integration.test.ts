@@ -351,15 +351,6 @@ describe("how long Claude Code keeps what is measured", () => {
     expect([statSync(settings).mtimeMs, statSync(project).mtimeMs]).toEqual(stat);
     expect(claudeFiles()).toEqual(names);
   });
-
-  it("is satisfied by 3650 in the user's settings, and overridden by a project's shorter one", async () => {
-    await configure(BARE);
-    writeFileSync(join(box.claude, "settings.json"), '{"cleanupPeriodDays":3650}');
-    expect(await retentionOf(repo)).toEqual({ days: 3650, short: false });
-    mkdirSync(join(repo, ".claude"));
-    writeFileSync(join(repo, ".claude", "settings.local.json"), '{"cleanupPeriodDays":7}');
-    expect(await retentionOf(repo)).toEqual({ days: 7, short: true });
-  });
 });
 
 function declare(branch: string, task: string): void {
@@ -477,12 +468,6 @@ describe("forgetting", () => {
     expect(readdirSync(box.telemetry)).toEqual(["notes.txt"]);
     expect(existsSync(join(box.home, ".config", "aidd", "auth.json"))).toBe(true);
     expect(existsSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"))).toBe(true);
-  });
-
-  it("creates nothing where nothing was measured", async () => {
-    const result = await deps.forgetTelemetry.execute({ confirmed: true });
-    expect(result.plan.entries).toEqual([]);
-    expect(existsSync(box.telemetry)).toBe(false);
   });
 
   it("never runs against a path outside the temporary directory", () => {

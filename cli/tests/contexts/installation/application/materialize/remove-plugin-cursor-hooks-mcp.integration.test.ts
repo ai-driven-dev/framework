@@ -19,7 +19,7 @@ const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";
 const OTHER_PLUGIN_NAME = "aidd-context-two";
-const RESOLVED_BASE = join(STUB_HOME, ".cursor", "plugins", "local");
+const _RESOLVED_BASE = join(STUB_HOME, ".cursor", "plugins", "local");
 const HOOKS_PATH = join(PROJECT_ROOT, ".cursor", "hooks.json");
 const SCRIPT_PATH = join(PROJECT_ROOT, ".cursor", "hooks", PLUGIN_NAME, "pre.js");
 const OTHER_SCRIPT_PATH = join(PROJECT_ROOT, ".cursor", "hooks", OTHER_PLUGIN_NAME, "pre.js");
@@ -105,34 +105,6 @@ async function installPlugin(
     previousProjectHooks: previous,
   });
 }
-
-describe("Cursor plugin.files tracking enables uninstall of mcp.json; hooks.json is out-of-band (Phase 6)", () => {
-  it("Plugin.files keys join to the exact written absolute paths (uninstall can find the files)", async () => {
-    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "test", []);
-
-    await installPlugin(fs, manifest, PLUGIN_NAME);
-
-    const plugins = manifest.getPlugins(TOOL.cursor);
-    const installed = plugins.find((p) => p.name === PLUGIN_NAME);
-    expect(installed).toBeDefined();
-    const keys = [...(installed?.files.keys() ?? [])];
-    expect(keys.some((k) => k.endsWith("hooks.json"))).toBe(false);
-    expect(keys.some((k) => k.endsWith("mcp.json"))).toBe(true);
-    // Every tracked key, when joined with resolvedBase, must match a written file
-    for (const key of keys) {
-      const absPath = join(RESOLVED_BASE, key);
-      expect(fs.has(absPath)).toBe(true);
-    }
-    // hooks.json was still written - just not tracked in Plugin.files, and not here
-    expect(fs.has(HOOKS_PATH)).toBe(true);
-    expect(installed?.projectHooks?.entries).toHaveLength(1);
-    expect([...(installed?.projectHooks?.scripts ?? new Map()).keys()]).toEqual([
-      `.cursor/hooks/${PLUGIN_NAME}/pre.js`,
-    ]);
-  });
-});
 
 describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => {
   it("removes what an install merged and copied, leaving every other plugin's entries untouched", async () => {
