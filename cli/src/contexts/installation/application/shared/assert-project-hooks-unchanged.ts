@@ -6,7 +6,7 @@ import type {
   ProjectHookEntry,
   ProjectHooksFormat,
 } from "../../../tools/contract/tool-vocabulary.js";
-import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import { assertScriptPath } from "../ownership/assert-script-path.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";

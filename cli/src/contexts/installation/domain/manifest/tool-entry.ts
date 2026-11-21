@@ -2,7 +2,8 @@ import type { InstallationFile } from "../../../../shared/domain/installation-fi
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import { DuplicatePluginError, PluginNotFoundError } from "../installation.error.js";
-import { InstalledPlugin, type PluginEntryData } from "../plugins/installed-plugin.js";
+import { InstalledPlugin } from "../plugins/installed-plugin.js";
+import type { PluginEntryData } from "../plugins/plugin-entry.js";
 import {
   type MergeFileEntryData,
   parseMergeFileEntries,

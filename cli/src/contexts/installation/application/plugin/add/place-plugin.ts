@@ -11,10 +11,8 @@ import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import {
-  InstalledPlugin,
-  type ProjectHooksProvenance,
-} from "../../../domain/plugins/installed-plugin.js";
+import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 import type { InstallRuntimeConfig } from "../../install/config/install-runtime-config.js";
 import type { PluginTranslator } from "../../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";

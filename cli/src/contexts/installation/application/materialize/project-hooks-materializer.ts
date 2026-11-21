@@ -10,7 +10,7 @@ import type {
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import {
   assertProjectHooksUnchanged,

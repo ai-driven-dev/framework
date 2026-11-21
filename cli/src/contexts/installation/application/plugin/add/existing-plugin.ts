@@ -3,7 +3,7 @@ import { VersionMismatchError } from "../../../../../shared/domain/shared.error.
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import { DuplicatePluginError } from "../../../domain/installation.error.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import type { ProjectHooksProvenance } from "../../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 
 /** What an earlier install of the same plugin left behind, per tool, for the new one to supersede. */
 export interface PreviousInstall {

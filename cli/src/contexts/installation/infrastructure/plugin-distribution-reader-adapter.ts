@@ -11,7 +11,7 @@ import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import { InvalidPluginNameError, InvalidPluginVersionError } from "../domain/installation.error.js";
-import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
+import { PLUGIN_NAME_REGEX } from "../domain/plugins/plugin-entry.js";
 import type { PluginDistributionReader } from "../ports/plugin/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";

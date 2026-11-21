@@ -3,7 +3,7 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
-import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import {
   OVERWRITE_EDITED_HINT,
   type ProjectHooksGuard,

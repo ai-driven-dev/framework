@@ -10,10 +10,8 @@ import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
  * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
  * installs only; a raw local-path install falls back to flat materialization.
  */
-import {
-  InstalledPlugin,
-  type ProjectHooksProvenance,
-} from "../../domain/plugins/installed-plugin.js";
+import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";

@@ -10,10 +10,8 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { ProjectScopeUnsupportedError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
-import {
-  InstalledPlugin,
-  type ProjectHooksProvenance,
-} from "../../domain/plugins/installed-plugin.js";
+import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";

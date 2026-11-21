@@ -2,10 +2,8 @@ import { dirname, join } from "node:path";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksFormat } from "../../../tools/contract/tool-vocabulary.js";
-import type {
-  InstalledPlugin,
-  ProjectHooksProvenance,
-} from "../../domain/plugins/installed-plugin.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import {

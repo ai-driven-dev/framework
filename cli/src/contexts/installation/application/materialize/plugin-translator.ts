@@ -5,7 +5,7 @@ import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 
 /** Everything a translator needs to place one plugin. The optional fields default per strategy. */

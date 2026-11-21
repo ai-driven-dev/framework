@@ -3,10 +3,8 @@ import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import {
-  InstalledPlugin,
-  type PluginEntryData,
-} from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

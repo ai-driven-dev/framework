@@ -9,7 +9,7 @@
   "src/contexts/installation/application/detect-project-context.ts": 1,
   "src/contexts/installation/domain/manifest-serialization.ts": 2,
   "src/contexts/installation/domain/manifest.ts": 1,
-  "src/contexts/installation/domain/plugins/installed-plugin.ts": 3,
+  "src/contexts/installation/domain/plugins/plugin-entry.ts": 3,
   "src/contexts/installation/infrastructure/agent-model-store-adapter.ts": 3,
   "src/contexts/installation/infrastructure/manifest-file-io.ts": 1,
   "src/contexts/tools/domain/bridges/event-bridge.ts": 1,

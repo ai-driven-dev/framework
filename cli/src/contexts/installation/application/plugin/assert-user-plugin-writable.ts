@@ -4,7 +4,8 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { type InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { PLUGIN_NAME_REGEX } from "../../domain/plugins/plugin-entry.js";
 import type {
   ContainmentCheck,
   UserScopeFileGuard,
