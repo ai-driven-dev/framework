@@ -60,7 +60,7 @@ describe("aidd-ui showcase overview", () => {
     assert.deepEqual(cards.map((match) => match[1]).sort(), ["onboarding", "second"]);
     const second = cards.find((match) => match[1] === "second")[2];
     assert.equal(second.match(/<a /g).length, 1);
-    assert.match(second, /<a class="ovcard" href="second\.html"/);
+    assert.match(second, /<a class="ovcard" href="_journey-second\.html"/);
     assert.match(second, /data-status="proposed">Awaiting your agreement</);
     assert.deepEqual([...second.matchAll(/<iframe[^>]*title="([^"]*)"/g)].map((match) => match[1]), ["start-screen", "bare"], "a step with no record is a blank card, not a frame");
     assert.equal(second.match(/class="thumb s/g).length, 3);

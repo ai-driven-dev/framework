@@ -31,7 +31,7 @@ describe("the verdicts beside the state tabs", () => {
   });
 
   it("hands every page the reviewable records and their states, settled or not, for the copy to cover", () => {
-    const html = pagesOf()["onboarding.html"];
+    const html = pagesOf()["_journey-onboarding.html"];
     const records = JSON.parse(html.match(/<script type="application\/json" id="review-records">([^<]*)<\/script>/)[1]);
     const home = records.find((each) => each.record === "home");
     assert.ok(home, "a record the page does not show");
@@ -41,12 +41,12 @@ describe("the verdicts beside the state tabs", () => {
 
   it("holds the decisions to copy in the drawer, hidden until there is one, with the tally's words for them", () => {
     for (const lang of ["en", "fr"]) {
-      const html = pagesOf(lang)["onboarding.html"];
+      const html = pagesOf(lang)["_journey-onboarding.html"];
       assert.match(html, new RegExp(`<section class="decisions" id="decisions" hidden data-copy="${LABELS[lang].toCopy.replace("{", "\\{").replace("}", "\\}")}" data-words="[^"]*"><h3>${LABELS[lang].decisions}</h3><ul></ul></section>`), lang);
     }
     const bare = { ...load(tmp), records: [] };
     assert.match(showcaseOf({ project: bare, tokens: null, captures: new Set(), lang: "fr" })["index.html"], new RegExp(`<p class="nothing">${LABELS.fr.nothing}</p>`));
-    const home = JSON.parse(pagesOf("fr")["onboarding.html"].match(/id="review-records">([^<]*)</)[1]).find((each) => each.record === "home");
+    const home = JSON.parse(pagesOf("fr")["_journey-onboarding.html"].match(/id="review-records">([^<]*)</)[1]).find((each) => each.record === "home");
     assert.equal(typeof home.title, "string");
     assert.ok(home.states.some((each) => each.state === "default" && each.name === "par défaut"));
   });
@@ -199,7 +199,7 @@ describe("the verdicts beside the state tabs", () => {
 
   it("puts none on a page with no state tabs", () => {
     const pages = pagesOf();
-    for (const name of ["index.html", "onboarding.html", "brand.html", "system.html"]) assert.doesNotMatch(pages[name], /class="verdict-bar"/, name);
+    for (const name of ["index.html", "_journey-onboarding.html", "brand.html", "system.html"]) assert.doesNotMatch(pages[name], /class="verdict-bar"/, name);
   });
 
   describe("in the page", () => {

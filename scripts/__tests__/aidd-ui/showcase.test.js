@@ -9,6 +9,7 @@ const { showcaseOf, copiedOf, keptOf, WIDTH, LABELS } = require(path.join(LIB, "
 
 // The showcase is a pure module that renders pages and a command that writes them: the pages are
 // judged as text, and the command as a subprocess, as the skill calls it.
+const pageFile = (id) => (id === "onboarding" ? "_journey-onboarding.html" : `${id}.html`); // the one journey of the project
 const PAGE_IDS = ["brand", "button", "dialog", "home", "icon-search", "old-button", "onboarding", "search-flow", "search-field", "system"];
 const SHOWCASE = `${UI}/showcase`;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -57,17 +58,17 @@ const drawerOf = (html) => html.match(/<aside class="drawer" id="review"[\s\S]*?
 const itemsOf = (html) => [...drawerOf(html).matchAll(/<details class="item" data-record="([^"]+)" data-version="([^"]+)"([^>]*)>[\s\S]*?<\/details>/g)].map((match) => ({ record: match[1], version: match[2], attributes: match[3], html: match[0] }));
 const rowOf = (html, record, state) => itemsOf(html).find((item) => item.record === record).html.match(new RegExp(`<li class="pstate" data-state="${state}"[\\s\\S]*?</li>`))[0];
 const headerOf = (html) => html.match(/<header class="head">[\s\S]*?<\/header>/)[0];
-const appearsOf = (html) => [...(html.match(/<section class="appears">[\s\S]*?<\/section>/)?.[0] ?? "").matchAll(/<a class="mini-card" href="([^"]+)\.html"><b>([^<]*)<\/b><span class="chip" data-status="([^"]+)">/g)].map((match) => match.slice(1));
+const appearsOf = (html) => [...(html.match(/<section class="appears">[\s\S]*?<\/section>/)?.[0] ?? "").matchAll(/<a class="mini-card" href="(?:_journey-)?([^"]+)\.html"><b>([^<]*)<\/b><span class="chip" data-status="([^"]+)">/g)].map((match) => match.slice(1));
 
 describe("aidd-ui showcase", () => {
   describe("the pages", () => {
     it("holds the home page and one page for each record that is not a review", () => {
-      assert.deepEqual(Object.keys(pagesOf()).sort(), ["index.html", ...PAGE_IDS.map((id) => `${id}.html`)].sort());
+      assert.deepEqual(Object.keys(pagesOf()).sort(), ["index.html", ...PAGE_IDS.map(pageFile)].sort());
     });
 
     it("reaches every page from the home page", () => {
       const index = pagesOf()["index.html"];
-      for (const id of PAGE_IDS) assert.ok(index.includes(`href="${id}.html"`), id);
+      for (const id of PAGE_IDS) assert.ok(index.includes(`href="${pageFile(id)}"`), id);
     });
 
     it("lists a wireframe and a screen under the screens step, and a journey under its own", () => {
@@ -77,7 +78,7 @@ describe("aidd-ui showcase", () => {
       const bare = pagesOf();
       assert.ok(bare["search-flow.html"]);
       assert.ok(!stepOf(index, "journeys").html.includes("search-flow"));
-      assert.ok(stepOf(index, "journeys").html.includes('href="onboarding.html"'));
+      assert.ok(stepOf(index, "journeys").html.includes('href="_journey-onboarding.html"'));
     });
 
     it("names the five steps in the language, in both languages", () => {
@@ -122,13 +123,13 @@ describe("aidd-ui showcase", () => {
     });
 
     it("draws a journey as a storyboard: a card per step, linking its page, its action numbered under it, the last one too", () => {
-      const cards = cardsOf(pagesOf()["onboarding.html"]);
+      const cards = cardsOf(pagesOf()["_journey-onboarding.html"]);
       assert.deepEqual(cards.map((card) => card.match(/<a class="step" href="([^".]+)\.html/)?.[1]), ["home", "home", "search-flow"]);
       assert.deepEqual(cards.map((card) => card.match(/<p class="action"><span class="num">(\d+)<\/span>([^<]*)<\/p>/).slice(1)), [["1", "types a query"], ["2", "opens a result"], ["3", "narrows the results"]]);
     });
 
     it("shows each journey step as a live miniature of its record's default state, sketched for a wireframe", () => {
-      const cards = cardsOf(pagesOf()["onboarding.html"]);
+      const cards = cardsOf(pagesOf()["_journey-onboarding.html"]);
       for (const card of cards) assert.match(card, /<iframe [^>]*tabindex="-1"[^>]*srcdoc="/);
       const frames = cards.map((card) => unescaped(card.match(/srcdoc="([^"]*)"/)[1]));
       for (const frame of frames) assert.ok(frame.includes('[data-state]:not([data-state="default"])'), frame);
@@ -138,13 +139,13 @@ describe("aidd-ui showcase", () => {
 
     it("draws a journey step that names no record as a card with neither a link nor a miniature", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows", "| ghost | narrows");
-      const ghost = cardsOf(pagesOf()["onboarding.html"])[2];
+      const ghost = cardsOf(pagesOf()["_journey-onboarding.html"])[2];
       assert.match(ghost, /<span class="screen">ghost<\/span>/);
       assert.doesNotMatch(ghost, /ghost\.html|<iframe/);
     });
 
     it("shows the persona as one line under the title, and leaves the Steps table and the Persona section out of the journey's text", () => {
-      const page = pagesOf()["onboarding.html"];
+      const page = pagesOf()["_journey-onboarding.html"];
       assert.match(headerOf(page), /<h1>Onboarding<\/h1><div class="stamp">[\s\S]*?<\/div><p class="persona">For a first-time analyst: An analyst opening the product for the first time, looking for one answer\.<\/p>/);
       assert.doesNotMatch(page, /<h2>Steps<\/h2>|<h2>Persona<\/h2>|<table|<section class="persona"/);
       assert.equal(page.match(/An analyst opening the product/g).length, 1);
@@ -153,16 +154,16 @@ describe("aidd-ui showcase", () => {
     it("writes the persona line from one template per language, a narrow no-break space before the French colon", () => {
       assert.equal(LABELS.en.persona, "For {name}: {said}");
       assert.equal(LABELS.fr.persona, "Pour {name}\u202f: {said}");
-      assert.match(headerOf(pagesOf({ lang: "fr" })["onboarding.html"]), /<p class="persona">Pour a first-time analyst\u202f: An analyst/);
+      assert.match(headerOf(pagesOf({ lang: "fr" })["_journey-onboarding.html"]), /<p class="persona">Pour a first-time analyst\u202f: An analyst/);
     });
 
     it("writes the persona line as its text alone when the text already opens with the persona's name", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "An analyst opening", "A first-time analyst opening");
-      assert.match(headerOf(pagesOf()["onboarding.html"]), /<p class="persona">A first-time analyst opening the product for the first time, looking for one answer\.<\/p>/);
+      assert.match(headerOf(pagesOf()["_journey-onboarding.html"]), /<p class="persona">A first-time analyst opening the product for the first time, looking for one answer\.<\/p>/);
     });
 
     it("holds no Uses row on a journey, whose storyboard already shows its screens", () => {
-      assert.doesNotMatch(pagesOf()["onboarding.html"], /data-links="uses"/);
+      assert.doesNotMatch(pagesOf()["_journey-onboarding.html"], /data-links="uses"/);
     });
 
     it("draws no journey chain on a record that is not a journey", () => {
@@ -310,7 +311,7 @@ describe("aidd-ui showcase", () => {
       assert.equal(groupOf(pagesOf()["home.html"]), undefined);
       withPlatforms("[web]");
       const pages = pagesOf();
-      for (const name of ["index.html", "onboarding.html", "brand.html", "system.html", "icon-search.html"]) assert.equal(groupOf(pages[name]), undefined, name);
+      for (const name of ["index.html", "_journey-onboarding.html", "brand.html", "system.html", "icon-search.html"]) assert.equal(groupOf(pages[name]), undefined, name);
     });
 
     it("sets the web frames of the review to a phone's width, a fluid one on a narrow window", () => {
@@ -322,7 +323,7 @@ describe("aidd-ui showcase", () => {
     it("runs in the page of a review, and nowhere else", () => {
       const pages = pagesOf();
       assert.ok(pages["home.html"].includes(WIDTH));
-      for (const name of ["index.html", "onboarding.html", "system.html"]) assert.ok(!pages[name].includes(WIDTH), name);
+      for (const name of ["index.html", "_journey-onboarding.html", "system.html"]) assert.ok(!pages[name].includes(WIDTH), name);
     });
 
     it("presses the chosen width and sets it on the review, going back to desktop", () => {
@@ -583,7 +584,7 @@ describe("aidd-ui showcase", () => {
       const run = written();
       assert.equal(run.code, 0, run.err);
       const files = filesUnder(path.join(tmp, SHOWCASE)).map((file) => path.relative(path.join(tmp, SHOWCASE), file)).sort();
-      assert.deepEqual(files, [".gitignore", "index.html", ...PAGE_IDS.map((id) => `${id}.html`)].sort());
+      assert.deepEqual(files, [".gitignore", "index.html", ...PAGE_IDS.map(pageFile)].sort());
       assert.equal(read(`${SHOWCASE}/.gitignore`), "*\n");
       assert.deepEqual(JSON.parse(run.out), { page: `${SHOWCASE}/index.html`, pages: PAGE_IDS.length + 1, lang: "en" });
     });
@@ -603,10 +604,10 @@ describe("aidd-ui showcase", () => {
 
     it("removes the page of a record that is gone", () => {
       written();
-      assert.ok(fs.existsSync(path.join(tmp, SHOWCASE, "onboarding.html")));
+      assert.ok(fs.existsSync(path.join(tmp, SHOWCASE, "_journey-onboarding.html")));
       fs.rmSync(path.join(tmp, UI, "journeys/onboarding.md"));
       written();
-      assert.ok(!fs.existsSync(path.join(tmp, SHOWCASE, "onboarding.html")));
+      assert.ok(!fs.existsSync(path.join(tmp, SHOWCASE, "_journey-onboarding.html")));
       assert.ok(fs.existsSync(path.join(tmp, SHOWCASE, "home.html")));
     });
 
@@ -792,7 +793,7 @@ describe("aidd-ui showcase", () => {
     it("holds the review only on a record with states and a render", () => {
       const pages = pagesOf();
       for (const id of ["home", "button", "search-flow"]) assert.match(pages[`${id}.html`], /<section class="review" data-record="/, id);
-      for (const id of ["brand", "system", "onboarding", "icon-search", "index"]) assert.doesNotMatch(pages[`${id}.html`], /<section class="review"/, id);
+      for (const id of ["brand", "system", "onboarding", "icon-search", "index"]) assert.doesNotMatch(pages[pageFile(id)], /<section class="review"/, id);
     });
 
     it("keeps no verdict under the canvas: no choice, no comment field, no state name repeated beside the tabs", () => {
@@ -1195,7 +1196,7 @@ describe("aidd-ui showcase", () => {
     });
 
     it("never wraps nor scrolls a journey's storyboard: one row of equal columns sharing the width, else one step per row", () => {
-      const html = pagesOf()["onboarding.html"];
+      const html = pagesOf()["_journey-onboarding.html"];
       const board = rule(html, ".board");
       assert.doesNotMatch(board, /flex-wrap: wrap|overflow-x: auto|overflow: auto/);
       assert.match(rule(html, ".journey"), /container-type: inline-size/);
@@ -1205,12 +1206,12 @@ describe("aidd-ui showcase", () => {
     });
 
     it("caps a storyboard card's width, so a short journey on a wide screen keeps small cards", () => {
-      const html = pagesOf()["onboarding.html"];
+      const html = pagesOf()["_journey-onboarding.html"];
       assert.match(html, /\.board\[data-steps="2"\] \{[^@]*grid-template-columns: repeat\(var\(--steps\), minmax\(0, 320px\)\)/);
     });
 
     it("switches to the vertical list below a readable card, the threshold following the step count", () => {
-      const html = pagesOf()["onboarding.html"];
+      const html = pagesOf()["_journey-onboarding.html"];
       const threshold = (n) => Number(html.match(new RegExp(`@container \\(min-width: (\\d+)px\\) \\{ \\.board\\[data-steps="${n}"\\]`))[1]);
       assert.equal(threshold(4), 4 * 240 + 3 * 48);
       assert.ok(threshold(5) > threshold(4));
@@ -1218,7 +1219,7 @@ describe("aidd-ui showcase", () => {
     });
 
     it("stacks a card's miniature above its text when the board is too narrow for the two side by side", () => {
-      const html = pagesOf()["onboarding.html"];
+      const html = pagesOf()["_journey-onboarding.html"];
       const narrow = html.match(/@container \(max-width: (\d+)px\) \{([^@]*)\}\n/);
       assert.ok(narrow, "a narrow rule");
       assert.ok(Number(narrow[1]) < 2 * 240 + 48, "below the first width the row of cards needs");
@@ -1226,7 +1227,7 @@ describe("aidd-ui showcase", () => {
     });
 
     it("leaves the sidebar no entry of its own for the review: the button floats, and the page keeps room for it", () => {
-      const html = pagesOf()["onboarding.html"];
+      const html = pagesOf()["_journey-onboarding.html"];
       assert.match(rule(html, ".review-foot"), /^\s*flex: none;\s*$/);
       assert.match(rule(html, ".open-review"), /position: fixed/);
       assert.match(html, /\nmain, main\.wide \{ padding-bottom: calc\(var\(--s5\) \+ var\(--h-touch\) \+ var\(--s6\)\); \}/);
@@ -1306,7 +1307,7 @@ describe("aidd-ui showcase", () => {
         assert.doesNotMatch(index, /<p class="none">/, lang);
         assert.match(index, new RegExp(`<p class="lede">${words[lang]}</p>`), lang);
         assert.doesNotMatch(index, /class="start"/, lang);
-        assert.match(todoOf(index), /<li data-id="onboarding"><a class="ovcard" href="onboarding\.html">/, lang);
+        assert.match(todoOf(index), /<li data-id="onboarding"><a class="ovcard" href="_journey-onboarding\.html">/, lang);
       }
     });
 
@@ -1359,19 +1360,19 @@ describe("aidd-ui showcase", () => {
         assert.deepEqual(pairOf(twinOf(pages["start-screen.html"])), [[null, words[0]], ["start", words[1]]]);
         assert.deepEqual(pairOf(twinOf(pages["start.html"])), [["start-screen", words[0]], [null, words[1]]]);
         assert.equal(twinOf(pages["lonely.html"]), undefined);
-        assert.equal(twinOf(pages["onboarding.html"]), undefined);
+        assert.equal(twinOf(pages["_journey-onboarding.html"]), undefined);
       }
     });
 
     it("reads the description in the text color, and the persona darker than the faint grey", () => {
-      const html = pagesOf()["onboarding.html"];
+      const html = pagesOf()["_journey-onboarding.html"];
       assert.match(rule(html, ".lede"), /color: var\(--text\)/);
       assert.doesNotMatch(rule(html, ".head .persona"), /var\(--muted\)|var\(--faint\)/);
     });
 
     it("lets only a journey page use the width of the screen", () => {
       const pages = pagesOf();
-      assert.ok(pages["onboarding.html"].includes('<main class="wide">'));
+      assert.ok(pages["_journey-onboarding.html"].includes('<main class="wide">'));
       for (const name of ["home.html", "search-flow.html", "index.html"]) assert.ok(pages[name].includes("<main>"), name);
       assert.match(rule(pages["home.html"], ".shell > main.wide"), /max-width: none/);
     });
@@ -1383,7 +1384,7 @@ describe("aidd-ui showcase", () => {
     const textOf = (bar, name) => unescaped(bar.match(new RegExp(`<a class="${name}"[^>]*>([\\s\\S]*?)</a>`))?.[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "");
 
     it("sends each storyboard card to its page with the journey and the step in the query", () => {
-      const cards = cardsOf(pagesOf()["onboarding.html"]);
+      const cards = cardsOf(pagesOf()["_journey-onboarding.html"]);
       assert.deepEqual(cards.map((card) => unescaped(card.match(/<a class="step" href="([^"]+)"/)[1])), ["home.html?journey=onboarding&step=1", "home.html?journey=onboarding&step=2", "search-flow.html?journey=onboarding&step=3"]);
     });
 
@@ -1398,15 +1399,15 @@ describe("aidd-ui showcase", () => {
 
     it("names the journey, the step of the total, and the titles of the steps around", () => {
       const [first, second] = barsOf(pagesOf()["home.html"]);
-      assert.deepEqual(hrefsOf(second), ["onboarding.html", "home.html?journey=onboarding&step=1", "search-flow.html?journey=onboarding&step=3"]);
+      assert.deepEqual(hrefsOf(second), ["_journey-onboarding.html", "home.html?journey=onboarding&step=1", "search-flow.html?journey=onboarding&step=3"]);
       assert.equal(textOf(second, "journey-title"), "Onboarding");
       assert.match(second, /Step 2 of 3/);
       assert.equal(textOf(second, "prev"), "Previous step Home");
       assert.equal(textOf(second, "next"), "Next step Search flow");
-      assert.deepEqual(hrefsOf(first), ["onboarding.html", "home.html?journey=onboarding&step=2"]);
+      assert.deepEqual(hrefsOf(first), ["_journey-onboarding.html", "home.html?journey=onboarding&step=2"]);
       assert.doesNotMatch(first, /class="prev"/);
       const last = barsOf(pagesOf()["search-flow.html"])[0];
-      assert.deepEqual(hrefsOf(last), ["onboarding.html", "home.html?journey=onboarding&step=2"]);
+      assert.deepEqual(hrefsOf(last), ["_journey-onboarding.html", "home.html?journey=onboarding&step=2"]);
       assert.doesNotMatch(last, /class="next"/);
     });
 
@@ -1418,7 +1419,7 @@ describe("aidd-ui showcase", () => {
 
     it("draws no bar and no script for it on a page no journey holds, nor on the journey itself", () => {
       const pages = pagesOf();
-      for (const name of ["button.html", "onboarding.html", "index.html", "dialog.html"]) {
+      for (const name of ["button.html", "_journey-onboarding.html", "index.html", "dialog.html"]) {
         assert.deepEqual(barsOf(pages[name]), [], name);
         assert.ok(!pages[name].includes("URLSearchParams"), name);
       }

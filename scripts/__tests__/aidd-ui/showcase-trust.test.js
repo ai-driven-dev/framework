@@ -72,9 +72,9 @@ describe("aidd-ui showcase trust", () => {
       crowd();
       const index = pagesOf()["index.html"];
       assert.deepEqual(rowsIn(blockOf(index, "journeys")), ["onboarding", "second"]);
-      assert.match(blockOf(index, "journeys"), /<a class="ovcard" href="second\.html">/);
+      assert.match(blockOf(index, "journeys"), /<a class="ovcard" href="_journey-second\.html">/);
       const group = drawerOf(index).match(/<details class="step-group" data-step="journeys"[\s\S]*?<\/details>/)[0];
-      assert.match(group, /<a href="second\.html">/);
+      assert.match(group, /<a href="_journey-second\.html">/);
       assert.doesNotMatch(group, /class="item"|class="step-ok"|class="verdict"/);
     });
 
@@ -162,12 +162,12 @@ describe("aidd-ui showcase trust", () => {
 
     it("opens on the first step with work in display order, a journey awaiting agreement coming last", () => {
       crowd();
-      assert.notEqual(startOf(pagesOf()["index.html"]), "second.html");
+      assert.notEqual(startOf(pagesOf()["index.html"]), "_journey-second.html");
       assert.equal(startOf(pagesOf()["index.html"]), "search-field.html");
     });
 
     it("opens on the first record awaiting when no journey does", () => {
-      assert.notEqual(startOf(pagesOf()["index.html"]), "second.html");
+      assert.notEqual(startOf(pagesOf()["index.html"]), "_journey-second.html");
       assert.match(startOf(pagesOf()["index.html"]), /^[a-z-]+\.html$/);
     });
   });
