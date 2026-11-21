@@ -5,10 +5,10 @@ import {
   underMachineHome,
 } from "../../../../src/composition/orchestration/plugin.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
-import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { ProjectPluginWithdrawal } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
-import { RemovePlugin } from "../../../../src/contexts/installation/application/removal/remove-plugin.js";
-import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.js";
+import { RemovePlugin } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
+import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";

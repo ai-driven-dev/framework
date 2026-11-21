@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   TranslateDistribution,
   type TranslateDistributionResult,
-} from "../../src/contexts/translate/application/translate-distribution.js";
+} from "../../src/contexts/translate/application/translate-distribution.use-case.js";
 import {
   distributionOf,
   FRAMEWORK_SOURCE,

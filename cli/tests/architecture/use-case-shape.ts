@@ -91,7 +91,7 @@ function executeBreaks(
   publicMethods: readonly Node[]
 ): string[] {
   const breaks: string[] = [];
-  const expected = pascalCase(file.replace(/^.*\//, "").replace(/\.ts$/, ""));
+  const expected = pascalCase(file.replace(/^.*\//, "").replace(/(?:\.use-case)?\.ts$/, ""));
   if (classes.length !== 1) breaks.push(`${classes.length} classes, expected one`);
   if (!classes.some((declaration) => nameOf(declaration) === expected))
     breaks.push(`no class named ${expected}`);

@@ -5,9 +5,9 @@ import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../src/contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
-import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
+import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";

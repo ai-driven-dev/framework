@@ -1,6 +1,6 @@
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import {
   PurgeUserScopeFiles,
@@ -18,7 +18,7 @@ import type { UserSourceReferences } from "../../../src/contexts/machine-claims/
 import {
   CleanUserScope,
   type CleanUserScopeDeps,
-} from "../../../src/orchestration/clean/clean-user-scope.js";
+} from "../../../src/orchestration/clean/clean-user-scope.use-case.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";

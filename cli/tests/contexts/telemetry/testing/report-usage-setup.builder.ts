@@ -1,9 +1,9 @@
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.js";
-import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
+import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { DeclaredBindings } from "../../../../src/contexts/telemetry/application/report/declared-bindings.js";
-import { ReportUsage } from "../../../../src/contexts/telemetry/application/report/report-usage.js";
-import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
+import { ReportUsage } from "../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { Period } from "../../../../src/contexts/telemetry/contract/period.js";
 import type { ReportAxis } from "../../../../src/contexts/telemetry/contract/usage-report.js";
 import { cloneOf, grantedBy } from "./clone.builder.js";

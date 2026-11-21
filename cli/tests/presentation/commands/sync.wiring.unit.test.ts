@@ -1,9 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
+import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
 import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
-import { RunSync } from "../../../src/orchestration/sync/run-sync.js";
-import { RunUserScopeSync } from "../../../src/orchestration/sync/run-user-scope-sync.js";
+import { RunSync } from "../../../src/orchestration/sync/run-sync.use-case.js";
+import { RunUserScopeSync } from "../../../src/orchestration/sync/run-user-scope-sync.use-case.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";

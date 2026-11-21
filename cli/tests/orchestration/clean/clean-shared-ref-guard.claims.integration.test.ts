@@ -2,7 +2,7 @@
  * copilot), a ref is left enabled while another project still references its shared source. */
 
 import { describe, expect, it } from "vitest";
-import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";

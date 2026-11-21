@@ -28,7 +28,7 @@ flowchart LR
     Report --> Out["text or the version 2 envelope"]
 ```
 
-- A report ingests new lines first, under the ledger lock (`application/report/report-usage.ts`, `application/ingest-usage.ts`).
+- A report ingests new lines first, under the ledger lock (`application/report/report-usage.use-case.ts`, `application/ingest-usage.use-case.ts`).
 - A transcript is read a block at a time (1 MiB), never the unread tail whole, so an ingest holds about three copies of the longest line.
 - A rewrite, a shrink or a replacement during a read: [residual limits](../../../../aidd_docs/product/usage-contract.md#residual-limits).
 - A report's envelope keeps its figures apart from its `run`: [the envelope reference](../../../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run).

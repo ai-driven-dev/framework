@@ -1,4 +1,4 @@
-import type { ManageIdentityResult } from "../../../contexts/telemetry/application/identity/manage-identity.js";
+import type { ManageIdentityResult } from "../../../contexts/telemetry/application/identity/manage-identity.use-case.js";
 import { MAX_IDENTITY_LENGTH } from "../../../contexts/telemetry/contract/identity-limit.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 

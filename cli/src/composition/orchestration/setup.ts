@@ -1,21 +1,21 @@
 import { homedir } from "node:os";
 import { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
 import { MainSessionLocator } from "../../contexts/installation/application/agents/main-session-locator.js";
-import { MainSessionModels } from "../../contexts/installation/application/agents/main-session-models.js";
-import { RecordAgentProviders } from "../../contexts/installation/application/agents/record-agent-providers.js";
-import { RestoreAgentProviders } from "../../contexts/installation/application/agents/restore-agent-providers.js";
-import { RestoreMainSessionModels } from "../../contexts/installation/application/agents/restore-main-session-models.js";
-import { InitProject } from "../../contexts/installation/application/init-project.js";
+import { MainSessionModels } from "../../contexts/installation/application/agents/main-session-models.use-case.js";
+import { RecordAgentProviders } from "../../contexts/installation/application/agents/record-agent-providers.use-case.js";
+import { RestoreAgentProviders } from "../../contexts/installation/application/agents/restore-agent-providers.use-case.js";
+import { RestoreMainSessionModels } from "../../contexts/installation/application/agents/restore-main-session-models.use-case.js";
+import { InitProject } from "../../contexts/installation/application/init-project.use-case.js";
 import { jsoncMainSessionSettings } from "../../contexts/installation/infrastructure/jsonc-main-session-settings.js";
-import { RefreshAgentPlugins } from "../../orchestration/agent-models/refresh-agent-plugins.js";
-import { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
+import { RefreshAgentPlugins } from "../../orchestration/agent-models/refresh-agent-plugins.use-case.js";
+import { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.use-case.js";
 import {
   RunSetup,
   type SetupQuestions,
   type SetupSteps,
-} from "../../orchestration/setup/run-setup.js";
-import { ChoosePlugins } from "../../orchestration/setup/steps/choose-plugins.js";
-import { ChooseTools } from "../../orchestration/setup/steps/choose-tools.js";
+} from "../../orchestration/setup/run-setup.use-case.js";
+import { ChoosePlugins } from "../../orchestration/setup/steps/choose-plugins.use-case.js";
+import { ChooseTools } from "../../orchestration/setup/steps/choose-tools.use-case.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import type { Global } from "./global.js";

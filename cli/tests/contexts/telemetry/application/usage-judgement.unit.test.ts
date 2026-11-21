@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { UsageReading } from "../../../../src/contexts/telemetry/application/read-usage.js";
+import type { ReadUsageResult } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { ResolutionRun } from "../../../../src/contexts/telemetry/application/resolution-run.js";
 import { judgeReading } from "../../../../src/contexts/telemetry/application/usage-judgement.js";
 import { ConsentLog } from "../../../../src/contexts/telemetry/domain/consent/consent-log.js";
@@ -30,9 +30,9 @@ function runWith(directory: ReturnType<typeof repository> | undefined) {
 }
 
 function reading(
-  records: UsageReading["records"],
-  dropped: UsageReading["dropped"] = []
-): UsageReading {
+  records: ReadUsageResult["records"],
+  dropped: ReadUsageResult["dropped"] = []
+): ReadUsageResult {
   return {
     records,
     fileOf: new Map(records.map((record) => [record, "/t/1.jsonl"])),

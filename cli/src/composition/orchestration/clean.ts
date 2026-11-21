@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
-import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
+import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.js";
+import { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.use-case.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
@@ -9,7 +9,7 @@ import { RemoveProjectFiles } from "../../contexts/installation/application/remo
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { RemoveToolFiles } from "../../contexts/installation/application/removal/remove-tool-files.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
-import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.js";
+import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
 import { dropSourceClaim } from "../../contexts/machine-claims/application/drop-source-claim.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
@@ -19,8 +19,8 @@ import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/applic
 import type { MachineManifestRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
 import type { UserSourceReferences } from "../../contexts/machine-claims/ports/user-source-references.js";
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
-import { CleanProject } from "../../orchestration/clean/clean-project.js";
-import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.js";
+import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
+import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";

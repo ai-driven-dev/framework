@@ -1,7 +1,7 @@
 import { CachedTokenProvider } from "../../../../src/contexts/auth/application/cached-token-provider.js";
-import { CheckStatus } from "../../../../src/contexts/auth/application/check-status.js";
-import { LogIn } from "../../../../src/contexts/auth/application/log-in.js";
-import { LogOut } from "../../../../src/contexts/auth/application/log-out.js";
+import { CheckStatus } from "../../../../src/contexts/auth/application/check-status.use-case.js";
+import { LogIn } from "../../../../src/contexts/auth/application/log-in.use-case.js";
+import { LogOut } from "../../../../src/contexts/auth/application/log-out.use-case.js";
 import type { CliAuthProvider } from "../../../../src/contexts/auth/ports/cli-auth-provider.js";
 import type { ExternalTokenSource } from "../../../../src/contexts/auth/ports/external-token-source.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";

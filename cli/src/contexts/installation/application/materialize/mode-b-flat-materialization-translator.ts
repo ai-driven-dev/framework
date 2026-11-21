@@ -21,7 +21,7 @@ import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
 import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
-import { ProjectHooksMaterializer } from "./project-hooks-materializer.js";
+import { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 interface PluginRegistration {
   dist: PluginDistribution;

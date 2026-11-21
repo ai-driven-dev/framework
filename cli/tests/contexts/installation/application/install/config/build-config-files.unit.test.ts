@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/build-config-files.js";
-import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
+import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import {
   buildInstallationDeps,

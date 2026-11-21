@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ForgetTelemetryResult } from "../../../../src/contexts/telemetry/application/forget/forget-telemetry.js";
-import type { EnableTelemetryResult } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.js";
+import type { ForgetTelemetryResult } from "../../../../src/contexts/telemetry/application/forget/forget-telemetry.use-case.js";
+import type { EnableTelemetryResult } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import {
   printForgetResult,
   printOffResult,

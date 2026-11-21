@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemoveProjectFiles } from "../../../../../src/contexts/installation/application/removal/remove-project-files.js";
-import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
+import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";

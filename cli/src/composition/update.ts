@@ -1,8 +1,8 @@
 import { platform } from "node:os";
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
-import { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
-import { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
-import { SelfUpdate } from "../contexts/update/application/self-update.js";
+import { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.use-case.js";
+import { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.use-case.js";
+import { SelfUpdate } from "../contexts/update/application/self-update.use-case.js";
 import { NpmRegistryReleaseAdapter } from "../contexts/update/infrastructure/npm-registry-release-adapter.js";
 import { PackageManagerInstallerAdapter } from "../contexts/update/infrastructure/package-manager-installer-adapter.js";
 import { UpdateCheckCacheAdapter } from "../contexts/update/infrastructure/update-check-cache-adapter.js";

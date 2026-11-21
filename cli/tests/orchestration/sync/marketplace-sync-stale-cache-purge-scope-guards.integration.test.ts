@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { RegisterFrameworkMarketplaceCommand } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import type { RegisterFrameworkMarketplaceRequest } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -102,7 +102,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const calls: RegisterFrameworkMarketplaceCommand[] = [];
+    const calls: RegisterFrameworkMarketplaceRequest[] = [];
     const useCase = marketplaceSync({
       fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
@@ -131,7 +131,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const calls: RegisterFrameworkMarketplaceCommand[] = [];
+    const calls: RegisterFrameworkMarketplaceRequest[] = [];
     const useCase = marketplaceSync({
       fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),

@@ -1,4 +1,4 @@
-import type { IngestUsageResult } from "../../../contexts/telemetry/application/ingest-usage.js";
+import type { IngestUsageResult } from "../../../contexts/telemetry/application/ingest-usage.use-case.js";
 import type { NotStoredReason } from "../../../contexts/telemetry/contract/repository-resolution.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DeclareTaskResult } from "../../../../src/contexts/telemetry/application/declaration/declare-task.js";
-import type { ReadTelemetryStatusResult } from "../../../../src/contexts/telemetry/application/read-telemetry-status.js";
+import type { DeclareTaskResult } from "../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
+import type { ReadTelemetryStatusResult } from "../../../../src/contexts/telemetry/application/read-telemetry-status.use-case.js";
 import {
   printDeclareResult,
   printTelemetryStatus,

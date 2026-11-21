@@ -3,7 +3,7 @@ import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../contexts/telemetry/application/report/report-envelope.js";
-import type { RequestReportResult } from "../../contexts/telemetry/application/report/request-report.js";
+import type { RequestReportResult } from "../../contexts/telemetry/application/report/request-report.use-case.js";
 import {
   ABSENT_AXES,
   type ReportFilters,

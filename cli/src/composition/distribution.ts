@@ -1,9 +1,9 @@
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
-import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.js";
-import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
-import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
-import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
-import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.js";
+import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.use-case.js";
+import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.use-case.js";
+import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.use-case.js";
+import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.use-case.js";
+import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.use-case.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "../contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";

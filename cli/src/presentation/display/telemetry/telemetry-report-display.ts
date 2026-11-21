@@ -2,8 +2,8 @@ import type {
   ReportCoverage,
   ReportRun,
   ReportUsageResult,
-} from "../../../contexts/telemetry/application/report/report-usage.js";
-import type { RequestReportResult } from "../../../contexts/telemetry/application/report/request-report.js";
+} from "../../../contexts/telemetry/application/report/report-usage.use-case.js";
+import type { RequestReportResult } from "../../../contexts/telemetry/application/report/request-report.use-case.js";
 import type { Period } from "../../../contexts/telemetry/contract/period.js";
 import type { Selector } from "../../../contexts/telemetry/contract/report-filter.js";
 import type { ReportAxis } from "../../../contexts/telemetry/contract/usage-report.js";

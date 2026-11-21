@@ -19,7 +19,7 @@ import type { BuiltMaterializationDeps } from "../shared/built-materialization-d
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
 import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
 import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
-import { ProjectHooksMaterializer } from "./project-hooks-materializer.js";
+import { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 import {
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,

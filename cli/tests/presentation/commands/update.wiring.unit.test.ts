@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
+import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.use-case.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";

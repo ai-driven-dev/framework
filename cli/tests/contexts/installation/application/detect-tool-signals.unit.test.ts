@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { detectToolSignals } from "../../../../src/contexts/installation/application/init-project.js";
+import { detectToolSignals } from "../../../../src/contexts/installation/application/init-project.use-case.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 

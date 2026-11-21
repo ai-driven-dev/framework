@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
-import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.use-case.js";
+import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";

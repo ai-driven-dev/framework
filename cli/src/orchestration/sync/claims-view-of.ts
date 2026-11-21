@@ -1,5 +1,5 @@
 import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";
-import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
+import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 
 /** What a sync run knows about the records, before any host registration asks for them. */

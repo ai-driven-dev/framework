@@ -1,26 +1,26 @@
 import { join } from "node:path";
-import { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.js";
-import { SearchPlugins } from "../../contexts/distribution/application/plugin-source/search-plugins.js";
-import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
+import { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.use-case.js";
+import { SearchPlugins } from "../../contexts/distribution/application/plugin-source/search-plugins.use-case.js";
+import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
-import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.use-case.js";
+import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { ProvenHostRef } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
-import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.js";
-import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.js";
-import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
-import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
-import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
+import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.use-case.js";
+import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.use-case.js";
+import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
+import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.use-case.js";
+import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../contexts/installation/application/plugin/plugin-materializer.js";
-import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
-import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.js";
+import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
+import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { ProjectPluginWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
-import { RemovePlugin } from "../../contexts/installation/application/removal/remove-plugin.js";
+import { RemovePlugin } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
 import {
   RemoveUserPlugin,
-  type UserPluginRemoveOptions,
-} from "../../contexts/installation/application/removal/remove-user-plugin.js";
+  type RemoveUserPluginRequest,
+} from "../../contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { HostWithdrawal } from "../../contexts/installation/ports/native-host.js";
 import type {
@@ -36,11 +36,11 @@ import {
   withoutMissingFiles,
 } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
-import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.js";
-import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
-import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
-import { PickPlugins } from "../../orchestration/plugin/pick-plugins.js";
-import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.js";
+import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.use-case.js";
+import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";
+import { InstallPlugin } from "../../orchestration/plugin/install-plugin.use-case.js";
+import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js";
+import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
 import { withdrawalClaimsOf } from "../../orchestration/plugin/withdrawal-claims.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
@@ -118,7 +118,7 @@ export function projectHostWithdrawal(
 /** A user-scope removal under the machine's home directory, which the command line does not know. */
 export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execute">) {
   return {
-    execute: (options: Omit<UserPluginRemoveOptions, "home">) =>
+    execute: (options: Omit<RemoveUserPluginRequest, "home">) =>
       removal.execute({ ...options, home: resolveHomeDir() }),
   };
 }

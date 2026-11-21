@@ -4,27 +4,27 @@ import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
 } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
-import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
+import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
-} from "../../../src/contexts/installation/application/sync/load-sync-context.js";
-import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
-import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.js";
+} from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
+import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
+import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
-} from "../../../src/contexts/machine-claims/application/record-source-reference.js";
+} from "../../../src/contexts/machine-claims/application/record-source-reference.use-case.js";
 import {
   SharedFrameworkSource,
   type SharedFrameworkSourceDeps,
-} from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
+} from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
-} from "../../../src/orchestration/sync/activate-native-tools.js";
-import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
+} from "../../../src/orchestration/sync/activate-native-tools.use-case.js";
+import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { FakeCurrentVersion } from "./fake-current-version.fake.js";
 import { registeredTools } from "./registered-tools.builder.js";
 

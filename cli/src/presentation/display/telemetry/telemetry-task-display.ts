@@ -1,6 +1,6 @@
 import type { RefusalReason } from "../../../contexts/telemetry/application/consented-repositories.js";
-import type { DeclareTaskResult } from "../../../contexts/telemetry/application/declaration/declare-task.js";
-import type { ReadTelemetryStatusResult } from "../../../contexts/telemetry/application/read-telemetry-status.js";
+import type { DeclareTaskResult } from "../../../contexts/telemetry/application/declaration/declare-task.use-case.js";
+import type { ReadTelemetryStatusResult } from "../../../contexts/telemetry/application/read-telemetry-status.use-case.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 
 const REFUSALS: Readonly<Record<RefusalReason, string>> = {

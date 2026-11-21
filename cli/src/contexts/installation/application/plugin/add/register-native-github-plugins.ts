@@ -3,7 +3,7 @@ import type { Manifest } from "../../../domain/manifest.js";
 import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
 import type { PluginAddOptions } from "./plugin-add.js";
-import type { GithubAddedPluginSource } from "./resolve-added-plugin-source.js";
+import type { GithubAddedPluginSource } from "./resolve-added-plugin-source.use-case.js";
 
 /** Records a github marketplace plugin for the tools that install it natively, with no files to place. */
 export function registerNativeGithubPlugins(

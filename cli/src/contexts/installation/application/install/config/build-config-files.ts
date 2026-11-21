@@ -5,8 +5,8 @@ import type { AssetProvider } from "../../../../../shared/ports/asset-provider.j
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { McpConfigAnswers } from "../../../../tools/contract/tool-profile.js";
-import type { InstallRuntimeConfigCommand } from "./install-runtime-config.js";
-import type { TrackedConfigFiles } from "./tracked-config-files.js";
+import type { InstallRuntimeConfigRequest } from "./install-runtime-config.use-case.js";
+import type { TrackedConfigFiles } from "./tracked-config-files.use-case.js";
 
 /** What reading a tool's config assets and the project they land in needs. */
 export interface ConfigFilesDeps {
@@ -19,7 +19,7 @@ export interface ConfigFilesDeps {
 export async function buildConfigFiles(
   deps: ConfigFilesDeps,
   tools: ToolCatalog,
-  options: InstallRuntimeConfigCommand
+  options: InstallRuntimeConfigRequest
 ): Promise<InstallationFile[]> {
   const profile = tools.aiProfile(options.toolId);
   const mcp = profile.mcpConfig();

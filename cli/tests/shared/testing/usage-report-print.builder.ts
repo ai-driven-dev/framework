@@ -1,5 +1,5 @@
-import type { ReportUsageResult } from "../../../src/contexts/telemetry/application/report/report-usage.js";
-import type { RequestReportResult } from "../../../src/contexts/telemetry/application/report/request-report.js";
+import type { ReportUsageResult } from "../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
+import type { RequestReportResult } from "../../../src/contexts/telemetry/application/report/request-report.use-case.js";
 import type { Period } from "../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,

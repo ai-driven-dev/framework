@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
-import { BuildMenu } from "../orchestration/menu/build-menu.js";
-import { MenuLoop } from "../orchestration/menu/menu-loop.js";
+import { BuildMenu } from "../orchestration/menu/build-menu.use-case.js";
+import { MenuLoop } from "../orchestration/menu/menu-loop.use-case.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
 import { projectSetupOf, wireInstallation } from "./installation.js";
 import { wireClean } from "./orchestration/clean.js";

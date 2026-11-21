@@ -1,5 +1,5 @@
-import type { CheckStatusResult } from "../../contexts/auth/application/check-status.js";
-import type { LogOutResult } from "../../contexts/auth/application/log-out.js";
+import type { CheckStatusResult } from "../../contexts/auth/application/check-status.use-case.js";
+import type { LogOutResult } from "../../contexts/auth/application/log-out.use-case.js";
 import type { AuthLevel } from "../../contexts/auth/contract/credential.js";
 import type { Output } from "../../orchestration/domain/output.js";
 

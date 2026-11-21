@@ -7,7 +7,7 @@ import {
   type StoredUsage,
 } from "../domain/stored-usage.js";
 import type { LeftOutEntry } from "../ports/usage-ledger.js";
-import type { UsageReading } from "./read-usage.js";
+import type { ReadUsageResult } from "./read-usage.use-case.js";
 import type { DirectoryOutcome, ResolutionRun } from "./resolution-run.js";
 
 export const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
@@ -49,7 +49,7 @@ interface JudgedCall {
  * run, and says what is stored, what is left out and what must be read again. */
 export async function judgeReading(
   resolver: ResolutionRun,
-  reading: UsageReading
+  reading: ReadUsageResult
 ): Promise<Verdicts> {
   const verdicts: Verdicts = {
     notStored: { ...NOT_STORED },
@@ -71,7 +71,7 @@ export async function judgeReading(
 async function judgeDropped(
   resolver: ResolutionRun,
   verdicts: Verdicts,
-  dropped: UsageReading["dropped"]
+  dropped: ReadUsageResult["dropped"]
 ): Promise<void> {
   for (const { line, cwd, at, path } of dropped) {
     if (cwd === null) continue;

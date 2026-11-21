@@ -1,6 +1,6 @@
 import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
-import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.js";
-import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.js";
+import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.use-case.js";
+import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.use-case.js";
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";

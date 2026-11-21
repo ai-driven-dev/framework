@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
-import { MenuLoop } from "../../../src/orchestration/menu/menu-loop.js";
+import { BuildMenu } from "../../../src/orchestration/menu/build-menu.use-case.js";
+import { MenuLoop } from "../../../src/orchestration/menu/menu-loop.use-case.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";

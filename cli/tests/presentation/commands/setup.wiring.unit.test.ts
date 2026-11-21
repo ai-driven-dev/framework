@@ -6,9 +6,9 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
-import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
-import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
-import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
+import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import { RunSetup } from "../../../src/orchestration/setup/run-setup.use-case.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";

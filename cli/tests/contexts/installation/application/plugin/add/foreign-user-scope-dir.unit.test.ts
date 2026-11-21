@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { foreignUserScopeDir } from "../../../../../../src/contexts/installation/application/plugin/add/foreign-user-scope-dir.js";
-import type { PlacePluginCommand } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.js";
+import type { PlacePluginRequest } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import {
   resolveScopeForInstall,
   scopeBaseOf,
@@ -15,7 +15,7 @@ import { registeredTools, TOOL } from "../../../../../shared/testing/registered-
 
 const ROOT = "/test-project";
 
-function command(machine: Manifest): PlacePluginCommand {
+function command(machine: Manifest): PlacePluginRequest {
   return {
     dist: new PluginDistribution({
       manifest: { name: "sample", version: "1.0.0" },

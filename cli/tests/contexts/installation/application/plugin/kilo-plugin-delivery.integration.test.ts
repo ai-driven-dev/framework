@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
-import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
+import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.use-case.js";
+import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
+import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import {
   buildInstallationDeps,
   initProject,

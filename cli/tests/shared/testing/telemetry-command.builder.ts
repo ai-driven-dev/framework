@@ -1,9 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
 import { wireTelemetryRequests } from "../../../src/composition/telemetry.js";
-import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.js";
-import { ChooseIdentity } from "../../../src/contexts/telemetry/application/identity/choose-identity.js";
-import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.js";
+import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
+import { ChooseIdentity } from "../../../src/contexts/telemetry/application/identity/choose-identity.use-case.js";
+import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.use-case.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { registerTelemetryCommand } from "../../../src/presentation/commands/telemetry.js";
 import { processOutputFactory } from "./output-factory.builder.js";

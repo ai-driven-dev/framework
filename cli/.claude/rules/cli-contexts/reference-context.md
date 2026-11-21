@@ -29,7 +29,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 ## 3. Command template
 
-- One file, one class named by a verb and its intent, a public `execute` taking an `XCommand` or nothing and returning an `XResult` declared in the same file: `src/contexts/auth/application/log-out.ts`, and `log-in.ts` for one with input.
+- One file, one class named by a verb and its intent, a public `execute` taking an `XRequest` or nothing and returning an `XResult` declared in the same file: `src/contexts/auth/application/log-out.use-case.ts`, and `log-in.ts` for one with input.
 - A command orchestrates, the aggregate decides, errors and the constructor's dependencies follow `cli-architecture.md`.
 - A command takes no `process`: an environment value comes through `shared/ports/environment.ts`, `noRestrictedGlobals` in `biome.json`.
 

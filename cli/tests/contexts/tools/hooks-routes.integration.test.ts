@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
-import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
@@ -112,7 +112,7 @@ async function deps(project: string) {
 async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const wired = await deps(project);
   const { InitProject } = await import(
-    "../../../src/contexts/installation/application/init-project.js"
+    "../../../src/contexts/installation/application/init-project.use-case.js"
   );
   await new InitProject(
     {

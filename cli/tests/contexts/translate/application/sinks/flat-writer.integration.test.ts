@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.js";
+import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.use-case.js";
 import {
   FlatTargetExistsError,
   JsonSchemaValidationError,

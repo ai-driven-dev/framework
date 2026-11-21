@@ -1,13 +1,13 @@
 import type {
   ForgetPlan,
   ForgetTelemetryResult,
-} from "../../../contexts/telemetry/application/forget/forget-telemetry.js";
-import type { DisableTelemetryResult } from "../../../contexts/telemetry/application/switch/disable-telemetry.js";
+} from "../../../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
+import type { DisableTelemetryResult } from "../../../contexts/telemetry/application/switch/disable-telemetry.use-case.js";
 import type {
   EnableTelemetryResult,
   OnIdentity,
-} from "../../../contexts/telemetry/application/switch/enable-telemetry.js";
-import type { ReadTranscriptRetentionResult } from "../../../contexts/telemetry/application/switch/read-transcript-retention.js";
+} from "../../../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
+import type { ReadTranscriptRetentionResult } from "../../../contexts/telemetry/application/switch/read-transcript-retention.use-case.js";
 import {
   RETENTION_DEFAULT_DAYS,
   RETENTION_WANTED_DAYS,

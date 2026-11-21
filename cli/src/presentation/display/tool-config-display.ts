@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { ValidateRecipesResult } from "../../contexts/recipes/application/validate-recipes.js";
+import type { ValidateRecipesResult } from "../../contexts/recipes/application/validate-recipes.use-case.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import { printScopedFailures } from "./sync-display.js";

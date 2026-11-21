@@ -1,7 +1,7 @@
 import {
   InspectHostRegistration,
   type InspectHostRegistrationDeps,
-} from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+} from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import { registeredTools } from "./registered-tools.builder.js";
 

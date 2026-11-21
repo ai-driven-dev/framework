@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { IngestUsageResult } from "../../../../src/contexts/telemetry/application/ingest-usage.js";
+import type { IngestUsageResult } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { printIngestResult } from "../../../../src/presentation/display/telemetry/telemetry-read-display.js";
 import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import { linesOf } from "../../../shared/testing/printed-lines.builder.js";

@@ -2,10 +2,10 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import {
   BuildNativeTree,
   type FrameworkBuildContext,
-} from "../contexts/translate/application/build-native-tree.js";
+} from "../contexts/translate/application/build-native-tree.use-case.js";
 import { DiskSink } from "../contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../contexts/translate/application/sinks/flat-writer.js";
-import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.js";
+import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.use-case.js";
 import { canonFormatOf, pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";

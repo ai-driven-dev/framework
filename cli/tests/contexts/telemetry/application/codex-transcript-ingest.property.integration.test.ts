@@ -8,9 +8,9 @@ import { DirectoryResolver } from "../../../../src/contexts/telemetry/applicatio
 import {
   IngestUsage,
   type IngestUsageResult,
-} from "../../../../src/contexts/telemetry/application/ingest-usage.js";
-import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
-import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
+} from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";

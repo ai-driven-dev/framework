@@ -1,7 +1,7 @@
 import { CachedTokenProvider } from "../contexts/auth/application/cached-token-provider.js";
-import { CheckStatus } from "../contexts/auth/application/check-status.js";
-import { LogIn } from "../contexts/auth/application/log-in.js";
-import { LogOut } from "../contexts/auth/application/log-out.js";
+import { CheckStatus } from "../contexts/auth/application/check-status.use-case.js";
+import { LogIn } from "../contexts/auth/application/log-in.use-case.js";
+import { LogOut } from "../contexts/auth/application/log-out.use-case.js";
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
 import { CredentialRecordFileAdapter } from "../contexts/auth/infrastructure/credential-record-file-adapter.js";
 import { GhCliAdapter } from "../contexts/auth/infrastructure/gh-cli-adapter.js";

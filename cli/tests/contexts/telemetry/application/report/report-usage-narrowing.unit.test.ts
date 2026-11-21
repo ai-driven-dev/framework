@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { RequestedFilters } from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+import type { RequestedFilters } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import {
   NO_FILTERS,
   type ReportFilters,

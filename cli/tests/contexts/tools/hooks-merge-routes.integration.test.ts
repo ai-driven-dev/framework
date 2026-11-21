@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
+import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";

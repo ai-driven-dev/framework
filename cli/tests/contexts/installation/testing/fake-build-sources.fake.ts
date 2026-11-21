@@ -1,5 +1,5 @@
 import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
-import { TranslateDistribution } from "../../../../src/contexts/translate/application/translate-distribution.js";
+import { TranslateDistribution } from "../../../../src/contexts/translate/application/translate-distribution.use-case.js";
 import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.builder.js";

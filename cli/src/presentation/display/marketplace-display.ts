@@ -1,4 +1,4 @@
-import type { RefreshEntryResult } from "../../contexts/distribution/application/refresh-marketplace.js";
+import type { RefreshEntryResult } from "../../contexts/distribution/application/refresh-marketplace.use-case.js";
 import type { PluginCatalog } from "../../contexts/distribution/contract/catalog.js";
 import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import type { Output } from "../../orchestration/domain/output.js";

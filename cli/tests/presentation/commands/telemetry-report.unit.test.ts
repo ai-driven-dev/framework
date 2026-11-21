@@ -167,7 +167,7 @@ describe("aidd telemetry report, narrowed", () => {
   ])(
     "exits 1 on %j, which select on one axis, naming both as the report refuses them",
     async (args, flags) => {
-      // The use case's own refusal, as `report-usage.unit.test.ts` pins it.
+      // The use case's own refusal, as `report-usage.use-case.unit.test.ts` pins it.
       report.mockImplementation(async ({ filters }: { filters: ReportFilters }) => {
         const [conflict] = conflictsOf(filters);
         return conflict === undefined
