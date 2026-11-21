@@ -5,6 +5,8 @@ import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract
  * What a build writes that no single plugin's translation holds. Each step folds across plugins
  * or reads the output tree, so it stays in the sink and nowhere else: the engine hands the sink a
  * plugin's hooks and MCP servers, and the sink merges them into the file other plugins share.
+ * Two more sink steps write no file, so they have no entry: `assertFlatDestinationFree`
+ * (`sinks/flat-collision.ts`, called by `DiskSink`) and `DiskSink.prepare`.
  */
 export const BUILD_ONLY_FOLDS = [
   "plugin manifest",
