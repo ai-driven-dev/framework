@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { aiToolSelectionOf } from "../../orchestration/domain/ai-tool-selection.model.js";
 import { parseScope } from "../../shared/domain/scope.js";
-import type { AiToolId } from "../../shared/domain/tool.js";
 import type { CommandRunner, DepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
@@ -12,7 +12,6 @@ import {
 } from "../display/plugin-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { UnknownAiToolIdError } from "../presentation.error.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -26,17 +25,6 @@ type PluginKeys =
   | "userPluginUpdateUseCase"
   | "pluginUpdateUseCase"
   | "syncNativeActivation";
-
-/** `--tool` names one AI tool or, left out or set to `all`, every one. */
-export function parseToolOption(
-  tool: string | undefined,
-  catalog: ToolCatalog
-): AiToolId[] | "all" {
-  if (tool === undefined || tool === "all") return "all";
-  const id = catalog.aiToolId(tool);
-  if (id === null) throw new UnknownAiToolIdError(tool, catalog.idsInCanonicalOrder("ai"));
-  return [id];
-}
 
 interface PluginWiring {
   readonly catalog: ToolCatalog;
@@ -79,7 +67,7 @@ function registerRemove(
     .action(async (name: string, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
+        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
         const scope = parseScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         const removal = { pluginName: name, toolIds, projectRoot };
@@ -122,7 +110,7 @@ function registerInstall(
       ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         try {
-          const toolIds = parseToolOption(cmdOptions.tool, catalog);
+          const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
           const scope = parseScope(cmdOptions.scope);
           const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const result = await deps.pluginInstallUseCase.execute({
@@ -162,7 +150,7 @@ function registerUpdate(
     .action(async (name: string | undefined, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
+        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
         const scope = parseScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         const updated = await (scope === "user"
@@ -196,7 +184,7 @@ function registerList(
     .action(async (cmdOptions: { tool?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
+        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
         const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.pluginListUseCase.execute({
           toolIds,

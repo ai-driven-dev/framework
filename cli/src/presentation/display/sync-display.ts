@@ -1,6 +1,6 @@
+import { assertActivated } from "../../orchestration/domain/activation-outcome.model.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Output } from "../deps.js";
-import { SyncFailedError } from "../presentation.error.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";
 
 interface ScopedError {
@@ -96,5 +96,5 @@ export function printScopedFailures(output: Output, failures: readonly ScopedErr
  * never loads. */
 export function reportNativeActivation(output: Output, activation: SyncActivationOutcome): void {
   printScopedFailures(output, activation.errors);
-  if (activation.failed) throw new SyncFailedError(activation.errors);
+  assertActivated(activation);
 }

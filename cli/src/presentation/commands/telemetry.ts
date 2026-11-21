@@ -29,7 +29,6 @@ import {
   printTelemetryStatus,
 } from "../display/telemetry-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { IdentityOffWithIdentifierError } from "../presentation.error.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -313,7 +312,7 @@ function registerReport({ telemetry, program, createDeps, requests }: TelemetryS
   );
 }
 
-function registerIdentity({ telemetry, program, createDeps }: TelemetrySurface): void {
+function registerIdentity({ telemetry, program, createDeps, requests }: TelemetrySurface): void {
   telemetry
     .command("identity [id]")
     .description("Choose to be named on your own measurement, or show or remove that choice")
@@ -321,18 +320,9 @@ function registerIdentity({ telemetry, program, createDeps }: TelemetrySurface):
     .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
       const { output, runChecked } = commandOf(program, createDeps);
       await runChecked(
-        () => {
-          if (cmdOptions.off && id !== undefined) throw new IdentityOffWithIdentifierError();
-        },
-        async (deps) => {
-          const use = deps.telemetry.manageIdentity;
-          const result = await use.execute(
-            cmdOptions.off
-              ? { action: "off" }
-              : id === undefined
-                ? { action: "show" }
-                : { action: "set", typed: id }
-          );
+        () => requests.resolveIdentityRequest.execute({ off: cmdOptions.off, id }),
+        async (deps, command) => {
+          const result = await deps.telemetry.manageIdentity.execute(command);
           printIdentityResult(output, result);
           if (result.status === "refused") output.exit(1);
         }

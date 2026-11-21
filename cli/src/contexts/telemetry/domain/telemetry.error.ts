@@ -10,6 +10,15 @@ export class ConflictingIdentityFlagsError extends AiddError {
   }
 }
 
+/** `aidd telemetry identity --off` given an identifier to set. */
+export class IdentityOffWithIdentifierError extends AiddError {
+  readonly code = "identity-off-with-identifier";
+  constructor() {
+    super("--off removes the identity: give it no identifier.");
+    this.name = "IdentityOffWithIdentifierError";
+  }
+}
+
 /** `aidd telemetry on --as` given an identifier that cannot name a person. */
 export class InvalidIdentityError extends AiddError {
   readonly code = "invalid-identity";

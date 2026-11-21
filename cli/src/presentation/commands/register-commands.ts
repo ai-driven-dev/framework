@@ -35,7 +35,7 @@ export function registerCommands(
   registerPluginCommand(program, { catalog: tools, createDeps: createSlice, runCommand });
   registerMarketplaceCommand(program, createSlice, runCommand);
   registerAuthCommand(program, createSlice);
-  registerSyncCommand(program, tools, createSlice);
+  registerSyncCommand(program, createSlice);
   registerUpdateCommand(program, createSlice);
   registerDoctorCommand(program, tools, createSlice);
   registerCleanCommand(program, createSlice);

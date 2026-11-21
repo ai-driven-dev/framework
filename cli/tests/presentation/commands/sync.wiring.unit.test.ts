@@ -2,6 +2,8 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
 import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
+import { RunSync } from "../../../src/orchestration/sync/run-sync.js";
+import { RunUserScopeSync } from "../../../src/orchestration/sync/run-user-scope-sync.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
@@ -16,18 +18,21 @@ const loadUserManifest = vi.fn();
 const userManifestRepo = manifestRepositoryLoading(loadUserManifest);
 const userPluginUpdate = vi.fn();
 
+const CATALOG = catalogOf();
+
 const createDeps = vi.fn(async () => ({
-  restoreAllUseCase: { execute: restoreAll },
-  restoreToolUseCase: { execute: restoreOne },
-  syncSettingsUseCase: { execute: activation },
-  readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
-  userPluginUpdateUseCase: { execute: userPluginUpdate },
+  runSync: new RunSync({ execute: restoreAll }, { execute: restoreOne }, { execute: activation }),
+  runUserScopeSync: new RunUserScopeSync(
+    new ReadMachineInstallation(userManifestRepo),
+    { execute: userPluginUpdate },
+    { execute: activation },
+    CATALOG
+  ),
 }));
 
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = catalogOf();
 
 const NOTHING_RESTORED = {
   errors: [],
@@ -82,7 +87,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program, CATALOG, createDeps);
+  registerSyncCommand(program, createDeps);
   await program.parseAsync(["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }

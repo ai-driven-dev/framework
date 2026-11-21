@@ -1,3 +1,4 @@
+import { InputRequiredError } from "../../../shared/domain/shared.error.js";
 import type { AuthLevel, Credential } from "../contract/credential.js";
 import { providerNamed } from "../domain/credential-record.js";
 import type { CliAuthProvider } from "../ports/cli-auth-provider.js";
@@ -33,6 +34,7 @@ export class LogIn {
     if (credential.method === "external") {
       return await providerNamed(this.cliProviders, credential.provider).verify();
     }
+    if (!credential.token) throw new InputRequiredError("Token cannot be empty.");
     return await this.identity.verifyToken(credential.token);
   }
 }

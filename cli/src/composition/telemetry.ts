@@ -13,6 +13,7 @@ import { CheckIdentity } from "../contexts/telemetry/application/identity/check-
 import { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
+import { ResolveIdentityRequest } from "../contexts/telemetry/application/identity/resolve-identity-request.js";
 import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
 import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
 import { ReadUsage } from "../contexts/telemetry/application/read-usage.js";
@@ -63,6 +64,7 @@ export function wireTelemetryRequests(): TelemetryRequests {
     resolveReportRequest: new ResolveReportRequest(() => new Date()),
     checkOnRequest: new CheckOnRequest(new CheckIdentity()),
     checkFilterValue: new CheckFilterValue(),
+    resolveIdentityRequest: new ResolveIdentityRequest(),
   };
 }
 

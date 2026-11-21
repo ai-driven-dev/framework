@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { AuthenticationError } from "../../../../src/shared/domain/shared.error.js";
+import {
+  AuthenticationError,
+  InputRequiredError,
+} from "../../../../src/shared/domain/shared.error.js";
 import { aLogIn } from "../testing/auth.builder.js";
 import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.fake.js";
@@ -30,6 +33,21 @@ describe("LogIn", () => {
 
       expect(await records.read("user")).toMatchObject({ method: "stored", token: "ghp_secret" });
       expect(await records.read("project")).toBeNull();
+    });
+  });
+
+  describe("when the stored token is empty", () => {
+    it("throws an input-required error and saves nothing", async () => {
+      const records = new InMemoryCredentialRecordRepository();
+
+      await expect(
+        aLogIn()
+          .withRecords(records)
+          .build()
+          .execute({ credential: { method: "stored", token: "" }, level: "user" })
+      ).rejects.toThrow(new InputRequiredError("Token cannot be empty."));
+
+      expect(await records.read("user")).toBeNull();
     });
   });
 
