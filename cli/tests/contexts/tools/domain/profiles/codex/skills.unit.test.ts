@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stripCodexSkillFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { stripCodexSkillFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex-build.model.js";
 import { serializeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 
 /**

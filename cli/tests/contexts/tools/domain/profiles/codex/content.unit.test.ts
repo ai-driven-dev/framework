@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rewriteCodexContent } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { rewriteCodexContent } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 
 describe("rewriteCodexContent()", () => {
   it("sends a skill reference to the agents directory Codex scans, under its aidd- prefix", () => {

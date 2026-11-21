@@ -11,6 +11,7 @@ import {
   genericFlatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
+import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
@@ -18,8 +19,9 @@ import {
   OUTPUT_CODEX_AGENTS_DIR,
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
-} from "./codex-paths.js";
-import { CODEX_HOOKS } from "./hooks.js";
+} from "./codex-paths.model.js";
+
+type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
 type TomlRecord = Record<string, unknown>;
 
@@ -126,11 +128,11 @@ function transformCodexSkill(content: string): string {
   return serializeFrontmatter(stripCodexSkillFrontmatter(frontmatter), body);
 }
 
-export function buildCodexContract(toml: TomlCodec): ToolBuildContract {
+export function buildCodexContract(toml: TomlCodec, hooks: HooksRouting): ToolBuildContract {
   const manifestRelative = OUTPUT_CODEX_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CODEX_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: CODEX_HOOKS.rootToken,
+    pluginRootToken: hooks.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: buildCodexManifest,
     manifestSchemaName: "codex-plugin-manifest",
@@ -153,7 +155,7 @@ export function buildCodexContract(toml: TomlCodec): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(CODEX_HOOKS),
+      hooks: pluginTreeHooksArtifact(hooks),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -208,7 +210,7 @@ function buildCodexConfigPayload(toml: TomlCodec, mcpServers: Record<string, unk
   return toml.stringify({ mcp_servers: mcpServers });
 }
 
-export function buildCodexFlatContract(toml: TomlCodec): ToolBuildContract {
+export function buildCodexFlatContract(toml: TomlCodec, hooks: FlatHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -227,7 +229,7 @@ export function buildCodexFlatContract(toml: TomlCodec): ToolBuildContract {
         transform: tomlAgentMarkdownToToml(toml),
       },
       mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
-      hooks: flatHooksArtifact(CODEX_HOOKS, { tool: "codex" }),
+      hooks: flatHooksArtifact(hooks, { tool: "codex" }),
       rules: { supported: false },
       commands: { supported: false },
     },

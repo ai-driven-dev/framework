@@ -6,11 +6,12 @@ import { createOutput } from "../../../src/composition/shared.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
-import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
+import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { kilo } from "../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
+import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
@@ -198,7 +199,7 @@ const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-ru
 
 const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
   claude: present(claude.hooks),
-  codex: CODEX_HOOKS,
+  codex: present(codexProfile(new SmolTomlCodec()).hooks),
   copilot: present(copilot.hooks),
   cursor: present(cursor.hooks),
   opencode: present(opencode.hooks),

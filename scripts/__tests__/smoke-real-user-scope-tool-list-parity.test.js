@@ -17,11 +17,9 @@ const ROOT = path.resolve(__dirname, "../..");
 
 // A script test cannot read the registration without building the CLI, so it takes the folder
 // name of each profile as the registered id: folder name = registered id.
-// TRANSITIONAL: a tool not yet migrated still names its profile `profile.ts`.
 function profileFile(toolId) {
   const dir = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId);
-  const named = path.join(dir, `${toolId}.profile.ts`);
-  return fs.existsSync(named) ? named : path.join(dir, "profile.ts");
+  return path.join(dir, `${toolId}.profile.ts`);
 }
 
 function aiToolIds() {

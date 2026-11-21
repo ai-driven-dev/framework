@@ -1,6 +1,5 @@
-import { existsSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/composition/tools.js";
 import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
@@ -25,19 +24,13 @@ const PROFILES = join(
 );
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 
-async function hooksOf(profile: BuiltToolConfig): Promise<object | undefined> {
-  if (profile.kind === "ai" && profile.hooks !== undefined) return profile.hooks;
-  const file = join(PROFILES, profile.toolId, "hooks.ts");
-  if (!existsSync(file)) return undefined;
-  const descriptor: unknown = (await import(pathToFileURL(file).href))[
-    `${profile.toolId.toUpperCase()}_HOOKS`
-  ];
-  return typeof descriptor === "object" && descriptor !== null ? descriptor : undefined;
+function hooksOf(profile: BuiltToolConfig): object | undefined {
+  return profile.kind === "ai" ? profile.hooks : undefined;
 }
 
 describe("the profile files on disk", () => {
   it("read at least one tool that runs hooks and one that runs none", async () => {
-    const declared = await Promise.all(REGISTERED_PROFILES.map(hooksOf));
+    const declared = REGISTERED_PROFILES.map(hooksOf);
     expect(declared.some((hooks) => hooks !== undefined)).toBe(true);
     expect(declared.some((hooks) => hooks === undefined)).toBe(true);
     expect(REGISTERED_PROFILES.some((profile) => profile.kind === "ai")).toBe(true);
@@ -50,7 +43,7 @@ describe("the profile files on disk", () => {
       profileFolders: readdirSync(PROFILES, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name),
-      hooks: await hooksOf(profile),
+      hooks: hooksOf(profile),
       payloadFixtures: readdirSync(PAYLOADS),
     }));
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { codexGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex-paths.js";
+import { codexGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex-paths.model.js";
 
 const ORCHESTRATOR = { name: "aidd-orchestrator", agents: new Set<string>() };
 

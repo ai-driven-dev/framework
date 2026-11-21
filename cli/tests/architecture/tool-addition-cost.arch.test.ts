@@ -151,7 +151,10 @@ describe("the guard itself", () => {
       "codex",
     ]);
     expect(
-      toolsNamedIn('import "../../src/contexts/tools/domain/profiles/codex/build.js";', ids),
+      toolsNamedIn(
+        'import "../../src/contexts/tools/domain/profiles/codex/codex-build.model.js";',
+        ids
+      ),
       "an import path"
     ).toEqual(["codex"]);
     expect(

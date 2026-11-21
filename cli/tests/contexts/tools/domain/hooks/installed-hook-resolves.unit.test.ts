@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { rewritePluginRootToken } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
-import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
@@ -117,7 +116,7 @@ const BUILT_BY: ReadonlyArray<
   [claude, () => present(claude.buildContracts.marketplace)()],
   [cursor, () => present(cursor.buildContracts.marketplace)()],
   [copilot, () => present(copilot.buildContracts.marketplace)()],
-  [codex, () => buildCodexContract(TOML)],
+  [codex, () => present(codex.buildContracts.marketplace)()],
 ];
 
 describe("the two ways a plugin gets installed", () => {

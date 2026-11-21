@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
-import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
@@ -145,7 +145,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("codex: .codex/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".codex/hooks/";
-    const fs = await flatMerge(buildCodexFlatContract(TOML), {
+    const fs = await flatMerge(present(codexProfile(TOML).buildContracts.flat)(), {
       [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
     });
     const file = fs.getFile(`${OUT}/.codex/hooks.json`);

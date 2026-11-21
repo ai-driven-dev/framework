@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
 

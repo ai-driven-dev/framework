@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeCodexConfigToml } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { mergeCodexConfigToml } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex-build.model.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const TOML = new SmolTomlCodec();

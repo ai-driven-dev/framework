@@ -1,8 +1,12 @@
 import { join } from "node:path";
 import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-codex.cjs";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import type { ShippedConfig } from "../../../contract/tool-profile.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
+import { declareHooks } from "../../formats/hooks/declaration.js";
 import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks/routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
@@ -16,13 +20,12 @@ import {
   buildCodexFlatContract,
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
-} from "./build.js";
-import { CODEX_DIRECTORY, codexGlobalFilePath } from "./codex-paths.js";
-import { CODEX_HOOKS } from "./hooks.js";
+} from "./codex-build.model.js";
+import { codexGlobalFilePath } from "./codex-paths.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
-const DIRECTORY = CODEX_DIRECTORY;
+const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 
@@ -52,7 +55,33 @@ function buildCodexSkillFilePath(fileName: string): string {
   return `${AGENTS_SKILLS_PREFIX}aidd-${skillNameFromPath(fileName)}/SKILL.md`;
 }
 
-const hooksSupport = nativeHooksSupport(CODEX_HOOKS);
+const hooks = declareHooks(
+  { toolId: "codex", directory: DIRECTORY, adapter },
+  {
+    // Measured: four consecutive `codex exec` sessions installed a plugin's hooks and ran none of
+    // them, with no warning, until `--dangerously-bypass-hook-trust` made the same install run
+    // all three. Codex writes one `trusted_hash` per hook under `[hooks.state]` when a person
+    // approves it; a hook with no entry is skipped in silence, and nothing prompts outside a
+    // terminal.
+    trustNotice:
+      "Codex will not run this plugin's hooks until each one is trusted — approve the prompt " +
+      "once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec " +
+      "for a headless run. Until then, none of its hooks run and nothing says why.",
+    // Each item kept whole: Codex trusts a hook by its whole entry, and an entry stripped of
+    // `async` runs in the way of the session it was written to stay out of.
+    file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "commands" } },
+    // The variable Codex expands to an installed plugin's directory in a hooks file.
+    rootToken: PLUGIN_ROOT_TOKEN,
+    flat: { scriptsDir: ".codex/hooks/", sharedFile: ".codex/hooks.json" },
+    config: {
+      outputPath: ".codex/hooks.json",
+      mergeStrategy: "user-prime",
+      consumes: ["codex-hooks"],
+    },
+  }
+);
+
+const hooksSupport = nativeHooksSupport(hooks);
 
 const CODEX_CONFIG_ASSETS: readonly ShippedConfig[] = [
   {
@@ -114,9 +143,10 @@ export const codexProfile = (toml: TomlCodec) =>
     recommendedFor: (project) => project?.stack === "python" && !project.isMonorepo,
     signalDir: `${DIRECTORY}commands`,
     configAssets: CODEX_CONFIG_ASSETS,
+    hooks,
     buildContracts: {
-      marketplace: () => buildCodexContract(toml),
-      flat: () => buildCodexFlatContract(toml),
+      marketplace: () => buildCodexContract(toml, hooks),
+      flat: () => buildCodexFlatContract(toml, hooks),
     },
 
     capabilities: (bound) => ({
@@ -149,7 +179,7 @@ export const codexProfile = (toml: TomlCodec) =>
         }),
         plugin: PLUGIN_MCP,
       },
-      hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
+      hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
       layout: CODEX_LAYOUT,
       manifest: manifestSection({
         manifestRelativePath: "plugin.json",

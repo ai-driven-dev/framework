@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PLUGIN_TREE_SOURCES, supported } from "../../../testing/build-artifacts.builder.js";
 import { contractOf, marketplaceSourcesOf } from "../../../testing/profile-tables.builder.js";
