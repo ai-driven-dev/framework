@@ -124,20 +124,6 @@ export function importersByFile(): Map<string, Set<string>> {
   return importers;
 }
 
-/** The baseline may only shrink: a new violation fails, and so does removing one without
- * taking it out of the baseline. */
-export function expectRatchet(
-  current: readonly string[],
-  baseline: readonly string[]
-): { added: string[]; fixed: string[] } {
-  const base = new Set(baseline);
-  const now = new Set(current);
-  return {
-    added: current.filter((entry) => !base.has(entry)).sort(),
-    fixed: baseline.filter((entry) => !now.has(entry)).sort(),
-  };
-}
-
 /**
  * The subset of glob syntax this suite declares: a literal prefix, `/**\/` for any number of
  * directories *including none* — `src/shared/domain/**\/*.ts` must match `src/shared/domain/tool.ts` too,
