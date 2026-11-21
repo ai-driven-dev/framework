@@ -623,7 +623,12 @@ describe("what a build reports having written", () => {
     const fs = await makeSeededFs();
     const _v = makeValidator();
     const _ap = makeAssetProvider();
-    const uc = new BuildNativeTree(fs, new CapturingLogger(), countingSink, LAYOUT);
+    const uc = new BuildNativeTree({
+      fs,
+      logger: new CapturingLogger(),
+      sink: countingSink,
+      layout: LAYOUT,
+    });
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,
@@ -644,7 +649,7 @@ describe("what a build reports having written", () => {
     const logger = new CapturingLogger();
     const _v = makeValidator();
     const _ap = makeAssetProvider();
-    const uc = new BuildNativeTree(fs, logger, countingSink, LAYOUT);
+    const uc = new BuildNativeTree({ fs, logger, sink: countingSink, layout: LAYOUT });
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,

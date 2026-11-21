@@ -73,13 +73,13 @@ async function flatMerge(
 ): Promise<InMemoryFileAdapter> {
   const fs = sourceFs(seed);
   const logger = new CapturingLogger();
-  const sink = new DiskSink(
+  const sink = new DiskSink({
     fs,
-    { validate() {} },
-    unused,
+    jsonSchemaValidator: { validate() {} },
+    assetProvider: unused,
     logger,
-    new FlatWriter(fs, unused, logger)
-  );
+    flat: new FlatWriter(fs, unused, logger),
+  });
   await sink.writePlugin(
     { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },
     PLUGIN,

@@ -33,26 +33,28 @@ export interface FrameworkBuildContext {
   readonly provider?: string;
 }
 
+export interface BuildNativeTreeDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly logger: Logger;
+  readonly sink: PluginTreeSink;
+  readonly layout: DiskLayout;
+}
+
 export class BuildNativeTree {
-  constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly logger: Logger,
-    private readonly sink: PluginTreeSink,
-    private readonly layout: DiskLayout
-  ) {}
+  constructor(private readonly deps: BuildNativeTreeDeps) {}
 
   async execute(options: FrameworkBuildOptions): Promise<FrameworkBuildResult> {
     const sourceDir = resolve(options.sourceDir);
     const outDir = resolve(options.outDir);
     this.guardPaths(sourceDir, outDir);
     const sourceMarketplace = await this.readSourceMarketplace(sourceDir);
-    const target: DiskTarget = { ...this.layout, sourceDir, outDir };
-    await this.sink.prepare(target);
+    const target: DiskTarget = { ...this.deps.layout, sourceDir, outDir };
+    await this.deps.sink.prepare(target);
     const builtPlugins: BuildPluginResult[] = [];
     for (const entry of sourceMarketplace.plugins) {
       builtPlugins.push(await this.buildPlugin(target, entry));
     }
-    const extraFiles = await this.sink.finish(target, sourceMarketplace, builtPlugins);
+    const extraFiles = await this.deps.sink.finish(target, sourceMarketplace, builtPlugins);
     const totalFiles = builtPlugins.reduce((sum, p) => sum + p.filesWritten, 0) + extraFiles;
     return { outDir, plugins: builtPlugins, totalFiles };
   }
@@ -65,7 +67,7 @@ export class BuildNativeTree {
     const marketplacePath = join(sourceDir, SOURCE_MARKETPLACE_RELATIVE);
     let raw: string;
     try {
-      raw = await this.fs.readFile(marketplacePath);
+      raw = await this.deps.fs.readFile(marketplacePath);
     } catch {
       throw new InvalidSourceMarketplaceError(`cannot read ${marketplacePath}`);
     }
@@ -99,10 +101,10 @@ export class BuildNativeTree {
     entry: SourcePluginEntryRef
   ): Promise<BuildPluginResult> {
     const pluginSrc = join(target.sourceDir, "plugins", entry.name);
-    if (!(await this.fs.fileExists(pluginSrc))) {
+    if (!(await this.deps.fs.fileExists(pluginSrc))) {
       throw new InvalidSourceMarketplaceError(`plugin '${entry.name}' not found at ${pluginSrc}`);
     }
-    const filesWritten = await this.sink.writePlugin(target, entry.name, pluginSrc);
+    const filesWritten = await this.deps.sink.writePlugin(target, entry.name, pluginSrc);
     const skippedSections = await this.warnOutOfScopeSections(entry.name, pluginSrc);
     return { name: entry.name, filesWritten, skippedSections };
   }
@@ -113,8 +115,10 @@ export class BuildNativeTree {
   ): Promise<readonly string[]> {
     const skipped: string[] = [];
     for (const section of OUT_OF_SCOPE_PLUGIN_SECTIONS) {
-      if (await this.fs.fileExists(join(pluginSrc, section))) {
-        this.logger.warn(`Skipping ${section}/ in plugin '${pluginName}' (out of scope for MVP1).`);
+      if (await this.deps.fs.fileExists(join(pluginSrc, section))) {
+        this.deps.logger.warn(
+          `Skipping ${section}/ in plugin '${pluginName}' (out of scope for MVP1).`
+        );
         skipped.push(section);
       }
     }

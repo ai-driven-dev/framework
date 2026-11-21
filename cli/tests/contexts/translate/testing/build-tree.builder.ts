@@ -18,9 +18,10 @@ export function buildTree(
   mode: FrameworkBuildMode,
   force = false
 ): BuildNativeTree {
-  return new BuildNativeTree(fs, logger, aDiskSink(fs, validator, assetProvider, logger), {
-    contract,
-    mode,
-    force,
+  return new BuildNativeTree({
+    fs,
+    logger,
+    sink: aDiskSink(fs, validator, assetProvider, logger),
+    layout: { contract, mode, force },
   });
 }

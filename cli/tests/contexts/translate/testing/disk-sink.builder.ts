@@ -13,11 +13,11 @@ export function aDiskSink(
   assetProvider: AssetProvider,
   logger: Logger
 ): DiskSink {
-  return new DiskSink(
+  return new DiskSink({
     fs,
-    validator,
+    jsonSchemaValidator: validator,
     assetProvider,
     logger,
-    new FlatWriter(fs, assetProvider, logger)
-  );
+    flat: new FlatWriter(fs, assetProvider, logger),
+  });
 }

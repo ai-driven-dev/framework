@@ -70,3 +70,16 @@ export function flatLinkTarget(
     ? pluginRelPath
     : flatPathOfPluginSuffix(contract, pluginRelPath, pluginName);
 }
+
+/** A plugin-root reference resolved into the output a flat build writes. "/"-joined and
+ * separator-normalized: this value is embedded into written JSON content, and on Windows
+ * `outDir` is backslash-native: JSON.stringify then escapes each backslash, so a reader
+ * comparing against the plain outDir string never finds it as a substring. */
+export function flatPluginRootAbsolute(
+  target: { readonly contract: ToolBuildContract; readonly outDir: string },
+  suffix: string,
+  pluginName: string
+): string {
+  const normalizedOut = target.outDir.replace(/\\/g, "/");
+  return `${normalizedOut}/${flatPathOfPluginSuffix(target.contract, suffix, pluginName)}`;
+}

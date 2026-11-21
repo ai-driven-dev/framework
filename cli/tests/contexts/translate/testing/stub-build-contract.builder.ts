@@ -1,0 +1,51 @@
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { DiskTarget } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
+
+type Supported = Extract<ArtifactContract, { supported: true }>;
+
+/** A supported artifact that lands every file at its own relative path. */
+export function aSupportedArtifact(over: Partial<Supported> = {}): ArtifactContract {
+  return {
+    supported: true,
+    source: { kind: "fullTree", srcDir: "." },
+    path: (_p, rel) => rel,
+    ...over,
+  };
+}
+
+/** A build contract with every artifact supported and no manifest, catalog or config. */
+export function aStubBuildContract(over: Partial<ToolBuildContract> = {}): ToolBuildContract {
+  return {
+    manifestFileRelative: null,
+    synthesizeManifest: null,
+    manifestSchemaName: null,
+    artifacts: {
+      agents: aSupportedArtifact(),
+      skills: aSupportedArtifact(),
+      hooks: aSupportedArtifact(),
+      mcp: aSupportedArtifact(),
+      rules: { supported: false },
+      commands: { supported: false },
+    },
+    buildMarketplaceCatalog: null,
+    buildMarketplaceEntry: null,
+    ...over,
+  };
+}
+
+export function aDiskTarget(
+  contract: ToolBuildContract,
+  over: Partial<DiskTarget> = {}
+): DiskTarget {
+  return {
+    contract,
+    mode: "marketplace",
+    force: false,
+    sourceDir: "/src",
+    outDir: "/out",
+    ...over,
+  };
+}
