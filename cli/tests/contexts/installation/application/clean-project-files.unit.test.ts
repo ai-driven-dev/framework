@@ -20,20 +20,24 @@ const ROOT = "/test-project";
 function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanProjectFiles {
   const repo = new InMemoryManifestRepository(manifest, ROOT);
   return new CleanProjectFiles(
-    fs,
-    repo,
     {
-      homeDir: () => "/home",
-      assertMcpRemovable: async () => undefined,
-      records: registrationRecordRules,
-    },
-    new RemoveProjectFiles(
       fs,
-      repo,
-      new CapturingLogger(),
-      new UpdateGitignore(fs),
-      registeredTools()
-    ),
+      manifestRepo: repo,
+      asks: {
+        homeDir: () => "/home",
+        assertMcpRemovable: async () => undefined,
+        records: registrationRecordRules,
+      },
+      removeProjectFiles: new RemoveProjectFiles(
+        {
+          fs,
+          manifestRepo: repo,
+          logger: new CapturingLogger(),
+          updateGitignore: new UpdateGitignore(fs),
+        },
+        registeredTools()
+      ),
+    },
     registeredTools()
   );
 }

@@ -22,7 +22,7 @@ function machineOver(fs: InMemoryFileAdapter, registry = new FakeMarketplaceRegi
       cache.resolveCandidate(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
-  return new PurgeMachineState(fs, logger, registry, guards);
+  return new PurgeMachineState({ fs, logger, marketplaceRegistry: registry, guards });
 }
 
 describe("PurgeMachineState.builtVersions", () => {

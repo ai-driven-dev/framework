@@ -35,13 +35,18 @@ export type SyncToolSettingsFilesRequest =
       readonly outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
     });
 
+/** What SyncToolSettingsFiles is built from. */
+export interface SyncToolSettingsFilesDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly logger: Logger;
+  readonly buildMarketplace: BuildMarketplaceForTool;
+  readonly records: RegistrationRecordRules;
+}
+
 /** The project settings files a tool shares with its host, kept in step with the manifest. */
 export class SyncToolSettingsFiles {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly logger: Logger,
-    private readonly buildMarketplace: BuildMarketplaceForTool,
-    private readonly records: RegistrationRecordRules,
+    private readonly deps: SyncToolSettingsFilesDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -73,7 +78,7 @@ export class SyncToolSettingsFiles {
       const profile = this.tools.aiProfileIfAny(toolId);
       const settings = profile?.marketplaceRegistration();
       if (profile == null || settings?.requiresNativeProof() !== true) continue;
-      const provenRefs = this.records.refsOnHosts(
+      const provenRefs = this.deps.records.refsOnHosts(
         outcome,
         outcome.marketplaces.map((entry) => entry.hostName)
       );
@@ -102,7 +107,7 @@ export class SyncToolSettingsFiles {
     // Building the tree is this CLI's job whoever registers it: a tool that is not installed
     // today may be tomorrow, and the tree is what any registration points at.
     for (const m of target.marketplaces)
-      await this.buildMarketplace.execute(target.toolId, m, target.projectRoot);
+      await this.deps.buildMarketplace.execute(target.toolId, m, target.projectRoot);
     return this.evictMarketplacesFromSharedFile(target);
   }
 
@@ -143,7 +148,7 @@ export class SyncToolSettingsFiles {
         source: marketplace.source,
       });
       if (entryKey == null) continue;
-      refs.push(this.records.refOnHostName(plugin.name, entryKey));
+      refs.push(this.deps.records.refOnHostName(plugin.name, entryKey));
     }
     return refs;
   }
@@ -153,10 +158,12 @@ export class SyncToolSettingsFiles {
   // down with it.
   private async load({ projectRoot, settings }: ToolSettings): Promise<Record<string, unknown>> {
     const absPath = resolve(projectRoot, settings.sharedSettingsFile());
-    if (!(await this.fs.fileExists(absPath))) return {};
-    const parsed = tryParseJson(await this.fs.readFile(absPath));
+    if (!(await this.deps.fs.fileExists(absPath))) return {};
+    const parsed = tryParseJson(await this.deps.fs.readFile(absPath));
     if (!parsed.ok) {
-      this.logger.warn(`Ignoring malformed JSON in ${absPath}; rewriting the keys this CLI owns.`);
+      this.deps.logger.warn(
+        `Ignoring malformed JSON in ${absPath}; rewriting the keys this CLI owns.`
+      );
       return {};
     }
     return asPlainObject(parsed.value) ?? {};
@@ -167,7 +174,7 @@ export class SyncToolSettingsFiles {
     json: Record<string, unknown>
   ): Promise<void> {
     const content = JSON.stringify(json, null, 2);
-    await this.fs.writeFile(resolve(projectRoot, settings.sharedSettingsFile()), content);
+    await this.deps.fs.writeFile(resolve(projectRoot, settings.sharedSettingsFile()), content);
     manifest.recordFileHash(toolId, settings.sharedSettingsFile(), FileHash.of(content));
   }
 }

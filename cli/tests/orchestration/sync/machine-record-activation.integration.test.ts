@@ -40,10 +40,8 @@ describe("the machine record is saved once any tool of the run changed it", () =
     });
     const repo = new InMemoryManifestRepository(machine);
     const record = new RecordActivation(
-      new InMemoryFileAdapter(),
-      registrationRecordRules,
-      registeredCatalog(),
-      repo
+      { fs: new InMemoryFileAdapter(), records: registrationRecordRules, userManifestRepo: repo },
+      registeredCatalog()
     );
 
     await record.execute({

@@ -63,17 +63,22 @@ interface RestoreResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
+/** What Restore is built from. */
+export interface RestoreDeps {
+  readonly fs: FileReader;
+  readonly manifestRepo: ManifestRepository;
+  readonly restoreToolFiles: RestoreToolFiles;
+  readonly restoreAllPlugins: RestoreAllPlugins;
+}
+
 export class Restore {
   constructor(
-    private readonly fs: FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly restoreToolFiles: RestoreToolFiles,
-    private readonly restoreAllPlugins: RestoreAllPlugins,
+    private readonly deps: RestoreDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreCommand): Promise<RestoreResult> {
-    const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
+    const manifest = options.manifest ?? (await requireManifest(this.deps.manifestRepo));
     const ctx = await this.buildRestoreContext(options, manifest);
     return this.executeRestore(ctx);
   }
@@ -116,13 +121,13 @@ export class Restore {
   private async runToolRestores(ctx: RestoreCtx): Promise<RestoreToolFilesResult[]> {
     const results: RestoreToolFilesResult[] = [];
     for (const toolId of ctx.toolIds) {
-      results.push(await this.restoreToolFiles.execute({ toolId, ...ctx }));
+      results.push(await this.deps.restoreToolFiles.execute({ toolId, ...ctx }));
     }
     return results;
   }
 
   private async runPluginRestore(ctx: RestoreCtx): Promise<RestoreAllPluginsResult> {
-    return this.restoreAllPlugins.execute({
+    return this.deps.restoreAllPlugins.execute({
       projectRoot: ctx.projectRoot,
       manifest: ctx.manifest,
       fileFilter: ctx.fileFilter,
@@ -143,7 +148,7 @@ export class Restore {
       toolResults.some((t) => t.restored.length > 0) ||
       totalPluginFilesRestored > 0 ||
       JSON.stringify(manifest.toJSON()) !== previousManifest;
-    if (hasChanges) await this.manifestRepo.save(manifest);
+    if (hasChanges) await this.deps.manifestRepo.save(manifest);
   }
 
   private buildTotals(
@@ -168,8 +173,8 @@ export class Restore {
     const contentFiles = new Map<string, string>();
     for (const ref of configRefs) {
       const absPath = join(frameworkPath, ref.path);
-      if (await this.fs.fileExists(absPath)) {
-        contentFiles.set(ref.path, await this.fs.readFile(absPath));
+      if (await this.deps.fs.fileExists(absPath)) {
+        contentFiles.set(ref.path, await this.deps.fs.readFile(absPath));
       }
     }
     return contentFiles;

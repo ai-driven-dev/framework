@@ -36,13 +36,13 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
   const fetcher = {
     fetch: vi.fn(new FixturePluginFetcher().fetch.bind(new FixturePluginFetcher())),
   };
-  const updater = new PluginMaterializer(
+  const updater = new PluginMaterializer({
     fs,
-    new PluginDistributionLoader(fetcher, { read: async () => dist }),
-    userScopeFileGuard,
-    { ...fakeBuiltDeps(), homedir },
-    options.globalCacheDir
-  );
+    loader: new PluginDistributionLoader(fetcher, { read: async () => dist }),
+    guard: userScopeFileGuard,
+    builtDeps: { ...fakeBuiltDeps(), homedir },
+    globalCacheDir: options.globalCacheDir,
+  });
   const plugin = InstalledPlugin.fromMetadata({
     name: "sample-plugin",
     version: installedVersion,

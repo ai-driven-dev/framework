@@ -44,10 +44,12 @@ function uninstaller(
   detachClaims: DetachProjectClaims = noClaims
 ): UninstallTools {
   return new UninstallTools(
-    manifestRepo,
-    detachClaims,
-    registrationRecordRules,
-    new RemoveToolFiles(fs, logger, registeredTools()),
+    {
+      manifestRepo,
+      detachClaims,
+      records: registrationRecordRules,
+      removeToolFiles: new RemoveToolFiles(fs, logger, registeredTools()),
+    },
     registeredTools()
   );
 }

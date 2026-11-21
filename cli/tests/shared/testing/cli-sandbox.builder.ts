@@ -293,9 +293,7 @@ export async function initProject(projectDir: string, _frameworkPath: string): P
   const output = createOutput(false);
   const deps = await bindContainer(catalogOf())(projectDir, { verbose: false }, output);
   await new InitProject(
-    deps.fs,
-    deps.manifestRepo,
-    new UpdateGitignore(deps.fs),
+    { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: new UpdateGitignore(deps.fs) },
     catalogOf()
   ).execute({
     projectRoot: projectDir,

@@ -45,13 +45,18 @@ export interface GithubAddedPluginSource extends ToolsByTranslation {
 
 export type ResolveAddedPluginSourceResult = LocalAddedPluginSource | GithubAddedPluginSource;
 
+/** What ResolveAddedPluginSource is built from. */
+export interface ResolveAddedPluginSourceDeps {
+  readonly distributionLoader: PluginDistributionLoader;
+  readonly fs: FileWriter & FileReader;
+  readonly built: BuiltMaterializationDeps;
+}
+
 /** Answers where an added plugin comes from: its marketplace, which tools take its files flat,
  * and, when the add needs them, its distribution and version. */
 export class ResolveAddedPluginSource {
   constructor(
-    private readonly distributionLoader: PluginDistributionLoader,
-    private readonly fs: FileWriter & FileReader,
-    private readonly built: BuiltMaterializationDeps,
+    private readonly deps: ResolveAddedPluginSourceDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -61,8 +66,10 @@ export class ResolveAddedPluginSource {
       return { isGithubMarketplace: false, distribution: await this.read(source, projectRoot) };
     }
     const isFlat = (toolId: AiToolId): boolean =>
-      resolvePluginTranslator(this.tools.aiProfile(toolId), { fs: this.fs, built: this.built })
-        ?.mode === "flat";
+      resolvePluginTranslator(this.tools.aiProfile(toolId), {
+        fs: this.deps.fs,
+        built: this.deps.built,
+      })?.mode === "flat";
     const flat = toolIds.filter(isFlat);
     const native = toolIds.filter((toolId) => !isFlat(toolId));
     // Without a catalog entry a github add is refused before it places anything.
@@ -79,6 +86,6 @@ export class ResolveAddedPluginSource {
   }
 
   private read(source: PluginSource, projectRoot: string): Promise<PluginDistribution> {
-    return this.distributionLoader.load(source, join(projectRoot, PLUGIN_CACHE_SUBDIR));
+    return this.deps.distributionLoader.load(source, join(projectRoot, PLUGIN_CACHE_SUBDIR));
   }
 }

@@ -2,7 +2,10 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
 import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
-import { LoadSyncContext } from "../../../src/contexts/installation/application/sync/load-sync-context.js";
+import {
+  LoadSyncContext,
+  type LoadSyncContextDeps,
+} from "../../../src/contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
 import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
@@ -17,20 +20,20 @@ import { FakeCurrentVersion } from "./fake-current-version.fake.js";
 import { registeredTools } from "./registered-tools.builder.js";
 
 type Hosts = ConstructorParameters<typeof RegisterPluginWithHost>;
-type Loader = ConstructorParameters<typeof LoadSyncContext>;
+type Loader = LoadSyncContextDeps;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
 export interface MarketplaceSyncParts {
   fs: ConstructorParameters<typeof SharedFrameworkSource>[0];
-  manifestRepo: Loader[0];
-  marketplaceRegistry: Loader[1];
+  manifestRepo: Loader["manifestRepo"];
+  marketplaceRegistry: Loader["marketplaceRegistry"];
   logger: ConstructorParameters<typeof SharedFrameworkSource>[1];
   ensureBuilt: ConstructorParameters<typeof BuildMarketplaceForTool>[0];
   userCacheRoot?: ActivationMarketplace["userCacheRoot"];
-  marketplaceRegisterFrameworkUseCase?: Loader[3];
+  marketplaceRegisterFrameworkUseCase?: Loader["marketplaceRegisterFrameworkUseCase"];
   userSourceReferences?: ConstructorParameters<typeof RecordSourceReference>[4];
   currentVersionProvider?: ConstructorParameters<typeof RecordSourceReference>[1];
-  userManifestRepo?: Loader[4];
+  userManifestRepo?: Loader["userManifestRepo"];
   activators?: Hosts[1];
   hostMarketplaceRegistries?: Hosts[2]["marketplaceRegistries"];
   hostPluginRegistries?: Hosts[2]["pluginRegistries"];
@@ -40,18 +43,20 @@ export interface MarketplaceSyncParts {
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, registeredTools());
   return new SyncSettings(
-    new LoadSyncContext(
-      parts.manifestRepo,
-      parts.marketplaceRegistry,
-      FRAMEWORK_MARKETPLACE_NAME,
-      parts.marketplaceRegisterFrameworkUseCase,
-      parts.userManifestRepo
-    ),
+    new LoadSyncContext({
+      manifestRepo: parts.manifestRepo,
+      marketplaceRegistry: parts.marketplaceRegistry,
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      marketplaceRegisterFrameworkUseCase: parts.marketplaceRegisterFrameworkUseCase,
+      userManifestRepo: parts.userManifestRepo,
+    }),
     new SyncToolSettingsFiles(
-      parts.fs,
-      parts.logger,
-      build,
-      registrationRecordRules,
+      {
+        fs: parts.fs,
+        logger: parts.logger,
+        buildMarketplace: build,
+        records: registrationRecordRules,
+      },
       registeredTools()
     ),
     new ActivateNativeTools(
@@ -72,10 +77,8 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       registrationRecordRules
     ),
     new RecordActivation(
-      parts.fs,
-      registrationRecordRules,
-      registeredTools(),
-      parts.userManifestRepo
+      { fs: parts.fs, records: registrationRecordRules, userManifestRepo: parts.userManifestRepo },
+      registeredTools()
     ),
     new SharedFrameworkSource(
       parts.fs,

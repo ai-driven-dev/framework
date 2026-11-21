@@ -4,7 +4,10 @@ import { ListMarketplaces } from "../../../src/contexts/distribution/application
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean-project-files.js";
-import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/remove-project-files.js";
+import {
+  RemoveProjectFiles,
+  type RemoveProjectFilesDeps,
+} from "../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -15,14 +18,14 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 type Constructed = ConstructorParameters<typeof CleanProject>;
-type Files = ConstructorParameters<typeof RemoveProjectFiles>;
+type Files = RemoveProjectFilesDeps;
 
 /** What a test names; everything else is the empty default. */
 export interface ProjectCleanerParts extends Partial<HostPorts> {
-  fs: Files[0];
-  manifestRepo: Files[1];
-  logger: Files[2];
-  gitignore: Files[3];
+  fs: Files["fs"];
+  manifestRepo: Files["manifestRepo"];
+  logger: Files["logger"];
+  gitignore: Files["updateGitignore"];
   marketplaceRegistry?: ConstructorParameters<typeof ListMarketplaces>[0];
   prompter?: Constructed[4];
   homeDir?: () => string;
@@ -34,21 +37,25 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
   const purgeCache = new PurgeDeclaredCache(parts.fs, parts.logger);
   return [
     new CleanProjectFiles(
-      parts.fs,
-      parts.manifestRepo,
       {
-        homeDir: parts.homeDir ?? resolveHomeDir,
-        assertMcpRemovable: (plugin, tool, projectRoot) =>
-          assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
-        records: registrationRecordRules,
+        fs: parts.fs,
+        manifestRepo: parts.manifestRepo,
+        asks: {
+          homeDir: parts.homeDir ?? resolveHomeDir,
+          assertMcpRemovable: (plugin, tool, projectRoot) =>
+            assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
+          records: registrationRecordRules,
+        },
+        removeProjectFiles: new RemoveProjectFiles(
+          {
+            fs: parts.fs,
+            manifestRepo: parts.manifestRepo,
+            logger: parts.logger,
+            updateGitignore: parts.gitignore,
+          },
+          registeredTools()
+        ),
       },
-      new RemoveProjectFiles(
-        parts.fs,
-        parts.manifestRepo,
-        parts.logger,
-        parts.gitignore,
-        registeredTools()
-      ),
       registeredTools()
     ),
     new WithdrawFromHost(parts.fs, parts.logger, {

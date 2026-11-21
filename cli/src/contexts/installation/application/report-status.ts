@@ -55,17 +55,22 @@ export interface StatusQuery {
   execute(options: ReportStatusCommand): Promise<ReportStatusResult>;
 }
 
+/** What ReportStatus is built from. */
+export interface ReportStatusDeps {
+  readonly fs: FileReader;
+  readonly manifestRepo: ManifestRepository;
+  readonly detectPluginDrift: DetectPluginDrift;
+}
+
 export class ReportStatus implements StatusQuery {
   constructor(
-    private readonly fs: FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly detectPluginDrift: DetectPluginDrift,
+    private readonly deps: ReportStatusDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: ReportStatusCommand): Promise<ReportStatusResult> {
     const { projectRoot, filterToolId, category, pluginName } = options;
-    const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
+    const manifest = options.manifest ?? (await requireManifest(this.deps.manifestRepo));
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
@@ -143,9 +148,9 @@ export class ReportStatus implements StatusQuery {
   }): Promise<FileDrift[]> {
     const { directory, trackedSet, projectRoot, machineLocal } = scan;
     const toolDir = join(projectRoot, directory);
-    if (!(await this.fs.fileExists(toolDir))) return [];
+    if (!(await this.deps.fs.fileExists(toolDir))) return [];
     const added: FileDrift[] = [];
-    const diskFiles = await this.fs.listDirectory(toolDir);
+    const diskFiles = await this.deps.fs.listDirectory(toolDir);
     for (const diskRelPath of diskFiles) {
       if (diskRelPath.endsWith(".backup")) continue;
       const fullRelPath = `${directory}${diskRelPath}`;
@@ -171,13 +176,13 @@ export class ReportStatus implements StatusQuery {
     projectRoot: string
   ): Promise<FileDrift[]> {
     const fullPath = join(projectRoot, mergeFile.relativePath);
-    if (!(await this.fs.fileExists(fullPath))) {
+    if (!(await this.deps.fs.fileExists(fullPath))) {
       return Object.keys(mergeFile.entries).map((key) => ({
         relativePath: `${mergeFile.relativePath} > ${key}`,
         status: "deleted" as const,
       }));
     }
-    const diskContent = await this.fs.readFile(fullPath);
+    const diskContent = await this.deps.fs.readFile(fullPath);
     const diskEntries = extractMergeEntries(diskContent, mergeFile.sectionKey);
     return this.compareMergeEntries(mergeFile, diskEntries);
   }
@@ -205,8 +210,8 @@ export class ReportStatus implements StatusQuery {
     const drifted: FileDrift[] = [];
     for (const file of files) {
       const fullPath = join(projectRoot, file.relativePath);
-      const onDisk = (await this.fs.fileExists(fullPath))
-        ? await this.fs.readFileHash(fullPath)
+      const onDisk = (await this.deps.fs.fileExists(fullPath))
+        ? await this.deps.fs.readFileHash(fullPath)
         : null;
       const verdict = driftOf(file.hash.value, onDisk);
       if (verdict === "missing") {
@@ -224,7 +229,7 @@ export class ReportStatus implements StatusQuery {
     projectRoot: string;
     pluginName?: string;
   }): Promise<PluginDriftEntry[]> {
-    const drifts = await this.detectPluginDrift.execute(scope);
+    const drifts = await this.deps.detectPluginDrift.execute(scope);
     return drifts.map((drift) => ({
       toolId: drift.toolId,
       pluginName: drift.pluginName,

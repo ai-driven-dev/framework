@@ -68,11 +68,13 @@ async function existingProject(configPath: string) {
       interactive: false,
     });
   const update = new UpdatePlugin(
-    deps.manifestRepo,
-    distribution,
-    new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
-    registeredTools(),
-    deps.installRuntimeConfigUseCase
+    {
+      manifestRepo: deps.manifestRepo,
+      distributionLoader: distribution,
+      replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
+      pluginRuntime: deps.installRuntimeConfigUseCase,
+    },
+    registeredTools()
   );
   return { deps, setup, setupOptions, install, update };
 }

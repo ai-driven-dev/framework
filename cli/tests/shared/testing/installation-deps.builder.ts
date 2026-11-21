@@ -47,16 +47,11 @@ export async function buildInstallationDeps() {
   );
   const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
-    trackedConfigFiles,
-    fs,
-    assetProvider,
-    runPostInstallPipeline,
+    { trackedConfigFiles, fs, assets: assetProvider, runPostInstallPipeline },
     registeredTools()
   );
   const installIdeConfig = new InstallIdeConfig(
-    trackedConfigFiles,
-    assetProvider,
-    runPostInstallPipeline,
+    { trackedConfigFiles, assets: assetProvider, runPostInstallPipeline },
     registeredTools()
   );
   const resolveSyncConflict = new ResolveSyncConflict(fs);
@@ -88,9 +83,7 @@ type InstallationDeps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 export async function initProject(deps: InstallationDeps, projectRoot: string): Promise<void> {
   const initUseCase = new InitProject(
-    deps.fs,
-    deps.manifestRepo,
-    deps.updateGitignore,
+    { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
     registeredTools()
   );
   await initUseCase.execute({ projectRoot });
@@ -132,10 +125,12 @@ export async function initAndInstall(
 
 export function buildUpdateTool(deps: InstallationDeps): UpdateTool {
   return new UpdateTool(
-    deps.installRuntimeConfigUseCase,
-    deps.installIdeConfig,
-    deps.resolveSyncConflict,
-    deps.manifestRepo,
+    {
+      installRuntimeConfig: deps.installRuntimeConfigUseCase,
+      installIdeConfig: deps.installIdeConfig,
+      resolveSyncConflict: deps.resolveSyncConflict,
+      manifestRepo: deps.manifestRepo,
+    },
     registeredTools()
   );
 }

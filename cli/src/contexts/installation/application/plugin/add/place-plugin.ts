@@ -51,14 +51,19 @@ interface ToolPlacement {
   readonly userScopeDirTaken: boolean;
 }
 
+/** What PlacePlugin is built from. */
+export interface PlacePluginDeps {
+  readonly fs: FileWriter & FileReader;
+  readonly logger: Logger;
+  readonly built: BuiltMaterializationDeps;
+  readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">;
+}
+
 /** Puts a plugin's files in place for each tool and records the plugin in the project manifest. */
 export class PlacePlugin {
   constructor(
-    private readonly fs: FileWriter & FileReader,
-    private readonly logger: Logger,
-    private readonly built: BuiltMaterializationDeps,
-    private readonly tools: ToolCatalog,
-    private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
+    private readonly deps: PlacePluginDeps,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: PlacePluginCommand): Promise<void> {
@@ -67,10 +72,10 @@ export class PlacePlugin {
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
-      await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
+      await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(command, tool);
       if (foreignDir !== undefined) {
-        this.logger.warn(
+        this.deps.logger.warn(
           `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`
         );
       }
@@ -101,14 +106,14 @@ export class PlacePlugin {
       scopeBaseOf(tool, { scope: "user", projectRoot: projectRoot, homedir: nodeHomedir }),
       pluginName
     );
-    const present = await this.fs.listFilesRecursive(dir);
+    const present = await this.deps.fs.listFilesRecursive(dir);
     return present.length > 0 ? dir : undefined;
   }
 
   private async placeForTool(placement: ToolPlacement): Promise<Placement> {
     const { command, tool, userScopeDirTaken } = placement;
     const { dist, source, projectRoot, manifest, marketplace } = command;
-    const adapter = resolvePluginTranslator(tool, { fs: this.fs, built: this.built });
+    const adapter = resolvePluginTranslator(tool, { fs: this.deps.fs, built: this.deps.built });
     if (adapter?.mode === "flat") {
       const result = await adapter.addPlugin({
         dist,
@@ -123,7 +128,7 @@ export class PlacePlugin {
       });
       return { ...result, notices: [] };
     }
-    const output = this.built.translate.execute({ distribution: dist, tool });
+    const output = this.deps.built.translate.execute({ distribution: dist, tool });
     return this.materializeNativePlugin(placement, adapter, {
       ...output,
       files: hashOutputFiles(output.files),
@@ -158,7 +163,7 @@ export class PlacePlugin {
       });
       return { ...result, notices };
     }
-    await writePluginFiles(files, projectRoot, this.fs);
+    await writePluginFiles(files, projectRoot, this.deps.fs);
     manifest.addPlugin(
       tool.toolId,
       InstalledPlugin.fromDistribution({
@@ -175,7 +180,7 @@ export class PlacePlugin {
 
   private emitSkipWarnings(skipped: ReadonlySkipList): void {
     for (const entry of skipped) {
-      this.logger.warn(
+      this.deps.logger.warn(
         `Plugin "${entry.pluginName}": ${entry.component} skipped for ${entry.toolId} — ${entry.reason}`
       );
     }
@@ -183,7 +188,7 @@ export class PlacePlugin {
 
   private emitInstallNotices(notices: ReadonlyNoticeList): void {
     for (const entry of notices) {
-      this.logger.info(`Plugin "${entry.pluginName}" (${entry.toolId}): ${entry.message}`);
+      this.deps.logger.info(`Plugin "${entry.pluginName}" (${entry.toolId}): ${entry.message}`);
     }
   }
 }

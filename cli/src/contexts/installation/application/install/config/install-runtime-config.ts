@@ -34,13 +34,17 @@ export interface InstallRuntimeConfigResult {
   warnings: string[];
 }
 
+/** What InstallRuntimeConfig is built from. */
+export interface InstallRuntimeConfigDeps {
+  readonly trackedConfigFiles: TrackedConfigFiles;
+  readonly fs: FileReader & FileWriter;
+  readonly assets: AssetProvider;
+  readonly runPostInstallPipeline: RunPostInstallPipeline;
+}
+
 export class InstallRuntimeConfig {
   constructor(
-    private readonly trackedConfigFiles: TrackedConfigFiles,
-    private readonly fs: FileReader & FileWriter,
-    private readonly assets: AssetProvider,
-    private readonly runPostInstallPipeline: RunPostInstallPipeline,
-    /** The profiles the install answers from: the tool's own and every installed one. */
+    private readonly deps: InstallRuntimeConfigDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -64,10 +68,10 @@ export class InstallRuntimeConfig {
     const toolId = profile.toolId;
     for (const [fileName, relativePath] of Object.entries(profile.runtimeFiles())) {
       const path = join(projectRoot, relativePath);
-      if (await this.fs.fileExists(path)) continue;
-      const asset = this.assets.loadConfigAsset(toolId, fileName);
+      if (await this.deps.fs.fileExists(path)) continue;
+      const asset = this.deps.assets.loadConfigAsset(toolId, fileName);
       const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      await this.fs.writeFile(path, content);
+      await this.deps.fs.writeFile(path, content);
       manifest.recordFileHash(toolId, relativePath, FileHash.of(content));
     }
   }
@@ -77,20 +81,20 @@ export class InstallRuntimeConfig {
     mergeFiles: InstallationFile[],
     options: InstallRuntimeConfigCommand
   ): Promise<void> {
-    const allTracked = await this.trackedConfigFiles.execute({
+    const allTracked = await this.deps.trackedConfigFiles.execute({
       kind: "write-and-track",
       files: regularFiles,
       projectRoot: options.projectRoot,
       onBeforeWrite: options.onBeforeWriteRegularFile,
     });
-    const mergeEntries = await this.trackedConfigFiles.execute({
+    const mergeEntries = await this.deps.trackedConfigFiles.execute({
       kind: "merge-and-track",
       files: mergeFiles,
       projectRoot: options.projectRoot,
     });
     options.manifest.addTool(options.toolId, options.version, allTracked);
     options.manifest.updateToolMergeFiles(options.toolId, mergeEntries);
-    await this.runPostInstallPipeline.execute({
+    await this.deps.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest: options.manifest,
     });
@@ -108,9 +112,9 @@ export class InstallRuntimeConfig {
         outputPath,
         projectRoot: options.projectRoot,
       });
-      const asset = this.assets.loadConfigAsset(options.toolId, fileName);
+      const asset = this.deps.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      const userOwned = await this.trackedConfigFiles.execute({
+      const userOwned = await this.deps.trackedConfigFiles.execute({
         kind: "is-user-owned",
         relativePath: resolvedPath,
         projectRoot: options.projectRoot,
@@ -139,7 +143,7 @@ export class InstallRuntimeConfig {
     const { mcp, fileName, outputPath, projectRoot } = config;
     if (mcp === null || !mcp.accepts(fileName)) return outputPath;
     return mcp.resolveOutputPath((relativePath) =>
-      this.fs.fileExists(join(projectRoot, relativePath))
+      this.deps.fs.fileExists(join(projectRoot, relativePath))
     );
   }
 
@@ -148,7 +152,7 @@ export class InstallRuntimeConfig {
     projectRoot: string
   ): Promise<string | null> {
     try {
-      return await this.fs.readFile(join(projectRoot, relativePath));
+      return await this.deps.fs.readFile(join(projectRoot, relativePath));
     } catch (error) {
       if (isErrnoException(error) && error.code === "ENOENT") return null;
       throw error;
@@ -170,7 +174,7 @@ export class InstallRuntimeConfig {
   ): InstallationFile | null {
     if (!cap.appliesWith((toolId) => options.manifest.hasTool(toolId))) return null;
     const content = cap.resolveStaticContent((fileName) =>
-      this.assets.loadConfigAsset(options.toolId, fileName)
+      this.deps.assets.loadConfigAsset(options.toolId, fileName)
     );
     if (content === null) return null;
     return cap.fileOf(content);

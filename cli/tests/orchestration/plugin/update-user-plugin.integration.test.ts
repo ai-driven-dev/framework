@@ -81,20 +81,22 @@ function fixture(
   const distribution = options.distribution;
   const update = new UpdateUserPlugin(
     new UpdateUserPluginFiles(
-      repo,
-      new PluginMaterializer(
-        fs,
-        new PluginDistributionLoader(
-          new FixturePluginFetcher(),
-          distribution
-            ? { read: async () => distribution }
-            : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
-        ),
-        userScopeFileGuard,
-        fakeBuiltDeps()
-      ),
-      logger,
-      registrationRecordRules,
+      {
+        repo,
+        materializer: new PluginMaterializer({
+          fs,
+          loader: new PluginDistributionLoader(
+            new FixturePluginFetcher(),
+            distribution
+              ? { read: async () => distribution }
+              : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
+          ),
+          guard: userScopeFileGuard,
+          builtDeps: fakeBuiltDeps(),
+        }),
+        logger,
+        records: registrationRecordRules,
+      },
       registeredTools()
     ),
     new RefreshHostPlugin(

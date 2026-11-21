@@ -12,7 +12,10 @@ import { saying } from "../../../shared/testing/saying.builder.js";
 const PROJECT_ROOT = "/test-project";
 
 function initOf(deps: Awaited<ReturnType<typeof buildInstallationDeps>>): InitProject {
-  return new InitProject(deps.fs, deps.manifestRepo, deps.updateGitignore, registeredTools());
+  return new InitProject(
+    { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
+    registeredTools()
+  );
 }
 
 function countingLoads(repo: { load: () => Promise<unknown> }): () => number {

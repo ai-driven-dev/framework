@@ -28,19 +28,22 @@ import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { scopeBaseOf } from "./plugin-target-resolution.js";
 import { writePluginFiles } from "./write-plugin-files.js";
 
+/** What PluginMaterializer is built from. */
+export interface PluginMaterializerDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly loader: PluginDistributionLoader;
+  readonly guard: UserScopeFileGuard;
+  readonly builtDeps: BuiltMaterializationDeps;
+  /** A global install's fetches: it writes nothing in the project. */
+  readonly globalCacheDir?: () => string;
+}
+
 /**
  * Plans and applies the file half of a machine-scope plugin update. The containment rule a
  * write must satisfy arrives with each call, from the scenario that owns it.
  */
 export class PluginMaterializer implements UserPluginMaterialization {
-  constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly loader: PluginDistributionLoader,
-    private readonly guard: UserScopeFileGuard,
-    private readonly builtDeps: BuiltMaterializationDeps,
-    /** A global install's fetches: it writes nothing in the project. */
-    private readonly globalCacheDir?: () => string
-  ) {}
+  constructor(private readonly deps: PluginMaterializerDeps) {}
 
   async update(request: UserPluginUpdateRequest): Promise<InstalledPlugin | null> {
     const plan = await this.planUpdate({ ...request, rebuild: false });
@@ -51,8 +54,8 @@ export class PluginMaterializer implements UserPluginMaterialization {
     request: UserPluginUpdateRequest & { readonly rebuild: boolean }
   ): Promise<PlannedUserPluginFileUpdate | null> {
     const { plugin, tool, projectRoot, logger, rebuild, isWithinUserScope } = request;
-    const cacheDir = this.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const dist = await this.loader.load(plugin.source, cacheDir, { forceRefresh: true });
+    const cacheDir = this.deps.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const dist = await this.deps.loader.load(plugin.source, cacheDir, { forceRefresh: true });
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await this.materializeFiles({
       dist,
@@ -60,9 +63,13 @@ export class PluginMaterializer implements UserPluginMaterialization {
       plugin,
       projectRoot,
     });
-    const home = this.builtDeps.homedir();
-    const present = await this.guard.withoutMissing({ fs: this.fs, home }, plugin, tool);
-    const oldSafe = await this.guard.safeToDelete({ fs: this.fs, logger, home }, present, tool);
+    const home = this.deps.builtDeps.homedir();
+    const present = await this.deps.guard.withoutMissing({ fs: this.deps.fs, home }, plugin, tool);
+    const oldSafe = await this.deps.guard.safeToDelete(
+      { fs: this.deps.fs, logger, home },
+      present,
+      tool
+    );
     if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${tool.toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
@@ -93,9 +100,13 @@ export class PluginMaterializer implements UserPluginMaterialization {
     request: Pick<UserPluginUpdateRequest, "logger" | "isWithinUserScope">
   ): Promise<InstalledPlugin> {
     const { home } = plan;
-    const present = await this.guard.withoutMissing({ fs: this.fs, home }, plan.plugin, plan.tool);
-    const oldSafe = await this.guard.safeToDelete(
-      { fs: this.fs, logger: request.logger, home },
+    const present = await this.deps.guard.withoutMissing(
+      { fs: this.deps.fs, home },
+      plan.plugin,
+      plan.tool
+    );
+    const oldSafe = await this.deps.guard.safeToDelete(
+      { fs: this.deps.fs, logger: request.logger, home },
       present,
       plan.tool
     );
@@ -111,12 +122,12 @@ export class PluginMaterializer implements UserPluginMaterialization {
       home: plan.home,
       isWithinUserScope: request.isWithinUserScope,
     });
-    await writePluginFiles([...plan.files], plan.baseDir, this.fs);
+    await writePluginFiles([...plan.files], plan.baseDir, this.deps.fs);
     const newPaths = new Set(plan.files.map((file) => file.relativePath));
     await deleteOldFiles(
       new Map([...plan.oldSafe].filter(([path]) => !newPaths.has(path))),
       plan.baseDir,
-      this.fs
+      this.deps.fs
     );
     return plan.next;
   }
@@ -133,7 +144,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
     const { plugin, tool, files, home, isWithinUserScope } = write;
     if (tool.plugins()?.globalFiles() != null) {
       await assertGlobalFilesWritable({
-        fs: this.fs,
+        fs: this.deps.fs,
         tool,
         plugin,
         pluginName: plugin.name,
@@ -147,9 +158,9 @@ export class PluginMaterializer implements UserPluginMaterialization {
     // A first install owns no file yet, and a restore may have lost the directory: it is created
     // so the containment proof has a real path to resolve. The name is one safe path segment.
     if (PLUGIN_NAME_REGEX.test(plugin.name)) {
-      await this.fs.createDirectory(join(baseDir, plugin.name));
+      await this.deps.fs.createDirectory(join(baseDir, plugin.name));
     }
-    await this.guard.assertWriteBoundary({ fs: this.fs, home }, tool, {
+    await this.deps.guard.assertWriteBoundary({ fs: this.deps.fs, home }, tool, {
       pluginName: plugin.name,
       files: [...files],
     });
@@ -166,7 +177,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
     for (const file of files) {
       if (plugin.files.has(file.relativePath)) continue;
       const target = join(baseDir, file.relativePath);
-      if (!(await this.fs.fileExists(target))) continue;
+      if (!(await this.deps.fs.fileExists(target))) continue;
       throw new Error(
         `${toolId}: '${plugin.name}' has untracked existing file '${file.relativePath}'; update refused without overwriting user content or changing its machine claim.`
       );
@@ -183,24 +194,24 @@ export class PluginMaterializer implements UserPluginMaterialization {
     const marketplace =
       plugin.marketplace === undefined
         ? undefined
-        : (await this.builtDeps.marketplaceRegistry.list(projectRoot))?.find(
+        : (await this.deps.builtDeps.marketplaceRegistry.list(projectRoot))?.find(
             (entry) => entry.name === plugin.marketplace
           );
     if (marketplace !== undefined) {
-      const { builtDir } = await this.builtDeps.ensureBuilt.execute({
+      const { builtDir } = await this.deps.builtDeps.ensureBuilt.execute({
         projectRoot,
         marketplace,
         target: tool.toolId,
         mode: tool.frameworkBuildMode(),
       });
       if (tool.plugins()?.globalFiles() != null) {
-        const files = await readGlobalPluginFiles(this.fs, { builtDir, tool, dist });
+        const files = await readGlobalPluginFiles(this.deps.fs, { builtDir, tool, dist });
         return { files, componentPaths: new Map() };
       }
-      const built = await readBuiltUserPluginFiles(this.fs, {
+      const built = await readBuiltUserPluginFiles(this.deps.fs, {
         builtDir,
         name: plugin.name,
-        platform: this.builtDeps.platform,
+        platform: this.deps.builtDeps.platform,
       });
       const files =
         tool.plugins()?.deliversHooksToProject() === true
@@ -216,7 +227,10 @@ export class PluginMaterializer implements UserPluginMaterialization {
     }
     const forGlobalFiles =
       tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
-    const translated = this.builtDeps.translate.execute({ distribution: forGlobalFiles, tool });
+    const translated = this.deps.builtDeps.translate.execute({
+      distribution: forGlobalFiles,
+      tool,
+    });
     return {
       files: hashOutputFiles(translated.files),
       componentPaths: translated.componentPaths,

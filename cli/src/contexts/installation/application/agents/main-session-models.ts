@@ -31,18 +31,21 @@ interface FileChange extends MainSessionChange {
   readonly content: string | null;
 }
 
+/** What MainSessionModels is built from. */
+export interface MainSessionModelsDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly store: AgentModelStore;
+  readonly settings: MainSessionSettings;
+  readonly mainSessionLocator: Pick<MainSessionLocator, "locate">;
+}
+
 /**
  * Points each tool's main session at its provider's main-tier model in the tool's own user
  * settings, machine-wide like the provider and never a file a project tracks, recording what that
  * replaced so unsetting restores it.
  */
 export class MainSessionModels {
-  constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly store: AgentModelStore,
-    private readonly settings: MainSessionSettings,
-    private readonly mainSessionLocator: Pick<MainSessionLocator, "locate">
-  ) {}
+  constructor(private readonly deps: MainSessionModelsDeps) {}
 
   /** Points each host's main session at its chosen provider, or restores what it replaced once
    * none is chosen. A settings file it cannot safely rewrite is skipped, never half-written.
@@ -52,7 +55,7 @@ export class MainSessionModels {
     chosen,
     dryRun = false,
   }: MainSessionModelsRequest): Promise<MainSessionOutcome> {
-    const mainModels = await this.store.loadMainModels();
+    const mainModels = await this.deps.store.loadMainModels();
     const changes: FileChange[] = [];
     const skipped: MainSessionSkip[] = [];
     for (const host of hosts) {
@@ -64,10 +67,10 @@ export class MainSessionModels {
     if (dryRun) return outcome;
     // The record goes first: a run stopped between two settings files still knows what each
     // held before, so unsetting restores it instead of taking aidd's value for the person's.
-    await this.store.saveMainModels(mainModels);
+    await this.deps.store.saveMainModels(mainModels);
     for (const { path, content } of changes) {
-      if (content === null) await this.fs.deleteFile(path);
-      else await this.fs.writeFile(path, content);
+      if (content === null) await this.deps.fs.deleteFile(path);
+      else await this.deps.fs.writeFile(path, content);
     }
     return outcome;
   }
@@ -78,7 +81,7 @@ export class MainSessionModels {
     mainModels: MainModels
   ): Promise<{ changes: FileChange[]; skipped: MainSessionSkip[] }> {
     const record = mainModels[host];
-    const { models, path: current } = await this.mainSessionLocator.locate(host);
+    const { models, path: current } = await this.deps.mainSessionLocator.locate(host);
     const changes: FileChange[] = [];
     // Restored where it was written, once unset or once the host reads another file.
     if (record !== undefined && (provider === undefined || record.path !== current)) {
@@ -90,7 +93,7 @@ export class MainSessionModels {
       return { changes, skipped: [] };
     }
     try {
-      const plan = this.settings.planInstall({
+      const plan = this.deps.settings.planInstall({
         path: current,
         content: await this.readIfAny(current),
         values: models.mainSettingsValues(provider),
@@ -112,7 +115,7 @@ export class MainSessionModels {
   ): Promise<{ change?: FileChange; skip?: MainSessionSkip }> {
     try {
       const content = await this.readIfAny(record.path);
-      const next = this.settings.planRemoval(content, record);
+      const next = this.deps.settings.planRemoval(content, record);
       delete mainModels[host];
       return next === content ? {} : { change: { host, path: record.path, content: next } };
     } catch (error) {
@@ -121,6 +124,6 @@ export class MainSessionModels {
   }
 
   private async readIfAny(path: string): Promise<string | null> {
-    return (await this.fs.fileExists(path)) ? this.fs.readFile(path) : null;
+    return (await this.deps.fs.fileExists(path)) ? this.deps.fs.readFile(path) : null;
   }
 }

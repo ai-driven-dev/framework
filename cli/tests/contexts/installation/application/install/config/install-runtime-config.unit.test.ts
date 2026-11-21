@@ -21,10 +21,12 @@ function buildUseCase(
   assets: AssetProvider = deps.assetProvider
 ) {
   return new InstallRuntimeConfig(
-    new TrackedConfigFiles(deps.fs, deps.logger),
-    deps.fs,
-    assets,
-    deps.runPostInstallPipeline,
+    {
+      trackedConfigFiles: new TrackedConfigFiles(deps.fs, deps.logger),
+      fs: deps.fs,
+      assets,
+      runPostInstallPipeline: deps.runPostInstallPipeline,
+    },
     registeredTools()
   );
 }

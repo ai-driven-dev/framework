@@ -41,7 +41,15 @@ function fixture(
     new Map([[NAME, new Map((options.proven ?? ["a.md", "b.md"]).map((f) => [f, "h"]))]])
   );
   const machine = new FakeMachineStatePurge(["1.0.0"]);
-  const purge = new PurgeUserScopeFiles(repo, machine, () => HOME, files, registeredTools());
+  const purge = new PurgeUserScopeFiles(
+    {
+      userManifestRepo: repo,
+      purgeMachineState: machine,
+      homeDir: () => HOME,
+      userScopePluginFiles: files,
+    },
+    registeredTools()
+  );
   return { repo, files, machine, purge };
 }
 

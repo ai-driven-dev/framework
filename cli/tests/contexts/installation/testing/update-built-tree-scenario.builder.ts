@@ -59,21 +59,23 @@ export function makeUpdateUseCase(
 ): UpdateUserPlugin {
   return new UpdateUserPlugin(
     new UpdateUserPluginFiles(
-      deps.userManifestRepo,
-      new PluginMaterializer(
-        deps.fs,
-        new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-        userScopeFileGuard,
-        {
-          ensureBuilt,
-          marketplaceRegistry: registry,
-          platform: process.platform,
-          homedir: () => HOME,
-          translate: translateDistribution,
-        }
-      ),
-      deps.logger,
-      deps.registrationRecordRules,
+      {
+        repo: deps.userManifestRepo,
+        materializer: new PluginMaterializer({
+          fs: deps.fs,
+          loader: new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
+          guard: userScopeFileGuard,
+          builtDeps: {
+            ensureBuilt,
+            marketplaceRegistry: registry,
+            platform: process.platform,
+            homedir: () => HOME,
+            translate: translateDistribution,
+          },
+        }),
+        logger: deps.logger,
+        records: deps.registrationRecordRules,
+      },
       registeredTools()
     ),
     nativeHost,

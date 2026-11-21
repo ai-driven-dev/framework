@@ -42,7 +42,10 @@ function setup(options: { manifest?: Manifest | null; refuse?: Error } = {}) {
     },
   };
   const { rules, withoutRef } = spiedRecordRules();
-  const useCase = new RemovePluginsFromMarketplace(repo, cleanup, rules, registeredTools());
+  const useCase = new RemovePluginsFromMarketplace(
+    { manifestRepo: repo, cleanup, records: rules },
+    registeredTools()
+  );
   return { useCase, repo, calls, withoutRef };
 }
 

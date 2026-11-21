@@ -25,9 +25,14 @@ async function placeForClaude() {
   const built = { ...fakeBuildSources(), marketplaceRegistry: deps.marketplaceRegistry };
   const platform = { homedir: () => "/home/u", platform: process.platform };
   const added = await new ResolveAddedPluginSource(
-    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    deps.fs,
-    { ...built, ...platform },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        deps.pluginDistributionReader
+      ),
+      fs: deps.fs,
+      built: { ...built, ...platform },
+    },
     registeredTools()
   ).execute({
     source: SOURCE,
@@ -40,11 +45,19 @@ async function placeForClaude() {
   if (manifest === null) throw new Error("the project manifest was not initialised");
   const logger = new CapturingLogger();
   const refreshed: string[] = [];
-  await new PlacePlugin(deps.fs, logger, { ...built, ...platform }, registeredTools(), {
-    ensurePluginRuntimeFiles: async (tool) => {
-      refreshed.push(tool.toolId);
+  await new PlacePlugin(
+    {
+      fs: deps.fs,
+      logger,
+      built: { ...built, ...platform },
+      pluginRuntime: {
+        ensurePluginRuntimeFiles: async (tool) => {
+          refreshed.push(tool.toolId);
+        },
+      },
     },
-  }).execute({
+    registeredTools()
+  ).execute({
     dist: added.distribution,
     toolIds: [TOOL.claude],
     source: SOURCE,

@@ -82,9 +82,11 @@ function makeRestoreAll(
   prompter: OverwritePrompter | ScriptedPrompter = new OverwritePrompter()
 ): RestoreAll {
   const statusUseCase = new ReportStatus(
-    deps.fs,
-    deps.manifestRepo,
-    new DetectPluginDrift(deps.fs, registeredTools()),
+    {
+      fs: deps.fs,
+      manifestRepo: deps.manifestRepo,
+      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+    },
     registeredTools()
   );
   const restoreUseCase = restoreOf({
@@ -377,9 +379,11 @@ describe("RestoreAll — consent to overwrite", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
-      deps.fs,
-      deps.manifestRepo,
-      new DetectPluginDrift(deps.fs, registeredTools()),
+      {
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      },
       registeredTools()
     );
     const restoreUseCase = restoreOf({
@@ -417,9 +421,11 @@ describe("RestoreAll — native-only tools", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
-      deps.fs,
-      deps.manifestRepo,
-      new DetectPluginDrift(deps.fs, registeredTools()),
+      {
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      },
       registeredTools()
     );
     const restoreUseCase = restoreOf({
@@ -466,9 +472,11 @@ function restoreAllDelegatingTo(
   delegate: (options: RestoreCommand) => Promise<RestoreOutcome>
 ): RestoreAll {
   const statusUseCase = new ReportStatus(
-    deps.fs,
-    deps.manifestRepo,
-    new DetectPluginDrift(deps.fs, registeredTools()),
+    {
+      fs: deps.fs,
+      manifestRepo: deps.manifestRepo,
+      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+    },
     registeredTools()
   );
   const restoreUseCase = restoreOf({

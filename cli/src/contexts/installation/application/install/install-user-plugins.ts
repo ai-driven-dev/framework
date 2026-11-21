@@ -17,6 +17,13 @@ export interface InstallUserPluginsCommand {
   readonly plugins: readonly UserPluginChoice[];
 }
 
+/** What InstallUserPlugins is built from. */
+export interface InstallUserPluginsDeps {
+  readonly repo: ManifestRepository;
+  readonly materializer: BoundPluginMaterializer;
+  readonly logger: Logger;
+}
+
 /**
  * Copies each chosen plugin's files into the tool's user configuration directory (OpenCode's and
  * Kilo's skills and agents, Codex's agents) or user plugins directory (Cursor), recording them in
@@ -31,14 +38,12 @@ export interface InstallUserPluginsCommand {
  */
 export class InstallUserPlugins {
   constructor(
-    private readonly repo: ManifestRepository,
-    private readonly materializer: BoundPluginMaterializer,
-    private readonly logger: Logger,
+    private readonly deps: InstallUserPluginsDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: InstallUserPluginsCommand): Promise<void> {
-    const manifest = await this.repo.load();
+    const manifest = await this.deps.repo.load();
     if (manifest === null) {
       throw new Error("No machine manifest: cannot record the user-scope plugins it installs.");
     }
@@ -47,9 +52,9 @@ export class InstallUserPlugins {
       plans.push(...(await this.planTool(toolId, manifest, command)));
     }
     for (const plan of plans) {
-      const next = await this.materializer.applyUpdate(plan, this.logger);
+      const next = await this.deps.materializer.applyUpdate(plan, this.deps.logger);
       manifest.withPlugin(plan.tool.toolId, next);
-      await this.repo.save(manifest);
+      await this.deps.repo.save(manifest);
     }
   }
 
@@ -63,11 +68,11 @@ export class InstallUserPlugins {
     const plans: PlannedUserPluginFileUpdate[] = [];
     for (const choice of command.plugins) {
       const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === choice.entry.name);
-      const plan = await this.materializer.planUpdate({
+      const plan = await this.deps.materializer.planUpdate({
         plugin: this.resolvedPlugin(choice, owned),
         tool,
         projectRoot: command.projectRoot,
-        logger: this.logger,
+        logger: this.deps.logger,
         rebuild: true,
       });
       if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;

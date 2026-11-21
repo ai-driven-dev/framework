@@ -69,12 +69,12 @@ export function wireAgentModels({
 }) {
   const { fs, manifestRepo, userManifestRepo, environment } = base;
   const { agentModelStore } = inst;
-  const mainSessions = new MainSessionModels(
+  const mainSessions = new MainSessionModels({
     fs,
-    agentModelStore,
-    jsoncMainSessionSettings,
-    new MainSessionLocator(fs, homedir, environment, base.tools)
-  );
+    store: agentModelStore,
+    settings: jsoncMainSessionSettings,
+    mainSessionLocator: new MainSessionLocator({ fs, homedir, environment }, base.tools),
+  });
   const refresh = new RefreshAgentPlugins(
     new AgentPluginHosts(manifestRepo, userManifestRepo),
     p.pluginUpdateUseCase,
@@ -117,7 +117,7 @@ export function wireSetup({
   const runSetup = new RunSetup(
     setupStepsOf(base, m, g),
     setupQuestionsOf(choosePlugins, chooseTools),
-    new InitProject(fs, manifestRepo, inst.updateGitignore, base.tools)
+    new InitProject({ fs, manifestRepo, updateGitignore: inst.updateGitignore }, base.tools)
   );
   return { choosePlugins, chooseTools, runSetup };
 }

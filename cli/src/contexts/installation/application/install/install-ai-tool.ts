@@ -66,19 +66,22 @@ export interface MarketplacePluginInstaller {
   }): Promise<unknown>;
 }
 
+/** What InstallAiTool is built from. */
+export interface InstallAiToolDeps {
+  readonly installRuntimeConfig: InstallRuntimeConfig;
+  readonly manifestRepo: ManifestRepository;
+  readonly pluginInstallFromMarketplace: MarketplacePluginInstaller;
+  readonly activatePropagated: ActivatePropagatedPlugins;
+  readonly logger: Logger;
+}
+
 export class InstallAiTool {
-  constructor(
-    private readonly installRuntimeConfig: InstallRuntimeConfig,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly pluginInstallFromMarketplace: MarketplacePluginInstaller,
-    private readonly activatePropagated: ActivatePropagatedPlugins,
-    private readonly logger: Logger
-  ) {}
+  constructor(private readonly deps: InstallAiToolDeps) {}
 
   async execute(options: InstallAiToolOptions): Promise<InstallAiToolResult> {
     const { toolId, projectRoot, force, version, propagatePlugins } = options;
-    const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
-    const runtimeResult = await this.installRuntimeConfig.execute({
+    const manifest = (await this.deps.manifestRepo.load()) ?? Manifest.create();
+    const runtimeResult = await this.deps.installRuntimeConfig.execute({
       toolId,
       projectRoot,
       manifest,
@@ -96,7 +99,7 @@ export class InstallAiTool {
     projectRoot: string,
     runtimeResult: InstallRuntimeConfigResult
   ): Promise<InstallAiToolResult> {
-    const freshManifest = await this.manifestRepo.load();
+    const freshManifest = await this.deps.manifestRepo.load();
     if (freshManifest === null) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
     }
@@ -111,7 +114,9 @@ export class InstallAiTool {
       if (outcome.warning !== undefined) warnings.push(outcome.warning);
     }
     const activation =
-      propagated.length > 0 ? await this.activatePropagated.execute({ projectRoot }) : undefined;
+      propagated.length > 0
+        ? await this.deps.activatePropagated.execute({ projectRoot })
+        : undefined;
     return {
       runtimeResult,
       propagatedPlugins: propagated,
@@ -149,7 +154,7 @@ export class InstallAiTool {
       return { warning: { text: this.warnNoMarketplace(plugin.name, toolId) } };
     }
     try {
-      await this.pluginInstallFromMarketplace.execute({
+      await this.deps.pluginInstallFromMarketplace.execute({
         pluginName: plugin.name,
         version: plugin.version,
         fromMarketplace: plugin.marketplace,
@@ -163,14 +168,14 @@ export class InstallAiTool {
       return { propagated: plugin.name };
     } catch (err) {
       const text = `Plugin '${plugin.name}' could not be propagated to ${toolId}: `;
-      this.logger.warn(text, err);
+      this.deps.logger.warn(text, err);
       return { warning: { text, cause: err } };
     }
   }
 
   private warnNoMarketplace(pluginName: string, toolId: AiToolId): string {
     const msg = `Plugin '${pluginName}' has no marketplace — cannot propagate to ${toolId}. Add it manually.`;
-    this.logger.warn(msg);
+    this.deps.logger.warn(msg);
     return msg;
   }
 }

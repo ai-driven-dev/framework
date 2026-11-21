@@ -38,13 +38,18 @@ export type RecordActivationRequest =
 
 type Of<K extends RecordActivationRequest["kind"]> = Extract<RecordActivationRequest, { kind: K }>;
 
+/** What RecordActivation is built from. */
+export interface RecordActivationDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly records: RegistrationRecordRules;
+  readonly userManifestRepo?: ManifestRepository & Lock;
+}
+
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly records: RegistrationRecordRules,
-    private readonly tools: ToolCatalog,
-    private readonly userManifestRepo?: ManifestRepository & Lock
+    private readonly deps: RecordActivationDeps,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(request: RecordActivationRequest): Promise<boolean> {
@@ -68,7 +73,7 @@ export class RecordActivation {
     for (const [toolId, outcome] of activated) {
       const binary = this.nativeActivationBinary(toolId);
       if (binary === undefined) continue;
-      const registrations = this.records.afterActivation(
+      const registrations = this.deps.records.afterActivation(
         manifest.getNativeRegistrations(toolId),
         outcome,
         { binary, narrowed }
@@ -98,7 +103,9 @@ export class RecordActivation {
         .getToolFiles(toolId)
         .find((file) => file.relativePath === settingsPath);
       if (tracked === undefined) continue;
-      const content = await this.fs.readFile(resolve(projectRoot, settingsPath)).catch(() => null);
+      const content = await this.deps.fs
+        .readFile(resolve(projectRoot, settingsPath))
+        .catch(() => null);
       if (content === null) continue;
       const hash = FileHash.of(content);
       if (driftOf(tracked.hash.value, hash) === "ok") continue;
@@ -117,16 +124,18 @@ export class RecordActivation {
   }
 
   private async recordMachinePluginClaims(request: Of<"machine-claims">): Promise<boolean> {
-    if (this.userManifestRepo === undefined) return false;
-    const machine = (await this.userManifestRepo.load()) ?? Manifest.create();
+    if (this.deps.userManifestRepo === undefined) return false;
+    const machine = (await this.deps.userManifestRepo.load()) ?? Manifest.create();
     const root =
-      request.projectRoot === undefined ? undefined : await this.fs.realpath(request.projectRoot);
+      request.projectRoot === undefined
+        ? undefined
+        : await this.deps.fs.realpath(request.projectRoot);
     let changed = false;
     for (const [toolId, outcome] of request.outcomes) {
       const claims = this.machineClaimsOf(toolId, outcome, request);
       if (claims.refs.length === 0 && claims.marketplaces.length === 0) continue;
       if (!this.machineTracks(machine, request.project, toolId)) continue;
-      const merged = this.records.mergeCatalogueClaims(
+      const merged = this.deps.records.mergeCatalogueClaims(
         machine.getNativeRegistrations(toolId),
         { ...claims, dependent: root },
         this.nativeActivationBinary(toolId) ?? toolId
@@ -134,7 +143,7 @@ export class RecordActivation {
       changed ||= merged.changed;
       if (changed) machine.setNativeRegistrations(toolId, merged.record);
     }
-    if (changed) await this.userManifestRepo.save(machine);
+    if (changed) await this.deps.userManifestRepo.save(machine);
     return changed;
   }
 

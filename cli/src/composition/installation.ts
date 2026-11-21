@@ -134,24 +134,16 @@ function wireConfigInstallation(base: Base, assetProvider: BundledAssetProviderA
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore, tools);
   const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
-    trackedConfigFiles,
-    fs,
-    assetProvider,
-    runPostInstallPipeline,
+    { trackedConfigFiles, fs, assets: assetProvider, runPostInstallPipeline },
     tools
   );
   const installIdeConfig = new InstallIdeConfig(
-    trackedConfigFiles,
-    assetProvider,
-    runPostInstallPipeline,
+    { trackedConfigFiles, assets: assetProvider, runPostInstallPipeline },
     tools
   );
   const propagateAiSettingsToIde = new PropagateAiSettingsToIde(
-    manifestRepo,
-    trackedConfigFiles,
-    runPostInstallPipeline,
-    tools,
-    assetProvider
+    { manifestRepo, trackedConfigFiles, runPostInstallPipeline, assetProvider },
+    tools
   );
   return {
     updateGitignore,
@@ -185,12 +177,12 @@ export function wireInstallation(base: Base) {
     logger: debugOnly(logger),
   });
   const agentModelStore = new AgentModelStoreAdapter(fs, userConfigDir);
-  const cacheBuiltMarketplace = new CacheBuiltMarketplace(
+  const cacheBuiltMarketplace = new CacheBuiltMarketplace({
     fs,
-    frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
-    currentVersionProvider,
-    userConfigDir
-  );
+    builds: frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
+    version: currentVersionProvider,
+    userCacheRoot: userConfigDir,
+  });
   const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplace(
     resolveMarketplaceUseCase,
     cacheBuiltMarketplace

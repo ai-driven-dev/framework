@@ -45,9 +45,11 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
   );
   const fs = new InMemoryFileAdapter(files);
   return new ReportStatus(
-    fs,
-    new InMemoryManifestRepository(manifest, PROJECT_ROOT),
-    new DetectPluginDrift(fs, registeredTools()),
+    {
+      fs,
+      manifestRepo: new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+      detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+    },
     registeredTools()
   );
 }
@@ -290,18 +292,18 @@ describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
     const deps = await buildInstallationDeps();
     await new InitProject(
-      deps.fs,
-      deps.manifestRepo,
-      deps.updateGitignore,
+      { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
       registeredTools()
     ).execute({
       projectRoot: PROJECT_ROOT,
     });
 
     const useCase = new ReportStatus(
-      deps.fs,
-      deps.manifestRepo,
-      new DetectPluginDrift(deps.fs, registeredTools()),
+      {
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      },
       registeredTools()
     );
     const report = await useCase.execute({
@@ -315,9 +317,7 @@ describe("status", () => {
   it("does not call a machine-local file an addition, whatever the profile declares", async () => {
     const deps = await buildInstallationDeps();
     await new InitProject(
-      deps.fs,
-      deps.manifestRepo,
-      deps.updateGitignore,
+      { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
       registeredTools()
     ).execute({
       projectRoot: PROJECT_ROOT,
@@ -343,9 +343,11 @@ describe("status", () => {
     ).toBeGreaterThan(0);
 
     const report = await new ReportStatus(
-      deps.fs,
-      deps.manifestRepo,
-      new DetectPluginDrift(deps.fs, registeredTools()),
+      {
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      },
       registeredTools()
     ).execute({ projectRoot: PROJECT_ROOT });
 

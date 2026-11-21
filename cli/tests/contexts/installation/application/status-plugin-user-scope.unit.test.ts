@@ -76,9 +76,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       };
 
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
       await useCase.execute({ projectRoot: "/proj" });
@@ -91,9 +93,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 
@@ -126,9 +130,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
         .build();
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 
@@ -147,9 +153,11 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 

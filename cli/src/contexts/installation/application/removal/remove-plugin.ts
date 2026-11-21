@@ -24,18 +24,23 @@ export interface PluginRemoveOptions {
   projectRoot: string;
 }
 
+/** What RemovePlugin is built from. */
+export interface RemovePluginDeps {
+  readonly fs: FileWriter & FileReader;
+  readonly projectRepo: ManifestRepository;
+  readonly withdrawal: ProjectPluginWithdrawalSteps;
+  readonly records: RegistrationRecordRules;
+}
+
 export class RemovePlugin {
   constructor(
-    private readonly fs: FileWriter & FileReader,
-    private readonly projectRepo: ManifestRepository,
-    private readonly withdrawal: ProjectPluginWithdrawalSteps,
-    private readonly records: RegistrationRecordRules,
+    private readonly deps: RemovePluginDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: PluginRemoveOptions): Promise<void> {
     const { pluginName, toolIds, projectRoot } = options;
-    const manifest = await requireManifest(this.projectRepo);
+    const manifest = await requireManifest(this.deps.projectRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const named = resolvedToolIds.flatMap((toolId) => {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
@@ -43,9 +48,9 @@ export class RemovePlugin {
     });
     for (const { toolId, plugin } of named) {
       const tool = this.tools.aiProfile(toolId);
-      await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
-      await assertProjectHooksRemovable({ fs: this.fs, plugin, tool, projectRoot });
-      await this.withdrawal.assertSource({
+      await assertProjectMcpEntriesRemovable(this.deps.fs, { plugin, tool, projectRoot });
+      await assertProjectHooksRemovable({ fs: this.deps.fs, plugin, tool, projectRoot });
+      await this.deps.withdrawal.assertSource({
         toolId,
         tool,
         plugin,
@@ -59,7 +64,7 @@ export class RemovePlugin {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of named) {
       const registrations = manifest.getNativeRegistrations(toolId);
-      const ref = this.records.refOf(registrations, pluginName, plugin.marketplace);
+      const ref = this.deps.records.refOf(registrations, pluginName, plugin.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
     const removed = await this.removeFromTools(manifest, {
@@ -68,10 +73,10 @@ export class RemovePlugin {
       projectRoot,
     });
     if (!removed) throw new PluginNotFoundError(pluginName);
-    await this.projectRepo.save(manifest);
-    await this.withdrawal.detachNativeRefs(projectRoot, nativeRefs);
+    await this.deps.projectRepo.save(manifest);
+    await this.deps.withdrawal.detachNativeRefs(projectRoot, nativeRefs);
     for (const toolId of userTools) {
-      await this.withdrawal.detachUserPlugin(toolId, pluginName, projectRoot);
+      await this.deps.withdrawal.detachUserPlugin(toolId, pluginName, projectRoot);
     }
   }
 
@@ -92,7 +97,7 @@ export class RemovePlugin {
         projectRoot: projectRoot,
         homedir: nodeHomedir,
       });
-      const confirmed = await this.withdrawal.withdraw({
+      const confirmed = await this.deps.withdrawal.withdraw({
         tool,
         plugin,
         projectRoot,
@@ -100,14 +105,14 @@ export class RemovePlugin {
       });
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
-      await removeProjectHooks({ fs: this.fs, plugin, tool, projectRoot });
-      const ref = this.records.refOf(registrations, plugin.name, plugin.marketplace);
+      await removeProjectHooks({ fs: this.deps.fs, plugin, tool, projectRoot });
+      const ref = this.deps.records.refOf(registrations, plugin.name, plugin.marketplace);
       if (
         ref !== undefined &&
         registrations !== undefined &&
-        (await this.withdrawal.canDetachRef({ toolId, tool, confirmed, ref }))
+        (await this.deps.withdrawal.canDetachRef({ toolId, tool, confirmed, ref }))
       ) {
-        manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
+        manifest.setNativeRegistrations(toolId, this.deps.records.withoutRef(registrations, ref));
       }
       manifest.removePlugin(toolId, pluginName);
       removed = true;
@@ -124,19 +129,19 @@ export class RemovePlugin {
     const mcpCap = tool.flatPluginMcp();
     if (mcpCap === null) return;
     const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
-      this.fs.fileExists(join(projectRoot, relativePath))
+      this.deps.fs.fileExists(join(projectRoot, relativePath))
     );
     const outputPath = join(projectRoot, outputRelPath);
     const existing = await this.readExistingJson(outputPath);
     if (existing === null) return;
     const updated = mcpCap.removePluginServers(existing, plugin.mcpEntries);
-    await assertProjectPathWithinRoot(this.fs, projectRoot, outputPath);
-    await this.fs.writeFile(outputPath, updated);
+    await assertProjectPathWithinRoot(this.deps.fs, projectRoot, outputPath);
+    await this.deps.fs.writeFile(outputPath, updated);
   }
 
   private async readExistingJson(path: string): Promise<string | null> {
     try {
-      return await this.fs.readFile(path);
+      return await this.deps.fs.readFile(path);
     } catch (err) {
       if (isErrnoException(err) && err.code === "ENOENT") return null;
       throw err;
@@ -149,8 +154,8 @@ export class RemovePlugin {
   ): Promise<void> {
     for (const relativePath of files.keys()) {
       const fullPath = join(baseDir, relativePath);
-      await this.fs.deleteFile(fullPath);
-      await this.fs.deleteEmptyDirectories(dirname(fullPath));
+      await this.deps.fs.deleteFile(fullPath);
+      await this.deps.fs.deleteEmptyDirectories(dirname(fullPath));
     }
   }
 }

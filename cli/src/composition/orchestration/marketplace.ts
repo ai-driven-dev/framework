@@ -94,7 +94,10 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const projectCleanup = new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs));
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(marketplaceRegistry),
-    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup, registrationRecordRules, tools),
+    new RemovePluginsFromMarketplace(
+      { manifestRepo, cleanup: projectCleanup, records: registrationRecordRules },
+      tools
+    ),
     new RemoveMarketplace(marketplaceRegistry),
     detachClaimsOf(projectCleanup),
     prompter
@@ -102,10 +105,12 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const userMarketplaceRemoveUseCase = new RemoveUserMarketplace(
     new FindUserMarketplace(marketplaceRegistry),
     new PurgeMarketplacePlugins(
-      userManifestRepo,
-      nativeHostRegistrationGate,
-      new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-      registrationRecordRules,
+      {
+        repo: userManifestRepo,
+        nativeHost: nativeHostRegistrationGate,
+        userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+        records: registrationRecordRules,
+      },
       tools
     ),
     new RemoveMarketplace(marketplaceRegistry),
@@ -158,16 +163,19 @@ function wireMarketplaceSync(base: Base, inst: Installation) {
     base.userSourceReferences
   );
   const syncSettingsUseCase = new SyncSettings(
-    new LoadSyncContext(
+    new LoadSyncContext({
       manifestRepo,
       marketplaceRegistry,
-      FRAMEWORK_MARKETPLACE_NAME,
-      registerFrameworkMarketplace,
-      userManifestRepo
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      marketplaceRegisterFrameworkUseCase: registerFrameworkMarketplace,
+      userManifestRepo,
+    }),
+    new SyncToolSettingsFiles(
+      { fs, logger, buildMarketplace: buildMarketplaceForTool, records: registrationRecordRules },
+      tools
     ),
-    new SyncToolSettingsFiles(fs, logger, buildMarketplaceForTool, registrationRecordRules, tools),
     nativeActivationOf(base, inst, buildMarketplaceForTool),
-    new RecordActivation(fs, registrationRecordRules, tools, userManifestRepo),
+    new RecordActivation({ fs, records: registrationRecordRules, userManifestRepo }, tools),
     new SharedFrameworkSource(
       fs,
       logger,

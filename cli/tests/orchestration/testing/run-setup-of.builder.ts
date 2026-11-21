@@ -21,6 +21,9 @@ export function runSetupOf(
   return new RunSetup(
     steps,
     questions,
-    new InitProject(fs, manifestRepo, new UpdateGitignore(fs), registeredTools())
+    new InitProject(
+      { fs, manifestRepo, updateGitignore: new UpdateGitignore(fs) },
+      registeredTools()
+    )
   );
 }

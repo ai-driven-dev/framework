@@ -20,7 +20,7 @@ export function projectMarketplaceRemover(
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(registry),
-    new RemovePluginsFromMarketplace(manifestRepo, cleanup, records, registeredTools()),
+    new RemovePluginsFromMarketplace({ manifestRepo, cleanup, records }, registeredTools()),
     new RemoveMarketplace(registry),
     (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),

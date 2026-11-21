@@ -34,18 +34,21 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
   return tool.plugins()?.deliversHooksToProject() ?? false;
 }
 
+/** What ApplyPluginFiles is built from. */
+export interface ApplyPluginFilesDeps {
+  readonly fs: FileReader & FileWriter;
+  readonly pluginFetcher: PluginFetcher;
+  readonly pluginDistributionReader: PluginDistributionReader;
+  readonly builtDeps: BuiltMaterializationDeps;
+}
+
 export class ApplyPluginFiles {
-  constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly builtDeps: BuiltMaterializationDeps
-  ) {}
+  constructor(private readonly deps: ApplyPluginFilesDeps) {}
 
   async execute(options: ApplyPluginFilesCommand): Promise<number> {
     if (options.plugin.scope === "user") return 0;
-    const localPath = await this.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
-    const dist = await this.pluginDistributionReader.read(localPath);
+    const localPath = await this.deps.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
+    const dist = await this.deps.pluginDistributionReader.read(localPath);
     const translator = this.resolveTranslator(options.tool);
     if (
       translator !== null &&
@@ -63,8 +66,8 @@ export class ApplyPluginFiles {
   // transform in either case.
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
     return resolvePluginTranslator(tool, {
-      fs: this.fs,
-      built: this.builtDeps,
+      fs: this.deps.fs,
+      built: this.deps.builtDeps,
     });
   }
 
@@ -81,9 +84,9 @@ export class ApplyPluginFiles {
       const baseDir = scopeBaseOf(tool, {
         scope: plugin.scope,
         projectRoot: projectRoot,
-        homedir: () => this.builtDeps.homedir(),
+        homedir: () => this.deps.builtDeps.homedir(),
       });
-      await deleteOldFiles(plugin.files, baseDir, this.fs);
+      await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
     }
     return materializeViaTranslator(translator, {
       dist,
@@ -101,14 +104,14 @@ export class ApplyPluginFiles {
   ): Promise<number> {
     const { toolId, plugin, tool, projectRoot, manifest, fileFilter } = options;
     const files = hashOutputFiles(
-      this.builtDeps.translate.execute({ distribution: dist, tool }).files
+      this.deps.builtDeps.translate.execute({ distribution: dist, tool }).files
     );
     let restored = 0;
     for (const f of files) {
       if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;
       const outputPath = join(projectRoot, f.relativePath);
-      if (!(await isPluginFileAtDesiredState(this.fs, outputPath, f.hash.value))) {
-        await this.fs.writeFile(outputPath, f.content);
+      if (!(await isPluginFileAtDesiredState(this.deps.fs, outputPath, f.hash.value))) {
+        await this.deps.fs.writeFile(outputPath, f.content);
         restored++;
       }
     }

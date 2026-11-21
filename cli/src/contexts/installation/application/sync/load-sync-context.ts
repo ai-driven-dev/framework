@@ -33,28 +33,33 @@ export interface SyncContext {
   persistedProject(): Promise<Manifest | undefined>;
 }
 
+/** What LoadSyncContext is built from. */
+export interface LoadSyncContextDeps {
+  readonly manifestRepo: ManifestRepository;
+  readonly marketplaceRegistry: InstallationMarketplaceRegistry;
+  /** The name the framework marketplace is registered under. */
+  readonly frameworkMarketplaceName: string;
+  /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
+   * Absent keeps the silent no-op instead of guessing what to register. */
+  readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar;
+  readonly userManifestRepo?: ManifestRepository & Lock;
+}
+
 export class LoadSyncContext {
-  constructor(
-    private readonly manifestRepo: ManifestRepository,
-    private readonly marketplaceRegistry: InstallationMarketplaceRegistry,
-    /** The name the framework marketplace is registered under. */
-    private readonly frameworkMarketplaceName: string,
-    /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
-     * Absent keeps the silent no-op instead of guessing what to register. */
-    private readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar,
-    private readonly userManifestRepo?: ManifestRepository & Lock
-  ) {}
+  constructor(private readonly deps: LoadSyncContextDeps) {}
 
   /** A project-scope run holds the machine manifest's lock; a user-scope one already works on it. */
   runLocked<T>(scope: Scope, work: () => Promise<T>): Promise<T> {
-    if (scope === "project" && this.userManifestRepo !== undefined) {
-      return this.userManifestRepo.withExclusiveAccess(work);
+    if (scope === "project" && this.deps.userManifestRepo !== undefined) {
+      return this.deps.userManifestRepo.withExclusiveAccess(work);
     }
     return work();
   }
 
   private repositoryOf(scope: Scope): ManifestRepository {
-    return scope === "user" ? (this.userManifestRepo ?? this.manifestRepo) : this.manifestRepo;
+    return scope === "user"
+      ? (this.deps.userManifestRepo ?? this.deps.manifestRepo)
+      : this.deps.manifestRepo;
   }
 
   /** `null` when there is no manifest or no marketplace to sync, so the run has nothing to do. */
@@ -63,7 +68,7 @@ export class LoadSyncContext {
     const manifestRepo = this.repositoryOf(request.scope);
     const [manifest, initialMarketplaces] = await Promise.all([
       manifestRepo.load().catch(() => null),
-      this.marketplaceRegistry.list(projectRoot),
+      this.deps.marketplaceRegistry.list(projectRoot),
     ]);
     if (manifest === null) return null;
     const recreatedMarketplaces = request.recreateFrameworkIfMissing
@@ -79,9 +84,9 @@ export class LoadSyncContext {
       marketplaces,
       toolIds: this.selectToolIds(manifest, request.toolIds),
       save: () => manifestRepo.save(manifest),
-      machineManifest: async () => (await this.userManifestRepo?.load()) ?? undefined,
-      machineKept: this.userManifestRepo !== undefined,
-      persistedProject: async () => (await this.manifestRepo.load()) ?? undefined,
+      machineManifest: async () => (await this.deps.userManifestRepo?.load()) ?? undefined,
+      machineKept: this.deps.userManifestRepo !== undefined,
+      persistedProject: async () => (await this.deps.manifestRepo.load()) ?? undefined,
     };
   }
 
@@ -96,14 +101,14 @@ export class LoadSyncContext {
     projectRoot: string,
     marketplaces: readonly DeclaredMarketplace[]
   ): Promise<readonly DeclaredMarketplace[]> {
-    const framework = marketplaces.find((m) => m.name === this.frameworkMarketplaceName);
+    const framework = marketplaces.find((m) => m.name === this.deps.frameworkMarketplaceName);
     if (marketplaces.length > 0 && framework?.scope !== "project") return marketplaces;
-    if (this.marketplaceRegisterFrameworkUseCase === undefined) return marketplaces;
-    await this.marketplaceRegisterFrameworkUseCase.execute({
+    if (this.deps.marketplaceRegisterFrameworkUseCase === undefined) return marketplaces;
+    await this.deps.marketplaceRegisterFrameworkUseCase.execute({
       projectRoot,
       pluginSource: framework?.source,
     });
-    return this.marketplaceRegistry.list(projectRoot);
+    return this.deps.marketplaceRegistry.list(projectRoot);
   }
 
   private selectToolIds(

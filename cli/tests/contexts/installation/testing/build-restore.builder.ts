@@ -32,14 +32,16 @@ interface RestoreToolFilesParts {
 export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFiles {
   const { fs, logger, prompter } = parts;
   return new RestoreToolFiles(
-    new GenerateToolDistribution(
-      new InstallConfig(fs),
-      parts.platform ?? new FakePlatform("linux"),
-      parts.assetProvider
-    ),
-    fs,
-    prompter,
-    logger,
+    {
+      generateToolDistribution: new GenerateToolDistribution(
+        new InstallConfig(fs),
+        parts.platform ?? new FakePlatform("linux"),
+        parts.assetProvider
+      ),
+      fs,
+      prompter,
+      logger,
+    },
     registeredTools()
   );
 }
@@ -55,7 +57,7 @@ interface RestoreAllPluginsParts {
 export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPlugins {
   const { fs, pluginFetcher, pluginDistributionReader, builtDeps } = parts;
   return new RestoreAllPlugins(
-    new ApplyPluginFiles(fs, pluginFetcher, pluginDistributionReader, builtDeps),
+    new ApplyPluginFiles({ fs, pluginFetcher, pluginDistributionReader, builtDeps }),
     registeredTools()
   );
 }
@@ -68,10 +70,12 @@ interface RestoreParts extends RestoreToolFilesParts {
 /** The project restore, its sub-commands built from the same ports. */
 export function restoreOf(parts: RestoreParts): Restore {
   return new Restore(
-    parts.fs,
-    parts.manifestRepo,
-    restoreToolFilesOf(parts),
-    parts.plugins,
+    {
+      fs: parts.fs,
+      manifestRepo: parts.manifestRepo,
+      restoreToolFiles: restoreToolFilesOf(parts),
+      restoreAllPlugins: parts.plugins,
+    },
     registeredTools()
   );
 }

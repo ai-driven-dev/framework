@@ -47,8 +47,11 @@ export function buildAddPlugin(
   return new AddPlugin(
     host.fs,
     manifests,
-    new ResolveAddedPluginSource(sources.distributionLoader, host.fs, built, tools),
-    new PlacePlugin(host.fs, host.logger, built, tools, pluginRuntime),
+    new ResolveAddedPluginSource(
+      { distributionLoader: sources.distributionLoader, fs: host.fs, built },
+      tools
+    ),
+    new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
     tools
   );
 }

@@ -26,12 +26,16 @@ export interface InstallIdeConfigResult {
   warnings: string[];
 }
 
+/** What InstallIdeConfig is built from. */
+export interface InstallIdeConfigDeps {
+  readonly trackedConfigFiles: TrackedConfigFiles;
+  readonly assets: AssetProvider;
+  readonly runPostInstallPipeline: RunPostInstallPipeline;
+}
+
 export class InstallIdeConfig {
   constructor(
-    private readonly trackedConfigFiles: TrackedConfigFiles,
-    private readonly assets: AssetProvider,
-    private readonly runPostInstallPipeline: RunPostInstallPipeline,
-    /** The profiles the install answers from: the tool's own and every installed one. */
+    private readonly deps: InstallIdeConfigDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -41,13 +45,13 @@ export class InstallIdeConfig {
       return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
     }
     const { regularFiles, mergeFiles } = await this.buildSettingsFiles(options);
-    const allTracked = await this.trackedConfigFiles.execute({
+    const allTracked = await this.deps.trackedConfigFiles.execute({
       kind: "write-and-track",
       files: regularFiles,
       projectRoot: options.projectRoot,
       onBeforeWrite: options.onBeforeWriteRegularFile,
     });
-    const mergeEntries = await this.trackedConfigFiles.execute({
+    const mergeEntries = await this.deps.trackedConfigFiles.execute({
       kind: "merge-and-track",
       files: mergeFiles,
       projectRoot: options.projectRoot,
@@ -55,7 +59,7 @@ export class InstallIdeConfig {
     const allFiles = [...regularFiles, ...mergeFiles];
     manifest.addTool(toolId, options.version, allTracked);
     manifest.updateToolMergeFiles(toolId, mergeEntries);
-    await this.runPostInstallPipeline.execute({
+    await this.deps.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest,
     });
@@ -88,7 +92,7 @@ export class InstallIdeConfig {
     options: InstallIdeConfigCommand
   ): Promise<InstallationFile | null> {
     const outputPath = capability.outputPath();
-    const userOwned = await this.trackedConfigFiles.execute({
+    const userOwned = await this.deps.trackedConfigFiles.execute({
       kind: "is-user-owned",
       relativePath: outputPath,
       projectRoot: options.projectRoot,
@@ -96,7 +100,7 @@ export class InstallIdeConfig {
     });
     if (userOwned) return null;
     const fileName = basename(outputPath);
-    const asset = this.assets.loadConfigAsset(options.toolId, fileName);
+    const asset = this.deps.assets.loadConfigAsset(options.toolId, fileName);
     const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
     return capability.fileOf(content);
   }

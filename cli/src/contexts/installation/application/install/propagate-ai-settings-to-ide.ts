@@ -13,20 +13,24 @@ export interface PropagateAiSettingsToIdeCommand {
   projectRoot: string;
 }
 
+/** What PropagateAiSettingsToIde is built from. */
+export interface PropagateAiSettingsToIdeDeps {
+  readonly manifestRepo: ManifestRepository;
+  readonly trackedConfigFiles: TrackedConfigFiles;
+  readonly runPostInstallPipeline: RunPostInstallPipeline;
+  readonly assetProvider?: AssetProvider;
+}
+
 /** Writes the static settings that the installed AI tools require an IDE to hold, once that IDE is
  * installed. */
 export class PropagateAiSettingsToIde {
   constructor(
-    private readonly manifestRepo: ManifestRepository,
-    private readonly trackedConfigFiles: TrackedConfigFiles,
-    private readonly runPostInstallPipeline: RunPostInstallPipeline,
-    /** The AI tools, in the order their settings are written, and what each declares. */
-    private readonly tools: ToolCatalog,
-    private readonly assetProvider?: AssetProvider
+    private readonly deps: PropagateAiSettingsToIdeDeps,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: PropagateAiSettingsToIdeCommand): Promise<void> {
-    const manifest = await this.manifestRepo.load();
+    const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return;
     for (const aiId of this.tools.idsInCanonicalOrder("ai")) {
       if (!manifest.hasTool(aiId)) continue;
@@ -45,13 +49,13 @@ export class PropagateAiSettingsToIde {
       .filter((cap) => cap.requires(ideId));
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
-      const [entry] = await this.trackedConfigFiles.execute({
+      const [entry] = await this.deps.trackedConfigFiles.execute({
         kind: "merge-and-track",
         files: [cap.fileOf(this.resolveCapabilityContent(cap, aiId))],
         projectRoot,
       });
       manifest.updateToolMergeFiles(aiId, this.replacing(existingEntries, entry));
-      await this.runPostInstallPipeline.execute({ projectRoot, manifest });
+      await this.deps.runPostInstallPipeline.execute({ projectRoot, manifest });
     }
   }
 
@@ -60,7 +64,7 @@ export class PropagateAiSettingsToIde {
   }
 
   private resolveCapabilityContent(cap: SettingsFileAnswers, aiId: AiToolId): string {
-    const provider = this.assetProvider;
+    const provider = this.deps.assetProvider;
     return (
       cap.resolveStaticContent(
         provider === undefined ? undefined : (fileName) => provider.loadConfigAsset(aiId, fileName)

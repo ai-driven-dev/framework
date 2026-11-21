@@ -12,12 +12,17 @@ export interface MainSessionLocation {
   readonly path: string | undefined;
 }
 
+/** What MainSessionLocator is built from. */
+export interface MainSessionLocatorDeps {
+  readonly fs: FileReader;
+  readonly homedir: () => string;
+  readonly environment: Environment;
+}
+
 /** Where a host's main session reads its model, and what that host answers about its models. */
 export class MainSessionLocator {
   constructor(
-    private readonly fs: FileReader,
-    private readonly homedir: () => string,
-    private readonly environment: Environment,
+    private readonly deps: MainSessionLocatorDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -37,10 +42,10 @@ export class MainSessionLocator {
   private async settingsPath(profile: AgentModelSection): Promise<string | undefined> {
     const settings = profile.agentModels()?.mainSettings() ?? null;
     if (settings === null) return undefined;
-    const home = this.homedir();
+    const home = this.deps.homedir();
     const own = profile
       .nativeActivation()
-      ?.userSettingsFile(home, (name) => this.environment.get(name));
+      ?.userSettingsFile(home, (name) => this.deps.environment.get(name));
     if (own !== undefined) return own;
     const globalDir = profile.plugins()?.globalFiles()?.dir(home);
     // No registered tool reaches this: each one with main settings declares a user settings file
@@ -48,6 +53,8 @@ export class MainSessionLocator {
     if (globalDir === undefined) return undefined;
     const path = join(globalDir, settings.file);
     const twin = path.replace(/c$/, "");
-    return !(await this.fs.fileExists(path)) && (await this.fs.fileExists(twin)) ? twin : path;
+    return !(await this.deps.fs.fileExists(path)) && (await this.deps.fs.fileExists(twin))
+      ? twin
+      : path;
   }
 }

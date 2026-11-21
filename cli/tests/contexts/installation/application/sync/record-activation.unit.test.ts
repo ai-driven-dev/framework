@@ -27,7 +27,10 @@ function setup(onDisk: string) {
   const manifest = aManifest()
     .withTool(claude, [trackedSettings("{}")])
     .build();
-  const record = new RecordActivation(fs, registrationRecordRules, registeredCatalog());
+  const record = new RecordActivation(
+    { fs, records: registrationRecordRules },
+    registeredCatalog()
+  );
   return { manifest, record };
 }
 

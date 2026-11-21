@@ -77,12 +77,15 @@ function setup(
     }
   );
   const tools = registeredTools();
-  const mainSessions = new MainSessionModels(
+  const mainSessions = new MainSessionModels({
     fs,
     store,
-    jsoncMainSessionSettings,
-    new MainSessionLocator(fs, () => HOME, { get: env }, tools)
-  );
+    settings: jsoncMainSessionSettings,
+    mainSessionLocator: new MainSessionLocator(
+      { fs, homedir: () => HOME, environment: { get: env } },
+      tools
+    ),
+  });
   const useCase = new SetAgentModels(
     new RecordAgentProviders(store, tools),
     new RestoreAgentProviders(store),

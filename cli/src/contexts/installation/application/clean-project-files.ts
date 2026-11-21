@@ -70,6 +70,14 @@ export type CleanProjectFilesCommand =
   | AssertProjectRemovableCommand
   | RemoveProjectFilesCommand;
 
+/** What CleanProjectFiles is built from. */
+export interface CleanProjectFilesDeps {
+  readonly fs: FileReader;
+  readonly manifestRepo: ManifestRepository;
+  readonly asks: ProjectCleanAsks;
+  readonly removeProjectFiles: RemoveProjectFiles;
+}
+
 /**
  * The project-local half of `aidd clean`: reads what this project installed, proves each part
  * removable, then deletes the files, the merged keys and AIDD's own state. Undoing the host's
@@ -77,10 +85,7 @@ export type CleanProjectFilesCommand =
  */
 export class CleanProjectFiles {
   constructor(
-    private readonly fs: FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly asks: ProjectCleanAsks,
-    private readonly removeProjectFiles: RemoveProjectFiles,
+    private readonly deps: CleanProjectFilesDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -97,14 +102,14 @@ export class CleanProjectFiles {
       case "assert-removable":
         return this.assertRemovable(command.projectRoot, command.force);
       case "remove":
-        return this.removeProjectFiles.remove(command.projectRoot, command.force);
+        return this.deps.removeProjectFiles.remove(command.projectRoot, command.force);
     }
   }
 
   private async plan(): Promise<ProjectCleanPlan | null> {
-    const manifest = await this.manifestRepo.load();
+    const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return null;
-    const home = this.asks.homeDir();
+    const home = this.deps.asks.homeDir();
     const toolFiles = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
       fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
@@ -120,14 +125,14 @@ export class CleanProjectFiles {
   }
 
   private async assertRemovable(projectRoot: string, force: boolean): Promise<void> {
-    const manifest = await this.manifestRepo.load();
+    const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return;
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         const tool = this.tools.aiProfile(toolId);
         await assertProjectHooksRemovable({
-          fs: this.fs,
+          fs: this.deps.fs,
           plugin,
           tool,
           projectRoot,
@@ -135,7 +140,7 @@ export class CleanProjectFiles {
             overwriteEdited: force,
           },
         });
-        await this.asks.assertMcpRemovable(plugin, tool, projectRoot);
+        await this.deps.asks.assertMcpRemovable(plugin, tool, projectRoot);
       }
     }
   }
@@ -144,7 +149,7 @@ export class CleanProjectFiles {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of manifest.getInstalledToolIds()) {
       const recorded = manifest.getNativeRegistrations(toolId);
-      const refs = this.asks.records.pluginRefsOf(recorded);
+      const refs = this.deps.asks.records.pluginRefsOf(recorded);
       if (refs.length > 0) nativeRefs.set(toolId, refs);
     }
     return nativeRefs;
@@ -169,7 +174,7 @@ export class CleanProjectFiles {
       const tool = this.tools.aiProfile(toolId);
       const refScopes = new Map<string, Scope>();
       for (const plugin of manifest.getPlugins(toolId)) {
-        const ref = this.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
+        const ref = this.deps.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
         if (ref !== undefined) refScopes.set(ref, plugin.scope);
       }
       withdrawals.push({
@@ -193,7 +198,10 @@ export class CleanProjectFiles {
       const cacheRoot = this.tools.isAiTool(toolId)
         ? this.tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home)
         : undefined;
-      preview.push({ toolId, ...this.asks.records.registrationPreview(registrations, cacheRoot) });
+      preview.push({
+        toolId,
+        ...this.deps.asks.records.registrationPreview(registrations, cacheRoot),
+      });
     }
     return preview;
   }

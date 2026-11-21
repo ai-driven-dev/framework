@@ -23,25 +23,27 @@ export interface UserPluginRemoveOptions {
 type FileTargets = ReturnType<RemoveUserPlugin<unknown>["fileTargets"]>;
 type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 
+/** What RemoveUserPlugin is built from. */
+export interface RemoveUserPluginDeps<Proof> {
+  readonly userRepo: ManifestRepository & Lock;
+  readonly withdrawFromHost: Pick<HostWithdrawal<Proof>, "proveClaimedRef" | "uninstallProven">;
+  readonly records: RegistrationRecordRules;
+  readonly userScopePluginFiles: UserScopePluginFileRemoval;
+}
+
 /** Removes a machine-scope plugin, serialised through the machine manifest. */
 export class RemoveUserPlugin<Proof> {
   constructor(
-    private readonly userRepo: ManifestRepository & Lock,
-    private readonly withdrawFromHost: Pick<
-      HostWithdrawal<Proof>,
-      "proveClaimedRef" | "uninstallProven"
-    >,
-    private readonly records: RegistrationRecordRules,
-    private readonly userScopePluginFiles: UserScopePluginFileRemoval,
+    private readonly deps: RemoveUserPluginDeps<Proof>,
     private readonly tools: ToolCatalog
   ) {}
 
   execute(options: UserPluginRemoveOptions): Promise<void> {
-    return this.userRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
+    return this.deps.userRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
   }
 
   private async removeUserPlugin(options: UserPluginRemoveOptions): Promise<void> {
-    const manifest = await requireManifest(this.userRepo);
+    const manifest = await requireManifest(this.deps.userRepo);
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
     const nativeTargets = this.nativeTargets(manifest, toolIds, options);
@@ -49,21 +51,21 @@ export class RemoveUserPlugin<Proof> {
     const safeFiles = await this.proveFiles(targets, options);
     const nativeRemoval = await this.proveNativeRefs(nativeTargets, options);
     for (const target of nativeRemoval) {
-      await this.withdrawFromHost.uninstallProven(target.proven);
+      await this.deps.withdrawFromHost.uninstallProven(target.proven);
       manifest.setNativeRegistrations(
         target.toolId,
-        this.records.withoutClaimedRef(target.registrations, target.claim.ref)
+        this.deps.records.withoutClaimedRef(target.registrations, target.claim.ref)
       );
     }
     for (const { toolId, plugin, files } of safeFiles) {
-      await this.userScopePluginFiles.remove(
+      await this.deps.userScopePluginFiles.remove(
         files,
         this.tools.aiProfile(toolId),
         options.projectRoot
       );
       manifest.removePlugin(toolId, plugin.name);
     }
-    await this.userRepo.save(manifest);
+    await this.deps.userRepo.save(manifest);
   }
 
   private fileTargets(
@@ -88,7 +90,7 @@ export class RemoveUserPlugin<Proof> {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return (registrations.pluginClaims ?? [])
-        .filter((claim) => this.records.refSelectedBy(claim.ref, options.pluginName))
+        .filter((claim) => this.deps.records.refSelectedBy(claim.ref, options.pluginName))
         .map((claim) => ({ toolId, registrations, claim }));
     });
   }
@@ -100,7 +102,7 @@ export class RemoveUserPlugin<Proof> {
   ): void {
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
-    if (!this.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
+    if (!this.deps.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
       throw new Error(
         `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
       );
@@ -122,7 +124,7 @@ export class RemoveUserPlugin<Proof> {
   private proveFiles(targets: FileTargets, options: UserPluginRemoveOptions) {
     return Promise.all(
       targets.map(async ({ toolId, plugin }) => {
-        const files = await this.userScopePluginFiles.proven(
+        const files = await this.deps.userScopePluginFiles.proven(
           plugin,
           this.tools.aiProfile(toolId),
           options.home
@@ -142,7 +144,7 @@ export class RemoveUserPlugin<Proof> {
         toolId,
         registrations,
         claim,
-        proven: await this.withdrawFromHost.proveClaimedRef(
+        proven: await this.deps.withdrawFromHost.proveClaimedRef(
           registrations,
           { tool: toolId, ref: claim.ref },
           options.projectRoot

@@ -57,13 +57,13 @@ function setup(
     registry.seed(PROJECT, { ...userMarketplace(FRAMEWORK), source: { kind: "local", path: "." } });
     return pluginSource;
   });
-  const load = new LoadSyncContext(
-    project,
-    registry,
-    FRAMEWORK,
-    options.register ? { execute: register } : undefined,
-    user
-  );
+  const load = new LoadSyncContext({
+    manifestRepo: project,
+    marketplaceRegistry: registry,
+    frameworkMarketplaceName: FRAMEWORK,
+    marketplaceRegisterFrameworkUseCase: options.register ? { execute: register } : undefined,
+    userManifestRepo: user,
+  });
   return { load, project, user, register, registry };
 }
 

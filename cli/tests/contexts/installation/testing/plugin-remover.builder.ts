@@ -69,13 +69,15 @@ export function pluginRemover(parts: PluginRemoverParts) {
       new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
   });
   return new RemovePlugin(
-    fs,
-    parts.manifestRepo,
-    new ProjectPluginWithdrawal(
-      projectHostWithdrawal(withdrawing({ ...parts, logger }, fs), removalClaims),
-      removalClaims
-    ),
-    parts.records ?? registrationRecordRules,
+    {
+      fs,
+      projectRepo: parts.manifestRepo,
+      withdrawal: new ProjectPluginWithdrawal(
+        projectHostWithdrawal(withdrawing({ ...parts, logger }, fs), removalClaims),
+        removalClaims
+      ),
+      records: parts.records ?? registrationRecordRules,
+    },
     registeredTools()
   );
 }
@@ -88,12 +90,14 @@ export function userPluginRemover(
   const logger = parts.logger ?? new CapturingLogger();
   return underMachineHome(
     new RemoveUserPlugin(
-      parts.userManifestRepo,
-      claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
-      parts.records ?? registrationRecordRules,
-      new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-      ),
+      {
+        userRepo: parts.userManifestRepo,
+        withdrawFromHost: claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
+        records: parts.records ?? registrationRecordRules,
+        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+        ),
+      },
       registeredTools()
     )
   );

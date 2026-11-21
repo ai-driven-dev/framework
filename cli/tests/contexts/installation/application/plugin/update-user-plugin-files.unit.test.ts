@@ -70,10 +70,7 @@ function fixture(
     return refresh;
   };
   const update = new UpdateUserPluginFiles(
-    repo,
-    materializer,
-    logger,
-    registrationRecordRules,
+    { repo, materializer, logger, records: registrationRecordRules },
     registeredTools()
   );
   const run = (command: Partial<UpdateUserPluginFilesCommand> = {}) =>

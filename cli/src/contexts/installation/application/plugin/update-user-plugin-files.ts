@@ -38,23 +38,28 @@ export interface UpdateUserPluginFilesCommand extends UpdatePluginCommand {
 
 type NativeTargets = ReturnType<UpdateUserPluginFiles["nativeTargets"]>;
 
+/** What UpdateUserPluginFiles is built from. */
+export interface UpdateUserPluginFilesDeps {
+  readonly repo: ManifestRepository & Lock;
+  readonly materializer: UserPluginMaterialization;
+  readonly logger: Logger;
+  readonly records: RegistrationRecordRules;
+}
+
 /** Brings the machine-scope plugins, and the native refs aidd owns, to their latest version. */
 export class UpdateUserPluginFiles {
   constructor(
-    private readonly repo: ManifestRepository & Lock,
-    private readonly materializer: UserPluginMaterialization,
-    private readonly logger: Logger,
-    private readonly records: RegistrationRecordRules,
+    private readonly deps: UpdateUserPluginFilesDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: UpdateUserPluginFilesCommand): Promise<string[]> {
     const run = () => this.updateLocked(options);
-    return this.repo.withExclusiveAccess(run);
+    return this.deps.repo.withExclusiveAccess(run);
   }
 
   private async updateLocked(options: UpdateUserPluginFilesCommand): Promise<string[]> {
-    const loaded = await this.repo.load();
+    const loaded = await this.deps.repo.load();
     if (loaded === null)
       throw new Error(
         "No machine manifest: cannot prove AIDD ownership for user-scope plugin update."
@@ -67,11 +72,11 @@ export class UpdateUserPluginFiles {
     // One plan at a time: plans for one tool share its built tree, which the first one builds.
     const filePlans = [];
     for (const { toolId, plugin } of targets) {
-      const plan = await this.materializer.planUpdate({
+      const plan = await this.deps.materializer.planUpdate({
         plugin,
         tool: this.tools.aiProfile(toolId),
         projectRoot: options.projectRoot,
-        logger: this.logger,
+        logger: this.deps.logger,
         rebuild: options.rebuild === true,
         isWithinUserScope: options.isWithinUserScope,
       });
@@ -83,7 +88,7 @@ export class UpdateUserPluginFiles {
       manifest.updatePlugin(toolId, await this.applyFilePlan({ toolId, plugin, plan }, options));
       updated.push(plugin.name);
     }
-    if (updated.length > 0) await this.repo.save(manifest);
+    if (updated.length > 0) await this.deps.repo.save(manifest);
     return updated;
   }
 
@@ -116,7 +121,7 @@ export class UpdateUserPluginFiles {
         .filter(
           (claim) =>
             options.pluginNames === undefined ||
-            options.pluginNames.some((name) => this.records.refSelectedBy(claim.ref, name))
+            options.pluginNames.some((name) => this.deps.records.refSelectedBy(claim.ref, name))
         )
         .map((claim) => ({ toolId, claim, registrations: manifest.getNativeRegistrations(toolId) }))
     );
@@ -134,8 +139,8 @@ export class UpdateUserPluginFiles {
     if (
       pluginNames.some(
         (name) =>
-          !this.records.isQualifiedRef(name) &&
-          selected.native.filter(({ claim }) => this.records.refSelectedBy(claim.ref, name))
+          !this.deps.records.isQualifiedRef(name) &&
+          selected.native.filter(({ claim }) => this.deps.records.refSelectedBy(claim.ref, name))
             .length > 1
       )
     ) {
@@ -164,7 +169,7 @@ export class UpdateUserPluginFiles {
     const updated: string[] = [];
     for (const { toolId, claim, refresh } of refreshes) {
       if (claim.dependents.length > 0)
-        this.logger.warn(
+        this.deps.logger.warn(
           `${toolId}: updating native ref '${claim.ref}' affects ${claim.dependents.join(", ")}; projects must refresh their local integrations afterward.`
         );
       refresh.apply();
@@ -179,12 +184,12 @@ export class UpdateUserPluginFiles {
   ): Promise<InstalledPlugin> {
     const { toolId, plugin, plan } = planned;
     if (plugin.dependents.length > 0)
-      this.logger.warn(
+      this.deps.logger.warn(
         `${toolId}: updating user-scope '${plugin.name}' affects ${plugin.dependents.join(", ")}; each project must refresh its own integration afterward.`
       );
     try {
-      return await this.materializer.applyUpdate(plan, {
-        logger: this.logger,
+      return await this.deps.materializer.applyUpdate(plan, {
+        logger: this.deps.logger,
         isWithinUserScope: options.isWithinUserScope,
       });
     } catch (error) {

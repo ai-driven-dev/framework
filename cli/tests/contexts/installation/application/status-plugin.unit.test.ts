@@ -59,9 +59,11 @@ describe("ReportStatus — plugin drift", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 
@@ -82,9 +84,11 @@ describe("ReportStatus — plugin drift", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 
@@ -101,9 +105,11 @@ describe("ReportStatus — plugin drift", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 
@@ -121,9 +127,11 @@ describe("ReportStatus — plugin drift", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        new DetectPluginDrift(fs, registeredTools()),
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
         registeredTools()
       );
 

@@ -23,18 +23,22 @@ export type UpdateToolResult =
   | { kind: "skipped" }
   | { kind: "failed"; error: unknown };
 
+/** What UpdateTool is built from. */
+export interface UpdateToolDeps {
+  readonly installRuntimeConfig: Pick<InstallRuntimeConfig, "execute">;
+  readonly installIdeConfig: Pick<InstallIdeConfig, "execute">;
+  readonly resolveSyncConflict: Pick<ResolveSyncConflict, "execute">;
+  readonly manifestRepo: ManifestRepository;
+}
+
 export class UpdateTool {
   constructor(
-    private readonly installRuntimeConfig: Pick<InstallRuntimeConfig, "execute">,
-    private readonly installIdeConfig: Pick<InstallIdeConfig, "execute">,
-    private readonly resolveSyncConflict: Pick<ResolveSyncConflict, "execute">,
-    private readonly manifestRepo: ManifestRepository,
-    /** Tells an AI tool from an IDE tool, the two kinds the update installs differently. */
+    private readonly deps: UpdateToolDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: UpdateToolCommand): Promise<UpdateToolResult> {
-    const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
+    const manifest = (await this.deps.manifestRepo.load()) ?? Manifest.create();
     const guard = this.buildFileGuard(manifest, command);
     // @policy report-and-continue: one tool failing must not abort a batch update.
     // Failures come back as a `failed` result, which every caller prints.
@@ -54,7 +58,7 @@ export class UpdateTool {
     return async (relativePath: string) => {
       const diskPath = join(command.projectRoot, relativePath);
       const manifestHash = hashes.get(relativePath);
-      const isModified = await this.resolveSyncConflict.execute({
+      const isModified = await this.deps.resolveSyncConflict.execute({
         diskTargetPath: diskPath,
         targetRelativePath: relativePath,
         targetManifestMap:
@@ -79,8 +83,8 @@ export class UpdateTool {
       onBeforeWriteRegularFile,
     };
     const result = this.tools.isAiTool(toolId)
-      ? await this.installRuntimeConfig.execute({ toolId, ...install })
-      : await this.installIdeConfig.execute({ toolId, ...install });
+      ? await this.deps.installRuntimeConfig.execute({ toolId, ...install })
+      : await this.deps.installIdeConfig.execute({ toolId, ...install });
     if (result.skipped) return { kind: "skipped" };
     return { kind: "updated", toolId, fileCount: result.fileCount };
   }
