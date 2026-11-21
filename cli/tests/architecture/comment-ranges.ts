@@ -47,91 +47,139 @@ function skipQuoted(source: string, from: number): number {
   return at + 1;
 }
 
+/** The offset just past the run of word characters starting at `from`. */
+function skipWord(source: string, from: number): number {
+  let stop = from;
+  while (stop < source.length && isWordChar(source.charAt(stop))) stop++;
+  return stop;
+}
+
+/** Whether a regex body is inside a character class once `char` has been read. */
+function inClassAfter(char: string, inClass: boolean): boolean {
+  if (char === "[") return true;
+  return char === "]" ? false : inClass;
+}
+
+/** The offset just past a regex: its body up to the closing `/`, then its flags. */
 function skipRegex(source: string, from: number): number {
   let at = from + 1;
   let inClass = false;
   while (at < source.length && source[at] !== "\n") {
     const char = source.charAt(at);
-    if (char === "\\") at++;
-    else if (char === "[") inClass = true;
-    else if (char === "]") inClass = false;
-    else if (char === "/" && !inClass) break;
-    at++;
+    if (char === "/" && !inClass) break;
+    inClass = inClassAfter(char, inClass);
+    at += char === "\\" ? 2 : 1;
   }
-  at++;
-  while (at < source.length && isWordChar(source.charAt(at))) at++;
-  return at;
+  return skipWord(source, at + 1);
+}
+
+const isQuote = (char: string): boolean => char === '"' || char === "'";
+
+/** Where a comment starting at `at` ends, or `undefined` when none starts there. */
+function commentEnd(source: string, at: number): number | undefined {
+  if (source[at] !== "/") return undefined;
+  if (source[at + 1] === "/") {
+    const end = source.indexOf("\n", at);
+    return end === -1 ? source.length : end;
+  }
+  if (source[at + 1] === "*") {
+    const close = source.indexOf("*/", at + 2);
+    return close === -1 ? source.length : close + 2;
+  }
+  return undefined;
+}
+
+class CommentScanner {
+  readonly ranges: CommentRange[] = [];
+  // One entry per open `${`: the brace depth at which its template resumes.
+  private readonly templates: number[] = [];
+  private braces = 0;
+  private previous = "";
+  private at = 0;
+
+  constructor(private readonly source: string) {}
+
+  scan(): CommentRange[] {
+    while (this.at < this.source.length) this.step();
+    return this.ranges;
+  }
+
+  private step(): void {
+    const char = this.source.charAt(this.at);
+    if (/\s/.test(char)) {
+      this.at++;
+      return;
+    }
+    const stop = commentEnd(this.source, this.at);
+    if (stop !== undefined) {
+      this.ranges.push({ start: this.at, end: stop });
+      this.at = stop;
+    } else if (isQuote(char)) {
+      this.skipToken(skipQuoted(this.source, this.at));
+    } else if (char === "`") {
+      this.resumeTemplate(this.at + 1);
+    } else if (this.startsRegex(char)) {
+      this.skipToken(skipRegex(this.source, this.at), "/re/");
+    } else if (isWordChar(char)) {
+      this.skipToken(skipWord(this.source, this.at));
+    } else {
+      this.punctuation(char);
+    }
+  }
+
+  private startsRegex(char: string): boolean {
+    return char === "/" && opensRegex(this.previous);
+  }
+
+  /** Moves past the token at the cursor, which becomes the previous token. */
+  private skipToken(stop: number, as = this.source.slice(this.at, stop)): void {
+    this.previous = as;
+    this.at = stop;
+  }
+
+  private resumeTemplate(from: number): void {
+    this.at = this.scanTemplateText(from);
+    if (this.previous !== "{") this.previous = "`";
+  }
+
+  private scanTemplateText(from: number): number {
+    let index = from;
+    while (index < this.source.length) {
+      const char = this.source.charAt(index);
+      if (char === "`") return index + 1;
+      if (char === "$" && this.source[index + 1] === "{") return this.enterExpression(index);
+      index += char === "\\" ? 2 : 1;
+    }
+    return index;
+  }
+
+  private enterExpression(index: number): number {
+    this.templates.push(this.braces);
+    this.braces++;
+    this.previous = "{";
+    return index + 2;
+  }
+
+  private closesTemplateExpression(): boolean {
+    return this.templates.length > 0 && this.templates[this.templates.length - 1] === this.braces;
+  }
+
+  private punctuation(char: string): void {
+    if (char === "{") this.braces++;
+    if (char === "}") {
+      this.braces--;
+      if (this.closesTemplateExpression()) {
+        this.templates.pop();
+        this.resumeTemplate(this.at + 1);
+        return;
+      }
+    }
+    this.previous = char;
+    this.at++;
+  }
 }
 
 /** Every `//` and `/* *\/` comment of `source`, in order, as offsets into it. */
 export function commentRanges(source: string): CommentRange[] {
-  const ranges: CommentRange[] = [];
-  // One entry per open `${`: the brace depth at which its template resumes.
-  const templates: number[] = [];
-  let braces = 0;
-  let previous = "";
-  let at = 0;
-
-  const scanTemplateText = (from: number): number => {
-    let index = from;
-    while (index < source.length) {
-      const char = source.charAt(index);
-      if (char === "\\") index += 2;
-      else if (char === "`") return index + 1;
-      else if (char === "$" && source[index + 1] === "{") {
-        templates.push(braces);
-        braces++;
-        previous = "{";
-        return index + 2;
-      } else index++;
-    }
-    return index;
-  };
-
-  while (at < source.length) {
-    const char = source.charAt(at);
-    const next = source[at + 1];
-    if (/\s/.test(char)) at++;
-    else if (char === "/" && next === "/") {
-      const end = source.indexOf("\n", at);
-      const stop = end === -1 ? source.length : end;
-      ranges.push({ start: at, end: stop });
-      at = stop;
-    } else if (char === "/" && next === "*") {
-      const close = source.indexOf("*/", at + 2);
-      const stop = close === -1 ? source.length : close + 2;
-      ranges.push({ start: at, end: stop });
-      at = stop;
-    } else if (char === '"' || char === "'") {
-      const stop = skipQuoted(source, at);
-      previous = source.slice(at, stop);
-      at = stop;
-    } else if (char === "`") {
-      at = scanTemplateText(at + 1);
-      if (previous !== "{") previous = "`";
-    } else if (char === "/" && opensRegex(previous)) {
-      const stop = skipRegex(source, at);
-      previous = "/re/";
-      at = stop;
-    } else if (isWordChar(char)) {
-      let stop = at;
-      while (stop < source.length && isWordChar(source.charAt(stop))) stop++;
-      previous = source.slice(at, stop);
-      at = stop;
-    } else {
-      if (char === "{") braces++;
-      if (char === "}") {
-        braces--;
-        if (templates.length > 0 && templates[templates.length - 1] === braces) {
-          templates.pop();
-          at = scanTemplateText(at + 1);
-          if (previous !== "{") previous = "`";
-          continue;
-        }
-      }
-      previous = char;
-      at++;
-    }
-  }
-  return ranges;
+  return new CommentScanner(source).scan();
 }

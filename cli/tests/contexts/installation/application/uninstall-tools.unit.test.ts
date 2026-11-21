@@ -225,6 +225,46 @@ describe("UninstallTools — merge files", () => {
   });
 });
 
+async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
+  const project = deps.manifestRepo.getCurrent();
+  if (project === null) throw new Error("fixture missing project");
+  const record = (name: string, scope: Scope) =>
+    InstalledPlugin.fromMetadata({
+      name,
+      version: "1.0.0",
+      source: { kind: "local", path: "/shared" },
+      strict: false,
+      scope,
+    });
+  project.addPlugin(TOOL.cursor, record("shared", "user"));
+  project.addPlugin(TOOL.cursor, record("local-only", "project"));
+  const registration = {
+    binary: "codex",
+    marketplaces: [{ alias: "aidd", hostName: "aidd" }],
+    pluginRefs: ["native@aidd"],
+  };
+  project.setNativeRegistrations(TOOL.codex, registration);
+  const machine = Manifest.create();
+  machine.addTool(TOOL.cursor, "1.0.0", []);
+  for (const name of ["shared", "local-only"])
+    machine.addPlugin(TOOL.cursor, record(name, "user").withDependents([PROJECT_ROOT, "/B"]));
+  machine.addTool(TOOL.codex, "1.0.0", []);
+  machine.setNativeRegistrations(TOOL.codex, {
+    ...registration,
+    pluginClaims: [{ ref: "native@aidd", dependents: [PROJECT_ROOT, "/B"] }],
+  });
+  await deps.userManifestRepo.save(machine);
+}
+
+function userPluginDependents(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
+  const plugins = deps.userManifestRepo.getCurrent()?.getPlugins(TOOL.cursor) ?? [];
+  return plugins.map((plugin) => ({ name: plugin.name, dependents: plugin.dependents }));
+}
+
+function codexClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
+  return deps.userManifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims;
+}
+
 describe("UninstallTools — a project's tools", () => {
   it.each([TOOL.cursor, TOOL.codex] as const)(
     "detaches only the selected %s tool's shared claims after local removal",
@@ -232,34 +272,7 @@ describe("UninstallTools — a project's tools", () => {
       const deps = await buildInstallationDeps();
       await initProject(deps, PROJECT_ROOT);
       for (const toolId of [TOOL.cursor, TOOL.codex]) await installTool(deps, PROJECT_ROOT, toolId);
-      const project = deps.manifestRepo.getCurrent();
-      if (project === null) throw new Error("fixture missing project");
-      const record = (name: string, scope: Scope) =>
-        InstalledPlugin.fromMetadata({
-          name,
-          version: "1.0.0",
-          source: { kind: "local", path: "/shared" },
-          strict: false,
-          scope,
-        });
-      project.addPlugin(TOOL.cursor, record("shared", "user"));
-      project.addPlugin(TOOL.cursor, record("local-only", "project"));
-      const registration = {
-        binary: "codex",
-        marketplaces: [{ alias: "aidd", hostName: "aidd" }],
-        pluginRefs: ["native@aidd"],
-      };
-      project.setNativeRegistrations(TOOL.codex, registration);
-      const machine = Manifest.create();
-      machine.addTool(TOOL.cursor, "1.0.0", []);
-      for (const name of ["shared", "local-only"])
-        machine.addPlugin(TOOL.cursor, record(name, "user").withDependents([PROJECT_ROOT, "/B"]));
-      machine.addTool(TOOL.codex, "1.0.0", []);
-      machine.setNativeRegistrations(TOOL.codex, {
-        ...registration,
-        pluginClaims: [{ ref: "native@aidd", dependents: [PROJECT_ROOT, "/B"] }],
-      });
-      await deps.userManifestRepo.save(machine);
+      await seedSharedClaims(deps);
       const retainedTool = selected === TOOL.cursor ? TOOL.codex : TOOL.cursor;
 
       await uninstaller(
@@ -274,21 +287,11 @@ describe("UninstallTools — a project's tools", () => {
 
       expect(deps.manifestRepo.getCurrent()?.hasTool(selected)).toBe(false);
       expect(deps.manifestRepo.getCurrent()?.hasTool(retainedTool)).toBe(true);
-      expect(
-        deps.userManifestRepo
-          .getCurrent()
-          ?.getPlugins(TOOL.cursor)
-          .map((plugin) => ({
-            name: plugin.name,
-            dependents: plugin.dependents,
-          }))
-      ).toEqual([
+      expect(userPluginDependents(deps)).toEqual([
         { name: "shared", dependents: selected === "cursor" ? ["/B"] : [PROJECT_ROOT, "/B"] },
         { name: "local-only", dependents: [PROJECT_ROOT, "/B"] },
       ]);
-      expect(
-        deps.userManifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims
-      ).toEqual([
+      expect(codexClaims(deps)).toEqual([
         { ref: "native@aidd", dependents: selected === "codex" ? ["/B"] : [PROJECT_ROOT, "/B"] },
       ]);
     }

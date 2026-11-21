@@ -19,6 +19,7 @@ import {
   type ParameterDeclaration,
   type SourceFile,
   SyntaxKind,
+  type TypeReferenceNode,
 } from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.builder.js";
 import { walk, withVirtualProject } from "./ts-project.js";
@@ -82,57 +83,86 @@ function implementsPort(declaration: ClassDeclaration, ports: ReadonlySet<string
   );
 }
 
-function breaksOf(file: string, source: string, root: SourceFile): string[] {
+/** What is wrong with the use case that has an `execute`. */
+function executeBreaks(
+  file: string,
+  classes: readonly ClassDeclaration[],
+  execute: readonly Node[],
+  publicMethods: readonly Node[]
+): string[] {
   const breaks: string[] = [];
-  const classes = root.statements.filter(isClassDeclaration);
-  if (classes.length > 0) {
-    const methods = classes.flatMap((declaration) =>
-      declaration.members.filter(isMethodDeclaration)
-    );
-    const execute = methods.filter((method) => nameOf(method) === "execute");
-    const publicMethods = methods.filter(
-      (method) => !isHidden(method) && !hasModifier(method, SyntaxKind.StaticKeyword)
-    );
-    const ports = portNames(source);
-    if (execute.length > 0) {
-      const expected = pascalCase(file.replace(/^.*\//, "").replace(/\.ts$/, ""));
-      if (classes.length !== 1) breaks.push(`${classes.length} classes, expected one`);
-      if (!classes.some((declaration) => nameOf(declaration) === expected))
-        breaks.push(`no class named ${expected}`);
-      if (execute.some(isHidden)) breaks.push("an execute that is not public");
-      const others = publicMethods.map(nameOf).filter((name) => name !== "execute");
-      if (ONLY_EXECUTE_HOMES.some((home) => file.startsWith(home)) && others.length > 0)
-        breaks.push(`public methods besides execute: ${others.join(", ")}`);
-    } else if (
-      publicMethods.length > 1 &&
-      !classes.some((declaration) => implementsPort(declaration, ports))
-    ) {
-      breaks.push(`${publicMethods.length} public methods and no execute`);
-    }
-    for (const declaration of classes) {
-      const constructors = declaration.members.filter(isConstructorDeclaration);
-      const widest = Math.max(0, ...constructors.map((c) => dependencies(c.parameters)));
-      if (widest > MAX_CONSTRUCTOR_DEPENDENCIES)
-        breaks.push(`${widest} constructor dependencies, at most ${MAX_CONSTRUCTOR_DEPENDENCIES}`);
-    }
+  const expected = pascalCase(file.replace(/^.*\//, "").replace(/\.ts$/, ""));
+  if (classes.length !== 1) breaks.push(`${classes.length} classes, expected one`);
+  if (!classes.some((declaration) => nameOf(declaration) === expected))
+    breaks.push(`no class named ${expected}`);
+  if (execute.some(isHidden)) breaks.push("an execute that is not public");
+  const others = publicMethods.map(nameOf).filter((name) => name !== "execute");
+  if (ONLY_EXECUTE_HOMES.some((home) => file.startsWith(home)) && others.length > 0)
+    breaks.push(`public methods besides execute: ${others.join(", ")}`);
+  return breaks;
+}
+
+/** What is wrong with the public methods of the classes of a file. */
+function methodBreaks(
+  file: string,
+  source: string,
+  classes: readonly ClassDeclaration[]
+): string[] {
+  const methods = classes.flatMap((declaration) => declaration.members.filter(isMethodDeclaration));
+  const execute = methods.filter((method) => nameOf(method) === "execute");
+  const publicMethods = methods.filter(
+    (method) => !isHidden(method) && !hasModifier(method, SyntaxKind.StaticKeyword)
+  );
+  if (execute.length > 0) return executeBreaks(file, classes, execute, publicMethods);
+  const ports = portNames(source);
+  const unported = !classes.some((declaration) => implementsPort(declaration, ports));
+  return publicMethods.length > 1 && unported
+    ? [`${publicMethods.length} public methods and no execute`]
+    : [];
+}
+
+function constructorBreaks(classes: readonly ClassDeclaration[]): string[] {
+  return classes.flatMap((declaration) => {
+    const constructors = declaration.members.filter(isConstructorDeclaration);
+    const widest = Math.max(0, ...constructors.map((c) => dependencies(c.parameters)));
+    return widest > MAX_CONSTRUCTOR_DEPENDENCIES
+      ? [`${widest} constructor dependencies, at most ${MAX_CONSTRUCTOR_DEPENDENCIES}`]
+      : [];
+  });
+}
+
+const asksForCatalog = (node: TypeReferenceNode): boolean => {
+  const name = node.typeName.getText();
+  return name === CATALOG || (name === "Pick" && node.typeArguments?.[0]?.getText() === CATALOG);
+};
+
+/** What the declaration that holds a catalog type reference breaks, when it is not a constructor. */
+function catalogHolderBreaks(node: Node): string[] {
+  for (let at = node.parent; at !== undefined; at = at.parent) {
+    if (isConstructorDeclaration(at)) return [];
+    if (isMethodDeclaration(at)) return ["takes the tool catalog as a method parameter"];
+    if (isPropertySignatureDeclaration(at) || isPropertyDeclaration(at))
+      return ["carries the tool catalog as a property"];
   }
+  return [];
+}
+
+function catalogBreaks(root: SourceFile): string[] {
+  const breaks: string[] = [];
   walk(root, (node) => {
-    if (!isTypeReferenceNode(node)) return;
-    const name = node.typeName.getText();
-    const asked =
-      name === CATALOG || (name === "Pick" && node.typeArguments?.[0]?.getText() === CATALOG);
-    if (!asked) return;
-    let at: Node | undefined = node.parent;
-    while (at !== undefined) {
-      if (isConstructorDeclaration(at)) return;
-      if (isMethodDeclaration(at))
-        return void breaks.push("takes the tool catalog as a method parameter");
-      if (isPropertySignatureDeclaration(at) || isPropertyDeclaration(at))
-        return void breaks.push("carries the tool catalog as a property");
-      at = at.parent;
-    }
+    if (isTypeReferenceNode(node) && asksForCatalog(node))
+      breaks.push(...catalogHolderBreaks(node));
   });
   return breaks;
+}
+
+function breaksOf(file: string, source: string, root: SourceFile): string[] {
+  const classes = root.statements.filter(isClassDeclaration);
+  const inClasses =
+    classes.length > 0
+      ? [...methodBreaks(file, source, classes), ...constructorBreaks(classes)]
+      : [];
+  return [...inClasses, ...catalogBreaks(root)];
 }
 
 /** The use-case files that break the shape, one entry per file. */

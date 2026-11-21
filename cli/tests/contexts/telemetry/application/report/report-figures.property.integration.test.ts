@@ -27,7 +27,6 @@ import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import type { LeftOutEntry } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
 import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
@@ -292,6 +291,43 @@ function figuresOf(envelope: object): string {
   return JSON.stringify(figures, null, 2);
 }
 
+type Held = typeof scenario extends fc.Arbitrary<infer T> ? T : never;
+type Records = ReturnType<typeof recordsOf>;
+
+/** Another history: in batches, in another order, with stores that bring nothing, stored with
+ * the clock in another zone. */
+async function storedInBatches(held: Held, earlier: Records, records: Records, zone: Zone) {
+  const batched = await ledgerWith(held.damaged, earlier);
+  const { batchOf, order, noOps } = held.history;
+  const nth = (n: number) => batchOf[n % batchOf.length] ?? 0;
+  await inZone(zone, async () => {
+    for (const batch of order) {
+      const calls = records.filter((_, n) => nth(n) === batch);
+      await batched.exclusively(() => storeCalls(batched, calls));
+      await batched.leftOut.add(held.leftOut.filter((_, n) => nth(n + 7) === batch));
+      if (batch < noOps) {
+        await batched.exclusively(() => storeCalls(batched, []));
+        await batched.leftOut.add([]);
+      }
+    }
+  });
+  return batched;
+}
+
+/** What the read found is in `run`, and only there. */
+function expectRunHoldsTheFacts(held: Held, envelope: { run: { skipped_ledger_lines: number } }) {
+  const facts = held.runs[2];
+  expect(envelope.run).toEqual({
+    files_read: facts.filesRead,
+    unrecognised_shapes: facts.unrecognised,
+    not_stored: ingestResultOf(facts).notStored,
+    consent_log_damaged: facts.consentLogDamaged,
+    oldest_transcript_at: facts.oldestTranscriptAt,
+    skipped_ledger_lines: envelope.run.skipped_ledger_lines,
+  });
+  expect(Object.keys(envelope).at(-1)).toBe("run");
+}
+
 describe("the figures of a report", () => {
   it("are byte for byte the same whatever history stored the same calls, whatever the read before found, on a second report, and in any zone", async () => {
     await fc.assert(
@@ -300,48 +336,22 @@ describe("the figures of a report", () => {
         const wasHeld = (n: number) => held.heldBefore[n % held.heldBefore.length];
         const earlier = all.filter((_, n) => wasHeld(n));
         const records = all.filter((_, n) => !wasHeld(n));
-        const leftOut: LeftOutEntry[] = held.leftOut;
 
         // One history: every call and left-out entry stored at once, reported in UTC.
         const once = await ledgerWith(held.damaged, earlier);
         await once.exclusively(() => storeCalls(once, records));
-        await once.leftOut.add(leftOut);
+        await once.leftOut.add(held.leftOut);
         const reference = await report(held, once, held.request, held.runs[0], "UTC");
 
-        // Another: in batches, in another order, with stores that bring nothing, stored with
-        // the clock in another zone.
-        const batched = await ledgerWith(held.damaged, earlier);
-        const { batchOf, order, noOps } = held.history;
-        const nth = (n: number) => batchOf[n % batchOf.length] ?? 0;
         const [first, second] = held.zones;
-        await inZone(first, async () => {
-          for (const batch of order) {
-            const calls = records.filter((_, n) => nth(n) === batch);
-            await batched.exclusively(() => storeCalls(batched, calls));
-            await batched.leftOut.add(leftOut.filter((_, n) => nth(n + 7) === batch));
-            if (batch < noOps) {
-              await batched.exclusively(() => storeCalls(batched, []));
-              await batched.leftOut.add([]);
-            }
-          }
-        });
+        const batched = await storedInBatches(held, earlier, records, first);
         const later = await report(held, batched, held.request, held.runs[1], first);
         const again = await report(held, batched, held.request, held.runs[2], second);
 
         expect(later.figures).toBe(reference.figures);
         expect(again.figures).toBe(reference.figures);
         if (!("run" in again.envelope)) return;
-        // What the read found is in `run`, and only there.
-        const facts = held.runs[2];
-        expect(again.envelope.run).toEqual({
-          files_read: facts.filesRead,
-          unrecognised_shapes: facts.unrecognised,
-          not_stored: ingestResultOf(facts).notStored,
-          consent_log_damaged: facts.consentLogDamaged,
-          oldest_transcript_at: facts.oldestTranscriptAt,
-          skipped_ledger_lines: again.envelope.run.skipped_ledger_lines,
-        });
-        expect(Object.keys(again.envelope).at(-1)).toBe("run");
+        expectRunHoldsTheFacts(held, again.envelope);
       }),
       { numRuns: 60 }
     );

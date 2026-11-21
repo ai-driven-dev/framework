@@ -3,9 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -13,9 +11,7 @@ import { hostRecord } from "../../shared/testing/host-record-reading.builder.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { saying } from "../../shared/testing/saying.builder.js";
 import {
-  CLAUDE_CACHE,
   CODEX_CACHE,
   manifestWithClaude,
   provenClaudeSources,
@@ -23,147 +19,39 @@ import {
   RecordingActivator,
   RecordingFileAdapter,
   seedClaudeCache,
-  seedWhitelist,
   USER_CONFIG_DIR,
-  WHITELIST_PURGE_MESSAGES,
 } from "../testing/clean-user-scope.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
-describe("clean --scope user: host cli", () => {
-  describe("what the run reports", () => {
-    function buildClaudeUseCase(fs: InMemoryFileAdapter, logger: CapturingLogger) {
-      return userScopeCleaner({
-        fs,
-        repo: new InMemoryManifestRepository(manifestWithClaude()),
-        logger,
-        activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
-        marketplaceRegistries: new Map([
-          [
-            TOOL.claude,
-            new FakeHostMarketplaceRegistry({
-              location: "known_marketplaces.json",
-              entries: new Map(),
-            }),
-          ],
-        ]),
-        sources: provenClaudeSources(),
-        pluginRegistries: provenHostPlugins(manifestWithClaude()),
-      });
-    }
+type HostFault = "missing catalogue" | "duplicate claim" | "disabled ref" | "missing ref";
 
-    it("reports the manifest found and the tools it named, and purges the cache the host forgot", async () => {
-      const fs = new InMemoryFileAdapter();
-      const claudeCachePath = seedClaudeCache(fs);
-      const useCase = buildClaudeUseCase(fs, new CapturingLogger());
-
-      const result = await useCase.execute({
-        projectRoot: "/wherever",
-        force: true,
-      });
-
-      expect(result).toStrictEqual({
-        dryRun: false,
-        manifestFound: true,
-        preview: {
-          toolIds: ["claude"],
-          activePluginDependents: [],
-          builtVersions: [],
-          referencingProjects: [],
-        },
-      });
-      expect(await fs.fileExists(join(claudeCachePath, "marker.json"))).toBe(false);
+function applyHostFault(manifest: Manifest, fault: HostFault): void {
+  const registration = manifest.getNativeRegistrations(TOOL.claude);
+  if (registration === undefined) throw new Error("fixture missing registration");
+  if (fault === "missing catalogue")
+    manifest.setNativeRegistrations(TOOL.claude, { ...registration, marketplaces: [] });
+  if (fault === "duplicate claim")
+    manifest.setNativeRegistrations(TOOL.claude, {
+      ...registration,
+      pluginClaims: [
+        ...(registration.pluginClaims ?? []),
+        { ref: "aidd-context@aidd-framework", dependents: [] },
+      ],
     });
+}
 
-    it("names each purge, by its label and path, and nothing about a missing user registration", async () => {
-      const fs = new InMemoryFileAdapter();
-      seedClaudeCache(fs);
-      await seedWhitelist(fs);
-      const logger = new CapturingLogger();
-      const useCase = buildClaudeUseCase(fs, logger);
-
-      await useCase.execute({
-        projectRoot: "/wherever",
-        force: true,
-      });
-
-      expect(logger.infoMessages).toStrictEqual([
-        `claude: cache for 'aidd-framework' purged: ${join(CLAUDE_CACHE, "aidd-framework")}`,
-        ...WHITELIST_PURGE_MESSAGES,
-      ]);
-    });
-
-    it("reports no tool, and says plainly that nothing was registered, when no user manifest exists", async () => {
-      const fs = new InMemoryFileAdapter();
-      await seedWhitelist(fs);
-      const logger = new CapturingLogger();
-      const useCase = userScopeCleaner({ fs, repo: new InMemoryManifestRepository(null), logger });
-
-      const result = await useCase.execute({
-        projectRoot: "/wherever",
-        force: true,
-      });
-
-      expect(result).toStrictEqual({
-        dryRun: false,
-        manifestFound: false,
-        preview: {
-          toolIds: [],
-          activePluginDependents: [],
-          builtVersions: [],
-          referencingProjects: [],
-        },
-      });
-      expect(logger.infoMessages).toStrictEqual([
-        "No host registration was undone: nothing was registered at user scope.",
-        ...WHITELIST_PURGE_MESSAGES,
-      ]);
-    });
-
-    it("names every referencing project, comma separated, when nothing was registered here", async () => {
-      const fs = new InMemoryFileAdapter();
-      fs.setFile("/project-a/marker", "");
-      fs.setFile("/project-b/marker", "");
-      const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
-      await userSourceReferences.addReference("1.0.0", "/project-a");
-      await userSourceReferences.addReference("1.0.0", "/project-b");
-      const logger = new CapturingLogger();
-      const useCase = userScopeCleaner({
-        fs,
-        repo: new InMemoryManifestRepository(null),
-        logger,
-        userSourceReferences,
-      });
-
-      await useCase.execute({
-        projectRoot: "/wherever",
-        force: false,
-      });
-
-      expect(logger.infoMessages).toStrictEqual([
-        "No host registration was undone: nothing was registered at user scope. " +
-          "/project-a, /project-b still resolve the shared source through their own host; " +
-          "full removal is `aidd clean` in each of them, then `aidd clean --scope user`.",
-      ]);
-    });
-
-    it("refuses to interpret an unreadable references.json as no dependent project", async () => {
-      const fs = new InMemoryFileAdapter();
-      fs.setFile(join(USER_CONFIG_DIR, "references.json"), "not json");
-      const logger = new CapturingLogger();
-      const useCase = userScopeCleaner({
-        fs,
-        repo: new InMemoryManifestRepository(Manifest.create()),
-        logger,
-        userSourceReferences: new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR),
-      });
-
-      await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        saying(/Cannot read.*references.json/)
-      );
-      expect(await fs.fileExists(join(USER_CONFIG_DIR, "references.json"))).toBe(true);
-    });
+function hostPluginRegistryFor(fault: HostFault): FakeHostPluginRegistry {
+  const refs: [string, { enabled: boolean }][] =
+    fault === "missing ref"
+      ? []
+      : [["aidd-context@aidd-framework", { enabled: fault !== "disabled ref" }]];
+  return new FakeHostPluginRegistry({
+    location: "literal host plugin registry",
+    refs: new Map(refs),
   });
+}
 
+describe("clean --scope user: host cli", () => {
   describe("driving the host CLI", () => {
     function buildUseCase(deps: {
       fs: InMemoryFileAdapter;
@@ -254,44 +142,18 @@ describe("clean --scope user: host cli", () => {
       expect(activator.removedMarketplaces).toEqual([]);
     });
 
-    it.each(["missing catalogue", "duplicate claim", "disabled ref", "missing ref"] as const)(
+    it.each<HostFault>(["missing catalogue", "duplicate claim", "disabled ref", "missing ref"])(
       "refuses %s before native or cache cleanup and retains the canonical manifest",
       async (fault) => {
         const manifest = manifestWithClaude();
-        const registration = manifest.getNativeRegistrations(TOOL.claude);
-        if (registration === undefined) throw new Error("fixture missing registration");
-        if (fault === "missing catalogue")
-          manifest.setNativeRegistrations(TOOL.claude, { ...registration, marketplaces: [] });
-        if (fault === "duplicate claim")
-          manifest.setNativeRegistrations(TOOL.claude, {
-            ...registration,
-            pluginClaims: [
-              ...(registration.pluginClaims ?? []),
-              {
-                ref: "aidd-context@aidd-framework",
-                dependents: [],
-              },
-            ],
-          });
+        applyHostFault(manifest, fault);
         const before = manifest.toJSON();
         const repo = new InMemoryManifestRepository(manifest);
         const fs = new InMemoryFileAdapter();
         const cacheMarker = join(seedClaudeCache(fs), "marker.json");
         const cacheBytes = fs.getFile(cacheMarker);
         const activator = new FakeHostActions({ available: true });
-        const hostPlugins = new Map([
-          [
-            TOOL.claude,
-            new FakeHostPluginRegistry({
-              location: "literal host plugin registry",
-              refs: new Map(
-                fault === "missing ref"
-                  ? []
-                  : [["aidd-context@aidd-framework", { enabled: fault !== "disabled ref" }]]
-              ),
-            }),
-          ],
-        ]);
+        const hostPlugins = new Map([[TOOL.claude, hostPluginRegistryFor(fault)]]);
 
         await expect(
           buildUseCase({

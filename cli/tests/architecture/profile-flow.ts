@@ -45,14 +45,21 @@ const LITERAL_WRAPPERS = new Set([
   SyntaxKind.SpreadElement,
 ]);
 
+const isCallOrNew = (node: Node): boolean =>
+  isCallExpression(node) || node.kind === SyntaxKind.NewExpression;
+
+/** The call `parent` is, when `child` is one of its arguments and not what it calls. */
+function callTakingAsArgument(parent: Node, child: Node): Node | null {
+  const calledOn = "expression" in parent ? parent.expression : undefined;
+  return isCallOrNew(parent) && calledOn !== child ? parent : null;
+}
+
 /** The call or `new` the expression is an argument of, through any literal wrapping it. */
 function enclosingCall(node: Node): Node | null {
   let child = node;
   for (let parent = node.parent; parent; child = parent, parent = parent.parent) {
     if (LITERAL_WRAPPERS.has(parent.kind)) continue;
-    const isCall = isCallExpression(parent) || parent.kind === SyntaxKind.NewExpression;
-    const calledOn = "expression" in parent ? parent.expression : undefined;
-    return isCall && calledOn !== child ? parent : null;
+    return callTakingAsArgument(parent, child);
   }
   return null;
 }
@@ -66,6 +73,59 @@ function declaringFile(project: Project, call: Node, root: string): string | und
   return name?.startsWith(root) ? name.slice(root.length) : undefined;
 }
 
+/** What one read of a project needs to tell a whole-profile flow from any other. */
+interface Reading {
+  project: Project;
+  isWhole: (type: Type | undefined) => boolean;
+  exemptCallees: readonly string[];
+  root: string;
+}
+
+/** The ids of the whole-profile types the profile module declares. */
+function wholeProfileTypeIds(project: Project, declaration: Node, profileModule: string) {
+  const whole = new Set<number>();
+  walk(declaration, (node) => {
+    const declaresWhole =
+      (isInterfaceDeclaration(node) || isTypeAliasDeclaration(node)) &&
+      WHOLE_PROFILE_TYPES.includes(node.name.text);
+    const type = declaresWhole ? project.checker.getTypeAtLocation(node.name) : undefined;
+    if (type) whole.add(type.id);
+  });
+  if (whole.size !== WHOLE_PROFILE_TYPES.length) {
+    throw new Error(`${profileModule} declares ${whole.size} of the whole-profile types`);
+  }
+  return whole;
+}
+
+/** Whether the expression, of the given type, is a whole profile handed to a whole-profile
+ * parameter of a callee that is not exempt. */
+function handsWholeProfileOn(
+  reading: Reading,
+  expression: CallExpression | Identifier,
+  type: Type | undefined
+): boolean {
+  if (!reading.isWhole(type)) return false;
+  const call = enclosingCall(expression);
+  if (call === null) return false;
+  const { checker } = reading.project;
+  const signature = checker.getResolvedSignature(call);
+  if (signature === undefined || signature.target !== undefined) return false;
+  if (!reading.isWhole(checker.getContextualType(expression))) return false;
+  const callee = declaringFile(reading.project, call, reading.root) ?? "";
+  return !reading.exemptCallees.includes(callee);
+}
+
+function fileHandsWholeProfileOn(reading: Reading, source: Node): boolean {
+  const expressions: (CallExpression | Identifier)[] = [];
+  walk(source, (node) => {
+    if (isIdentifier(node) || isCallExpression(node)) expressions.push(node);
+  });
+  const types = reading.project.checker.getTypeAtLocation(expressions);
+  return expressions.some((expression, index) =>
+    handsWholeProfileOn(reading, expression, types[index])
+  );
+}
+
 function flowsIn(
   project: Project,
   profileModule: string,
@@ -73,46 +133,21 @@ function flowsIn(
   exemptCallees: readonly string[],
   at: (path: string) => string
 ): string[] {
-  const root = at("");
-  const { checker, program } = project;
+  const { program } = project;
   const declaration = program.getSourceFile(at(profileModule));
   if (!declaration) throw new Error(`the compiler returned no source for ${profileModule}`);
-  const whole = new Set<number>();
-  walk(declaration, (node) => {
-    if (
-      (isInterfaceDeclaration(node) || isTypeAliasDeclaration(node)) &&
-      WHOLE_PROFILE_TYPES.includes(node.name.text)
-    ) {
-      const type = checker.getTypeAtLocation(node.name);
-      if (type) whole.add(type.id);
-    }
-  });
-  if (whole.size !== WHOLE_PROFILE_TYPES.length) {
-    throw new Error(`${profileModule} declares ${whole.size} of the whole-profile types`);
-  }
-  const isWhole = (type: Type | undefined): boolean => type !== undefined && whole.has(type.id);
-  const hits: string[] = [];
-  for (const file of files) {
+  const whole = wholeProfileTypeIds(project, declaration, profileModule);
+  const reading: Reading = {
+    project,
+    isWhole: (type) => type !== undefined && whole.has(type.id),
+    exemptCallees,
+    root: at(""),
+  };
+  return files.filter((file) => {
     const source = program.getSourceFile(at(file));
     if (!source) throw new Error(`the compiler returned no source for ${file}`);
-    const expressions: (CallExpression | Identifier)[] = [];
-    walk(source, (node) => {
-      if (isIdentifier(node) || isCallExpression(node)) expressions.push(node);
-    });
-    const types = checker.getTypeAtLocation(expressions);
-    for (const [index, expression] of expressions.entries()) {
-      if (!isWhole(types[index])) continue;
-      const call = enclosingCall(expression);
-      if (call === null) continue;
-      const signature = checker.getResolvedSignature(call);
-      if (signature === undefined || signature.target !== undefined) continue;
-      if (!isWhole(checker.getContextualType(expression))) continue;
-      if (exemptCallees.includes(declaringFile(project, call, root) ?? "")) continue;
-      hits.push(file);
-      break;
-    }
-  }
-  return hits;
+    return fileHandsWholeProfileOn(reading, source);
+  });
 }
 
 /**

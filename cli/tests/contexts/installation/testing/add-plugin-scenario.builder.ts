@@ -86,3 +86,21 @@ export function localAdd(toolId: AiToolId, path = PLUGIN_FIXTURE, replace?: bool
 export function pluginNames(deps: Deps, toolId: AiToolId): string[] {
   return (deps.manifestRepo.getCurrent()?.getPlugins(toolId) ?? []).map((p) => p.name).sort();
 }
+
+export async function makeGithubRegistry(projectRoot: string): Promise<FakeMarketplaceRegistry> {
+  const registry = new FakeMarketplaceRegistry();
+  registry.seed(projectRoot, {
+    name: "aidd-framework",
+    source: { kind: "github", repo: "ai-driven-dev/framework" },
+    scope: "project",
+  });
+  return registry;
+}
+
+export const GIT_SUBDIR_SOURCE = {
+  kind: "git-subdir" as const,
+  url: "https://github.com/ai-driven-dev/framework.git",
+  path: "plugins/sample-plugin",
+};
+
+export const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false };

@@ -44,17 +44,30 @@ export class FakeHostActions implements HostActions {
       installedAtScope?: ReadonlyMap<string, Scope>;
     } = {}
   ) {
-    this.available = options.available ?? false;
-    this.failOnPlugins = new Set(options.failOnPlugins ?? []);
-    this.conflictOnAdd = options.conflictOnAdd ?? false;
-    this.throwOnRemove = options.throwOnRemove ?? false;
-    this.pluginsEnabledHere = options.enablesPlugins ?? true;
-    this.state = options.registrationState ?? "unknown";
-    this.failOnUninstall = new Set(options.failOnUninstall ?? []);
-    this.failOnUpdate = new Set(options.failOnUpdate ?? []);
-    this.crashOnAddMarketplace = options.crashOnAddMarketplace ?? false;
-    this.crashOnUninstall = options.crashOnUninstall ?? false;
-    this.installedAtScope = options.installedAtScope ?? new Map();
+    const {
+      available = false,
+      failOnPlugins = [],
+      conflictOnAdd = false,
+      throwOnRemove = false,
+      enablesPlugins = true,
+      registrationState = "unknown",
+      failOnUninstall = [],
+      failOnUpdate = [],
+      crashOnAddMarketplace = false,
+      crashOnUninstall = false,
+      installedAtScope = new Map(),
+    } = options;
+    this.available = available;
+    this.failOnPlugins = new Set(failOnPlugins);
+    this.conflictOnAdd = conflictOnAdd;
+    this.throwOnRemove = throwOnRemove;
+    this.pluginsEnabledHere = enablesPlugins;
+    this.state = registrationState;
+    this.failOnUninstall = new Set(failOnUninstall);
+    this.failOnUpdate = new Set(failOnUpdate);
+    this.crashOnAddMarketplace = crashOnAddMarketplace;
+    this.crashOnUninstall = crashOnUninstall;
+    this.installedAtScope = installedAtScope;
   }
 
   registrationState(): "live" | "dead" | "unknown" {

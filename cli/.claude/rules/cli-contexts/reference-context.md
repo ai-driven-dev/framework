@@ -25,7 +25,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ```
 
 - `contract/` imports no other folder of its context, `domain/` no `application/` or `infrastructure/`, `ports/` what `domain/` must not, `application/` no `infrastructure/`, `infrastructure/` no `shared/infrastructure/`.
-- No folder imports presentation, composition or a context `ALLOWED` does not admit; `biome.json` overrides hold it, generated from the edge table by `pnpm biome:boundaries`, held by `biome-guards-bite.arch.test.ts`.
+- No folder imports presentation, composition or a context `ALLOWED` does not admit; `biome.json` overrides hold it, generated from the edge table by `pnpm biome:boundaries`, held by `biome-boundaries.arch.test.ts`.
 
 ## 3. Command template
 

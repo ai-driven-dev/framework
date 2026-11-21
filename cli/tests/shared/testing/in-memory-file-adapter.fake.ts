@@ -98,14 +98,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
    * neither a file nor a known directory. */
   async realpath(path: string): Promise<string> {
     const key = norm(resolve(path));
-    let bestMatch: { link: string; target: string } | undefined;
-    for (const [link, target] of this.symlinks) {
-      if (key === link || key.startsWith(`${link}/`)) {
-        if (bestMatch === undefined || link.length > bestMatch.link.length) {
-          bestMatch = { link, target };
-        }
-      }
-    }
+    const bestMatch = this.longestSymlinkAbove(key);
     // `posix.normalize`, not `resolve`: a virtual `/project/file` stays drive-free on Windows.
     const resolved =
       bestMatch === undefined
@@ -115,6 +108,13 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
       throw enoent("realpath", norm(path));
     }
     return resolved;
+  }
+
+  private longestSymlinkAbove(key: string): { link: string; target: string } | undefined {
+    const above = [...this.symlinks]
+      .filter(([link]) => key === link || key.startsWith(`${link}/`))
+      .sort(([a], [b]) => b.length - a.length)[0];
+    return above && { link: above[0], target: above[1] };
   }
 
   /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
@@ -130,16 +130,9 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   async deleteDirectory(dirPath: string): Promise<void> {
     const normalizedDir = dirKey(dirPath);
     const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
-    for (const key of [...this.files.keys()]) {
-      if (key.startsWith(prefix) || key === normalizedDir) {
-        this.files.delete(key);
-      }
-    }
-    for (const dir of [...this.directories]) {
-      if (dir.startsWith(prefix) || dir === normalizedDir) {
-        this.directories.delete(dir);
-      }
-    }
+    const inside = (entry: string): boolean => entry.startsWith(prefix) || entry === normalizedDir;
+    for (const key of [...this.files.keys()].filter(inside)) this.files.delete(key);
+    for (const dir of [...this.directories].filter(inside)) this.directories.delete(dir);
   }
 
   async listFilesRecursive(dirPath: string): Promise<string[]> {

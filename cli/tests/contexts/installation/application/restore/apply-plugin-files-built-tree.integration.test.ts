@@ -85,6 +85,25 @@ async function installMarketplacePlugin(
   });
 }
 
+function installedUserPaths(deps: Awaited<ReturnType<typeof buildInstallationDeps>>): string[] {
+  const manifest = deps.userManifestRepo.getCurrent();
+  if (manifest === null) throw new Error("manifest not found");
+  const entry = manifest.getPlugins(TOOL.cursor).find((p) => p.name === "sample-plugin");
+  return [...(entry?.files.keys() ?? [])];
+}
+
+async function loadedProjectManifest(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
+  const manifest = await deps.manifestRepo.load();
+  if (manifest === null) throw new Error("manifest not found");
+  return manifest;
+}
+
+function builtSkillContent(deps: Awaited<ReturnType<typeof buildInstallationDeps>>): string {
+  const content = deps.fs.getFile(BUILT_SKILL);
+  if (content === undefined) throw new Error("built fixture missing");
+  return content;
+}
+
 describe("RestoreAllPlugins — built-tree materialization", () => {
   it("does not re-materialize a shared user plugin during project restore", async () => {
     const deps = await buildInstallationDeps();
@@ -92,21 +111,13 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
 
-    const manifestBefore = deps.userManifestRepo.getCurrent();
-    if (manifestBefore === null) throw new Error("manifest not found");
-    const installedRelPaths = [
-      ...(manifestBefore
-        .getPlugins(TOOL.cursor)
-        .find((p) => p.name === "sample-plugin")
-        ?.files.keys() ?? []),
-    ];
+    const installedRelPaths = installedUserPaths(deps);
     expect(installedRelPaths.length).toBeGreaterThan(0);
     for (const relativePath of installedRelPaths) {
       await deps.fs.deleteFile(join(USER_PLUGINS_DIR, relativePath));
     }
 
-    const manifest = await deps.manifestRepo.load();
-    if (manifest === null) throw new Error("manifest not found");
+    const manifest = await loadedProjectManifest(deps);
     const result = await makeRestoreUseCase(deps, registry).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -132,18 +143,10 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
 
-    const manifest = await deps.manifestRepo.load();
-    if (manifest === null) throw new Error("manifest not found");
-    const installedRelPaths = [
-      ...(deps.userManifestRepo
-        .getCurrent()
-        ?.getPlugins(TOOL.cursor)
-        .find((p) => p.name === "sample-plugin")
-        ?.files.keys() ?? []),
-    ];
+    const manifest = await loadedProjectManifest(deps);
+    const installedRelPaths = installedUserPaths(deps);
     expect(installedRelPaths.length).toBeGreaterThan(0);
-    const builtContent = deps.fs.getFile(BUILT_SKILL);
-    if (builtContent === undefined) throw new Error("built fixture missing");
+    const builtContent = builtSkillContent(deps);
     for (const relativePath of installedRelPaths) {
       await deps.fs.writeFile(join(USER_PLUGINS_DIR, relativePath), builtContent);
     }

@@ -35,20 +35,27 @@ function routeOf(value: unknown): HookEventRoute | undefined {
   return { native: native.filter((name) => typeof name === "string"), relay };
 }
 
+function declaredEvents(descriptor: object): Map<string, HookEventRoute> {
+  const events = new Map<string, HookEventRoute>();
+  const declared: unknown = Reflect.get(descriptor, "events");
+  if (!(declared instanceof Map)) return events;
+  for (const [event, route] of declared) {
+    const parsed = routeOf(route);
+    if (typeof event === "string" && parsed !== undefined) events.set(event, parsed);
+  }
+  return events;
+}
+
+function declaredAdapter(descriptor: object): string | undefined {
+  const runtime: unknown = Reflect.get(descriptor, "runtime");
+  const adapter: unknown = isRecord(runtime) ? Reflect.get(runtime, "adapter") : undefined;
+  return typeof adapter === "string" ? adapter : undefined;
+}
+
 function declaredHooks(subject: FileConformanceSubject): DeclaredHooks | undefined {
   const descriptor = subject.hooks;
   if (!isRecord(descriptor)) return undefined;
-  const events = new Map<string, HookEventRoute>();
-  const declared: unknown = Reflect.get(descriptor, "events");
-  if (declared instanceof Map) {
-    for (const [event, route] of declared) {
-      const parsed = routeOf(route);
-      if (typeof event === "string" && parsed !== undefined) events.set(event, parsed);
-    }
-  }
-  const runtime: unknown = Reflect.get(descriptor, "runtime");
-  const adapter: unknown = isRecord(runtime) ? Reflect.get(runtime, "adapter") : undefined;
-  return { events, adapter: typeof adapter === "string" ? adapter : undefined };
+  return { events: declaredEvents(descriptor), adapter: declaredAdapter(descriptor) };
 }
 
 /** The adapter's table as [native, canonical] pairs, or `null` when it keeps no table. */
