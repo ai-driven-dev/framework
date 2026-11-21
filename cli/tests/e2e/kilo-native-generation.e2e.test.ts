@@ -135,6 +135,165 @@ function outputStrings(output: string): string[] {
 }
 
 describeNative("E2E: saved native generation in Kilo", () => {
+  it("loads generated artifacts and executes the rule and command", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
+      "kilo-generated-artifacts"
+    );
+    let model: Awaited<ReturnType<typeof localModel>> | undefined;
+    const requests: KiloChatRequest[] = [];
+    try {
+      const xdg = join(tempDir, "xdg");
+      const env = {
+        ...process.env,
+        ...KILO_ENV,
+        HOME: fakeHome,
+        USERPROFILE: fakeHome,
+        APPDATA: join(fakeHome, "AppData", "Roaming"),
+        LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
+        XDG_CONFIG_HOME: join(xdg, "config"),
+        XDG_DATA_HOME: join(xdg, "data"),
+        XDG_STATE_HOME: join(xdg, "state"),
+        XDG_CACHE_HOME: join(xdg, "cache"),
+        KILO_PURE: "1",
+        KILO_DISABLE_EXTERNAL_SKILLS: "true",
+      };
+      for (const name of ["config", "data", "state", "cache"]) {
+        await mkdir(join(xdg, name), { recursive: true });
+      }
+      const generator = (name: string, script: string) =>
+        join(REPOSITORY_ROOT, "plugins", "aidd-context", "skills", name, "scripts", script);
+      const invoke = async (script: string, args: string[]) =>
+        execFileAsync(process.execPath, [script, ...args], { cwd: projectDir, timeout: 30000 });
+      const generate = async (name: string, script: string, input: object) => {
+        const file = join(tempDir, `${name}.json`);
+        await writeFile(file, JSON.stringify(input));
+        await invoke(generator(name, script), [
+          "--project",
+          projectDir,
+          "--tools",
+          "kilo",
+          "--input",
+          file,
+        ]);
+      };
+      await generate("05-rule-generate", "write-rule.cjs", {
+        category: "01-standards",
+        slug: "1-naming",
+        description: "Naming rule",
+        paths: [],
+        body: "# Naming\n\nGENERATED_RULE_MARKER_914\n",
+      });
+      await generate("06-agent-generate", "write-agent.cjs", {
+        name: "generated-agent",
+        description: "Checks generated artifacts.",
+        body: "GENERATED_AGENT_MARKER_914\n",
+        temperature: 0.25,
+        permission: { edit: "deny" },
+      });
+      await generate("07-command-generate", "write-command.cjs", {
+        name: "generated-command",
+        description: "Checks the generated command.",
+        body: "GENERATED_COMMAND_MARKER_914\nArguments: $ARGUMENTS\n",
+      });
+      const plan = join(tempDir, "skill-plan.json");
+      await writeFile(
+        plan,
+        JSON.stringify({
+          name: "generated-skill",
+          description: "Checks generated skills.",
+          actions: [{ slug: "check", title: "Check", next: [{ end: "done" }] }],
+        })
+      );
+      await invoke(generator("04-skill-generate", "scaffold-skill.cjs"), [
+        plan,
+        join(projectDir, ".kilo", "skills", "generated-skill"),
+      ]);
+      model = await localModel({
+        respond(request) {
+          requests.push(request);
+          return { content: "GENERATED_RESPONSE_914" };
+        },
+      });
+      await writeFile(
+        join(projectDir, "kilo.jsonc"),
+        JSON.stringify({
+          model: "openai-compatible/fake",
+          provider: {
+            "openai-compatible": {
+              options: { baseURL: model.url },
+              models: {
+                fake: {
+                  name: "Generated artifacts test",
+                  tool_call: true,
+                  limit: { context: 8192, output: 256 },
+                },
+              },
+            },
+          },
+        })
+      );
+      const kilo = async (...args: string[]) =>
+        (
+          await execFileAsync(KILO_BIN, args, {
+            cwd: projectDir,
+            env,
+            timeout: 30000,
+            maxBuffer: 8 * 1024 * 1024,
+            shell: KILO_SHELL,
+          })
+        ).stdout;
+      const config = JSON.parse(await kilo("debug", "config", "--pure")) as {
+        instructions?: string[];
+        agent?: Record<string, { prompt?: string; temperature?: number; permission?: unknown }>;
+        command?: Record<string, { template?: string }>;
+      };
+      expect(config.instructions).toContain(".kilo/rules/01-standards/1-naming.md");
+      expect(config.agent?.["generated-agent"]?.prompt).toContain("GENERATED_AGENT_MARKER_914");
+      expect(config.agent?.["generated-agent"]?.temperature).toBe(0.25);
+      expect(config.agent?.["generated-agent"]?.permission).toEqual({ edit: "deny" });
+      expect(config.command?.["generated-command"]?.template).toContain(
+        "GENERATED_COMMAND_MARKER_914"
+      );
+      const catalog = JSON.parse(await kilo("debug", "skill", "--pure")) as Array<{
+        name: string;
+        location?: string;
+      }>;
+      expect(
+        catalog.find((entry) => entry.name === "generated-skill")?.location?.replaceAll("\\", "/")
+      ).toContain(".kilo/skills/generated-skill/SKILL.md");
+      const result = await kilo(
+        "run",
+        "--pure",
+        "--auto",
+        "--dir",
+        projectDir,
+        "--command",
+        "generated-command",
+        "probe-argument",
+        "--model",
+        "openai-compatible/fake",
+        "--format",
+        "json"
+      );
+      expect(result).toContain("GENERATED_RESPONSE_914");
+      const system = requests
+        .flatMap((request) => request.messages)
+        .filter((message) => message.role === "system");
+      expect(JSON.stringify(system)).toContain("GENERATED_RULE_MARKER_914");
+      expect(JSON.stringify(requests)).toContain("GENERATED_COMMAND_MARKER_914");
+      expect(JSON.stringify(requests)).toContain("probe-argument");
+    } finally {
+      if (model) {
+        const server = model.server;
+        server.closeAllConnections();
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
+      await cleanup();
+    }
+  }, 120000);
+
   it("executes a project workflow through kilo run --command and passes its arguments to the model", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("kilo-workflow-command");
     let model: Awaited<ReturnType<typeof localModel>> | undefined;

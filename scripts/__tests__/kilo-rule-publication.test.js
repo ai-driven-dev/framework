@@ -85,7 +85,7 @@ function publisher(t) {
   function run(value = rule, targets = "kilo", extra = [], env = {}) {
     const input = path.join(installed, "input.json");
     fs.writeFileSync(input, JSON.stringify(value));
-    const mode = extra.some((item) => ["--input", "--delete", "--publish"].includes(item)) ? extra : [...extra, "--input", input];
+    const mode = extra.some((item) => ["--input", "--remove", "--publish"].includes(item)) ? extra : [...extra, "--input", input];
     return spawnSync(process.execPath, [script, "--project", p.root, "--tools", targets, ...mode], { encoding: "utf8", cwd: p.root, env: { PATH: "", ...env } });
   }
   return { ...p, run, read: (relative) => fs.readFileSync(path.join(p.root, relative), "utf8") };
@@ -103,7 +103,7 @@ test("installed writer publishes a Kilo rule and exact instruction, then reruns 
   assert.equal(p.run().status, 0);
   assert.deepEqual(p.snapshot(), before);
   for (const relative of tracked) assert.equal(fs.statSync(path.join(p.root, relative)).mtimeMs, mtimes.get(relative));
-  assert.equal(p.run(null, "kilo", ["--delete", "01-standards/1-naming"]).status, 0);
+  assert.equal(p.run(null, "kilo", ["--remove", "01-standards/1-naming"]).status, 0);
   assert.equal(fs.existsSync(path.join(p.root, instruction)), false);
   assert.deepEqual(JSON.parse(p.read(".kilo/kilo.jsonc")).instructions, []);
 });
@@ -136,7 +136,7 @@ test("Kilo refuses path-scoped rules before creating any publication", (t) => {
   const before = p.snapshot();
   const result = p.run({ ...rule, paths: ["src/**/*.ts", "test/**/*.ts"] });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Kilo does not support enforceable path scoping/);
+  assert.match(result.stdout, /Kilo does not support enforceable path scoping/);
   assert.deepEqual(p.snapshot(), before);
 });
 
@@ -145,7 +145,7 @@ test("mixed Kilo and Claude targets refuse path scope before fan-out", (t) => {
   const before = p.snapshot();
   const result = p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude,kilo");
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /remove ["']?kilo["']? from targets/);
+  assert.match(JSON.parse(result.stdout).error.message, /remove ["']?kilo["']? from targets/);
   assert.deepEqual(p.snapshot(), before);
 });
 
@@ -154,14 +154,14 @@ test("plan and publish check refuse path-scoped Kilo output without mutation", (
   const before = p.snapshot();
   const plan = p.run({ ...rule, paths: ["src/**/*.ts"] }, "kilo", ["--plan"]);
   assert.notEqual(plan.status, 0);
-  assert.match(plan.stderr, /Kilo does not support enforceable path scoping/);
+  assert.match(plan.stdout, /Kilo does not support enforceable path scoping/);
   assert.deepEqual(p.snapshot(), before);
 
   p.put("aidd_docs/rules/01-standards/1-naming.md", canonicalScopedRule);
   const publishBefore = p.snapshot();
-  const check = p.run(null, "kilo", ["--check", "--publish"]);
+  const check = p.run(null, "kilo", ["--plan", "--publish"]);
   assert.notEqual(check.status, 0);
-  assert.match(check.stderr, /Kilo does not support enforceable path scoping/);
+  assert.match(check.stdout, /Kilo does not support enforceable path scoping/);
   assert.deepEqual(p.snapshot(), publishBefore);
 });
 
@@ -171,13 +171,34 @@ test("updating an existing Kilo rule to path scope refuses without mutation", (t
   const before = p.snapshot();
   const result = p.run({ ...rule, paths: ["src/**/*.ts"] });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Kilo does not support enforceable path scoping/);
+  assert.match(result.stdout, /Kilo does not support enforceable path scoping/);
+  assert.deepEqual(p.snapshot(), before);
+});
+
+test("adding Kilo when publishing scoped Claude rules refuses without mutation", (t) => {
+  const p = publisher(t);
+  assert.equal(p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude").status, 0);
+  const before = p.snapshot();
+  const result = p.run(null, "kilo", ["--publish"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /Kilo does not support enforceable path scoping/);
+  assert.deepEqual(p.snapshot(), before);
+});
+
+test("scoping an existing Kilo rule through another target refuses without mutation", (t) => {
+  const p = publisher(t);
+  assert.equal(p.run().status, 0);
+  const before = p.snapshot();
+  const result = p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /Kilo does not support enforceable path scoping/);
   assert.deepEqual(p.snapshot(), before);
 });
 
 test("removing Kilo while adding path scope for Claude remains supported", (t) => {
   const p = publisher(t);
   assert.equal(p.run().status, 0);
+  assert.equal(p.run(null, "kilo", ["--remove", "01-standards/1-naming"]).status, 0);
   assert.equal(p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude").status, 0);
   assert.equal(fs.existsSync(path.join(p.root, instruction)), false);
   assert.match(p.read(".claude/rules/01-standards/1-naming.md"), /^---\npaths:/);
@@ -187,7 +208,7 @@ test("Claude and Cursor retain native path scope without a Kilo publication", (t
   const p = publisher(t);
   assert.equal(p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude,cursor").status, 0);
   assert.match(p.read(".claude/rules/01-standards/1-naming.md"), /^---\npaths:/);
-  assert.match(p.read(".cursor/rules/01-standards/1-naming.mdc"), /globs: "src\/\*\*\/\*\.ts"/);
+  assert.match(p.read(".cursor/rules/01-standards/1-naming.mdc"), /globs: src\/\*\*\/\*\.ts/);
   assert.equal(fs.existsSync(path.join(p.root, instruction)), false);
 });
 
@@ -198,7 +219,7 @@ test("ambiguous selection, unsafe last config and unowned Kilo output refuse the
   let before = p.snapshot();
   const ambiguous = p.run(rule, "claude,kilo");
   assert.notEqual(ambiguous.status, 0);
-  assert.match(ambiguous.stderr, /Choose a Kilo config/);
+  assert.match(ambiguous.stdout, /Choose a Kilo config/);
   assert.deepEqual(p.snapshot(), before);
   assert.equal(p.run(rule, "claude,kilo", ["--kilo-config", "kilo.jsonc"]).status, 0);
   p.put("kilo.jsonc", '{"instructions":[null]}');
@@ -228,9 +249,9 @@ test("writer refuses deletion with two exact owners and leaves rules, configs an
   assert.equal(p.run().status, 0);
   p.put("kilo.jsonc", `{"instructions":["${instruction}"]}\n`);
   const before = p.snapshot();
-  const result = p.run(null, "kilo", ["--kilo-config", ".kilo/kilo.json", "--delete", "01-standards/1-naming"]);
+  const result = p.run(null, "kilo", ["--kilo-config", ".kilo/kilo.json", "--remove", "01-standards/1-naming"]);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Multiple Kilo configs own/);
+  assert.match(result.stdout, /Multiple Kilo configs own/);
   assert.deepEqual(p.snapshot(), before);
   assert.equal(fs.existsSync(path.join(p.root, instruction)), true);
 });
@@ -240,9 +261,9 @@ test("writer refuses removal of duplicate exact entries without mutation", (t) =
   assert.equal(p.run().status, 0);
   p.put(".kilo/kilo.jsonc", `{"instructions":["${instruction}","${instruction}",]}`);
   const before = p.snapshot();
-  const result = p.run(null, "kilo", ["--delete", "01-standards/1-naming"]);
+  const result = p.run(null, "kilo", ["--remove", "01-standards/1-naming"]);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Duplicate exact instruction entries/);
+  assert.match(result.stdout, /Duplicate exact instruction entries/);
   assert.deepEqual(p.snapshot(), before);
 });
 
@@ -252,7 +273,7 @@ test("partially written temporary file and newly created directories are cleaned
   const env = injected(t, p.root, "const fs=require('node:fs');const write=fs.writeFileSync;let failed=false;fs.writeFileSync=function(file,data,...args){if(!failed&&typeof file==='number'){failed=true;write.call(this,file,data.slice(0,8),...args);throw new Error('injected partial temporary write')}return write.call(this,file,data,...args)};");
   const result = p.run(rule, "claude,kilo", [], env);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /injected partial temporary write/);
+  assert.match(result.stdout, /injected partial temporary write/);
   assert.deepEqual(p.snapshot(), before);
 });
 
@@ -267,14 +288,42 @@ test("late failure restores existing file bytes and modes", { skip: process.plat
   const before = p.snapshot();
   const beforeModes = modes(p.root, tracked);
   const beforeHashes = hashes(p.root, tracked);
-  const env = injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;fs.renameSync=function(from,to){if(to.endsWith('/AGENTS.md'))throw new Error('injected late shared failure');return rename.apply(this,arguments)};");
+  const env = injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;fs.renameSync=function(from,to){if(to.endsWith('/.kilo/kilo.jsonc'))throw new Error('injected late shared failure');return rename.apply(this,arguments)};");
   const result = p.run({ ...rule, body: "# Naming\n\nChanged body.\n" }, "codex,kilo", [], env);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /injected late shared failure/);
+  assert.match(result.stdout, /injected late shared failure/);
   assert.deepEqual(p.snapshot(), before);
   assert.deepEqual(modes(p.root, tracked), beforeModes);
   assert.deepEqual(hashes(p.root, tracked), beforeHashes);
   assert.deepEqual(temporaryFiles(p.snapshot()), []);
+});
+
+test("rollback includes a published file when a subsequent stat fails", (t) => {
+  const p = publisher(t);
+  p.put(".kilo/kilo.jsonc", "{}\n");
+  const env = injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;const stat=fs.lstatSync;let armed=false;fs.renameSync=function(from,to){const r=rename.apply(this,arguments);if(to.endsWith('/aidd_docs/rules/01-standards/1-naming.md'))armed=true;return r};fs.lstatSync=function(file,...args){if(armed&&typeof file==='string'&&file.endsWith('/.kilo/rules/01-standards/1-naming.md')){armed=false;throw Object.assign(new Error('injected stat failure'),{code:'EIO'})}return stat.call(this,file,...args)};");
+  const before = p.snapshot();
+  const result = p.run(rule, "kilo", [], env);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /injected stat failure/);
+  assert.deepEqual(p.snapshot(), before);
+});
+
+test("rollback preserves an external edit made after publication", (t) => {
+  const p = publisher(t);
+  p.put(".kilo/kilo.jsonc", "{}\n");
+  const config = path.join(p.root, ".kilo/kilo.jsonc");
+  const source = path.join(p.root, "aidd_docs/rules/01-standards/1-naming.md");
+  const env = {
+    ...injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;fs.renameSync=function(from,to){if(to===process.env.AIDD_CONFIG){fs.writeFileSync(process.env.AIDD_SOURCE,'external edit\\n');throw new Error('injected failure')}return rename.apply(this,arguments)};"),
+    AIDD_CONFIG: config,
+    AIDD_SOURCE: source,
+  };
+  const result = p.run(rule, "kilo", [], env);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /rollback failed: Output changed before rollback/);
+  assert.equal(fs.readFileSync(source, "utf8"), "external edit\n");
+  assert.equal(p.read(".kilo/kilo.jsonc"), "{}\n");
 });
 
 test("successful config replacement preserves private mode", { skip: process.platform === "win32" }, (t) => {
@@ -297,7 +346,7 @@ for (const change of ["modified", "disappeared"]) {
     };
     const result = p.run(rule, "claude,kilo", [], env);
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /changed after inspection/);
+    assert.match(result.stdout, /changed after inspection/);
     assert.equal(fs.existsSync(path.join(p.root, instruction)), false);
     assert.equal(fs.existsSync(path.join(p.root, "aidd_docs")), false);
     assert.equal(fs.existsSync(config), change === "modified");
@@ -316,7 +365,7 @@ test("writer detects config mutation during staging and removes staged outputs",
   };
   const result = p.run(rule, "claude,kilo", [], env);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Kilo config changed during publication/);
+  assert.match(result.stdout, /Kilo config changed during publication/);
   assert.equal(p.read(".kilo/kilo.jsonc"), '{"external":true}\n');
   assert.deepEqual([...p.snapshot().keys()].sort(), [".kilo/", ".kilo/kilo.jsonc", "package.json"]);
 });
@@ -331,7 +380,7 @@ test("late config rename failure restores canonical and native outputs", (t) => 
   t.after(() => fs.rmSync(preload, { force: true }));
   const result = p.run(rule, "claude,kilo", [], { NODE_OPTIONS: `--require=${preload}` });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /injected config rename failure/);
+  assert.match(result.stdout, /injected config rename failure/);
   assert.deepEqual(p.snapshot(), before);
 });
 
@@ -373,7 +422,7 @@ test("Kilo rejects a non-regular config without writing", (t) => {
   const before = p.snapshot();
   const result = p.run();
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Cannot safely read|invalid config path|directory|regular/u);
+  assert.match(result.stdout, /Cannot safely read|invalid config path|directory|regular/u);
   assert.deepEqual(p.snapshot(), before);
   assert.deepEqual(temporaryFiles(p.snapshot()), []);
 });
@@ -385,7 +434,7 @@ test("Kilo rejects a non-regular rule output without writing", (t) => {
   const before = p.snapshot();
   const result = p.run();
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /EISDIR|directory|regular|read/u);
+  assert.match(result.stdout, /EISDIR|directory|regular|read/u);
   assert.deepEqual(p.snapshot(), before);
   assert.deepEqual(temporaryFiles(p.snapshot()), []);
 });
@@ -452,7 +501,6 @@ test("an explicit Kilo config cannot override the unique rule owner in any write
     ["input", ["--kilo-config", ".kilo/kilo.jsonc"]],
     ["plan", ["--plan", "--kilo-config", ".kilo/kilo.jsonc"]],
     ["publish", ["--publish", "--kilo-config", ".kilo/kilo.jsonc"]],
-    ["check", ["--publish", "--check", "--kilo-config", ".kilo/kilo.jsonc"]],
   ];
   for (const [name, args] of modes) {
     const p = publisher(t);
@@ -462,9 +510,21 @@ test("an explicit Kilo config cannot override the unique rule owner in any write
     const before = p.snapshot();
     const result = p.run(rule, "kilo", args);
     assert.notEqual(result.status, 0, name);
-    assert.match(result.stderr, /conflicts with the unique rule owner kilo\.jsonc/u, name);
+    assert.match(result.stdout, /conflicts with the unique rule owner kilo\.jsonc/u, name);
     assert.deepEqual(p.snapshot(), before, name);
   }
+});
+
+test("publish resolves an ambiguous rule without overriding another rule's unique config", (t) => {
+  const p = publisher(t);
+  const second = { ...rule, slug: "1-second", body: "# Second\n" };
+  assert.equal(p.run().status, 0);
+  assert.equal(p.run(second).status, 0);
+  p.put("kilo.jsonc", "{}\n");
+  p.put(".kilo/kilo.jsonc", JSON.stringify({ instructions: [instruction] }) + "\n");
+  assert.equal(p.run(null, "kilo", ["--publish", "--kilo-config", "kilo.jsonc"]).status, 0);
+  assert.deepEqual(JSON.parse(p.read(".kilo/kilo.jsonc")).instructions, [instruction]);
+  assert.deepEqual(JSON.parse(p.read("kilo.jsonc")).instructions, [".kilo/rules/01-standards/1-second.md"]);
 });
 
 for (const size of [2, 3, 4]) {

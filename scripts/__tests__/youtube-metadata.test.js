@@ -75,7 +75,7 @@ test("a release with no contributors scene leaves the contributors line out", ()
   assert.doesNotMatch(description, /contributeurs/);
 });
 
-test("youtubeProblems accepts a plan whose programme covers every scene surface", () => {
+test("youtubeProblems accepts a plan whose programme lines all carry a known theme", () => {
   assert.deepEqual(youtubeProblems(plan), []);
 });
 
@@ -88,12 +88,18 @@ test("youtubeProblems names a programme line whose theme is missing or not one o
   assert.deepEqual(youtubeProblems(foreign), ["youtube programme: aidd telemetry has no theme from themes"]);
 });
 
-test("youtubeProblems names a missing block, a title that is too long and an uncovered surface", () => {
+test("youtubeProblems names a missing block and a title that is too long", () => {
   assert.deepEqual(youtubeProblems({ scenes: [], skipped: [] }), ["youtube: missing"]);
 
   const long = { ...plan, youtube: { ...plan.youtube, themes: ["x".repeat(90)] } };
   assert.match(youtubeProblems(long).join("\n"), /title: \d+ characters, 100 at most/);
+});
 
-  const uncovered = { ...plan, youtube: { ...plan.youtube, programme: plan.youtube.programme.slice(0, 1) } };
-  assert.deepEqual(youtubeProblems(uncovered), ["youtube programme: no line for aidd-context:05-rule-generate"]);
+test("youtubeProblems accepts one programme line per scene, so a scene showing several surfaces stays one sentence", () => {
+  const grouped = {
+    ...plan,
+    scenes: [{ template: "terminal-demo", surfaces: ["aidd setup", "aidd sync", "aidd doctor"] }],
+    youtube: { themes: ["Installation"], programme: [{ surface: "aidd setup --global", theme: "Installation", text: "une installation, tous les projets." }] },
+  };
+  assert.deepEqual(youtubeProblems(grouped), []);
 });

@@ -2,7 +2,7 @@
 "use strict";
 // Usage: node check-skill.cjs <skill-folder>
 // The lexical rules of ../references/skill-authoring.md, checked without judgment.
-// Exit 0 clean, 1 findings, 2 usage. Node built-ins only.
+// Exit 0 clean, 1 findings, 2 usage or a file it cannot read. Node built-ins only.
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -33,6 +33,11 @@ const ITEM_SECTIONS = ["Process", "Rules", ROUTER_SECTION];
 const LIST_ITEM = /^\s*(?:\d+\.|-)\s+(.*)$/u;
 const SECTION_HEADING = /^##\s+(.+?)\s*$/u;
 const ACTION_LINK =/\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
+
+/** The file's text with CRLF line endings read as LF, so a file saved on Windows is checked like any other. */
+function readText(file) {
+  return fs.readFileSync(file, "utf8").replace(/\r\n?/gu, "\n");
+}
 
 function excerpt(text) {
   const flat = text.trim().replace(/\s+/gu, " ");
@@ -127,7 +132,7 @@ function checkEdges(skill, flow, rules, lineOf, report) {
           const target = actions.get(to);
           if (!source || !target || source === target) continue;
           const sourcePath = path.join(skill, source);
-          const text = fs.existsSync(sourcePath) ? fs.readFileSync(sourcePath, "utf8") : "";
+          const text = fs.existsSync(sourcePath) ? readText(sourcePath) : "";
           const name = path.basename(target);
           if (new RegExp(`\\b${name.replace(/^\d\d-|\.md$/gu, "")}\\b`, "iu").test(rules)) continue;
           const linked = [...text.matchAll(LINK)].some((match) => path.basename(match[1]) === name);
@@ -210,15 +215,18 @@ function withoutFalseBreaks(text) {
   return text.replace(LINK, "").replace(ABBREVIATION, "");
 }
 
-/** Each numbered or dash item of a step or rule list holds one sentence, its cases as dash sub-items. */
+/** Each numbered or dash item of a step or rule list holds one sentence; a step's cases are dash sub-items, a rule has none. */
 function checkItems(file, text, report) {
   const lines = text.split("\n");
-  let inside = false;
+  let section = null;
   proseLines(text).forEach((line, index) => {
     const heading = SECTION_HEADING.exec(line);
-    if (heading) inside = ITEM_SECTIONS.includes(heading[1]);
-    const item = inside && LIST_ITEM.exec(line);
-    if (item && CLAUSE_BREAK.test(withoutFalseBreaks(item[1]))) report.error(file, index + 1, "sentence", lines[index], "split it: one sentence per item, cases as dash sub-items, or put exact text in backticks");
+    if (heading) section = ITEM_SECTIONS.includes(heading[1]) ? heading[1] : null;
+    const item = section && LIST_ITEM.exec(line);
+    if (!item) return;
+    const rule = section !== "Process";
+    if (rule && /^\s/u.test(line)) report.error(file, index + 1, "rule-line", lines[index], "write the rule on one line, its case inside the sentence");
+    else if (CLAUSE_BREAK.test(withoutFalseBreaks(item[1]))) report.error(file, index + 1, "sentence", lines[index], rule ? "keep one sentence per rule, or put exact text in backticks" : "split it: one sentence per item, cases as dash sub-items, or put exact text in backticks");
   });
 }
 
@@ -262,9 +270,9 @@ function check(skill) {
   const report = { error: (file, line, rule, offending, fix) => errors.push({ file, line, rule, ...(offending === undefined ? {} : { excerpt: excerpt(offending) }), fix }) };
   const files = walk(skill).map((full) => path.relative(skill, full).split(path.sep).join("/"));
   const actions = files.filter((file) => /^actions\/[^/]+\.md$/u.test(file)).sort();
-  const chained = chainedActions(fs.readFileSync(path.join(skill, "SKILL.md"), "utf8"));
+  const chained = chainedActions(readText(path.join(skill, "SKILL.md")));
   for (const file of files) {
-    const text = fs.readFileSync(path.join(skill, file), "utf8");
+    const text = readText(path.join(skill, file));
     if (file === "SKILL.md") checkRouter(skill, text, report);
     if (actions.includes(file)) checkAction(file, text, chained.has(file), report);
     if (file === "SKILL.md" || actions.includes(file)) checkItems(file, text, report);
@@ -290,7 +298,13 @@ function main(args) {
     process.stderr.write(USAGE);
     return EXIT_USAGE;
   }
-  const findings = check(skill);
+  let findings;
+  try {
+    findings = check(skill);
+  } catch (error) {
+    process.stderr.write(`check-skill: ${error.message}\n`);
+    return EXIT_USAGE;
+  }
   const text = format(skill, findings);
   if (text !== "") process.stdout.write(`${text}\n`);
   return findings.length > 0 ? EXIT_ERRORS : EXIT_OK;

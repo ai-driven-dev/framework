@@ -145,6 +145,50 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     expect(fs.getFile(join(r.builtDir, ".build-version"))).toBe("5.0.0:1.0.0");
   });
 
+  it("builds a target's agents with the provider chosen for it, and records it in the sentinel", async () => {
+    const providers: (string | undefined)[] = [];
+    const uc = new EnsureBuiltMarketplaceUseCase(
+      fs,
+      fakeResolve("/src/framework", "1.0.0"),
+      (target, mode, outDir, provider) => {
+        providers.push(provider);
+        return buildFor(target, mode, outDir);
+      },
+      fakeVersion("5.0.0"),
+      () => "/user-cache",
+      async (target) => (target === "codex" ? "openai" : undefined)
+    );
+    const r = await uc.execute({
+      projectRoot: PROJECT,
+      marketplace: makeRemoteMarketplace(),
+      target: "codex",
+      mode: "marketplace",
+    });
+    expect(providers).toStrictEqual(["openai"]);
+    expect(fs.getFile(join(r.builtDir, ".build-version"))).toBe("5.0.0:1.0.0:openai");
+  });
+
+  it("rebuilds a published source once its agents' provider changed", async () => {
+    const builtDir = resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex"));
+    fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
+    const uc = new EnsureBuiltMarketplaceUseCase(
+      fs,
+      fakeResolve("/src/framework", "1.0.0"),
+      buildFor,
+      fakeVersion("5.0.0"),
+      () => "/user-cache",
+      async () => "openai"
+    );
+    const r = await uc.execute({
+      projectRoot: PROJECT,
+      marketplace: makeRemoteMarketplace(),
+      target: "codex",
+      mode: "marketplace",
+    });
+    expect(r.rebuilt).toBe(true);
+    expect(builds).toBe(1);
+  });
+
   it("does not rebuild a published source when the sentinel matches (cliVer:catalogVer)", async () => {
     // resolve(): a drive-less PROJECT would seed a key the in-memory fs never looks up under,
     // since the code's own builtDir is resolved with a drive letter.

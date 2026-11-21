@@ -330,6 +330,26 @@ describe("skill check", () => {
     expectError("sentence");
   });
 
+  it("rule-line: a sub-item under a transversal rule", () => {
+    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask.\n  - In a subagent: ask the caller.");
+    expectError("rule-line");
+  });
+
+  it("rule-line: a sub-item under an action rule", () => {
+    mutate("actions/02-second.md", "The answer.\n", "The answer.\n\n## Rules\n\n- Answer once.\n  - Asked twice: repeat it.\n");
+    expectError("rule-line");
+  });
+
+  it("a case of a step as a dash sub-item is no finding", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n   - No rubric: ask for one.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("sentence: two sentences in a rule are never told to split into sub-items", () => {
+    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask. Wait after.");
+    assert.doesNotMatch(run().out, /sub-items/u);
+  });
+
   it("sentence: an abbreviation like e.g. ends no sentence", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per a rubric (e.g. the team's, i.e. the shared one).");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
@@ -350,7 +370,24 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  for (const skill of ["aidd-context/skills/04-skill-generate"]) {
+  it("reads a skill saved with CRLF line endings like one saved with LF", () => {
+    for (const file of Object.keys(CLEAN)) fs.writeFileSync(path.join(root, file), CLEAN[file].replace(/\n/gu, "\r\n"));
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+    mutate("actions/02-second.md", "Answer per", "**Answer** per");
+    const { code, out } = run();
+    assert.equal(code, 1, out);
+    assert.match(out, / bold /u);
+    assert.doesNotMatch(out, / diagram /u);
+  });
+
+  it("exits 2, not 1, when a file of the skill cannot be read, so a crash never reads as findings", () => {
+    fs.symlinkSync(path.join(root, "missing.md"), path.join(root, "references/broken.md"));
+    const { code, out, err } = run();
+    assert.equal(code, 2, out);
+    assert.match(err, /check-skill: .*broken\.md/u);
+  });
+
+  for (const skill of ["aidd-context/skills/04-skill-generate", "aidd-dev/skills/05-review"]) {
     it(`finds nothing in ${skill}`, () => {
       assert.deepEqual(run(path.resolve(__dirname, "../../plugins", skill)), { code: 0, out: "", err: "" });
     });

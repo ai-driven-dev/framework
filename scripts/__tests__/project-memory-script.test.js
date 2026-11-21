@@ -221,6 +221,239 @@ test("wire maps Kilo to shared AGENTS.md, preserves team content, and is repeata
   });
 });
 
+test("Kilo wiring refuses an AGENTS.md symlink to a file outside the project", (t) => {
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-memory-outside-"));
+  try {
+    const target = path.join(outside, "context.md");
+    fs.writeFileSync(target, "# External\n");
+    within({}, (root) => {
+      try { fs.symlinkSync(target, path.join(root, "AGENTS.md")); }
+      catch (error) {
+        if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) { t.skip("symlink creation requires Windows privileges"); return; }
+        throw error;
+      }
+      const result = run(root, "wire", "kilo");
+      assert.notEqual(result.status, 0);
+      assert.equal(fs.readFileSync(target, "utf8"), "# External\n");
+    });
+  } finally { fs.rmSync(outside, { recursive: true, force: true }); }
+});
+
+test("Kilo wiring refuses a hardlinked AGENTS.md without modifying its other link", () => {
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-memory-outside-"));
+  try {
+    const target = path.join(outside, "context.md");
+    fs.writeFileSync(target, "# External\n");
+    within({}, (root) => {
+      fs.linkSync(target, path.join(root, "AGENTS.md"));
+      const result = run(root, "wire", "kilo");
+      assert.notEqual(result.status, 0);
+      assert.equal(fs.readFileSync(target, "utf8"), "# External\n");
+    });
+  } finally { fs.rmSync(outside, { recursive: true, force: true }); }
+});
+
+test("Kilo wiring preserves an internal AGENTS.md symlink and its target", (t) => {
+  within({ "context/team.md": "# Team\n" }, (root) => {
+    try { fs.symlinkSync("context/team.md", path.join(root, "AGENTS.md")); }
+    catch (error) {
+      if (process.platform === "win32" && ["EPERM", "EACCES"].includes(error.code)) { t.skip("symlink creation requires Windows privileges"); return; }
+      throw error;
+    }
+    const result = run(root, "wire", "kilo");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.lstatSync(path.join(root, "AGENTS.md")).isSymbolicLink(), true);
+    assert.equal(read(root, "context/team.md"), `# Team\n\n${OPEN}\n${CLOSE}\n`);
+  });
+});
+
+test("Kilo wiring refuses a context file replaced before it opens for writing", () => {
+  within({ "AGENTS.md": "# Original\n" }, (root) => {
+    const preload = path.join(root, "inject.cjs");
+    fs.writeFileSync(preload, `
+const fs = require("node:fs");
+const original = fs.openSync;
+let done = false;
+fs.openSync = function(file, flags, ...rest) {
+  if (!done && typeof file === "string" && file.includes(".aidd-memory-") && typeof flags === "number" && (flags & fs.constants.O_WRONLY)) {
+    done = true;
+    const target = ${JSON.stringify(path.join(root, "AGENTS.md"))};
+    fs.renameSync(target, target + ".old");
+    fs.writeFileSync(target, "# Replacement\\n");
+  }
+  return original.call(this, file, flags, ...rest);
+};
+`);
+    const result = spawnSync(process.execPath, [SCRIPT, "wire", "kilo"], {
+      cwd: root, encoding: "utf8", env: { ...GIT_ENV, NODE_OPTIONS: `--require=${preload}` },
+    });
+    assert.notEqual(result.status, 0);
+    assert.equal(read(root, "AGENTS.md"), "# Replacement\n");
+    assert.equal(read(root, "AGENTS.md.old"), "# Original\n");
+  });
+});
+
+test("Kilo wiring leaves invalid UTF-8 context bytes intact", () => {
+  within({}, (root) => {
+    const invalid = Buffer.from([0x23, 0x20, 0xc3, 0x28, 0x0a]);
+    fs.writeFileSync(path.join(root, "AGENTS.md"), invalid);
+    const result = run(root, "wire", "kilo");
+    assert.notEqual(result.status, 0);
+    assert.deepEqual(fs.readFileSync(path.join(root, "AGENTS.md")), invalid);
+  });
+});
+
+test("Kilo wiring preserves a UTF-8 BOM and private mode", () => {
+  within({}, (root) => {
+    const target = path.join(root, "AGENTS.md");
+    fs.writeFileSync(target, Buffer.from("\ufeff# Team\n"), { mode: 0o600 });
+    assert.equal(run(root, "wire", "kilo").status, 0);
+    assert.ok(fs.readFileSync(target).subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])));
+    if (process.platform !== "win32") assert.equal(fs.statSync(target).mode & 0o777, 0o600);
+  });
+});
+
+test("Kilo wiring respects a read-only context file", { skip: process.platform === "win32" }, () => {
+  within({ "AGENTS.md": "# Read only\n" }, (root) => {
+    const target = path.join(root, "AGENTS.md");
+    fs.chmodSync(target, 0o444);
+    const result = run(root, "wire", "kilo");
+    assert.notEqual(result.status, 0);
+    assert.equal(read(root, "AGENTS.md"), "# Read only\n");
+  });
+});
+
+test("Kilo wiring preserves the context inode and extended attributes", (t) => {
+  within({ "AGENTS.md": "# Team\n" }, (root) => {
+    const target = path.join(root, "AGENTS.md");
+    const set = spawnSync("python3", ["-c", "import os,sys; os.setxattr(sys.argv[1], b'user.aidd-test', b'keep')", target], { encoding: "utf8" });
+    if (set.error?.code === "ENOENT" || set.status !== 0) { t.skip("extended attributes unavailable"); return; }
+    const inode = fs.statSync(target).ino;
+    const result = run(root, "wire", "kilo");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.statSync(target).ino, inode);
+    const get = spawnSync("python3", ["-c", "import os,sys; print(os.getxattr(sys.argv[1], b'user.aidd-test').decode())", target], { encoding: "utf8" });
+    assert.equal(get.status, 0, get.stderr);
+    assert.equal(get.stdout.trim(), "keep");
+  });
+});
+
+for (const existing of [true, false]) {
+  test(`Kilo wiring recovers from a partial write when context is ${existing ? "present" : "absent"}`, () => {
+    within(existing ? { "AGENTS.md": "# Original\n" } : {}, (root) => {
+      const preload = path.join(root, "inject.cjs");
+      fs.writeFileSync(preload, `
+const fs = require("node:fs");
+const original = fs.writeSync;
+let done = false;
+fs.writeSync = function(fd, buffer, offset, length, position) {
+  if (!done && Buffer.isBuffer(buffer) && buffer.includes("aidd_project_memory")) {
+    done = true;
+    original.call(this, fd, Buffer.from("BROKEN"), 0, 6, position);
+    throw Object.assign(new Error("injected write failure"), { code: "EIO" });
+  }
+  return original.apply(this, arguments);
+};
+`);
+      const failed = spawnSync(process.execPath, ["--require", preload, SCRIPT, "wire", "kilo"], {
+        cwd: root, encoding: "utf8", env: GIT_ENV,
+      });
+      assert.notEqual(failed.status, 0);
+      assert.equal(exists(root, "AGENTS.md"), existing);
+      const backups = fs.readdirSync(root).filter((name) => name.endsWith(".tmp"));
+      if (existing) {
+        assert.equal(backups.length, 1);
+        assert.equal(read(root, backups[0]), "# Original\n");
+        assert.ok(failed.stderr.includes(backups[0]));
+        fs.writeFileSync(path.join(root, "AGENTS.md"), read(root, backups[0]));
+      } else assert.deepEqual(backups, []);
+      assert.equal(run(root, "wire", "kilo").status, 0);
+      assert.match(read(root, "AGENTS.md"), /<!-- aidd_project_memory:start -->/u);
+    });
+  });
+}
+
+test("Kilo wiring preserves a concurrent edit to the same context inode", () => {
+  within({ "AGENTS.md": "# Original\n" }, (root) => {
+    const target = path.join(root, "AGENTS.md");
+    const preload = path.join(root, "inject.cjs");
+    fs.writeFileSync(preload, `
+const fs = require("node:fs");
+const original = fs.writeSync;
+let done = false;
+fs.writeSync = function(fd, buffer, offset, length, position) {
+  if (!done && Buffer.isBuffer(buffer) && buffer.includes("# Original")) {
+    done = true;
+    fs.writeFileSync(${JSON.stringify(target)}, "# Updated!\\n");
+  }
+  return original.apply(this, arguments);
+};
+`);
+    const result = spawnSync(process.execPath, ["--require", preload, SCRIPT, "wire", "kilo"], {
+      cwd: root, encoding: "utf8", env: GIT_ENV,
+    });
+    assert.notEqual(result.status, 0);
+    assert.equal(read(root, "AGENTS.md"), "# Updated!\n");
+  });
+});
+
+test("Kilo wiring keeps a recovery copy when writing fails", () => {
+  within({ "AGENTS.md": "# Original\n" }, (root) => {
+    const preload = path.join(root, "inject.cjs");
+    fs.writeFileSync(preload, `
+const fs = require("node:fs");
+const original = fs.writeSync;
+let broken = false;
+fs.writeSync = function(fd, buffer, offset, length, position) {
+  if (broken) throw Object.assign(new Error("restore failed"), { code: "EIO" });
+  if (Buffer.isBuffer(buffer) && buffer.includes("aidd_project_memory")) {
+    broken = true;
+    original.call(this, fd, Buffer.from("BROKEN"), 0, 6, position);
+    throw Object.assign(new Error("write failed"), { code: "EIO" });
+  }
+  return original.apply(this, arguments);
+};
+`);
+    const result = spawnSync(process.execPath, ["--require", preload, SCRIPT, "wire", "kilo"], {
+      cwd: root, encoding: "utf8", env: GIT_ENV,
+    });
+    assert.notEqual(result.status, 0);
+    const backup = fs.readdirSync(root).find((name) => name.startsWith(".aidd-memory-") && name.endsWith(".tmp"));
+    assert.ok(backup);
+    assert.match(result.stderr, /Original content retained at/u);
+    assert.ok(result.stderr.includes(backup));
+    assert.equal(read(root, backup), "# Original\n");
+  });
+});
+
+test("Kilo wiring never overwrites a concurrent edit after a failed write", () => {
+  within({ "AGENTS.md": "# Original\n" }, (root) => {
+    const target = path.join(root, "AGENTS.md");
+    const preload = path.join(root, "inject.cjs");
+    fs.writeFileSync(preload, `
+const fs = require("node:fs");
+const original = fs.writeSync;
+let done = false;
+fs.writeSync = function(fd, buffer, offset, length, position) {
+  if (!done && Buffer.isBuffer(buffer) && buffer.includes("aidd_project_memory")) {
+    done = true;
+    fs.writeFileSync(${JSON.stringify(target)}, "# Concurrent edit\\n");
+    throw Object.assign(new Error("write failed"), { code: "EIO" });
+  }
+  return original.apply(this, arguments);
+};
+`);
+    const result = spawnSync(process.execPath, ["--require", preload, SCRIPT, "wire", "kilo"], {
+      cwd: root, encoding: "utf8", env: GIT_ENV,
+    });
+    assert.notEqual(result.status, 0);
+    assert.equal(read(root, "AGENTS.md"), "# Concurrent edit\n");
+    const backup = fs.readdirSync(root).find((name) => name.startsWith(".aidd-memory-") && name.endsWith(".tmp"));
+    assert.ok(backup);
+    assert.equal(read(root, backup), "# Original\n");
+  });
+});
+
 test("wire refuses an unknown tool or no tool, and writes nothing", () => {
   within({}, (root) => {
     const unknown = run(root, "wire", "claude", "emacs");
