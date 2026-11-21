@@ -1,5 +1,13 @@
 import { InputRequiredError } from "../../../../shared/domain/shared.error.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
+
+/** Answers, for one drifted file, whether to keep what is on disk or restore it. The restore
+ * asks; whoever owns the conversation with the person answers. */
+export interface ConflictResolver {
+  resolveConflict(
+    relativePath: string,
+    reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite">;
+}
 
 interface ResolveRestoreDecisionCommand {
   relativePath: string;
@@ -13,7 +21,7 @@ interface ResolveRestoreDecisionCommand {
  * Throws InputRequiredError when a modified file is encountered in non-interactive non-force mode.
  */
 export async function resolveRestoreDecision(
-  prompter: Prompter,
+  conflicts: ConflictResolver,
   options: ResolveRestoreDecisionCommand
 ): Promise<boolean> {
   const { relativePath, reason, force, interactive } = options;
@@ -24,7 +32,7 @@ export async function resolveRestoreDecision(
     );
   }
   if (!force && interactive) {
-    const decision = await prompter.resolveConflict(relativePath, reason);
+    const decision = await conflicts.resolveConflict(relativePath, reason);
     return decision === "keep";
   }
   return false;

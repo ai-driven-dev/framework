@@ -1,9 +1,9 @@
-import { InputRequiredError } from "../../../../shared/domain/shared.error.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
-import type { IdentityChoice } from "../switch/enable-telemetry.use-case.js";
-import type { CheckIdentity } from "./check-identity.use-case.js";
-import type { ManageIdentity } from "./manage-identity.use-case.js";
-import type { ProposeIdentity } from "./propose-identity.use-case.js";
+import type { CheckIdentity } from "../../contexts/telemetry/application/identity/check-identity.use-case.js";
+import type { ManageIdentity } from "../../contexts/telemetry/application/identity/manage-identity.use-case.js";
+import type { ProposeIdentity } from "../../contexts/telemetry/application/identity/propose-identity.use-case.js";
+import type { IdentityChoice } from "../../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
+import type { Prompter } from "../ports/prompter.js";
 
 export interface ChooseIdentityRequest {
   readonly cwd: string;

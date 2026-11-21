@@ -6,10 +6,10 @@ import {
   type MergeStrategy,
 } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { type DriftVerdict, driftOfKeys } from "../../domain/manifest/drift.js";
 import { planRestore, type RecordedVerdict } from "../../domain/manifest/restore-plan.js";
 import type { FileMerger } from "../../ports/file-merger.js";
+import type { ConflictResolver } from "./resolve-restore-decision.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
 import { restoreDriftEntries } from "./restore-drift-entries.js";
 
@@ -39,13 +39,13 @@ export interface RestoreMergeFilesResult {
 
 export async function restoreMergeFiles(
   fs: FileReader & FileMerger,
-  prompter: Prompter,
+  conflicts: ConflictResolver,
   options: RestoreMergeFilesCommand
 ): Promise<RestoreMergeFilesResult | null> {
   const mergeMap = new Map(options.mergeFiles.map((m) => [m.relativePath, m]));
 
   return restoreDriftEntries(
-    prompter,
+    conflicts,
     {
       collectDrift: () => collectMergeDrift(fs, options),
       restore: (entry) =>

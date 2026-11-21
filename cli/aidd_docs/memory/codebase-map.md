@@ -150,9 +150,11 @@ src/
 │   ├── marketplace/
 │   ├── menu/
 │   ├── plugin/
+│   ├── ports/    # the Prompter port, implemented by presentation
 │   ├── setup/
 │   │   └── steps/
-│   └── sync/
+│   ├── sync/
+│   └── telemetry/
 ├── presentation/    # everything that talks to a human
 │   ├── controllers/
 │   ├── errors/

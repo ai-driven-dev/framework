@@ -4,8 +4,8 @@ import type {
   RestoreGlobal,
 } from "../../contexts/installation/application/restore/project/restore-global.use-case.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
+import type { Prompter } from "../ports/prompter.js";
 
 export interface RestoreAllResult {
   totalRestored: number;

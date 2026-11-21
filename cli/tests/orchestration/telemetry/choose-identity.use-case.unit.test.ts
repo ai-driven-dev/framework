@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { CheckIdentity } from "../../../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
-import { ChooseIdentity } from "../../../../../src/contexts/telemetry/application/identity/choose-identity.use-case.js";
-import type { ManageIdentityResult } from "../../../../../src/contexts/telemetry/application/identity/manage-identity.use-case.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
-import { prompterAnswering } from "../../../../shared/testing/partial-ports.builder.js";
+import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
+import type { ManageIdentityResult } from "../../../src/contexts/telemetry/application/identity/manage-identity.use-case.js";
+import { ChooseIdentity } from "../../../src/orchestration/telemetry/choose-identity.use-case.js";
+import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const NAMED: ManageIdentityResult = { status: "set", personId: "Ada Example" };
 const UNSET: ManageIdentityResult = { status: "unset" };

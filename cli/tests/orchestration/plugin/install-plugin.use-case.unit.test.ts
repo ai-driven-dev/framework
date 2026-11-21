@@ -5,7 +5,7 @@ import {
   InteractiveOnlyError,
   TrustDeniedError,
 } from "../../../src/orchestration/orchestration.error.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   makeUseCase,

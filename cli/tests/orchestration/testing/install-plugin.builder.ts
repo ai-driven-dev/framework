@@ -10,8 +10,8 @@ import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/conf
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.use-case.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 

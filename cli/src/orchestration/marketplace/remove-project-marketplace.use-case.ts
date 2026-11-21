@@ -4,7 +4,7 @@ import type { MarketplaceRemovalResult } from "../../contexts/distribution/contr
 import type { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import type { DetachPluginClaims } from "../../contexts/installation/contract/plugin-claims.js";
 import type { Scope } from "../../shared/domain/scope.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
+import type { Prompter } from "../ports/prompter.js";
 
 export interface RemoveProjectMarketplaceRequest {
   name: string;

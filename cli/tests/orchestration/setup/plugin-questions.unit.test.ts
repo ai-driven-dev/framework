@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginSourceMatch } from "../../../src/contexts/distribution/contract/plugin-source-match.js";
 import { AmbiguousPluginMatchError } from "../../../src/orchestration/orchestration.error.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import {
   askWhichMatch,
   type WhichMatchQuestion,
 } from "../../../src/orchestration/setup/plugin-questions.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 
 function match(marketplaceName: string): PluginSourceMatch {

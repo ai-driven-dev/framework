@@ -10,11 +10,11 @@ import type { ManifestRepository } from "../../../../src/contexts/installation/p
 import type { PluginFetcher } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { Platform } from "../../../../src/contexts/installation/ports/platform.js";
 import type { PluginDistributionReader } from "../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
+import type { Prompter } from "../../../../src/orchestration/ports/prompter.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
-import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { FakePlatform } from "./fake-platform.fake.js";
 
@@ -39,7 +39,7 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
         parts.assetProvider
       ),
       fs,
-      prompter,
+      conflicts: prompter,
       logger,
     },
     registeredTools()

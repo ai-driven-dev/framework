@@ -12,8 +12,8 @@ import {
   NoMarketplacesRegisteredError,
 } from "../../../src/orchestration/orchestration.error.js";
 import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { InvalidPluginManifestError } from "../../../src/shared/domain/shared.error.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";

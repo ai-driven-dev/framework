@@ -7,7 +7,7 @@ import type {
   ProjectCleanPlan,
 } from "../../contexts/installation/application/plan-project-clean.use-case.js";
 import type { ToolId } from "../../shared/domain/tool.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
+import type { Prompter } from "../ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";
 
 export interface CleanProjectRequest {
