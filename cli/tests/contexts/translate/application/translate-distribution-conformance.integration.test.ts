@@ -1,17 +1,21 @@
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
-import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
 import { translator } from "../testing/engine-kit.builder.js";
+import {
+  distributionOf,
+  FRAMEWORK_SOURCE,
+  FRAMEWORK_SOURCES,
+} from "../testing/framework-real-distribution.builder.js";
 
-const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");
+const SOURCE = FRAMEWORK_SOURCE;
 const OUT = resolve("/tmp/aidd-conformance-out").replaceAll("\\", "/");
 const PLUGINS = [
   "aidd-vcs",
@@ -66,12 +70,7 @@ const DIVERGENCES: readonly Divergence[] = [
   },
 ];
 
-const SOURCES = [
-  { name: "claude", format: TOOL.claude, manifest: ".claude-plugin/plugin.json" },
-  { name: "cursor", format: TOOL.cursor, manifest: ".cursor-plugin/plugin.json" },
-  { name: "codex", format: TOOL.codex, manifest: ".codex-plugin/plugin.json" },
-  { name: "copilot", format: TOOL.copilot, manifest: "plugin.json" },
-];
+const SOURCES = FRAMEWORK_SOURCES;
 /** The plugin manifest, which B copies from the source and A synthesizes, is checked apart. */
 const MANIFEST_DIVERGENCES = [
   "B writes the manifest at the plugin root, A in the tool's own manifest directory",
@@ -104,35 +103,6 @@ async function writtenByA(tree: InMemoryFileAdapter, tool: AiToolProfile, native
   const build = buildTree(fs, validator, assets, new CapturingLogger(), contract, mode);
   await build.execute({ sourceDir: SOURCE, outDir: OUT, target: tool.toolId, mode });
   return new Map(fs.listUnder(OUT).map((p) => [p.replaceAll("\\", "/"), fileAt(fs, p)]));
-}
-
-function distributionOf(
-  tree: InMemoryFileAdapter,
-  name: string,
-  source = SOURCES[0]
-): PluginDistribution {
-  const root = join(SOURCE, "plugins", name);
-  const files = tree.listUnder(root).map((path) => ({
-    relativePath: path.slice(root.length + 1).replaceAll("\\", "/"),
-    content: fileAt(tree, path),
-  }));
-  for (const f of files)
-    if (f.relativePath === SOURCES[0].manifest) f.relativePath = source.manifest;
-  const under = (dir: string) => files.filter((f) => f.relativePath.startsWith(`${dir}/`));
-  const components = {
-    commands: under("commands"),
-    agents: under("agents"),
-    skills: under("skills"),
-    rules: under("rules"),
-    hooks: under("hooks"),
-    mcp: files.filter((f) => f.relativePath === ".mcp.json"),
-  };
-  return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
-    format: source.format,
-    files,
-    components,
-  });
 }
 
 function isExplainedBy(
