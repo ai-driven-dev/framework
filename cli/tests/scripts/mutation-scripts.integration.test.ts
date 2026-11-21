@@ -3,6 +3,7 @@
  * selection, shard arguments, incremental carry and the canary verdict. The declaration
  * `mutation-scopes.json` is held against the source by `tests/architecture/mutation-covers-source`.
  */
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -30,6 +31,22 @@ function declaration(): { scopes: Readonly<Record<string, MutationScope>> } {
 }
 
 describe("the mutation scripts", () => {
+  it("reads a changed-file list longer than one environment variable can hold from stdin", () => {
+    const filler = Array.from(
+      { length: 4000 },
+      (_, i) => `docs/unrelated-${i}/a-long-enough-file-name.md`
+    );
+    const changed = [...filler, "cli/src/shared/domain/anything.ts"].join("\n");
+    const run = spawnSync("node", [join(CLI_ROOT, "scripts", "mutation-scopes-to-run.mjs")], {
+      input: changed,
+      env: { ...process.env, ALL: "false" },
+      encoding: "utf8",
+    });
+    expect(changed.length).toBeGreaterThan(131072);
+    expect(run.status).toBe(0);
+    expect(JSON.parse(run.stdout).map((leg: { scope: string }) => leg.scope)).toContain("shared");
+  });
+
   const scopes = {
     shared: { mutate: "src/shared/**/*.ts", break: 70 },
     tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },

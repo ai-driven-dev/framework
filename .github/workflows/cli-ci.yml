@@ -206,8 +206,8 @@ jobs:
               changed="$(git diff --name-only "$BASE" "$HEAD")"
               all=false
             fi
-            legs="$(ALL="$all" CHANGED="$changed" node cli/scripts/mutation-scopes-to-run.mjs)"
-            sharded="$(ALL="$all" CHANGED="$changed" OUTPUT=sharded node cli/scripts/mutation-scopes-to-run.mjs)"
+            legs="$(printf '%s\n' "$changed" | ALL="$all" node cli/scripts/mutation-scopes-to-run.mjs)"
+            sharded="$(printf '%s\n' "$changed" | ALL="$all" OUTPUT=sharded node cli/scripts/mutation-scopes-to-run.mjs)"
           fi
           echo "mutation legs: $legs"
           echo "sharded scopes: $sharded"

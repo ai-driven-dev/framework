@@ -65,7 +65,9 @@ export function shardedOf(names, scopes) {
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const scopes = JSON.parse(readFileSync(join(CLI_ROOT, "mutation-scopes.json"), "utf8")).scopes;
-  const changed = (process.env.CHANGED ?? "").split("\n").filter(Boolean);
+  // The changed files arrive on stdin: a pull request's list outgrows what one environment
+  // variable can carry to a child process.
+  const changed = readFileSync(0, "utf8").split("\n").filter(Boolean);
   const names = scopesToRun(changed, scopes, { all: process.env.ALL === "true" });
   // `legs` feeds the mutation matrix; `sharded` the jobs that score a split scope once.
   const output =
