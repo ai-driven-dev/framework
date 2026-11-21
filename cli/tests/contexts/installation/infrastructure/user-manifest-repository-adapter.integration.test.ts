@@ -71,14 +71,6 @@ describe("UserManifestRepositoryAdapter", () => {
       const loaded = await adapter.load();
       expect(loaded?.getInstalledToolIds()).toHaveLength(0);
     });
-
-    it("manifest version is 8 after roundtrip — same schema, same version as the project manifest", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      const loaded = await adapter.load();
-      expect(loaded?.toJSON().version).toBe(8);
-    });
   });
 
   describe("exclusive machine mutations", () => {

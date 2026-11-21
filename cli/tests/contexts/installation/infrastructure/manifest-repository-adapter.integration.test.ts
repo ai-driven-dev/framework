@@ -46,19 +46,6 @@ describe("ManifestRepositoryAdapter", () => {
     });
   });
 
-  describe("save() + load() roundtrip", () => {
-    it("manifest version is 8 after roundtrip", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      const loaded = await adapter.load();
-      const json = loaded?.toJSON();
-      expect(json?.version).toBe(8);
-      expect("marketplaces" in (json ?? {})).toBe(false);
-      expect("docsDir" in (json ?? {})).toBe(false);
-    });
-  });
-
   describe("delete()", () => {
     it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();

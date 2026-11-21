@@ -31,7 +31,6 @@ export const AXES = [
   "task",
   "ticket",
 ];
-export const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
 
 export const S_BRANCH = "a1b2c3d4-0000-4000-8000-000000000001";
 const S_NOTHING = "b2c3d4e5-0000-4000-8000-000000000002";

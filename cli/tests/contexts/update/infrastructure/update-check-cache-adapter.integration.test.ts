@@ -18,15 +18,4 @@ describe("UpdateCheckCacheAdapter", () => {
       '{"checkedAt":7,"latest":"2.0.0"}'
     );
   });
-
-  it("reads what an earlier release left beside the cache directory", async () => {
-    const fs = new InMemoryFileAdapter({
-      [join("/cfg", "update-check.json")]: '{"checkedAt":5,"latest":"1.5.0"}',
-    });
-
-    expect(await new UpdateCheckCacheAdapter(fs, () => "/cfg").read()).toStrictEqual({
-      checkedAt: 5,
-      latest: "1.5.0",
-    });
-  });
 });

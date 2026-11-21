@@ -8,11 +8,8 @@ import type {
 import type { BuiltToolConfig } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../src/contexts/tools/domain/profile.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
-import type { AiToolId, ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";
-import {
-  TOOL as REGISTERED_TOOL_IDS,
-  resolveRegisteredToolId as registeredToolIdResolver,
-} from "./registered-tools.builder.js";
+import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
+import { TOOL as REGISTERED_TOOL_IDS } from "./registered-tools.builder.js";
 
 /** A catalog over the given profiles, in the given order, the registered ones when none is given.
  * Built inside the `it` that reads it: a catalog is a value, never shared state. */
@@ -52,6 +49,3 @@ export function registeredAiConfig(id: AiToolId): AiTool {
 /** The registered ids, minted by the shared kit. Transitional alias: callers move to
  * tests/shared/testing/registered-tools.ts, then this goes. */
 export const TOOL = REGISTERED_TOOL_IDS;
-
-/** The shared resolver, under the name its callers here already use. */
-export const resolveRegisteredToolId: ToolIdResolver = registeredToolIdResolver;

@@ -4,8 +4,6 @@ import { sandboxGitEnv } from "../../../shared/testing/git-sandbox.builder.js";
 import {
   type Aidd,
   declareBranch as declareBranchOn,
-  held as heldIn,
-  json as jsonOf,
   type ReportPaths,
   reportEnv,
   reportPaths,
@@ -18,13 +16,6 @@ import {
 
 let env: Awaited<ReturnType<typeof createTestEnv>>;
 let paths: ReportPaths;
-
-/** What the running test sees of its sandbox, fresh for each test. */
-export const sandbox = {
-  get telemetry() {
-    return paths.telemetry;
-  },
-};
 
 export const aidd: Aidd = (args, extra = {}, cwd = paths.repo) =>
   runCli(["telemetry", ...args], cwd, env.fakeHome, { env: reportEnv(paths, extra) });
@@ -41,6 +32,4 @@ export function useReportSandbox(): void {
   });
 }
 
-export const held = () => heldIn(paths);
 export const declareBranch = () => declareBranchOn(aidd);
-export const json = (axis: string) => jsonOf(aidd, axis);

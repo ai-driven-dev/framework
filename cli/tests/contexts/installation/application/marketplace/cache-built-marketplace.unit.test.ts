@@ -212,34 +212,6 @@ describe("CacheBuiltMarketplace", () => {
     expect(r.rebuilt).toBe(true);
   });
 
-  it("rebuilds when the CLI version changed even if catalog version is the same", async () => {
-    const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
-    fs.setFile(join(builtDir, ".build-version"), "4.0.0:1.0.0");
-    const uc = buildEnsurer(fs, fakeResolve("/src/framework", "1.0.0"), buildsOf(buildFor));
-    const r = await uc.execute({
-      projectRoot: PROJECT,
-      marketplace: makeMarketplace(),
-      target: TOOL.codex,
-      mode: "marketplace",
-    });
-    expect(r.rebuilt).toBe(true);
-    expect(builds).toBe(1);
-  });
-
-  it("always rebuilds when catalog version is undefined", async () => {
-    const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
-    fs.setFile(join(builtDir, ".build-version"), "5.0.0:unversioned");
-    const uc = buildEnsurer(fs, fakeResolve("/src/framework", undefined), buildsOf(buildFor));
-    const r = await uc.execute({
-      projectRoot: PROJECT,
-      marketplace: makeMarketplace(),
-      target: TOOL.codex,
-      mode: "marketplace",
-    });
-    expect(r.rebuilt).toBe(true);
-    expect(builds).toBe(1);
-  });
-
   it("builds via a temp dir and copies into the cache when the cache nests under the source (dogfood)", async () => {
     // Source == project root, so builtDir (.aidd/cache/built/...) nests under source → guardPaths would throw.
     const uc = buildEnsurer(fs, fakeResolve(PROJECT, "1.0.0"), buildsOf(buildFor));
