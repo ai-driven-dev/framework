@@ -5,8 +5,8 @@ import type {
   PlanPluginInstallCommand,
 } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
 import { parsePluginSpec } from "../../contexts/installation/contract/plugin-spec.js";
-import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
+import { parsePluginSourceShorthand } from "../domain/source-shorthand.model.js";
 import { InteractiveOnlyError } from "../orchestration.error.js";
 import type { ConfirmPluginSourceTrust } from "./confirm-plugin-source-trust.js";
 import type { PluginInstallFromMarketplace } from "./install-from-marketplace.js";

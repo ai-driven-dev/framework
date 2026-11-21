@@ -1,6 +1,7 @@
 import { isScope } from "../../../../shared/domain/scope.js";
 import { isSemver } from "../../../../shared/domain/semver.js";
-import { parsePluginSource, serializePluginSource } from "../../../../shared/domain/source.js";
+import { serializePluginSource } from "../../../../shared/domain/source.js";
+import { parsePluginSource } from "../../../../shared/domain/source-parsing.js";
 import {
   InvalidPluginNameError,
   InvalidPluginVersionError,

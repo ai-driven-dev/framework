@@ -1,10 +1,7 @@
 import { isScope, type Scope } from "../../../shared/domain/scope.js";
 import { InvalidMarketplaceNameError } from "../../../shared/domain/shared.error.js";
-import {
-  type PluginSource,
-  parsePluginSource,
-  serializePluginSource,
-} from "../../../shared/domain/source.js";
+import { type PluginSource, serializePluginSource } from "../../../shared/domain/source.js";
+import { parsePluginSource } from "../../../shared/domain/source-parsing.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 import { InvalidMarketplaceScopeError } from "./distribution.error.js";
 

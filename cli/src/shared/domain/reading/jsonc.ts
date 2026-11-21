@@ -24,27 +24,25 @@ function readStringLiteral(content: string, from: number): { text: string; end: 
   return { text: content.slice(from, end), end };
 }
 
+/** What survives of the text at `from`, and where the next token starts. */
+function readToken(content: string, from: number): { text: string; end: number } {
+  const ch = content[from];
+  const next = content[from + 1];
+  if (ch === '"') return readStringLiteral(content, from);
+  if (ch === "/" && next === "/") return { text: "", end: endOfLineComment(content, from) };
+  if (ch === "/" && next === "*") return { text: "", end: endOfBlockComment(content, from) };
+  if (ch === "," && isTrailingComma(content, from)) return { text: "", end: from + 1 };
+  return { text: ch, end: from + 1 };
+}
+
 // No inverse: stripJsonComments is lossy: stripped comments are not recoverable.
 export function stripJsonComments(content: string): string {
   let result = "";
   let i = 0;
   while (i < content.length) {
-    const ch = content[i];
-    const next = content[i + 1];
-    if (ch === '"') {
-      const { text, end } = readStringLiteral(content, i);
-      result += text;
-      i = end;
-    } else if (ch === "/" && next === "/") {
-      i = endOfLineComment(content, i);
-    } else if (ch === "/" && next === "*") {
-      i = endOfBlockComment(content, i);
-    } else if (ch === "," && isTrailingComma(content, i)) {
-      i++;
-    } else {
-      result += ch;
-      i++;
-    }
+    const { text, end } = readToken(content, i);
+    result += text;
+    i = end;
   }
   return result;
 }

@@ -50,17 +50,14 @@ export function compareSemver(a: string, b: string): -1 | 0 | 1 {
  * digits-only, lexically otherwise, and the shorter list loses a tie on a shared
  * prefix. */
 function comparePrerelease(a: readonly string[], b: readonly string[]): -1 | 0 | 1 {
-  if (a.length === 0 && b.length === 0) return 0;
-  if (a.length === 0) return 1;
-  if (b.length === 0) return -1;
-  const length = Math.max(a.length, b.length);
-  for (let i = 0; i < length; i++) {
-    if (a[i] === undefined) return -1;
-    if (b[i] === undefined) return 1;
+  const releaseOrder = compareOrdered(Number(a.length === 0), Number(b.length === 0));
+  if (releaseOrder !== 0) return releaseOrder;
+  const shared = Math.min(a.length, b.length);
+  for (let i = 0; i < shared; i++) {
     const cmp = comparePrereleaseIdentifier(a[i], b[i]);
     if (cmp !== 0) return cmp;
   }
-  return 0;
+  return compareOrdered(a.length, b.length);
 }
 
 const NUMERIC_IDENTIFIER = /^\d+$/;

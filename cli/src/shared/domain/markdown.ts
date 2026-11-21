@@ -83,29 +83,29 @@ export function serializeFrontmatter(
 function parseYamlLike(lines: string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    const keyOnlyMatch = /^(\w[\w-]*):\s*$/.exec(line);
-    const keyValueMatch = /^(\w[\w-]*):\s*([^\n]+)/.exec(line);
-    if (keyOnlyMatch) {
-      const { items, next } = collectListBlock(lines, i + 1);
-      result[keyOnlyMatch[1]] = items;
-      i = next;
-    } else if (keyValueMatch) {
-      const rawValue = keyValueMatch[2].trim();
-      if (isBlockScalarIndicator(rawValue)) {
-        const { value, next } = collectScalarBlock(lines, i + 1, rawValue.startsWith(">"));
-        result[keyValueMatch[1]] = value;
-        i = next;
-      } else {
-        result[keyValueMatch[1]] = parseScalar(rawValue);
-        i++;
-      }
-    } else {
-      i++;
-    }
-  }
+  while (i < lines.length) i = readYamlEntry(lines, i, result);
   return result;
+}
+
+/** Reads the entry starting at `index` into `result` and returns the index of the next line. */
+function readYamlEntry(lines: string[], index: number, result: Record<string, unknown>): number {
+  const line = lines[index];
+  const keyOnlyMatch = /^(\w[\w-]*):\s*$/.exec(line);
+  if (keyOnlyMatch) {
+    const { items, next } = collectListBlock(lines, index + 1);
+    result[keyOnlyMatch[1]] = items;
+    return next;
+  }
+  const keyValueMatch = /^(\w[\w-]*):\s*([^\n]+)/.exec(line);
+  if (!keyValueMatch) return index + 1;
+  const rawValue = keyValueMatch[2].trim();
+  if (!isBlockScalarIndicator(rawValue)) {
+    result[keyValueMatch[1]] = parseScalar(rawValue);
+    return index + 1;
+  }
+  const { value, next } = collectScalarBlock(lines, index + 1, rawValue.startsWith(">"));
+  result[keyValueMatch[1]] = value;
+  return next;
 }
 
 function collectListBlock(lines: string[], start: number): { items: string[]; next: number } {
@@ -139,16 +139,26 @@ function isBlockScalarIndicator(s: string): boolean {
   return s === ">-" || s === ">" || s === "|-" || s === "|";
 }
 
-function parseScalar(value: string): unknown {
-  if (value === "true") return true;
-  if (value === "false") return false;
-  if (value === "null" || value === "~") return null;
-  if (isJsonArray(value)) return JSON.parse(value);
-  if (value.length > 1 && value.startsWith("'") && value.endsWith("'")) {
+const SCALAR_LITERALS = new Map<string, unknown>([
+  ["true", true],
+  ["false", false],
+  ["null", null],
+  ["~", null],
+]);
+
+function unquote(value: string): string | undefined {
+  if (value.length < 2) return undefined;
+  if (value.startsWith("'") && value.endsWith("'")) {
     return value.slice(1, -1).replaceAll("''", "'");
   }
-  if (value.length > 1 && value.startsWith('"') && value.endsWith('"')) {
+  if (value.startsWith('"') && value.endsWith('"')) {
     return value.slice(1, -1).replaceAll('\\"', '"');
   }
-  return value;
+  return undefined;
+}
+
+function parseScalar(value: string): unknown {
+  if (SCALAR_LITERALS.has(value)) return SCALAR_LITERALS.get(value);
+  if (isJsonArray(value)) return JSON.parse(value);
+  return unquote(value) ?? value;
 }
