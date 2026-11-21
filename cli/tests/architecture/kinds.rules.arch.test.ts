@@ -8,6 +8,11 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   answerViolations,
+  STORED_ANSWERS,
+  sectionViolations,
+  storedValueViolations,
+} from "./kind-answer-rules.js";
+import {
   compositionViolations,
   constructionViolations,
   contractReaderViolations,
@@ -19,14 +24,13 @@ import {
   isPortFile,
   portViolations,
   profileViolations,
-  repositoryViolations,
-  STORED_ANSWERS,
-  scopeViolations,
-  sectionViolations,
-  sizeViolations,
-  storedValueViolations,
-  translateViolations,
 } from "./kind-rules.js";
+import {
+  repositoryViolations,
+  scopeViolations,
+  sizeViolations,
+  translateViolations,
+} from "./kind-text-rules.js";
 import type { Violation } from "./kinds.js";
 import {
   CATALOG_PROFILE_METHODS,
