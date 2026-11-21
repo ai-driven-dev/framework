@@ -167,7 +167,7 @@ function frontMatterIssues(ctx, model, rule, say) {
   for (const [key, value] of Object.entries(model.fm)) {
     const line = ctx.fm.fieldLine[key] ?? 1;
     const allowed = rule.values?.[key];
-    if (!(key in ctx.fm.fields)) { if (!(rule.optional ?? []).includes(key)) say(1, undefined, `front matter key "${key}" missing`); }
+    if (!(key in ctx.fm.fields)) { if (!(rule.optional ?? []).includes(key)) say(1, undefined, `front matter key "${key}" missing, ${allowed ? `one of ${allowed.join(", ")}` : value === "" || SLOT.test(value) ? "fill it" : `set it to "${value}"`}`); }
     else if (SLOT.test(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}": placeholder left, fill it`);
     else if (allowed) { if (!allowed.includes(unquote(ctx.fm.fields[key]))) say(line, ctx.fm.fields[key], `front matter "${key}" must be one of ${allowed.join(", ")}`); }
     else if (value !== "" && !SLOT.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);

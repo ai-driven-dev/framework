@@ -124,12 +124,14 @@ function session(plugin, host, files = {}) {
   };
 }
 
-/** The lines a Stop answered, whatever the host's shape; null when it printed nothing. */
+/** The finding lines a Stop answered, after its fix hint, whatever the host's shape; null when it printed nothing. */
 function lines(stdout) {
   if (stdout === "") return null;
   const answer = JSON.parse(stdout);
   assert.equal(stdout.trim().split("\n").length, 1, "one answer per turn");
-  return (answer.reason ?? answer.followup_message).split("\n");
+  const [hint, ...found] = (answer.reason ?? answer.followup_message).split("\n");
+  assert.match(hint, /^These files break their AIDD contract\. /u, "the answer opens with the fix hint");
+  return found;
 }
 
 const PHASE = "aidd_docs/tasks/x/phase-1.md";
