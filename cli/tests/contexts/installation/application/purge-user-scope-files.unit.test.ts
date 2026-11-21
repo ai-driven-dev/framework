@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PurgeUserScopeFiles } from "../../../../src/contexts/installation/application/purge-user-scope-files.js";
 import { ActiveMachineDependentsError } from "../../../../src/contexts/installation/domain/installation.error.js";
@@ -109,7 +110,7 @@ describe("PurgeUserScopeFiles.proveWithdrawals", () => {
 
     const [withdrawal] = await purge.proveWithdrawals();
 
-    expect(withdrawal?.cacheRoot).toContain(HOME);
+    expect(withdrawal?.cacheRoot).toBe(join(HOME, ".codex", "plugins", "cache"));
   });
 });
 
