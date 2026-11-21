@@ -51,6 +51,7 @@ src/
 │   │   │   ├── restore/
 │   │   │   │   └── project/
 │   │   │   ├── shared/
+│   │   │   ├── status/
 │   │   │   ├── sync/
 │   │   │   └── update/
 │   │   ├── contract/
