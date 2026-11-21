@@ -30,26 +30,32 @@ export async function seedFromDirectory(
   });
 }
 
-async function walkDir(dir: string, callback: (path: string) => Promise<void>): Promise<void> {
-  let entries: { name: string; isDir: boolean }[];
+async function directoryEntries(dir: string): Promise<{ name: string; isDir: boolean }[]> {
   try {
     const dirents = await readdir(dir, { withFileTypes: true });
-    entries = dirents.map((d) => ({ name: d.name, isDir: d.isDirectory() }));
+    return dirents.map((d) => ({ name: d.name, isDir: d.isDirectory() }));
   } catch {
-    return;
+    return [];
   }
-  for (const entry of entries) {
+}
+
+async function visitFile(
+  fullPath: string,
+  callback: (path: string) => Promise<void>
+): Promise<void> {
+  // biome-ignore lint/plugin: seeding a fixture skips an unreadable entry
+  try {
+    const s = await stat(fullPath);
+    if (s.isFile()) await callback(fullPath);
+  } catch {
+    // skip unreadable files
+  }
+}
+
+async function walkDir(dir: string, callback: (path: string) => Promise<void>): Promise<void> {
+  for (const entry of await directoryEntries(dir)) {
     const fullPath = join(dir, entry.name);
-    if (entry.isDir) {
-      await walkDir(fullPath, callback);
-    } else {
-      // biome-ignore lint/plugin: seeding a fixture skips an unreadable entry
-      try {
-        const s = await stat(fullPath);
-        if (s.isFile()) await callback(fullPath);
-      } catch {
-        // skip unreadable files
-      }
-    }
+    if (entry.isDir) await walkDir(fullPath, callback);
+    else await visitFile(fullPath, callback);
   }
 }

@@ -21,24 +21,23 @@ export function stringList(value: unknown, what = "value"): string[] {
   return value.map(String);
 }
 
+function mutationScope(name: string, scope: unknown): MutationScope {
+  if (!isRecord(scope)) throw new Error(`expected scope ${name} to be an object`);
+  const { mutate, tests } = scope;
+  return {
+    mutate: typeof mutate === "string" ? mutate : stringList(mutate, `${name}.mutate`),
+    ...(typeof scope.break === "number" ? { break: scope.break } : {}),
+    ...(typeof scope.shards === "number" ? { shards: scope.shards } : {}),
+    ...(tests === undefined ? {} : { tests: stringList(tests, `${name}.tests`) }),
+    ...(scope.harnessOnly === true ? { harnessOnly: true } : {}),
+  };
+}
+
 /** The scopes of `mutation-scopes.json`, each field checked as the scripts read it. */
 export function mutationScopes(text: string): Record<string, MutationScope> {
   const { scopes } = parseJsonRecord(text);
   if (!isRecord(scopes)) throw new Error("expected `scopes` to be an object");
   return Object.fromEntries(
-    Object.entries(scopes).map(([name, scope]) => {
-      if (!isRecord(scope)) throw new Error(`expected scope ${name} to be an object`);
-      const { mutate, tests } = scope;
-      return [
-        name,
-        {
-          mutate: typeof mutate === "string" ? mutate : stringList(mutate, `${name}.mutate`),
-          ...(typeof scope.break === "number" ? { break: scope.break } : {}),
-          ...(typeof scope.shards === "number" ? { shards: scope.shards } : {}),
-          ...(tests === undefined ? {} : { tests: stringList(tests, `${name}.tests`) }),
-          ...(scope.harnessOnly === true ? { harnessOnly: true } : {}),
-        },
-      ];
-    })
+    Object.entries(scopes).map(([name, scope]) => [name, mutationScope(name, scope)])
   );
 }

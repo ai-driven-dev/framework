@@ -84,6 +84,67 @@ function substituteEnvironment(sandbox: NodeJS.ProcessEnv): () => void {
   };
 }
 
+function captureStreams(out: string[], err: string[]): MockInstance[] {
+  return [
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+      out.push(String(chunk));
+      return true;
+    }),
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+      err.push(String(chunk));
+      return true;
+    }),
+    vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
+      throw new ExitSignal(code ?? 0);
+    }) as typeof process.exit),
+  ];
+}
+
+/** Registers the real command tree on a fresh program, as `src/cli.ts` does minus its hooks. */
+async function buildProgram(): Promise<Command> {
+  const { wireTools } = await import("../../../src/composition/tools.js");
+  const tools = wireTools();
+  const program = new Command();
+  program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
+  const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
+  const depsFactory: DepsFactory = bindContainer(tools);
+  const { registerCommands } = await import(
+    "../../../src/presentation/commands/register-commands.js"
+  );
+  const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
+  registerCommands(program, {
+    tools,
+    createSlice: depsFactory,
+    telemetryRequests: wireTelemetryRequests(),
+    runCommand: async () => 0,
+    createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code), String),
+  });
+  return program;
+}
+
+/** Parses the arguments and answers the exit code, a thrown error counting as 1 on `err`. */
+async function parseToExitCode(
+  program: Command,
+  args: readonly string[],
+  err: string[]
+): Promise<number> {
+  const { outputOf } = await import("../../../src/presentation/commands/global-options.js");
+  const { failCommand } = await import(
+    "../../../src/presentation/errors/error-translator.presenter.js"
+  );
+  try {
+    await program.parseAsync(["node", "aidd", ...args]).catch((error: unknown) => {
+      if (error instanceof ExitSignal) throw error;
+      return failCommand(outputOf(program), error);
+    });
+    return typeof process.exitCode === "number" ? process.exitCode : 0;
+  } catch (error) {
+    if (error instanceof ExitSignal) return error.code;
+    err.push(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+}
+
 export async function runInProcess(
   args: readonly string[],
   options: InProcessOptions
@@ -114,65 +175,13 @@ export async function runInProcess(
       PWD: options.cwd,
     });
     spies.push(vi.spyOn(process, "cwd").mockReturnValue(options.cwd));
-    spies.push(
-      vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
-        out.push(String(chunk));
-        return true;
-      })
-    );
-    spies.push(
-      vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
-        err.push(String(chunk));
-        return true;
-      })
-    );
-    spies.push(
-      vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
-        throw new ExitSignal(code ?? 0);
-      }) as typeof process.exit)
-    );
+    spies.push(...captureStreams(out, err));
     Object.defineProperty(process.stdout, "isTTY", { value: false, configurable: true });
     process.exitCode = undefined;
 
     // A new process starts with an empty profile registry.
     vi.resetModules();
-    const { wireTools } = await import("../../../src/composition/tools.js");
-    const tools = wireTools();
-    const program = new Command();
-    program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
-    const depsFactory: DepsFactory = bindContainer(tools);
-    const { registerCommands } = await import(
-      "../../../src/presentation/commands/register-commands.js"
-    );
-    const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
-    registerCommands(program, {
-      tools,
-      createSlice: depsFactory,
-      telemetryRequests: wireTelemetryRequests(),
-      runCommand: async () => 0,
-      createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code), String),
-    });
-
-    const { outputOf } = await import("../../../src/presentation/commands/global-options.js");
-    const { failCommand } = await import(
-      "../../../src/presentation/errors/error-translator.presenter.js"
-    );
-
-    try {
-      await program.parseAsync(["node", "aidd", ...args]).catch((error: unknown) => {
-        if (error instanceof ExitSignal) throw error;
-        return failCommand(outputOf(program), error);
-      });
-      exitCode = typeof process.exitCode === "number" ? process.exitCode : 0;
-    } catch (error) {
-      if (error instanceof ExitSignal) {
-        exitCode = error.code;
-      } else {
-        err.push(`${error instanceof Error ? error.message : String(error)}\n`);
-        exitCode = 1;
-      }
-    }
+    exitCode = await parseToExitCode(await buildProgram(), args, err);
   } finally {
     for (const spy of spies) spy.mockRestore();
     restoreEnvironment();
