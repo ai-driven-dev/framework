@@ -71,24 +71,28 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("requiredTool", () => {
-    it("is null when not set", () => {
+  describe("the tool it requires", () => {
+    it("applies whatever is installed, and requires no tool, when none is set", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
       });
-      expect(cap.requiredTool()).toBeNull();
+      expect(cap.appliesWith(() => false)).toBe(true);
+      expect(cap.requires(TOOL.vscode)).toBe(false);
     });
 
-    it("is set when provided alongside staticContent", () => {
+    it("applies only once the tool it requires is installed, and requires that tool alone", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
         requiresTool: TOOL.vscode,
       });
-      expect(cap.requiredTool()).toBe("vscode");
+      expect(cap.appliesWith((toolId) => toolId === TOOL.vscode)).toBe(true);
+      expect(cap.appliesWith((toolId) => toolId === TOOL.cursor)).toBe(false);
+      expect(cap.requires(TOOL.vscode)).toBe(true);
+      expect(cap.requires(TOOL.cursor)).toBe(false);
     });
 
     it("throws when requiresTool is set without staticContent", () => {
@@ -110,7 +114,7 @@ describe("ConfigSection", () => {
         requiresTool: TOOL.vscode,
       });
       expect(cap.resolveStaticContent()).toBeNull();
-      expect(cap.requiredTool()).toBe("vscode");
+      expect(cap.requires(TOOL.vscode)).toBe(true);
     });
   });
 

@@ -42,7 +42,7 @@ export class PropagateAiSettingsToIde {
     const toMerge = this.tools
       .aiProfile(aiId)
       .settingsFiles()
-      .filter((c) => c.requiredTool() === ideId);
+      .filter((cap) => cap.requires(ideId));
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
       const [entry] = await this.trackedConfigFiles.mergeAndTrack(

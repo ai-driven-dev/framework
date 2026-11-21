@@ -193,8 +193,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("asks, in each settings file, for a registered tool", (profile, { registration }) => {
     const registered = registration.map((other) => other.toolId);
     for (const file of profile.settingsFiles()) {
-      const required = file.requiredTool();
-      if (required !== null) expect(registered).toContain(required);
+      expect(file.appliesWith((toolId) => registered.some((id) => id === toolId))).toBe(true);
     }
   }),
   aiCheck("routes a numbered command and its references to the same folder", (profile) => {

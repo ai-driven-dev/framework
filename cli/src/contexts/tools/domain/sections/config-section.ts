@@ -45,9 +45,16 @@ export class ConfigSection {
     return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
-  /** The tool that must be installed for this section's content to apply, or `null`. */
-  requiredTool(): string | null {
-    return this.#params.requiresTool ?? null;
+  /** Whether this section's content applies, `installed` telling which tools are there: a
+   * section that requires no tool always does. */
+  appliesWith(installed: (toolId: string) => boolean): boolean {
+    const required = this.#params.requiresTool;
+    return required === undefined || installed(required);
+  }
+
+  /** Whether this section's content applies only because `toolId` is installed. */
+  requires(toolId: string): boolean {
+    return this.#params.requiresTool === toolId;
   }
 
   /** The fixed content, inline or loaded through `loadAsset`; `null` when there is none, or when

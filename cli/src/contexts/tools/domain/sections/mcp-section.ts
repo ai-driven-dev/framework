@@ -69,10 +69,6 @@ export class McpConfigPart {
     return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
-  outputPath(): string {
-    return this.#params.outputPath;
-  }
-
   mergeStrategy(): "user-prime" | "framework-prime" | "none" {
     return this.#params.mergeStrategy ?? "user-prime";
   }
