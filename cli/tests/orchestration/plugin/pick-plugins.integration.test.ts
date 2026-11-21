@@ -39,7 +39,7 @@ function seedMarketplaceFile(
   dir: string,
   plugins: Array<Record<string, unknown>>
 ): void {
-  fs.writeFile(join(dir, ".claude-plugin/marketplace.json"), JSON.stringify({ plugins }));
+  fs.setFile(join(dir, ".claude-plugin/marketplace.json"), JSON.stringify({ plugins }));
 }
 
 function registerMarketplace(

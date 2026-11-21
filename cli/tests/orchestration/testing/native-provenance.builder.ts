@@ -122,7 +122,7 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
   );
   const machineRepo = new InMemoryManifestRepository(options.machine ?? null);
   const registry = new InMemoryMarketplaceRegistry();
-  registry.save(
+  registry.seed(
     PROJECT_ROOT,
     Marketplace.create({
       name: CATALOG,

@@ -45,8 +45,8 @@ function buildManifest(
 }
 
 describe("Manifest property tests", () => {
-  it("toJSON → fromJSON → toJSON is identity", () => {
-    fc.assert(
+  it("toJSON → fromJSON → toJSON is identity", async () => {
+    await fc.assert(
       fc.property(fc.array(toolEntryArb, { maxLength: 4 }), (tools) => {
         const m = buildManifest(tools);
         const firstSerialized = m.toJSON();
@@ -58,8 +58,8 @@ describe("Manifest property tests", () => {
     );
   });
 
-  it("fromJSON on v6 input round-trips cleanly (guard is a no-op at the supported version)", () => {
-    fc.assert(
+  it("fromJSON on v6 input round-trips cleanly (guard is a no-op at the supported version)", async () => {
+    await fc.assert(
       fc.property(fc.array(toolEntryArb, { maxLength: 4 }), (tools) => {
         const m = buildManifest(tools);
         const v6 = m.toJSON();

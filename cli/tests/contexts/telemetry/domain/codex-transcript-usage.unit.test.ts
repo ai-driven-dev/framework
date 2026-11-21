@@ -273,8 +273,8 @@ describe("a Codex session file to usage records", () => {
     expect(only([meta(), turn(), call({ usage: { ...USAGE, [field]: "9" } })])[key]).toBeNull();
   });
 
-  it("adds up to the call's total_tokens, whatever its counters (P2)", () => {
-    fc.assert(
+  it("adds up to the call's total_tokens, whatever its counters (P2)", async () => {
+    await fc.assert(
       fc.property(
         fc.nat(10_000),
         fc.nat(10_000),

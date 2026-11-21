@@ -163,8 +163,8 @@ function expectAxisToAddUp(report: Report, records: readonly StoredUsage[], orac
 }
 
 describe("every axis of a report adds up to the same totals", () => {
-  it("on any ledger, unknown counters included", () => {
-    fc.assert(
+  it("on any ledger, unknown counters included", async () => {
+    await fc.assert(
       fc.property(
         fc.array(usage, { maxLength: 40 }),
         facts,
@@ -182,8 +182,8 @@ describe("every axis of a report adds up to the same totals", () => {
     );
   }, 30_000);
 
-  it("whatever order the records arrive in", () => {
-    fc.assert(
+  it("whatever order the records arrive in", async () => {
+    await fc.assert(
       fc.property(fc.array(usage, { maxLength: 30 }), facts, (records, attributionFacts) => {
         for (const axis of REPORT_AXES) {
           expect(

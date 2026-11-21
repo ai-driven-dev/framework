@@ -257,8 +257,8 @@ function filtersOfRow(axis: ReportAxis, value: AxisValue): ReportFilters {
 }
 
 describe("selecting a row", () => {
-  it("keeps exactly the calls of that row, so it adds up to that row", () => {
-    fc.assert(
+  it("keeps exactly the calls of that row, so it adds up to that row", async () => {
+    await fc.assert(
       fc.property(
         fc.array(usage, { maxLength: 30 }),
         facts,

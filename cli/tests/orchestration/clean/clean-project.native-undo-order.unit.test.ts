@@ -64,7 +64,7 @@ describe("clean: native registration undo order", () => {
 
       function seedClaudeMarketplaceRegistry(): InMemoryMarketplaceRegistry {
         const registry = new InMemoryMarketplaceRegistry();
-        registry.save(
+        registry.seed(
           PROJECT_ROOT,
           Marketplace.create({
             name: CLAUDE_MARKETPLACE,

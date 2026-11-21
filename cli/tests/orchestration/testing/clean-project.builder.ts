@@ -177,7 +177,7 @@ export function claudeRefOnHost(scope?: Scope): ReadonlyMap<AiToolId, HostPlugin
 
 export function seedMarketplaceRegistry(): InMemoryMarketplaceRegistry {
   const registry = new InMemoryMarketplaceRegistry();
-  registry.save(
+  registry.seed(
     PROJECT_ROOT,
     Marketplace.create({
       name: MARKETPLACE,
