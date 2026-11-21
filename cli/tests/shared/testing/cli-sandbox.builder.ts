@@ -13,18 +13,9 @@ import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
-import { bindContainer } from "../../../src/composition/orchestration/deps-graph.js";
-import { createOutput } from "../../../src/composition/shared.js";
-import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
-import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/domain/git-environment.js";
-import { catalogOf } from "./catalog-of.builder.js";
 
 export const execFileAsync = promisify(execFile);
-
-export async function gitInit(cwd: string): Promise<void> {
-  await execFileAsync("git", ["init"], { cwd, env: withoutGitEnv(process.env) });
-}
 
 /**
  * No fallback to `dist/cli.js`: that path is shared across concurrent vitest runs, so a run
@@ -287,17 +278,6 @@ export async function runCli(
     const { stdout, stderr, code } = failedRunOf(error);
     return { stdout, stderr, exitCode: code ?? 1 };
   }
-}
-
-export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
-  const output = createOutput(false);
-  const deps = await bindContainer(catalogOf())(projectDir, { verbose: false }, output);
-  await new InitProject(
-    { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: new UpdateGitignore(deps.fs) },
-    catalogOf()
-  ).execute({
-    projectRoot: projectDir,
-  });
 }
 
 /**
