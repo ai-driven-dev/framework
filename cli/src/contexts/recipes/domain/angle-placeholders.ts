@@ -1,4 +1,5 @@
-import { type Fence, LINK_PATTERN, lineNumberAt } from "./markdown-scan.js";
+import type { Fence } from "./fence-scan.js";
+import { LINK_PATTERN, lineNumberAt } from "./markdown-scan.js";
 
 const HTML_TAGS = new Set([
   "a",

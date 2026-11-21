@@ -14,7 +14,7 @@ import {
 } from "../domain/source/marketplace-source-drift.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { CatalogProbeTool } from "../ports/host-tool.js";
-import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
+import { readCatalogIdentity } from "./read-marketplace-catalog-identity.js";
 
 export type HostMarketplaceSourceCheck =
   | MarketplaceSourceConflict
@@ -79,7 +79,7 @@ export async function hostMarketplaceSourceConflict(
       };
     }
   }
-  const registeredIdentity = await readMarketplaceCatalogIdentity(fs, tool, registeredSource);
+  const registeredIdentity = await readCatalogIdentity(fs, tool, registeredSource);
   return marketplaceSourceConflict(reading, requestedIdentity.name, {
     requestedSource,
     registeredIdentity,

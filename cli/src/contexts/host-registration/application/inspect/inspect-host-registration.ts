@@ -6,17 +6,15 @@ import type {
   InspectHostRegistrationResult,
 } from "../../contract/inspect-host-registration-result.js";
 import { answeredRegistry } from "../../domain/reading/host-registration-answers.js";
-import {
-  describePluginDiff,
-  pluginSetDifference,
-} from "../../domain/source/marketplace-source-conflict.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
 import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
+import type { CatalogProbeTool } from "../../ports/host-tool.js";
 import {
+  type HostMarketplaceSourceCheck,
   hostMarketplaceSourceConflict,
-  isDriftFound,
 } from "../host-marketplace-source-conflict.js";
-import { readMarketplaceCatalogIdentity } from "../read-marketplace-catalog-identity.js";
+import { readCatalogIdentity } from "../read-marketplace-catalog-identity.js";
+import { pluginFinding, sourceFinding } from "./host-registration-findings.js";
 
 /** A plugin the host is expected to carry, and the ref to look it up by: `ref` is absent exactly
  * when nothing can build one. */
@@ -44,6 +42,17 @@ export interface InspectHostRegistrationCommand {
   readonly hosts: readonly InspectedHost[];
 }
 
+/** What the host registries are read through. Only a tool whose profile declares a marketplace
+ * registry is ever looked up in `marketplaceRegistries`. */
+export interface InspectHostRegistrationDeps {
+  readonly fs: FileReader;
+  /** Host plugin registry readers, one per tool whose own CLI activates plugins. */
+  readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
+  readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
+  /** The platform whose path rules decide what a host's stored source names. */
+  readonly platform: string;
+}
+
 /**
  * Asks each host's own registries whether they carry what aidd asked them to register, and
  * whether a marketplace they already hold points somewhere other than this project's build.
@@ -54,14 +63,7 @@ export interface InspectHostRegistrationCommand {
  */
 export class InspectHostRegistration {
   constructor(
-    private readonly fs: FileReader,
-    /** Host plugin registry readers, one per tool whose own CLI activates plugins. */
-    private readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>,
-    /** Host marketplace registry readers. Only a tool whose profile declares a marketplace
-     * registry is ever looked up here. */
-    private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
-    /** The platform whose path rules decide what a host's stored source names. */
-    private readonly platform: string,
+    private readonly deps: InspectHostRegistrationDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -79,29 +81,11 @@ export class InspectHostRegistration {
     const { tool } = host;
     if (this.tools.aiProfile(tool).nativeActivation() === undefined) return [];
     if (host.expectedPlugins.length === 0) return [];
-    const reading = await this.pluginRegistries.get(tool)?.read(command.projectRoot);
+    const reading = await this.deps.pluginRegistries.get(tool)?.read(command.projectRoot);
     const answered = answeredRegistry(tool, reading, true);
     if ("detail" in answered)
       return [{ kind: "registry-unanswerable", tool, detail: answered.detail }];
-    const findings: HostRegistrationFinding[] = [];
-    for (const item of host.expectedPlugins) {
-      if (item.ref === undefined) {
-        findings.push({ kind: "plugin-unrecorded", tool, plugin: item.plugin });
-        continue;
-      }
-      const entry = answered.refs.get(item.ref);
-      if (entry === undefined) {
-        findings.push({ kind: "plugin-missing", tool, ref: item.ref, location: answered.location });
-      } else if (!entry.enabled) {
-        findings.push({
-          kind: "plugin-disabled",
-          tool,
-          ref: item.ref,
-          location: answered.location,
-        });
-      }
-    }
-    return findings;
+    return host.expectedPlugins.flatMap((item) => pluginFinding(tool, item, answered));
   }
 
   private async inspectSources(
@@ -111,51 +95,46 @@ export class InspectHostRegistration {
     const { tool } = host;
     const profile = this.tools.aiProfile(tool);
     if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) return [];
-    const reader = this.marketplaceRegistries.get(tool);
+    const reader = this.deps.marketplaceRegistries.get(tool);
     if (reader === undefined) return [];
     const findings: HostRegistrationFinding[] = [];
     for (const marketplace of host.marketplaces) {
-      const requestedIdentity = await readMarketplaceCatalogIdentity(
-        this.fs,
-        profile,
-        marketplace.builtDir
-      );
-      if (requestedIdentity === undefined) continue;
-      // Keyed by the catalog's own declared name, never `marketplace.name` (aidd's local alias): a
-      // host's registry only ever holds an entry under the name its own catalog declares. The
-      // drift context goes to every entry whatever its recorded `scope`, since an unmigrated
-      // project-scope registration is exactly the case it decides.
-      const check = await hostMarketplaceSourceConflict(
-        { fs: this.fs, tool: profile, reader },
-        {
-          requestedSource: marketplace.builtDir,
-          requestedIdentity,
-          driftContext: {
-            userCacheRoot: command.userCacheRoot,
-            projectRoot: command.projectRoot,
-            marketplaceName: marketplace.name,
-            target: tool,
-            platform: this.platform,
-          },
-        }
-      );
-      if (check === undefined) continue;
-      findings.push(
-        isDriftFound(check)
-          ? { kind: "source-drift", tool, found: check }
-          : {
-              kind: "source-conflict",
-              tool,
-              name: check.name,
-              location: check.location,
-              registeredSource: check.registeredSource,
-              requestedSource: check.requestedSource,
-              pluginDiff: describePluginDiff(
-                pluginSetDifference(check.registeredIdentity, check.requestedIdentity)
-              ),
-            }
-      );
+      const check = await this.checkSource({ command, tool, profile, reader }, marketplace);
+      if (check !== undefined) findings.push(sourceFinding(tool, check));
     }
     return findings;
+  }
+
+  // Keyed by the catalog's own declared name, never `marketplace.name` (aidd's local alias): a
+  // host's registry only ever holds an entry under the name its own catalog declares. The
+  // drift context goes to every entry whatever its recorded `scope`, since an unmigrated
+  // project-scope registration is exactly the case it decides.
+  private async checkSource(
+    scene: {
+      readonly command: InspectHostRegistrationCommand;
+      readonly tool: AiToolId;
+      readonly profile: CatalogProbeTool;
+      readonly reader: HostMarketplaceRegistry;
+    },
+    marketplace: InspectedMarketplace
+  ): Promise<HostMarketplaceSourceCheck | undefined> {
+    const { command, tool, profile, reader } = scene;
+    const { fs, platform } = this.deps;
+    const requestedIdentity = await readCatalogIdentity(fs, profile, marketplace.builtDir);
+    if (requestedIdentity === undefined) return undefined;
+    return hostMarketplaceSourceConflict(
+      { fs, tool: profile, reader },
+      {
+        requestedSource: marketplace.builtDir,
+        requestedIdentity,
+        driftContext: {
+          userCacheRoot: command.userCacheRoot,
+          projectRoot: command.projectRoot,
+          marketplaceName: marketplace.name,
+          target: tool,
+          platform,
+        },
+      }
+    );
   }
 }

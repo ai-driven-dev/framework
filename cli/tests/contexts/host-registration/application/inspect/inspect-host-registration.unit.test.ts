@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type InspectedHost,
   InspectHostRegistration,
+  type InspectHostRegistrationDeps,
 } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -23,15 +24,17 @@ function plugins(tool: AiToolId, reading: HostPluginRegistryReading) {
 function inspector(
   parts: {
     fs?: InMemoryFileAdapter;
-    pluginRegistries?: ConstructorParameters<typeof InspectHostRegistration>[1];
-    marketplaceRegistries?: ConstructorParameters<typeof InspectHostRegistration>[2];
+    pluginRegistries?: InspectHostRegistrationDeps["pluginRegistries"];
+    marketplaceRegistries?: InspectHostRegistrationDeps["marketplaceRegistries"];
   } = {}
 ) {
   return new InspectHostRegistration(
-    parts.fs ?? new InMemoryFileAdapter(),
-    parts.pluginRegistries ?? new Map(),
-    parts.marketplaceRegistries ?? new Map(),
-    "linux",
+    {
+      fs: parts.fs ?? new InMemoryFileAdapter(),
+      pluginRegistries: parts.pluginRegistries ?? new Map(),
+      marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
+      platform: "linux",
+    },
     registeredTools()
   );
 }

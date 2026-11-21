@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { McpConfigError } from "../../../../shared/domain/shared.error.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
@@ -23,7 +24,7 @@ function parsePluginMcp(pluginName: string, content: string): unknown {
     return JSON.parse(content);
   } catch (err) {
     throw new McpConfigError(
-      `Cannot parse plugin '${pluginName}' MCP config: ${err instanceof Error ? err.message : String(err)}`
+      `Cannot parse plugin '${pluginName}' MCP config: ${errorMessage(err)}`
     );
   }
 }

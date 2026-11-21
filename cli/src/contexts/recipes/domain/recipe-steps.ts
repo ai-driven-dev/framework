@@ -1,4 +1,5 @@
-import { type Heading, hasTable, type Report, type ScannedRecipe } from "./markdown-scan.js";
+import type { Report } from "./fence-scan.js";
+import { type Heading, hasTable, type ScannedRecipe } from "./markdown-scan.js";
 
 interface RecipeStep extends Heading {
   number: number;

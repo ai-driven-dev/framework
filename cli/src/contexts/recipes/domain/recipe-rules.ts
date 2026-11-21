@@ -1,11 +1,11 @@
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { findAnglePlaceholders, maskAngleSyntaxBlocks } from "./angle-placeholders.js";
+import type { Fence, Report } from "./fence-scan.js";
 import { headingAnchors } from "./heading-anchors.js";
 import {
-  type Fence,
   lineNumberAt,
   type RecipeFinding,
   type RecipeLink,
-  type Report,
   recipeLinks,
   reporter,
   type ScannedRecipe,
@@ -81,11 +81,7 @@ function checkJsonExamples(blocks: Fence[], report: Report): void {
     try {
       JSON.parse(block.body);
     } catch (error) {
-      report(
-        block.start + 1,
-        "json-syntax",
-        `Fix the JSON example: ${error instanceof Error ? error.message : String(error)}`
-      );
+      report(block.start + 1, "json-syntax", `Fix the JSON example: ${errorMessage(error)}`);
     }
   }
 }

@@ -5,8 +5,8 @@ import type { UserSourceReferences } from "../ports/user-source-references.js";
 import {
   frameworkSourceIsShared,
   otherProjectsReferencing,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
+  resolveReferenceRoot,
+  toleratingUnreadableRefs,
 } from "./shared-source-reference-support.js";
 
 /** Where a project's own claim on the shared source stands, read before any host cleanup. */
@@ -43,8 +43,8 @@ export function readSharedSourceClaim(parts: {
       frameworkSourceIsShared(m.name, m.scope, frameworkMarketplaceName)
     );
     if (shared === undefined) return undefined;
-    return toleratingUnreadableSourceReferences(logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(fs, request.projectRoot);
+    return toleratingUnreadableRefs(logger, undefined, async () => {
+      const resolvedRoot = await resolveReferenceRoot(fs, request.projectRoot);
       return {
         alias: shared.name,
         resolvedRoot,

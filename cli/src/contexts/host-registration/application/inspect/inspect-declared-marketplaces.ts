@@ -31,20 +31,25 @@ export class InspectDeclaredMarketplaces {
     command: InspectDeclaredMarketplacesCommand
   ): Promise<InspectDeclaredMarketplacesResult> {
     const findings: UndeclaredMarketplace[] = [];
-    for (const toolId of command.toolIds) {
-      const profile = this.tools.profile(toolId);
-      const settings = this.untrackedSettingsOf(profile);
-      if (settings === undefined) continue;
-      // A tool that writes its own registration cannot have written one while its binary was out
-      // of reach: reporting the absence would report that an uninstalled tool is unconfigured.
-      if (!this.canRegisterItself(profile)) continue;
-      const registered = await this.registeredNames(command.projectRoot, settings);
-      for (const name of command.marketplaceNames) {
-        if (registered.has(name)) continue;
-        findings.push({ tool: toolId, name, file: settings.file });
-      }
-    }
+    for (const toolId of command.toolIds)
+      findings.push(...(await this.undeclaredBy(command, toolId)));
     return { findings };
+  }
+
+  private async undeclaredBy(
+    command: InspectDeclaredMarketplacesCommand,
+    toolId: string
+  ): Promise<UndeclaredMarketplace[]> {
+    const profile = this.tools.profile(toolId);
+    const settings = this.untrackedSettingsOf(profile);
+    if (settings === undefined) return [];
+    // A tool that writes its own registration cannot have written one while its binary was out
+    // of reach: reporting the absence would report that an uninstalled tool is unconfigured.
+    if (!this.canRegisterItself(profile)) return [];
+    const registered = await this.registeredNames(command.projectRoot, settings);
+    return command.marketplaceNames
+      .filter((name) => !registered.has(name))
+      .map((name) => ({ tool: toolId, name, file: settings.file }));
   }
 
   private untrackedSettingsOf(

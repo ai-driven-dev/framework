@@ -1,4 +1,4 @@
-import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import type { InspectHostRegistrationDeps } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.js";
 import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
@@ -15,7 +15,7 @@ import { checkRegistrationOver } from "./build-check-registration.builder.js";
 
 export function buildDoctorUseCase(
   deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
-  hostRegistries: ConstructorParameters<typeof InspectHostRegistration>[1] = new Map()
+  hostRegistries: InspectHostRegistrationDeps["pluginRegistries"] = new Map()
 ): RunDoctor {
   const loadManifest = new LoadManifest(deps.manifestRepo);
   return new RunDoctor(

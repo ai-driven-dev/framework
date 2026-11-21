@@ -1,5 +1,5 @@
 import { samePathSegment } from "../../../shared/domain/paths.js";
-import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/shared.error.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -69,7 +69,7 @@ export function describeGuardedPluginRefMessage(input: {
  * Every project this file still names as referencing the shared source, minus `ownRoot`: the one
  * denominator every caller reads, so a project that never had a claim of its own to drop reads the
  * same "other projects" fact as one that just dropped one. `ownRoot` must already be resolved
- * through `resolveProjectRootForReferences`; this does not resolve it itself.
+ * through `resolveReferenceRoot`; this does not resolve it itself.
  */
 export async function otherProjectsReferencing(
   userSourceReferences: UserSourceReferences,
@@ -87,16 +87,8 @@ export async function otherProjectsReferencing(
  * would never match what a later `clean` resolves for the same project. Falls back to the path as
  * given only on `ENOENT`, so `clean` can still drop a reference to a project since removed.
  */
-export async function resolveProjectRootForReferences(
-  fs: FileReader,
-  projectRoot: string
-): Promise<string> {
-  try {
-    return await fs.realpath(projectRoot);
-  } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return projectRoot;
-    throw error;
-  }
+export async function resolveReferenceRoot(fs: FileReader, projectRoot: string): Promise<string> {
+  return whenAbsent(() => fs.realpath(projectRoot), projectRoot);
 }
 
 /**
@@ -106,7 +98,7 @@ export async function resolveProjectRootForReferences(
  * failure by forgetting to catch it. Anything other than `UnreadableUserSourceReferencesError` is
  * a bug, not a corrupted file, and propagates.
  */
-export async function toleratingUnreadableSourceReferences<T>(
+export async function toleratingUnreadableRefs<T>(
   logger: Logger,
   fallback: T,
   action: () => Promise<T>

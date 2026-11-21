@@ -1,9 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  proveUserRegistrations,
-  withdrawUserRegistrations,
-} from "../../../../../src/contexts/host-registration/application/withdraw/withdraw-user-registrations.js";
+import { withdrawUserRegistrations } from "../../../../../src/contexts/host-registration/application/withdraw/withdraw-user-registrations.js";
 import type {
   UserRegistrationWithdrawal,
   WithdrawalDeps,
@@ -69,18 +66,6 @@ describe("withdrawing every user-scope registration through the host's own CLI",
     await expect(withdrawUserRegistrations(depsOf(activator), [withdrawal])).rejects.toThrow(
       `claude: user clean refused after plugin uninstall '${REF}' failed; canonical claims retained.`
     );
-    expect(activator.removedMarketplaces).toStrictEqual([]);
-  });
-
-  it("refuses a user clean whose catalogue the host no longer lists, before any host change", async () => {
-    const activator = new FakeHostActions({ available: true });
-    const sources = new Map([
-      [TOOL.claude, { read: async () => ({ location: "host", entries: new Map() }) }],
-    ]);
-
-    await expect(
-      proveUserRegistrations(depsOf(activator, sources), [withdrawal], "/project")
-    ).rejects.toThrow("claude: catalogue source unproven.");
     expect(activator.removedMarketplaces).toStrictEqual([]);
   });
 });

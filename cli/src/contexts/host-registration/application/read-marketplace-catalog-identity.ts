@@ -12,7 +12,7 @@ import type { CatalogProbeTool } from "../ports/host-tool.js";
  * fact to invent, which is what lets a dead registry entry or an unbuilt tree answer "no fact"
  * instead of a false "different catalog".
  */
-export async function readMarketplaceCatalogIdentity(
+export async function readCatalogIdentity(
   fs: FileReader,
   tool: CatalogProbeTool,
   dir: string
@@ -31,7 +31,7 @@ export async function readMarketplaceCatalogIdentity(
   }
 }
 
-/** The exact path {@link readMarketplaceCatalogIdentity} reads, named so a caller whose read came
+/** The exact path {@link readCatalogIdentity} reads, named so a caller whose read came
  * back `undefined` can report *which file* it found nothing readable at. `undefined` for the same
  * reason the read would answer nothing: not an AI tool, or one whose profile declares no
  * `distributionPaths("marketplace")`. */

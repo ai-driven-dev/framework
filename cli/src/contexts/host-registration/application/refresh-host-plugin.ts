@@ -9,7 +9,11 @@ import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { ActivatedTool } from "../ports/host-tool.js";
-import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
+import {
+  inspectHostSource,
+  type NativeMarketplaceSourceInspection,
+} from "./native-marketplace-source-proof.js";
+import { reachableActivator } from "./reachable-activator.js";
 
 export interface RefreshHostPluginCommand {
   readonly tool: ActivatedTool;
@@ -32,7 +36,7 @@ export class RefreshHostPlugin {
   ) {}
 
   async execute(command: RefreshHostPluginCommand): Promise<ProvenHostRefresh> {
-    const { tool, ref, projectRoot, registrations } = command;
+    const { tool, ref, projectRoot } = command;
     const { toolId } = tool;
     const activation = tool.nativeActivation();
     if (activation?.refreshesOnePlugin() !== true) {
@@ -40,40 +44,46 @@ export class RefreshHostPlugin {
         `${toolId} does not support targeted native plugin update for '${ref}'; use marketplace refresh or framework update instead.`
       );
     }
-    const activator = this.activators.get(activation.hostBinary());
+    const activator = reachableActivator(this.activators, activation.hostBinary());
     const reader = this.registries.get(toolId);
-    if (activator === undefined || !activator.isAvailable() || reader === undefined) {
+    if (activator === undefined || reader === undefined) {
       throw new Error(
         `${toolId}: cannot update AIDD-owned ref '${ref}' without its CLI and readable host registry; canonical claims retained.`
       );
     }
     const refEnabled = (await reader.read(projectRoot)).refs?.get(ref)?.enabled === true;
-    const registration = readRegistrationRecord(registrations)?.marketplaces.find((marketplace) =>
-      isRefOnHost(ref, marketplace.hostName)
-    );
     const verdict = judgeRegistration({
       intent: "refresh",
       refEnabled,
-      source:
-        registration === undefined
-          ? undefined
-          : await inspectNativeMarketplaceSource(
-              this.sources.get(toolId),
-              projectRoot,
-              registration
-            ),
+      source: await this.sourceProofOf(tool, ref, command),
     });
-    if (verdict.outcome === "refuse") {
-      if (verdict.reason === "ref-not-enabled")
-        throw new Error(
-          `${toolId}: ref '${ref}' is not provably enabled on the host; update refused.`
-        );
-      if (verdict.reason === "no-canonical-source")
-        throw new Error(
-          `${toolId}: ref '${ref}' has no canonical catalogue source proof; update refused.`
-        );
-      throw new Error(verdict.reconcile ?? `${toolId}: catalogue source unproven.`);
-    }
+    if (verdict.outcome === "refuse") throw new Error(refusalMessage(toolId, ref, verdict));
     return { apply: () => activator.updatePlugin(ref) };
   }
+
+  /** The proof of the catalogue the ref comes from, when this project recorded one. */
+  private async sourceProofOf(
+    tool: ActivatedTool,
+    ref: string,
+    { projectRoot, registrations }: RefreshHostPluginCommand
+  ): Promise<NativeMarketplaceSourceInspection | undefined> {
+    const registration = readRegistrationRecord(registrations)?.marketplaces.find((marketplace) =>
+      isRefOnHost(ref, marketplace.hostName)
+    );
+    return registration === undefined
+      ? undefined
+      : inspectHostSource(this.sources.get(tool.toolId), projectRoot, registration);
+  }
+}
+
+function refusalMessage(
+  toolId: AiToolId,
+  ref: string,
+  verdict: { readonly reason: string; readonly reconcile?: string }
+): string {
+  if (verdict.reason === "ref-not-enabled")
+    return `${toolId}: ref '${ref}' is not provably enabled on the host; update refused.`;
+  if (verdict.reason === "no-canonical-source")
+    return `${toolId}: ref '${ref}' has no canonical catalogue source proof; update refused.`;
+  return verdict.reconcile ?? `${toolId}: catalogue source unproven.`;
 }

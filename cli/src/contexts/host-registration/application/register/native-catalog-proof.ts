@@ -4,7 +4,7 @@ import type {
   NativeMarketplaceSource,
 } from "../../domain/record/native-marketplace-source.js";
 import { pluginRefsOf, recordedMarketplaces } from "../../domain/record/registration-record.js";
-import { inspectNativeMarketplaceSource } from "../native-marketplace-source-proof.js";
+import { inspectHostSource } from "../native-marketplace-source-proof.js";
 import { type RegistrationRun, warnRegistration } from "./registration-run.js";
 
 export interface NativeCatalogProof {
@@ -26,7 +26,7 @@ export async function nativeCatalogProof(
   const machine = await claims.machine();
   const persisted = await claims.persistedProject();
   const registration = registrationOf(run, hostName, { machine, persisted, fresh });
-  const sourceProof = await inspectNativeMarketplaceSource(
+  const sourceProof = await inspectHostSource(
     run.hosts.sources.get(profile.toolId),
     projectRoot,
     registration.entry

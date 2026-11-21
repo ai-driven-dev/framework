@@ -13,8 +13,8 @@ import {
   frameworkSourceIsShared,
   otherProjectsReferencing,
   refAnotherProjectStillNeeds,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
+  resolveReferenceRoot,
+  toleratingUnreadableRefs,
 } from "./shared-source-reference-support.js";
 
 export interface PluginRemovalClaimsDeps {
@@ -63,8 +63,8 @@ function otherProjectsOf(
   userSourceReferences: UserSourceReferences,
   projectRoot: string
 ): Promise<readonly string[]> {
-  return toleratingUnreadableSourceReferences<readonly string[]>(deps.logger, [], async () => {
-    const ownRoot = await resolveProjectRootForReferences(deps.fs, projectRoot);
+  return toleratingUnreadableRefs<readonly string[]>(deps.logger, [], async () => {
+    const ownRoot = await resolveReferenceRoot(deps.fs, projectRoot);
     return otherProjectsReferencing(userSourceReferences, ownRoot, deps.platform);
   });
 }

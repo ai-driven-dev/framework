@@ -1,4 +1,5 @@
 import { simpleGit } from "simple-git";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { PluginFetchError } from "../domain/distribution.error.js";
 import { withoutCredentials } from "./inject-token.js";
 
@@ -46,7 +47,7 @@ export class GitCloner {
   }
 
   private classifyAndThrow(err: unknown, displayUrl: string): never {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = errorMessage(err);
     // The URL the user typed may carry their own credential; the message must not.
     const safeUrl = withoutCredentials(displayUrl);
     if (AUTH_ERROR_PATTERN.test(msg)) {

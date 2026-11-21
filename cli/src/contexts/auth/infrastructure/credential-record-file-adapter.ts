@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { AuthLevel, Credential } from "../contract/credential.js";
 import { AuthStorageError } from "../domain/auth.error.js";
@@ -73,7 +74,7 @@ async function restrictToOwner(path: string): Promise<void> {
 
 function failureDetail(err: unknown): string {
   if (err instanceof AuthStorageError) return err.detail;
-  return err instanceof Error ? err.message : String(err);
+  return errorMessage(err);
 }
 
 /** The account icacls grants to. Absent, the grant would name nobody, so it fails here

@@ -1,11 +1,11 @@
+import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import { judgeRegistration, type SourceProof } from "../../domain/policy/registration-policy.js";
 import type { HostPluginRegistryReading } from "../../domain/reading/plugin-registry-reading.js";
+import type { NativeMarketplaceRegistration } from "../../domain/record/native-marketplace-source.js";
 import { readRegistrationRecord } from "../../domain/record/registration-record.js";
-import {
-  assertSourceOwned,
-  inspectNativeMarketplaceSource,
-} from "../native-marketplace-source-proof.js";
+import { assertSourceOwned, inspectHostSource } from "../native-marketplace-source-proof.js";
+import { reachableActivator } from "../reachable-activator.js";
 import type { ProjectSourceCommand, WithdrawalDeps } from "./withdrawal.js";
 
 /** Refuses, before any change, a removal the host's own state does not prove safe. */
@@ -18,36 +18,59 @@ export async function assertProjectSource(
   const toolId = tool.toolId;
   const activation = tool.nativeActivation();
   if (activation == null) return;
-  const activator = deps.ports.activators.get(activation.hostBinary());
-  if (activator === undefined || !activator.isAvailable()) return;
-  const registration = registrations?.marketplaces.find(
-    (entry) => entry.alias === plugin.marketplace
-  );
-  if (registration === undefined)
-    throw new Error(
-      `${toolId}: '${plugin.name}' has no recorded native catalogue source for '${plugin.marketplace}'; reconcile manually before removal.`
-    );
+  const activator = reachableActivator(deps.ports.activators, activation.hostBinary());
+  if (activator === undefined) return;
+  const registration = recordedCatalogue(command, registrations);
   const ref = `${plugin.name}@${registration.hostName}`;
   const enabledByProject = registrations?.pluginRefs.includes(ref) === true;
-  if (tool.pluginEnablementIsMachineGlobal() && !(await command.isMachineOwned(ref)))
-    throw new Error(
-      `${toolId}: '${ref}' is an unclaimed machine-global host ref; canonical machine claim required before removal.`
-    );
-  if (!enabledByProject && activator.enablesPlugins() !== true)
-    throw new Error(
-      `${toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
-    );
-  const proof = await inspectNativeMarketplaceSource(
-    deps.ports.sources.get(toolId),
-    projectRoot,
-    registration
-  );
+  await assertRefOwned(command, {
+    ref,
+    enabledByProject,
+    enablesPlugins: activator.enablesPlugins() === true,
+  });
+  const proof = await inspectHostSource(deps.ports.sources.get(toolId), projectRoot, registration);
   assertSourceOwned(
     proof,
     `${toolId}: catalogue '${registration.hostName}' has unproven host source; reconcile manually.`
   );
   if (tool.pluginEnablementIsMachineGlobal() || !enabledByProject) return;
   await assertRefEnabled(deps, { toolId, ref, projectRoot, proof });
+}
+
+function recordedCatalogue(
+  command: ProjectSourceCommand,
+  registrations: ReturnType<typeof readRegistrationRecord>
+): NativeMarketplaceRegistration {
+  const { tool, plugin } = command;
+  const registration = registrations?.marketplaces.find(
+    (entry) => entry.alias === plugin.marketplace
+  );
+  if (registration === undefined)
+    throw new Error(
+      `${tool.toolId}: '${plugin.name}' has no recorded native catalogue source for '${plugin.marketplace}'; reconcile manually before removal.`
+    );
+  return registration;
+}
+
+/** Refuses a ref this project neither holds a machine claim on nor enabled itself. */
+async function assertRefOwned(
+  command: ProjectSourceCommand,
+  held: {
+    readonly ref: string;
+    readonly enabledByProject: boolean;
+    readonly enablesPlugins: boolean;
+  }
+): Promise<void> {
+  const { tool } = command;
+  const { ref, enabledByProject, enablesPlugins } = held;
+  if (tool.pluginEnablementIsMachineGlobal() && !(await command.isMachineOwned(ref)))
+    throw new Error(
+      `${tool.toolId}: '${ref}' is an unclaimed machine-global host ref; canonical machine claim required before removal.`
+    );
+  if (!enabledByProject && !enablesPlugins)
+    throw new Error(
+      `${tool.toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
+    );
 }
 
 interface RefEnabledRequest {
@@ -70,7 +93,7 @@ async function assertRefEnabled(deps: WithdrawalDeps, request: RefEnabledRequest
     reading = await reader.read(projectRoot);
   } catch (error) {
     throw new Error(
-      `${toolId}: '${ref}' host plugin registry read failed (${error instanceof Error ? error.message : String(error)}); uninstall refused.`
+      `${toolId}: '${ref}' host plugin registry read failed (${errorMessage(error)}); uninstall refused.`
     );
   }
   const current = reading.refs?.get(ref);

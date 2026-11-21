@@ -3,6 +3,7 @@ import {
   type SpawnSyncReturns,
   spawnSync,
 } from "node:child_process";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import type { NativeMarketplaceSourceReading } from "../domain/record/native-marketplace-source-reading.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import {
@@ -33,7 +34,7 @@ export class NativeMarketplaceSourceReaderAdapter implements HostMarketplaceSour
     try {
       return { entries: this.contract.parse(stdout) };
     } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
+      const reason = errorMessage(error);
       return {
         unreadable: `${this.contract.binary} marketplace list could not prove a source: ${reason}`,
       };

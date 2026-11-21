@@ -5,8 +5,8 @@ import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import {
   frameworkSourceIsShared,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
+  resolveReferenceRoot,
+  toleratingUnreadableRefs,
 } from "./shared-source-reference-support.js";
 
 export interface RecordSourceReferenceCommand {
@@ -38,8 +38,8 @@ export class RecordSourceReference {
       this.deps;
     if (!frameworkSourceIsShared(name, scope, frameworkMarketplaceName)) return;
     if (userSourceReferences === undefined) return;
-    await toleratingUnreadableSourceReferences(logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(fs, command.projectRoot);
+    await toleratingUnreadableRefs(logger, undefined, async () => {
+      const resolvedRoot = await resolveReferenceRoot(fs, command.projectRoot);
       await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
     });
   }

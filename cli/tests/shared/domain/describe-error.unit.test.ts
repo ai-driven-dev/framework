@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeError } from "../../../src/shared/domain/describe-error.js";
+import { describeError, errorMessage } from "../../../src/shared/domain/describe-error.js";
 
 describe("describeError", () => {
   it("answers the code of a filesystem failure", () => {
@@ -18,5 +18,17 @@ describe("describeError", () => {
 
   it("stringifies a thrown value that is not an Error, whatever fields it carries", () => {
     expect(describeError({ code: "ENOENT" })).toBe("[object Object]");
+  });
+});
+
+describe("errorMessage", () => {
+  it("answers the message of an Error, whatever code it carries", () => {
+    expect(errorMessage(Object.assign(new Error("open failed"), { code: "ENOENT" }))).toBe(
+      "open failed"
+    );
+  });
+
+  it("stringifies a thrown value that is not an Error", () => {
+    expect(errorMessage("boom")).toBe("boom");
   });
 });

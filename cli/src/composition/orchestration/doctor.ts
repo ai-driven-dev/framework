@@ -53,10 +53,12 @@ export function wireDoctor(base: Base, inst: Installation) {
       }),
       new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators), tools),
       new InspectHostRegistration(
-        fs,
-        hostPluginRegistries,
-        hostMarketplaceRegistries,
-        process.platform,
+        {
+          fs,
+          pluginRegistries: hostPluginRegistries,
+          marketplaceRegistries: hostMarketplaceRegistries,
+          platform: process.platform,
+        },
         tools
       ),
       tools

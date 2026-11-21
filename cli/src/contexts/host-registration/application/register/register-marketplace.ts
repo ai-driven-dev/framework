@@ -9,7 +9,7 @@ import type {
 import type { MarketplaceCatalogIdentity } from "../../domain/source/marketplace-source-conflict.js";
 import {
   marketplaceCatalogProbePath,
-  readMarketplaceCatalogIdentity,
+  readCatalogIdentity,
 } from "../read-marketplace-catalog-identity.js";
 import { type CatalogRequest, guardAgainstConflict } from "./catalog-source-guard.js";
 import { followsRequestedSource, untouchedReason } from "./marketplace-registration-guard.js";
@@ -97,7 +97,7 @@ async function builtIdentityOf(
   run: RegistrationRun,
   builtDir: string
 ): Promise<MarketplaceCatalogIdentity> {
-  const identity = await readMarketplaceCatalogIdentity(run.fs, run.profile, builtDir);
+  const identity = await readCatalogIdentity(run.fs, run.profile, builtDir);
   if (identity !== undefined) return identity;
   throw new UnreadableBuiltCatalogError(
     marketplaceCatalogProbePath(run.profile, builtDir) ?? builtDir

@@ -44,10 +44,7 @@ export async function writeFlatSkill(
     return 1;
   }
   assertNoToolsPlaceholder(content, pluginName, relFromSkills);
-  const rewritten = rewriteRelativeLinks(content, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => flatLinkTarget(target.contract, pluginName, rel),
-  });
+  const rewritten = rewriteFlatLinks(target, { content, flatRelPath, pluginName });
   const outContent =
     artifact.rewriteSkillName && basename(absPath) === "SKILL.md"
       ? rewriteSkillNameFrontmatter(rewritten, flatRelPath)
@@ -56,16 +53,22 @@ export async function writeFlatSkill(
   return 1;
 }
 
-function rewriteAgentLinks(
+function rewriteFlatLinks(
   target: FlatTarget,
   { content, flatRelPath, pluginName }: { content: string; flatRelPath: string; pluginName: string }
 ): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rewritten = rewriteRelativeLinks(body, {
+  return rewriteRelativeLinks(content, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => flatLinkTarget(target.contract, pluginName, rel),
   });
-  return serializeFrontmatter(frontmatter, rewritten);
+}
+
+function rewriteAgentLinks(
+  target: FlatTarget,
+  step: { content: string; flatRelPath: string; pluginName: string }
+): string {
+  const { frontmatter, body } = parseFrontmatter(step.content);
+  return serializeFrontmatter(frontmatter, rewriteFlatLinks(target, { ...step, content: body }));
 }
 
 function rewriteSkillNameFrontmatter(content: string, flatRelPath: string): string {

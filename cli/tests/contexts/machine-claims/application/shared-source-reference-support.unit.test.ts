@@ -4,8 +4,8 @@ import {
   describeGuardedPluginRefMessage,
   frameworkSourceIsShared,
   refAnotherProjectStillNeeds,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
+  resolveReferenceRoot,
+  toleratingUnreadableRefs,
 } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import {
@@ -42,21 +42,21 @@ describe("frameworkSourceIsShared", () => {
   });
 });
 
-describe("resolveProjectRootForReferences", () => {
+describe("resolveReferenceRoot", () => {
   it("propagates a resolution failure other than the project being absent", async () => {
     const fs = new FaultingFileAdapter();
     fs.failOn("realpath", "/project", errnoError("EACCES"));
 
-    await expect(resolveProjectRootForReferences(fs, "/project")).rejects.toThrow(
+    await expect(resolveReferenceRoot(fs, "/project")).rejects.toThrow(
       "EACCES: planted by the test"
     );
   });
 });
 
-describe("toleratingUnreadableSourceReferences", () => {
+describe("toleratingUnreadableRefs", () => {
   it("propagates any failure that is not an unreadable registry", async () => {
     await expect(
-      toleratingUnreadableSourceReferences(new CapturingLogger(), "fallback", async () => {
+      toleratingUnreadableRefs(new CapturingLogger(), "fallback", async () => {
         throw new Error("a bug, not a corrupted file");
       })
     ).rejects.toThrow("a bug, not a corrupted file");

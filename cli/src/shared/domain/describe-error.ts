@@ -5,5 +5,10 @@ export function describeError(error: unknown): string {
   if (error instanceof Error && "code" in error && typeof error.code === "string") {
     return error.code;
   }
+  return errorMessage(error);
+}
+
+/** The message of an Error, the string form of anything else thrown. */
+export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
