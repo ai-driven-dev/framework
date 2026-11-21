@@ -24,7 +24,6 @@ const OVER_THE_CAP: Readonly<Record<string, number>> = {
   "contexts/telemetry/domain": 19,
   "contexts/tools/domain/formats": 12,
   "contexts/tools/domain/sections": 11,
-  "contexts/translate/domain": 13,
   "presentation/commands": 30,
   "presentation/display": 15,
   "shared/domain": 14,

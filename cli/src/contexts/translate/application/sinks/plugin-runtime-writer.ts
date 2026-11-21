@@ -1,4 +1,4 @@
-import type { PluginMcp } from "../../domain/build-layout/flat-mcp.js";
+import type { PluginMcp } from "../../domain/rules/flat-mcp.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
 

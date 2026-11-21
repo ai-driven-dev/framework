@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FlatHooksBridge } from "../../../../../src/contexts/tools/contract/build-contract.js";
-import { translateBuildLayout } from "../../../../../src/contexts/translate/domain/build-layout/index.js";
+import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import {
   aStubBuildContract,

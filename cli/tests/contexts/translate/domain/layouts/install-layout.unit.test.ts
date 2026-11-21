@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
+import { contractToolProfile } from "../../testing/contract-tool-profile.builder.js";
 import {
   CLAUDE_ROOT_TOKEN,
   CODEX_ROOT_TOKEN,
@@ -16,9 +16,9 @@ import {
   skillEntryContent,
   translator,
   treeOf,
-} from "../testing/engine-kit.builder.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
-import { claude, codex, cursor, opencode } from "../testing/registered-profiles.builder.js";
+} from "../../testing/engine-kit.builder.js";
+import { flatPluginsStub } from "../../testing/flat-plugins-stub.builder.js";
+import { claude, codex, cursor, opencode } from "../../testing/registered-profiles.builder.js";
 
 describe("a plugin of one skill, its action and its asset", () => {
   it("lays the whole skill tree under the plugin directory claude expands, beside the manifest", () => {

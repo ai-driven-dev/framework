@@ -2,15 +2,14 @@ import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-di
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
 import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
-import type { FrameworkBuildMode, PluginAnswers } from "../../tools/contract/tool-profile.js";
-import { flatMcp, type PluginMcp } from "./build-layout/flat-mcp.js";
-import { translateBuildLayout } from "./build-layout/index.js";
-import { flatHooksFiles } from "./flat-hooks.js";
-import { translateFlat } from "./flat-translation.js";
-import { translateNativeWithPaths } from "./native-translation.js";
+import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
+import { buildPlans } from "./layouts/build-layout.js";
+import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
+import { applyPlan } from "./rules/component-pipeline.js";
+import { flatMcp, type PluginMcp } from "./rules/flat-mcp.js";
 import { HOOKS_MANIFEST } from "./rules/hook-scripts.js";
-import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
+import type { TranslateProfile } from "./translate-profile.js";
 
 /** Where a translation lands: one tool's install, or one tool's build. The rules are the same;
  * the layout chooses where each file goes. `manifestPaths` is every place a host keeps a plugin
@@ -42,7 +41,8 @@ export interface Translation {
   readonly mcp: PluginMcp | null;
 }
 
-/** The one translation both sinks call: a plugin's canon, laid out for an install or a build. */
+/** The one translation both sinks call: a plugin's canon, laid out for an install or a build. A
+ * layout plans each file as data, and `applyPlan` runs the rules, so a rule is written once. */
 export function translate(dist: PluginDistribution, layout: TranslateLayout): Translation {
   return layout.kind === "install"
     ? installTranslation(dist, layout.tool, layout.manifestPaths)
@@ -57,7 +57,7 @@ function buildTranslation(
   const { mcp } = contract.artifacts;
   const foldsMcp = mcp.supported && mcp.merge !== undefined && mcp.mergeDest !== undefined;
   return {
-    files: translateBuildLayout(dist, contract, mode),
+    files: buildPlans(dist, contract, mode).map(applyPlan),
     componentPaths: new Map(),
     flatHookPaths: new Set(),
     skipped: [],
@@ -73,56 +73,19 @@ function hooksManifestOf(dist: PluginDistribution): string | null {
   );
 }
 
+const UNTRANSLATED = {
+  componentPaths: new Map<string, string>(),
+  flatHookPaths: new Set<string>(),
+  skipped: [],
+  notices: [],
+};
+
 function installTranslation(
   dist: PluginDistribution,
   tool: TranslateProfile,
   manifestPaths: readonly string[]
 ): Translation {
-  return {
-    ...translateWithComponentPaths(dist, tool, manifestPaths),
-    flatHookPaths: flatHookPaths(dist, tool),
-    hooks: null,
-    mcp: null,
-  };
-}
-
-function translateWithComponentPaths(
-  dist: PluginDistribution,
-  toolConfig: TranslateProfile,
-  manifestPaths: readonly string[]
-): {
-  files: OutputFile[];
-  componentPaths: ReadonlyMap<string, string>;
-  skipped: ReadonlySkipList;
-  notices: ReadonlyNoticeList;
-} {
-  const delivery = asPluginTool(toolConfig);
-  if (delivery === null) return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
-  const { tool, plugins } = delivery;
-  if (plugins.kind === "native")
-    return translateNativeWithPaths({ dist, tool, plugins }, manifestPaths);
-  if (plugins.kind === "flat") {
-    const { files, skipped } = translateFlat(dist, tool, plugins);
-    return { files, componentPaths: new Map(), skipped, notices: [] };
-  }
-  return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
-}
-
-/** The hook paths a flat install writes for this plugin: its scripts and the generated bridge,
- * none for a tool that is not flat. */
-function flatHookPaths(
-  dist: PluginDistribution,
-  toolConfig: TranslateProfile
-): ReadonlySet<string> {
-  const delivery = asPluginTool(toolConfig);
-  if (delivery === null || delivery.plugins.kind !== "flat") return new Set();
-  return new Set(flatHooksFiles(dist, delivery.plugins).map((file) => file.relativePath));
-}
-
-function asPluginTool(
-  profile: TranslateProfile
-): { tool: TranslatedAiTool; plugins: PluginAnswers } | null {
-  if (profile.kind !== "ai") return null;
-  const plugins = profile.plugins();
-  return plugins === null ? null : { tool: profile, plugins };
+  if (tool.kind !== "ai") return { ...UNTRANSLATED, files: [], hooks: null, mcp: null };
+  const { plans, ...rest } = installPlan(dist, { tool, manifestPaths });
+  return { ...rest, files: plans.map(applyPlan), hooks: null, mcp: null };
 }

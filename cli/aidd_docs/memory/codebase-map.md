@@ -132,7 +132,7 @@ src/
 │   │   │   └── sinks/
 │   │   ├── contract/
 │   │   ├── domain/
-│   │   │   ├── build-layout/
+│   │   │   ├── layouts/    # where each sink puts a plugin, as data for the rules
 │   │   │   └── rules/    # the one rule set both sinks write content with
 │   │   ├── infrastructure/
 │   │   └── ports/

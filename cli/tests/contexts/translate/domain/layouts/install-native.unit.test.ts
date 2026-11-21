@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
-import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
+import { parseFrontmatter } from "../../../../../src/shared/domain/markdown.js";
+import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { contractToolProfile } from "../../testing/contract-tool-profile.builder.js";
 import {
   distOf,
   hooksDist,
@@ -12,11 +12,17 @@ import {
   skillDist,
   translator,
   treeOf,
-} from "../testing/engine-kit.builder.js";
-import { flatPluginsStub } from "../testing/flat-plugins-stub.builder.js";
-import { nativePluginsStub } from "../testing/native-plugins-stub.builder.js";
-import { claude, codex, cursor, opencode, vscode } from "../testing/registered-profiles.builder.js";
-import { unsupportedPluginsStub } from "../testing/unsupported-plugins-stub.builder.js";
+} from "../../testing/engine-kit.builder.js";
+import { flatPluginsStub } from "../../testing/flat-plugins-stub.builder.js";
+import { nativePluginsStub } from "../../testing/native-plugins-stub.builder.js";
+import {
+  claude,
+  codex,
+  cursor,
+  opencode,
+  vscode,
+} from "../../testing/registered-profiles.builder.js";
+import { unsupportedPluginsStub } from "../../testing/unsupported-plugins-stub.builder.js";
 
 describe("a plugin's mcp declaration", () => {
   it("lands at the name cursor reads it under", () => {

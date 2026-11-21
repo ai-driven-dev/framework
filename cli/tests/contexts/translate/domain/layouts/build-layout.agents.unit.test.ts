@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { translateBuildLayout } from "../../../../../src/contexts/translate/domain/build-layout/index.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import {
   aStubBuildContract,

@@ -1,7 +1,7 @@
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
-import { translateBuildLayout } from "../../../src/contexts/translate/domain/build-layout/index.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
+import { translateBuildLayout } from "./build-files.builder.js";
 import { TOOL } from "./registered-tools.builder.js";
 
 /** An agent as the engine builds it for the contract in the given mode: its file, its place

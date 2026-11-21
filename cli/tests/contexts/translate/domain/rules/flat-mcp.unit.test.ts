@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { flatMcp } from "../../../../../src/contexts/translate/domain/build-layout/flat-mcp.js";
+import { flatMcp } from "../../../../../src/contexts/translate/domain/rules/flat-mcp.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { aStubBuildContract } from "../../testing/stub-build-contract.builder.js";
 
