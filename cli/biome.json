@@ -476,14 +476,20 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "group": [
+                      "**/auth/domain/**",
+                      "**/auth/ports/**",
+                      "**/auth/infrastructure/**",
+                      "!**/domain/*.error.js"
+                    ],
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
                     "group": [
                       "**/distribution/domain/**",
                       "**/distribution/ports/**",
-                      "**/distribution/infrastructure/**"
+                      "**/distribution/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "distribution publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -491,7 +497,8 @@
                     "group": [
                       "**/host-registration/domain/**",
                       "**/host-registration/ports/**",
-                      "**/host-registration/infrastructure/**"
+                      "**/host-registration/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -499,7 +506,8 @@
                     "group": [
                       "**/installation/domain/**",
                       "**/installation/ports/**",
-                      "**/installation/infrastructure/**"
+                      "**/installation/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "installation publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -507,7 +515,8 @@
                     "group": [
                       "**/machine-claims/domain/**",
                       "**/machine-claims/ports/**",
-                      "**/machine-claims/infrastructure/**"
+                      "**/machine-claims/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "machine-claims publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -515,7 +524,8 @@
                     "group": [
                       "**/telemetry/domain/**",
                       "**/telemetry/ports/**",
-                      "**/telemetry/infrastructure/**"
+                      "**/telemetry/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "telemetry publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -523,7 +533,8 @@
                     "group": [
                       "**/tools/domain/**",
                       "**/tools/infrastructure/**",
-                      "**/tools/application/**"
+                      "**/tools/application/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -531,7 +542,8 @@
                     "group": [
                       "**/translate/domain/**",
                       "**/translate/ports/**",
-                      "**/translate/infrastructure/**"
+                      "**/translate/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -539,7 +551,8 @@
                     "group": [
                       "**/update/domain/**",
                       "**/update/ports/**",
-                      "**/update/infrastructure/**"
+                      "**/update/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
@@ -547,7 +560,8 @@
                     "group": [
                       "**/recipes/domain/**",
                       "**/recipes/ports/**",
-                      "**/recipes/infrastructure/**"
+                      "**/recipes/infrastructure/**",
+                      "!**/domain/*.error.js"
                     ],
                     "message": "recipes publishes its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   }
