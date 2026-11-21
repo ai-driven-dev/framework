@@ -18,13 +18,12 @@ import {
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
+import { importViolations } from "./kind-imports.js";
+import { KINDS, type Kind } from "./kind-table.js";
 import {
   classificationViolations,
-  importViolations,
   isInCatalog,
   isUseCase,
-  KINDS,
-  type Kind,
   kindsOf,
   mirrorViolations,
   type Shape,
