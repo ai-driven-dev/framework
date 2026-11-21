@@ -1,6 +1,6 @@
 import { type Command, CommanderError } from "commander";
 import { outputOf } from "../../../src/presentation/commands/global-options.js";
-import { failCommand } from "../../../src/presentation/errors/error-translator.js";
+import { failCommand } from "../../../src/presentation/errors/error-translator.presenter.js";
 import { ExitRequested } from "./capturing-output.fake.js";
 
 /** Parses as `src/cli.ts` does: a command's failure bubbles out of `parseAsync` to the one exit

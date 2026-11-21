@@ -1,6 +1,5 @@
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { AgentFrontmatter } from "../formats/agent-format.js";
-import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 import { ToolSuffix } from "../profile/tool-suffix.js";
 
 function agentNameFromFrontmatter(
@@ -52,10 +51,6 @@ export class AgentsSection {
       return `${this.#params.directory}agents/${toTomlBasename(this.#params.toolSuffix, basename)}`;
     }
     return this.#suffix.strip(`${this.#params.directory}agents/${basename}`);
-  }
-
-  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
-    return ForeignSuffixFilter.keeping(this.#params.toolSuffix, registered).accepts(fileName);
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {

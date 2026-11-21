@@ -8,7 +8,6 @@ export class MarketplaceSourceConflictError extends AiddError {
   readonly code = "marketplace-source-conflict";
   constructor(message: string) {
     super(message);
-    this.name = "MarketplaceSourceConflictError";
   }
 }
 
@@ -16,7 +15,6 @@ export class NativePluginCliError extends AiddError {
   readonly code = "native-plugin-cli";
   constructor(message: string) {
     super(message);
-    this.name = "NativePluginCliError";
   }
 }
 
@@ -31,6 +29,5 @@ export class UnreadableBuiltCatalogError extends AiddError {
       `Cannot read the marketplace catalog this project just built, at ${path} — nothing was ` +
         "registered for it. Run `aidd sync` again once the source is fixed."
     );
-    this.name = "UnreadableBuiltCatalogError";
   }
 }

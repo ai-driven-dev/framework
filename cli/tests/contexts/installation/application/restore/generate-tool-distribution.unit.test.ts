@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { contentSectionInstallers } from "../../../../../src/composition/installation.js";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.js";
 import { GenerateToolDistribution } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -14,27 +12,10 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { FakePlatform } from "../../testing/fake-platform.fake.js";
 
 const PROJECT_ROOT = "/test-project";
-const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";
 
-const descriptor = new FrameworkDescriptor({
-  version: "test",
-  contentSections: ["agents", "commands", "rules", "skills", "templates"].map((name) => ({
-    name,
-    directory: name,
-    entryFile: null,
-  })),
-  templateRefs: [],
-  configRefs: [{ name: "vscodeSettings", path: "config/vscode/settings.json" }],
-});
+const configRefs = [{ name: "vscodeSettings", path: "config/vscode/settings.json" }];
 
-const contentFiles = new Map([
-  ["agents/reviewer.md", MARKDOWN],
-  ["commands/greet.md", MARKDOWN],
-  ["rules/naming.md", MARKDOWN],
-  ["skills/hello/SKILL.md", MARKDOWN],
-  ["templates/AGENTS.md", MARKDOWN],
-  ["config/vscode/settings.json", '{"editor.tabSize": 2}'],
-]);
+const contentFiles = new Map([["config/vscode/settings.json", '{"editor.tabSize": 2}']]);
 
 const assets = new BundledAssetProviderAdapter(wireTools());
 
@@ -44,10 +25,9 @@ function generate(
 ): Promise<InstallationFile[]> {
   return new GenerateToolDistribution(
     new InstallConfig(new InMemoryFileAdapter({})),
-    contentSectionInstallers(registeredTools()),
     new FakePlatform("linux"),
     assetProvider
-  ).execute({ config, descriptor, contentFiles, projectRoot: PROJECT_ROOT });
+  ).execute({ config, configRefs, contentFiles, projectRoot: PROJECT_ROOT });
 }
 
 async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdapter) {
@@ -56,33 +36,9 @@ async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdap
     .sort();
 }
 
-describe("GenerateToolDistribution — content sections", () => {
+describe("GenerateToolDistribution — IDE tools", () => {
   it("gives an IDE tool its config files and no content section", async () => {
     expect(await pathsFor(TOOL.vscode)).toStrictEqual([".vscode/settings.json"]);
-  });
-
-  it("gives an AI tool one file per content section its capabilities accept", async () => {
-    expect(await pathsFor(TOOL.claude)).toStrictEqual([
-      ".claude/agents/reviewer.md",
-      ".claude/commands/greet.md",
-      ".claude/rules/naming.md",
-      ".claude/skills/hello/SKILL.md",
-    ]);
-  });
-
-  it("skips a section the tool declares no capability for", async () => {
-    const claude = registeredTools().aiProfile(TOOL.claude);
-    const withoutRules = {
-      ...claude,
-      markdownSection: (kind: Parameters<typeof claude.markdownSection>[0]) =>
-        kind === "rules" ? null : claude.markdownSection(kind),
-    };
-
-    const paths = (await generate(withoutRules)).map((f) => f.relativePath).sort();
-
-    expect(paths).toStrictEqual(
-      (await pathsFor(TOOL.claude)).filter((path) => !path.startsWith(".claude/rules/"))
-    );
   });
 });
 

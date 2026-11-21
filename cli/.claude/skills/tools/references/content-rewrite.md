@@ -6,7 +6,6 @@
 
 | Path | Caller |
 | --- | --- |
-| install | `contexts/installation/application/install/content/install-content-section.ts` |
 | translate | `contexts/translate/domain/engine.ts` |
 
 ## Contract

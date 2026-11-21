@@ -2,11 +2,9 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type {
   AgentModelAnswers,
   ConfigWrite,
-  MarkdownSectionAnswers,
   McpConfigAnswers,
   NativeActivationAnswers,
   PluginAnswers,
-  SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
 import type {
   ProjectHooksLocation,
@@ -20,12 +18,6 @@ export interface ToolFootprint {
   readonly directory: string;
   machineLocalFiles(): readonly string[];
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;
-}
-
-export interface ContentSections {
-  markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
-  skillsSection(): SkillsSectionAnswers | null;
-  rewriteContent(content: string): string;
 }
 
 export interface ConfigFilesSection {
@@ -83,8 +75,6 @@ export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & F
 
 export type RestoredIdeTool = { readonly kind: "ide" } & ConfigWritesSection;
 
-export type RestoredAiTool = { readonly kind: "ai" } & ConfigWritesSection &
-  ConfigFilesSection &
-  ContentSections;
+export type RestoredAiTool = { readonly kind: "ai" } & ConfigWritesSection & ConfigFilesSection;
 
 export type RestoredTool = RestoredIdeTool | RestoredAiTool;

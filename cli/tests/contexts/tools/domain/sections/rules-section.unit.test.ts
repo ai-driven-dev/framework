@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RulesSection } from "../../../../../src/contexts/tools/domain/sections/rules-section.js";
 
-const REGISTERED = [".claude.md", ".cursor.md", ".codex.md"];
-
 const stubParams = {
   buildInstallPath: (fileName: string): string | null => `stub/${fileName}`,
   convertFrontmatter: (fm: Record<string, unknown>): Record<string, unknown> => fm,
@@ -73,41 +71,6 @@ describe("RulesSection installed location edge cases", () => {
       toolSuffix: ".x.md",
       buildInstallPath: () => ".x/rules/renamed.mdc",
       convertFrontmatter: (fm) => fm,
-    });
-
-    expect(cap.installedLocation()).toBeNull();
-  });
-});
-
-describe("RulesSection file acceptance", () => {
-  const cap = new RulesSection({
-    toolSuffix: ".claude.md",
-    buildInstallPath: (fileName) => fileName,
-    convertFrontmatter: (fm) => fm,
-  });
-
-  it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("rules/a.claude.md", REGISTERED)).toBe(true);
-    expect(cap.acceptsFileName("rules/a.md", REGISTERED)).toBe(true);
-  });
-
-  it("reads the input suffix as its own when the tool declares one", () => {
-    const mdc = new RulesSection({
-      toolSuffix: ".mdc",
-      inputSuffix: ".cursor.md",
-      buildInstallPath: (fileName) => fileName,
-      convertFrontmatter: (fm) => fm,
-    });
-
-    expect(mdc.acceptsFileName("a.cursor.md", REGISTERED)).toBe(true);
-    expect(mdc.acceptsFileName("a.claude.md", REGISTERED)).toBe(false);
-  });
-
-  it("answers nothing when the probe stem sits in a directory and not in the file name", () => {
-    const cap = new RulesSection({
-      toolSuffix: ".claude.md",
-      ...stubParams,
-      buildInstallPath: () => ".x/aidd-installed-location-probe/rule.md",
     });
 
     expect(cap.installedLocation()).toBeNull();

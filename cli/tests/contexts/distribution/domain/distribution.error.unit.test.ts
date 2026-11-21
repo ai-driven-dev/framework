@@ -8,7 +8,6 @@ import {
   PluginNotInMarketplaceError,
   UnreadableMarketplaceRegistryError,
 } from "../../../../src/contexts/distribution/domain/distribution.error.js";
-import { InvalidPluginManifestError } from "../../../../src/shared/domain/shared.error.js";
 
 describe("InvalidMarketplaceScopeError", () => {
   it("says exactly what went wrong", () => {
@@ -46,12 +45,6 @@ describe("MalformedMarketplaceCatalogError", () => {
   it("carries its stable code", () => {
     expect(new MalformedMarketplaceCatalogError("/c.json", "not json", true).code).toBe(
       "malformed-marketplace-catalog"
-    );
-  });
-
-  it("keeps a malformed catalog an invalid plugin manifest, so existing catches still hold", () => {
-    expect(new MalformedMarketplaceCatalogError("/c.json", "x", true)).toBeInstanceOf(
-      InvalidPluginManifestError
     );
   });
 });

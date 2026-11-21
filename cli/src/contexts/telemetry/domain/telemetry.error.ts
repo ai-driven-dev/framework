@@ -6,7 +6,6 @@ export class ConflictingIdentityFlagsError extends AiddError {
   readonly code = "conflicting-identity-flags";
   constructor() {
     super("--as names you and --anonymous names nobody: give one of them.");
-    this.name = "ConflictingIdentityFlagsError";
   }
 }
 
@@ -15,7 +14,6 @@ export class IdentityOffWithIdentifierError extends AiddError {
   readonly code = "identity-off-with-identifier";
   constructor() {
     super("--off removes the identity: give it no identifier.");
-    this.name = "IdentityOffWithIdentifierError";
   }
 }
 
@@ -26,7 +24,6 @@ export class InvalidIdentityError extends AiddError {
     super(
       `An identity is one non-empty line of at most ${MAX_IDENTITY_LENGTH} characters. Nothing was changed.`
     );
-    this.name = "InvalidIdentityError";
   }
 }
 
@@ -35,7 +32,6 @@ export class InvalidReportPeriodError extends AiddError {
   readonly code = "invalid-report-period";
   constructor(message: string) {
     super(message);
-    this.name = "InvalidReportPeriodError";
   }
 }
 
@@ -44,7 +40,6 @@ export class TaskDeclaredNoneWithNameError extends AiddError {
   readonly code = "task-declared-none-with-name";
   constructor() {
     super("--none declares no task: give it neither a name nor --ticket.");
-    this.name = "TaskDeclaredNoneWithNameError";
   }
 }
 
@@ -55,6 +50,5 @@ export class TaskNameMissingError extends AiddError {
     super(
       "A task needs a name: aidd telemetry task <name> [--ticket <ref>], or --none. See what the work is bound to with aidd telemetry status."
     );
-    this.name = "TaskNameMissingError";
   }
 }

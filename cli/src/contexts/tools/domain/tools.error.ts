@@ -4,7 +4,6 @@ export class CapabilityConfigError extends AiddError {
   readonly code = "capability-config";
   constructor(message: string) {
     super(message);
-    this.name = "CapabilityConfigError";
   }
 }
 
@@ -12,7 +11,6 @@ export class DuplicateToolIdError extends AiddError {
   readonly code = "duplicate-tool-id";
   constructor(toolId: string) {
     super(`Tool '${toolId}' is registered twice.`);
-    this.name = "DuplicateToolIdError";
   }
 }
 
@@ -20,7 +18,6 @@ export class InvalidAgentFrontmatterError extends AiddError {
   readonly code = "invalid-agent-frontmatter";
   constructor(agentName: string, detail: string) {
     super(`Agent '${agentName}' has invalid frontmatter: ${detail}.`);
-    this.name = "InvalidAgentFrontmatterError";
   }
 }
 
@@ -43,7 +40,6 @@ export class InvalidHooksDescriptorError extends AiddError {
     detail: string
   ) {
     super(`The hooks descriptor of '${toolId}' breaks '${invariant}': ${detail}`);
-    this.name = "InvalidHooksDescriptorError";
   }
 }
 
@@ -51,7 +47,6 @@ export class InvalidMcpServerConfigError extends AiddError {
   readonly code = "invalid-mcp-server-config";
   constructor(name: string) {
     super(`MCP server "${name}" must have either a "command" or "url" field`);
-    this.name = "InvalidMcpServerConfigError";
   }
 }
 
@@ -71,7 +66,6 @@ export class InvalidToolProfileError extends AiddError {
     detail: string
   ) {
     super(`The profile of '${toolId}' breaks '${invariant}': ${detail}`);
-    this.name = "InvalidToolProfileError";
   }
 }
 
@@ -82,6 +76,5 @@ export class DualConfigError extends AiddError {
     detail: string
   ) {
     super(`Both ${detail}. Remove one.`);
-    this.name = "DualConfigError";
   }
 }

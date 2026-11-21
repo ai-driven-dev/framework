@@ -32,7 +32,8 @@ describe("AiddError", () => {
   it("is an Error that carries the stable code its subclass names", () => {
     const error = new ProbeError("words");
     expect(error).toBeInstanceOf(Error);
-    expect({ code: error.code, message: error.message }).toStrictEqual({
+    expect({ name: error.name, code: error.code, message: error.message }).toStrictEqual({
+      name: "ProbeError",
       code: "probe",
       message: "words",
     });

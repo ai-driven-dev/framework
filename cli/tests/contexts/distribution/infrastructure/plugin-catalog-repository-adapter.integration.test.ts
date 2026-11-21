@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MalformedMarketplaceCatalogError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { InvalidPluginManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
@@ -64,10 +63,10 @@ describe("PluginCatalogRepositoryAdapter", () => {
   });
 
   describe("marketplace-malformed fixture", () => {
-    it("throws InvalidPluginManifestError for invalid JSON", async () => {
+    it("throws MalformedMarketplaceCatalogError for invalid JSON", async () => {
       const adapter = makeAdapter();
       await expect(adapter.load(join(FIXTURE_DIR, "marketplace-malformed"))).rejects.toThrow(
-        InvalidPluginManifestError
+        MalformedMarketplaceCatalogError
       );
     });
   });
@@ -115,11 +114,11 @@ describe("PluginCatalogRepositoryAdapter.load (Copilot-native path)", () => {
   });
 
   describe("copilot marketplace-multi-malformed fixture", () => {
-    it("throws InvalidPluginManifestError for invalid JSON in .plugin/marketplace.json", async () => {
+    it("throws MalformedMarketplaceCatalogError for invalid JSON in .plugin/marketplace.json", async () => {
       const adapter = makeAdapter();
       await expect(
         adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-malformed"))
-      ).rejects.toThrow(InvalidPluginManifestError);
+      ).rejects.toThrow(MalformedMarketplaceCatalogError);
     });
   });
 });
@@ -140,8 +139,6 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     try {
       await expect(adapter.load(cacheDir)).rejects.toThrow(MalformedMarketplaceCatalogError);
       await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
-      // Backward-compat: still an InvalidPluginManifestError for existing catchers.
-      await expect(adapter.load(cacheDir)).rejects.toThrow(InvalidPluginManifestError);
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }

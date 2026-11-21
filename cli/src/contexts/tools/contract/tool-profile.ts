@@ -107,8 +107,6 @@ export type PluginAnswers = NativePluginAnswers | FlatPluginAnswers | Unsupporte
 export interface MarkdownSectionAnswers {
   /** Where a built file lands, or null when the tool takes none by that name. */
   buildInstallPath(fileName: string): string | null;
-  /** Whether the tool takes a framework file of this name, a file for another tool's suffix refused. */
-  acceptsFileName(fileName: string, registered: readonly string[]): boolean;
   convertFrontmatter(fm: Record<string, unknown>, fileName: string): Record<string, unknown>;
   serialize(fm: Record<string, unknown>, body: string): string;
 }

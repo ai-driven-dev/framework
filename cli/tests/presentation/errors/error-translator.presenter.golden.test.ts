@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { failCommand } from "../../../src/presentation/errors/error-translator.js";
+import { failCommand } from "../../../src/presentation/errors/error-translator.presenter.js";
 import {
   AuthenticationError,
   InputRequiredError,

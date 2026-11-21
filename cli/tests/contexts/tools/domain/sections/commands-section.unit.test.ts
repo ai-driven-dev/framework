@@ -1,21 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { CommandsSection } from "../../../../../src/contexts/tools/domain/sections/commands-section.js";
 
-const REGISTERED = [".claude.md", ".cursor.md", ".codex.md"];
+describe("CommandsSection", () => {
+  it("writes the converted frontmatter and the body as a markdown file", () => {
+    const section = new CommandsSection({
+      toolSuffix: ".claude.md",
+      buildInstallPath: (fileName) => fileName,
+      convertFrontmatter: (fm, relativeFileName) => ({ ...fm, source: relativeFileName }),
+    });
 
-describe("CommandsSection file acceptance", () => {
-  const cap = new CommandsSection({
-    toolSuffix: ".claude.md",
-    buildInstallPath: (fileName) => fileName,
-    convertFrontmatter: (fm) => fm,
-  });
+    const converted = section.convertFrontmatter({ a: 1 }, "plan.md");
 
-  it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("01-plan/plan.claude.md", REGISTERED)).toBe(true);
-    expect(cap.acceptsFileName("01-plan/plan.md", REGISTERED)).toBe(true);
-  });
-
-  it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/plan.cursor.md", REGISTERED)).toBe(false);
+    expect(section.serialize(converted, "Body.")).toBe(
+      "---\na: '1'\nsource: 'plan.md'\n---\nBody."
+    );
   });
 });

@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AgentsSection } from "../../../../../src/contexts/tools/domain/sections/agents-section.js";
 
-const REGISTERED = [".claude.md", ".cursor.md", ".codex.md"];
-
 const identity = (fm: Record<string, unknown>) => fm;
 
 describe("AgentsSection", () => {
@@ -77,24 +75,6 @@ describe("AgentsSection install paths", () => {
     });
 
     expect(delegating.buildInstallPath("planner.x.md")).toBe("custom/planner.x.md");
-  });
-});
-
-describe("AgentsSection file acceptance", () => {
-  const cap = new AgentsSection({
-    directory: ".claude/",
-    toolSuffix: ".claude.md",
-    format: "markdown",
-    frontmatter: identity,
-  });
-
-  it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("planner.claude.md", REGISTERED)).toBe(true);
-    expect(cap.acceptsFileName("planner.md", REGISTERED)).toBe(true);
-  });
-
-  it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/planner.cursor.md", REGISTERED)).toBe(false);
   });
 });
 

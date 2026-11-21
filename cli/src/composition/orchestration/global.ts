@@ -29,7 +29,7 @@ import {
 import { RunSync } from "../../orchestration/sync/run-sync.js";
 import { RunUserScopeSync } from "../../orchestration/sync/run-user-scope-sync.js";
 import type { SyncSettings } from "../../orchestration/sync/sync-settings.js";
-import { contentSectionInstallers, type Installation } from "../installation.js";
+import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
@@ -87,12 +87,7 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
 function wireRestore(base: Base, installation: Installation, statusUseCase: ReportStatus) {
   const { fs, prompter, logger, manifestRepo, currentVersionProvider, platform, tools } = base;
   const restoreToolFiles = new RestoreToolFiles(
-    new GenerateToolDistribution(
-      new InstallConfig(fs),
-      contentSectionInstallers(tools),
-      platform,
-      installation.assetProvider
-    ),
+    new GenerateToolDistribution(new InstallConfig(fs), platform, installation.assetProvider),
     fs,
     prompter,
     logger,
