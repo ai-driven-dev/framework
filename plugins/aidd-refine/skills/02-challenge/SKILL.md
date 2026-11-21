@@ -10,6 +10,7 @@ argument-hint: work [techniques]
 flowchart LR
   work([work and what it was asked to do]) --> challenge["actions/01-challenge.md"]
   challenge --> report([deal breakers, what to decide, suggestions and what holds])
+  challenge -->|"a round appended"| file["challenge.md in the task folder"]
 ```
 
 ## Transversal rules
