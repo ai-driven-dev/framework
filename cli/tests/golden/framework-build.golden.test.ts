@@ -95,6 +95,8 @@ async function captureTarget(
   if (result.exitCode !== 0) {
     throw new Error(`translate --to ${target}${flat ? " --as flat" : ""} failed: ${result.stderr}`);
   }
+  const report = flat ? "Flat-installed" : "Built";
+  expect(result.stdout, `translate --to ${key} reports the build`).toContain(report);
   return hashDirectory(outDir);
 }
 
