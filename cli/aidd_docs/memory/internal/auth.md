@@ -6,7 +6,7 @@
 
 ## Credentials
 
-- `aidd auth login | logout | status` live in `src/presentation/commands/auth.ts` and are built by `src/composition/auth.ts`.
+- `aidd auth login | logout | status` live in `src/presentation/controllers/auth.controller.ts` and are built by `src/composition/auth.ts`.
 - A record's method is `stored` (a token in `auth.json`) or `external` (asked of a provider at read time), and no method is `gh`.
 - The one source order, `sourcesInOrder` in `src/contexts/auth/domain/credential-sources.ts`, is `--token`, then `AIDD_TOKEN`, then the project record, then the user record.
 - Token resolution (`firstToken`) passes over a record that yields no token.

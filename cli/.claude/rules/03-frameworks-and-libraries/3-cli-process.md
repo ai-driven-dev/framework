@@ -16,7 +16,7 @@ paths:
 - A conflict or skip is `warn`, never `error`.
 - End with a one-line summary.
 - `CLIOutput` routes by level, nothing else.
-- Rendering lives in `presentation/display/`.
+- Rendering lives in `presentation/presenters/`.
 - Deciding lives in the use case.
 - Exit `0` when it did what was asked.
 - Exit `1` on a thrown error, an invalid `--scope`, an invalid `translate` flag, an unhealthy `doctor`, a guard needing a TTY, no argument without a TTY (commander prints help to stderr), or a result that reports a failure: a refused telemetry step, a failed marketplace refresh, recipe findings.

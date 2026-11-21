@@ -25,7 +25,7 @@ const NOT_COMMANDS = new Set([
 ]);
 
 const SKILL = /^plugins\/([^/]+)\/skills\/(\d{2}-[^/]+)\//;
-const COMMAND = /^cli\/src\/presentation\/commands\/([^/]+)\.ts$/;
+const COMMAND = /^cli\/src\/presentation\/controllers\/([^/]+)\.controller\.ts$/;
 
 function surfaceOf(file) {
   const skill = SKILL.exec(file);
@@ -43,7 +43,7 @@ function surfacesOf(files) {
 /** Where a surface lives, so a surface added then removed or renamed in the same cycle is dropped. */
 function pathOf(surface) {
   if (surface.startsWith("aidd ")) {
-    return `cli/src/presentation/commands/${surface.slice(5)}.ts`;
+    return `cli/src/presentation/controllers/${surface.slice(5)}.controller.ts`;
   }
   const [plugin, skill] = surface.split(":");
   return `plugins/${plugin}/skills/${skill}`;

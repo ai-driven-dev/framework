@@ -322,20 +322,22 @@ describe("a controller builds no error", () => {
     entries(controllerBuildsErrorViolations({ [path]: error + body }));
 
   it("flags a controller that builds an error it imports from an error file", () => {
-    expect(found("src/presentation/commands/a.ts", "throw new GhostError('x');")).toEqual([
-      "src/presentation/commands/a.ts :: new GhostError",
-    ]);
+    expect(
+      found("src/presentation/controllers/a.controller.ts", "throw new GhostError('x');")
+    ).toEqual(["src/presentation/controllers/a.controller.ts :: new GhostError"]);
     expect(found("src/presentation/hooks/a.ts", "const e = new GhostError();")).toEqual([
       "src/presentation/hooks/a.ts :: new GhostError",
     ]);
   });
 
   it("clears an error only tested, a class of another file, and a file that is no controller", () => {
-    expect(found("src/presentation/commands/a.ts", "if (e instanceof GhostError) return;")).toEqual(
+    expect(
+      found("src/presentation/controllers/a.controller.ts", "if (e instanceof GhostError) return;")
+    ).toEqual([]);
+    expect(found("src/presentation/controllers/a.controller.ts", "new Other();")).toEqual([]);
+    expect(found("src/presentation/presenters/a.presenter.ts", "throw new GhostError();")).toEqual(
       []
     );
-    expect(found("src/presentation/commands/a.ts", "new Other();")).toEqual([]);
-    expect(found("src/presentation/display/a.ts", "throw new GhostError();")).toEqual([]);
   });
 
   it("holds the tree", () => {

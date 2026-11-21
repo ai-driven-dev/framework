@@ -168,7 +168,7 @@ export function isContext(name: string): boolean {
  */
 export function declaredCommands(): Set<string> {
   const declared = new Set<string>();
-  for (const file of sourceFiles().filter((f) => f.startsWith("src/presentation/commands/"))) {
+  for (const file of sourceFiles().filter((f) => f.startsWith("src/presentation/controllers/"))) {
     const source = read(file);
     // `program.command("noun")` names a parent; every other `.command("verb")` in that file
     // is one of its subcommands.
