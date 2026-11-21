@@ -76,7 +76,12 @@ export function flatSectionPath(
 }
 
 /** Whether a project-relative path is one of the plugin's skills or agents: the inverse of the
- * two placements above, read from the same declaration. */
+ * two placements above, read from the same declaration.
+ *
+ * Limit: a flat single-level skill or agent is owned by the `<plugin>-` name prefix, so plugin
+ * "aidd" also claims the `aidd-x-...` artifacts of a sibling plugin "aidd-x". No framework plugin
+ * name is a prefix of another, so nothing guards it; a plugin named that way must change the
+ * placement first. The nested skill layout (`<plugin>/`) has no such overlap. */
 export function ownsFlatArtifact(
   layout: FlatArtifactLayout,
   relativePath: string,

@@ -288,7 +288,9 @@ export interface AiToolProfile {
   buildContract(mode: FrameworkBuildMode, provider?: string): ToolBuildContract | null;
   /** Where a flat plugin's file of `section` lands, relative to the project root. */
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
-  /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree. */
+  /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree.
+   * Limit: a flat skill or agent is matched by the `<plugin>-` prefix, so a plugin whose name
+   * prefixes a sibling's would claim its files; no framework plugin name does. */
   ownsFlatPath(relativePath: string, pluginName: string): boolean;
   /** How this tool writes the references of its documents. */
   readonly linkSyntax: LinkSyntax;
