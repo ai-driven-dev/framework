@@ -104,6 +104,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | orchestration reads `machine-claims` beyond its `contract/` | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (each carries a `biome-ignore lint/plugin` above its import) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |
+| `folder-size.arch.test.ts` lets the folders it lists hold more than 10 source files | each was grown before the cap was checked, and a split moves files between kits and imports | the folder is split or shrinks to 10, and its line leaves the list: the list only ever gets shorter |
 
 ## 10. Checklist for a context's migration PR
 
