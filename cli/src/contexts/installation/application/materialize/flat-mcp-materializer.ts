@@ -10,6 +10,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
+import type { AddPluginRequest } from "./plugin-translator.js";
 
 export async function refreshTrackedMcpConfigHash(refresh: {
   fs: FileReader;
@@ -76,4 +77,24 @@ async function readExistingJson(fs: FileReader, path: string): Promise<string | 
     if (isErrnoException(err) && err.code === "ENOENT") return null;
     throw err;
   }
+}
+
+/**
+ * Merges the plugin's MCP servers into the tool's flat config, then refreshes the hash the manifest
+ * tracks for that config so the merge does not read back as drift.
+ */
+export async function materializeRequestedMcp(
+  fs: FileReader & FileWriter,
+  request: AddPluginRequest
+): Promise<Awaited<ReturnType<typeof materializeFlatMcp>>> {
+  const { dist, tool, projectRoot, manifest, previousMcpEntries = new Map() } = request;
+  const mcp = await materializeFlatMcp({ fs, dist, tool, projectRoot, previousMcpEntries });
+  await refreshTrackedMcpConfigHash({
+    fs,
+    manifest,
+    toolId: tool.toolId,
+    projectRoot,
+    outputRelPath: mcp.outputRelPath,
+  });
+  return mcp;
 }

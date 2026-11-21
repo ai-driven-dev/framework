@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
@@ -16,10 +15,10 @@ import {
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
-import { isPluginFileAtDesiredState } from "../plugin/check-plugin-file-state.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
+import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
-import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
+import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
 import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
 
@@ -62,34 +61,12 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       projectRoot,
       manifest,
       marketplace,
-      previousMcpEntries = new Map(),
       userScopeDirTaken = false,
-      previousProjectHooks,
-      hooksGuard = {},
     } = request;
     const ctx = this.resolveFlatToolContext(tool, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
-    const mcp = await materializeFlatMcp({
-      fs: this.fs,
-      dist,
-      tool,
-      projectRoot,
-      previousMcpEntries,
-    });
-    await refreshTrackedMcpConfigHash({
-      fs: this.fs,
-      manifest,
-      toolId: tool.toolId,
-      projectRoot,
-      outputRelPath: mcp.outputRelPath,
-    });
-    const hooks = await this.projectHooks.execute({
-      dist,
-      tool,
-      projectRoot,
-      previous: previousProjectHooks,
-      guard: hooksGuard,
-    });
+    const mcp = await materializeRequestedMcp(this.fs, request);
+    const hooks = await this.projectHooksOf(request);
     const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
     if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
       return { skipped: allSkipped };
@@ -107,6 +84,17 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       manifest,
     });
     return { skipped: allSkipped, written };
+  }
+
+  private projectHooksOf(request: AddPluginRequest) {
+    const { dist, tool, projectRoot, previousProjectHooks, hooksGuard = {} } = request;
+    return this.projectHooks.execute({
+      dist,
+      tool,
+      projectRoot,
+      previous: previousProjectHooks,
+      guard: hooksGuard,
+    });
   }
 
   private resolveFlatToolContext(
@@ -152,13 +140,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       scope,
       manifest,
     } = registration;
-    let written = 0;
-    for (const file of files) {
-      const outputPath = join(baseDir, file.relativePath);
-      if (await isPluginFileAtDesiredState(this.fs, outputPath, file.hash.value)) continue;
-      await this.fs.writeFile(outputPath, file.content);
-      written++;
-    }
+    const written = await writeChangedPluginFiles(this.fs, files, baseDir);
     const plugin = InstalledPlugin.fromDistributionWithMcp({
       dist,
       source,

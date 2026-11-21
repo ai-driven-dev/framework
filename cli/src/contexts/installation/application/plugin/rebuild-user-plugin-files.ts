@@ -5,11 +5,11 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { withoutHooks } from "../materialize/project-hooks-materializer.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
-} from "../materialize/built-tree-materialization-translator.js";
-import { withoutHooks } from "../materialize/project-hooks-materializer.js";
+} from "../materialize/read-built-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { readGlobalPluginFiles } from "./global-plugin-files.js";
