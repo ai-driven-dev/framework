@@ -75,7 +75,7 @@ describe("BuildNativeTree", () => {
 
     it("synthesized plugin.json omits skills when no SKILL.md files exist", async () => {
       for (const path of fs.listUnder(`${SOURCE_DIR}/plugins/aidd-test/skills`)) {
-        if (path.endsWith("SKILL.md")) fs.deleteFile(path);
+        if (path.endsWith("SKILL.md")) await fs.deleteFile(path);
       }
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
@@ -96,7 +96,7 @@ describe("BuildNativeTree", () => {
 
     it("synthesized plugin.json omits agents when no .md files exist in agents directory", async () => {
       for (const path of fs.listUnder(`${SOURCE_DIR}/plugins/aidd-test/agents`)) {
-        fs.deleteFile(path);
+        await fs.deleteFile(path);
       }
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });

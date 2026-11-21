@@ -16,9 +16,14 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
     return [...projectEntries, ...userFiltered];
   }
 
-  async save(projectRoot: string, marketplace: Marketplace): Promise<void> {
+  /** Records a marketplace at once, for a test that arranges the registry before the run. */
+  seed(projectRoot: string, marketplace: Marketplace): void {
     const store = marketplace.scope === "project" ? this.project : this.user;
     store.set(this.key(projectRoot, marketplace.name, marketplace.scope), marketplace);
+  }
+
+  async save(projectRoot: string, marketplace: Marketplace): Promise<void> {
+    this.seed(projectRoot, marketplace);
   }
 
   async delete(projectRoot: string, name: string, scope: Scope): Promise<void> {

@@ -160,7 +160,7 @@ export function seedManifest(toolId: AiToolId, hostName: string, alias: string):
 
 export function seedAiddMarketplaceRegistry(alias: string, scope: Scope = "project") {
   const registry = new InMemoryMarketplaceRegistry();
-  registry.save(
+  registry.seed(
     PROJECT_ROOT,
     Marketplace.create({
       name: alias,

@@ -86,7 +86,7 @@ export function seedSharedMarketplaceRegistry(
   withOtherProjectCatalogue = false
 ): InMemoryMarketplaceRegistry {
   const registry = new InMemoryMarketplaceRegistry();
-  registry.save(
+  registry.seed(
     PROJECT_ROOT,
     Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
@@ -96,7 +96,7 @@ export function seedSharedMarketplaceRegistry(
     })
   );
   if (withOtherProjectCatalogue) {
-    registry.save(
+    registry.seed(
       PROJECT_ROOT,
       Marketplace.create({
         name: "other-mkt",

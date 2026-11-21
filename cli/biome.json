@@ -24,6 +24,9 @@
         "noUnresolvedImports": "error",
         "noUnusedImports": "error"
       },
+      "nursery": {
+        "noFloatingPromises": "error"
+      },
       "style": {
         "noExportedImports": "error",
         "useTemplate": "error"

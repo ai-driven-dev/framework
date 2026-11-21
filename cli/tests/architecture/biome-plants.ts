@@ -4,6 +4,7 @@
  */
 const IMPORT = "lint/style/noRestrictedImports";
 const GLOBAL = "lint/style/noRestrictedGlobals";
+const FLOATING = "lint/nursery/noFloatingPromises";
 const PROFILE_MODULE = "../../../tools/contract/tool-profile.js";
 const OF_INSTALLATION = "tests/contexts/installation/application";
 const TOOLS = "../../../../src/contexts/tools";
@@ -388,6 +389,19 @@ export const PLANTS: readonly Plant[] = [
     "tests/shared/domain/reads.integration.test.ts",
     'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n',
     IMPORT,
+    0,
+  ],
+  // A promise nobody awaits, returns or voids fails its error silently.
+  [
+    "src/shared/domain/floats.ts",
+    "const load = async (): Promise<number> => 1;\nexport const run = async (): Promise<void> => {\n  load();\n};\n",
+    FLOATING,
+    1,
+  ],
+  [
+    "src/shared/domain/awaits-promise.ts",
+    "const load = async (): Promise<number> => 1;\nexport const run = async (): Promise<void> => {\n  await load();\n};\n",
+    FLOATING,
     0,
   ],
 ];

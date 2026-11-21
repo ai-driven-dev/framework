@@ -48,7 +48,7 @@ describe("settings migration: legacy host entries", () => {
         "claude"
       );
       const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
+      await registry.seed(
         PROJECT_ROOT,
         Marketplace.create({
           name: FRAMEWORK_MARKETPLACE_NAME,
@@ -113,7 +113,7 @@ describe("settings migration: legacy host entries", () => {
         "claude"
       );
       const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
+      await registry.seed(
         PROJECT_ROOT,
         Marketplace.create({
           name: FRAMEWORK_MARKETPLACE_NAME,
@@ -178,7 +178,7 @@ describe("settings migration: legacy host entries", () => {
         "claude"
       );
       const registry = new InMemoryMarketplaceRegistry();
-      registry.save(
+      registry.seed(
         PROJECT_ROOT,
         Marketplace.create({
           name: FRAMEWORK_MARKETPLACE_NAME,

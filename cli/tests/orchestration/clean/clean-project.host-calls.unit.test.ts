@@ -63,7 +63,7 @@ describe("clean: host calls", () => {
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
-        await registry.save(
+        await registry.seed(
           PROJECT_ROOT,
           Marketplace.create({
             name: "other-mkt",
@@ -156,7 +156,7 @@ describe("clean: host calls", () => {
 
       function seedSharedRegistry(): InMemoryMarketplaceRegistry {
         const registry = new InMemoryMarketplaceRegistry();
-        registry.save(
+        registry.seed(
           PROJECT_ROOT,
           Marketplace.create({
             name: MARKETPLACE,

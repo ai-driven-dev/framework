@@ -175,7 +175,7 @@ describe("clean: native registration refusals", () => {
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
-      registry.save(
+      registry.seed(
         PROJECT_ROOT,
         Marketplace.create({
           name: MARKETPLACE,

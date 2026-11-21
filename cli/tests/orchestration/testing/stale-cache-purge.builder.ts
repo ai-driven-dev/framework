@@ -22,7 +22,7 @@ export const OLD_CACHE_FILE = join(OLD_CACHE_DIR, "claude", "agents", "some-agen
 
 export function projectWithMigratableEntry(): InMemoryMarketplaceRegistry {
   const registry = new InMemoryMarketplaceRegistry();
-  registry.save(
+  registry.seed(
     PROJECT_ROOT,
     Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
@@ -36,7 +36,7 @@ export function projectWithMigratableEntry(): InMemoryMarketplaceRegistry {
 
 export function registryWithSharedFramework(): InMemoryMarketplaceRegistry {
   const registry = new InMemoryMarketplaceRegistry();
-  registry.save(
+  registry.seed(
     PROJECT_ROOT,
     Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
