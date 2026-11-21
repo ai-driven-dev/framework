@@ -6,7 +6,7 @@ import {
   parseSourceFlag,
   parseToolIds,
   requireAgentHosts,
-} from "../../../src/presentation/commands/setup.js";
+} from "../../../src/presentation/commands/setup-flags.js";
 import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { catalogOf, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 

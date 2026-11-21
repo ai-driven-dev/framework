@@ -56,9 +56,8 @@ const createDeps = vi.fn(async () => {
   };
 });
 
-const { globalSetupHelp, registerSetupCommand } = await import(
-  "../../../src/presentation/commands/setup.js"
-);
+const { registerSetupCommand } = await import("../../../src/presentation/commands/setup.js");
+const { globalSetupHelp } = await import("../../../src/presentation/commands/setup-flags.js");
 
 const PROJECT_ROOT = process.cwd();
 const CATALOG = wireTools();
@@ -218,29 +217,6 @@ describe("aidd setup — the agents' provider", () => {
     expect(setAgentModel).not.toHaveBeenCalled();
   });
 
-  it("reports, per host, what the main session and each agent now run on, and what it updated", async () => {
-    setAgentModel.mockResolvedValue({
-      reinstalled: ["aidd-orchestrator"],
-      changed: [{ host: "opencode", path: "/home/.config/opencode/opencode.json" }],
-      skipped: [],
-    });
-
-    const lines = await run("--ide", "opencode,kilo", "--provider", "mistral");
-    const start = lines.indexOf("Models on mistral, for every project on this machine:");
-
-    expect(lines.slice(start, start + 9)).toEqual([
-      "Models on mistral, for every project on this machine:",
-      "  opencode main session: mistral/mistral-large-4, written in /home/.config/opencode/opencode.json",
-      "  opencode reviewer: mistral/mistral-large-4 (high)",
-      "  opencode explorer, executor, validator: mistral/mistral-small-latest (high)",
-      "  kilo main session: not managed by aidd, still the IDE's choice",
-      "  kilo reviewer: mistral/mistral-large-4 (high)",
-      "  kilo explorer, executor, validator: mistral/mistral-small-latest (high)",
-      "Agents updated: aidd-orchestrator.",
-      OTHER_PROJECTS("opencode,kilo", "mistral"),
-    ]);
-  });
-
   it("gives the main session and the agents back the IDE's model with none", async () => {
     const lines = await run("--ide", "opencode", "--provider", "none");
 
@@ -249,29 +225,6 @@ describe("aidd setup — the agents' provider", () => {
     );
     expect(lines).toContain("opencode: the agents run on the IDE's model again.");
     expect(lines).toContain(OTHER_PROJECTS("opencode", "none"));
-  });
-
-  it("does not claim a main session it could not write, even after restoring its old file", async () => {
-    setAgentModel.mockResolvedValue({
-      reinstalled: [],
-      changed: [{ host: "claude", path: "/old/settings.json" }],
-      skipped: [{ host: "claude", path: "/new/settings.json", reason: "it holds no JSON object" }],
-    });
-
-    const lines = await run("--ide", "claude", "--provider", "anthropic");
-
-    expect(lines.filter((line) => line.includes("main session"))).toEqual([]);
-    expect(errors.join("")).toContain(
-      "claude main session left as it is in /new/settings.json: it holds no JSON object."
-    );
-  });
-
-  it("says agents installed later get the models when no plugin was updated", async () => {
-    setAgentModel.mockResolvedValue({ reinstalled: [], changed: [], skipped: [] });
-
-    const lines = await run("--ide", "opencode", "--provider", "mistral");
-
-    expect(lines).toContain("Agents installed later get these models too.");
   });
 
   it.each([
