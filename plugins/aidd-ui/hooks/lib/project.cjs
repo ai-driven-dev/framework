@@ -125,4 +125,4 @@ function required(root) {
   return project;
 }
 
-module.exports = { Refusal, NO_UI_FOLDER, load, required, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };
+module.exports = { Refusal, NO_UI_FOLDER, load, required, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, SHOWCASE_DIR, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };

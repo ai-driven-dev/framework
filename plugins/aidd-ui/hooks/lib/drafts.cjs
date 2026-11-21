@@ -1,17 +1,19 @@
-// Sets of variants: a skill writes one under aidd_docs/ui/drafts/<set>/, `compare` checks it, `keep` makes one variant the design system's own.
+// Sets of variants: a skill writes one under aidd_docs/ui/drafts/<set>/, `showcase` checks it, `keep` makes one variant the design system's own.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, SYSTEM_FILE, CSS_FILE, DRAFTS_DIR, ERROR } = require("./project.cjs");
-const { table, list, parseRecord, LINE_BREAK } = require("./markdown.cjs");
-const { pageOf } = require("./page.cjs");
+const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, DRAFTS_DIR, ERROR } = require("./project.cjs");
+const { table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { fingerprintOf } = require("./html.cjs");
+const { loadsStylesheet, STYLESHEET_HREF } = require("./renders.cjs");
 
 const VARIANTS_FILE = "variants.md";
-const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while comparing and never kept
-const PAGE_FILE = "compare.html";
+const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while choosing and never kept
 const IGNORE_FILE = ".gitignore";
 const IGNORE_ALL = "*\n";
 const VARIANT_COLUMN = "Variant";
 const INTENT_COLUMN = "Intent";
+const ROUND_COLUMN = "Round"; // the round a variant belongs to, 1 when the column is absent
+const PARENT_COLUMN = "Parent"; // the variant of an earlier round a variant is drawn from
 // A set's name is a folder of its own, never a path out of the drafts.
 const SET_NAME = /^[a-z0-9][a-z0-9-]*$/;
 const WHITESPACE = /\s+/g;
@@ -23,9 +25,9 @@ function setOf(root, id) {
   if (!fs.existsSync(path.join(root, UI_DIR))) throw new Refusal(NO_UI_FOLDER);
   const dir = path.join(root, UI_DIR, DRAFTS_DIR, id);
   const file = `${UI_DIR}/${DRAFTS_DIR}/${id}/${VARIANTS_FILE}`;
-  if (!fs.existsSync(path.join(root, file))) throw new Refusal(`no ${file}. Write it, then run compare ${id}.`);
+  if (!fs.existsSync(path.join(root, file))) throw new Refusal(`no ${file}. Write it, then run showcase.`);
   const rows = table({ lines: clean(fs.readFileSync(path.join(root, file), "utf8")).split(LINE_BREAK) });
-  const axes = rows.length ? Object.keys(rows[0]).filter((column) => column !== VARIANT_COLUMN && column !== INTENT_COLUMN) : [];
+  const axes = rows.length ? Object.keys(rows[0]).filter((column) => ![VARIANT_COLUMN, INTENT_COLUMN, ROUND_COLUMN, PARENT_COLUMN].includes(column)) : [];
   return { id, dir, file, rows, axes };
 }
 
@@ -35,7 +37,13 @@ const valueOf = (cell) => (cell ?? "").toLowerCase().replace(WHITESPACE, " ").tr
 /** A variant name is a folder name of its own, as a set's is. */
 const isName = (name) => typeof name === "string" && SET_NAME.test(name);
 
-/** The problems of a set, D1 to D5, each naming its variant. */
+/** The renders of a variant that load the tokens from another path than the record they become. */
+const strayRenders = (from) =>
+  walk(from)
+    .map((file) => relative(from, file))
+    .filter((file) => file.endsWith(".html") && path.basename(file) !== PREVIEW_FILE && !loadsStylesheet(fs.readFileSync(path.join(from, file), "utf8")));
+
+/** The problems of a set, D1 to D6, each naming its variant. */
 function check({ dir, file, rows, axes }) {
   const found = [];
   const flag = (rule, message, fix, excerpt) => found.push({ rule, severity: ERROR, file, message, fix, ...(excerpt === undefined ? {} : { excerpt }) });
@@ -47,6 +55,7 @@ function check({ dir, file, rows, axes }) {
     for (const axis of axes) if (!row[axis]) flag("D3", `variant "${names[at]}" has no value for ${axis}`, `write its ${axis}`, names[at]);
     if (!isName(names[at])) flag("D5", `variant "${names[at]}" is no folder name`, "name it with lowercase letters, digits and hyphens", String(names[at]));
     else if (!walk(path.join(dir, names[at])).length) flag("D5", `variant "${names[at]}" has no files`, `write its files in ${DRAFTS_DIR}/${path.basename(dir)}/${names[at]}/`, names[at]);
+    else for (const render of strayRenders(path.join(dir, names[at]))) flag("D6", `${names[at]}/${render} does not load ${STYLESHEET_HREF}, as its record will`, `link ${STYLESHEET_HREF}, the path from aidd_docs/ui/`, `${names[at]}/${render}`);
   });
   rows.forEach((row, at) => {
     rows.slice(at + 1).forEach((other, offset) => {
@@ -57,6 +66,9 @@ function check({ dir, file, rows, axes }) {
   return found;
 }
 
+/** The round of a row, and the variant it is drawn from or null. */
+const roundOf = (row) => ({ round: Number.parseInt(row[ROUND_COLUMN], 10) || 1, parent: row[PARENT_COLUMN] || null });
+
 /** What the page shows of a variant: its row, and its records and renders as text. */
 function shownOf({ dir, axes }, row) {
   const from = path.join(dir, row[VARIANT_COLUMN]);
@@ -64,31 +76,47 @@ function shownOf({ dir, axes }, row) {
     .map((file) => relative(from, file))
     .filter((file) => SHOWN_FILE.test(file))
     .map((file) => ({ path: file, text: fs.readFileSync(path.join(from, file), "utf8") }));
-  return { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], axes: axes.map((axis) => [axis, row[axis]]), files };
+  return { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], ...roundOf(row), axes: axes.map((axis) => [axis, row[axis]]), files };
 }
 
-/** A project file's text, or null when the project has none. */
-const readIfThere = (root, name) => (fs.existsSync(path.join(root, UI_DIR, name)) ? clean(fs.readFileSync(path.join(root, UI_DIR, name), "utf8")) : null);
-
-/** The set's problems when it has any. Else writes `drafts/.gitignore` and the set's page, and says
- * where the page is and which variants it shows. */
-function compare(root, id) {
-  const set = setOf(root, id);
-  const problems = check(set);
-  if (problems.length) return { problems };
+/** Every set under the drafts: its rows and axes, what each variant shows, its problems and a fingerprint of what it shows.
+ * A variant named like a path shows no files, and a folder without `variants.md` is no set. */
+function setsOf(root) {
   const draftsDir = path.join(root, UI_DIR, DRAFTS_DIR);
-  fs.writeFileSync(path.join(draftsDir, IGNORE_FILE), IGNORE_ALL);
-  const system = readIfThere(root, SYSTEM_FILE);
-  const variants = set.rows.map((row) => shownOf(set, row));
-  fs.writeFileSync(path.join(set.dir, PAGE_FILE), pageOf({ id, variants, tokens: readIfThere(root, CSS_FILE), themes: system === null ? [] : list(parseRecord(system).frontMatter.themes) }));
-  return { variants: variants.map(({ name, intent }) => ({ name, intent })), page: `${UI_DIR}/${DRAFTS_DIR}/${id}/${PAGE_FILE}` };
+  if (!fs.existsSync(draftsDir)) return [];
+  return fs
+    .readdirSync(draftsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && SET_NAME.test(entry.name) && fs.existsSync(path.join(draftsDir, entry.name, VARIANTS_FILE)))
+    .map((entry) => entry.name)
+    .sort()
+    .map((id) => {
+      const set = setOf(root, id);
+      const variants = set.rows.map((row) => (isName(row[VARIANT_COLUMN]) ? shownOf(set, row) : { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], ...roundOf(row), axes: set.axes.map((axis) => [axis, row[axis]]), files: [] }));
+      return { id, rows: set.rows, axes: set.axes, variants, problems: check(set), fingerprint: fingerprintOf(variants) };
+    });
 }
 
-/** Copies the variant's folder into the design system, `preview.html` aside, then deletes the set. */
+/** The index of the `version:` line of the front matter of `lines`, -1 when there is none. */
+const versionLineOf = (lines) => {
+  const close = frontMatterEnd(lines);
+  return close < 0 ? -1 : lines.findIndex((line, index) => index > 0 && index < close && line.startsWith("version:"));
+};
+
+/** A variant's record as text, with the `version:` line of the record it replaces: a version is the design system's, not a variant's. */
+function withVersionOf(variantText, existingText) {
+  const lines = variantText.split(LINE_BREAK);
+  const [at, kept] = [versionLineOf(lines), versionLineOf(existingText.split(LINE_BREAK))];
+  if (at < 0 || kept < 0) return variantText;
+  const existing = existingText.split(LINE_BREAK)[kept].replace(/\r$/, "");
+  lines[at] = existing + (lines[at].endsWith("\r") ? "\r" : "");
+  return lines.join(LINE_BREAK);
+}
+
+/** Copies the variant's folder into the design system, `preview.html` aside, then deletes the set. A record replaced keeps its version. */
 function keep(root, id, variant) {
   const set = setOf(root, id);
   const problems = check(set);
-  if (problems.length) throw new Refusal(`${id} has problems (${[...new Set(problems.map((problem) => problem.rule))].join(", ")}). Fix them, then run compare ${id}.`);
+  if (problems.length) throw new Refusal(`${id} has problems (${[...new Set(problems.map((problem) => problem.rule))].join(", ")}). Fix them, then run showcase.`);
   if (!set.rows.some((row) => row[VARIANT_COLUMN] === variant)) throw new Refusal(`no variant "${variant}" in ${id}`);
   const from = path.join(set.dir, variant);
   const written = walk(from)
@@ -97,11 +125,12 @@ function keep(root, id, variant) {
     .map((file) => {
       const target = path.join(root, UI_DIR, file);
       fs.mkdirSync(path.dirname(target), { recursive: true });
-      fs.copyFileSync(path.join(from, file), target);
+      if (file.endsWith(".md") && fs.existsSync(target)) fs.writeFileSync(target, withVersionOf(fs.readFileSync(path.join(from, file), "utf8"), fs.readFileSync(target, "utf8")));
+      else fs.copyFileSync(path.join(from, file), target);
       return `${UI_DIR}/${file}`;
     });
   fs.rmSync(set.dir, { recursive: true });
   return { kept: variant, written };
 }
 
-module.exports = { compare, keep };
+module.exports = { keep, setsOf, IGNORE_FILE, IGNORE_ALL };

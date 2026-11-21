@@ -4,13 +4,10 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, PATHS, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject } = require("../fixtures/aidd-ui/project.js");
 
-const { feedbackOf, copiedOf } = require(path.join(LIB, "page.cjs"));
-
-// A set of variants is driven as a subprocess, as the skill calls it: `compare` checks it and
+// A set of variants is driven as a subprocess, as the skill calls it: `showcase` checks it and
 // writes its page, `keep` makes one of its variants the design system's own file.
 
 const DRAFTS = `${UI}/drafts`;
-const PAGE = `${DRAFTS}/brand/compare.html`;
 const HEADER = ["Variant", "Intent", "Tone", "Density"];
 const ROWS = [
   ["a", "Calm and plain for analysts", "calm", "roomy"],
@@ -43,8 +40,8 @@ function writeSet(id, { header = HEADER, rows = ROWS, files = (name) => ({ "bran
   for (const [name] of rows) for (const [file, content] of Object.entries(files(name))) put(`${DRAFTS}/${id}/${name}/${file}`, content);
 }
 
-const compare = (id = "brand") => {
-  const run = engine("compare", id, "--root", tmp);
+const showcase = () => {
+  const run = engine("showcase", "--root", tmp);
   return { code: run.status, out: run.stdout, err: run.stderr };
 };
 const keep = (id, variant) => {
@@ -53,13 +50,15 @@ const keep = (id, variant) => {
 };
 const snapshot = () => filesUnder(tmp).map((file) => [file, fs.readFileSync(file, "utf8")]);
 
-/** `compare` refused the set for each of `rules`, writing nothing. */
+/** `showcase` printed the problems of the set for each of `rules`, exited 1, and showed them on the set's page. */
 function assertFlags(rules, id = "brand") {
-  const before = snapshot();
-  const run = compare(id);
+  const run = showcase();
   assert.equal(run.code, 1, run.out + run.err);
-  for (const rule of rules) assert.match(run.out, new RegExp(` ${rule}( |$)`, "m"), `${rule} in ${run.out}`);
-  assert.deepEqual(snapshot(), before);
+  const page = read(`${UI}/showcase/_set-${id}.html`);
+  for (const rule of rules) {
+    assert.match(run.out, new RegExp(` ${rule}( |$)`, "m"), `${rule} in ${run.out}`);
+    assert.match(page, new RegExp(`data-rule="${rule}"`), `${rule} on the page`);
+  }
   return run.out;
 }
 
@@ -71,12 +70,12 @@ describe("aidd-ui drafts", () => {
     });
   });
 
-  describe("compare", () => {
-    it("checks a valid set, prints each variant's name and intent in the table's order, and ignores the drafts", () => {
+  describe("D1 to D5, through showcase", () => {
+    it("shows a valid set on a page of its own, exits 0, and the drafts stay out of the validation", () => {
       writeSet("brand");
-      const run = compare();
+      const run = showcase();
       assert.deepEqual([run.code, run.err], [0, ""]);
-      assert.deepEqual(JSON.parse(run.out).variants, ROWS.map(([name, intent]) => ({ name, intent })));
+      assert.deepEqual(ROWS.filter(([name]) => !read(`${UI}/showcase/_set-brand.html`).includes(`data-variant="${name}"`)), []);
       assert.equal(read(`${DRAFTS}/.gitignore`), "*\n");
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
@@ -111,23 +110,17 @@ describe("aidd-ui drafts", () => {
       assert.match(assertFlags(["D5"]), / D5 "b"/);
     });
 
-    it("refuses a set without variants.md, nothing written", () => {
-      const before = snapshot();
-      const run = compare("brand");
-      assert.deepEqual([run.code, run.out, run.err.startsWith("aidd-ui: ")], [2, "", true]);
-      assert.deepEqual(snapshot(), before);
-    });
-
-    it("refuses a project without aidd_docs/ui, nothing written", () => {
-      fs.rmSync(path.join(tmp, UI), { recursive: true });
-      const run = compare("brand");
-      assert.deepEqual([run.code, run.out, run.err.startsWith("aidd-ui: ")], [2, "", true]);
-      assert.equal(exists(UI), false);
+    it("D6 flags a variant render that loads the tokens from elsewhere than its record will, naming the file", () => {
+      const screen = (href) => `<!doctype html>\n<html lang="en">\n<head>\n<link rel="stylesheet" href="${href}">\n</head>\n<body></body>\n</html>\n`;
+      writeSet("brand", { files: (name) => ({ "brand.md": brandOf(`Tone of ${name}`), "screens/home.html": screen("../tokens.css"), "preview.html": `<p>${name}</p>\n` }) });
+      assert.equal(showcase().code, 0);
+      put(`${DRAFTS}/brand/b/screens/home.html`, screen("../../../../tokens.css"));
+      assert.match(assertFlags(["D6"]), / D6 "b\/screens\/home.html"/);
     });
 
     it("D5 flags a table without a Variant column, and a variant named like a path, naming the row", () => {
       writeSet("brand", { header: ["Direction", "Intent", "Tone"], rows: ROWS.map(([name, intent, tone]) => [name, intent, tone]) });
-      const run = compare();
+      const run = showcase();
       assert.deepEqual([run.code, run.err], [1, ""]);
       assert.match(run.out, / D5 "undefined"/);
       writeSet("brand", { rows: ROWS.slice(0, 1) });
@@ -135,16 +128,21 @@ describe("aidd-ui drafts", () => {
       assert.match(assertFlags(["D5"]), / D5 "\.\."/);
     });
 
-    it("exits 2 with its usage when the set is not named", () => {
-      const run = engine("compare", "--root", tmp);
-      assert.deepEqual([run.status, run.stderr], [2, "usage: node aidd-ui.cjs compare <set> [--root <dir>]\n"]);
+    it("is no command any more: compare exits 2 as an unknown command and writes nothing", () => {
+      writeSet("brand");
+      const before = snapshot();
+      const run = engine("compare", "brand", "--root", tmp);
+      assert.deepEqual([run.status, run.stdout], [2, ""]);
+      assert.match(run.stderr, /^usage: node aidd-ui.cjs help/);
+      assert.doesNotMatch(run.stderr, /compare/);
+      assert.deepEqual(snapshot(), before);
     });
   });
 
   describe("keep", () => {
     it("makes the variant the design system's file, drops every other, and leaves the set's ignore file", () => {
       writeSet("brand");
-      compare();
+      showcase();
       const run = keep("brand", "b");
       assert.deepEqual([run.code, run.err], [0, ""]);
       assert.deepEqual(JSON.parse(run.out), { kept: "b", written: [`${UI}/brand.md`] });
@@ -155,12 +153,34 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    it("keeps the version of the record it replaces, never the variant's", () => {
+      writeSet("brand");
+      fs.writeFileSync(path.join(tmp, PATHS.BRAND), read(PATHS.BRAND).replace("version: 1", "version: 3"));
+      const run = keep("brand", "b");
+      assert.deepEqual([run.code, run.err], [0, ""]);
+      assert.equal(read(PATHS.BRAND), brandOf("Tone of b").replace("version: 1", "version: 3"));
+    });
+
+    it("keeps the variant's own version for a record the design system does not hold yet", () => {
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": "---\nid: x\nversion: 4\n---\n", "preview.html": "<p>p</p>\n" }) });
+      keep("button", "b");
+      assert.equal(read(`${UI}/components/x.md`), "---\nid: x\nversion: 4\n---\n");
+    });
+
+    it("removes every round of the set with the kept variant", () => {
+      writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
+      const run = keep("brand", "c");
+      assert.deepEqual([run.code, run.err], [0, ""]);
+      assert.equal(read(PATHS.BRAND), brandOf("Tone of c"));
+      assert.equal(exists(`${DRAFTS}/brand`), false);
+    });
+
     it("lands each file where the variant's folder mirrors it", () => {
-      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<link rel="stylesheet" href="../tokens.css"><p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
       const run = keep("button", "b");
       assert.deepEqual(JSON.parse(run.out).written, [`${UI}/components/x.html`, `${UI}/components/x.md`]);
       assert.equal(read(`${UI}/components/x.md`), "md b\n");
-      assert.equal(read(`${UI}/components/x.html`), "<p>b</p>\n");
+      assert.equal(read(`${UI}/components/x.html`), '<link rel="stylesheet" href="../tokens.css"><p>b</p>\n');
     });
 
     it("refuses a name that leaves the drafts folder, nothing written", () => {
@@ -205,351 +225,76 @@ describe("aidd-ui drafts", () => {
     });
   });
 
-  describe("the comparison page", () => {
-    const page = () => read(PAGE);
-    const render = (title, states) => read(PATHS.BUTTON_RENDER).replace("<title>button</title>", `<title>${title}</title>`).replace(/<button class="ui"[\s\S]*<\/button>/, states.map((state) => `<button class="ui" data-state="${state}">${title}</button>`).join("\n"));
-    const componentSet = (states = ["default", "hover"]) => writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.html": render(name, states) }) });
+  describe("setsOf", () => {
+    const { setsOf } = require(path.join(LIB, "drafts.cjs"));
 
-    it("is written beside the set by compare, and named in its output", () => {
+    it("lists no set when the project has no drafts", () => {
+      assert.deepEqual(setsOf(tmp), []);
+    });
+
+    it("lists each set with its rows, axes, shown variants, problems and a fingerprint of what it shows", () => {
       writeSet("brand");
-      assert.equal(JSON.parse(compare().out).page, PAGE);
-      assert.equal(exists(PAGE), true);
+      writeSet("layout", { rows: ROWS.slice(0, 1) });
+      const sets = setsOf(tmp);
+      assert.deepEqual(sets.map((set) => set.id), ["brand", "layout"]);
+      const [brand, layout] = sets;
+      assert.deepEqual(brand.axes, ["Tone", "Density"]);
+      assert.deepEqual(brand.rows.map((row) => row.Variant), ["a", "b", "c"]);
+      assert.deepEqual(brand.variants.map(({ name, intent, axes }) => [name, intent, axes]), ROWS.map(([name, intent, tone, density]) => [name, intent, [["Tone", tone], ["Density", density]]]));
+      assert.deepEqual(brand.variants[0].files.map((file) => file.path), ["brand.md", "preview.html"]);
+      assert.deepEqual(brand.problems, []);
+      assert.match(brand.fingerprint, /^[0-9a-f]{64}$/);
+      assert.deepEqual(layout.problems.map((problem) => problem.rule), ["D1"]);
     });
 
-    it("holds each variant's name, intent, axis values and text, and each html file in a frame of its own", () => {
+    it("changes the fingerprint when a variant's file changes, and only then", () => {
       writeSet("brand");
-      compare();
-      for (const [name, intent, tone, density] of ROWS) for (const text of [`data-name="${name}"`, intent, `<dd>${tone}</dd>`, `<dd>${density}</dd>`, `Tone of ${name}`]) assert.ok(page().includes(text), text);
-      assert.equal(page().match(/<iframe /g).length, ROWS.length);
-      assert.equal(page().match(/ srcdoc="/g).length, ROWS.length);
+      const before = setsOf(tmp)[0].fingerprint;
+      assert.equal(setsOf(tmp)[0].fingerprint, before);
+      put(`${DRAFTS}/brand/a/preview.html`, "<p>changed</p>\n");
+      assert.notEqual(setsOf(tmp)[0].fingerprint, before);
     });
 
-    it("asks for nothing outside itself: no link, no source, no address", () => {
+    it("reads a Round and a Parent column as the rounds of a set, never as axes", () => {
+      writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
+      const [set] = setsOf(tmp);
+      assert.deepEqual(set.axes, ["Tone", "Density"]);
+      assert.deepEqual(set.variants.map((variant) => [variant.name, variant.round, variant.parent]), [["a", 1, null], ["b", 1, null], ["c", 2, "a"]]);
+      assert.deepEqual(set.variants[2].axes.map(([axis]) => axis), ["Tone", "Density"]);
+      assert.deepEqual(set.problems, []);
+    });
+
+    it("puts every variant of a set without a Round column in round 1", () => {
       writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /\b(?:src|href)=["']|https?:\/\//);
+      assert.deepEqual(setsOf(tmp)[0].variants.map((variant) => [variant.round, variant.parent]), [[1, null], [1, null], [1, null]]);
     });
 
-    it("takes the tokens of the design system in line, and lists its themes", () => {
-      componentSet();
-      compare("button");
-      const text = read(`${DRAFTS}/button/compare.html`);
-      assert.ok(text.includes("--space-md: 1rem"));
-      assert.equal(text.includes("../tokens.css"), false);
-      const themes = [...text.match(/<select id="theme">([\s\S]*?)<\/select>/)[1].matchAll(/<option value="([^"]*)"/g)].map((match) => match[1]);
-      assert.deepEqual(themes, ["light", "dark"]);
+    it("keeps a set whose variant is named like a path, with its problem and no files", () => {
+      writeSet("brand", { rows: [ROWS[0], ["../x", ROWS[1][1], "bold", "roomy"], ROWS[2]] });
+      const [set] = setsOf(tmp);
+      assert.ok(set.problems.some((problem) => problem.rule === "D5"));
+      assert.deepEqual(set.variants[1].files, []);
     });
 
-    it("lists no theme without a design system file", () => {
-      fs.rmSync(path.join(tmp, PATHS.SYSTEM));
+    it("skips a folder that holds no variants.md and a folder that is no set name", () => {
+      put(`${DRAFTS}/empty/a/preview.html`, "<p>a</p>");
+      put(`${DRAFTS}/Not A Name/variants.md`, "# x\n");
+      assert.deepEqual(setsOf(tmp), []);
+    });
+  });
+
+  describe("showcase and the drafts folder", () => {
+    const showcase = () => engine("showcase", "--root", tmp);
+
+    it("writes drafts/.gitignore when drafts exist, so a draft never reaches the history", () => {
       writeSet("brand");
-      compare();
-      assert.equal(page().includes('id="theme"'), false);
+      assert.equal(showcase().status, 0);
+      assert.equal(read(`${DRAFTS}/.gitignore`), "*\n");
     });
 
-    it("lists the states its renders carry, once and sorted", () => {
-      componentSet(["hover", "default"]);
-      compare("button");
-      const text = read(`${DRAFTS}/button/compare.html`);
-      const states = [...text.match(/<select id="state">([\s\S]*?)<\/select>/)[1].matchAll(/<option value="([^"]*)"/g)].map((match) => match[1]);
-      assert.deepEqual(states, ["", "default", "hover"]);
-    });
-
-    const order = (pattern) => [...page().matchAll(pattern)].map((match) => match[1]);
-    const PICK = /<button type="button" class="pick" data-name="(\w+)"/g;
-    const SECTION = /<section class="variant" data-name="(\w+)"/g;
-    const PANEL = /<section class="panel" data-name="(\w+)"/g;
-    const tagsOf = (pattern) => page().match(pattern) ?? [];
-    const panelBodies = () => page().split('<section class="panel"').slice(1).map((chunk) => chunk.split("</section>")[0]);
-
-    it("lists the variants in the order of variants.md", () => {
-      writeSet("brand", { rows: [ROWS[1], ROWS[0], ROWS[2]] });
-      compare();
-      assert.deepEqual(order(PICK), ["b", "a", "c"]);
-      assert.deepEqual(order(SECTION), ["b", "a", "c"]);
-    });
-
-    it("has a variants list, a canvas, an inspector and a progress reading 0/N decided", () => {
-      writeSet("brand");
-      compare();
-      assert.match(page(), /<nav aria-label="Variants">/);
-      assert.match(page(), /<main id="canvas">/);
-      assert.match(page(), /<aside id="inspector">/);
-      assert.match(page(), /<span id="progress"[^>]*>0\/3 decided<\/span>/);
-    });
-
-    it("has one pick, one canvas section and one panel per variant, in order", () => {
-      writeSet("brand", { rows: [ROWS[1], ROWS[0], ROWS[2]] });
-      compare();
-      for (const pattern of [PICK, SECTION, PANEL]) assert.deepEqual(order(pattern), ["b", "a", "c"]);
-    });
-
-    it("shows only the first variant: its section and panel are not hidden, its pick is current", () => {
-      writeSet("brand");
-      compare();
-      for (const pattern of [/<section class="variant"[^>]*>/g, /<section class="panel"[^>]*>/g]) assert.deepEqual(tagsOf(pattern).map((tag) => /\shidden/.test(tag)), [false, true, true]);
-      assert.deepEqual(tagsOf(/<button type="button" class="pick"[^>]*>/g).map((tag) => tag.includes('aria-current="true"')), [true, false, false]);
-    });
-
-    it("gives each panel three unpressed verdict buttons and a comment", () => {
-      writeSet("brand");
-      compare();
-      assert.equal(panelBodies().length, ROWS.length);
-      for (const body of panelBodies()) {
-        assert.deepEqual([...body.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)" aria-pressed="false"[^>]*>/g)].map((match) => match[1]), ["keep", "revise", "discard"]);
-        assert.match(body, /<textarea class="comment" autocomplete="off"/); // a browser restoring the text would outlive a changed set
-      }
-    });
-
-    it("renders a markdown variant as a document, never as preformatted text", () => {
-      const markdown = (name) => `---\nid: brand\nkind: brand\n---\n\n# Brand ${name}\n\n## Users\n\nAnalysts use \`${name}-code\` daily.\n<script>alert(1)</script>\n\n### Glossary\n\n- first item\n- second item\n\n| Concept | Word | Forbidden |\n| --- | --- | --- |\n| order | Order <i> | basket |\n\n#### Deep\n`;
-      writeSet("brand", { files: (name) => ({ "brand.md": markdown(name), "preview.html": `<p>${name}</p>\n` }) });
-      compare();
-      const canvas = page().split('<main id="canvas">')[1].split("</main>")[0];
-      const count = (pattern) => (canvas.match(pattern) ?? []).length;
-      assert.equal(count(/<h1>Brand \w<\/h1>/g), ROWS.length);
-      assert.equal(count(/<h2>Users<\/h2>/g), ROWS.length);
-      assert.equal(count(/<h3>Glossary<\/h3>/g), ROWS.length);
-      assert.equal(count(/<table>/g), ROWS.length);
-      assert.equal(count(/<th>Forbidden<\/th>/g), ROWS.length);
-      assert.equal(count(/<td>Order &lt;i&gt;<\/td>/g), ROWS.length);
-      assert.equal(count(/<li>second item<\/li>/g), ROWS.length);
-      assert.equal(count(/<code>\w-code<\/code>/g), ROWS.length);
-      assert.equal(count(/<span class="chip">[^<]*<span class="key">kind<\/span>brand<\/span>/g), ROWS.length);
-      assert.equal(count(/<p>#### Deep<\/p>/g), ROWS.length);
-      assert.equal(count(/&lt;script&gt;alert\(1\)&lt;\/script&gt;/g), ROWS.length);
-      assert.doesNotMatch(canvas, /<pre|<script|<i>/);
-    });
-
-    it("keeps the feedback in a closed Show JSON disclosure and Copy a plain button", () => {
-      writeSet("brand");
-      compare();
-      assert.match(page(), /<details>\s*<summary>Show JSON<\/summary>\s*<textarea id="feedback"/);
-      assert.match(page(), /<button type="button" id="copy"[^>]*>/);
-    });
-
-    const canvasOf = () => page().split('<main id="canvas">')[1].split("</main>")[0];
-    const headerOf = () => page().split("<header>")[1].split("</header>")[0];
-    const inspectorOf = () => page().split('<aside id="inspector">')[1].split("</aside>")[0];
-
-    it("puts the view, layout and preview controls in a toolbar inside the canvas", () => {
-      componentSet();
-      compare("button");
-      const canvas = read(`${DRAFTS}/button/compare.html`).split('<main id="canvas">')[1].split("</main>")[0];
-      const toolbar = canvas.match(/<div class="toolbar">([\s\S]*?)<\/div>\s*<div class="stage">/)?.[1] ?? "";
-      assert.deepEqual([...toolbar.matchAll(/<button type="button" class="mode"[^>]*>([^<]*)<\/button>/g)].map((match) => match[1]), ["Screen", "Spec", "1 up", "2 up", "Desktop", "Mobile"]);
-      assert.match(toolbar, /<select id="state">/);
-      assert.match(toolbar, /<select id="theme">/);
-    });
-
-    it("defaults the screen size to Desktop, 1280 by 800, with Mobile 390 by 844 in the script", () => {
-      writeSet("brand");
-      compare();
-      assert.match(canvasOf(), /data-device="desktop" aria-pressed="true"/);
-      assert.match(canvasOf(), /data-device="mobile" aria-pressed="false"/);
-      assert.match(page(), /desktop: \[1280, 800\]/);
-      assert.match(page(), /mobile: \[390, 844\]/);
-    });
-
-    it("shows the zoom in each title bar and scales a real viewport inside a box", () => {
-      writeSet("brand");
-      compare();
-      canvasOf().split('<section class="variant"').slice(1).forEach((chunk) => assert.match(chunk, /<span class="zoom"[^>]*><\/span>/));
-      assert.match(canvasOf(), /<div class="shot"><iframe /);
-      assert.doesNotMatch(page(), /clamp\(/);
-    });
-
-    it("gives the inspector 18rem", () => {
-      writeSet("brand");
-      compare();
-      assert.match(page(), /minmax\(0, 1fr\) 18rem;/);
-    });
-
-    it("fits each screen to the canvas, side by side or stacked, whichever scales larger", () => {
-      writeSet("brand");
-      compare();
-      assert.match(page(), /const side = Math\.min\(/);
-      assert.match(page(), /const stack = Math\.min\(/);
-      assert.match(page(), /const stacked = stack > side;/);
-      assert.match(page(), /stage\.dataset\.arrange = stacked \? "stack" : "side"/);
-      assert.match(page(), /watch\.observe\(stage\)/);
-      assert.match(page(), /\.stage\[data-arrange="stack"\] \{ flex-direction: column; \}/);
-      assert.match(page(), /\.stage\[data-arrange\] \{ justify-content: center; align-items: center; \}/);
-      assert.match(page(), /const scale = Math\.min\(1, Math\.max\(side, stack\)\);/);
-    });
-
-    it("has a Focus toggle that hides the navigator and the inspector and is remembered", () => {
-      writeSet("brand");
-      compare();
-      const toolbar = canvasOf().match(/<div class="toolbar">([\s\S]*?)<\/div>\s*<div class="stage">/)?.[1] ?? "";
-      assert.match(toolbar, /<button type="button" id="focus" aria-pressed="false" title="Focus \(\\\)"><span>Focus<\/span><kbd aria-hidden="true">\\<\/kbd><\/button>/);
-      assert.match(page(), /body\[data-focus\] nav, body\[data-focus\] aside \{ display: none; \}/);
-      assert.match(page(), /body\[data-focus\] \{ grid-template-columns: minmax\(0, 1fr\); grid-template-areas: "top" "canvas"; \}/);
-      assert.match(page(), /view, up, device, focus \}/);
-      assert.match(page(), /if \(saved\.focus === true\) focus = true;/);
-      assert.match(page(), /if \(event\.key === "\\\\"\) \{/);
-    });
-
-    it("keeps the preview selects out of the top bar", () => {
-      componentSet();
-      compare("button");
-      const header = read(`${DRAFTS}/button/compare.html`).split("<header>")[1].split("</header>")[0];
-      assert.doesNotMatch(header, /<select/);
-    });
-
-    it("opens on Screen when a variant has html, on Spec when none has, and says when a view is empty", () => {
-      writeSet("brand");
-      compare();
-      assert.match(canvasOf(), /data-view="screen" aria-pressed="true"/);
-      assert.match(canvasOf(), /data-view="spec" aria-pressed="false"/);
-      assert.match(canvasOf(), /<div class="file" data-kind="screen">/);
-      assert.match(canvasOf(), /<div class="file" data-kind="spec" hidden>\s*<div class="page">/);
-      writeSet("notes", { rows: ROWS.slice(0, 2), files: () => ({ "brand.md": "# Brand\n" }) });
-      compare("notes");
-      const notes = read(`${DRAFTS}/notes/compare.html`);
-      assert.match(notes, /data-view="spec" aria-pressed="true"/);
-      assert.match(notes, /data-kind="screen" hidden><p class="none">No screen in this variant\.<\/p>/);
-    });
-
-    it("shows each variant in a window with a title bar holding its name and verdict pill", () => {
-      writeSet("brand");
-      compare();
-      const windows = canvasOf().split('<section class="variant"').slice(1);
-      assert.equal(windows.length, ROWS.length);
-      windows.forEach((chunk, at) => assert.match(chunk, new RegExp(`<div class="win">\\s*<div class="title"><b>${ROWS[at][0]}</b><span class="slot" aria-hidden="true"></span>(?:<span class="zoom"[^>]*></span>)?<span class="vpill" data-verdict="">Undecided</span></div>`)));
-    });
-
-    it("has a help button and a sheet listing every shortcut", () => {
-      writeSet("brand");
-      compare();
-      assert.match(headerOf(), /<button type="button" id="help" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded="false" aria-controls="sheet" title="Shortcuts \(\?\)">\?<\/button>/);
-      const sheet = headerOf().match(/<dialog id="sheet"[^>]*>([\s\S]*?)<\/dialog>/)?.[1] ?? "";
-      assert.deepEqual([...sheet.matchAll(/<kbd>([^<]+)<\/kbd>/g)].map((match) => match[1]), ["K", "R", "D", "←→", "C", "\\", "?", "Esc"]);
-    });
-
-    it("gives each verdict button its key as a cap and a title, its name staying the verdict", () => {
-      writeSet("brand");
-      compare();
-      assert.equal(panelBodies().length, ROWS.length);
-      for (const body of panelBodies()) {
-        const buttons = [...body.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)"[^>]*? title="([^"]*)"><span aria-hidden="true">\S<\/span>(\w+)<kbd aria-hidden="true">(\w)<\/kbd><\/button>/g)];
-        assert.deepEqual(buttons.map((match) => match.slice(1)), [["keep", "Keep (K)", "Keep", "K"], ["revise", "Revise (R)", "Revise", "R"], ["discard", "Discard (D)", "Discard", "D"]]);
-      }
-      assert.match(headerOf(), /<button type="button" id="copy" title="Copy feedback \(C\)">/);
-    });
-
-    it("shows a legend of the four dots under the list, and no shortcut grid in the inspector", () => {
-      writeSet("brand");
-      compare();
-      const nav = page().split("<nav")[1].split("</nav>")[0];
-      const legend = nav.match(/<ul class="legend"[^>]*>([\s\S]*?)<\/ul>/)?.[1] ?? "";
-      assert.deepEqual([...legend.matchAll(/<li><span class="dot" data-verdict="(\w*)" aria-hidden="true"><\/span>([^<]+)<\/li>/g)].map((match) => match.slice(1)), [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"], ["", "Undecided"]]);
-      assert.doesNotMatch(inspectorOf(), /class="keys"/);
-    });
-
-    it("hides the completion hint until every variant has a verdict, the progress still reading 0/N", () => {
-      writeSet("brand");
-      compare();
-      assert.match(headerOf(), /<span id="done" hidden>Copy the feedback into the chat\.<\/span>/);
-      assert.match(headerOf(), /<span id="progress">0\/3 decided<\/span>/);
-    });
-
-    it("keeps the chrome greyscale: every neutral colour has equal channels, in both schemes", () => {
-      writeSet("brand");
-      compare();
-      const style = page().match(/<style>([\s\S]*?)<\/style>/)[1];
-      const neutral = ["bg", "text", "muted", "line", "canvas", "dot", "hover", "press", "pill", "pill-text", "kbd-line", "title", "win", "win-line", "track"];
-      const found = neutral.flatMap((name) => [...style.matchAll(new RegExp(`--${name}: (#[0-9a-f]{6})`, "g"))].map((match) => [name, match[1]]));
-      assert.equal(found.length, neutral.length * 2, "each neutral is defined in light and in dark");
-      for (const [name, hex] of found) assert.equal(hex.slice(1, 3) === hex.slice(3, 5) && hex.slice(3, 5) === hex.slice(5, 7), true, `--${name}: ${hex}`);
-    });
-
-    it("redefines its chrome colours under the dark scheme", () => {
-      writeSet("brand");
-      compare();
-      assert.match(page(), /@media \(prefers-color-scheme: dark\) \{[^}]*--[\w-]+:/);
-    });
-
-    const keyOf = () => page().match(/"aidd-ui:brand:([0-9a-f]+)"/)?.[1];
-
-    it("stores the review under a key of the set and a hex fingerprint", () => {
-      writeSet("brand");
-      compare();
-      assert.match(keyOf() ?? "", /^[0-9a-f]{64}$/);
-    });
-
-    it("writes the same fingerprint on two runs", () => {
-      writeSet("brand");
-      compare();
-      const first = keyOf();
-      assert.ok(first);
-      compare();
-      assert.equal(keyOf(), first);
-    });
-
-    it("writes another fingerprint once a variant file's text changes", () => {
-      writeSet("brand");
-      compare();
-      const first = keyOf();
-      assert.ok(first);
-      put(`${DRAFTS}/brand/b/preview.html`, "<p>changed</p>\n");
-      compare();
-      assert.ok(keyOf());
-      assert.notEqual(keyOf(), first);
-    });
-
-    it("is the same bytes on a second run", () => {
-      writeSet("brand");
-      compare();
-      const first = page();
-      compare();
-      assert.equal(page(), first);
-    });
-
-    it("builds the feedback of a decided and an undecided variant, trimming the comment", () => {
-      const state = {
-        set: "brand",
-        variants: [
-          { name: "a", verdict: "keep", comment: "  calm \n" },
-          { name: "b", verdict: "", comment: "" },
-          { name: "c", verdict: "discard", comment: "loud" },
-        ],
-      };
-      assert.deepEqual(feedbackOf(state), {
-        set: "brand",
-        variants: [
-          { name: "a", verdict: "keep", comment: "calm" },
-          { name: "b", verdict: null, comment: "" },
-          { name: "c", verdict: "discard", comment: "loud" },
-        ],
-      });
-    });
-
-    it("copies the feedback as 2-space JSON in a json fence", () => {
-      const state = { set: "brand", variants: [{ name: "a", verdict: "revise", comment: "calm" }, { name: "b", verdict: "", comment: "" }] };
-      assert.equal(copiedOf(state), '```json\n{\n  "set": "brand",\n  "variants": [\n    {\n      "name": "a",\n      "verdict": "revise",\n      "comment": "calm"\n    },\n    {\n      "name": "b",\n      "verdict": null,\n      "comment": ""\n    }\n  ]\n}\n```\n');
-    });
-
-    it("carries feedbackOf and copiedOf as the module has them", () => {
-      writeSet("brand");
-      compare();
-      assert.ok(page().includes(feedbackOf.toString()));
-      assert.ok(page().includes(copiedOf.toString()));
-      assert.ok(page().includes("out.value = copiedOf(stateOf());"), "the textarea, so Copy and select agree, holds the fenced text");
-    });
-
-    it("copies the feedback from a textarea", () => {
-      writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /showSaveFilePicker|id="save"/);
-      assert.match(page(), /<button type="button" id="copy"[^>]*>/);
-      assert.match(page(), /<textarea id="feedback" readonly/);
-    });
-
-    it("opens no connection", () => {
-      writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /fetch|XMLHttpRequest|WebSocket/);
+    it("writes no drafts folder when the project holds none", () => {
+      assert.equal(showcase().status, 0);
+      assert.equal(exists(DRAFTS), false);
     });
   });
 });

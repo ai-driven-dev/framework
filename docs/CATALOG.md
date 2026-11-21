@@ -8,7 +8,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-refine](#-aidd-refine) - meta-cognition
 - [aidd-vcs](#-aidd-vcs) - version control workflows
 - [aidd-orchestrator](#-aidd-orchestrator) - feature flow, async automation and backlog
-- [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
+- [aidd-ui](#-aidd-ui) - UI / UX (🧪 beta, off the curated path)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
 - [aidd-qa](#-aidd-qa) - acceptance QA (🔭 preview, off the curated path)
 
@@ -129,7 +129,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 🎨 aidd-ui
 
-🚧 **Alpha, not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently maps journeys and wireframes, and lays and changes the brand, tokens and components.
+🧪 **Beta.** UI / UX: design, review, and improve frontend interfaces. Currently maps journeys and wireframes, and lays and changes the brand, tokens and components.
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
