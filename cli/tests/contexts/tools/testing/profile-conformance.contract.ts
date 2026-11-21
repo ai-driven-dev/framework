@@ -46,7 +46,7 @@ const SAMPLE_PATHS: Readonly<Record<string, string>> = {
 
 const PLUGIN_ROOT_TOKEN = /^\$\{[A-Z_]+\}$/u;
 
-function contractsOf(profile: AiTool): ToolBuildContract[] {
+export function contractsOf(profile: AiTool): ToolBuildContract[] {
   const { marketplace, flat } = profile.buildContracts ?? {};
   return [marketplace?.(), flat?.()].filter((contract) => contract !== undefined);
 }
@@ -59,7 +59,7 @@ function supportedArtifacts(
   );
 }
 
-function aiCheck(
+export function aiCheck(
   title: string,
   holds: (profile: AiTool, subject: ConformanceSubject) => void
 ): ConformanceCheck<ConformanceSubject> {

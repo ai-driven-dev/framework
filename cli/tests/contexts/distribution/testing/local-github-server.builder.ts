@@ -34,11 +34,13 @@ function serveContents(req: IncomingMessage, res: ServerResponse): void {
 /** A GitHub contents API on a free local port, serving the contract's world. */
 export function startLocalGitHub(): Promise<{ apiBase: string; close: () => Promise<void> }> {
   const server = createServer(serveContents);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    server.once("error", reject);
     server.listen(0, "127.0.0.1", () => {
       const address = server.address();
       if (address === null || typeof address === "string") {
-        throw new Error("the local GitHub is not listening on a port");
+        reject(new Error("the local GitHub is not listening on a port"));
+        return;
       }
       resolve({
         apiBase: `http://127.0.0.1:${address.port}`,

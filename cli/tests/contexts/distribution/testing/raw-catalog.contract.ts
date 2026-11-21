@@ -4,6 +4,7 @@ import {
   CatalogFetchAuthError,
   CatalogFetchNotFoundError,
 } from "../../../../src/shared/domain/shared.error.js";
+import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
 
 export const CATALOG_PATH = ".claude-plugin/marketplace.json";
 export const HEAD_CATALOG = '{"plugins":["head"]}';
@@ -13,6 +14,17 @@ export const STABLE_CATALOG = '{"plugins":["stable"]}';
 export const PUBLIC_REPO = "owner/public";
 export const PRIVATE_REPO = "owner/private";
 export const STABLE_REF = "stable";
+
+/** The forge of that world, as the in-memory double answers it. */
+export function contractWorld(source: PluginSourceGitHub, catalogPath: string): string {
+  if (source.repo === PRIVATE_REPO) throw new CatalogFetchAuthError(source.repo);
+  if (source.repo !== PUBLIC_REPO || catalogPath !== CATALOG_PATH) {
+    throw new CatalogFetchNotFoundError(source.repo);
+  }
+  if (source.ref === undefined || source.ref === "HEAD") return HEAD_CATALOG;
+  if (source.ref === STABLE_REF) return STABLE_CATALOG;
+  return HEAD_CATALOG;
+}
 
 export interface RawCatalogSubject {
   readonly fetcher: RawCatalogFetcher;
