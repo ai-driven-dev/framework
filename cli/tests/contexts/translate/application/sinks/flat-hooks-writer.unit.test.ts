@@ -10,8 +10,6 @@ import {
   aSupportedArtifact,
 } from "../../testing/stub-build-contract.builder.js";
 
-const SRC = "/src/plugins/plug";
-
 function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}, force = false) {
   const artifact = aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over });
   if (!artifact.supported) throw new Error("stub artifact is supported");
@@ -19,7 +17,7 @@ function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}, force = fa
     target: aDiskTarget(aStubBuildContract(), { mode: "flat", force }),
     artifact,
     pluginName: "plug",
-    hooksSrc: `${SRC}/hooks/hooks.json`,
+    hooksJson: "{}",
   };
 }
 
@@ -33,7 +31,7 @@ const OWN_FILE = {
 };
 
 function seeded(extra: Record<string, string> = {}): InMemoryFileAdapter {
-  return new InMemoryFileAdapter({ [`${SRC}/hooks/hooks.json`]: "{}", ...extra });
+  return new InMemoryFileAdapter(extra);
 }
 
 describe("one plugin's flat hooks file", () => {

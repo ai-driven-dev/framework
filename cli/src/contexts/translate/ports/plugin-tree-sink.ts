@@ -17,15 +17,28 @@ export interface DiskTarget extends DiskLayout {
   readonly outDir: string;
 }
 
+/** What writing one plugin leaves for the sink's close. */
+export interface PluginWritten {
+  readonly files: number;
+  /** The plugin's MCP declaration, plugin-root references resolved into the output, when a flat
+   * build needs it for the tool's config. */
+  readonly declaredMcp: string | null;
+}
+
+/** A plugin once written, as the close of the tree sees it. */
+export interface BuiltPlugin {
+  readonly name: string;
+  readonly declaredMcp?: string | null;
+}
+
 /** Where a build puts its output: prepare the directory, write each plugin, then close the tree. */
 export interface PluginTreeSink {
   prepare(target: DiskTarget): Promise<void>;
-  /** Returns the files written for the plugin. */
-  writePlugin(target: DiskTarget, pluginName: string, pluginSrc: string): Promise<number>;
+  writePlugin(target: DiskTarget, pluginName: string, pluginSrc: string): Promise<PluginWritten>;
   /** Once every plugin is built; returns the extra files written. */
   finish(
     target: DiskTarget,
     sourceMarketplace: SourceMarketplaceRef,
-    builtPlugins: readonly { name: string }[]
+    builtPlugins: readonly BuiltPlugin[]
   ): Promise<number>;
 }

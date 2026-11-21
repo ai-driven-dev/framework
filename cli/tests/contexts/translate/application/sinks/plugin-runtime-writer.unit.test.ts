@@ -3,60 +3,112 @@ import {
   writePluginHooks,
   writePluginMcp,
 } from "../../../../../src/contexts/translate/application/sinks/plugin-runtime-writer.js";
+import type {
+  FlatHooksStep,
+  FlatMcpStep,
+} from "../../../../../src/contexts/translate/ports/flat-plugin-writer.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { aCanon } from "../../testing/canon-distribution.builder.js";
-import { aDiskTarget, aStubBuildContract } from "../../testing/stub-build-contract.builder.js";
+import {
+  aDiskTarget,
+  aStubBuildContract,
+  aSupportedArtifact,
+} from "../../testing/stub-build-contract.builder.js";
 
-const PLUGIN = { name: "plug", src: "/src/plugins/plug" };
-const UNUSED_FLAT = {
-  writeConfig: async () => 0,
-  writeHooks: async () => 0,
-  writeMcp: async () => 0,
+const MERGES = {
+  merge: () => ({ mergedContent: "", collisions: [] }),
+  mergeDest: (outDir: string) => `${outDir}/mcp.json`,
 };
 
-function depsOver(fs: InMemoryFileAdapter, logger = new CapturingLogger()) {
-  return { fs, flat: UNUSED_FLAT, logger };
+function depsOver(logger = new CapturingLogger()) {
+  const hooks: FlatHooksStep[] = [];
+  const mcp: FlatMcpStep[] = [];
+  const flat = {
+    writeConfig: async () => 0,
+    writeHooks: async (step: FlatHooksStep) => {
+      hooks.push(step);
+      return 1;
+    },
+    writeMcp: async (step: FlatMcpStep) => {
+      mcp.push(step);
+      return 1;
+    },
+  };
+  return { deps: { flat, logger }, hooks, mcp };
+}
+
+function flatTarget(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
+  const contract = aStubBuildContract();
+  return aDiskTarget(
+    { ...contract, artifacts: { ...contract.artifacts, mcp: aSupportedArtifact(over) } },
+    { mode: "flat" }
+  );
 }
 
 describe("one plugin's hooks and MCP servers", () => {
-  it("writes no hook in the marketplace layout, which the engine builds", async () => {
-    const fs = new InMemoryFileAdapter({
-      [`${PLUGIN.src}/hooks/hooks.json`]: "{}",
-      [`${PLUGIN.src}/hooks/run.sh`]: "echo hi",
-    });
-    const target = aDiskTarget(aStubBuildContract());
-    await expect(writePluginHooks(depsOver(fs), target, PLUGIN)).resolves.toBe(0);
-    expect(fs.getFile("/out/plugins/plug/hooks/run.sh")).toBeUndefined();
+  it("hands the flat writer the hooks the engine handed over, with no read of the plugin's source", async () => {
+    const { deps, hooks } = depsOver();
+
+    await expect(
+      writePluginHooks(deps, flatTarget(), { name: "plug", hooks: '{"hooks":{}}' })
+    ).resolves.toBe(1);
+    expect(hooks.map((step) => [step.pluginName, step.hooksJson])).toEqual([
+      ["plug", '{"hooks":{}}'],
+    ]);
+  });
+
+  it("writes nothing for a plugin the engine handed no hooks", async () => {
+    const { deps, hooks } = depsOver();
+    const logger = deps.logger;
+
+    await expect(writePluginHooks(deps, flatTarget(), { name: "plug", hooks: null })).resolves.toBe(
+      0
+    );
+    expect([hooks, logger.warnMessages]).toEqual([[], []]);
   });
 
   it("warns, and writes nothing, for flat hooks a tool does not support", async () => {
-    const fs = new InMemoryFileAdapter({ [`${PLUGIN.src}/hooks/hooks.json`]: "{}" });
-    const logger = new CapturingLogger();
+    const { deps, hooks } = depsOver();
     const contract = aStubBuildContract();
     const target = aDiskTarget(
       { ...contract, artifacts: { ...contract.artifacts, hooks: { supported: false } } },
       { mode: "flat" }
     );
-    await expect(writePluginHooks(depsOver(fs, logger), target, PLUGIN)).resolves.toBe(0);
-    expect(logger.warnMessages).toEqual([
+
+    await expect(writePluginHooks(deps, target, { name: "plug", hooks: "{}" })).resolves.toBe(0);
+    expect(hooks).toEqual([]);
+    expect(deps.logger.warnMessages).toEqual([
       "Skipping hooks/ in plugin 'plug' (hooks not supported for this target).",
     ]);
   });
 
-  it("writes no MCP file in the marketplace layout, which the engine builds", async () => {
-    const fs = new InMemoryFileAdapter();
-    const target = aDiskTarget(aStubBuildContract());
+  it("hands the flat writer the servers the engine handed over", async () => {
+    const { deps, mcp } = depsOver();
+    const servers = { "plug-db": { command: "run" } };
+
     await expect(
-      writePluginMcp(depsOver(fs), target, aCanon("plug", { ".mcp.json": "{}" }))
-    ).resolves.toBe(0);
-    expect(fs.getFile("/out/plugins/plug/.mcp.json")).toBeUndefined();
+      writePluginMcp(deps, flatTarget(MERGES), { name: "plug", mcp: { servers, declared: "{}" } })
+    ).resolves.toBe(1);
+    expect(mcp.map((step) => [step.pluginName, step.servers])).toEqual([["plug", servers]]);
   });
 
-  it("writes nothing when the plugin has no MCP file", async () => {
-    const target = aDiskTarget(aStubBuildContract());
+  it("writes nothing when the engine handed no MCP servers", async () => {
+    const { deps, mcp } = depsOver();
+
     await expect(
-      writePluginMcp(depsOver(new InMemoryFileAdapter()), target, aCanon("plug", {}))
+      writePluginMcp(deps, flatTarget(MERGES), { name: "plug", mcp: null })
     ).resolves.toBe(0);
+    expect(mcp).toEqual([]);
+  });
+
+  it("writes nothing for a tool that merges no MCP servers", async () => {
+    const { deps, mcp } = depsOver();
+
+    await expect(
+      writePluginMcp(deps, flatTarget(), {
+        name: "plug",
+        mcp: { servers: { "plug-db": {} }, declared: "{}" },
+      })
+    ).resolves.toBe(0);
+    expect(mcp).toEqual([]);
   });
 });

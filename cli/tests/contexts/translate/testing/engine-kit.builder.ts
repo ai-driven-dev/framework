@@ -1,8 +1,5 @@
 import type { ToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import {
-  flatHookPaths,
-  translateWithComponentPaths,
-} from "../../../../src/contexts/translate/domain/engine.js";
+import { translate } from "../../../../src/contexts/translate/domain/engine.js";
 import {
   type PluginComponentFile,
   type PluginComponents,
@@ -16,10 +13,17 @@ const manifestPaths = registeredManifestPaths();
 /** The engine's functions with the registered manifest places filled in, as the composition hands them. */
 export const translator = {
   translate: (dist: PluginDistribution, tool: ToolProfile) =>
-    translateWithComponentPaths(dist, tool, manifestPaths).files,
-  translateWithComponentPaths: (dist: PluginDistribution, tool: ToolProfile) =>
-    translateWithComponentPaths(dist, tool, manifestPaths),
-  flatHookPaths,
+    translate(dist, { kind: "install", tool, manifestPaths }).files,
+  translateWithComponentPaths: (dist: PluginDistribution, tool: ToolProfile) => {
+    const { files, componentPaths, skipped, notices } = translate(dist, {
+      kind: "install",
+      tool,
+      manifestPaths,
+    });
+    return { files, componentPaths, skipped, notices };
+  },
+  flatHookPaths: (dist: PluginDistribution, tool: ToolProfile) =>
+    translate(dist, { kind: "install", tool, manifestPaths }).flatHookPaths,
 };
 
 export const greetContent = `---

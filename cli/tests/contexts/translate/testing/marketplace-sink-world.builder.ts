@@ -85,7 +85,7 @@ export function sinkFor(
     write: () => {
       const manifest = `${PLUGIN_SRC}/.claude-plugin/plugin.json`;
       if (!fs.has(manifest)) fs.setFile(manifest, "{}");
-      return sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
+      return sink.writePlugin(target, PLUGIN, PLUGIN_SRC).then((written) => written.files);
     },
     finish: (source: SourceMarketplaceRef, built: { name: string }[]) =>
       sink.finish(target, source, built),

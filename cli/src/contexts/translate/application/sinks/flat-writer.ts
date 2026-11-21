@@ -1,31 +1,17 @@
 import { join } from "node:path";
-import { errorMessage } from "../../../../shared/domain/describe-error.js";
-import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import { McpConfigError } from "../../../../shared/domain/shared.error.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
-import { flatPluginRootAbsolute } from "../../domain/flat-layout.js";
 import type {
   FlatHooksStep,
   FlatMcpStep,
   FlatPluginWriter,
   FlatTarget,
 } from "../../ports/flat-plugin-writer.js";
+import type { BuiltPlugin } from "../../ports/plugin-tree-sink.js";
 import { writeFlatHooks } from "./flat-hooks-writer.js";
 import { writeFlatMcp } from "./flat-mcp-writer.js";
-
-function parsePluginMcp(pluginName: string, content: string): unknown {
-  try {
-    return JSON.parse(content);
-  } catch (err) {
-    throw new McpConfigError(
-      `Cannot parse plugin '${pluginName}' MCP config: ${errorMessage(err)}`
-    );
-  }
-}
 
 /** Writes a built plugin into one flat tool directory, merging into the files other plugins share. */
 export class FlatWriter implements FlatPluginWriter {
@@ -35,13 +21,15 @@ export class FlatWriter implements FlatPluginWriter {
     private readonly logger: Logger
   ) {}
 
-  async writeConfig(t: FlatTarget, builtPlugins: readonly { name: string }[]): Promise<number> {
+  async writeConfig(t: FlatTarget, builtPlugins: readonly BuiltPlugin[]): Promise<number> {
     const step = t.contract.configArtifact;
     if (!step) return 0;
     const names = builtPlugins.map((p) => p.name);
     const files = step.emit({
       builtPlugins: names,
-      pluginMcp: await this.readPluginMcp(t, names),
+      pluginMcp: new Map(
+        builtPlugins.flatMap((p) => (p.declaredMcp ? [[p.name, p.declaredMcp] as const] : []))
+      ),
       existing: await this.readEach(step.reads(names), (relPath) => join(t.outDir, relPath)),
       present: await this.presentOf(step.probes(names), t.outDir),
       assets: new Map(
@@ -53,25 +41,6 @@ export class FlatWriter implements FlatPluginWriter {
     });
     for (const file of files) await this.fs.writeFile(join(t.outDir, file.path), file.content);
     return files.length;
-  }
-
-  /** Each built plugin's `.mcp.json`, its plugin-root paths already resolved into the output, as
-   * the per-plugin MCP merge resolves them. */
-  private async readPluginMcp(
-    t: FlatTarget,
-    names: readonly string[]
-  ): Promise<ReadonlyMap<string, string>> {
-    const raw = await this.readEach(names, (name) =>
-      join(t.sourceDir, "plugins", name, PLUGIN_MCP_RELATIVE)
-    );
-    const resolved = new Map<string, string>();
-    for (const [name, content] of raw) {
-      const rewritten = rewritePluginRootInJson(parsePluginMcp(name, content), (suffix) =>
-        flatPluginRootAbsolute(t, suffix, name)
-      );
-      resolved.set(name, JSON.stringify(rewritten));
-    }
-    return resolved;
   }
 
   private async presentOf(relPaths: readonly string[], outDir: string): Promise<Set<string>> {

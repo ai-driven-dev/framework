@@ -112,11 +112,12 @@ export async function stubWrite(
   if (!memFs.has(`${STUB_PLUGIN_SRC}/.claude-plugin/plugin.json`)) {
     memFs.setFile(`${STUB_PLUGIN_SRC}/.claude-plugin/plugin.json`, "{}");
   }
-  return stubSink(memFs, logger).writePlugin(
+  const { files } = await stubSink(memFs, logger).writePlugin(
     stubTarget(contract, force),
     "aidd-test",
     STUB_PLUGIN_SRC
   );
+  return files;
 }
 
 export function writtenUnder(

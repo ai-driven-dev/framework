@@ -26,7 +26,6 @@ describe("what a flat layout writes once every plugin is built", () => {
 
   it("hands the layout's own step what it names, then writes what it returns", async () => {
     const memFs = new InMemoryFileAdapter({
-      "/src/plugins/aidd-test/.mcp.json": '{"mcpServers":{}}',
       [`${STUB_OUT}/kept.json`]: "kept",
       [`${STUB_OUT}/probed.js`]: "probed",
     });
@@ -47,7 +46,7 @@ describe("what a flat layout writes once every plugin is built", () => {
     });
     const sink = stubSink(memFs);
     await sink.prepare(stubTarget(contract));
-    const built = [{ name: "aidd-test" }, { name: "aidd-bare" }];
+    const built = [{ name: "aidd-test", declaredMcp: '{"mcpServers":{}}' }, { name: "aidd-bare" }];
     const reads = vi.spyOn(memFs, "readFile");
 
     expect(await sink.finish(stubTarget(contract), { name: "m", plugins: [] }, built)).toBe(2);

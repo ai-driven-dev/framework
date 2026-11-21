@@ -2,15 +2,20 @@ import { join } from "node:path";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
-import { translateBuildLayout } from "../../domain/build-layout/index.js";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../domain/canon-format.js";
+import { translate } from "../../domain/engine.js";
 import type { OutputFile } from "../../domain/output-file.js";
 import {
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
 } from "../../domain/translate.error.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
-import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";
+import type {
+  BuiltPlugin,
+  DiskTarget,
+  PluginTreeSink,
+  PluginWritten,
+} from "../../ports/plugin-tree-sink.js";
 import { assertFlatDestinationFree } from "./flat-collision.js";
 import { writeMarketplaceCatalog } from "./marketplace-catalog-writer.js";
 import { writePluginHooks, writePluginMcp } from "./plugin-runtime-writer.js";
@@ -46,19 +51,22 @@ export class DiskSink implements PluginTreeSink {
   }
 
   /** Writes one plugin's manifest, agents, skills, hooks and MCP; returns the files written. */
-  async writePlugin(t: DiskTarget, pluginName: string, pluginSrc: string): Promise<number> {
+  async writePlugin(t: DiskTarget, pluginName: string, pluginSrc: string): Promise<PluginWritten> {
     await this.validateSourceManifest(pluginSrc);
     const plugin = { name: pluginName, src: pluginSrc };
     const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
     const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
-    const built = translateBuildLayout(canon, t.contract, t.mode);
-    for (const file of built) await this.writeBuilt(t, plugin.name, file);
-    return (
-      manifest +
-      built.length +
-      (await writePluginHooks(this.deps, t, plugin)) +
-      (await writePluginMcp(this.deps, t, canon))
-    );
+    const { files, hooks, mcp } = translate(canon, {
+      kind: "build",
+      contract: t.contract,
+      mode: t.mode,
+      outDir: t.outDir,
+    });
+    for (const file of files) await this.writeBuilt(t, plugin.name, file);
+    const folded =
+      (await writePluginHooks(this.deps, t, { name: plugin.name, hooks })) +
+      (await writePluginMcp(this.deps, t, { name: plugin.name, mcp }));
+    return { files: manifest + files.length + folded, declaredMcp: mcp?.declared ?? null };
   }
 
   /** Once every plugin is built: the marketplace catalog, or the flat config artefact. Returns
@@ -66,7 +74,7 @@ export class DiskSink implements PluginTreeSink {
   async finish(
     t: DiskTarget,
     sourceMarketplace: SourceMarketplaceRef,
-    builtPlugins: readonly { name: string }[]
+    builtPlugins: readonly BuiltPlugin[]
   ): Promise<number> {
     return t.mode === "flat"
       ? this.deps.flat.writeConfig(t, builtPlugins)

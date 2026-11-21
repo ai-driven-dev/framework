@@ -15,16 +15,15 @@ type FlatFiles = FileReader & FileWriter;
 export async function writeFlatHooks(
   fs: FlatFiles,
   logger: Logger,
-  { target, artifact, pluginName, hooksSrc }: FlatHooksStep
+  { target, artifact, pluginName, hooksJson }: FlatHooksStep
 ): Promise<number> {
   const file = artifact.skipHooksJson ? undefined : artifact.hooksFile;
   if (file === undefined) return 0;
   const destPath = join(target.outDir, file.path(pluginName));
   if (!file.shared) await assertFlatDestinationFree(fs, { target, destPath, pluginName });
   const existing = file.shared ? await readSharedHooksTarget(fs, target.outDir, destPath) : null;
-  const raw = await fs.readFile(hooksSrc);
   const { content, warnings } = file.merge(existing, {
-    json: raw,
+    json: hooksJson,
     plugin: pluginName,
     locate: (pluginPath) => `./${flatPathOfPluginSuffix(target.contract, pluginPath, pluginName)}`,
   });

@@ -97,9 +97,9 @@ async function write(
   const sink = aDiskSink(fs, validator, ASSETS, logger);
   if (target.mode === "flat") fs.setFile(`${target.outDir}/.keep`, "");
   await sink.prepare(target);
-  const count = await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
-  await sink.finish(target, { name: "m", plugins: [] }, [{ name: PLUGIN }]);
-  return count;
+  const { files, declaredMcp } = await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
+  await sink.finish(target, { name: "m", plugins: [] }, [{ name: PLUGIN, declaredMcp }]);
+  return files;
 }
 
 function writtenPaths(fs: InMemoryFileAdapter): string[] {
