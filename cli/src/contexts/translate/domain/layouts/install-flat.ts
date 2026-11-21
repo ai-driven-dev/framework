@@ -9,10 +9,11 @@ import type {
 import type { FlatPluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { flatLinkTarget } from "../flat-layout.js";
 import { basename, isProse } from "../plugin-paths.js";
+import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { reshapeFrontmatter } from "../rules/frontmatter.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
-import { toolLinks } from "../rules/links.js";
+import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 
 type FlatSection = "agents" | "rules" | "skills";
@@ -85,7 +86,7 @@ function sectionPlan(
   // flat file left a script intact only where a tool's own rewrite happened to spare it.
   const links = isProse(source) ? toolLinks(tool) : undefined;
   const agent = section === "agents" ? agentPlan(file, at) : null;
-  if (agent !== null) return { ...agent, links };
+  if (agent !== null) return { ...agent, links: chainLinks(links, agent.links) };
   if (!declared) return null;
   const path = tool.flatInstallPath(section, pluginName, source.slice(`${section}/`.length));
   return { source, path, content, links };
@@ -98,17 +99,19 @@ function agentPlan(file: PluginComponentFile, at: FlatAt): ComponentPlan | null 
   const artifact = contract?.artifacts.agents;
   if (contract === null || !artifact?.supported) return null;
   const path = artifact.path(pluginName, file.relativePath);
+  const place = {
+    plugin: pluginName,
+    outName: file.relativePath.slice("agents/".length),
+    from: path,
+    resolveTarget: (rel: string) => flatLinkTarget(contract, pluginName, rel),
+    unshaped: "carry" as const,
+  };
   return {
     source: file.relativePath,
     path,
     content: file.content,
-    shape: agentShape(artifact, {
-      plugin: pluginName,
-      outName: file.relativePath.slice("agents/".length),
-      from: path,
-      resolveTarget: (rel) => flatLinkTarget(contract, pluginName, rel),
-      unshaped: "carry",
-    }),
+    links: agentLinks(artifact, place),
+    shape: agentShape(artifact, place),
   };
 }
 

@@ -27,6 +27,7 @@ export interface RewriteRelativeLinksOptions {
  * where the file is written. `rewriteLinks` is the one place either runs. */
 export type LinkForm =
   | { readonly kind: "tool"; readonly rewrite: (content: string) => string }
+  | { readonly kind: "chain"; readonly forms: readonly LinkForm[] }
   | ({ readonly kind: "relative" } & RewriteRelativeLinksOptions);
 
 /** The tool's own reading of a link, for the layouts that install into its directory. */
@@ -34,8 +35,16 @@ export function toolLinks(tool: { rewriteContent(content: string): string }): Li
   return { kind: "tool", rewrite: (content) => tool.rewriteContent(content) };
 }
 
+/** The forms a document is read through, in order; none when it has none. */
+export function chainLinks(...forms: readonly (LinkForm | undefined)[]): LinkForm | undefined {
+  const present = forms.filter((form): form is LinkForm => form !== undefined);
+  return present.length === 0 ? undefined : { kind: "chain", forms: present };
+}
+
 export function rewriteLinks(content: string, form: LinkForm): string {
-  return form.kind === "tool" ? form.rewrite(content) : rewriteRelativeLinks(content, form);
+  if (form.kind === "tool") return form.rewrite(content);
+  if (form.kind === "chain") return form.forms.reduce(rewriteLinks, content);
+  return rewriteRelativeLinks(content, form);
 }
 
 /**
