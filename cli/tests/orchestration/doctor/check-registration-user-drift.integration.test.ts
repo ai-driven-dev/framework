@@ -26,7 +26,7 @@ const NAME = "probe-mkt";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 
-describe("CheckRegistration — user-scope marketplace source drift", () => {
+describe("CheckRegistration - user-scope marketplace source drift", () => {
   // resolve(): compared against an already-resolved requested/registered source, so a
   // drive-less literal misses the base compare and every drift below returns undefined.
   const USER_CACHE_ROOT = resolve("/user-cache");
@@ -123,7 +123,7 @@ describe("CheckRegistration — user-scope marketplace source drift", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0]?.severity).toBe("warning");
     expect(issues[0]?.message).toContain(foreignProjectCache);
-    // Never the wording pinned for *this* project's own cache above — a project
+    // Never the wording pinned for *this* project's own cache above - a project
     // reading its own pre-migration path back would be told the wrong story.
     expect(issues[0]?.message).not.toContain("this project's own pre-migration cache");
     expect(issues[0]?.message).toContain("another project's pre-migration cache");

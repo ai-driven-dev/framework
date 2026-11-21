@@ -80,7 +80,7 @@ describe("setup without TTY", () => {
     }
   });
 
-  it("manifest exists — returns up-to-date even with tool flags (tools still installed)", async () => {
+  it("manifest exists - returns up-to-date even with tool flags (tools still installed)", async () => {
     const { useCase, deps } = await buildUseCase();
     await initProject(deps, PROJECT_ROOT);
 
@@ -109,7 +109,7 @@ describe("setup without TTY", () => {
     }
   });
 
-  it("project already up to date — exits without error", async () => {
+  it("project already up to date - exits without error", async () => {
     const { useCase, deps } = await buildUseCase();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
@@ -274,7 +274,7 @@ describe("setup without TTY", () => {
     });
   });
 
-  describe("issue #141 — post-uninstall regression", () => {
+  describe("issue #141 - post-uninstall regression", () => {
     it("succeeds when aidd_docs/ and .aidd/ exist but no manifest and no tool dirs", async () => {
       const { useCase, deps } = await buildUseCase();
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");

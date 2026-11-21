@@ -185,8 +185,8 @@ describe("CacheBuiltMarketplace", () => {
     expect(builds).toBe(0);
   });
 
-  // A directory on this machine can change without its version moving — which is all of
-  // framework development — so the version says nothing about freshness there.
+  // A directory on this machine can change without its version moving - which is all of
+  // framework development - so the version says nothing about freshness there.
   it("rebuilds a local source even when the sentinel matches", async () => {
     const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
     fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");

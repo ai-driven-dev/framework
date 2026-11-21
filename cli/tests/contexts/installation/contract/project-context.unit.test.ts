@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
 
-describe("ProjectContext.describe() — one line naming what was detected", () => {
+describe("ProjectContext.describe() - one line naming what was detected", () => {
   it("names every detected trait, dot-separated, in stack, monorepo, framework order", () => {
     const context = new ProjectContext({
       stack: "typescript",

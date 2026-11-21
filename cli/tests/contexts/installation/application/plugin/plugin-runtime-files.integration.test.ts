@@ -15,7 +15,7 @@ import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-source
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
-const HELPER = ".opencode/hooks/opencode-events.js";
+const EVENTS_FILE = ".opencode/hooks/opencode-events.js";
 const USER_CONFIG = '{"model":"user/model","permission":{"bash":"ask"}}';
 
 async function legacyProject() {
@@ -72,21 +72,21 @@ describe("plugin runtime files on an existing tool", () => {
   it("backfills a missing shared adapter during plugin install without replacing user configuration", async () => {
     const { deps, addPlugin } = await legacyProject();
     await addPlugin();
-    expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
+    expect(await deps.fs.readFile(join(ROOT, EVENTS_FILE))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     const manifest = deps.manifestRepo.getCurrent();
     expect(manifest?.getToolVersion(TOOL.opencode)).toBe("legacy");
     expect(manifest?.getToolFiles(TOOL.opencode).map((file) => file.relativePath)).toEqual([
       "opencode.json",
-      HELPER,
+      EVENTS_FILE,
     ]);
-    expect(manifest?.getPlugins(TOOL.opencode)[0]?.files.has(HELPER)).toBe(false);
+    expect(manifest?.getPlugins(TOOL.opencode)[0]?.files.has(EVENTS_FILE)).toBe(false);
   });
 
   it("backfills during plugin update and retains tool ownership after plugin replacement", async () => {
     const { deps, addPlugin, update } = await legacyProject();
     await addPlugin();
-    await deps.fs.deleteFile(join(ROOT, HELPER));
+    await deps.fs.deleteFile(join(ROOT, EVENTS_FILE));
     const manifest = deps.manifestRepo.getCurrent();
     const plugin = manifest?.getPlugins(TOOL.opencode)[0];
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
@@ -95,21 +95,21 @@ describe("plugin runtime files on an existing tool", () => {
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,
     });
-    expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
+    expect(await deps.fs.readFile(join(ROOT, EVENTS_FILE))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     expect(
       deps.manifestRepo
         .getCurrent()
         ?.getToolFiles(TOOL.opencode)
-        .filter((file) => file.relativePath === HELPER)
+        .filter((file) => file.relativePath === EVENTS_FILE)
     ).toHaveLength(1);
   });
 
-  it("restores a missing helper when the plugin version is already current", async () => {
+  it("restores a missing runtime file when the plugin version is already current", async () => {
     const { deps, addPlugin, update } = await legacyProject();
     await addPlugin();
     const plugin = deps.manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)[0];
-    await deps.fs.deleteFile(join(ROOT, HELPER));
+    await deps.fs.deleteFile(join(ROOT, EVENTS_FILE));
 
     expect(
       await update.execute({
@@ -117,43 +117,43 @@ describe("plugin runtime files on an existing tool", () => {
         projectRoot: ROOT,
       })
     ).toEqual([]);
-    expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
+    expect(await deps.fs.readFile(join(ROOT, EVENTS_FILE))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     expect(deps.manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)[0]).toEqual(plugin);
     expect(
       deps.manifestRepo
         .getCurrent()
         ?.getToolFiles(TOOL.opencode)
-        .filter((file) => file.relativePath === HELPER)
+        .filter((file) => file.relativePath === EVENTS_FILE)
     ).toHaveLength(1);
   });
 
-  it("preserves and does not claim an existing untracked helper", async () => {
+  it("preserves and does not claim an existing untracked runtime file", async () => {
     const { deps, addPlugin } = await legacyProject();
-    await deps.fs.writeFile(join(ROOT, HELPER), "// user's helper");
+    await deps.fs.writeFile(join(ROOT, EVENTS_FILE), "// user's file");
     await addPlugin();
-    expect(await deps.fs.readFile(join(ROOT, HELPER))).toBe("// user's helper");
+    expect(await deps.fs.readFile(join(ROOT, EVENTS_FILE))).toBe("// user's file");
     expect(
       deps.manifestRepo
         .getCurrent()
         ?.getToolFiles(TOOL.opencode)
-        .some((file) => file.relativePath === HELPER)
+        .some((file) => file.relativePath === EVENTS_FILE)
     ).toBe(false);
   });
 
-  it("leaves edits to an already tracked helper and its recorded hash intact", async () => {
+  it("leaves edits to an already tracked runtime file and its recorded hash intact", async () => {
     const { deps, addPlugin } = await legacyProject();
-    await deps.fs.writeFile(join(ROOT, HELPER), "// user's edit");
+    await deps.fs.writeFile(join(ROOT, EVENTS_FILE), "// user's edit");
     const manifest = deps.manifestRepo.getCurrent();
-    const originalHash = FileHash.of("// original helper");
-    manifest?.recordFileHash(TOOL.opencode, HELPER, originalHash);
+    const originalHash = FileHash.of("// original file");
+    manifest?.recordFileHash(TOOL.opencode, EVENTS_FILE, originalHash);
     await addPlugin();
-    expect(await deps.fs.readFile(join(ROOT, HELPER))).toBe("// user's edit");
+    expect(await deps.fs.readFile(join(ROOT, EVENTS_FILE))).toBe("// user's edit");
     expect(
       deps.manifestRepo
         .getCurrent()
         ?.getToolFiles(TOOL.opencode)
-        .find((file) => file.relativePath === HELPER)?.hash
+        .find((file) => file.relativePath === EVENTS_FILE)?.hash
     ).toEqual(originalHash);
   });
 });

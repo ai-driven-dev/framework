@@ -155,7 +155,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
   });
 
   // The migration itself: the host still points at this project's own pre-migration
-  // cache, and this run's build is the newer, shared source — it must proceed.
+  // cache, and this run's build is the newer, shared source - it must proceed.
   it("proceeds when the host still points at this project's own pre-migration cache", async () => {
     const { result, activator } = await sync({
       requestedVersion: "1.0.0",
@@ -166,7 +166,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
     expect(result.errors).toEqual([]);
   });
 
-  it("proceeds when the host already follows an older shared build — a legitimate update, not a rollback", async () => {
+  it("proceeds when the host already follows an older shared build - a legitimate update, not a rollback", async () => {
     const { result, activator } = await sync({
       requestedVersion: "2.0.0",
       registeredPath: sharedPath("1.0.0"),

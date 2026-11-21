@@ -406,6 +406,9 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm knip
+      # Tests count as entries above, so an export only a test reads passes. Without them, it shows.
+      - name: Exports and types no shipped code reads
+        run: cd cli && pnpm knip:production
 
   identifier-join:
     name: cli / Identifier join (Claude Code)

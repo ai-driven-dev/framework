@@ -20,7 +20,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
    * Deleting a file leaves them, as on a real filesystem. */
   private readonly directories = new Set<string>();
   /** Path → what it resolves to, for a test proving `realpath`-based containment
-   * without a real filesystem — see `setSymlink`. */
+   * without a real filesystem - see `setSymlink`. */
   private readonly symlinks = new Map<string, string>();
 
   /** `directories` exist empty, as a project root does before anything is installed into it. */

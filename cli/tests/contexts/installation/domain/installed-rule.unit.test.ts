@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { toInstalledRule } from "../../../../src/contexts/installation/domain/installed-rule.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
-describe("toInstalledRule — one installed file, read as a rule", () => {
+describe("toInstalledRule - one installed file, read as a rule", () => {
   it("names the rule from its own file, never from the frontmatter", () => {
     const rule = toInstalledRule({
       tool: TOOL.claude,
@@ -47,7 +47,7 @@ describe("toInstalledRule — one installed file, read as a rule", () => {
     expect(bare.description).toBe("");
   });
 
-  /** Each tool names the scope field differently — `paths`, `globs`, `applyTo` — and a file
+  /** Each tool names the scope field differently - `paths`, `globs`, `applyTo` - and a file
    * converted between tools can carry more than one, so they are merged rather than picked. */
   it("merges every spelling of the scope field into one list", () => {
     const rule = toInstalledRule({
@@ -61,7 +61,7 @@ describe("toInstalledRule — one installed file, read as a rule", () => {
   });
 
   // A rule that names no scope applies everywhere, which is a different statement from
-  // "applies to an empty list of paths" — so the field is absent, never an empty array.
+  // "applies to an empty list of paths" - so the field is absent, never an empty array.
   it("states no scope at all for a rule that names none", () => {
     const rule = toInstalledRule({
       tool: TOOL.claude,

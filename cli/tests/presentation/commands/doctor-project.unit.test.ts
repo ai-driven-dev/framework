@@ -6,7 +6,7 @@ import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 const PROJECT_ROOT = process.cwd();
 const { doctorAll, statusAll, doctorScoped, statusScoped, written, errors, run } = doctorHarness();
 
-describe("aidd doctor — every tool at once", () => {
+describe("aidd doctor - every tool at once", () => {
   it("reports drift for both categories, then calls a clean install healthy", async () => {
     expect(await run()).toEqual([
       "",
@@ -138,7 +138,7 @@ describe("aidd doctor — every tool at once", () => {
   });
 });
 
-describe("aidd doctor — the two categories, told apart", () => {
+describe("aidd doctor - the two categories, told apart", () => {
   it("labels each category's inventory and its issues by that category's own name", async () => {
     doctorAll.mockResolvedValue({
       errors: [],

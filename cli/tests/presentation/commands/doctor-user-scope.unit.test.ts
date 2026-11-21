@@ -90,7 +90,7 @@ describe("aidd doctor --scope user", () => {
   });
 });
 
-describe("aidd doctor --scope user — what a tool without user-scope settings reports", () => {
+describe("aidd doctor --scope user - what a tool without user-scope settings reports", () => {
   it("names the tool asked for, and says so when it has no user-scope settings file", async () => {
     loadUserManifest.mockResolvedValue({
       getInstalledToolIds: () => ["claude"],

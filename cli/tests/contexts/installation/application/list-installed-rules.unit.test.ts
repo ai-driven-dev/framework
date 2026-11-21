@@ -27,7 +27,7 @@ function readerOf(files: Readonly<Record<string, string>>): FileReader {
 
 const at = (relative: string) => join(ROOT, relative).replaceAll("\\", "/");
 
-describe("ListInstalledRules — every tool's installed rules, in one answer", () => {
+describe("ListInstalledRules - every tool's installed rules, in one answer", () => {
   it("finds a rule under each tool's own installed directory", async () => {
     const useCase = new ListInstalledRules(
       readerOf({

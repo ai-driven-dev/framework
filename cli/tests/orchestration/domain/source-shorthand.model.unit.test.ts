@@ -5,7 +5,7 @@ import { saying } from "../../shared/testing/saying.builder.js";
 
 /**
  * Grouped by what a user types, not by the parsing function: the wrong kind sends the plugin
- * to the wrong fetch adapter, and a dropped ref installs the default branch — both silently.
+ * to the wrong fetch adapter, and a dropped ref installs the default branch - both silently.
  */
 describe("the source spellings a user types", () => {
   describe("a bare owner/repo", () => {

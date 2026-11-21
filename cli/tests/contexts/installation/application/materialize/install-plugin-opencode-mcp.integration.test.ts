@@ -290,7 +290,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
       marketplace: undefined,
     });
 
-    // "local-tool" is user-owned — must be skipped, not overwritten
+    // "local-tool" is user-owned - must be skipped, not overwritten
     const mcpSkip = skipped.find((s) => s.component === "mcp" && s.toolId === "opencode");
     expect(mcpSkip).toBeDefined();
     expect(mcpSkip?.reason).toContain("local-tool");

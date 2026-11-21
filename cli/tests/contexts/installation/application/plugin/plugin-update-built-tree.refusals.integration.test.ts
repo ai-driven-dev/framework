@@ -25,7 +25,7 @@ import { userScopeFileGuard } from "../../testing/user-scope-file-guard.fake.js"
 
 const { cursor, copilot } = TOOL;
 
-describe("UpdatePlugin — built-tree materialization", () => {
+describe("UpdatePlugin - built-tree materialization", () => {
   it("refuses an escaped old user file before writing a fetched build or changing its claim", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, cursor);

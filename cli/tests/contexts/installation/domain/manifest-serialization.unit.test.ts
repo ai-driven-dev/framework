@@ -7,7 +7,7 @@ import { parseManifestTools } from "../../../../src/contexts/installation/domain
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../shared/testing/saying.builder.js";
 
-describe("parseManifestTools — the tools section of a manifest document", () => {
+describe("parseManifestTools - the tools section of a manifest document", () => {
   it("reads no tool from a document without a tools section", () => {
     expect([...parseManifestTools({ version: 8 }, resolveRegisteredToolId)]).toStrictEqual([]);
   });

@@ -109,8 +109,8 @@ describe("a hook that was installed", () => {
   });
 });
 
-/** The two routes write different layouts by design — one a bundle, the other a tool's own
- * directory — so what has to agree is the plugin's own file the command names. */
+/** The two routes write different layouts by design - one a bundle, the other a tool's own
+ * directory - so what has to agree is the plugin's own file the command names. */
 const BUILT_BY: ReadonlyArray<
   [AiTool<WithSections<"layout">>, () => { pluginRootToken?: string | null }]
 > = [

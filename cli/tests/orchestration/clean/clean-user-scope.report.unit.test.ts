@@ -62,7 +62,7 @@ describe("clean --scope user: report", () => {
         saying(/the shared framework source.*active projects.*\/project-a/)
       );
       expect(fs.order).not.toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache", "built")}`);
-      // No manifest means no `nativeRegistrations` to drive a host's own CLI through —
+      // No manifest means no `nativeRegistrations` to drive a host's own CLI through -
       // the activator that would have recorded a real call never sees one.
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.uninstalledPlugins).toEqual([]);

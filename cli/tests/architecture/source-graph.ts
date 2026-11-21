@@ -59,7 +59,7 @@ export function sourceFiles(): string[] {
   return srcFiles();
 }
 
-/** Every `.ts` file under a `cli/`-relative directory, kits and helpers included, as a `cli/`-relative path, sorted. */
+/** Every `.ts` file under a `cli/`-relative directory, kits and support files included, as a `cli/`-relative path, sorted. */
 export function tsFilesUnder(dir: string): string[] {
   return readdirSync(join(CLI_ROOT, dir), { recursive: true, encoding: "utf8" })
     .map((entry) => canonicalPath(join(dir, entry)))
@@ -84,7 +84,7 @@ export function pluginReadmes(): string[] {
     if (existsSync(readme)) found.push(canonicalPath(join("plugins", entry.name, "README.md")));
   }
   if (found.length === 0) {
-    throw new Error("no plugin README found — the scope of this rule is stale");
+    throw new Error("no plugin README found - the scope of this rule is stale");
   }
   return found.sort();
 }
@@ -126,8 +126,8 @@ export function importersByFile(): Map<string, Set<string>> {
 
 /**
  * The subset of glob syntax this suite declares: a literal prefix, `/**\/` for any number of
- * directories *including none* — `src/shared/domain/**\/*.ts` must match `src/shared/domain/tool.ts` too,
- * or a scope silently covers only its subdirectories — and `*` within one segment.
+ * directories *including none* - `src/shared/domain/**\/*.ts` must match `src/shared/domain/tool.ts` too,
+ * or a scope silently covers only its subdirectories - and `*` within one segment.
  */
 export function matchesGlob(glob: string, path: string): boolean {
   return scopeGlob(glob, path);
@@ -164,7 +164,7 @@ export function isContext(name: string): boolean {
 
 /**
  * Every invocation the CLI declares: a top-level verb, and each `noun verb` pair. The pair
- * matters — `aidd plugin marketplace add` passes any check reading only the first word.
+ * matters - `aidd plugin marketplace add` passes any check reading only the first word.
  */
 export function declaredCommands(): Set<string> {
   const declared = new Set<string>();
@@ -180,7 +180,7 @@ export function declaredCommands(): Set<string> {
   }
   // An empty set would clear every document at once: nothing can be undeclared when nothing
   // is declared.
-  if (declared.size === 0) throw new Error("no command found — the scope of this rule is stale");
+  if (declared.size === 0) throw new Error("no command found - the scope of this rule is stale");
   return declared;
 }
 
@@ -193,7 +193,7 @@ function isArgumentLike(word: string, trailing: string): boolean {
 const INSTRUCTED_COMMAND = /\baidd ([a-z][a-z-]*)(?: ([a-z][a-z-]*)([^\s`]*))?/g;
 
 /** The command a mention names that the declared set does not have, when it names one.
- * A bare verb needs only itself declared — `aidd setup --ai` reads as one, a flag being no word
+ * A bare verb needs only itself declared - `aidd setup --ai` reads as one, a flag being no word
  * this pattern captures. A pair needs the pair, unless its first word is a declared verb followed
  * by an argument: `aidd marketplace add` is a pair, `aidd update --force` is not. */
 function undeclaredMention(

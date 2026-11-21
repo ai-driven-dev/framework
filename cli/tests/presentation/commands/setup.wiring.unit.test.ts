@@ -116,7 +116,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd setup — the flow a scripted run builds", () => {
+describe("aidd setup - the flow a scripted run builds", () => {
   it("names the tools it was given, installs no plugin, and registers the default source", async () => {
     expect(await run("--ai", "claude")).toEqual(["Project is up to date."]);
     expect({ ...builtFlow() }).toEqual({
@@ -190,7 +190,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
 const OTHER_PROJECTS = (ide: string, provider: string) =>
   `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${ide} --provider ${provider}\` there.`;
 
-describe("aidd setup — the agents' provider", () => {
+describe("aidd setup - the agents' provider", () => {
   it("sets the provider and the main session's model only once the install has succeeded", async () => {
     await run("--ide", "opencode,vscode", "--provider", "mistral");
 
@@ -242,7 +242,7 @@ describe("aidd setup — the agents' provider", () => {
   });
 });
 
-describe("aidd setup — a person at a terminal", () => {
+describe("aidd setup - a person at a terminal", () => {
   it("greets, names what it detected, and ends with what to do next", async () => {
     pretendTerminal(true);
     setupTools.mockResolvedValue({
@@ -298,7 +298,7 @@ describe("aidd setup — a person at a terminal", () => {
   });
 });
 
-describe("aidd setup — every flag that makes a run a scripted one", () => {
+describe("aidd setup - every flag that makes a run a scripted one", () => {
   it.each([
     [["--source", "remote"]],
     [["--release", "v1.2.3"]],
@@ -333,7 +333,7 @@ describe("aidd setup — every flag that makes a run a scripted one", () => {
   });
 });
 
-describe("aidd setup — what it refuses and what it reports", () => {
+describe("aidd setup - what it refuses and what it reports", () => {
   it.each([
     { args: [], cause: "with no --ide", remedy: "Pass `--ide <ids>`" },
     {

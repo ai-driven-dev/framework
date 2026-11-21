@@ -23,7 +23,7 @@ import {
 
 const { cursor, copilot } = TOOL;
 
-describe("UpdatePlugin — built-tree materialization", () => {
+describe("UpdatePlugin - built-tree materialization", () => {
   it("refuses an absent machine manifest before touching user files", async () => {
     const deps = await buildInstallationDeps();
     const registry = await makeRegistry();

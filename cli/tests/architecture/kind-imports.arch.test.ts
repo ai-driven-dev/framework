@@ -232,15 +232,11 @@ describe("a file imports only the kinds its kind allows", () => {
     ).toEqual(["tests/contexts/a/testing/x.fake.ts -> tests/contexts/b/testing/y.fake.ts"]);
   });
 
-  it("flags a test of a context, a helper and the shared kit that import another context's kit", () => {
+  it("flags a test of a context and the shared kit that import another context's kit", () => {
     const kit = {
       "tests/contexts/b/testing/y.fake.ts": "export class Y {}",
     };
-    for (const file of [
-      "tests/contexts/a/x/y.unit.test.ts",
-      "tests/helpers/ports/h.ts",
-      "tests/shared/testing/h.ts",
-    ]) {
+    for (const file of ["tests/contexts/a/x/y.unit.test.ts", "tests/shared/testing/h.ts"]) {
       const target = "tests/contexts/b/testing/y.fake.ts";
       const spec = posix.relative(posix.dirname(file), target).replace(/\.ts$/, ".js");
       expect(importsOf({ ...kit, [file]: `import { Y } from "${spec}";` })).toEqual([

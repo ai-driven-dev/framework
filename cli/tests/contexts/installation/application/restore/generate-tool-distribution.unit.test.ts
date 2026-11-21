@@ -36,13 +36,13 @@ async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdap
     .sort();
 }
 
-describe("GenerateToolDistribution — IDE tools", () => {
+describe("GenerateToolDistribution - IDE tools", () => {
   it("gives an IDE tool its config files and no content section", async () => {
     expect(await pathsFor(TOOL.vscode)).toStrictEqual([".vscode/settings.json"]);
   });
 });
 
-describe("GenerateToolDistribution — a tool's own config assets", () => {
+describe("GenerateToolDistribution - a tool's own config assets", () => {
   it("regenerates the shared OpenCode plugin runtime alongside tool configuration", async () => {
     const files = await generate(registeredTools().profile(TOOL.opencode), assets);
     expect(

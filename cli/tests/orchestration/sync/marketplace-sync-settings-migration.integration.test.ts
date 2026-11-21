@@ -27,7 +27,7 @@ import {
 } from "../testing/marketplace-sync-settings-migration.builder.js";
 
 describe("settings migration", () => {
-  describe("SyncSettings — sync migrates a project installed before the shared source", () => {
+  describe("SyncSettings - sync migrates a project installed before the shared source", () => {
     it("preserves the existing entry's own source when migrating it from project to user scope, never falling back to the local default", async () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
@@ -59,7 +59,7 @@ describe("settings migration", () => {
       });
     });
 
-    it("registers the framework at user scope even when the project-scope entry is the only one present — not only when the registry is empty", async () => {
+    it("registers the framework at user scope even when the project-scope entry is the only one present - not only when the registry is empty", async () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "/some/path" }));
       const manifest = Manifest.create();
@@ -82,7 +82,7 @@ describe("settings migration", () => {
     });
   });
 
-  describe("SyncSettings — codex and copilot refuse the same name from a different source", () => {
+  describe("SyncSettings - codex and copilot refuse the same name from a different source", () => {
     function frameworkAtUserScope(): Marketplace {
       return Marketplace.create({
         name: FRAMEWORK_MARKETPLACE_NAME,
@@ -175,7 +175,7 @@ describe("settings migration", () => {
       expect(logger.warnMessages).toEqual(result.warnings);
     });
 
-    it("never reclaims an arbitrary, non-reserved marketplace name this way — only the framework's own", async () => {
+    it("never reclaims an arbitrary, non-reserved marketplace name this way - only the framework's own", async () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         PROJECT_ROOT,
@@ -288,7 +288,7 @@ describe("settings migration", () => {
     });
   });
 
-  describe("SyncSettings — fresh Claude host provenance", () => {
+  describe("SyncSettings - fresh Claude host provenance", () => {
     async function syncWithHostRegistry(reading: { absent?: true; unreadable?: string }) {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "." }));

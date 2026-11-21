@@ -9,7 +9,7 @@ import { processOutputFactory } from "../../shared/testing/output-factory.builde
 const PROJECT_ROOT = process.cwd();
 const { doctorAll, createDeps, errors, run, catalog: CATALOG } = doctorHarness();
 
-describe("aidd doctor — how it builds its graph and reports a failure", () => {
+describe("aidd doctor - how it builds its graph and reports a failure", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("--verbose");
 
@@ -33,7 +33,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
   });
 });
 
-describe("aidd doctor — the help surface", () => {
+describe("aidd doctor - the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

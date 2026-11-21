@@ -25,7 +25,7 @@ const PROJECT_ROOT = "/test-project";
 
 type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
-describe("RestoreAll — consent to overwrite", () => {
+describe("RestoreAll - consent to overwrite", () => {
   type RestoreCommand = Parameters<Restore["execute"]>[0];
 
   /** Records what RestoreAll asks the restore to do, without doing it. */
@@ -87,7 +87,7 @@ describe("RestoreAll — consent to overwrite", () => {
   });
 });
 
-describe("RestoreAll — native-only tools", () => {
+describe("RestoreAll - native-only tools", () => {
   it("forwards the native-only tool ids the restore it delegates to found", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -178,7 +178,7 @@ function recordingDelegate(): {
   };
 }
 
-describe("RestoreAll — before delegating", () => {
+describe("RestoreAll - before delegating", () => {
   it("refuses a project that has no manifest", async () => {
     const deps = await buildInstallationDeps();
     const useCase = restoreAllDelegatingTo(
@@ -264,7 +264,7 @@ describe("RestoreAll — before delegating", () => {
   });
 });
 
-describe("RestoreAll — the interactive file picker", () => {
+describe("RestoreAll - the interactive file picker", () => {
   const KEYBINDINGS = ".vscode/keybindings.json";
   const SETTINGS = ".vscode/settings.json";
 

@@ -137,7 +137,7 @@ describe("mergeIntoJsonFile", () => {
     describe("prototype pollution guard", () => {
       it("does not pollute Object.prototype after merging __proto__ payload", async () => {
         const path = join(root, "proto-test.json");
-        // Must pass a raw JSON string — a JS literal { __proto__: ... } would set the prototype,
+        // Must pass a raw JSON string - a JS literal { __proto__: ... } would set the prototype,
         // not create an own key, and test nothing.
         const malicious = '{"__proto__":{"polluted":true}}';
         await files.mergeJsonFile(path, malicious, "framework-prime");

@@ -44,7 +44,7 @@ export interface Kind {
 const PURE_BUILTINS = ["node:path", "node:crypto"];
 const ANY_TEST_FOLDER = ["tests/**/*"];
 export const KIT_FOLDER = ["tests/**/testing/**/*"];
-export const SETUP_FOLDER = ["tests/setup/**/*"];
+export const SETUP_FOLDER = ["tests/setup/**/*", "tests/mutation/**/*"];
 
 export const KINDS: readonly Kind[] = [
   {
@@ -231,7 +231,8 @@ export const KINDS: readonly Kind[] = [
     tests: [],
   },
   {
-    // A setup file is claimed by its folder alone: a vitest config loads it, nothing imports it.
+    // A setup file is claimed by its folder alone: a vitest config loads it, nothing imports it. The
+    // mutation run's sequencer and reporter filter sit beside their tests in `tests/mutation/`.
     id: "setup",
     suffix: /(?!)/,
     folders: SETUP_FOLDER,

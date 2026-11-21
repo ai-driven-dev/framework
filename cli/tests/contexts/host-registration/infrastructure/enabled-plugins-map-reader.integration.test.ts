@@ -39,7 +39,7 @@ describe("Copilot's own settings.json", () => {
   });
 
   // A settings file exists from the first `copilot` run and gains `enabledPlugins` only on
-  // the first install, so its absence is "carries none" — a real answer, not a failed read.
+  // the first install, so its absence is "carries none" - a real answer, not a failed read.
   it("reads a settings file with no enabledPlugins as carrying none", async () => {
     await write(PATH, JSON.stringify({ extraKnownMarketplaces: {} }));
 

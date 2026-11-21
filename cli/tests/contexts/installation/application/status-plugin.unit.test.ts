@@ -53,7 +53,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   };
 }
 
-describe("ReportStatus — plugin drift", () => {
+describe("ReportStatus - plugin drift", () => {
   describe("when plugin file has drifted", () => {
     it("returns plugin drift entry for the drifted tool", async () => {
       const manifest = makeManifest(EXPECTED_HASH);

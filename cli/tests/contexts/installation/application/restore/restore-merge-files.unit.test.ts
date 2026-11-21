@@ -330,7 +330,7 @@ describe("restoreMergeFiles", () => {
       JSON.stringify({ toolPath: "/usr/local/old-tool", timeout: 30, sideNote: "keep-me" })
     );
     const prompter = new OverwritePrompter();
-    // The framework distribution only ever manages toolPath and timeout — sideNote
+    // The framework distribution only ever manages toolPath and timeout - sideNote
     // never appears in it, proving a merge restore cannot behave as a whole-file replace.
     const distContent = JSON.stringify({ toolPath: "/usr/local/new-tool", timeout: 30 });
 
@@ -372,7 +372,7 @@ describe("restoreMergeFiles", () => {
   });
 });
 
-describe("restoreMergeFiles — the entries it hands back", () => {
+describe("restoreMergeFiles - the entries it hands back", () => {
   const distContent = JSON.stringify({ a: "framework-a" });
 
   function distMapFor() {

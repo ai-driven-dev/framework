@@ -104,7 +104,7 @@ describe("doctor", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // The doctor reads through `manifestRepo.load()`, so a corrupt manifest is a load that
-    // throws — the in-memory double never does on its own.
+    // throws - the in-memory double never does on its own.
     const corruptRepo = Object.create(deps.manifestRepo) as typeof deps.manifestRepo;
     corruptRepo.load = async () => {
       throw new Error("Manifest is corrupted");

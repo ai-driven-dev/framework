@@ -27,7 +27,7 @@ import {
 } from "../testing/marketplace-sync-settings-migration.builder.js";
 
 describe("settings migration: legacy host entries", () => {
-  describe("SyncSettings + CheckRegistration — the full migration cycle", () => {
+  describe("SyncSettings + CheckRegistration - the full migration cycle", () => {
     /** Reads live from a `Map` the test's own activator double mutates on `addMarketplace`, the
      * one double that lets a `doctor` call made after a `sync` see what that `sync` actually did. */
     class LiveHostMarketplaceRegistryReader {

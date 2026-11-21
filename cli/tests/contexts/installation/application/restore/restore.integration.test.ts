@@ -127,7 +127,7 @@ describe("restore", () => {
     expect(cursorContent).toBe('{"modified": true}');
   });
 
-  it("toolIds filter also scopes plugin restore — does not leak to other AI tools", async () => {
+  it("toolIds filter also scopes plugin restore - does not leak to other AI tools", async () => {
     const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);

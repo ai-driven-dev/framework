@@ -28,7 +28,7 @@ import {
 } from "../testing/marketplace-sync-settings-migration.builder.js";
 
 describe("settings migration: legacy host entries", () => {
-  describe("SyncSettings — the host still tracks another, unmigrated project's cache", () => {
+  describe("SyncSettings - the host still tracks another, unmigrated project's cache", () => {
     const USER_CACHE_ROOT = "/user-cache";
     const CURRENT_VERSION = "2.0.0";
 
@@ -125,7 +125,7 @@ describe("settings migration: legacy host entries", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
       const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-      // Nothing is seeded under `foreignProjectCache` at all — the directory a real
+      // Nothing is seeded under `foreignProjectCache` at all - the directory a real
       // `rm -rf` would have removed after the fact.
       const fs = fsAt(PROJECT_ROOT, {
         [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({

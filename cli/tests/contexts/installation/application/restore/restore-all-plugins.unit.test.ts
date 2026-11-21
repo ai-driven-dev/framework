@@ -58,7 +58,7 @@ function nativePlugin(
   });
 }
 
-describe("RestoreAllPlugins — native-activation tools", () => {
+describe("RestoreAllPlugins - native-activation tools", () => {
   it("names claude in nativeOnlyToolIds when its only installed plugin tracks zero files", async () => {
     const manifest = aManifest()
       .withTool(TOOL.claude, [])
@@ -136,7 +136,7 @@ function trackedPlugin(name: string): InstalledPlugin {
   });
 }
 
-describe("RestoreAllPlugins — restricting to one plugin", () => {
+describe("RestoreAllPlugins - restricting to one plugin", () => {
   function claudeWithMixedPlugins(): Manifest {
     const manifest = aManifest()
       .withTool(TOOL.claude, [])

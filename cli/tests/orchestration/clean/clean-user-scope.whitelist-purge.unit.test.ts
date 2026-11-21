@@ -165,7 +165,7 @@ describe("clean --scope user: whitelist purge", () => {
         "1"
       );
       // Written by any online command into the same `cache/` directory `cache/built/` sits
-      // in — the occupant that used to survive a machine-scope clean and keep the shell alive.
+      // in - the occupant that used to survive a machine-scope clean and keep the shell alive.
       fs.setFile(join(USER_CONFIG_DIR, "cache", "update-check.json"), '{"latest":"9.9.9"}');
       // And where an older CLI wrote the same cache, before it moved under `cache/`.
       fs.setFile(join(USER_CONFIG_DIR, "update-check.json"), '{"latest":"8.0.0"}');
@@ -211,7 +211,7 @@ describe("clean --scope user: whitelist purge", () => {
       expect(fs.order).not.toContain(`deleteFile:${join(USER_CONFIG_DIR, "references.json")}`);
       expect(fs.order).not.toContain(`deleteFile:${USER_CONFIG_DIR}`);
       expect(fs.order.some((entry) => entry.endsWith(USER_CONFIG_DIR))).toBe(false);
-      // userConfigDir() itself must still exist — the marker file placed directly under it
+      // userConfigDir() itself must still exist - the marker file placed directly under it
       // proves the directory was never recursively removed.
       expect(await fs.fileExists(join(USER_CONFIG_DIR, "marker"))).toBe(true);
     });

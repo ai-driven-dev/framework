@@ -94,7 +94,7 @@ export class LockAwareActivator extends FakeHostActions {
 }
 
 /** Fails `realpath` with a non-ENOENT error (EACCES) for one exact path, so a test can prove
- * `clean` treats that failure like containment — named and skipped — not as an abort. */
+ * `clean` treats that failure like containment - named and skipped - not as an abort. */
 export class RealpathDeniedFileAdapter extends RecordingFileAdapter {
   constructor(private readonly deniedPath: string) {
     super();

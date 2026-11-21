@@ -100,6 +100,7 @@ describe("every file is exactly one kind", () => {
     ["tests/contexts/auth/testing/credentials.fake.ts", "fake"],
     ["tests/contexts/auth/testing/credentials.contract.ts", "contract-suite"],
     ["tests/setup/vitest-text-loader.ts", "setup"],
+    ["tests/mutation/mutation-sequencer.ts", "setup"],
   ])("%s is a %s", (path, kind) => {
     expect(kindsOf(path)).toEqual([kind]);
     expect(violationsOf(path)).toEqual([]);
@@ -114,8 +115,8 @@ describe("every file is exactly one kind", () => {
     expect(violation?.message).toMatch(/Fix:/);
   });
 
-  it("flags a test helper that carries no kind suffix", () => {
-    expect(violationsOf("tests/helpers/other.ts")).toHaveLength(1);
+  it("flags a test support file that carries no kind suffix", () => {
+    expect(violationsOf("tests/shared/other.ts")).toHaveLength(1);
   });
 
   it("flags a kind suffix outside the folders of its kind", () => {

@@ -262,7 +262,7 @@ describe("InstalledPlugin", () => {
       const plugin = InstalledPlugin.fromJSON(makePluginData());
 
       function acceptsComponentPaths(_m: ComponentPathMap): void {}
-      // @ts-expect-error files is a PathHashMap, not a ComponentPathMap — same runtime
+      // @ts-expect-error files is a PathHashMap, not a ComponentPathMap - same runtime
       // shape (ReadonlyMap<string, string>), different brand.
       acceptsComponentPaths(plugin.files);
 
@@ -276,7 +276,7 @@ describe("InstalledPlugin", () => {
   });
 });
 
-describe("parsePluginSpec — a plugin argument as typed on the command line", () => {
+describe("parsePluginSpec - a plugin argument as typed on the command line", () => {
   it("reads the version after the last @", () => {
     expect(parsePluginSpec("aidd-context@1.2.3")).toStrictEqual({
       name: "aidd-context",

@@ -276,7 +276,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       currentVersionProvider: new FakeCurrentVersion(VERSION),
     });
 
-    // No `recreateFrameworkIfMissing` — the same call shape `syncNativeActivation` uses.
+    // No `recreateFrameworkIfMissing` - the same call shape `syncNativeActivation` uses.
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(await registry.list(PROJECT_ROOT)).toEqual([]);

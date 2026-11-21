@@ -82,7 +82,7 @@ describe("rewritePluginRootToken", () => {
     });
   });
 
-  describe("scope guard — other env variables are untouched", () => {
+  describe("scope guard - other env variables are untouched", () => {
     it("leaves ISSUE_NUMBER unchanged", () => {
       const issueVar = "$" + "{ISSUE_NUMBER}";
       const content = `${CLAUDE_TOKEN}/hooks/check.sh ${issueVar}`;

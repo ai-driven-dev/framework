@@ -93,7 +93,7 @@ function remove(
   });
 }
 
-describe("UninstallTools — regular files", () => {
+describe("UninstallTools - regular files", () => {
   it("deletes the files a tool tracks and reports them, then forgets the tool", async () => {
     const target = project({ [SETTINGS]: "{}", [AGENTS]: "# Agents" });
     target.manifest.addTool(TOOL.claude, "test", [
@@ -111,7 +111,7 @@ describe("UninstallTools — regular files", () => {
   });
 });
 
-describe("UninstallTools — merge files", () => {
+describe("UninstallTools - merge files", () => {
   const HUB = { command: "hub" };
   const PLAYWRIGHT = { command: "npx" };
 
@@ -265,7 +265,7 @@ function codexClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
   return deps.userManifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims;
 }
 
-describe("UninstallTools — a project's tools", () => {
+describe("UninstallTools - a project's tools", () => {
   it.each([TOOL.cursor, TOOL.codex] as const)(
     "detaches only the selected %s tool's shared claims after local removal",
     async (selected) => {
@@ -334,7 +334,7 @@ describe("UninstallTools — a project's tools", () => {
       expect(deps.fs.has(settingsPath)).toBe(false);
     });
 
-    it("deletes keybindings.json on uninstall — whole-file ownership, no zombie", async () => {
+    it("deletes keybindings.json on uninstall - whole-file ownership, no zombie", async () => {
       const deps = await buildInstallationDeps();
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
@@ -353,7 +353,7 @@ describe("UninstallTools — a project's tools", () => {
   });
 });
 
-describe("UninstallTools — refusals", () => {
+describe("UninstallTools - refusals", () => {
   it("refuses to remove nothing, naming every tool it knows", async () => {
     const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
@@ -398,7 +398,7 @@ function parse(raw: string | undefined): Record<string, unknown> {
   return JSON.parse(raw ?? "{}") as Record<string, unknown>;
 }
 
-describe("UninstallTools, IDE — merge-file entries", () => {
+describe("UninstallTools, IDE - merge-file entries", () => {
   it("leaves a user-authored key in that shared file untouched", async () => {
     const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
@@ -416,7 +416,7 @@ describe("UninstallTools, IDE — merge-file entries", () => {
   });
 });
 
-describe("UninstallTools, IDE — report", () => {
+describe("UninstallTools, IDE - report", () => {
   it("reports every file it removed", async () => {
     const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);

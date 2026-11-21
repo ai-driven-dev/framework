@@ -24,7 +24,7 @@ import {
   PROJECT_ROOT,
 } from "../../testing/restore-scenario.builder.js";
 
-describe("restore — consent to overwrite", () => {
+describe("restore - consent to overwrite", () => {
   it("refuses to overwrite a modified file when neither force nor a TTY was given", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
@@ -40,7 +40,7 @@ describe("restore — consent to overwrite", () => {
   });
 });
 
-describe("restore — persisting the manifest", () => {
+describe("restore - persisting the manifest", () => {
   it("persists the manifest it was handed once one tool restored a file, even when another had nothing to restore", async () => {
     const deps = await buildInstallationDeps();
     await initProject(deps, PROJECT_ROOT);
@@ -105,7 +105,7 @@ describe("restore — persisting the manifest", () => {
   });
 });
 
-describe("restore — totals", () => {
+describe("restore - totals", () => {
   it("counts the files restored and kept across a tool's sections", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
@@ -129,7 +129,7 @@ describe("restore — totals", () => {
   });
 });
 
-describe("restore — the framework path", () => {
+describe("restore - the framework path", () => {
   it("reads only the config files the framework path actually holds", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
@@ -148,7 +148,7 @@ describe("restore — the framework path", () => {
   });
 });
 
-describe("restore — the file selection", () => {
+describe("restore - the file selection", () => {
   const RUN = ".claude/hooks/run.js";
   const OTHER = ".claude/hooks/other.js";
 
