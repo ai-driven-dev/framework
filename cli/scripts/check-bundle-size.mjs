@@ -80,6 +80,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
 // 821 KB: 820.7 KB, the kind rollout giving services their ports, the presentation output port, one prompter adapter per file, named-object requests, and the error catalog split into one file per owner; 0.04% measured headroom.
 // 822 KB: 821.4 KB, the installation context giving clean and config tracking one execute each; 0.05% measured headroom.
+// 824 KB: 823.3 KB, the installation context giving use cases and domain factories named-object parameters; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
