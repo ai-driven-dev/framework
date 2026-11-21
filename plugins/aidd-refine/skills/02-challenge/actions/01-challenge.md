@@ -6,7 +6,7 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
 
 - The work: an answer, files, a plan, a doc, a decision or a commit range.
 - What it was asked to do: a plan, a spec or a request, else the user's stated intent.
-- Optional techniques from [techniques.md](../references/techniques.md), all of them when none is named.
+- Optional techniques from [techniques.md](../references/techniques.md), else those that apply to the work.
 - Optional task folder.
 
 ## Process
@@ -16,11 +16,12 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
 3. Apply each selected technique of `techniques.md`, in its table order, to the work and to what it was asked to do.
 4. Classify each finding with the first question of the `techniques.md` decision that answers yes.
 5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
-6. Fill [report-template.md](../assets/report-template.md) and append it to `challenge.md` under a `# Round <n>` heading, never over an earlier round, in the first folder that exists:
+6. Fill [report-template.md](../assets/report-template.md).
+7. Write it to `challenge.md` under a `# Round <n>` heading, after any earlier round, in the first folder that exists:
    - the task folder named;
    - the folder of the plan or spec the work follows;
    - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
-7. Emit the filled report, then its path on one line, with nothing else.
+8. Read `challenge.md` back, then emit the filled report and its path on one line, with nothing else.
 
 ## Output
 
