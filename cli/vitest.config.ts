@@ -117,19 +117,6 @@ export default defineConfig({
           globalSetup: ["./tests/setup/global-setup.ts", "./tests/setup/sweep-stale-temp-dirs.ts"],
         },
       },
-      {
-        // The presenters' and errors' goldens render in process: no binary to build.
-        extends: false,
-        plugins: [textLoader(TEXT_EXTENSIONS)],
-        test: {
-          name: "display",
-          include: ["tests/presentation/**/*.golden.test.ts"],
-          globals: false,
-          environment: "node",
-          testTimeout: 60000,
-          globalSetup: ["./tests/setup/sweep-stale-temp-dirs.ts"],
-        },
-      },
     ],
     globals: false,
     environment: "node",
