@@ -68,7 +68,12 @@ const pluginSpecs = pluginSpecsReaching(
 try {
   if (cliFiles.length > 0) run("npx", ["vitest", "related", "--run", ...cliFiles], CLI);
   for (const spec of pluginSpecs) {
-    run("node", ["--test", `${PLUGIN_SUITE_DIR}/${spec}`], ROOT);
+    // Wrapped like lefthook and CI: the specs run `git init`, which can land in this repository's own hooks.
+    run(
+      "node",
+      ["scripts/check-tests-leave-git-alone.js", "--", "node", "--test", `${PLUGIN_SUITE_DIR}/${spec}`],
+      ROOT
+    );
   }
 } catch {
   process.exit(1);
