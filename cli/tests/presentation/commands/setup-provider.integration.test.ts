@@ -1,13 +1,25 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../src/shared/domain/markdown.js";
+import { singlePluginSource } from "../../composition/testing/single-plugin-source.builder.js";
 import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
-import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 import { readJson } from "../testing/project-state.builder.js";
 
+const PLUGIN = "aidd-orchestrator";
 const AGENT = ".opencode/agents/aidd-orchestrator-reviewer.md";
+
+let source: string;
+let removeSource: () => Promise<void>;
+
+beforeAll(async () => {
+  ({ source, remove: removeSource } = await singlePluginSource(PLUGIN));
+});
+
+afterAll(async () => {
+  await removeSource();
+});
 
 let project: string;
 let home: string;
@@ -30,8 +42,8 @@ async function fileExists(path: string): Promise<boolean> {
   );
 }
 
-const SETUP = ["setup", "--source", "local", "--path", REPOSITORY_ROOT, "--ide", "opencode"];
-const INSTALL = ["--plugins", "aidd-orchestrator", "--yes"];
+const setupArgs = () => ["setup", "--source", "local", "--path", source, "--ide", "opencode"];
+const INSTALL = ["--plugins", PLUGIN, "--yes"];
 
 async function agentModel(): Promise<unknown> {
   return parseFrontmatter(await readFile(join(project, AGENT), "utf8")).frontmatter.model;
@@ -47,25 +59,25 @@ async function mainModel(): Promise<unknown> {
 
 describe("aidd setup --provider on a project", () => {
   it("installs the agents with the provider's models, and undoes it", async () => {
-    const setup = await aidd([...SETUP, ...INSTALL]);
+    const setup = await aidd([...setupArgs(), ...INSTALL]);
     expect(setup.exitCode, setup.stderr).toBe(0);
     expect(await agentModel()).toBeUndefined();
 
-    const set = await aidd([...SETUP, ...INSTALL, "--provider", "mistral"]);
+    const set = await aidd([...setupArgs(), ...INSTALL, "--provider", "mistral"]);
     expect(set.exitCode, set.stderr).toBe(0);
     expect(await agentModel()).toBe("mistral/mistral-large-4#high");
     expect(await mainModel()).toBe("mistral/mistral-large-4");
     expect(await readFile(join(project, "opencode.json"), "utf8")).not.toContain('"model"');
     expect(set.stdout).toContain("opencode reviewer: mistral/mistral-large-4 (high)");
 
-    const unset = await aidd([...SETUP, ...INSTALL, "--provider", "none"]);
+    const unset = await aidd([...setupArgs(), ...INSTALL, "--provider", "none"]);
     expect(unset.exitCode, unset.stderr).toBe(0);
     expect(await agentModel()).toBeUndefined();
     expect(await mainModel()).toBeUndefined();
   });
 
   it("gives everything back with clean --global: main session, provider and machine-wide agents", async () => {
-    const global = ["setup", "--global", "--source", "local", "--path", REPOSITORY_ROOT];
+    const global = ["setup", "--global", "--source", "local", "--path", source];
     const set = await aidd([...global, "--ide", "opencode", ...INSTALL, "--provider", "mistral"]);
     expect(set.exitCode, set.stderr).toBe(0);
     expect(await mainModel()).toBe("mistral/mistral-large-4");
