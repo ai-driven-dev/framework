@@ -4,6 +4,7 @@ import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js
 import type { OutputFile } from "../output-file.js";
 import { marketplaceAgents } from "./agents.js";
 import { marketplaceHooks } from "./hooks.js";
+import { marketplaceMcp } from "./mcp.js";
 import { marketplaceSkills } from "./skills.js";
 
 /** The files one plugin builds into for a tool, each named from the output directory. Only the
@@ -14,10 +15,11 @@ export function translateBuildLayout(
   mode: FrameworkBuildMode
 ): OutputFile[] {
   if (mode !== "marketplace") return [];
-  const { agents, hooks, skills } = contract.artifacts;
+  const { agents, hooks, mcp, skills } = contract.artifacts;
   return [
     ...(agents.supported ? marketplaceAgents(canon, agents) : []),
     ...(hooks.supported ? marketplaceHooks(canon, hooks, contract.pluginRootToken) : []),
+    ...(mcp.supported ? marketplaceMcp(canon, mcp, contract.pluginRootToken) : []),
     ...(skills.supported ? marketplaceSkills(canon, skills) : []),
   ];
 }

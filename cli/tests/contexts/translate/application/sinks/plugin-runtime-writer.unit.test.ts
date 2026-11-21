@@ -45,11 +45,11 @@ describe("one plugin's hooks and MCP servers", () => {
     ]);
   });
 
-  it("copies the MCP file when the plugin has one", async () => {
+  it("writes no MCP file in the marketplace layout, which the engine builds", async () => {
     const fs = new InMemoryFileAdapter({ [`${PLUGIN.src}/.mcp.json`]: "{}" });
     const target = aDiskTarget(aStubBuildContract());
-    await expect(writePluginMcp(depsOver(fs), target, PLUGIN)).resolves.toBe(1);
-    expect(fs.getFile("/out/plugins/plug/.mcp.json")).toBe("{}");
+    await expect(writePluginMcp(depsOver(fs), target, PLUGIN)).resolves.toBe(0);
+    expect(fs.getFile("/out/plugins/plug/.mcp.json")).toBeUndefined();
   });
 
   it("writes nothing when the plugin has no MCP file", async () => {
