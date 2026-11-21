@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -15,6 +14,8 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { userScopeFileGuard } from "../../testing/user-scope-file-guard.fake.js";
+
+const homedir = (): string => "/home/dev";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
 const insideUserScope: IsWithinUserScope = () => true;

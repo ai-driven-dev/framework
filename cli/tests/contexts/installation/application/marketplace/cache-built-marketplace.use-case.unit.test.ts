@@ -1,5 +1,4 @@
-import { tmpdir } from "node:os";
-import { join, resolve, sep } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   CacheBuiltMarketplace,
@@ -228,7 +227,7 @@ describe("CacheBuiltMarketplace", () => {
     });
     expect(r.builtDir).toBe(resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex")));
     expect(fs.getFile(join(r.builtDir, "plugins/aidd-vcs/SKILL.md"))).toBe("built content");
-    expect(fs.listUnder(tmpdir()).length).toBe(0);
+    expect(fs.listUnder("/").filter((path) => path.includes("aidd-built-"))).toEqual([]);
   });
 
   it("memoizes within a run: a second call for the same target/version does not rebuild", async () => {
@@ -392,14 +391,13 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     // resolve(): the direct-path outDir the code passes is itself resolved (drive letter
     // on win32), so the cache root it is compared against must be built the same way.
     const cacheRoot = resolve(join(PROJECT, BUILT_CACHE_SUBDIR));
-    const tmpRoot = tmpdir();
+    const isTemp = (outDir: string) => basename(outDir).startsWith("aidd-built-");
     for (const outDir of capturedOutDirs) {
       const underCache = outDir === cacheRoot || outDir.startsWith(`${cacheRoot}${sep}`);
-      const underTmp = outDir === tmpRoot || outDir.startsWith(`${tmpRoot}${sep}`);
-      expect(underCache || underTmp).toBe(true);
+      expect(underCache || isTemp(outDir)).toBe(true);
     }
     // The dogfood call specifically must have gone through the temp dir, not the cache.
-    expect(capturedOutDirs[1]?.startsWith(`${tmpRoot}${sep}`)).toBe(true);
+    expect(isTemp(capturedOutDirs[1] ?? "")).toBe(true);
   });
 
   // A user-scope marketplace is declared once for every project, so building it inside whichever

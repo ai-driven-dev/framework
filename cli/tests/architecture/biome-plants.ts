@@ -391,6 +391,18 @@ export const PLANTS: readonly Plant[] = [
     1,
   ],
   [
+    "tests/shared/domain/homes.unit.test.ts",
+    'import { homedir } from "node:os";\nexport const home = homedir;\n',
+    IMPORT,
+    1,
+  ],
+  [
+    "tests/shared/domain/homes.integration.test.ts",
+    'import { homedir } from "node:os";\nexport const home = homedir;\n',
+    IMPORT,
+    0,
+  ],
+  [
     "tests/shared/domain/reads.integration.test.ts",
     'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n',
     IMPORT,

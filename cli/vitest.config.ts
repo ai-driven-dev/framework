@@ -10,7 +10,7 @@ const TOOLING_TESTS = [
   "tests/mutation/stryker-filter.integration.test.ts",
   "tests/shared/testing/realpath-windows.unit.test.ts",
   "tests/mutation/mutation-sequencer.integration.test.ts",
-  "tests/setup/throwaway-profile.unit.test.ts",
+  "tests/setup/throwaway-profile.integration.test.ts",
   "tests/mutation/unloadable-file-as-failed-test.integration.test.ts",
   "tests/mutation/unloadable-file-as-failed-test.unit.test.ts",
 ];

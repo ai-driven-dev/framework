@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { foreignUserScopeDir } from "../../../../../../src/contexts/installation/application/plugin/add/foreign-user-scope-dir.js";
@@ -12,6 +11,8 @@ import { InstalledPlugin } from "../../../../../../src/contexts/installation/dom
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 const ROOT = "/test-project";
 
