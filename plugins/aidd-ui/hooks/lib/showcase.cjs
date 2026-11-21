@@ -24,8 +24,11 @@ const UNRESOLVED = ["none", "pending"]; // a state still to review
 const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
 const FEW_ITEMS = 3; // a drawer holding this many records or fewer opens every group
 const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
+const AGREE_MARK = "\u25CF"; // the mark of a step that only awaits the agreement of the assistant
 const JOURNEY_PREFIX = "_journey-"; // so a journey named like another record never takes that record's page name
-/** The file of a record's page: ids are unique per kind, so a journey is told apart by its prefix. Every link to a page goes through it. */
+/** The file of a record's page: ids are unique per kind, so a journey is told apart by its prefix. Every link to a page goes through it,
+ * but two that can only name a record that is no journey and so write `<id>.html` by hand: the next record of the verdict bar (the page
+ * script) and the anchors under the brand and the system (`charte-page.cjs`). */
 const pageName = (kind, id) => `${kind === "journey" ? JOURNEY_PREFIX : ""}${id}.html`;
 
 /** The words of the page chrome, one table per language: the same keys in each. */
@@ -33,6 +36,7 @@ const LABELS = {
   en: {
     title: "Showcase",
     choose: "Variants",
+    checks: "Checks",
     kindNames: { brand: "Brand identity", system: "Design system" },
     whole: "Whole",
     stepNames: { journeys: "Journeys", identity: "Identity", foundations: "Foundations", components: "Elements", screens: "Screens" },
@@ -55,7 +59,6 @@ const LABELS = {
     pickedFrom: "taken from {variant}",
     round: "Round {round}",
     changed: "Changed from {parent}",
-    desktop: "Desktop",
     mobile: "Mobile",
     same: "Same in all: {sections}",
     full: "Full text",
@@ -152,6 +155,7 @@ const LABELS = {
   fr: {
     title: "La vitrine",
     choose: "Variantes",
+    checks: "V\u00e9rifications",
     kindNames: { brand: "Identité visuelle", system: "Charte graphique" },
     whole: "L'ensemble",
     stepNames: { journeys: "Parcours", identity: "Identité", foundations: "Charte", components: "Éléments", screens: "Écrans" },
@@ -174,7 +178,6 @@ const LABELS = {
     pickedFrom: "pris de {variant}",
     round: "Tour {round}",
     changed: "Changé depuis {parent}",
-    desktop: "Ordinateur",
     mobile: "Mobile",
     same: "Identique dans toutes : {sections}",
     full: "Texte complet de la piste",
@@ -355,7 +358,7 @@ select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--t
 .shell > main.wide { max-width: none; }
 main, main.wide { padding-bottom: calc(var(--s5) + var(--h-touch) + var(--s6)); }
 nav .brand { display: flex; align-items: center; gap: var(--s1); padding: var(--s1) 0 var(--s4); font-size: var(--t-sm); font-weight: 600; }
-nav .mark { inline-size: 20px; block-size: 20px; border-radius: var(--r1); background: var(--text); flex: none; }
+nav .brand-mark { inline-size: 20px; block-size: 20px; border-radius: var(--r1); background: var(--text); flex: none; }
 nav .home { margin: 0; }
 nav .steps { list-style: none; margin: var(--s3) 0 var(--s4); padding: 0; }
 nav .steps > li { display: block; }
@@ -390,7 +393,7 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 500; }
 .chip[data-status="validated"]::before { color: var(--ok); }
 .chip[data-status]::before { content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%; background: currentColor; }
 .links { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; }
-.links h2, .bar-top h2, .overview h2, .appears h2 { font-size: var(--t-md); font-weight: 600; margin: 0; }
+.links h2, .bar-top h2, .appears h2 { font-size: var(--t-md); font-weight: 600; margin: 0; }
 .links h2 { font-size: var(--t-sm); color: var(--muted); font-weight: 500; min-width: 4rem; }
 .links ul { display: flex; gap: 6px; flex-wrap: wrap; }
 .links a { display: inline-block; padding: 2px 10px; border-radius: var(--r-pill); background: var(--accent-soft); font-size: var(--t-sm); }
@@ -520,7 +523,6 @@ textarea.comment:focus, textarea.colcomment:focus { border-color: var(--accent);
 .ovcard:hover { border-color: var(--line-strong); box-shadow: var(--shadow-2); text-decoration: none; }
 .ovcard .title { font-weight: 600; }
 .ovcard .meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2); margin-top: auto; color: var(--muted); font-size: var(--t-sm); }
-.ovcard .progress { margin-left: auto; }
 .mark { padding: 0 8px; border-radius: var(--r-pill); font-size: var(--t-xs); font-weight: 600; line-height: 18px; }
 .mark.todo { background: var(--revise-soft); color: var(--revise); }
 .mark.rework { background: var(--sunken); color: var(--text); }
@@ -862,6 +864,7 @@ function keptOf(store, keys) {
 /** The script of the review panel, on every page: a verdict by state of every record, kept in the browser
  * across the pages when it shares their storage, else for the page alone; then one copy of all decided. */
 const PANEL = `${DELIVER}
+const AGREE_MARK = ${JSON.stringify(AGREE_MARK)};
 ${copiedOf.toString()}
 ${keptOf.toString()}
 ${entriesOf.toString()}
@@ -963,6 +966,7 @@ function paint() {
   const stepOf = (node) => node.closest("details.step-group").dataset.step;
   const leftBy = Object.fromEntries([...items, ...sets].map((node) => [stepOf(node), 0]));
   const unsettled = [];
+  const firstBy = {};
   for (const item of items) {
     const rows = rowsOf(item);
     let own = 0;
@@ -995,7 +999,14 @@ function paint() {
     sum.textContent = done + "/" + total;
     group.querySelector(".bar i").style.inlineSize = Math.round((100 * done) / total) + "%";
   });
-  for (const item of unsettled) if (!item.dataset.dressedBy) { left += 1; leftBy[stepOf(item)] += 1; }
+  const rankOf = (item) => { const at = order.indexOf(item.dataset.record); return at < 0 ? Infinity : at; };
+  for (const item of unsettled) {
+    if (item.dataset.dressedBy) continue;
+    left += 1;
+    const step = stepOf(item);
+    leftBy[step] += 1;
+    if (!firstBy[step] || rankOf(item) < rankOf(firstBy[step])) firstBy[step] = item;
+  }
   for (const set of sets) {
     let decided = 0;
     for (const row of variantsOf(set)) {
@@ -1010,6 +1021,7 @@ function paint() {
     if (!decided) { left += 1; leftBy[stepOf(set)] += 1; }
     const total = set.querySelector(".done");
     total.textContent = decided + "/" + variantsOf(set).length + " " + total.dataset.label;
+    document.querySelectorAll('.progress[data-set="' + set.dataset.set + '"]').forEach((each) => { each.textContent = decided + "/" + each.dataset.total + " " + each.dataset.label; });
     const count = set.querySelector(".picked");
     const taken = Object.keys(picksOf(set)).length;
     count.hidden = !taken;
@@ -1027,13 +1039,41 @@ function paint() {
     const own = picksOf(holder);
     holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
   }
-  const template = document.querySelectorAll(".tally[data-template]")[0]?.dataset.template ?? "{count}";
-  for (const [step, count] of Object.entries(leftBy)) {
+  const words = (document.querySelectorAll(".tally[data-template]")[0] || { dataset: {} }).dataset;
+  const filled = (template, count) => String(template).replace("{count}", String(count));
+  for (const [step, todo] of Object.entries(leftBy)) {
+    const marks = document.querySelectorAll('.steps > li[data-step="' + step + '"] .step-mark');
+    const own = marks.length ? marks[0].dataset : {};
+    const proposed = Number(own.proposed || 0);
+    const count = todo || proposed;
+    const say = todo ? filled(words.template, todo) : proposed ? own.proposedWord : own.restWord;
+    const mark = todo ? String(todo) : proposed ? AGREE_MARK : own.restMark;
     const write = (selector, text) => document.querySelectorAll(selector).forEach((each) => { each.textContent = text; });
-    write('.stepper li[data-step="' + step + '"] .state', template.replace("{count}", String(count)));
-    write('.steps > li[data-step="' + step + '"] .step-mark', String(count));
-    write('.ov-step[data-step="' + step + '"] h3 span', String(count));
+    write('.stepper li[data-step="' + step + '"] .state', say);
+    document.querySelectorAll('.stepper li[data-step="' + step + '"]').forEach((each) => { each.dataset.state = count ? "todo" : own.restState; });
+    marks.forEach((each) => {
+      each.textContent = mark;
+      each.setAttribute("aria-label", say);
+      each.classList.toggle("agree", !todo && proposed > 0);
+    });
+    document.querySelectorAll('.ov-step[data-step="' + step + '"] h3 span').forEach((each) => { each.textContent = count ? String(count) : ""; each.hidden = !count; });
     write('.step-group[data-step="' + step + '"] .step-count', "(" + count + ")");
+  }
+  const lede = document.querySelectorAll("p.lede[data-next]")[0];
+  if (lede) {
+    const fill = (template, values) => template.replace("{count}", String(values.count)).replace("{steps}", values.steps);
+    const stepsOfPage = JSON.parse(lede.dataset.steps).map((each) => ({ ...each, todo: leftBy[each.step] || 0 }));
+    const waiting = stepsOfPage.filter((each) => each.todo);
+    const agreeing = stepsOfPage.filter((each) => each.proposed);
+    const agree = (template) => fill(template, { count: agreeing.reduce((sum, each) => sum + each.proposed, 0), steps: agreeing.map((each) => each.name).join(", ") });
+    const review = waiting.length ? fill(lede.dataset.next, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => each.name).join(", ") }) : "";
+    lede.textContent = waiting.length ? (agreeing.length ? review + " " + agree(lede.dataset.agree) : review) : agreeing.length ? agree(lede.dataset.only) : lede.dataset.nothing;
+    const row = document.querySelectorAll(".start-row")[0];
+    if (row) {
+      const first = stepsOfPage.find((each) => each.todo || each.proposed);
+      row.hidden = !waiting.length;
+      if (first) row.querySelector("a.start").setAttribute("href", first.todo && firstBy[first.step] ? firstBy[first.step].dataset.href : first.rest);
+    }
   }
   paintBars();
   const list = decisionsOf(model(), choices);
@@ -1307,6 +1347,10 @@ const recordLine = (record, title, after = "") => `<li data-id="${escaped(fm(rec
 /** What a step still asks, in words: the records to review, else the records awaiting agreement. */
 const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { count: each.count }) : filled(labels.proposedCount, { count: each.count }));
 
+/** What a step says once nothing is left to review and nothing is proposed: complete when it holds something, else empty.
+ * The page script writes the same words when verdicts bring a step to nothing. */
+const restOf = (labels, each) => (each.records.length || each.sets.length ? { state: "done", word: labels.stepDone, mark: "\u2713" } : { state: "empty", word: labels.stepEmpty, mark: "\u2014" });
+
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
  * and open sets, never states, a wireframe awaiting beside the awaiting screen that dresses it once (`dressedBy` names
@@ -1394,20 +1438,20 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   const here = hereOf(held, records, sets, current);
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
-    const left = each.count;
-    const agree = left && !each.todo;
-    const mark = agree ? "\u25CF" : left ? each.count : each.records.length || each.sets.length ? "\u2713" : "\u2014";
-    const markName = left ? leftWordOf(labels, each) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
+    const agree = each.count && !each.todo;
+    const rest = restOf(labels, each);
+    const mark = agree ? AGREE_MARK : each.count ? each.count : rest.mark;
+    const markName = each.count ? leftWordOf(labels, each) : rest.word;
     const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
     const name = alone
       ? `<a class="step-name" href="${escaped(pageNameOf(alone))}"${pageNameOf(alone) === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
       : `<span class="step-name">${labels.stepNames[each.step]}</span>`;
     const body = alone ? subNavigationOf(fm(alone).id, anchors.get(fm(alone).id) ?? []) : bodyOf(each) + setsOf(each.sets);
-    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark${agree ? " agree" : ""}" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${body}</details></li>`;
+    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark${agree ? " agree" : ""}" role="img" aria-label="${escaped(markName)}" data-proposed="${each.proposed.length}" data-proposed-word="${escaped(filled(labels.proposedCount, { count: each.proposed.length }))}" data-rest-state="${rest.state}" data-rest-word="${escaped(rest.word)}" data-rest-mark="${rest.mark}">${mark}</span></summary>${body}</details></li>`;
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false"><span class="label">${labels.myReview}</span>${pendingOf(labels, total)}</button></div>`;
   const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
-  return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
+  return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="brand-mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
 }
 
 /** The state a miniature shows: `default` when the record has it, else its first. */
@@ -1643,7 +1687,7 @@ function drawerOf({ project, held, here, rows, labels, current, order }) {
       "</li>",
     ].join("");
     const screen = held.map((each) => each.dressedBy.get(id)).find(Boolean);
-    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""}${pageNameOf(record) === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}${screen ? ` \u00b7 ${escaped(labels.wireframe)}` : ""}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
+    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""} data-href="${escaped(pageNameOf(record))}"${pageNameOf(record) === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}${screen ? ` \u00b7 ${escaped(labels.wireframe)}` : ""}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
   const shown = held.reduce((sum, each) => sum + each.awaiting.length + each.open.length, 0);
   const known = held.flatMap((each) => each.records).filter((record) => reviewable(project, record)).map((record) => ({
@@ -1769,9 +1813,9 @@ const hrefOf = (each, order) => {
 /** The five steps as a stepper in order, each a link to the first thing to open, with its state in words. */
 function stepperOf(held, labels, order) {
   const item = (each, at) => {
-    const left = each.count;
-    const state = left ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
-    const word = left ? leftWordOf(labels, each) : state === "done" ? labels.stepDone : labels.stepEmpty;
+    const rest = restOf(labels, each);
+    const state = each.count ? "todo" : rest.state;
+    const word = each.count ? leftWordOf(labels, each) : rest.word;
     const href = hrefOf(each, order);
     const inner = `<span class="no">${at + 1}</span><span class="name">${labels.stepNames[each.step]}</span><span class="state">${escaped(word)}</span>`;
     return `<li data-step="${each.step}" data-state="${state}">${href ? `<a href="${escaped(href)}">${inner}</a>` : `<span class="cell">${inner}</span>`}</li>`;
@@ -1779,17 +1823,21 @@ function stepperOf(held, labels, order) {
   return `<ol class="stepper">${held.map(item).join("")}</ol>`;
 }
 
-/** The line that says what awaits review, with the way in: a primary link to the first step that has work. */
+/** The line that says what awaits review, with the way in: a primary link to the first step that has work.
+ * The lede carries its words as templates, and each step its name, its proposed count and where to open it with no
+ * record left to review, so the page script words and aims it again as verdicts are given. */
 function reviewLineOf(held, labels, order) {
   const waiting = held.filter((each) => each.todo);
   const proposed = held.filter((each) => each.proposed.length);
   const agreeing = (template) => filled(template, { count: proposed.reduce((sum, each) => sum + each.proposed.length, 0), steps: proposed.map((each) => labels.stepNames[each.step]).join(", ") });
-  if (!waiting.length && proposed.length) return `<p class="lede">${escaped(agreeing(labels.overviewProposed))}</p>`;
-  if (!waiting.length) return `<p class="lede">${labels.nothing}</p>`;
+  const steps = held.map((each) => ({ step: each.step, name: labels.stepNames[each.step], proposed: each.proposed.length, rest: hrefOf({ ...each, counted: [] }, order) }));
+  const words = ` data-next="${escaped(labels.overviewNext)}" data-agree="${escaped(labels.overviewAgree)}" data-only="${escaped(labels.overviewProposed)}" data-nothing="${escaped(labels.nothing)}" data-steps="${escaped(JSON.stringify(steps))}"`;
+  if (!waiting.length && proposed.length) return `<p class="lede"${words}>${escaped(agreeing(labels.overviewProposed))}</p>`;
+  if (!waiting.length) return `<p class="lede"${words}>${labels.nothing}</p>`;
   const review = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
   const text = proposed.length ? `${review} ${agreeing(labels.overviewAgree)}` : review;
   const first = held.find((each) => each.count);
-  return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first, order))}">${labels.start}</a></p>`;
+  return `<p class="lede"${words}>${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first, order))}">${labels.start}</a></p>`;
 }
 
 /** A static thumbnail of a record's shown state, sketched for a wireframe: no script runs in it, it loads when scrolled near,

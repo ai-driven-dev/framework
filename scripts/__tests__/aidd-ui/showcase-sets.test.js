@@ -167,8 +167,9 @@ describe("aidd-ui showcase sets", () => {
     });
 
     it("leaves room under the content for the floating review button on a set page", () => {
-      const style = require(path.join(LIB, "variants.cjs")).STYLE;
-      assert.match(style, /main\.wide \{[^}]*padding-bottom/);
+      const { STYLE } = require(path.join(LIB, "variants.cjs"));
+      assert.match(pagesOf([SET()])["_set-layout.html"], /main, main\.wide \{[^}]*padding-bottom/);
+      assert.doesNotMatch(STYLE, /main\.wide/, "one rule for it, the shell's");
     });
 
     it("sizes the frame to the render it holds and centres it in a column wider than the render", () => {
@@ -764,7 +765,7 @@ describe("aidd-ui showcase sets", () => {
         return node;
       };
       // The page as the script sees it: a drawer row per variant, a header per column, one copy button.
-      const open = ({ past = false } = {}) => {
+      const open = ({ past = false, progress = [] } = {}) => {
         const html = pagesOf([SET()])["_set-layout.html"];
         const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
         const rows = ["a", "b"].map((name) => {
@@ -785,7 +786,7 @@ describe("aidd-ui showcase sets", () => {
         const holders = past ? [folded, holder] : [holder];
         const list = element({}, { children: [], replaceChildren: (...nodes) => { list.children = nodes; } });
         const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element(), decisions: element({ copy: "{count} to copy", words: JSON.stringify({ keep: "Keep", revise: "Revise", discard: "Discard", pick: "taken from {variant}" }) }, { below: { ul: [list] } }) };
-        const document = { body: { dataset: {} }, createElement: () => element(), addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? holders : []), querySelector: () => null };
+        const document = { body: { dataset: {} }, createElement: () => element(), addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? holders : selector === '.progress[data-set="layout"]' ? progress : []), querySelector: () => null };
         const written = [];
         const memory = {};
         const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
@@ -803,6 +804,18 @@ describe("aidd-ui showcase sets", () => {
         page.by.copy.listeners.click();
         await new Promise((resolve) => setImmediate(resolve));
         assert.deepEqual(verdictsOf(page.written[0]), [["a", "keep", ""], ["b", null, ""]]);
+      });
+
+      it("repaints the progress of a set on the overview as a variant is decided, and back to what the server wrote when it is taken back", () => {
+        const onScreens = SET({ variants: ["a", "b"].map((name) => variant(name, name, [file("components/button.md", SECTIONS(name))])) });
+        const written = pagesOf([onScreens])["index.html"].match(/<span class="progress" data-set="layout"([^>]*)>([^<]*)<\/span>/);
+        const dataset = Object.fromEntries([...written[1].matchAll(/ data-([a-z]+)="([^"]*)"/g)].map((match) => [match[1], match[2]]));
+        const progress = element(dataset, { textContent: written[2] });
+        const page = open({ progress: [progress] });
+        page.columns[0].votes[0].listeners.click();
+        assert.equal(progress.textContent, "1/2 chosen");
+        page.columns[0].votes[0].listeners.click();
+        assert.equal(progress.textContent, written[2]);
       });
 
       it("lists in the drawer a verdict and a pick given in the columns, under the set's title", () => {

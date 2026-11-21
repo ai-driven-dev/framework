@@ -181,7 +181,7 @@ describe("aidd-ui showcase overview", () => {
 
   it("names the steps awaiting agreement in the lede after the others, in step order", () => {
     crowd();
-    const lede = pagesOf([], "fr")["index.html"].match(/<p class="lede">([^<]*)<\/p>/)[1];
+    const lede = pagesOf([], "fr")["index.html"].match(/<p class="lede"[^>]*>([^<]*)<\/p>/)[1];
     const names = LABELS.fr.stepNames;
     const at = (step) => lede.indexOf(names[step]);
     assert.ok(at("components") < at("screens") && at("screens") < lede.indexOf("Parcours"), lede);
@@ -189,7 +189,7 @@ describe("aidd-ui showcase overview", () => {
 
   it("names in the lede the steps whose records await agreement, beside what awaits review, in both languages", () => {
     crowd();
-    const ledeOf = (html) => html.match(/<p class="lede">([^<]*)<\/p>/)[1];
+    const ledeOf = (html) => html.match(/<p class="lede"[^>]*>([^<]*)<\/p>/)[1];
     assert.match(ledeOf(pagesOf()["index.html"]), /to review, in [^.]*\. 1 awaiting your agreement, in Journeys\./);
     assert.match(ledeOf(pagesOf([], "fr")["index.html"]), /à relire, dans [^.]*\. 1 en attente de votre accord, dans Parcours\./);
     assert.ok(LABELS.en.overviewAgree && LABELS.fr.overviewAgree);

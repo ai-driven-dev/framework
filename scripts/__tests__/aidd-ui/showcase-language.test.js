@@ -39,6 +39,21 @@ function readOf(html) {
 // A record file always sits in a folder; a bare name ending in .md is a token, as space.md.
 const PATH = /[\w-]+\/[\w./-]+\.\w+|\b[\w-]+\.(?:tsx?|jsx?|png|svg|html)\b|#\w+@\d/;
 
+describe("a showcase in either language", () => {
+  it("names every label it writes, the heading of a set with problems included", () => {
+    const broken = { ...SET, id: "broken", problems: [{ rule: "D4", severity: "error", file: "x/variants.md", message: "variants share every axis value", fix: "make them differ" }] };
+    for (const lang of ["en", "fr"]) {
+      const pages = showcaseOf({ project: load(tmp), problems: [], tokens: ":root { --accent: #123456; }\n", captures: new Set(), lang, sets: [broken] });
+      assert.ok(LABELS[lang].checks, `${lang}: a label for the heading of the problems`);
+      assert.match(pages["_set-broken.html"], new RegExp(`<section class="checks"><h2>${LABELS[lang].checks}</h2>`), lang);
+      for (const [name, html] of Object.entries(pages)) {
+        if (!name.endsWith(".html")) continue;
+        for (const text of readOf(html).all) assert.doesNotMatch(text, /\bundefined\b/, `${lang} ${name}: ${text}`);
+      }
+    }
+  });
+});
+
 describe("a French showcase", () => {
   it("holds every source of an engine-written word, so the checks below cannot pass on an empty page", () => {
     const pages = pagesOf("fr");

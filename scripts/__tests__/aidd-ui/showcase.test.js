@@ -981,7 +981,7 @@ describe("aidd-ui showcase", () => {
         const index = pagesOf({ lang })["index.html"];
         const start = index.match(/<a class="start" href="([^"]+)">([^<]*)<\/a>/);
         assert.equal(start[2], word, lang);
-        assert.match(index.match(/<p class="lede">[\s\S]*?<\/p>/)[0], status, lang);
+        assert.match(index.match(/<p class="lede"[^>]*>[\s\S]*?<\/p>/)[0], status, lang);
         const links = [...todoOf(index).matchAll(/<li data-id="([^"]+)"><a (?:class="ovcard" )?href="([^"]+)">/g)].filter((match) => markedOf(index).includes(match[1])).map((match) => match[2]);
         assert.ok(links.length > 1, "more than one record awaits");
         assert.equal(start[1], links[0], lang);
@@ -1305,7 +1305,7 @@ describe("aidd-ui showcase", () => {
       for (const lang of ["en", "fr"]) {
         const index = pagesOf({ lang })["index.html"];
         assert.doesNotMatch(index, /<p class="none">/, lang);
-        assert.match(index, new RegExp(`<p class="lede">${words[lang]}</p>`), lang);
+        assert.match(index, new RegExp(`<p class="lede"[^>]*>${words[lang]}</p>`), lang);
         assert.doesNotMatch(index, /class="start"/, lang);
         assert.match(todoOf(index), /<li data-id="onboarding"><a class="ovcard" href="_journey-onboarding\.html">/, lang);
       }

@@ -204,7 +204,8 @@ describe("the verdicts beside the state tabs", () => {
 
   describe("in the page", () => {
     const element = (dataset = {}, own = {}) => {
-      const node = { dataset, hidden: false, value: "", disabled: false, textContent: "", attrs: {}, listeners: {}, below: {}, ...own };
+      const node = { dataset, hidden: false, value: "", disabled: false, textContent: "", attrs: {}, listeners: {}, below: {}, on: new Set(), ...own };
+      node.classList = { toggle: (name, force) => { if (force) node.on.add(name); else node.on.delete(name); } };
       node.addEventListener = (type, listener) => { node.listeners[type] = listener; };
       node.setAttribute = (name, value) => { node.attrs[name] = value; };
       node.getAttribute = (name) => node.attrs[name];
@@ -216,14 +217,14 @@ describe("the verdicts beside the state tabs", () => {
     // A record page as the script sees it: one review of home at version 1 with two tabs, the drawer holding the
     // row of `empty` only, as a state already settled has none there.
     // A drawer item with one state not settled, naming the screen that dresses it when it is a wireframe.
-    const pending = (record, dressedBy) => {
+    const pending = (record, dressedBy, href) => {
       const row = element({ state: "default", current: "pending" }, { below: { ".verdict": ["ok", "revise"].map((verdict) => element({ verdict })), ".comment": [element()], ".pick": [element()] } });
-      const own = element(dressedBy ? { record, version: "1", dressedBy } : { record, version: "1" }, { below: { "li.pstate": [row], ".done": [element()] } });
+      const own = element({ record, version: "1", ...(dressedBy ? { dressedBy } : {}), ...(href ? { href } : {}) }, { below: { "li.pstate": [row], ".done": [element()] } });
       own.hasAttribute = () => false;
       own.closest = () => ({ dataset: { step: "screens" } });
       return own;
     };
-    const open = (memory = {}, { drawerHoldsIt = true, beside = [], known, decisions = false, steps = false, order, extra = () => undefined } = {}) => {
+    const open = (memory = {}, { drawerHoldsIt = true, beside = [], itemData = {}, known, decisions = false, steps = false, order, extra = () => undefined } = {}) => {
       const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
@@ -236,7 +237,7 @@ describe("the verdicts beside the state tabs", () => {
       const rowField = element();
       const rowVotes = ["ok", "revise"].map((verdict) => element({ verdict }));
       const row = element({ state: "empty", current: "pending" }, { below: { ".verdict": rowVotes, ".comment": [rowField], ".pick": [element()] } });
-      const item = element({ record: "home", version: "1" }, { below: { "li.pstate": [row], ".done": [element()] } });
+      const item = element({ record: "home", version: "1", ...itemData }, { below: { "li.pstate": [row], ".done": [element()] } });
       item.hasAttribute = () => false;
       item.closest = () => ({ dataset: { step: "screens" } });
       const tally = element({ template: "{count} to review" });
@@ -245,7 +246,7 @@ describe("the verdicts beside the state tabs", () => {
       const nothing = element();
       const stepOk = element({ step: "screens", label: "All OK", confirm: "Confirm {count} states?", confirmOne: "Confirm 1 state?" }, { textContent: "All OK" });
       const stepCancel = element({}, { hidden: true });
-      const by = { scrim: element(), review: element({}, { hidden: true, below: { ".nothing": [nothing], "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": steps ? [stepOk] : [], ".step-cancel": steps ? [stepCancel] : [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element(), ...(decisions ? { decisions: decided } : {}), ...(order ? { "review-order": element({}, { textContent: JSON.stringify(order) }) } : {}), ...(known ? { "review-records": element({}, { textContent: JSON.stringify(known) }) } : {}) };
+      const by = { scrim: element(), review: element({}, { hidden: true, below: { ".nothing": [nothing], "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy, href]) => pending(record, dressedBy, href))] : [], "details.choice": [], ".step-ok": steps ? [stepOk] : [], ".step-cancel": steps ? [stepCancel] : [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element(), ...(decisions ? { decisions: decided } : {}), ...(order ? { "review-order": element({}, { textContent: JSON.stringify(order) }) } : {}), ...(known ? { "review-records": element({}, { textContent: JSON.stringify(known) }) } : {}) };
       const keys = {};
       const document = { activeElement: null, createElement: () => element(), body: { dataset: {} }, addEventListener(type, listener) { keys[type] = listener; }, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : extra(selector) ?? []), querySelector: () => null };
       const written = [];
@@ -272,6 +273,89 @@ describe("the verdicts beside the state tabs", () => {
       assert.equal(page.tally.textContent, "3 to review", "home, screen and bare count, the wireframe the screen dresses does not");
       const settledScreen = open({}, { beside: [["wire", "screen"], ["bare"]] });
       assert.equal(settledScreen.tally.textContent, "2 to review", "with no awaiting screen beside it the wireframe has left the review");
+    });
+
+    describe("a step brought to nothing", () => {
+      const settledReview = (verdict) => record(["id: first-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home]"], "# First pass", ["## Verdicts", "", "| Screen | State | Version | Verdict | Comment |", "| --- | --- | --- | --- | --- |", "| brand | default | 1 | ok | |", "| system | default | 1 | ok | |", "| home | default | 1 | ok | |", "| home | empty | 1 | ok | |", "| home | loading | 1 | revise | spinner too small |", `| home | error | 1 | ${verdict} | |`].join("\n"));
+      const unescapedText = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+      const datasetOf = (tag) => Object.fromEntries([...tag.matchAll(/ data-([a-z-]+)="([^"]*)"/g)].map(([, name, value]) => [name.replace(/-(\w)/g, (_, letter) => letter.toUpperCase()), unescapedText(value)]));
+      const marks = (html) => ({
+        stepper: html.match(/<li data-step="screens" data-state="(\w+)"><a[^>]*><span class="no">\d<\/span><span class="name">[^<]*<\/span><span class="state">([^<]*)<\/span>/),
+        sidebar: html.match(/<li data-step="screens" data-todo="\d+">[\s\S]*?(<span class="step-mark( agree)?"[^>]*aria-label="([^"]*)"[^>]*>([^<]*)<\/span>)/),
+        overview: html.match(/<section class="ov-step" data-step="screens"><h3>[^<]*(?:<span>(\d+)<\/span>)?<\/h3>/),
+      });
+
+      for (const lang of ["en", "fr"]) {
+        for (const proposed of [false, true]) {
+          it(`says what a fresh render says once the last verdict is given, ${lang}, ${proposed ? "with" : "without"} a record still proposed`, () => {
+            if (proposed) put(tmp, `${UI}/screens/draft.md`, record(["id: draft", "kind: screen", "status: proposed", "version: 1", "states: [default]"], "# draft"));
+            put(tmp, `${UI}/reviews/first-pass.md`, settledReview("pending"));
+            const before = pagesOf(lang)["index.html"];
+            put(tmp, `${UI}/reviews/first-pass.md`, settledReview("ok"));
+            const fresh = marks(pagesOf(lang)["index.html"]);
+            const was = marks(before);
+            assert.equal(was.stepper[1], "todo", "the step starts with a verdict to give");
+            const spots = { state: element(), li: element({ state: "todo" }), mark: element(datasetOf(was.sidebar[1])), span: element() };
+            const page = open({}, { extra: (selector) => ({
+              '.stepper li[data-step="screens"] .state': [spots.state],
+              '.stepper li[data-step="screens"]': [spots.li],
+              '.steps > li[data-step="screens"] .step-mark': [spots.mark],
+              '.ov-step[data-step="screens"] h3 span': [spots.span],
+            })[selector] });
+            page.rowVotes[0].listeners.click();
+            assert.equal(spots.state.textContent, unescapedText(fresh.stepper[2]));
+            assert.equal(spots.li.dataset.state, fresh.stepper[1]);
+            assert.equal(spots.mark.textContent, fresh.sidebar[4]);
+            assert.equal(spots.mark.attrs["aria-label"], unescapedText(fresh.sidebar[3]));
+            assert.equal(spots.mark.on.has("agree"), Boolean(fresh.sidebar[2]));
+            assert.equal(spots.span.textContent, fresh.overview[1] ?? "");
+            assert.equal(spots.span.hidden, fresh.overview[1] === undefined);
+          });
+        }
+      }
+    });
+
+    describe("the home headline", () => {
+      const unescapedText = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+      const datasetOf = (tag) => Object.fromEntries([...tag.matchAll(/ data-([a-z-]+)="([^"]*)"/g)].map(([, name, value]) => [name.replace(/-(\w)/g, (_, letter) => letter.toUpperCase()), unescapedText(value)]));
+      const reviewFile = (verdicts) => record(["id: first-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home, other]"], "# First pass", ["## Verdicts", "", "| Screen | State | Version | Verdict | Comment |", "| --- | --- | --- | --- | --- |", "| brand | default | 1 | ok | |", "| system | default | 1 | ok | |", "| home | default | 1 | ok | |", "| home | empty | 1 | ok | |", "| home | loading | 1 | revise | spinner too small |", `| home | error | 1 | ${verdicts.home} | |`, `| other | default | 1 | ${verdicts.other} | |`].join("\n"));
+      const headline = (html) => ({
+        tag: html.match(/<p class="lede"[^>]* data-next=[^>]*>/)[0],
+        text: unescapedText(html.match(/<p class="lede"[^>]* data-next=[^>]*>([^<]*)<\/p>/)[1]),
+        start: html.match(/<p class="start-row"><a class="start" href="([^"]*)"/)?.[1] ?? null,
+      });
+      // Only the screens step, which the stand-in page holds, has work: the elements step is left out.
+      const homeOnly = (lang) => {
+        const project = load(tmp);
+        return showcaseOf({ project: { ...project, records: project.records.filter((each) => ["brand", "system", "screen", "wireframe", "journey", "review"].includes(each.frontMatter.kind)) }, tokens: null, captures: new Set(), lang })["index.html"];
+      };
+      const hrefOf = (html, id) => html.match(new RegExp(`<details class="item" data-record="${id}"[^>]* data-href="([^"]*)"`))[1];
+
+      for (const lang of ["en", "fr"]) {
+        for (const [name, other, proposed] of [["nothing left", true, false], ["only proposed left", true, true], ["another record left to review", false, false], ["another record and a proposed one left", false, true]]) {
+          it(`says what a fresh render says once the last verdict of home is given, ${lang}, ${name}`, () => {
+            const render = '<html><head></head><body><main data-state="default">x</main></body></html>';
+            put(tmp, `${UI}/screens/other.md`, record(["id: other", "kind: screen", "status: validated", "version: 1", "states: [default]"], "# Other"));
+            put(tmp, `${UI}/screens/other.html`, render);
+            if (proposed) put(tmp, `${UI}/screens/draft.md`, record(["id: draft", "kind: screen", "status: proposed", "version: 1", "states: [default]"], "# draft"));
+            put(tmp, `${UI}/reviews/first-pass.md`, reviewFile({ home: "pending", other: other ? "ok" : "pending" }));
+            const before = homeOnly(lang);
+            put(tmp, `${UI}/reviews/first-pass.md`, reviewFile({ home: "ok", other: other ? "ok" : "pending" }));
+            const fresh = headline(homeOnly(lang));
+            const was = headline(before);
+            const spots = { lede: element(datasetOf(was.tag)), anchor: element({}, { attrs: { href: was.start } }) };
+            spots.row = element({}, { below: { "a.start": [spots.anchor] } });
+            const page = open({}, { itemData: { href: hrefOf(before, "home") }, beside: other ? [] : [["other", undefined, hrefOf(before, "other")]], extra: (selector) => ({
+              "p.lede[data-next]": [spots.lede],
+              ".start-row": [spots.row],
+            })[selector] });
+            page.rowVotes[0].listeners.click();
+            assert.equal(spots.lede.textContent, fresh.text);
+            assert.equal(spots.row.hidden, fresh.start === null);
+            if (fresh.start !== null) assert.equal(spots.anchor.attrs.href, fresh.start);
+          });
+        }
+      }
     });
 
     it("keeps the rework mark of a record once every state has a verdict, and hides only its to-review mark", () => {

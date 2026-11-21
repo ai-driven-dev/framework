@@ -191,7 +191,7 @@ const MOBILE = SIZES.find(([size]) => size === "mobile");
 
 /** The one screen a column shows: the first dressed wireframe in a mobile frame, and the document of each
  * dressed wireframe kept beside it for the select above the columns to switch to. */
-function screenOf({ variant, docs, tokens, labels }) {
+function screenOf({ variant, docs, tokens }) {
   const [first] = docs;
   const kept = docs.map((each) => `<template class="screen-doc" data-path="${escaped(each.path)}" data-doc="${escaped(inlined(each.text, tokens))}"></template>`).join("");
   return `<div class="file screen" data-path="${escaped(first.path)}">${frameOf({ variant, title: fileTitleOf(variant, first), doc: inlined(first.text, tokens), size: MOBILE })}${kept}</div>`;
@@ -201,7 +201,7 @@ function screenOf({ variant, docs, tokens, labels }) {
 function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, siblings, voting, page }) {
   const look = lookOf(variant);
   const docs = look && wireframes.length ? wireframes.map((wireframe) => ({ path: wireframe.path, text: dressedOf(wireframe.text, look) })) : null;
-  const screens = docs ? [screenOf({ variant, docs, tokens, labels })] : null;
+  const screens = docs ? [screenOf({ variant, docs, tokens })] : null;
   const before = new Map(parent?.axes ?? []);
   const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: titleOf(parent.name) }))}"` : "");
   const same = (axis) => siblings.length > 1 && siblings.every((each) => valueOf(each.axes.find(([name]) => name === axis)?.[1]) === valueOf(variant.axes.find(([name]) => name === axis)?.[1]));
@@ -272,7 +272,6 @@ const STYLE = `
 .axes { border-collapse: collapse; width: 100%; font-size: var(--t-md); }
 .axes, .axes tbody, .axes tr { display: block; }
 .axes th, .axes td { display: block; }
-main.wide { padding-bottom: 72px; }
 .axes th { text-align: left; font-weight: 500; font-size: var(--t-xs); color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
 .round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
