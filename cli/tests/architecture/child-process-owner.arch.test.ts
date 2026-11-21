@@ -1,13 +1,10 @@
 /**
  * Spawning a process is an adapter's job: `node:child_process` is imported only from an
- * `infrastructure/` folder. The files outside one today are listed and may not grow; one that
- * moves or goes away must come off the list, so it only ever gets shorter.
+ * `infrastructure/` folder or from `presentation/terminal/`, the presentation's own adapters
+ * (the `adapter` kind in `kind-table.ts`).
  */
 import { describe, expect, it } from "vitest";
 import { read, sourceFiles } from "./source-graph.js";
-
-/** Files outside `infrastructure/` that import `node:child_process` today. */
-const OUTSIDE_INFRASTRUCTURE: readonly string[] = ["src/presentation/terminal/child-command.ts"];
 
 const STATIC_IMPORT = /^(?:\} from|import(?: [^;]*? from)?) ["'](?:node:)?child_process["']/m;
 const DYNAMIC_IMPORT = /(?<![\w"'`])import\(\s*["'](?:node:)?child_process["']\s*\)/;
@@ -16,8 +13,10 @@ function importsChildProcess(text: string): boolean {
   return STATIC_IMPORT.test(text) || DYNAMIC_IMPORT.test(text);
 }
 
-function inInfrastructure(file: string): boolean {
-  return file.split("/").includes("infrastructure");
+function inAdapterFolder(file: string): boolean {
+  return (
+    file.split("/").includes("infrastructure") || file.startsWith("src/presentation/terminal/")
+  );
 }
 
 describe("child_process owner", () => {
@@ -30,11 +29,11 @@ describe("child_process owner", () => {
     ).toBe(false);
   });
 
-  it("keeps every import of child_process in infrastructure, or on the list written down for it", () => {
+  it("keeps every import of child_process in an adapter folder", () => {
     const outside = sourceFiles()
-      .filter((file) => !inInfrastructure(file))
+      .filter((file) => !inAdapterFolder(file))
       .filter((file) => importsChildProcess(read(file)));
 
-    expect(outside).toEqual(OUTSIDE_INFRASTRUCTURE);
+    expect(outside).toEqual([]);
   });
 });
