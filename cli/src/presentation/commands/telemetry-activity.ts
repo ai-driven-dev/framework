@@ -3,11 +3,11 @@ import {
   DECLARED_BY,
   type DeclaredBy,
 } from "../../contexts/telemetry/contract/task-declaration.js";
+import { printIngestResult } from "../display/telemetry/telemetry-read-display.js";
 import {
   printDeclareResult,
-  printIngestResult,
   printTelemetryStatus,
-} from "../display/telemetry-display.js";
+} from "../display/telemetry/telemetry-task-display.js";
 import { commandOf, type TelemetrySurface } from "./telemetry-surface.js";
 
 export function configureIngest(command: Command, { program, createDeps }: TelemetrySurface): void {

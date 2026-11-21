@@ -14,7 +14,8 @@ import {
 } from "../../../contexts/telemetry/contract/claude-retention.js";
 import type { ErasureKind } from "../../../contexts/telemetry/contract/measurement-erasure.js";
 import type { Output } from "../../../orchestration/domain/output.js";
-import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
+import { IDENTITY_RULE } from "./telemetry-identity-display.js";
+import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON } from "./telemetry-read-display.js";
 
 const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
 

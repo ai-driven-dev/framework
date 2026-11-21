@@ -1,13 +1,13 @@
 import type { Command } from "commander";
 import type { Deps } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
+import { printIdentityResult } from "../display/telemetry/telemetry-identity-display.js";
 import {
   printForgetResult,
   printIdentityRule,
   printOffResult,
   printOnResult,
 } from "../display/telemetry/telemetry-lifecycle-display.js";
-import { printIdentityResult } from "../display/telemetry-display.js";
 import {
   commandOf,
   type TelemetryCommandKeys,
