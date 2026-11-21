@@ -3,7 +3,11 @@ import { InstallSkills } from "../../../../../../src/contexts/installation/appli
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { GITKEEP_FILE } from "../../../../../../src/shared/domain/redundant-gitkeeps.js";
-import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+import {
+  registeredSuffixes,
+  registeredTools,
+  TOOL,
+} from "../../../../../shared/testing/registered-tools.builder.js";
 
 const claude = registeredTools().aiProfile(TOOL.claude);
 const copilot = registeredTools().aiProfile(TOOL.copilot);
@@ -23,7 +27,7 @@ const skillsSectionWithEntry: ContentSection = {
 };
 
 function buildUseCase() {
-  const useCase = new InstallSkills();
+  const useCase = new InstallSkills(registeredSuffixes());
   return { useCase };
 }
 

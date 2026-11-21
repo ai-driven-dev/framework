@@ -44,7 +44,7 @@ function generate(
 ): Promise<InstallationFile[]> {
   return new GenerateToolDistribution(
     new InstallConfig(new InMemoryFileAdapter({})),
-    contentSectionInstallers(),
+    contentSectionInstallers(registeredTools()),
     new FakePlatform("linux"),
     assetProvider
   ).execute({ config, descriptor, contentFiles, projectRoot: PROJECT_ROOT });

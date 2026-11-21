@@ -39,12 +39,10 @@ type AgentsSectionParams = {
 export class AgentsSection {
   readonly #params: AgentsSectionParams;
   readonly #suffix: ToolSuffix;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: AgentsSectionParams) {
     this.#params = params;
     this.#suffix = new ToolSuffix(params.toolSuffix);
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(relativeFileName: string): string | null {
@@ -56,8 +54,8 @@ export class AgentsSection {
     return this.#suffix.strip(`${this.#params.directory}agents/${basename}`);
   }
 
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
+  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
+    return ForeignSuffixFilter.keeping(this.#params.toolSuffix, registered).accepts(fileName);
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {

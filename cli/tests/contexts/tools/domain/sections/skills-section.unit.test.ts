@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SkillsSection } from "../../../../../src/contexts/tools/domain/sections/skills-section.js";
 
+const REGISTERED = [".claude.md", ".cursor.md", ".codex.md"];
+
 const stubCallbacks = {
   buildInstallPath: (fileName: string): string | null => `stub/${fileName}`,
   convertFrontmatter: (fm: Record<string, unknown>): Record<string, unknown> => fm,
@@ -25,12 +27,12 @@ describe("SkillsSection file acceptance", () => {
     });
 
   it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap().acceptsFileName("skills/a.claude.md")).toBe(true);
-    expect(cap().acceptsFileName("skills/a/SKILL.md")).toBe(true);
+    expect(cap().acceptsFileName("skills/a.claude.md", REGISTERED)).toBe(true);
+    expect(cap().acceptsFileName("skills/a/SKILL.md", REGISTERED)).toBe(true);
   });
 
   it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap().acceptsFileName("a/b/c.cursor.md")).toBe(false);
+    expect(cap().acceptsFileName("a/b/c.cursor.md", REGISTERED)).toBe(false);
   });
 });
 
@@ -47,9 +49,11 @@ describe("SkillsSection construction and equality details", () => {
   });
 
   it("refuses any tool's suffix when it declares none of its own", () => {
-    expect(new SkillsSection({ ...params, directory: ".x/" }).acceptsFileName("a.cursor.md")).toBe(
-      false
-    );
-    expect(new SkillsSection({ ...params, directory: ".x/" }).acceptsFileName("a.md")).toBe(true);
+    expect(
+      new SkillsSection({ ...params, directory: ".x/" }).acceptsFileName("a.cursor.md", REGISTERED)
+    ).toBe(false);
+    expect(
+      new SkillsSection({ ...params, directory: ".x/" }).acceptsFileName("a.md", REGISTERED)
+    ).toBe(true);
   });
 });

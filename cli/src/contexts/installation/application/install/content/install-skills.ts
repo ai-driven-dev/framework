@@ -16,9 +16,11 @@ interface InstallSkillsCommand {
 }
 
 export class InstallSkills {
-  private readonly inner: InstallContentSection<SkillsSectionAnswers> = new InstallContentSection(
-    skillsDescriptor
-  );
+  private readonly inner: InstallContentSection<SkillsSectionAnswers>;
+
+  constructor(registeredSuffixes: readonly string[]) {
+    this.inner = new InstallContentSection(skillsDescriptor, registeredSuffixes);
+  }
 
   execute(options: InstallSkillsCommand): InstallationFile[] {
     return this.inner.execute(options);

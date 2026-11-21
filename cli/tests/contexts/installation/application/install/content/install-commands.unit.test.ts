@@ -3,7 +3,11 @@ import { InstallCommands } from "../../../../../../src/contexts/installation/app
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { GITKEEP_FILE } from "../../../../../../src/shared/domain/redundant-gitkeeps.js";
-import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+import {
+  registeredSuffixes,
+  registeredTools,
+  TOOL,
+} from "../../../../../shared/testing/registered-tools.builder.js";
 
 const antigravity = registeredTools().aiProfile(TOOL.antigravity);
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -18,7 +22,7 @@ const commandsSection: ContentSection = {
 };
 
 function buildUseCase() {
-  const useCase = new InstallCommands();
+  const useCase = new InstallCommands(registeredSuffixes());
   return { useCase };
 }
 

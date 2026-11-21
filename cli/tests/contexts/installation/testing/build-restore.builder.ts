@@ -35,7 +35,7 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
   return new RestoreToolFiles(
     new GenerateToolDistribution(
       new InstallConfig(fs),
-      contentSectionInstallers(),
+      contentSectionInstallers(registeredTools()),
       parts.platform ?? new FakePlatform("linux"),
       parts.assetProvider
     ),

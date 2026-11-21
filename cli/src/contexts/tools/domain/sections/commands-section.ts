@@ -12,11 +12,9 @@ type CommandsSectionParams = {
 
 export class CommandsSection {
   readonly #params: CommandsSectionParams;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: CommandsSectionParams) {
     this.#params = params;
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(fileName: string): string | null {
@@ -30,8 +28,8 @@ export class CommandsSection {
     return this.#params.convertFrontmatter(fm, relativeFileName);
   }
 
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
+  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
+    return ForeignSuffixFilter.keeping(this.#params.toolSuffix, registered).accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

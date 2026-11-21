@@ -119,12 +119,13 @@ export function frameworkBuildsOf(
 
 /** A logger whose every level lands at debug, for work that runs behind almost every command. */
 /** The installer of each content section the tool distribution writes. */
-export function contentSectionInstallers(): ContentSectionInstallers {
+export function contentSectionInstallers(tools: ToolCatalog): ContentSectionInstallers {
+  const registered = tools.idsInCanonicalOrder("ai").map((id) => tools.aiProfile(id).toolSuffix);
   return new Map<string, ContentSectionInstaller>([
-    ["agents", new InstallAgents()],
-    ["commands", new InstallCommands()],
-    ["rules", new InstallRules()],
-    ["skills", new InstallSkills()],
+    ["agents", new InstallAgents(registered)],
+    ["commands", new InstallCommands(registered)],
+    ["rules", new InstallRules(registered)],
+    ["skills", new InstallSkills(registered)],
   ]);
 }
 

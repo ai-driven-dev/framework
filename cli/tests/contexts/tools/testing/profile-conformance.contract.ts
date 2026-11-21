@@ -5,7 +5,6 @@ import type {
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
-import { TOOL_FILE_SUFFIXES } from "../../../../src/contexts/tools/domain/profile/foreign-suffix-filter.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
@@ -208,14 +207,6 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(converted).not.toHaveProperty("model");
   }),
 ];
-
-/** The suffix vocabulary and the registered AI tools agree, in both directions. */
-export function registeredSuffixesMatchVocabulary(
-  profiles: readonly (AiTool | IdeToolConfig)[]
-): void {
-  const suffixes = profiles.filter((p) => p.kind === "ai").map((p) => p.toolSuffix);
-  expect(suffixes.sort()).toEqual([...TOOL_FILE_SUFFIXES].sort());
-}
 
 export function describeProfileConformance(
   profile: AiTool | IdeToolConfig,

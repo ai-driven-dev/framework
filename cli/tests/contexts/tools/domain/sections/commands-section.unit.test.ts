@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CommandsSection } from "../../../../../src/contexts/tools/domain/sections/commands-section.js";
 
+const REGISTERED = [".claude.md", ".cursor.md", ".codex.md"];
+
 describe("CommandsSection file acceptance", () => {
   const cap = new CommandsSection({
     toolSuffix: ".claude.md",
@@ -9,11 +11,11 @@ describe("CommandsSection file acceptance", () => {
   });
 
   it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("01-plan/plan.claude.md")).toBe(true);
-    expect(cap.acceptsFileName("01-plan/plan.md")).toBe(true);
+    expect(cap.acceptsFileName("01-plan/plan.claude.md", REGISTERED)).toBe(true);
+    expect(cap.acceptsFileName("01-plan/plan.md", REGISTERED)).toBe(true);
   });
 
   it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/plan.cursor.md")).toBe(false);
+    expect(cap.acceptsFileName("a/b/plan.cursor.md", REGISTERED)).toBe(false);
   });
 });

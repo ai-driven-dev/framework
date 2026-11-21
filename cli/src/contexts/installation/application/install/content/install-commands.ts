@@ -17,9 +17,11 @@ interface InstallCommandsCommand {
 }
 
 export class InstallCommands {
-  private readonly inner: InstallContentSection<MarkdownSectionAnswers> = new InstallContentSection(
-    commandsDescriptor
-  );
+  private readonly inner: InstallContentSection<MarkdownSectionAnswers>;
+
+  constructor(registeredSuffixes: readonly string[]) {
+    this.inner = new InstallContentSection(commandsDescriptor, registeredSuffixes);
+  }
 
   execute(options: InstallCommandsCommand): InstallationFile[] {
     return this.inner.execute(options);
