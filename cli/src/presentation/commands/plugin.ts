@@ -2,28 +2,19 @@ import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../orchestration/domain/ai-tool-selection.model.js";
-import { parseScope } from "../../shared/domain/scope.js";
-import {
-  printInstalledPlugins,
-  printPluginInstallOutcome,
-  printPluginRemoved,
-  printPluginsUpdated,
-  printSearchHits,
-} from "../display/plugin-display.js";
-import { reportNativeActivation } from "../display/sync-display.js";
+import { printInstalledPlugins, printSearchHits } from "../display/plugin-display.js";
 import { parseGlobalOptions } from "./global-options.js";
+import { type MenuChoice, offerGroupMenu } from "./group-menu.js";
+import {
+  type ChangeKeys,
+  type ChangeOptions,
+  removePluginFrom,
+  updatePluginsFrom,
+} from "./plugin-change.js";
+import { type InstallKeys, type InstallOptions, installPluginFrom } from "./plugin-install.js";
 
 /** What this command reads of the graph. */
-type PluginKeys =
-  | "prompter"
-  | "pluginRemoveUseCase"
-  | "userPluginRemove"
-  | "pluginListUseCase"
-  | "pluginInstallUseCase"
-  | "searchPlugins"
-  | "userPluginUpdateUseCase"
-  | "pluginUpdateUseCase"
-  | "syncNativeActivation";
+type PluginKeys = InstallKeys | ChangeKeys | "prompter" | "pluginListUseCase" | "searchPlugins";
 
 interface PluginWiring {
   readonly catalog: ToolCatalog;
@@ -31,27 +22,13 @@ interface PluginWiring {
   readonly runCommand: CommandRunner;
 }
 
-function registerMenu(
-  plugin: Command,
-  createDeps: DepsSliceFactory<PluginKeys>,
-  runCommand: CommandRunner
-): void {
-  plugin.action(async () => {
-    if (!process.stdout.isTTY) {
-      plugin.help();
-      return;
-    }
-    const { prompter } = await createDeps(process.cwd(), { verbose: false }, undefined);
-    const choice = await prompter.select("plugin: what do you want to do?", [
-      { name: "Install plugin", value: "install" },
-      { name: "List installed plugins", value: "list" },
-      { name: "Search plugins", value: "search", description: "requires query arg" },
-      { name: "Update plugins", value: "update" },
-      { name: "Remove a plugin", value: "remove", description: "requires name arg" },
-    ]);
-    await runCommand(["plugin", choice]);
-  });
-}
+const MENU: readonly MenuChoice[] = [
+  { name: "Install plugin", value: "install" },
+  { name: "List installed plugins", value: "list" },
+  { name: "Search plugins", value: "search", description: "requires query arg" },
+  { name: "Update plugins", value: "update" },
+  { name: "Remove a plugin", value: "remove", description: "requires name arg" },
+];
 
 function registerRemove(
   program: Command,
@@ -63,18 +40,9 @@ function registerRemove(
     .description("Remove a plugin from one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .option("--scope <user|project>", "Removal scope (default: project)")
-    .action(async (name: string, cmdOptions: { tool?: string; scope?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-      const scope = parseScope(cmdOptions.scope) ?? "project";
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const removal = { pluginName: name, toolIds, projectRoot };
-      await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(removal);
-      if (scope === "project") {
-        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
-      }
-      printPluginRemoved(output, name);
-    });
+    .action(async (name: string, options: ChangeOptions) =>
+      removePluginFrom({ program, catalog, createDeps }, name, options)
+    );
 }
 
 function registerInstall(
@@ -90,39 +58,8 @@ function registerInstall(
     .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
     .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
-    .action(
-      async (
-        pluginArg: string | undefined,
-        cmdOptions: {
-          from?: string;
-          tool?: string;
-          token?: string;
-          scope?: string;
-          yes?: boolean;
-        }
-      ) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-        const scope = parseScope(cmdOptions.scope);
-        const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
-        const result = await deps.pluginInstallUseCase.execute({
-          pluginArg,
-          toolIds,
-          projectRoot,
-          interactive: process.stdout.isTTY,
-          fromMarketplace: cmdOptions.from,
-          yes: cmdOptions.yes,
-          scope,
-        });
-        reportNativeActivation(
-          output,
-          await deps.syncNativeActivation.execute({
-            projectRoot,
-            marketplaceNames: cmdOptions.from !== undefined ? [cmdOptions.from] : undefined,
-          })
-        );
-        printPluginInstallOutcome(output, result);
-      }
+    .action(async (pluginArg: string | undefined, options: InstallOptions) =>
+      installPluginFrom({ program, catalog, createDeps }, pluginArg, options)
     );
 }
 
@@ -136,25 +73,9 @@ function registerUpdate(
     .description("Update one or all plugins for one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .option("--scope <user|project>", "Update scope (default: project)")
-    .action(async (name: string | undefined, cmdOptions: { tool?: string; scope?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-      const scope = parseScope(cmdOptions.scope) ?? "project";
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const updated = await (scope === "user"
-        ? deps.userPluginUpdateUseCase
-        : deps.pluginUpdateUseCase
-      ).execute({
-        pluginNames: name !== undefined ? [name] : undefined,
-        toolIds,
-        projectRoot,
-        scope,
-      });
-      if (scope === "project") {
-        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
-      }
-      printPluginsUpdated(output, updated);
-    });
+    .action(async (name: string | undefined, options: ChangeOptions) =>
+      updatePluginsFrom({ program, catalog, createDeps }, name, options)
+    );
 }
 
 function registerList(
@@ -203,7 +124,12 @@ function registerSearch(
 export function registerPluginCommand(program: Command, wiring: PluginWiring): void {
   const { createDeps, runCommand } = wiring;
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
-  registerMenu(plugin, createDeps, runCommand);
+  offerGroupMenu(plugin, {
+    question: "plugin: what do you want to do?",
+    choices: MENU,
+    createDeps,
+    runCommand,
+  });
   registerRemove(program, plugin, wiring);
   registerList(program, plugin, wiring);
   registerInstall(program, plugin, wiring);

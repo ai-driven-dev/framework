@@ -1,60 +1,24 @@
 import type { Command } from "commander";
 import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
-import type { Output } from "../../orchestration/domain/output.js";
-import { parsePluginSourceShorthand } from "../../orchestration/domain/source-shorthand.model.js";
-import type { Scope } from "../../shared/domain/scope.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import {
   printMarketplaceCheck,
-  printMarketplaceRegistered,
   printMarketplaceRemoved,
   printRefreshResults,
   printRegisteredMarketplaces,
 } from "../display/marketplace-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { parseGlobalOptions } from "./global-options.js";
+import { type MenuChoice, offerGroupMenu } from "./group-menu.js";
+import { type AddOptions, addMarketplaceFrom, type MarketplaceKeys } from "./marketplace-add.js";
 
-/** What this command reads of the graph. */
-type MarketplaceKeys =
-  | "prompter"
-  | "addMarketplace"
-  | "listMarketplaces"
-  | "userMarketplaceRemoveUseCase"
-  | "marketplaceRemoveUseCase"
-  | "refreshMarketplace"
-  | "marketplaceCheckUseCase"
-  | "syncNativeActivation";
-
-function registerMenu(
-  marketplace: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>,
-  runCommand: CommandRunner
-): void {
-  marketplace.action(async () => {
-    if (!process.stdout.isTTY) {
-      marketplace.help();
-      return;
-    }
-    const { prompter } = await createDeps(process.cwd(), { verbose: false }, undefined);
-    const choice = await prompter.select("marketplace: what do you want to do?", [
-      { name: "List marketplaces", value: "list" },
-      { name: "Add marketplace", value: "add" },
-      { name: "Refresh marketplaces", value: "refresh" },
-      { name: "Remove marketplace", value: "remove", description: "requires name arg" },
-      { name: "Check marketplaces", value: "check" },
-    ]);
-    await runCommand(["marketplace", choice]);
-  });
-}
-
-/** Absent means project; anything but `project` or `user` ends the run. */
-function parseRegistrationScope(raw: string | undefined, output: Output): Scope {
-  if (raw !== undefined && raw !== "project" && raw !== "user") {
-    output.error(`Invalid --scope '${raw}'. Expected 'project' or 'user'.`);
-    return output.exit(1);
-  }
-  return raw === "user" ? "user" : "project";
-}
+const MENU: readonly MenuChoice[] = [
+  { name: "List marketplaces", value: "list" },
+  { name: "Add marketplace", value: "add" },
+  { name: "Refresh marketplaces", value: "refresh" },
+  { name: "Remove marketplace", value: "remove", description: "requires name arg" },
+  { name: "Check marketplaces", value: "check" },
+];
 
 function registerAdd(
   program: Command,
@@ -68,45 +32,8 @@ function registerAdd(
     .option("--yes", "Skip the trust + cleanup prompts")
     .option("--overwrite", "Replace an existing marketplace with the same name")
     .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
-    .action(
-      async (
-        nameArg: string | undefined,
-        sourceArg: string | undefined,
-        cmdOptions: {
-          scope?: string;
-          yes?: boolean;
-          overwrite?: boolean;
-          token?: string;
-        }
-      ) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const interactive = process.stdout.isTTY;
-        if (!interactive && (!nameArg || !sourceArg)) {
-          output.error("name and source are required in non-interactive mode.");
-          output.exit(1);
-        }
-        const scope = parseRegistrationScope(cmdOptions.scope, output);
-        const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
-        const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
-        const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
-        const source = parsePluginSourceShorthand(rawSource);
-        const result = await deps.addMarketplace.execute({
-          source,
-          name,
-          scope,
-          projectRoot,
-          autoTrust: cmdOptions.yes ?? false,
-          overwrite: cmdOptions.overwrite ?? false,
-        });
-        reportNativeActivation(
-          output,
-          await deps.syncNativeActivation.execute({
-            projectRoot,
-            marketplaceNames: [result.marketplace.name],
-          })
-        );
-        printMarketplaceRegistered(output, result.marketplace.name);
-      }
+    .action(async (name: string | undefined, source: string | undefined, options: AddOptions) =>
+      addMarketplaceFrom({ program, createDeps }, { name, source }, options)
     );
 }
 
@@ -207,7 +134,12 @@ export function registerMarketplaceCommand(
   runCommand: CommandRunner
 ): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
-  registerMenu(marketplace, createDeps, runCommand);
+  offerGroupMenu(marketplace, {
+    question: "marketplace: what do you want to do?",
+    choices: MENU,
+    createDeps,
+    runCommand,
+  });
   registerAdd(program, marketplace, createDeps);
   registerList(program, marketplace, createDeps);
   registerRemove(program, marketplace, createDeps);
