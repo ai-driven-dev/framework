@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../src/composition/tools.js";
+import { REGISTERED_PROFILES } from "../../../../src/composition/tool-profiles.js";
 
 describe("what the registered profiles answer", () => {
   it("keeps every machine-local file inside its tool's directory", () => {

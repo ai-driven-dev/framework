@@ -176,16 +176,22 @@ describe("the guard itself", () => {
     };
     expect(scopeMatches(split.tools.mutate, "src/contexts/tools/domain/registry.ts")).toBe(true);
     expect(
-      scopeMatches(split.tools.mutate, "src/contexts/tools/domain/profiles/claude/profile.ts")
+      scopeMatches(
+        split.tools.mutate,
+        "src/contexts/tools/domain/profiles/claude/claude.profile.ts"
+      )
     ).toBe(false);
     expect(
-      scopeMatches(split.profiles.mutate, "src/contexts/tools/domain/profiles/claude/profile.ts")
+      scopeMatches(
+        split.profiles.mutate,
+        "src/contexts/tools/domain/profiles/claude/claude.profile.ts"
+      )
     ).toBe(true);
     expect(strykerArgs("tools", split)).toContain(
       "src/contexts/tools/**/*.ts,!src/contexts/tools/domain/profiles/**/*.ts"
     );
     expect(
-      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/profile.ts"], split).sort()
+      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/claude.profile.ts"], split).sort()
     ).toEqual(["profiles", "tools"]);
   });
 

@@ -5,15 +5,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
-import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
-import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
-import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
-import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
-import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
-import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
+import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
+import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
+import { kilo } from "../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
+import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
+import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 /**
@@ -196,12 +198,12 @@ async function sourceHookScripts(): Promise<Map<string, string>> {
 const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 
 const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
-  claude: CLAUDE_HOOKS,
-  codex: CODEX_HOOKS,
-  copilot: COPILOT_HOOKS,
-  cursor: CURSOR_HOOKS,
-  opencode: OPENCODE_HOOKS,
-  kilo: KILO_HOOKS,
+  claude: present(claude.hooks),
+  codex: present(codexProfile(new SmolTomlCodec()).hooks),
+  copilot: present(copilot.hooks),
+  cursor: present(cursor.hooks),
+  opencode: present(opencode.hooks),
+  kilo: present(kilo.hooks),
 };
 
 /** Each tool's host adapter by content, so a delivered copy names the one it is: an asset file

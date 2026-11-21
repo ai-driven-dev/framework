@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildCodexFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
 
 const TOML = new SmolTomlCodec();
@@ -34,7 +34,7 @@ describe("the telemetry plugin's hooks on both Codex routes", () => {
       join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "hooks.json"),
       "utf8"
     );
-    const hooks = buildCodexFlatContract(TOML).artifacts.hooks;
+    const hooks = present(codex.buildContracts.flat)().artifacts.hooks;
     if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
     const merged = hooks.hooksFile.merge(null, {
       json: shipped,
@@ -63,7 +63,7 @@ describe("the Codex flat hooks file", () => {
         ],
       },
     });
-    const hooks = buildCodexFlatContract(TOML).artifacts.hooks;
+    const hooks = present(codex.buildContracts.flat)().artifacts.hooks;
     if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
 
     expect(

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/contract/tool-vocabulary.js";
-import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
+import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
 
 const format = antigravity.projectHooksDelivery()?.format as ProjectHooksFormat;
 

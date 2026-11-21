@@ -28,7 +28,7 @@ const STORED_VOCABULARY = { path: "src/contexts/telemetry/contract/usage-record.
 
 /** A telemetry source reads one tool's files, so its folder is named for that tool, as a profile's is. */
 function isAllowed(file: string, ids: readonly string[], named: readonly string[] = []): boolean {
-  if (file === "src/composition/tools.ts" || file === STORED_VOCABULARY.path) return true;
+  if (file === "src/composition/tool-profiles.ts" || file === STORED_VOCABULARY.path) return true;
   return ids.some(
     (id) =>
       file.startsWith(`src/contexts/tools/domain/profiles/${id}/`) ||
@@ -151,7 +151,10 @@ describe("the guard itself", () => {
       "codex",
     ]);
     expect(
-      toolsNamedIn('import "../../src/contexts/tools/domain/profiles/codex/build.js";', ids),
+      toolsNamedIn(
+        'import "../../src/contexts/tools/domain/profiles/codex/codex-build.model.js";',
+        ids
+      ),
       "an import path"
     ).toEqual(["codex"]);
     expect(
@@ -237,17 +240,17 @@ describe("a tool never names an identifier outside its profile, in the code ever
   });
 });
 
-// A tool's hooks facts live in `profiles/<tool>/hooks.ts` alone. Read lexically, with strings and
+// A tool's hooks facts live in the `declareHooks(` call of its profile alone. Read lexically, with strings and
 // comments blanked, because `typescript` 7 ships no in-process parser.
 
-const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/(?!hooks\.ts$)[^/]+\.ts$/;
+const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/[^/]+\.ts$/;
 const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks/descriptor.ts";
 
 const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g;
 const REFERENCE_OR_CALL =
   /^(?!(?:true|false|null)\b)(?:new\s+)?[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*\s*(?:\(|,|;|\}|$)/;
 const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.freeze\()/;
-// A tool with no `hooks.ts` declares its absence in `profile.ts` and `build.ts`: no fact.
+// A tool with no hooks declares its absence in its profile and its build model: no fact.
 const ABSENCE = /^(?:false\b|\{\s*supported:\s*false\b)/;
 
 // A hooks section naming the descriptor's builders by reference, never restating a fact.
@@ -321,17 +324,33 @@ function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[
   return facts;
 }
 
-/** One `<file> (<facts>)` per profile file that is not its tool's descriptor. */
+/** The source with every `declareHooks(` call blanked: the one place a profile states a fact. */
+function withoutDeclaredHooks(source: string): string {
+  const blank = source.replace(BLANKED, (text) => text.replace(/[^\n]/g, " "));
+  let out = source;
+  for (const { 0: opening, index } of blank.matchAll(/\bdeclare(?:Bridge)?Hooks\(/g)) {
+    let depth = 0;
+    let end = index + opening.length - 1;
+    do {
+      depth += blank[end] === "(" ? 1 : blank[end] === ")" ? -1 : 0;
+      end += 1;
+    } while (depth > 0 && end < blank.length);
+    out = out.slice(0, index) + out.slice(index, end).replace(/[^\n]/g, " ") + out.slice(end);
+  }
+  return out;
+}
+
+/** One `<file> (<facts>)` per profile file declaring a fact outside its `declareHooks(` call. */
 function factsOutsideDescriptor(bodies: ReadonlyMap<string, string>): string[] {
   const keys = descriptorKeys(bodies.get(DESCRIPTOR_TYPES) ?? "");
   return [...bodies]
     .filter(([file]) => PROFILE_FILE.test(file))
-    .map(([file, body]) => `${file} (${hooksFacts(body, keys).length})`)
+    .map(([file, body]) => `${file} (${hooksFacts(withoutDeclaredHooks(body), keys).length})`)
     .filter((entry) => !entry.endsWith(" (0)"))
     .sort();
 }
 
-const BUILD = "src/contexts/tools/domain/profiles/claude/build.ts";
+const PROFILE = "src/contexts/tools/domain/profiles/claude/claude.profile.ts";
 
 /** A planted profile source, then ` → ` and the facts it declares, which none must be. */
 const PLANTED = [
@@ -362,13 +381,13 @@ const PLANTED = [
 ];
 
 describe("a tool's hooks facts live in its descriptor", () => {
-  it("no profile file other than hooks.ts declares a hooks fact", () => {
+  it("no profile file declares a hooks fact outside its declareHooks call", () => {
     const bodies = new Map(sourceFiles().map((file) => [file, read(file)]));
     const keys = descriptorKeys(read(DESCRIPTOR_TYPES));
 
     expect(
       factsOutsideDescriptor(bodies),
-      "a hooks fact declared outside profiles/<tool>/hooks.ts — declare it in the descriptor and read it from there"
+      "a hooks fact declared outside the profile's declareHooks call — declare it in the descriptor and read it from there"
     ).toEqual([]);
     expect(sourceFiles().filter((file) => PROFILE_FILE.test(file)).length).toBeGreaterThan(20);
     expect(
@@ -377,14 +396,13 @@ describe("a tool's hooks facts live in its descriptor", () => {
     ).toEqual([false, false, false, true, true]);
   });
 
-  it("names the file, and reads no fact in the tool's own hooks.ts", () => {
-    const fact = "export const p = new HooksConfigPart({});";
-    const bodies = new Map([
-      [BUILD, fact],
-      [BUILD.replace("build.ts", "hooks.ts"), fact],
-    ]);
+  it("names the file, and reads no fact inside the profile's own declareHooks call", () => {
+    const fact = "new HooksConfigPart({})";
+    const inside = `const hooks = declareHooks(owner, {\n  rootToken: "R",\n  events: { Stop: "stop(" },\n  x: ${fact},\n});`;
+    const bodies = new Map([[PROFILE, `${inside}\nconst p = ${fact};`]]);
 
-    expect(factsOutsideDescriptor(bodies)).toEqual([`${BUILD} (1)`]);
+    expect(factsOutsideDescriptor(bodies)).toEqual([`${PROFILE} (1)`]);
+    expect(factsOutsideDescriptor(new Map([[PROFILE, inside]]))).toEqual([]);
   });
 
   it.each(PLANTED)("reads %s", (row) => {

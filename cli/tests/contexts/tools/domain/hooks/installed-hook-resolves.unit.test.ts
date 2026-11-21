@@ -1,18 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { rewritePluginRootToken } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
-import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { buildCopilotMarketplaceContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
+import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
+import { present } from "../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
 import { translatePlugin } from "../../testing/translate-plugin.builder.js";
@@ -116,10 +113,10 @@ describe("a hook that was installed", () => {
 const BUILT_BY: ReadonlyArray<
   [AiTool<WithSections<"layout">>, () => { pluginRootToken?: string | null }]
 > = [
-  [claude, buildClaudeContract],
-  [cursor, buildCursorContract],
-  [copilot, buildCopilotMarketplaceContract],
-  [codex, () => buildCodexContract(TOML)],
+  [claude, () => present(claude.buildContracts.marketplace)()],
+  [cursor, () => present(cursor.buildContracts.marketplace)()],
+  [copilot, () => present(copilot.buildContracts.marketplace)()],
+  [codex, () => present(codex.buildContracts.marketplace)()],
 ];
 
 describe("the two ways a plugin gets installed", () => {

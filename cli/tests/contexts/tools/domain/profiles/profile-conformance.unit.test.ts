@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/composition/tools.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.js";
 import { describeProfileConformance } from "../../testing/profile-conformance.contract.js";
 
 describe("the registered profiles", () => {

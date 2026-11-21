@@ -2,10 +2,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
-import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
+import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
@@ -17,6 +17,7 @@ import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js"
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const TOML = new SmolTomlCodec();
@@ -125,7 +126,7 @@ function nestedSeed(dir: string, extra: Record<string, unknown> = {}): string {
 describe("a flat build merging a plugin into a shared file it already wrote to", () => {
   it("claude: .claude/settings.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".claude/hooks/";
-    const fs = await flatMerge(buildClaudeFlatContract(), {
+    const fs = await flatMerge(present(claude.buildContracts.flat)(), {
       [`${OUT}/.claude/settings.json`]: nestedSeed(dir, { model: "opus" }),
     });
     const file = fs.getFile(`${OUT}/.claude/settings.json`);
@@ -144,7 +145,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("codex: .codex/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".codex/hooks/";
-    const fs = await flatMerge(buildCodexFlatContract(TOML), {
+    const fs = await flatMerge(present(codexProfile(TOML).buildContracts.flat)(), {
       [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
     });
     const file = fs.getFile(`${OUT}/.codex/hooks.json`);
@@ -162,7 +163,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("cursor: .cursor/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".cursor/hooks/";
-    const fs = await flatMerge(buildCursorFlatContract(), {
+    const fs = await flatMerge(present(cursor.buildContracts.flat)(), {
       [`${OUT}/.cursor/hooks.json`]: JSON.stringify({
         version: 1,
         hooks: {
@@ -194,7 +195,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
   it("copilot: no shared file; a forced build rewrites the plugin's own file whole", async () => {
     const dir = ".github/hooks/";
     const own = `${OUT}/${dir}${PLUGIN}.hooks.json`;
-    const fs = await flatMerge(buildCopilotFlatContract(), {
+    const fs = await flatMerge(present(copilot.buildContracts.flat)(), {
       [own]: JSON.stringify({
         version: 1,
         hooks: {
