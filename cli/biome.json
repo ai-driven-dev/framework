@@ -5969,8 +5969,6 @@
         "!src/contexts/installation/application/plugin/global-plugin-files.ts",
         "!src/contexts/installation/application/plugin/plugin-helpers.ts",
         "!src/contexts/installation/application/plugin/update-plugin.ts",
-        "!src/contexts/installation/application/removal/remove-project-files.ts",
-        "!src/contexts/installation/application/removal/remove-tool-files.ts",
         "!src/contexts/installation/application/report-status.ts",
         "!src/contexts/installation/application/resolve-sync-conflict.ts",
         "!src/contexts/installation/application/restore/generate-tool-distribution.ts",

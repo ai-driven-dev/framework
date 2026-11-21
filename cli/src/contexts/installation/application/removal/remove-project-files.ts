@@ -88,7 +88,10 @@ export class RemoveProjectFiles {
     let count = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
       count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot);
-      count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot, hooksGuard);
+      count += await this.removeProjectHooksForTool(manifest, toolId, {
+        projectRoot,
+        hooksGuard,
+      });
     }
     return count;
   }
@@ -111,9 +114,9 @@ export class RemoveProjectFiles {
   private async removeProjectHooksForTool(
     manifest: Manifest,
     toolId: ToolId,
-    projectRoot: string,
-    hooksGuard: ProjectHooksGuard
+    project: { projectRoot: string; hooksGuard: ProjectHooksGuard }
   ): Promise<number> {
+    const { projectRoot, hooksGuard } = project;
     if (!this.tools.isAiTool(toolId)) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {

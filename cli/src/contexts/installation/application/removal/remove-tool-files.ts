@@ -12,6 +12,14 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
+/** One tool leaving a project, among the tools leaving with it. */
+export interface ToolRemoval {
+  readonly toolId: ToolId;
+  readonly allToolIds: readonly ToolId[];
+  readonly manifest: Manifest;
+  readonly projectRoot: string;
+}
+
 /** What removing a tool deletes from a project: its files, its merged keys and its plugins'
  * files. What other tools still being installed own is left in place. */
 export class RemoveToolFiles {
@@ -22,50 +30,23 @@ export class RemoveToolFiles {
   ) {}
 
   /** The paths deleted, relative to the project. */
-  async remove(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    manifest: Manifest,
-    projectRoot: string
-  ): Promise<string[]> {
+  async remove(removal: ToolRemoval): Promise<string[]> {
+    const { toolId, manifest, projectRoot } = removal;
     this.logger.info(`Removing ${toolId} files...`);
-    const sharedPaths = this.computeSharedPaths(toolId, allToolIds, manifest);
-    const mergeFilePaths = this.collectMergeFilePaths(toolId, manifest);
-    const allPaths = this.collectToolPaths(toolId, manifest);
-    const deletedFiles = await this.deleteToolFiles(
-      toolId,
-      allToolIds,
-      allPaths,
-      sharedPaths,
-      mergeFilePaths,
-      manifest,
-      projectRoot
-    );
+    const deletedFiles = await this.deleteToolFiles(removal);
     await this.removeAllPluginFiles(toolId, manifest, projectRoot);
     return deletedFiles;
   }
 
-  private async deleteToolFiles(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    allPaths: string[],
-    sharedPaths: Set<string>,
-    mergeFilePaths: Set<string>,
-    manifest: Manifest,
-    projectRoot: string
-  ): Promise<string[]> {
+  private async deleteToolFiles(removal: ToolRemoval): Promise<string[]> {
+    const { toolId, manifest, projectRoot } = removal;
+    const sharedPaths = this.computeSharedPaths(removal);
+    const mergeFilePaths = this.collectMergeFilePaths(toolId, manifest);
     const deleted: string[] = [];
-    for (const relativePath of allPaths) {
+    for (const relativePath of this.collectToolPaths(toolId, manifest)) {
       if (sharedPaths.has(relativePath) && !mergeFilePaths.has(relativePath)) continue;
       if (mergeFilePaths.has(relativePath)) {
-        const removed = await this.removeMergeFile(
-          toolId,
-          allToolIds,
-          relativePath,
-          manifest,
-          projectRoot
-        );
-        if (removed) deleted.push(relativePath);
+        if (await this.removeMergeFile(removal, relativePath)) deleted.push(relativePath);
         continue;
       }
       const fullPath = join(projectRoot, relativePath);
@@ -103,18 +84,13 @@ export class RemoveToolFiles {
     return [...filePaths, ...mergePaths];
   }
 
-  private async removeMergeFile(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    relativePath: string,
-    manifest: Manifest,
-    projectRoot: string
-  ): Promise<boolean> {
+  private async removeMergeFile(removal: ToolRemoval, relativePath: string): Promise<boolean> {
+    const { toolId, manifest, projectRoot } = removal;
     const mergeEntry = manifest.getMergeFiles(toolId).find((m) => m.relativePath === relativePath);
     if (!mergeEntry) return false;
     const fullPath = join(projectRoot, relativePath);
     if (!(await this.fs.fileExists(fullPath))) return false;
-    const canDelete = this.computeDeletePermission(toolId, allToolIds, relativePath, manifest);
+    const canDelete = this.computeDeletePermission(removal, relativePath);
     if (mergeEntry.sectionKey === null && canDelete) {
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
@@ -123,19 +99,9 @@ export class RemoveToolFiles {
     return this.deleteOrWriteStripped(fullPath, mergeEntry, canDelete);
   }
 
-  private computeDeletePermission(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    relativePath: string,
-    manifest: Manifest
-  ): boolean {
-    const otherOwnersExist = this.otherToolsOwnMergeFile(
-      toolId,
-      allToolIds,
-      relativePath,
-      manifest
-    );
-    const isIdeTool = !this.tools.isAiTool(toolId);
+  private computeDeletePermission(removal: ToolRemoval, relativePath: string): boolean {
+    const otherOwnersExist = this.otherToolsOwnMergeFile(removal, relativePath);
+    const isIdeTool = !this.tools.isAiTool(removal.toolId);
     return !otherOwnersExist && !isIdeTool;
   }
 
@@ -165,12 +131,8 @@ export class RemoveToolFiles {
     await this.fs.deleteEmptyDirectories(dirname(fullPath));
   }
 
-  private otherToolsOwnMergeFile(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    relativePath: string,
-    manifest: Manifest
-  ): boolean {
+  private otherToolsOwnMergeFile(removal: ToolRemoval, relativePath: string): boolean {
+    const { toolId, allToolIds, manifest } = removal;
     const uninstallingSet = new Set([toolId, ...allToolIds]);
     return manifest
       .getInstalledToolIds()
@@ -178,11 +140,8 @@ export class RemoveToolFiles {
       .some((id) => manifest.getMergeFiles(id).some((m) => m.relativePath === relativePath));
   }
 
-  private computeSharedPaths(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    manifest: Manifest
-  ): Set<string> {
+  private computeSharedPaths(removal: ToolRemoval): Set<string> {
+    const { toolId, allToolIds, manifest } = removal;
     const remainingToolIds = manifest
       .getInstalledToolIds()
       .filter((id) => id !== toolId && !allToolIds.includes(id));

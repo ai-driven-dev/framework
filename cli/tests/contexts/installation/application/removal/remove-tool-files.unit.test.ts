@@ -40,12 +40,12 @@ function removal(
   allToolIds: ToolId[],
   logger = new CapturingLogger()
 ): Promise<string[]> {
-  return new RemoveToolFiles(target.fs, logger, registeredTools()).remove(
+  return new RemoveToolFiles(target.fs, logger, registeredTools()).remove({
     toolId,
     allToolIds,
-    target.manifest,
-    ROOT
-  );
+    manifest: target.manifest,
+    projectRoot: ROOT,
+  });
 }
 
 describe("RemoveToolFiles.remove", () => {
