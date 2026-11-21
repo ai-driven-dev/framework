@@ -3,6 +3,8 @@ import {
   rewritePluginRootToken,
   SOURCE_PLUGIN_ROOT_TOKEN,
 } from "../../../../src/contexts/tools/contract/plugin-root-token.js";
+import { registeredAiConfig } from "../../../shared/testing/catalog-of.builder.js";
+import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
@@ -149,5 +151,16 @@ describe("per-tool pluginRootToken contract values", () => {
     for (const tool of [TOOL.claude, TOOL.cursor, TOOL.copilot, TOOL.codex]) {
       expect(buildContractOf(tool, "flat").pluginRootToken).toBeUndefined();
     }
+  });
+});
+
+describe("the route that builds a marketplace bundle", () => {
+  it("leaves a command alone for the tool whose variable is the one authors write", () => {
+    const native = nativeOf(registeredAiConfig(TOOL.claude).plugins());
+    const authored = `node ${native.rootToken()}/hooks/journal.cjs`;
+
+    const token = buildContractOf(TOOL.claude, "marketplace").pluginRootToken;
+
+    expect(rewritePluginRootToken(authored, token ?? "")).toBe(authored);
   });
 });
