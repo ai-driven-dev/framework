@@ -42,7 +42,7 @@ export function aCachedTokenProvider() {
     },
     build(): CachedTokenProvider {
       const supplied = commandLine === undefined ? { environment } : { commandLine, environment };
-      return new CachedTokenProvider(records, supplied, externalTokens, logger);
+      return new CachedTokenProvider({ records, supplied, externalTokens, logger });
     },
   };
   return builder;
@@ -113,7 +113,7 @@ export function aCheckStatus() {
       return builder;
     },
     build(): CheckStatus {
-      return new CheckStatus(records, environment, identity, cliProviders);
+      return new CheckStatus({ records, environment, identity, cliProviders });
     },
   };
   return builder;

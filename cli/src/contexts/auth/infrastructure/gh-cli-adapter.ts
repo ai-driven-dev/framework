@@ -1,7 +1,21 @@
-import { spawnSync } from "node:child_process";
+import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { AuthenticationError } from "../../../shared/domain/shared.error.js";
 import { GhCliError } from "../domain/auth.error.js";
 import type { CliAuthProvider } from "../ports/cli-auth-provider.js";
+
+function failTokenRead(result: SpawnSyncReturns<string>): never {
+  const detail = result.stderr?.trim() ?? "";
+  if (detail.includes("unknown command")) {
+    throw new GhCliError(
+      'gh CLI is too old to support "gh auth token". Install the latest version from https://cli.github.com'
+    );
+  }
+  throw new GhCliError(
+    detail
+      ? `gh auth token failed: ${detail}`
+      : `gh auth token exited with code ${result.status ?? "unknown"}`
+  );
+}
 
 export class GhCliAdapter implements CliAuthProvider {
   read(): string | null {
@@ -16,19 +30,7 @@ export class GhCliAdapter implements CliAuthProvider {
       return null;
     }
 
-    if (result.status !== 0) {
-      const detail = result.stderr?.trim() ?? "";
-      if (detail.includes("unknown command")) {
-        throw new GhCliError(
-          'gh CLI is too old to support "gh auth token". Install the latest version from https://cli.github.com'
-        );
-      }
-      throw new GhCliError(
-        detail
-          ? `gh auth token failed: ${detail}`
-          : `gh auth token exited with code ${result.status ?? "unknown"}`
-      );
-    }
+    if (result.status !== 0) failTokenRead(result);
 
     return result.stdout.trim() || null;
   }

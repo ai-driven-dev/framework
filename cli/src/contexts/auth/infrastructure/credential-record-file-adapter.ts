@@ -48,23 +48,32 @@ export class CredentialRecordFileAdapter implements CredentialRecordRepository {
   private async write(path: string, record: CredentialRecord): Promise<void> {
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, JSON.stringify(record, null, 2), { encoding: "utf-8", mode: 0o600 });
-    if (process.platform === "win32") {
-      try {
-        // An argument list, never a command line: `path` comes from an environment variable
-        // or a project root, either of which could close the quoting and append a command.
-        // With no shell to expand `%USERNAME%`, the account is read here instead.
-        execFileSync("icacls", [path, "/inheritance:r", "/grant:r", `${windowsAccount()}:(R,W)`], {
-          stdio: ["ignore", "ignore", "pipe"],
-        });
-      } catch (err) {
-        throw new AuthStorageError(
-          `Failed to set restrictive permissions on ${path}: ${err instanceof AuthStorageError ? err.detail : err instanceof Error ? err.message : String(err)}`
-        );
-      }
-    } else {
-      await chmod(path, 0o600);
-    }
+    await restrictToOwner(path);
   }
+}
+
+async function restrictToOwner(path: string): Promise<void> {
+  if (process.platform !== "win32") {
+    await chmod(path, 0o600);
+    return;
+  }
+  try {
+    // An argument list, never a command line: `path` comes from an environment variable
+    // or a project root, either of which could close the quoting and append a command.
+    // With no shell to expand `%USERNAME%`, the account is read here instead.
+    execFileSync("icacls", [path, "/inheritance:r", "/grant:r", `${windowsAccount()}:(R,W)`], {
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+  } catch (err) {
+    throw new AuthStorageError(
+      `Failed to set restrictive permissions on ${path}: ${failureDetail(err)}`
+    );
+  }
+}
+
+function failureDetail(err: unknown): string {
+  if (err instanceof AuthStorageError) return err.detail;
+  return err instanceof Error ? err.message : String(err);
 }
 
 /** The account icacls grants to. Absent, the grant would name nobody, so it fails here
