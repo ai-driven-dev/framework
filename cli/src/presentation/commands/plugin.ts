@@ -3,7 +3,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../orchestration/domain/ai-tool-selection.model.js";
 import { printInstalledPlugins, printSearchHits } from "../display/plugin-display.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { parseGlobalOptions, TOKEN_FLAG_HELP } from "./global-options.js";
 import { type MenuChoice, offerGroupMenu } from "./group-menu.js";
 import {
   type ChangeKeys,
@@ -57,7 +57,7 @@ function registerInstall(
     .description("Install a plugin (marketplace name, local path, or interactive pick)")
     .option("--from <market>", "Marketplace name (when multiple match)")
     .option("--tool <toolId>", TOOL_FLAG_HELP)
-    .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--token <value>", TOKEN_FLAG_HELP)
     .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
     .action(async (pluginArg: string | undefined, options: InstallOptions) =>

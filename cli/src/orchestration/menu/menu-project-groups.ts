@@ -1,4 +1,4 @@
-import type { MenuBranch, MenuLeaf } from "./menu-node.js";
+import { type MenuBranch, type MenuLeaf, UPDATE_ALL_TOOLS_HELP } from "./menu-node.js";
 
 const DOCTOR_LEAVES: MenuLeaf[] = [
   {
@@ -56,7 +56,7 @@ const TOOL_LEAVES: MenuLeaf[] = [
   {
     name: "Update all",
     value: "framework-update-all",
-    description: "Re-install every installed tool's configs from bundled assets",
+    description: UPDATE_ALL_TOOLS_HELP,
     command: ["framework", "update"],
   },
   {

@@ -8,7 +8,7 @@ import {
   printRegisteredMarketplaces,
 } from "../display/marketplace-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { parseGlobalOptions, TOKEN_FLAG_HELP } from "./global-options.js";
 import { type MenuChoice, offerGroupMenu } from "./group-menu.js";
 import { type AddOptions, addMarketplaceFrom, type MarketplaceKeys } from "./marketplace-add.js";
 
@@ -31,7 +31,7 @@ function registerAdd(
     .option("--scope <user|project>", "Registration scope (default: project)", "project")
     .option("--yes", "Skip the trust + cleanup prompts")
     .option("--overwrite", "Replace an existing marketplace with the same name")
-    .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--token <value>", TOKEN_FLAG_HELP)
     .action(async (name: string | undefined, source: string | undefined, options: AddOptions) =>
       addMarketplaceFrom({ program, createDeps }, { name, source }, options)
     );

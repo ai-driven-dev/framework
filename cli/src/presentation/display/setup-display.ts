@@ -14,6 +14,13 @@ interface SetupOutcome {
   readonly globalPlugins?: readonly string[];
 }
 
+function debugFiles(output: Output, installed: readonly ToolInstallOutcome[]): void {
+  for (const { toolId, files } of installed) {
+    output.debug(`Tool: ${toolId}`);
+    for (const f of files) output.debug(`  + ${f.relativePath}`);
+  }
+}
+
 function displayInstall(
   output: Output,
   results: readonly ToolInstallOutcome[],
@@ -22,17 +29,10 @@ function displayInstall(
   const skipped = results.filter((r) => r.skipped);
   const installed = results.filter((r) => !r.skipped);
   for (const r of skipped) output.warn(`${r.toolId} is already installed.`);
-  for (const r of installed) for (const w of r.warnings) output.warn(w);
-  if (verbose) {
-    for (const r of installed) {
-      output.debug(`Tool: ${r.toolId}`);
-      for (const f of r.files) output.debug(`  + ${f.relativePath}`);
-    }
-  }
-  if (installed.length === 1) {
-    output.success(`Installed ${installed[0].toolId} (${installed[0].fileCount} files)`);
-  } else if (installed.length > 1) {
-    const total = installed.reduce((s, r) => s + r.fileCount, 0);
+  for (const w of installed.flatMap((r) => r.warnings)) output.warn(w);
+  if (verbose) debugFiles(output, installed);
+  if (installed.length > 0) {
+    const total = installed.reduce((sum, r) => sum + r.fileCount, 0);
     output.success(`Installed ${installed.map((r) => r.toolId).join(", ")} (${total} files)`);
   }
 }

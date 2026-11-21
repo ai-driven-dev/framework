@@ -16,6 +16,14 @@ const ONLINE_COMMAND_PATHS = new Set([
   "sync",
 ]);
 
+/** The graph a hook reads, or nothing when it cannot be built: a hook never fails the command. */
+function graphOf(program: Command, createDeps: DepsSliceFactory<UpdateNoticeKeys>) {
+  const { verbose } = program.opts<{ verbose?: boolean }>();
+  return createDeps(process.cwd(), { verbose: verbose ?? false }, outputOf(program)).catch(
+    () => null
+  );
+}
+
 export function registerUpdateNoticeHooks(
   program: Command,
   createDeps: DepsSliceFactory<UpdateNoticeKeys>
@@ -24,11 +32,7 @@ export function registerUpdateNoticeHooks(
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
     if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
-    const opts = program.opts<{ verbose?: boolean }>();
-    const output = outputOf(program);
-    const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-      () => null
-    );
+    const deps = await graphOf(program, createDeps);
     if (!deps) return;
     // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
     // `update` resolves the latest version on its own, so the generic check is redundant.
@@ -50,11 +54,7 @@ export function registerUpdateNoticeHooks(
     // its expectations. Same switch shape as AIDD_SKIP_MARKETPLACE_REFRESH, same reason.
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
-    const opts = program.opts<{ verbose?: boolean }>();
-    const output = outputOf(program);
-    const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-      () => null
-    );
+    const deps = await graphOf(program, createDeps);
     if (!deps) return;
     await deps.refreshUpdateCheck.execute().catch((err: unknown) => {
       deps.logger.debug(`CLI update refresh failed: ${render(err)}`);

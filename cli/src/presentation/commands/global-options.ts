@@ -39,6 +39,9 @@ export function parseGlobalOptions(program: Command): GlobalOptions {
 /** `--global` is the spelling a person types; `--scope user` stays for scripts. */
 export const GLOBAL_FLAG_HELP = "act on the machine-wide install `setup --global` wrote";
 
+/** What `--token` says in every command that fetches from a source. */
+export const TOKEN_FLAG_HELP = "Auth token (host detected from source URL at fetch time)";
+
 export function resolveScopeFlags(
   options: { scope?: string; global?: boolean },
   output: Output
