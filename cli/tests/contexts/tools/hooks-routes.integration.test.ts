@@ -7,7 +7,7 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
-import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
+import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { kilo } from "../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
@@ -199,7 +199,7 @@ const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-ru
 const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
   claude: present(claude.hooks),
   codex: CODEX_HOOKS,
-  copilot: COPILOT_HOOKS,
+  copilot: present(copilot.hooks),
   cursor: present(cursor.hooks),
   opencode: present(opencode.hooks),
   kilo: present(kilo.hooks),

@@ -26,7 +26,7 @@
   "src/contexts/tools/domain/profiles/antigravity/antigravity.profile.ts": 1,
   "src/contexts/tools/domain/profiles/claude/claude-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/codex/build.ts": 6,
-  "src/contexts/tools/domain/profiles/copilot/profile.ts": 2,
+  "src/contexts/tools/domain/profiles/copilot/copilot.profile.ts": 2,
   "src/contexts/tools/domain/profiles/cursor/cursor-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/kilo/kilo-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/opencode/opencode-build.model.ts": 1,

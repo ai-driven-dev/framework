@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 
 /** What a reference to another framework file becomes once installed for Copilot. No other gate
  * sees it: `translate` never calls `rewriteContent`, and the byte-frozen golden cell is claude,

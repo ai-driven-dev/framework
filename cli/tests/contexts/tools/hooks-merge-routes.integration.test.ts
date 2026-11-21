@@ -4,7 +4,7 @@ import { ProjectHooksMaterializer } from "../../../src/contexts/installation/app
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
@@ -195,7 +195,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
   it("copilot: no shared file; a forced build rewrites the plugin's own file whole", async () => {
     const dir = ".github/hooks/";
     const own = `${OUT}/${dir}${PLUGIN}.hooks.json`;
-    const fs = await flatMerge(buildCopilotFlatContract(), {
+    const fs = await flatMerge(present(copilot.buildContracts.flat)(), {
       [own]: JSON.stringify({
         version: 1,
         hooks: {

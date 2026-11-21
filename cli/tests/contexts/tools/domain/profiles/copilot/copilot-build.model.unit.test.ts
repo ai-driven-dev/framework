@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildCopilotFlatContract,
-  buildCopilotMarketplaceContract,
-} from "../../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
@@ -29,9 +27,9 @@ const HOOKS_JSON = JSON.stringify({
   },
 });
 
-describe("buildCopilotMarketplaceContract()", () => {
+describe("present(copilot.buildContracts.marketplace)()", () => {
   it("declares Copilot's own plugin manifest path and root token, and validates it against no schema", () => {
-    const contract = buildCopilotMarketplaceContract();
+    const contract = present(copilot.buildContracts.marketplace)();
 
     expect({
       pluginRootToken: contract.pluginRootToken,
@@ -45,7 +43,7 @@ describe("buildCopilotMarketplaceContract()", () => {
   });
 
   it("synthesizes a manifest naming the agents, skills, hooks file and mcp servers a plugin ships", () => {
-    const manifest = buildCopilotMarketplaceContract().synthesizeManifest?.(
+    const manifest = present(copilot.buildContracts.marketplace)().synthesizeManifest?.(
       { name: "aidd-dev", description: "Development loop", version: "1.2.3" },
       {
         hasAgents: true,
@@ -68,7 +66,9 @@ describe("buildCopilotMarketplaceContract()", () => {
   });
 
   it("keeps what Copilot reads of an agent and links its plugin-root references from agents/", () => {
-    const transform = supported(buildCopilotMarketplaceContract().artifacts.agents).transform;
+    const transform = supported(
+      present(copilot.buildContracts.marketplace)().artifacts.agents
+    ).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -87,7 +87,7 @@ describe("buildCopilotMarketplaceContract()", () => {
   });
 
   it("builds the OpenPlugin catalog, at .plugin/marketplace.json, with the plugin root beside it", async () => {
-    const built = await buildCopilotMarketplaceContract().buildMarketplaceCatalog?.(
+    const built = await present(copilot.buildContracts.marketplace)().buildMarketplaceCatalog?.(
       {
         name: "aidd",
         version: "1.0.0",
@@ -123,7 +123,7 @@ describe("buildCopilotMarketplaceContract()", () => {
       }),
     });
 
-    const entry = await buildCopilotMarketplaceContract().buildMarketplaceEntry?.({
+    const entry = await present(copilot.buildContracts.marketplace)().buildMarketplaceEntry?.({
       name: "aidd-dev",
       pluginSrc: "/src/plugins/aidd-dev",
       outDir: "/out",
@@ -140,9 +140,9 @@ describe("buildCopilotMarketplaceContract()", () => {
   });
 });
 
-describe("buildCopilotFlatContract()", () => {
+describe("present(copilot.buildContracts.flat)()", () => {
   it("lands a plugin's hooks declaration beside the other hooks and its scripts under the plugin's own folder", () => {
-    const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
+    const hooks = supported(present(copilot.buildContracts.flat)().artifacts.hooks);
 
     expect({
       declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
@@ -154,7 +154,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("flattens a plugin's hooks declaration into the one-entry-per-event shape Copilot reads", () => {
-    const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
+    const hooks = supported(present(copilot.buildContracts.flat)().artifacts.hooks);
 
     expect([hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared]).toStrictEqual([
       ".github/hooks/aidd-dev.hooks.json",
@@ -178,7 +178,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("adds a plugin's mcp servers to the workspace .vscode/mcp.json under servers", () => {
-    const mcp = supported(buildCopilotFlatContract().artifacts.mcp);
+    const mcp = supported(present(copilot.buildContracts.flat)().artifacts.mcp);
 
     expect({
       path: mcp.path("aidd-dev", ".mcp.json"),
@@ -198,7 +198,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("renames a skill folder after its plugin, only for a path that starts with skills/", () => {
-    const skills = supported(buildCopilotFlatContract().artifacts.skills);
+    const skills = supported(present(copilot.buildContracts.flat)().artifacts.skills);
 
     expect(skills.path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
       ".github/skills/aidd-dev-01-plan/SKILL.md"
@@ -210,7 +210,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("names a flat agent from its path, dropping agents/ only at the start", () => {
-    const { path } = supported(buildCopilotFlatContract().artifacts.agents);
+    const { path } = supported(present(copilot.buildContracts.flat)().artifacts.agents);
 
     expect(path("aidd-dev", "docs/agents/x.md")).toBe(
       ".github/agents/aidd-dev-docs/agents/x.agent.md"
@@ -218,7 +218,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("keeps only the fields Copilot reads of a hook entry", () => {
-    const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
+    const hooks = supported(present(copilot.buildContracts.flat)().artifacts.hooks);
     const incoming = JSON.stringify({
       hooks: {
         PostToolUse: [
@@ -241,7 +241,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("renames a flat agent after its plugin, drops what Copilot cannot read, and points its references at their flat destinations", () => {
-    const transform = supported(buildCopilotFlatContract().artifacts.agents).transform;
+    const transform = supported(present(copilot.buildContracts.flat)().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -260,7 +260,7 @@ describe("buildCopilotFlatContract()", () => {
   });
 
   it("drops only the trailing .md from the name it gives a flat agent", () => {
-    const transform = supported(buildCopilotFlatContract().artifacts.agents).transform;
+    const transform = supported(present(copilot.buildContracts.flat)().artifacts.agents).transform;
 
     expect(
       transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
@@ -272,7 +272,9 @@ describe("buildCopilotFlatContract()", () => {
   it.each([true, false])(
     "preserves repository instruction selection %s in flat agents",
     (include) => {
-      const transform = supported(buildCopilotFlatContract().artifacts.agents).transform;
+      const transform = supported(
+        present(copilot.buildContracts.flat)().artifacts.agents
+      ).transform;
       const result = transform?.(
         `---\nname: reviewer\ninclude-custom-instructions: ${include}\n---\nReview.\n`,
         "aidd-dev",

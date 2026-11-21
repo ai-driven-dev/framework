@@ -4,8 +4,7 @@ import type { AiTool, WithSections } from "../../../../../src/contexts/tools/dom
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { buildCopilotMarketplaceContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
@@ -117,7 +116,7 @@ const BUILT_BY: ReadonlyArray<
 > = [
   [claude, () => present(claude.buildContracts.marketplace)()],
   [cursor, () => present(cursor.buildContracts.marketplace)()],
-  [copilot, buildCopilotMarketplaceContract],
+  [copilot, () => present(copilot.buildContracts.marketplace)()],
   [codex, () => buildCodexContract(TOML)],
 ];
 

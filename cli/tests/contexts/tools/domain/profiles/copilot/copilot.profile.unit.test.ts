@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { registeredAiConfig } from "../../../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import {

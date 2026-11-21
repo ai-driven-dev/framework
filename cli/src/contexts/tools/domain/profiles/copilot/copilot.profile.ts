@@ -2,9 +2,13 @@ import { join } from "node:path";
 import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vscode-settings.json" with {
   type: "json",
 };
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-copilot.cjs";
 import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
+import { declareHooks } from "../../formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../formats/hooks/routes.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -17,14 +21,15 @@ import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js"
 import { ModelsSection } from "../../sections/models-section.js";
 import { RulesSection } from "../../sections/rules-section.js";
 import { SkillsSection } from "../../sections/skills-section.js";
-import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
-import { copilotAgentFrontmatter } from "./copilot-agent.js";
-import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
-import { COPILOT_HOOKS } from "./hooks.js";
+import { copilotAgentFrontmatter } from "./copilot-agent.model.js";
+import {
+  buildCopilotFlatContract,
+  buildCopilotMarketplaceContract,
+} from "./copilot-build.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
-const DIRECTORY = COPILOT_WORKSPACE_DIR;
+const DIRECTORY = ".github/";
 const TOOL_SUFFIX = ".copilot.md";
 const VSCODE_SETTINGS_ASSET = "vscode-settings.json";
 const VSCODE_SETTINGS_PATH = ".vscode/settings.json";
@@ -190,7 +195,24 @@ function rewriteCopilotContent(content: string): string {
   );
 }
 
-const hooksSupport = nativeHooksSupport(COPILOT_HOOKS);
+const hooks = declareHooks(
+  { toolId: "copilot", directory: DIRECTORY, adapter },
+  {
+    manifestNamesHooks: true,
+    // Copilot CLI honours the matcher, measured live: a `Write|Edit` PostToolUse entry stays
+    // silent on Read.
+    file: {
+      wrapper: { version: 1 },
+      entries: { shape: "flat", fieldsKept: ["type", "command", "matcher", "timeout"] },
+    },
+    // The variable Copilot expands to an installed plugin's directory in a hooks file.
+    rootToken: PLUGIN_ROOT_TOKEN,
+    // One file per plugin, `.github/hooks/<plugin>.hooks.json`, beside its scripts.
+    flat: { scriptsDir: `${DIRECTORY}hooks/` },
+  }
+);
+
+const hooksSupport = nativeHooksSupport(hooks);
 
 // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
 // must therefore never receive a declarative true entry before native source proof.
@@ -274,9 +296,10 @@ export const copilot = defineAiTool({
       delivery: "section",
     },
   ],
+  hooks,
   buildContracts: {
-    marketplace: buildCopilotMarketplaceContract,
-    flat: buildCopilotFlatContract,
+    marketplace: () => buildCopilotMarketplaceContract(hooks),
+    flat: () => buildCopilotFlatContract(hooks),
   },
 
   capabilities: () => ({

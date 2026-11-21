@@ -12,15 +12,18 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
+import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   resolveDescription,
   resolveVersion,
   synthesizeSharedManifest,
 } from "../../marketplace-catalog.js";
-import { copilotAgentFrontmatter } from "./copilot-agent.js";
-import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
-import { COPILOT_HOOKS } from "./hooks.js";
+import { copilotAgentFrontmatter } from "./copilot-agent.model.js";
+
+type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
+
+const COPILOT_WORKSPACE_DIR = ".github/";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
@@ -32,20 +35,21 @@ const FLAT_GITHUB_AGENTS_PREFIX = `${COPILOT_WORKSPACE_DIR}agents/`;
 /** Output prefix for skills in flat mode: .github/skills/<plugin>/<name>/ */
 const FLAT_GITHUB_SKILLS_PREFIX = `${COPILOT_WORKSPACE_DIR}skills/`;
 
-const FLAT_VSCODE_MCP_PATH = COPILOT_VSCODE_MCP_PATH;
+const FLAT_VSCODE_MCP_PATH = ".vscode/mcp.json";
 
 const FLAT_AGENT_OUTPUT_EXT = ".agent.md";
 
-export function buildCopilotMarketplaceContract(): ToolBuildContract {
+export function buildCopilotMarketplaceContract(hooks: HooksRouting): ToolBuildContract {
+  const namesHooks = hooks.manifestNamesHooks === true;
   const manifestRelative = OUTPUT_PLUGIN_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: COPILOT_HOOKS.rootToken,
+    pluginRootToken: hooks.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeSharedManifest(source, presence, {
         agentsField: true,
-        hooksField: COPILOT_HOOKS.manifestNamesHooks,
+        hooksField: namesHooks,
       }),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
     artifacts: {
@@ -65,7 +69,7 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(COPILOT_HOOKS),
+      hooks: pluginTreeHooksArtifact(hooks),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -130,7 +134,7 @@ function copilotFlatResolveTarget(plugin: string, rel: string): string {
   return rel;
 }
 
-export function buildCopilotFlatContract(): ToolBuildContract {
+export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -157,7 +161,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },
-      hooks: flatHooksArtifact(COPILOT_HOOKS, { tool: "copilot" }),
+      hooks: flatHooksArtifact(hooks, { tool: "copilot" }),
       rules: { supported: false },
       commands: { supported: false },
     },

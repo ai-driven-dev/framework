@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
