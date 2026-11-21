@@ -16,6 +16,12 @@ const world = useInProcessReportWorld();
 
 describe("aidd telemetry report, narrowed", () => {
   const tallyOf = ({ kind: _k, key: _key, reason: _r, ...tally }: Row) => tally;
+  const selectingFlags = (axis: string, row: Row): string[] => {
+    if (row.kind === "absent") return ["--absent", axis];
+    if (row.kind === "unattributed") return ["--unattributed", row.reason as string];
+    const key = row.key as string;
+    return [`--${axis}`, axis === "session" ? key.slice(0, 8) : key];
+  };
   async function narrowed(...args: string[]): Promise<Envelope> {
     const run = await world().aidd(["report", ...WINDOW, "--json", ...args]);
     expect(run.exitCode, run.stderr).toBe(0);
@@ -26,15 +32,7 @@ describe("aidd telemetry report, narrowed", () => {
     await world().declareBranch();
     for (const axis of ["ticket", "session", "model", "tool"]) {
       for (const row of (await world().json(axis)).rows) {
-        const flags =
-          row.kind === "absent"
-            ? ["--absent", axis]
-            : row.kind === "unattributed"
-              ? ["--unattributed", row.reason as string]
-              : [
-                  `--${axis}`,
-                  axis === "session" ? (row.key as string).slice(0, 8) : (row.key as string),
-                ];
+        const flags = selectingFlags(axis, row);
         const envelope = await narrowed(...flags);
         expect(envelope.totals, flags.join(" ")).toEqual(tallyOf(row));
         expect(envelope.coverage.records).toBe(CALLS.length);

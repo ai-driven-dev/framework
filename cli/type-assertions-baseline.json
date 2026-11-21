@@ -108,7 +108,7 @@
   "tests/presentation/commands/setup.wiring.unit.test.ts": 2,
   "tests/presentation/commands/sync-machine-registration.integration.test.ts": 5,
   "tests/presentation/commands/telemetry-identity.integration.test.ts": 1,
-  "tests/presentation/commands/telemetry-report.integration.test.ts": 5,
+  "tests/presentation/commands/telemetry-report.integration.test.ts": 4,
   "tests/presentation/commands/tool-config.integration.test.ts": 1,
   "tests/presentation/hooks/update-notice-hooks.unit.test.ts": 1,
   "tests/presentation/testing/project-state.builder.ts": 3,
