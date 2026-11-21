@@ -43,7 +43,7 @@ The [issue](https://github.com/ai-driven-dev/framework/issues/914) defines 16 cr
 
 ## Current integration review (2026-11-21)
 
-The statuses below apply to integration HEAD `d6fcf67e60b29574d8978c5ca422a9b5ff2c6d1b` plus the uncommitted review changes in the isolated integration worktree. `PARTIAL` identifies missing breadth in direct evidence; it is not automatically a blocker when the missing behavior is outside the stated contract or awaits remote CI.
+The statuses below apply to integration HEAD `3c584f00613362e835b50ff51a02fcd5724115c2`, including the merge of `d6fcf67e60b29574d8978c5ca422a9b5ff2c6d1b` with `75659dbcebd63e43358a051e092719fe6d52aba1` and the follow-up memory file-race fix. `PARTIAL` identifies missing breadth in direct evidence; it is not automatically a blocker when the missing behavior is outside the stated contract.
 
 | AC | Status | Evidence |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ The statuses below apply to integration HEAD `d6fcf67e60b29574d8978c5ca422a9b5ff
 | 12 | PASS | Hook contracts say Kilo is guidance-only, cite `session.created` only where documented, and prohibit unsupported declarative output (`scripts/__tests__/context-kilo-generation-contracts.test.js`). |
 | 13 | PASS | Repeat runs are tested for memory, skill scaffolding, agent and command writers, hook writers, and Kilo rule publication; second runs report unchanged/no new output (`scripts/__tests__/project-memory-script.test.js`, `scripts/__tests__/scaffold-skill.test.js`, `scripts/__tests__/agent-generation.test.js`, `scripts/__tests__/command-generation.test.js`, `scripts/__tests__/hook-generation.test.js`, `scripts/__tests__/kilo-rule-publication.test.js`). |
 | 14 | PASS | Invalid JSONC, ambiguous/unsafe config, and ownership failures leave the publication snapshot unchanged; staged write/rename failures clean outputs or restore the prior config (`scripts/__tests__/kilo-rule-publication.test.js`). Memory write I/O failures have separate recovery evidence under #1018 below. |
-| 15 | PARTIAL | The native E2E generates rule/agent/command/skill artifacts and confirms discovery/use on local Linux Kilo 7.7.5. Windows and macOS evidence must come from the remote CI matrix after publication; no such run is claimed for this integration. |
+| 15 | PARTIAL | On integration HEAD `3c584f00613362e835b50ff51a02fcd5724115c2`, CI run [44914577137](https://github.com/ai-driven-dev/framework/actions/runs/44914577137) passed the Kilo runtime smoke on Ubuntu, Windows, and macOS Intel; the Windows CLI suite also passed. The native E2E generates and confirms discovery/use of rule/agent/command/skill artifacts on local Linux Kilo 7.7.5. Saved rule consumption, agent invocation, saved workflow invocation, and generator-to-runtime provenance remain unverified. |
 | 16 | PASS | Kilo path claims in memory, detection, skill, rule, agent, command, and hook references now carry official Kilo/legacy sources and the required `2026-09-25` verification date. `scripts/__tests__/context-kilo-generation-contracts.test.js` enforces this. |
 
 ## Project-memory write-failure boundary (#1018)
