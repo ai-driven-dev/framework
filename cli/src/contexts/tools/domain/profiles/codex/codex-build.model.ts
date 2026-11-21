@@ -3,10 +3,7 @@
  * materialization); what they merge, strip and list lives in the sibling models.
  */
 
-import {
-  flatMcpKeyPrefix,
-  genericFlatSkillPath,
-} from "../../../../../shared/domain/materialization/flat-paths.js";
+import { genericFlatSkillPath } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
@@ -93,7 +90,7 @@ function codexFlatAgentPath(plugin: string, rel: string): string {
   return `.codex/agents/${plugin}-${base}`;
 }
 
-function collectPrefixedMcpServers(
+function collectMcpServers(
   builtPlugins: readonly string[],
   pluginMcp: ReadonlyMap<string, string>
 ): Record<string, unknown> {
@@ -102,9 +99,8 @@ function collectPrefixedMcpServers(
     const raw = pluginMcp.get(plugin);
     if (raw === undefined) continue;
     const parsed = JSON.parse(raw) as { mcpServers?: Record<string, unknown> };
-    const prefix = flatMcpKeyPrefix(plugin);
     for (const [k, v] of Object.entries(parsed.mcpServers ?? {})) {
-      mcpServers[`${prefix}${k}`] = v;
+      mcpServers[k] = v;
     }
   }
   return mcpServers;
@@ -151,7 +147,7 @@ export function buildCodexFlatContract(toml: TomlCodec, hooks: FlatHooks): ToolB
       probes: () => [],
       assets: { tool: "codex", names: [] },
       emit: ({ builtPlugins, pluginMcp, existing }) => {
-        const mcpServers = collectPrefixedMcpServers(builtPlugins, pluginMcp);
+        const mcpServers = collectMcpServers(builtPlugins, pluginMcp);
         const aiddPayload = buildCodexConfigPayload(toml, mcpServers);
         const merged = mergeCodexConfigToml(toml)(
           existing.get(CODEX_FLAT_CONFIG) ?? "",

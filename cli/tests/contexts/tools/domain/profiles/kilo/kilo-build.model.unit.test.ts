@@ -72,7 +72,9 @@ describe("buildKiloFlatContract", () => {
       pluginMcp: new Map([
         [
           "aidd-dev",
-          JSON.stringify({ mcpServers: { context: { command: "node", args: ["server.js"] } } }),
+          JSON.stringify({
+            mcpServers: { "aidd-dev-context": { command: "node", args: ["server.js"] } },
+          }),
         ],
       ]),
     });
@@ -133,7 +135,9 @@ describe("buildKiloFlatContract", () => {
       pluginMcp: new Map([
         [
           "aidd-dev",
-          JSON.stringify({ mcpServers: { context: { command: "node", args: ["server.js"] } } }),
+          JSON.stringify({
+            mcpServers: { "aidd-dev-context": { command: "node", args: ["server.js"] } },
+          }),
         ],
       ]),
       existing: {

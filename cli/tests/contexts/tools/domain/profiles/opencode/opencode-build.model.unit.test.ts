@@ -186,7 +186,7 @@ describe("present(opencode.buildContracts.flat)()", () => {
     const files = emit({
       builtPlugins: ["aidd-dev"],
       pluginMcp: new Map([
-        ["aidd-dev", JSON.stringify({ mcpServers: { context: { command: "node" } } })],
+        ["aidd-dev", JSON.stringify({ mcpServers: { "aidd-dev-context": { command: "node" } } })],
       ]),
       existing: { "opencode.json": JSON.stringify({ theme: "dark" }) },
     });

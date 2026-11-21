@@ -171,7 +171,8 @@ export interface ConfigArtifact {
 
 export interface ConfigArtifactInput {
   readonly builtPlugins: readonly string[];
-  /** Each built plugin's own `.mcp.json`, by plugin; a plugin shipping none is absent. */
+  /** Each built plugin's own `.mcp.json`, by plugin, its server keys already prefixed with the
+   * plugin's name; a plugin shipping none is absent. */
   readonly pluginMcp: ReadonlyMap<string, string>;
   /** Each file `reads` named that exists, by its path under the output root. */
   readonly existing: ReadonlyMap<string, string>;

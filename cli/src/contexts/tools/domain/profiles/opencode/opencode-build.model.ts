@@ -4,7 +4,6 @@
 
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
-  flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
@@ -64,9 +63,8 @@ function collectOpencodeMcp(
     const transformed = JSON.parse(toTypedMcpSection(raw)) as {
       mcp?: Record<string, unknown>;
     };
-    const prefix = flatMcpKeyPrefix(plugin);
     for (const [k, v] of Object.entries(transformed.mcp ?? {})) {
-      incoming[`${prefix}${k}`] = v;
+      incoming[k] = v;
     }
   }
   return incoming;

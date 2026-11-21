@@ -16,6 +16,16 @@ describe("the MCP servers of a plugin in a flat layout", () => {
     });
   });
 
+  it("declares the whole declaration with the same prefixed keys, so a config never prefixes again", () => {
+    const canon = aCanon("plug", {
+      ".mcp.json": JSON.stringify({ mcpServers: { db: { command: "run" } }, extra: 1 }),
+    });
+    expect(JSON.parse(flatMcp(canon, TARGET)?.declared ?? "null")).toEqual({
+      mcpServers: { "plug-db": { command: "run" } },
+      extra: 1,
+    });
+  });
+
   it("holds no server for a declaration naming none", () => {
     expect(flatMcp(aCanon("plug", { ".mcp.json": "{}" }), TARGET)?.servers).toEqual({});
   });

@@ -3,7 +3,6 @@
 
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
-  flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
@@ -60,7 +59,7 @@ function collectKiloMcp(
       mcp?: Record<string, unknown>;
     };
     for (const [key, value] of Object.entries(transformed.mcp ?? {})) {
-      incoming[`${flatMcpKeyPrefix(plugin)}${key}`] = value;
+      incoming[key] = value;
     }
   }
   return incoming;

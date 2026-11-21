@@ -12,7 +12,8 @@ import { flatPluginRootAbsolute } from "../flat-layout.js";
 export interface PluginMcp {
   /** The plugin's servers, each key prefixed with the plugin's name so plugins never share one. */
   readonly servers: Readonly<Record<string, unknown>>;
-  /** The whole declaration, for a config built from every plugin at once. */
+  /** The whole declaration with the same prefixed keys, for a config built from every plugin at
+   * once: the one place a key is prefixed, so a config never prefixes it again. */
   readonly declared: string;
 }
 
@@ -27,14 +28,16 @@ export function flatMcp(
   const parsed = parseDeclaration(plugin, declaration.content);
   const rooted = (value: unknown) =>
     rewritePluginRootInJson(value, (suffix) => flatPluginRootAbsolute(target, suffix, plugin));
-  const servers = asPlainObject(asPlainObject(parsed)?.mcpServers) ?? {};
+  const whole = asPlainObject(rooted(parsed)) ?? {};
   const prefix = flatMcpKeyPrefix(plugin);
-  return {
-    servers: Object.fromEntries(
-      Object.entries(servers).map(([key, value]) => [`${prefix}${key}`, rooted(value)])
-    ),
-    declared: JSON.stringify(rooted(parsed)),
-  };
+  const servers = Object.fromEntries(
+    Object.entries(asPlainObject(whole.mcpServers) ?? {}).map(([key, value]) => [
+      `${prefix}${key}`,
+      value,
+    ])
+  );
+  const prefixed = "mcpServers" in whole ? { ...whole, mcpServers: servers } : whole;
+  return { servers, declared: JSON.stringify(prefixed) };
 }
 
 function parseDeclaration(plugin: string, content: string): unknown {

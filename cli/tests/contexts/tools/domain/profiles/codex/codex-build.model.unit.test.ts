@@ -251,7 +251,7 @@ describe("present(codex.buildContracts.flat)()", () => {
     const files = configArtifactOf().emit({
       builtPlugins: ["aidd-dev", "aidd-pm"],
       pluginMcp: new Map([
-        ["aidd-dev", JSON.stringify({ mcpServers: { context: { command: "node" } } })],
+        ["aidd-dev", JSON.stringify({ mcpServers: { "aidd-dev-context": { command: "node" } } })],
       ]),
       existing: new Map(),
       present: new Set(),
