@@ -41,13 +41,18 @@ export function projectHooks(
   };
 }
 
+/** Whether a path from the plugin's root is one of its hooks files. */
+export function isHooksFile(relativePath: string): boolean {
+  return relativePath.split("/")[0] === PLUGIN_HOOKS_DIR;
+}
+
 /** The plugin with every `hooks/` file dropped, from `files` and `components.hooks` alike: what a
  * tool that keeps its hooks in the project plans, so none lands under the plugin's own directory. */
 export function withoutHooks(dist: PluginDistribution): PluginDistribution {
   return new PluginDistribution({
     manifest: dist.manifest,
     format: dist.format,
-    files: dist.files.filter((file) => file.relativePath.split("/")[0] !== PLUGIN_HOOKS_DIR),
+    files: dist.files.filter((file) => !isHooksFile(file.relativePath)),
     components: { ...dist.components, hooks: [] },
   });
 }

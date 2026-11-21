@@ -29,6 +29,9 @@ export interface PluginTranslationResult {
     readonly manifest: string | null;
     readonly scripts: readonly TranslatedFile[];
   };
+  /** Whether an install leaves out a file of the plugin's built tree, by its path from the
+   * plugin's root. */
+  readonly dropsBuiltFile: (relativePath: string) => boolean;
 }
 
 /** A plugin's distribution turned into the files one tool installs. */

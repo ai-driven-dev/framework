@@ -62,12 +62,11 @@ export async function readBuiltUserPluginFiles(
   );
 }
 
-// `readBuiltUserPluginFiles` prefixes every path with `<name>/`, so a built-tree hooks file always
-// reads `<name>/hooks/<rest>`.
-export function withoutHooksPrefix(
+/** The files an install keeps, from a built tree read with every path prefixed by `<name>/`. */
+export function withoutDroppedFiles(
   files: InstallationFile[],
-  pluginName: string
+  pluginName: string,
+  drops: (relativePath: string) => boolean
 ): InstallationFile[] {
-  const hooksPrefix = `${pluginName}/hooks/`;
-  return files.filter((f) => !f.relativePath.startsWith(hooksPrefix));
+  return files.filter((file) => !drops(file.relativePath.slice(pluginName.length + 1)));
 }

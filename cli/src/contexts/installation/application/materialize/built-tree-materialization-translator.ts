@@ -22,7 +22,7 @@ import { ProjectHooksMaterializer } from "./project-hooks-materializer.js";
 import {
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,
-  withoutHooksPrefix,
+  withoutDroppedFiles,
 } from "./read-built-plugin-files.js";
 export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   readonly mode = "flat" as const;
@@ -87,8 +87,9 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       target: tool.toolId,
       mode: build.mode,
     });
+    const translated = this.built.translate.execute({ distribution: dist, tool });
     const deliversHooksToProject = tool.plugins()?.deliversHooksToProject() === true;
-    const builtFiles =
+    const read =
       build.mode === "flat"
         ? await readBuiltFlatFiles(
             this.fs,
@@ -96,9 +97,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
             {
               name: dist.manifest.name,
               tool,
-              extraPaths: deliversHooksToProject
-                ? new Set<string>()
-                : this.built.translate.execute({ distribution: dist, tool }).flatHookPaths,
+              extraPaths: deliversHooksToProject ? new Set<string>() : translated.flatHookPaths,
             }
           )
         : await readBuiltUserPluginFiles(this.fs, {
@@ -106,16 +105,17 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
             name: dist.manifest.name,
             platform: this.built.platform,
           });
-    if (!deliversHooksToProject) return { files: builtFiles, hooks: { skipped: [] } };
+    const files = withoutDroppedFiles(read, dist.manifest.name, translated.dropsBuiltFile);
+    if (!deliversHooksToProject) return { files, hooks: { skipped: [] } };
     const hooks = await this.projectHooks.execute({
       dist,
-      hooks: this.built.translate.execute({ distribution: dist, tool }).projectHooks,
+      hooks: translated.projectHooks,
       tool,
       projectRoot,
       previous: previousProjectHooks,
       guard: hooksGuard,
     });
-    return { files: withoutHooksPrefix(builtFiles, dist.manifest.name), hooks };
+    return { files, hooks };
   }
 
   private mergeMcp(request: AddPluginRequest) {

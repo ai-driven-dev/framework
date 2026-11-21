@@ -10,7 +10,12 @@ import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
 import { applyPlan, type ComponentPlan } from "./rules/component-pipeline.js";
 import { flatMcp, type PluginMcp } from "./rules/flat-mcp.js";
-import { type ProjectHooks, projectHooks, withoutHooks } from "./rules/hook-scripts.js";
+import {
+  isHooksFile,
+  type ProjectHooks,
+  projectHooks,
+  withoutHooks,
+} from "./rules/hook-scripts.js";
 import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
 
 /** Where a translation lands: one tool's install, or one tool's build. The rules are the same;
@@ -50,6 +55,10 @@ export interface Translation {
   /** The plugin's hooks as a tool that keeps them in the project takes them, for an install to
    * merge and place. Empty for a tool whose plugins carry their own, which `files` then holds. */
   readonly projectHooks: ProjectHooks;
+  /** Whether an install leaves out a file of the plugin's built tree, by its path from the plugin's
+   * root: the plugin's hooks, when the tool keeps them in the project and `projectHooks` places
+   * them there. */
+  readonly dropsBuiltFile: (relativePath: string) => boolean;
   /** What merging the plugin's hooks into its own file reported. */
   readonly warnings: readonly string[];
 }
@@ -86,6 +95,7 @@ const UNTRANSLATED = {
 const NO_PROJECT_HOOKS: ProjectHooks = { manifest: null, scripts: [] };
 
 const NOTHING_FOLDED = {
+  dropsBuiltFile: () => false,
   hooks: null,
   mcp: null,
   installedMcp: null,
@@ -103,6 +113,7 @@ function buildLayoutPlan(
   const own = flatOwnHooksFile(dist, contract);
   return {
     ...UNTRANSLATED,
+    dropsBuiltFile: NOTHING_FOLDED.dropsBuiltFile,
     plans: own ? [...plans, own.plan] : plans,
     hooks: own === null ? hooksManifestOf(dist) : null,
     installedMcp: null,
@@ -140,6 +151,7 @@ function installLayoutPlan(
     ...NOTHING_FOLDED,
     installedMcp: installedMcpOf(dist, tool),
     projectHooks: location === null ? NO_PROJECT_HOOKS : projectHooks(dist, location),
+    dropsBuiltFile: location === null ? () => false : isHooksFile,
   };
 }
 

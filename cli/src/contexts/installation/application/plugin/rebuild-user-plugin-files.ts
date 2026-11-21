@@ -7,7 +7,7 @@ import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import {
   readBuiltUserPluginFiles,
-  withoutHooksPrefix,
+  withoutDroppedFiles,
 } from "../materialize/read-built-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
@@ -70,11 +70,11 @@ async function readBuiltFiles(
     name: plugin.name,
     platform: deps.builtDeps.platform,
   });
-  const files =
-    tool.plugins()?.deliversHooksToProject() === true
-      ? withoutHooksPrefix(built, plugin.name)
-      : built;
-  return { files, componentPaths: new Map() };
+  const { dropsBuiltFile } = deps.builtDeps.translate.execute({ distribution: dist, tool });
+  return {
+    files: withoutDroppedFiles(built, plugin.name, dropsBuiltFile),
+    componentPaths: new Map(),
+  };
 }
 
 function translateUserPluginFiles(
