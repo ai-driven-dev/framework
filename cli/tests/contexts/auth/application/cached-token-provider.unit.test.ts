@@ -74,21 +74,29 @@ const ROWS: [string, Row][] = [
   ["nothing", { token: null, logged: "No token available" }],
 ];
 
+function aProviderOver(
+  given: Omit<Row, "token" | "logged">,
+  token: string,
+  logger: CapturingLogger
+) {
+  const records = new InMemoryCredentialRecordRepository();
+  if (given.project) records.seed("project", given.project);
+  if (given.user) records.seed("user", given.user);
+  const builder = aCachedTokenProvider()
+    .withRecords(records)
+    .withExternalTokens(new FakeCliAuthProvider({ token }))
+    .withLogger(logger);
+  if (given.commandLine !== undefined) builder.withCommandLine(given.commandLine);
+  if (given.environment !== undefined) builder.withEnvironmentToken(given.environment);
+  return builder.build();
+}
+
 describe("CachedTokenProvider", () => {
   describe("the order of sources", () => {
     it.each(ROWS)("%s answers its token and logs where it came from", async (_row, row) => {
-      const records = new InMemoryCredentialRecordRepository();
-      if (row.project) records.seed("project", row.project);
-      if (row.user) records.seed("user", row.user);
       const logger = new CapturingLogger();
-      const builder = aCachedTokenProvider()
-        .withRecords(records)
-        .withExternalTokens(new FakeCliAuthProvider({ token: "gh_tok" }))
-        .withLogger(logger);
-      if (row.commandLine !== undefined) builder.withCommandLine(row.commandLine);
-      if (row.environment !== undefined) builder.withEnvironmentToken(row.environment);
 
-      expect(await builder.build().resolve()).toBe(row.token);
+      expect(await aProviderOver(row, "gh_tok", logger).resolve()).toBe(row.token);
       expect(logger.debugMessages).toStrictEqual([row.logged]);
     });
   });
@@ -115,18 +123,9 @@ describe("CachedTokenProvider", () => {
       ["a stored record", { user: aStoredRecord({ token: "my-secret" }) }],
       ["an external record", { user: anExternalRecord() }],
     ])("never logs the token, whatever the source: %s", async (_source, given) => {
-      const records = new InMemoryCredentialRecordRepository();
-      if ("user" in given && given.user) records.seed("user", given.user);
       const logger = new CapturingLogger();
-      const builder = aCachedTokenProvider()
-        .withRecords(records)
-        .withExternalTokens(new FakeCliAuthProvider({ token: "my-secret" }))
-        .withLogger(logger);
-      if ("commandLine" in given && given.commandLine) builder.withCommandLine(given.commandLine);
-      if ("environment" in given && given.environment)
-        builder.withEnvironmentToken(given.environment);
 
-      expect(await builder.build().resolve()).toBe("my-secret");
+      expect(await aProviderOver(given, "my-secret", logger).resolve()).toBe("my-secret");
       expect(logger.allMessages.length).toBeGreaterThan(0);
       expect(logger.allMessages.filter((message) => message.includes("my-secret"))).toEqual([]);
     });
