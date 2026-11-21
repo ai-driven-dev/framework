@@ -2,7 +2,10 @@ import type { ListMarketplaces } from "../../contexts/distribution/application/l
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { ProjectCleanFacts } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import type { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.js";
-import type { CleanNativeRegistrationPreview } from "../../contexts/installation/application/plan-project-clean.js";
+import type {
+  CleanNativeRegistrationPreview,
+  ProjectCleanPlan,
+} from "../../contexts/installation/application/plan-project-clean.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";
@@ -54,30 +57,35 @@ export class CleanProject {
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0, nativeRegistrations: [] };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
     }
-    const preview: CleanPreview = {
+    const preview = await this.previewOf(plan, projectRoot);
+    const dryRunResult = await this.confirmOrDryRun(options, preview);
+    if (dryRunResult !== null) return dryRunResult;
+    const fileCount = await this.removeInOrder(plan, options);
+    return { dryRun: false, manifestFound: true, preview, fileCount };
+  }
+
+  private async previewOf(plan: ProjectCleanPlan, projectRoot: string): Promise<CleanPreview> {
+    const shared = await this.deps.claims.sharedClaim({
+      projectRoot,
+      list: () => this.registered(projectRoot),
+    });
+    return {
       tools: plan.tools,
       totalFileCount: plan.totalFileCount,
       nativeRegistrations: plan.nativeRegistrations,
-      sharedSourceOtherProjects: (
-        await this.deps.claims.sharedClaim({
-          projectRoot,
-          list: () => this.registered(projectRoot),
-        })
-      )?.otherProjects,
+      sharedSourceOtherProjects: shared?.otherProjects,
     };
-    const dryRunResult = await this.confirmOrDryRun(options, preview);
-    if (dryRunResult !== null) return dryRunResult;
+  }
+
+  private async removeInOrder(plan: ProjectCleanPlan, options: CleanOptions): Promise<number> {
+    const { projectRoot, force } = options;
     const facts = this.cleanFacts(projectRoot, await this.marketplaceScopes(projectRoot));
     await this.deps.withdrawFromHost.execute({
       kind: "prove-project-registrations",
       withdrawals: plan.withdrawals,
       facts,
     });
-    await this.deps.cleanProject.execute({
-      kind: "assert-removable",
-      projectRoot,
-      force: options.force,
-    });
+    await this.deps.cleanProject.execute({ kind: "assert-removable", projectRoot, force });
     // Read the other projects before host cleanup, but keep this project's claim until every
     // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
     const sharedSource = await this.deps.claims.sharedClaim({
@@ -93,15 +101,11 @@ export class CleanProject {
       withdrawals: plan.withdrawals,
       facts: { ...facts, sharedSource },
     });
-    const fileCount = await this.deps.cleanProject.execute({
-      kind: "remove",
-      projectRoot,
-      force: options.force,
-    });
+    const fileCount = await this.deps.cleanProject.execute({ kind: "remove", projectRoot, force });
     // One project-level decrement, only after the local projection has been cleaned successfully.
     await this.deps.claims.dropClaim(sharedSource?.resolvedRoot);
     await this.deps.claims.detach(projectRoot, plan.userPlugins, plan.nativeRefs);
-    return { dryRun: false, manifestFound: true, preview, fileCount };
+    return fileCount;
   }
 
   private async registered(projectRoot: string) {

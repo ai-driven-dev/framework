@@ -1,4 +1,5 @@
-import type { SyncSettings, SyncSettingsResult } from "./sync-settings.js";
+import type { SyncSettingsResult } from "../domain/sync-settings.model.js";
+import type { SyncSettings } from "./sync-settings.js";
 
 export interface SyncNativeActivationRequest {
   readonly projectRoot: string;

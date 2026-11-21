@@ -1,4 +1,7 @@
-import type { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.js";
+import type {
+  RegisterPluginWithHost,
+  RegisterPluginWithHostResult,
+} from "../../contexts/host-registration/application/register/register-plugin-with-host.js";
 import type { HostRegistrationOutcome } from "../../contexts/host-registration/application/register/registration-outcome.js";
 import type { BuiltCatalogs } from "../../contexts/host-registration/contract/built-catalogs.js";
 import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";
@@ -36,6 +39,14 @@ export interface ActivationRun {
   errors: readonly { scope: string; error: unknown }[];
 }
 
+/** The run while it is being collected: the same four answers, still open to writing. */
+interface ActivationAccumulator {
+  outcomes: Map<ToolId, HostRegistrationOutcome>;
+  binaryMissing: { toolId: ToolId; binary: string }[];
+  warnings: string[];
+  errors: { scope: string; error: unknown }[];
+}
+
 export interface ActivateNativeToolsRequest {
   projectRoot: string;
   context: SyncContext;
@@ -68,49 +79,64 @@ export class ActivateNativeTools {
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
    * anything, so a settings file that differs for it differs because a person changed it. */
   async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
-    const { projectRoot, context, claims, scope, enablePlugins } = request;
-    const { manifest, marketplaces } = context;
-    const outcomes = new Map<ToolId, HostRegistrationOutcome>();
-    const binaryMissing: { toolId: ToolId; binary: string }[] = [];
-    const warnings: string[] = [];
-    const errors: { scope: string; error: unknown }[] = [];
-    for (const toolId of context.toolIds) {
+    const run: ActivationAccumulator = {
+      outcomes: new Map(),
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+    };
+    for (const toolId of request.context.toolIds) {
       try {
-        const result = await this.deps.registerPluginWithHost.execute({
-          toolId,
-          projectRoot,
-          scope,
-          marketplaces,
-          claims: claims(toolId),
-          build: this.builtFor(toolId, projectRoot),
-          refsToEnable: (hostNameByAlias) =>
-            this.refsToEnableOn({
-              toolId,
-              manifest,
-              marketplaces,
-              hostNameByAlias,
-              scope,
-              enablePlugins,
-            }),
-          userCacheRoot: this.deps.marketplace.userCacheRoot,
-          sink: { logger: this.deps.logger, warnings },
-        });
-        if (result.status === "binary-missing") {
-          this.deps.logger.warn(
-            `${result.binary} CLI not found on PATH — skipping native plugin activation.${
-              enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : ""
-            }`
-          );
-          binaryMissing.push({ toolId, binary: result.binary });
-        } else if (result.status === "activated") outcomes.set(toolId, result.outcome);
+        const result = await this.register(toolId, request, run.warnings);
+        this.record({ run, toolId, result, enablePlugins: request.enablePlugins });
       } catch (error) {
-        errors.push({
-          scope: toolId,
-          error,
-        });
+        run.errors.push({ scope: toolId, error });
       }
     }
-    return { outcomes, binaryMissing, warnings, errors };
+    return run;
+  }
+
+  private register(toolId: ToolId, request: ActivateNativeToolsRequest, warnings: string[]) {
+    const { projectRoot, context, claims, scope, enablePlugins } = request;
+    const { manifest, marketplaces } = context;
+    return this.deps.registerPluginWithHost.execute({
+      toolId,
+      projectRoot,
+      scope,
+      marketplaces,
+      claims: claims(toolId),
+      build: this.builtFor(toolId, projectRoot),
+      refsToEnable: (hostNameByAlias) =>
+        this.refsToEnableOn({
+          toolId,
+          manifest,
+          marketplaces,
+          hostNameByAlias,
+          scope,
+          enablePlugins,
+        }),
+      userCacheRoot: this.deps.marketplace.userCacheRoot,
+      sink: { logger: this.deps.logger, warnings },
+    });
+  }
+
+  private record(outcome: {
+    run: ActivationAccumulator;
+    toolId: ToolId;
+    result: RegisterPluginWithHostResult;
+    enablePlugins: readonly string[];
+  }): void {
+    const { run, toolId, result, enablePlugins } = outcome;
+    if (result.status === "activated") {
+      run.outcomes.set(toolId, result.outcome);
+    } else if (result.status === "binary-missing") {
+      const rerun =
+        enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : "";
+      this.deps.logger.warn(
+        `${result.binary} CLI not found on PATH — skipping native plugin activation.${rerun}`
+      );
+      run.binaryMissing.push({ toolId, binary: result.binary });
+    }
   }
 
   /** Each catalogue's tree, built for one tool the moment its registration asks for it. */
@@ -134,23 +160,26 @@ export class ActivateNativeTools {
    * marketplace half of a ref against its own registry, which knows this catalog only by the
    * name it declares itself. */
   private pluginRefsToEnable(run: PluginRefsRun): string[] {
-    const { toolId, manifest, marketplaces, hostNameByAlias, scope } = run;
-    const byName = new Map(marketplaces.map((m) => [m.name, m]));
-    const refs: string[] = [];
-    for (const plugin of manifest.getPlugins(toolId)) {
-      const marketplace = plugin.marketplace == null ? undefined : byName.get(plugin.marketplace);
-      if (marketplace === undefined) continue;
-      const hostName = hostNameByAlias.get(marketplace.name);
-      if (hostName === undefined) continue;
-      refs.push(this.deps.records.refOnHostName(plugin.name, hostName));
-    }
-    // Native-only global installs record successful activations, not copied plugin files.
-    // Claims also recover a selection an older sync dropped from its projection.
-    if (scope === "user") {
-      const native = manifest.getNativeRegistrations(toolId);
-      const provenHosts = [...hostNameByAlias.values()];
-      if (native !== undefined) refs.push(...this.deps.records.refsOnHosts(native, provenHosts));
-    }
-    return refs;
+    return [...this.declaredRefs(run), ...this.nativeRefs(run)];
+  }
+
+  private declaredRefs(run: PluginRefsRun): string[] {
+    const { toolId, manifest, marketplaces, hostNameByAlias } = run;
+    const known = new Set(marketplaces.map((m) => m.name));
+    return manifest.getPlugins(toolId).flatMap((plugin) => {
+      const alias = plugin.marketplace == null ? undefined : plugin.marketplace;
+      const hostName =
+        alias !== undefined && known.has(alias) ? hostNameByAlias.get(alias) : undefined;
+      return hostName === undefined ? [] : [this.deps.records.refOnHostName(plugin.name, hostName)];
+    });
+  }
+
+  // Native-only global installs record successful activations, not copied plugin files.
+  // Claims also recover a selection an older sync dropped from its projection.
+  private nativeRefs(run: PluginRefsRun): string[] {
+    if (run.scope !== "user") return [];
+    const native = run.manifest.getNativeRegistrations(run.toolId);
+    if (native === undefined) return [];
+    return this.deps.records.refsOnHosts(native, [...run.hostNameByAlias.values()]);
   }
 }

@@ -57,6 +57,20 @@ export interface SetupFlowParams {
   scope?: Scope;
 }
 
+/** What a setup asks for once every unanswered option has its default. */
+function withDefaults(params: SetupFlowParams) {
+  return {
+    aiTools: params.aiTools ?? [],
+    ideTools: params.ideTools ?? [],
+    pluginMode: params.pluginMode ?? "none",
+    pluginNames: params.pluginNames ?? [],
+    interactive: params.interactive ?? false,
+    force: params.force ?? false,
+    registerDefaultMarketplace: params.registerDefaultMarketplace ?? true,
+    scope: params.scope ?? "project",
+  };
+}
+
 export class SetupFlow {
   readonly projectRoot: string;
   readonly source?: FrameworkSource;
@@ -70,36 +84,31 @@ export class SetupFlow {
   readonly scope: Scope;
 
   constructor(params: SetupFlowParams) {
-    const aiTools = this.registeredAmong(
-      params.registeredToolIds,
-      params.aiToolIds,
-      params.aiTools ?? []
-    );
+    const given = withDefaults(params);
+    const aiTools = this.registeredAmong(params.registeredToolIds, params.aiToolIds, given.aiTools);
     const ideTools = this.registeredAmong(
       params.registeredToolIds,
       params.ideToolIds,
-      params.ideTools ?? []
+      given.ideTools
     );
-    const pluginMode = params.pluginMode ?? "none";
-    const scope = params.scope ?? "project";
-    this.validatePluginMode(pluginMode, params.pluginNames ?? []);
+    this.validatePluginMode(given.pluginMode, given.pluginNames);
     this.validateScope({
       supportsUserScopeActivation: params.supportsUserScopeActivation,
-      scope,
+      scope: given.scope,
       aiTools,
       ideTools,
-      pluginMode,
+      pluginMode: given.pluginMode,
     });
     this.projectRoot = params.projectRoot;
     this.source = params.source;
     this.aiTools = aiTools;
     this.ideTools = ideTools;
-    this.pluginMode = pluginMode;
-    this.pluginNames = params.pluginNames ?? [];
-    this.interactive = params.interactive ?? false;
-    this.force = params.force ?? false;
-    this.registerDefaultMarketplace = params.registerDefaultMarketplace ?? true;
-    this.scope = scope;
+    this.pluginMode = given.pluginMode;
+    this.pluginNames = given.pluginNames;
+    this.interactive = given.interactive;
+    this.force = given.force;
+    this.registerDefaultMarketplace = given.registerDefaultMarketplace;
+    this.scope = given.scope;
   }
 
   /** The ids of `candidates` the names spell, in the order written; a name no candidate bears is

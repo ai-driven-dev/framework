@@ -1,7 +1,8 @@
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
-import { installedNodes, isBranch, type MenuLeaf, type MenuNode, toChoice } from "./menu-tree.js";
+import { isBranch, type MenuLeaf, type MenuNode, toChoice } from "./menu-node.js";
+import { installedNodes } from "./menu-tree.js";
 
 const BACK = { name: "← Back", value: "back" } as const;
 const EXIT = { name: "Exit", value: "exit" } as const;

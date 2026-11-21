@@ -36,19 +36,16 @@ export class CheckMarketplaceUpstream {
       staleMaxDays: command.staleMaxDays,
     });
     const installed = await this.sources.execute();
-    const upstreamRemoved: UpstreamRemoved[] = [];
-    const skipped: SkippedMarketplace[] = [];
-    for (const { marketplace, plugins, error } of readings) {
-      if (plugins === null) {
-        if (error !== undefined) skipped.push({ marketplace, error });
-        continue;
-      }
-      for (const source of installed) {
-        if (source.marketplace === marketplace && !plugins.has(source.plugin)) {
-          upstreamRemoved.push({ marketplace, plugin: source.plugin, toolId: source.toolId });
-        }
-      }
-    }
+    const skipped: SkippedMarketplace[] = readings.flatMap(({ marketplace, plugins, error }) =>
+      plugins === null && error !== undefined ? [{ marketplace, error }] : []
+    );
+    const upstreamRemoved: UpstreamRemoved[] = readings.flatMap(({ marketplace, plugins }) =>
+      plugins === null
+        ? []
+        : installed
+            .filter((source) => source.marketplace === marketplace && !plugins.has(source.plugin))
+            .map((source) => ({ marketplace, plugin: source.plugin, toolId: source.toolId }))
+    );
     return { stale, upstreamRemoved, skipped };
   }
 }

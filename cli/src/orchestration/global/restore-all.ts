@@ -20,6 +20,18 @@ export interface RestoreAllResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
+function nothingRestored(errors: GlobalExecutionError[], failed: boolean): RestoreAllResult {
+  return {
+    totalRestored: 0,
+    totalKept: 0,
+    pluginNamesRestored: [],
+    errors,
+    failed,
+    unrestorable: [],
+    nativeOnlyToolIds: [],
+  };
+}
+
 export class RestoreAll {
   constructor(
     private readonly prompter: Prompter,
@@ -32,53 +44,24 @@ export class RestoreAll {
     force: boolean,
     interactive: boolean
   ): Promise<RestoreAllResult> {
-    const errors: GlobalExecutionError[] = [];
     const restore = await this.restoreGlobal.open();
-
     const files = interactive
       ? await this.promptForFiles(projectRoot, restore.manifest)
       : undefined;
-    if (files !== undefined && files.length === 0) {
-      return {
-        totalRestored: 0,
-        totalKept: 0,
-        pluginNamesRestored: [],
-        errors,
-        failed: false,
-        unrestorable: [],
-        nativeOnlyToolIds: [],
-      };
-    }
+    if (files !== undefined && files.length === 0) return nothingRestored([], false);
     try {
-      const result = await restore.execute({
-        projectRoot,
-        files,
-        force,
-        interactive,
-      });
+      const result = await restore.execute({ projectRoot, files, force, interactive });
       return {
         totalRestored: result.totalRestored,
         totalKept: result.totalKept,
         pluginNamesRestored: result.restoredPluginNames,
-        errors,
+        errors: [],
         failed: false,
         unrestorable: result.unrestorable,
         nativeOnlyToolIds: result.nativeOnlyToolIds,
       };
     } catch (err) {
-      errors.push({
-        scope: "config-restore",
-        error: err,
-      });
-      return {
-        totalRestored: 0,
-        totalKept: 0,
-        pluginNamesRestored: [],
-        errors,
-        failed: true,
-        unrestorable: [],
-        nativeOnlyToolIds: [],
-      };
+      return nothingRestored([{ scope: "config-restore", error: err }], true);
     }
   }
 

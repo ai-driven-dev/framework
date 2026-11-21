@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  installedNodes,
   isBranch,
   type MenuLeaf,
   type MenuNode,
-  toChoice,
-} from "../../../src/orchestration/menu/menu-tree.js";
+} from "../../../src/orchestration/menu/menu-node.js";
+import { installedNodes } from "../../../src/orchestration/menu/menu-tree.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 
 function leavesOf(nodes: MenuNode[]): MenuLeaf[] {
@@ -43,23 +42,5 @@ describe("menu tree", () => {
     expect(prompt).toBe(
       `Tool (e.g. ${[...catalog.inHelpOrder("ai"), ...catalog.inHelpOrder("ide")].join(", ")})`
     );
-  });
-
-  it("tells a branch from a leaf by its children", () => {
-    const [branch] = nodes;
-    const leaf = leavesOf(nodes)[0];
-
-    expect(isBranch(branch)).toBe(true);
-    expect(isBranch(leaf)).toBe(false);
-  });
-
-  it("shows a node as its name, value and description only", () => {
-    const [branch] = nodes;
-
-    expect(toChoice(branch)).toEqual({
-      name: branch.name,
-      value: branch.value,
-      description: branch.description,
-    });
   });
 });

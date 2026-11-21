@@ -1,7 +1,8 @@
 import type { RestoreTool } from "../../contexts/installation/application/restore/project/restore-tool.js";
+import type { SyncSettingsResult } from "../domain/sync-settings.model.js";
 import type { RestoreAll, RestoreAllResult } from "../global/restore-all.js";
 import { SyncFailedError } from "../orchestration.error.js";
-import type { SyncSettings, SyncSettingsResult } from "./sync-settings.js";
+import type { SyncSettings } from "./sync-settings.js";
 
 type ToolRestoreResult = Awaited<ReturnType<RestoreTool["execute"]>>;
 

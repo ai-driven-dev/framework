@@ -3,53 +3,9 @@ import type { RecordActivation } from "../../contexts/installation/application/s
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import type { Scope } from "../../shared/domain/scope.js";
-import type { ToolId } from "../../shared/domain/tool.js";
+import type { SyncSettingsOptions, SyncSettingsResult } from "../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.js";
 import { claimsViewOf } from "./claims-view-of.js";
-
-export interface SyncSettingsOptions {
-  projectRoot: string;
-  /** Limits both the settings sync and the native activation to these tools; every
-   * installed tool when absent. */
-  toolIds?: readonly ToolId[];
-  /** Re-registers the framework marketplace when this run finds none at all: `sync` alone
-   * sets it, so every other caller reads an empty registry as found rather than repopulating it. */
-  recreateFrameworkIfMissing?: boolean;
-  /**
-   * The scope this run enables plugins at, which is a different question than a marketplace's
-   * own `scope`. `"user"` also writes nothing under `projectRoot`, so `syncTool` is skipped.
-   */
-  scope?: Scope;
-  /**
-   * Narrows the settings sync and native activation to the marketplaces named here; absent
-   * activates every registered one. A name matching nothing resolves to zero marketplaces,
-   * never a fallback to every one.
-   */
-  marketplaceNames?: readonly string[];
-  /**
-   * Framework plugins a tool with native activation also enables at this run's scope, on top
-   * of the ones its manifest records: what `setup --global --plugins` asks for, since a
-   * machine-scope install records no plugin a host loads by itself.
-   */
-  enablePlugins?: readonly string[];
-}
-
-export interface SyncSettingsResult {
-  /** Tools whose own CLI actually ran, whether or not every step inside it succeeded. */
-  activated: readonly ToolId[];
-  /** Tools with a native activation whose binary was not on PATH: nothing of theirs
-   * ran, so the settings this pass wrote will not load until it has. */
-  binaryMissing: readonly { toolId: ToolId; binary: string }[];
-  /** What a recoverable, best-effort step logged: the same text `logger.warn` received. */
-  warnings: readonly string[];
-  /** A hard failure that is not the recoverable `NativePluginCliError` family: a bug in an
-   * activator, or the source-conflict guard's deliberate refusal. Returned rather than thrown,
-   * so whether the whole command fails stays the caller's decision. */
-  errors: readonly { scope: string; error: unknown }[];
-  /** The verdict on `errors`: one returned error fails the run. Decided here, where the errors
-   * are produced, so a command only prints it and exits on it. */
-  failed: boolean;
-}
 
 const EMPTY_RESULT: SyncSettingsResult = {
   activated: [],
@@ -59,12 +15,31 @@ const EMPTY_RESULT: SyncSettingsResult = {
   failed: false,
 };
 
+type LoadedSyncContext = NonNullable<Awaited<ReturnType<LoadSyncContext["execute"]>>>;
+
+interface ActivationRecording {
+  options: SyncSettingsOptions;
+  scope: Scope;
+  context: LoadedSyncContext;
+  activation: Awaited<ReturnType<ActivateNativeTools["execute"]>>;
+}
+
 export interface SyncSettingsDeps {
   readonly loadContext: LoadSyncContext;
   readonly settingsFiles: SyncToolSettingsFiles;
   readonly activateNativeTools: ActivateNativeTools;
   readonly recordActivation: RecordActivation;
   readonly sharedSource: SharedFrameworkSource;
+}
+
+function resultOf(activation: ActivationRecording["activation"]): SyncSettingsResult {
+  return {
+    activated: [...activation.outcomes.keys()],
+    binaryMissing: activation.binaryMissing,
+    warnings: activation.warnings,
+    errors: activation.errors,
+    failed: activation.errors.length > 0,
+  };
 }
 
 /** Brings a project's (or the machine's) tool settings and native registrations in line with its manifest. */
@@ -90,51 +65,49 @@ export class SyncSettings {
     if (context === null) return EMPTY_RESULT;
     const { manifest, marketplaces } = context;
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
-    if (
-      scope === "project" &&
-      (await this.deps.settingsFiles.execute({
+    await this.saveWhenProjectMirrored(scope, context, () =>
+      this.deps.settingsFiles.execute({
         kind: "project-tools",
         projectRoot,
         manifest,
         marketplaces,
         toolIds: context.toolIds,
-      }))
-    )
-      await context.save();
-    const activation = await this.deps.activateNativeTools.execute({
-      projectRoot,
-      context,
-      claims: (toolId) => claimsViewOf(context, toolId),
-      scope,
-      enablePlugins: options.enablePlugins ?? [],
-    });
-    if (
-      scope === "project" &&
-      (await this.deps.settingsFiles.execute({
+      })
+    );
+    const activation = await this.activate({ options, scope, context });
+    await this.saveWhenProjectMirrored(scope, context, () =>
+      this.deps.settingsFiles.execute({
         kind: "proven-plugins",
         projectRoot,
         manifest,
         marketplaces,
         outcomes: activation.outcomes,
-      }))
-    )
-      await context.save();
+      })
+    );
     await this.recordActivationOf({ options, scope, context, activation });
-    return {
-      activated: [...activation.outcomes.keys()],
-      binaryMissing: activation.binaryMissing,
-      warnings: activation.warnings,
-      errors: activation.errors,
-      failed: activation.errors.length > 0,
-    };
+    return resultOf(activation);
   }
 
-  private async recordActivationOf(run: {
-    options: SyncSettingsOptions;
-    scope: Scope;
-    context: NonNullable<Awaited<ReturnType<LoadSyncContext["execute"]>>>;
-    activation: Awaited<ReturnType<ActivateNativeTools["execute"]>>;
-  }): Promise<void> {
+  private activate(run: Omit<ActivationRecording, "activation">) {
+    const { options, scope, context } = run;
+    return this.deps.activateNativeTools.execute({
+      projectRoot: options.projectRoot,
+      context,
+      claims: (toolId) => claimsViewOf(context, toolId),
+      scope,
+      enablePlugins: options.enablePlugins ?? [],
+    });
+  }
+
+  private async saveWhenProjectMirrored(
+    scope: Scope,
+    context: LoadedSyncContext,
+    mirror: () => Promise<boolean>
+  ): Promise<void> {
+    if (scope === "project" && (await mirror())) await context.save();
+  }
+
+  private async recordActivationOf(run: ActivationRecording): Promise<void> {
     const { options, scope, context, activation } = run;
     const { projectRoot } = options;
     const { manifest, marketplaces } = context;
@@ -161,6 +134,13 @@ export class SyncSettings {
       narrowed: options.marketplaceNames !== undefined,
     });
     if (wroteHashes || wroteRegistrations) await context.save();
+    await this.recordMachineClaims(run);
+  }
+
+  private async recordMachineClaims(run: ActivationRecording): Promise<void> {
+    const { options, scope, context, activation } = run;
+    const { projectRoot } = options;
+    const { manifest, marketplaces } = context;
     await this.deps.recordActivation.execute({
       kind: "machine-claims",
       project: manifest,

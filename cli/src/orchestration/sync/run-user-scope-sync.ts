@@ -1,8 +1,9 @@
 import type { ReadMachineInstallation } from "../../contexts/installation/application/doctor/read-machine-installation.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { SyncSettingsResult } from "../domain/sync-settings.model.js";
 import { SyncFailedError, UserScopeFilterUnsupportedError } from "../orchestration.error.js";
 import type { UpdateUserPlugin } from "../plugin/update-user-plugin.js";
-import type { SyncSettings, SyncSettingsResult } from "./sync-settings.js";
+import type { SyncSettings } from "./sync-settings.js";
 
 export interface RunUserScopeSyncCommand {
   projectRoot: string;
