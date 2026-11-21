@@ -1,4 +1,5 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { pluginAgentName } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, SupportedArtifact } from "../../../tools/contract/build-contract.js";
 import type { LinkForm } from "./links.js";
 
@@ -27,7 +28,12 @@ export function agentContent(content: string, artifact: SupportedArtifact, at: A
   const kept = shape ?? KEEPS_FRONTMATTER;
   return reshapeFrontmatter(content, {
     frontmatter: (frontmatter) =>
-      kept.frontmatter(frontmatter, { plugin: at.plugin, outName: at.outName }),
+      kept.frontmatter(
+        kept.pluginPrefixedName
+          ? { ...frontmatter, name: pluginAgentName(at.plugin, at.outName) }
+          : frontmatter,
+        { plugin: at.plugin, outName: at.outName }
+      ),
     quote: kept.quote,
   });
 }

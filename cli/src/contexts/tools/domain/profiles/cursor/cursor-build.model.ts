@@ -21,8 +21,8 @@ const OUTPUT_CURSOR_MANIFEST_RELATIVE = ".cursor-plugin/plugin.json";
 const OUTPUT_CURSOR_MARKETPLACE_RELATIVE = ".cursor-plugin/marketplace.json";
 
 const cursorAgentMarkdown: AgentMarkdown = {
-  frontmatter: (frontmatter, { plugin, outName }) =>
-    cursorAgentFrontmatter({ ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}` }),
+  frontmatter: (frontmatter) => cursorAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
   quote: "double",
 };
 

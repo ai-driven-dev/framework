@@ -1,6 +1,9 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
-import { genericFlatSkillPath } from "../../../../../shared/domain/materialization/flat-paths.js";
+import {
+  genericFlatSkillPath,
+  pluginAgentName,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
@@ -13,17 +16,13 @@ function antigravityFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(ANTIGRAVITY_SKILLS_DIR, plugin, rel.replace(/^skills\//, ""));
 }
 
-function agentName(plugin: string, rel: string): string {
-  return `${plugin}-${rel.replace(/^agents\//, "").replace(/(\.agent)?\.md$/, "")}`;
-}
-
 function antigravityFlatAgentPath(plugin: string, rel: string): string {
-  return `${ANTIGRAVITY_AGENTS_DIR}${agentName(plugin, rel)}/agent.md`;
+  return `${ANTIGRAVITY_AGENTS_DIR}${pluginAgentName(plugin, rel.replace(/^agents\//, ""))}/agent.md`;
 }
 
 const antigravityAgentMarkdown: AgentMarkdown = {
-  frontmatter: (frontmatter, { plugin, outName }) =>
-    portableAgentFrontmatter(frontmatter, agentName(plugin, `agents/${outName}`)),
+  frontmatter: (frontmatter) => portableAgentFrontmatter(frontmatter, String(frontmatter.name)),
+  pluginPrefixedName: true,
 };
 
 export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuildContract {

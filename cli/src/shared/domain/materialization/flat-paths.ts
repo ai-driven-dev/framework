@@ -1,3 +1,14 @@
+/** An agent file's name without its extension: `.md`, or `.md` after an `.agent` infix. */
+export function agentStem(agentFile: string): string {
+  return agentFile.replace(/(\.agent)?\.md$/, "");
+}
+
+/** The name a flat layout gives an agent: its plugin and its file, so two plugins' agents of one
+ * file name stay two agents. */
+export function pluginAgentName(plugin: string, agentFile: string): string {
+  return `${plugin}-${agentStem(agentFile)}`;
+}
+
 /**
  * Flat mode carries no `<plugin>/` directory segment: the plugin name is hyphen-prefixed
  * onto the leaf filename instead, so a tool discovers the file at the depth it expects and
@@ -14,8 +25,7 @@ export function genericFlatAgentPath({
   agentBaseName: string;
   outputExt: string;
 }): string {
-  const withoutMd = agentBaseName.endsWith(".md") ? agentBaseName.slice(0, -3) : agentBaseName;
-  return `${agentsPrefix}${plugin}-${withoutMd}${outputExt}`;
+  return `${agentsPrefix}${pluginAgentName(plugin, agentBaseName)}${outputExt}`;
 }
 
 /**

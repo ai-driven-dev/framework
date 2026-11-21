@@ -36,6 +36,24 @@ describe("agentContent", () => {
     expect(agentContent(SOURCE, artifact, { ...at, unshaped: "carry" })).toContain('name: "x"');
   });
 
+  it("names an agent after its plugin and file when the tool asks, whatever the source called it", () => {
+    const artifact: Supported = {
+      ...base,
+      agentMarkdown: { frontmatter: (fm) => ({ name: fm.name }), pluginPrefixedName: true },
+    };
+
+    expect(agentContent(SOURCE, artifact, { ...at, unshaped: "carry" })).toContain("name: 'p-x'");
+    expect(
+      agentContent(SOURCE, artifact, { ...at, outName: "y.agent.md", unshaped: "carry" })
+    ).toContain("name: 'p-y'");
+  });
+
+  it("keeps the source's name when the tool does not ask", () => {
+    const artifact: Supported = { ...base, agentMarkdown: { frontmatter: (fm) => fm } };
+
+    expect(agentContent(SOURCE, artifact, { ...at, unshaped: "carry" })).toContain("name: 'x'");
+  });
+
   it("hands the whole conversion to a tool whose agent is no markdown", () => {
     const artifact: Supported = { ...base, transform: (content, plugin) => `${plugin}:${content}` };
 

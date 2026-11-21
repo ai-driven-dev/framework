@@ -48,8 +48,8 @@ const claudeAgentMarkdown: AgentMarkdown = {
 };
 
 const claudeFlatAgentMarkdown: AgentMarkdown = {
-  frontmatter: (frontmatter, { plugin, outName }) =>
-    claudeAgentFrontmatter({ ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}` }),
+  frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
 };
 
 export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {

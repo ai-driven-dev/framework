@@ -89,8 +89,8 @@ const copilotAgentMarkdown: AgentMarkdown = {
 };
 
 const copilotFlatAgentMarkdown: AgentMarkdown = {
-  frontmatter: (frontmatter, { plugin, outName }) =>
-    copilotAgentFrontmatter({ ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}` }),
+  frontmatter: (frontmatter) => copilotAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
 };
 
 export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {

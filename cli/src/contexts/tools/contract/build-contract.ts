@@ -37,6 +37,9 @@ export interface AgentMarkdown {
     frontmatter: Record<string, unknown>,
     of: { readonly plugin: string; readonly outName: string }
   ) => Record<string, unknown>;
+  /** The engine gives the agent the name its plugin and file make, `<plugin>-<file>`, in place of
+   * the source's: for a layout that holds every plugin's agents in one place. */
+  readonly pluginPrefixedName?: true;
   /** `double` for a reader that keeps single quotes literally. */
   readonly quote?: "double";
 }
