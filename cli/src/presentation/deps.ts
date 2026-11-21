@@ -4,7 +4,6 @@ import type { LogOut } from "../contexts/auth/application/log-out.js";
 import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
-import type { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.js";
 import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
@@ -13,7 +12,6 @@ import type { UpdatePlugin } from "../contexts/installation/application/plugin/u
 import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.js";
 import type { UserPluginRemoveOptions } from "../contexts/installation/application/removal/remove-user-plugin.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
-import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
@@ -22,6 +20,7 @@ import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/f
 import type { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.js";
 import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
+import type { ResolveIdentityRequest } from "../contexts/telemetry/application/identity/resolve-identity-request.js";
 import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
 import type { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.js";
@@ -41,11 +40,10 @@ import type { SelfUpdate } from "../contexts/update/application/self-update.js";
 import type { SetAgentModels } from "../orchestration/agent-models/set-agent-models.js";
 import type { CleanProject } from "../orchestration/clean/clean-project.js";
 import type { CleanUserScope } from "../orchestration/clean/clean-user-scope.js";
-import type { CheckRegistration } from "../orchestration/doctor/check-registration.js";
 import type { RunDoctor } from "../orchestration/doctor/run-doctor.js";
+import type { RunUserScopeDoctor } from "../orchestration/doctor/run-user-scope-doctor.js";
 import type { DoctorAll } from "../orchestration/global/doctor-all.js";
 import type { ReportAllStatus } from "../orchestration/global/report-all-status.js";
-import type { RestoreAll } from "../orchestration/global/restore-all.js";
 import type { UpdateTools } from "../orchestration/global/update-tools.js";
 import type { AddMarketplace } from "../orchestration/marketplace/add-marketplace.js";
 import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check-marketplace-upstream.js";
@@ -54,6 +52,8 @@ import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-
 import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { RunSetup } from "../orchestration/setup/run-setup.js";
+import type { RunSync } from "../orchestration/sync/run-sync.js";
+import type { RunUserScopeSync } from "../orchestration/sync/run-user-scope-sync.js";
 import type { SyncNativeActivation } from "../orchestration/sync/sync-native-activation.js";
 import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
 import type { Environment } from "../shared/ports/environment.js";
@@ -99,12 +99,10 @@ export interface TelemetryRequests {
   resolveReportRequest: Pick<ResolveReportRequest, "execute">;
   checkOnRequest: Pick<CheckOnRequest, "execute">;
   checkFilterValue: Pick<CheckFilterValue, "execute">;
+  resolveIdentityRequest: Pick<ResolveIdentityRequest, "execute">;
 }
 
 export interface Deps {
-  /** The machine's installation record `--scope user` shows: `userConfigDir()/manifest.json`,
-   * never nested under a project's `.aidd/`. */
-  readMachineInstallation: Pick<ReadMachineInstallation, "execute">;
   /** The one home-directory resolver presentation calls, never `os.homedir()` directly, so a
    * test can point it elsewhere. */
   homedir: () => string;
@@ -135,16 +133,15 @@ export interface Deps {
   syncSettingsUseCase: Pick<SyncSettings, "execute">;
   syncNativeActivation: Pick<SyncNativeActivation, "execute">;
   doctorUseCase: Pick<RunDoctor, "execute">;
-  /** The registration check alone, reused directly by `doctor --scope user`. */
-  doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;
+  runUserScopeDoctor: Pick<RunUserScopeDoctor, "execute">;
   runSetup: Pick<RunSetup, "execute">;
   /** The agents' provider and the main session's model: set by `setup`, forgotten by `clean`. */
   setAgentModels: Pick<SetAgentModels, "execute" | "reset">;
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
-  restoreToolUseCase: Pick<RestoreTool, "execute">;
   statusAllUseCase: Pick<ReportAllStatus, "execute">;
-  restoreAllUseCase: Pick<RestoreAll, "execute">;
+  runSync: Pick<RunSync, "execute">;
+  runUserScopeSync: Pick<RunUserScopeSync, "execute">;
   updateToolsUseCase: Pick<UpdateTools, "execute">;
   cleanUseCase: Pick<CleanProject, "execute">;
   cleanUserScopeUseCase: Pick<CleanUserScope, "execute">;

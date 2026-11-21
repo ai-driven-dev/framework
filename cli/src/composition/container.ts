@@ -208,14 +208,11 @@ class ContainerGraph implements Graph {
   get choosePlugins() {
     return this.container.setup.choosePlugins;
   }
-  get readMachineInstallation() {
-    return this.container.installation.readMachineInstallation;
+  get runSync() {
+    return this.container.global.runSync;
   }
-  get restoreAllUseCase() {
-    return this.container.global.restoreAllUseCase;
-  }
-  get restoreToolUseCase() {
-    return this.container.global.restoreToolUseCase;
+  get runUserScopeSync() {
+    return this.container.global.runUserScopeSync;
   }
   get syncSettingsUseCase() {
     return this.container.marketplace.syncSettingsUseCase;
@@ -286,8 +283,8 @@ class ContainerGraph implements Graph {
   get environment() {
     return this.container.shared.environment;
   }
-  get doctorRegistrationUseCase() {
-    return this.container.doctor.doctorRegistrationUseCase;
+  get runUserScopeDoctor() {
+    return this.container.doctor.runUserScopeDoctor;
   }
   get cleanUseCase() {
     return this.container.clean.cleanUseCase;

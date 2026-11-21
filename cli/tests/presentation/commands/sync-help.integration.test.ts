@@ -2,7 +2,6 @@ import { Command } from "commander";
 import { describe, expect, it } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
@@ -15,7 +14,7 @@ describe("aidd sync — the help surface", () => {
   function syncCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerSyncCommand(program, catalogOf(), noDeps);
+    registerSyncCommand(program, noDeps);
     const sync = program.commands.find((command) => command.name() === "sync");
     if (sync === undefined) throw new Error("sync command was not registered");
     return sync;

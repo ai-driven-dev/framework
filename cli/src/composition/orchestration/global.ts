@@ -26,6 +26,8 @@ import {
   SetupMachineScope,
   type SyncMachineScope,
 } from "../../orchestration/setup/setup-machine-scope.js";
+import { RunSync } from "../../orchestration/sync/run-sync.js";
+import { RunUserScopeSync } from "../../orchestration/sync/run-user-scope-sync.js";
 import type { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import { contentSectionInstallers, type Installation } from "../installation.js";
 import type { Base } from "../shared.js";
@@ -137,9 +139,21 @@ export function wireGlobal(parts: GlobalParts) {
     installation.detectPluginDriftUseCase,
     tools
   );
+  const restore = wireRestore(base, installation, statusUseCase);
   return {
     ...wireToolLifecycle(parts),
-    ...wireRestore(base, installation, statusUseCase),
+    ...restore,
+    runSync: new RunSync(
+      restore.restoreAllUseCase,
+      restore.restoreToolUseCase,
+      syncSettingsUseCase
+    ),
+    runUserScopeSync: new RunUserScopeSync(
+      installation.readMachineInstallation,
+      plugin.userPluginUpdateUseCase,
+      syncSettingsUseCase,
+      tools
+    ),
     projectContextDetector: new DetectProjectContext(fs),
     setupMachineScope,
     statusUseCase,

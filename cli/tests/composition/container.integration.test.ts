@@ -56,7 +56,7 @@ describe("the graph a container hands the commands", () => {
     const walked = vi.spyOn(handed, "inHelpOrder");
 
     const graph = await graphOf(root, { verbose: false }, undefined, handed);
-    graph.doctorRegistrationUseCase;
+    graph.runUserScopeDoctor;
 
     expect(walked).toHaveBeenCalled();
   });

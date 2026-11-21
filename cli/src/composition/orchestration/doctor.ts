@@ -12,6 +12,7 @@ import { LoadManifestForDoctor } from "../../contexts/installation/application/d
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.js";
+import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.js";
 import { doctorAll } from "../../orchestration/global/doctor-all.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Installation } from "../installation.js";
@@ -69,10 +70,13 @@ export function wireDoctor(base: Base, inst: Installation) {
     tools
   );
   // `doctor --scope user` checks the same registrations against the machine-wide manifest.
-  const doctorRegistrationUseCase = registrationOver(new LoadManifest(userManifestRepo));
+  const runUserScopeDoctor = new RunUserScopeDoctor(
+    inst.readMachineInstallation,
+    registrationOver(new LoadManifest(userManifestRepo))
+  );
   const doctorAllUseCase = {
     execute: (projectRoot: string, pluginName?: string) =>
       doctorAll(doctorUseCase, projectRoot, pluginName),
   };
-  return { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase };
+  return { doctorUseCase, runUserScopeDoctor, doctorAllUseCase };
 }

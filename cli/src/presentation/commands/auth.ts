@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
-import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { failCommand } from "../errors/error-translator.js";
@@ -50,7 +49,6 @@ async function askCredential(prompter: Prompting, options: LoginOptions): Promis
   const wantsPat = await prompter.confirm("Do you have a Personal Access Token?");
   if (!wantsPat) return { method: "external", provider: "gh" };
   const token = await prompter.input("Paste your GitHub Personal Access Token:");
-  if (!token) throw new InputRequiredError("Token cannot be empty.");
   return { method: "stored", token };
 }
 

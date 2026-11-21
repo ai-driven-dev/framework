@@ -130,16 +130,13 @@ describe("aidd auth login, what it asks a person at a terminal", () => {
     expect(login).toHaveBeenCalledWith({ method: "stored", token: "ghp_asked" }, "user");
   });
 
-  it("refuses an empty paste rather than storing a credential of nothing", async () => {
+  it("hands an empty paste to the log-in, which refuses it", async () => {
     pretendTerminal(true);
     promptInput.mockResolvedValue("");
-    const exit = refusing();
 
-    await expect(run("login", "--level", "user")).rejects.toThrow("exited");
+    await run("login", "--level", "user");
 
-    expect(errors[0]).toBe("Error: Token cannot be empty.\n");
-    expect(exit).toHaveBeenCalledWith(1);
-    expect(login).not.toHaveBeenCalled();
+    expect(login).toHaveBeenCalledWith({ method: "stored", token: "" }, "user");
   });
 });
 

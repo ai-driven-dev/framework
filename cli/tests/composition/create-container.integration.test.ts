@@ -86,7 +86,7 @@ describe("createContainer", () => {
       slice.addMarketplace,
       slice.marketplaceCheckUseCase,
       slice.syncSettingsUseCase,
-      slice.restoreAllUseCase,
+      slice.runSync,
     ])
       expect(member.execute).toBeTypeOf("function");
     expect(slice.userManifestRepo.load).toBeTypeOf("function");
@@ -98,7 +98,7 @@ describe("createContainer", () => {
     for (const member of [
       slice.doctorAllUseCase,
       slice.statusAllUseCase,
-      slice.doctorRegistrationUseCase,
+      slice.runUserScopeDoctor,
       slice.cleanUseCase,
       slice.cleanUserScopeUseCase,
       slice.installAiToolUseCase,

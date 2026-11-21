@@ -63,12 +63,5 @@
   "exemptProfileImport": [],
   "exemptProfileList": [],
   "profile": [],
-  "controllerBuildsError": [
-    "src/presentation/commands/auth.ts :: new InputRequiredError",
-    "src/presentation/commands/doctor.ts :: new UserScopeFilterUnsupportedError",
-    "src/presentation/commands/plugin.ts :: new UnknownAiToolIdError",
-    "src/presentation/commands/sync.ts :: new SyncFailedError",
-    "src/presentation/commands/sync.ts :: new UserScopeFilterUnsupportedError",
-    "src/presentation/commands/telemetry.ts :: new IdentityOffWithIdentifierError"
-  ]
+  "controllerBuildsError": []
 }

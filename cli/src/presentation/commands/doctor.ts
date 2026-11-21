@@ -13,7 +13,6 @@ import {
   printUserScopeTools,
 } from "../display/doctor-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { UserScopeFilterUnsupportedError } from "../presentation.error.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -22,10 +21,9 @@ type DoctorKeys =
   | "statusAllUseCase"
   | "doctorUseCase"
   | "statusUseCase"
-  | "readMachineInstallation"
+  | "runUserScopeDoctor"
   | "homedir"
-  | "environment"
-  | "doctorRegistrationUseCase";
+  | "environment";
 
 interface DoctorRun {
   deps: Pick<Deps, DoctorKeys>;
@@ -130,9 +128,8 @@ async function runScopedDoctor({
   output.exit(1);
 }
 
-/** A user-scope install writes nothing under any project, so the only check left is
- * `doctorRegistrationUseCase` against the user manifest: registrations versus a host's own
- * registry file, the one check that is not project-file-shaped. */
+/** A user-scope install writes nothing under any project: the scenario checks the registrations
+ * against the user manifest, and this prints what it finds as it finds it. */
 async function runUserScopeDoctor({
   tools,
   deps,
@@ -140,41 +137,36 @@ async function runUserScopeDoctor({
   projectRoot,
   cmdOptions,
 }: DoctorRun & { tools: ToolCatalog; cmdOptions: DoctorCmdOptions }): Promise<void> {
-  // At user scope doctor checks registrations, not plugin files: there is nothing `--plugin`
-  // could narrow: so it is refused rather than silently read and discarded.
-  if (cmdOptions.plugin !== undefined) {
-    throw new UserScopeFilterUnsupportedError("--plugin", "doctor --plugin <name>");
-  }
-  const manifest = await deps.readMachineInstallation.execute();
-  if (manifest === null) {
+  const { tool } = cmdOptions;
+  const issues = await deps.runUserScopeDoctor.execute(
+    { projectRoot, tool, plugin: cmdOptions.plugin },
+    {
+      registered: (manifest) => {
+        const toolIds: readonly string[] = tool === undefined ? manifest.toolIds : [tool];
+        printUserScopeTools(
+          output,
+          toolIds.map((id) => {
+            const profile = tools.profile(id);
+            const settingsFile =
+              profile.kind === "ai"
+                ? profile
+                    .nativeActivation()
+                    ?.userSettingsFile(deps.homedir(), (name) => deps.environment.get(name))
+                : undefined;
+            return {
+              toolId: profile.toolId,
+              version: manifest.versionOf(id) ?? "unknown",
+              settings: settingsFile ?? "no user-scope settings file",
+            };
+          })
+        );
+      },
+    }
+  );
+  if (issues === null) {
     output.success("Nothing registered at user scope yet — run `aidd setup --global` first.");
     return;
   }
-  const { tool } = cmdOptions;
-  const toolIds: readonly string[] = tool === undefined ? manifest.toolIds : [tool];
-  printUserScopeTools(
-    output,
-    toolIds.map((id) => {
-      const profile = tools.profile(id);
-      const settingsFile =
-        profile.kind === "ai"
-          ? profile
-              .nativeActivation()
-              ?.userSettingsFile(deps.homedir(), (name) => deps.environment.get(name))
-          : undefined;
-      return {
-        toolId: profile.toolId,
-        version: manifest.versionOf(id) ?? "unknown",
-        settings: settingsFile ?? "no user-scope settings file",
-      };
-    })
-  );
-  const allowedIds = tool === undefined ? null : new Set([tool]);
-  const issues = await deps.doctorRegistrationUseCase.execute({
-    projectRoot,
-    allowedIds,
-    globalInstall: true,
-  });
   printScopeIssues(output, "User scope", { issues });
   const healthy = issues.every((i) => i.severity !== "error");
   if (healthy) {

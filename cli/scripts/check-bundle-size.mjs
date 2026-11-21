@@ -82,7 +82,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 822 KB: 821.4 KB, the installation context giving clean and config tracking one execute each; 0.05% measured headroom.
 // 824 KB: 823.3 KB, the installation context giving use cases and domain factories named-object parameters; 0.1% measured headroom.
 // 822 KB: 821.6 KB, the installation translators, flat MCP materialization, cache build, orphan removal and main-session settings taking one request object each; 0.05% measured headroom.
-// 825 KB: 824.2 KB, the installation lanes merged: use cases, translators and settings taking named-object parameters; 0.1% measured headroom.
+// 826 KB: 825.5 KB, the installation and controller lanes merged; 0.06% measured headroom.
+// 823 KB: 822.0 KB, the input checks and the sync failure moved from the controllers into their use cases and scenarios; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
