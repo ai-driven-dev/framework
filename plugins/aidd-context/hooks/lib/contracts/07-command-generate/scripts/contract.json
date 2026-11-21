@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "kind": "command",
+  "unit": "file",
+  "scope": [".claude/commands/*.md"],
+  "rules": {
+    "COMMAND-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/command-template.md",
+      "why": "one shape per command",
+      "fix": "follow command-template.md",
+      "optional": [
+        "argument-hint",
+        "model",
+        "agent",
+        "allowed-tools",
+        "disable-model-invocation"
+      ]
+    }
+  }
+}

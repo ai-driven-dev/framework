@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "kind": "agent",
+  "unit": "file",
+  "targets": "plugins/*/agents/*.md",
+  "scope": [".claude/agents/*.md"],
+  "rules": {
+    "AGENT-02": {
+      "op": "equals",
+      "in": "*.md",
+      "field": "name",
+      "to": "basename",
+      "why": "hosts resolve the agent by file name",
+      "fix": "set name to {expected}"
+    },
+    "AGENT-03": {
+      "op": "pattern",
+      "in": "*.md",
+      "field": "description",
+      "regex": "\\. Use to ",
+      "why": "A4: what it does, then when to call it",
+      "fix": "end the description with `Use to <when>`"
+    },
+    "AGENT-04": {
+      "op": "sections",
+      "in": "*.md",
+      "level": 1,
+      "allowed": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "order": true,
+      "required": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "why": "A5-A7: the caller reads role, boundary, then return format",
+      "fix": "use exactly # Role, # Behavior, # Output in that order"
+    },
+    "AGENT-05": {
+      "op": "forbidden",
+      "in": "*.md",
+      "regex": "\\{\\{[^{}\\n]*\\}\\}",
+      "why": "an unfilled slot is read as an instruction",
+      "fix": "fill the template slot"
+    }
+  }
+}

@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { main } = require("../../check/run.cjs");
+const { syncHooks } = require("../../check/engine/sync.cjs");
 const catalogs = require("../../check/generators/catalogs.cjs");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
@@ -26,6 +27,7 @@ beforeEach(() => {
   fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace("plugins/*/agents/*.md", "agents/*.md"));
   fs.mkdirSync(path.join(root, "agents"));
   fs.cpSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/executor.md"));
+  syncHooks({ root, write: true });
   catalogs.run({ root, write: true });
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -38,6 +40,16 @@ describe("repository run", () => {
     const bad = run();
     assert.equal(bad.status, 1);
     assert.match(bad.stdout, /^agents\/b\.md:\d+ AGENT-/mu);
+  });
+
+  it("fails on a stale hook copy naming it, and the sync repairs it", () => {
+    const copy = "plugins/aidd-context/hooks/artifacts.cjs";
+    fs.appendFileSync(path.join(root, copy), "// edited\n");
+    const stale = run();
+    assert.equal(stale.status, 1);
+    assert.match(stale.stdout, new RegExp(`${copy.replaceAll(".", "\\.")} differs from its source`, "u"));
+    syncHooks({ root, write: true });
+    assert.equal(run().status, 0);
   });
 
   const baselined = (text) => {
@@ -118,6 +130,7 @@ describe("repository run", () => {
   it("skips a contract that names no targets", () => {
     const contractFile = path.join(root, AGENT_CONTRACT);
     fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace(/ *"targets": .*\n/u, ""));
+    syncHooks({ root, write: true });
     write("agents/b.md", "no front matter\n");
     assert.equal(run().status, 0);
   });

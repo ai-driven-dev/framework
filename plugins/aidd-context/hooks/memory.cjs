@@ -73,10 +73,18 @@ function realish(file) {
   }
 }
 
+/** The turn's one Stop answer: the written artifacts' findings, then what memory could not sync. This plugin has a single Stop entry, so both ride it. */
 function atTurnEnd(host, event) {
+  let artifacts = "";
+  try {
+    artifacts = require("./artifacts.cjs").atStop(event);
+  } catch {
+    // a broken artifact check never costs memory its own answer
+  }
   if (event.stopActive) return;
   const root = realish(path.resolve(event.cwd));
-  const text = sync(root, { onlyMissing: true }).map((message) => `${PLUGIN}: ${message}`).join("\n");
+  const memory = sync(root, { onlyMissing: true }).map((message) => `${PLUGIN}: ${message}`).join("\n");
+  const text = [artifacts, memory].filter((part) => part !== "").join("\n");
   if (text !== "") host.answer({ level: 1, text, person: text });
 }
 

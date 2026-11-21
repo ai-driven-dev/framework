@@ -92,4 +92,4 @@ Release rules: [Release](../RELEASE.md#rules).
 | --- | --- |
 | Tool list in the README, `COMPATIBILITY.md` | `node scripts/sync-generated-docs.mjs` |
 | Counts, tables and plugin cards in the README, `CATALOG.md` files, `docs/ARCHITECTURE.md` blocks | `node scripts/check/run.cjs --fix` (the pre-commit hook runs it) |
-| `skills/*/scripts/lib/` | `node scripts/check/engine/sync.cjs`, from `scripts/check/engine/` |
+| `skills/*/scripts/lib/`, `hooks/artifacts.cjs`, `hooks/lib/contracts/` | `node scripts/check/engine/sync.cjs`, from `scripts/check/engine/` and each `contract.json` |
