@@ -1,15 +1,15 @@
 /** Builds an InstallPlugin over recorded delegates, a silent prompter and an in-memory manifest. */
 import { join } from "node:path";
 import { type Mock, vi } from "vitest";
-import { TrustPluginSource } from "../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.js";
+import { TrustPluginSource } from "../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.use-case.js";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
-import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.js";
+import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.js";
-import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
-import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.js";
-import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
+import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.use-case.js";
+import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
+import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.use-case.js";
+import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

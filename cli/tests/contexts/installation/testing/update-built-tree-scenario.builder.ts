@@ -1,11 +1,11 @@
 import { join } from "node:path";
-import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
+import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
-import { UpdateUserPluginFiles } from "../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
+import { UpdateUserPluginFiles } from "../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { IsWithinUserScope } from "../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
-import { UpdateUserPlugin } from "../../../../src/orchestration/plugin/update-user-plugin.js";
+import { UpdateUserPlugin } from "../../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import type { buildInstallationDeps } from "../../../shared/testing/installation-deps.builder.js";

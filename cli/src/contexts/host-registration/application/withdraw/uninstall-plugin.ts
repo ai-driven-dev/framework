@@ -4,12 +4,12 @@ import { readRegistrationRecord } from "../../domain/record/registration-record.
 import type { HostActions } from "../../ports/host-actions.js";
 import { hostNameFor, uninstallAtFirstAcceptedScope } from "./host-call.js";
 import { resolveUninstallScopeOrder } from "./uninstall-scope-order.js";
-import type { WithdrawalDeps, WithdrawFromHostCommand } from "./withdrawal.js";
+import type { WithdrawalDeps, WithdrawFromHostRequest } from "./withdrawal.js";
 
 /** Returns `undefined` when nothing was undone, else whether the host's own CLI confirmed it. */
 export async function uninstallPlugin(
   deps: WithdrawalDeps,
-  command: WithdrawFromHostCommand
+  command: WithdrawFromHostRequest
 ): Promise<boolean | undefined> {
   const { tool, plugin, projectRoot } = command;
   const registrations = readRegistrationRecord(command.registrations);
@@ -39,7 +39,7 @@ export async function uninstallPlugin(
 async function refLeftEnabledUnless(
   deps: WithdrawalDeps,
   request: {
-    readonly command: WithdrawFromHostCommand;
+    readonly command: WithdrawFromHostRequest;
     readonly activator: HostActions;
     readonly binary: string;
   }

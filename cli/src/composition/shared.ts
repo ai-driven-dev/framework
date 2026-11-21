@@ -1,4 +1,4 @@
-import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";

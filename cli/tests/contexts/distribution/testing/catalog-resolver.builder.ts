@@ -1,5 +1,5 @@
-import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
 import { cloneRequiringRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 

@@ -133,21 +133,21 @@ export const STORED_ANSWERS: readonly {
   {
     file: `${ANSWER_FILE}/sections/config-section.ts`,
     member: "ConfigSection.outputPath",
-    caller: "installation/application/install/config/install-ide-config.ts",
+    caller: "installation/application/install/config/install-ide-config.use-case.ts",
     reason: "the path is checked against the manifest and its basename names the asset to load",
   },
   {
     file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
     member: "MarketplaceRegistration.sharedSettingsFile",
     caller:
-      "installation/application/sync/sync-tool-settings-files.ts, installation/application/sync/record-activation.ts",
+      "installation/application/sync/sync-tool-settings-files.use-case.ts, installation/application/sync/record-activation.use-case.ts",
     reason: "the path is read, written, hashed and matched against the manifest",
   },
   {
     file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
     member: "NativeActivation.hostBinary",
     caller:
-      "host-registration/application, installation/application/sync/record-activation.ts, composition/host-registration.ts",
+      "host-registration/application, installation/application/sync/record-activation.use-case.ts, composition/host-registration.ts",
     reason: "the binary is looked up on the PATH and keys the host's activator",
   },
   {

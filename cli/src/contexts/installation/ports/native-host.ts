@@ -104,7 +104,7 @@ export interface RegistrationRecordRules {
  * is removable: installation only hands back what `proveClaimedRef` gave it, never reads it.
  */
 export interface HostWithdrawal<Proof> {
-  readonly assertProjectSource: (command: ProjectSourceCommand) => Promise<void>;
+  readonly assertProjectSource: (command: ProjectSourceRequest) => Promise<void>;
   readonly proveClaimedRef: (
     registrations: NativeRegistrations,
     claim: ClaimedHostRef,
@@ -112,7 +112,7 @@ export interface HostWithdrawal<Proof> {
   ) => Promise<Proof>;
   readonly uninstallProven: (proof: Proof) => Promise<void>;
   /** `undefined` when nothing was registered, else whether the host confirmed. */
-  readonly execute: (command: WithdrawFromHostCommand) => Promise<boolean | undefined>;
+  readonly execute: (command: WithdrawFromHostRequest) => Promise<boolean | undefined>;
 }
 
 /** What installation does to a host once a catalogue removal is proven. */
@@ -142,7 +142,7 @@ interface WithdrawnPlugin {
   readonly scope: Scope;
 }
 
-export interface WithdrawFromHostCommand {
+export interface WithdrawFromHostRequest {
   readonly tool: NativeHostTool;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
@@ -151,8 +151,8 @@ export interface WithdrawFromHostCommand {
   readonly pluginCacheRoot: string | undefined;
 }
 
-export type ProjectSourceCommand = Pick<
-  WithdrawFromHostCommand,
+export type ProjectSourceRequest = Pick<
+  WithdrawFromHostRequest,
   "tool" | "projectRoot" | "registrations"
 > & {
   readonly plugin: WithdrawnPlugin;

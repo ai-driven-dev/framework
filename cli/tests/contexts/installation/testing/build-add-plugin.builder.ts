@@ -1,11 +1,11 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
-import type { InstallRuntimeConfig } from "../../../../src/contexts/installation/application/install/config/install-runtime-config.js";
-import { PlacePlugin } from "../../../../src/contexts/installation/application/plugin/add/place-plugin.js";
-import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.js";
+import type { InstallRuntimeConfig } from "../../../../src/contexts/installation/application/install/config/install-runtime-config.use-case.js";
+import { PlacePlugin } from "../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
+import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import {
   AddPlugin,
   type AddPluginManifests,
-} from "../../../../src/contexts/installation/application/plugin/add-plugin.js";
+} from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import type { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";

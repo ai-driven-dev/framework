@@ -1,6 +1,6 @@
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.js";
+import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.use-case.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";

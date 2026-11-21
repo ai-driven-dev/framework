@@ -12,7 +12,7 @@ const GUARD = path.resolve(__dirname, "..", "check-cli-type-honesty.mjs");
  * directory. Both cli/src and cli/tests must exist: a missing one throws ENOENT, which exits
  * non-zero with no breach and would pass an exit-code-only assertion for the wrong reason.
  */
-const ALLOWED_CAST_FILE = "cli/src/contexts/translate/application/build-native-tree.ts";
+const ALLOWED_CAST_FILE = "cli/src/contexts/translate/application/build-native-tree.use-case.ts";
 const A_CAST = "const parsed = raw as unknown as SourceMarketplace;";
 
 function plant(dir, files) {
@@ -26,7 +26,7 @@ function plant(dir, files) {
 const TSCONFIG = JSON.stringify({ include: ["src/**/*", "tests/**/*"] });
 
 /** Every fixture counts its one tolerated cast (`as unknown as` is two assertions), so a case only moves the counts it plants. */
-const ALLOWED_CAST_BASELINE = { "src/contexts/translate/application/build-native-tree.ts": 2 };
+const ALLOWED_CAST_BASELINE = { "src/contexts/translate/application/build-native-tree.use-case.ts": 2 };
 
 /** A hook runs with GIT_DIR and GIT_INDEX_FILE set: left in, a fixture's git would act on the repository being committed. */
 const withoutGitEnv = () =>
@@ -106,7 +106,7 @@ test("an allowance nobody spends is named, so a fixed cast drops its entry", () 
   const stale = runOn({ [ALLOWED_CAST_FILE]: "export const parsed: SourceMarketplace = build();" });
 
   assert.equal(stale.status, 1);
-  assert.match(stale.output, /build-native-tree\.ts no longer casts - drop its CASTS_ALLOWED entry/);
+  assert.match(stale.output, /build-native-tree\.use-case\.ts no longer casts - drop its CASTS_ALLOWED entry/);
 });
 
 const MINTS_A_TOOL_ID = [

@@ -6,12 +6,12 @@ import type { NativeMarketplaceRegistration } from "../../domain/record/native-m
 import { readRegistrationRecord } from "../../domain/record/registration-record.js";
 import { assertSourceOwned, inspectHostSource } from "../native-marketplace-source-proof.js";
 import { reachableActivator } from "../reachable-activator.js";
-import type { ProjectSourceCommand, WithdrawalDeps } from "./withdrawal.js";
+import type { ProjectSourceRequest, WithdrawalDeps } from "./withdrawal.js";
 
 /** Refuses, before any change, a removal the host's own state does not prove safe. */
 export async function assertProjectSource(
   deps: WithdrawalDeps,
-  command: ProjectSourceCommand
+  command: ProjectSourceRequest
 ): Promise<void> {
   const { tool, plugin, projectRoot } = command;
   const registrations = readRegistrationRecord(command.registrations);
@@ -38,7 +38,7 @@ export async function assertProjectSource(
 }
 
 function recordedCatalogue(
-  command: ProjectSourceCommand,
+  command: ProjectSourceRequest,
   registrations: ReturnType<typeof readRegistrationRecord>
 ): NativeMarketplaceRegistration {
   const { tool, plugin } = command;
@@ -54,7 +54,7 @@ function recordedCatalogue(
 
 /** Refuses a ref this project neither holds a machine claim on nor enabled itself. */
 async function assertRefOwned(
-  command: ProjectSourceCommand,
+  command: ProjectSourceRequest,
   held: {
     readonly ref: string;
     readonly enabledByProject: boolean;

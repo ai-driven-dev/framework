@@ -18,20 +18,20 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../contexts/host-registration/domain/record/registration-record.js";
-import { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.js";
-import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.js";
-import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.js";
-import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.js";
-import { PropagateAiSettingsToIde } from "../contexts/installation/application/install/propagate-ai-settings-to-ide.js";
-import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
-import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
+import { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.use-case.js";
+import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.use-case.js";
+import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.use-case.js";
+import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.use-case.js";
+import { PropagateAiSettingsToIde } from "../contexts/installation/application/install/propagate-ai-settings-to-ide.use-case.js";
+import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.use-case.js";
+import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.use-case.js";
 import {
   CacheBuiltMarketplace,
   type FrameworkBuilds,
-} from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
-import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
-import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.js";
-import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
+} from "../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
+import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
+import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
+import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../contexts/installation/contract/built-marketplace.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
@@ -40,7 +40,7 @@ import type { ManifestRepository } from "../contexts/installation/ports/manifest
 import type { RegistrationRecordRules } from "../contexts/installation/ports/native-host.js";
 import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.js";
+import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";

@@ -1,66 +1,66 @@
-import type { CheckStatus } from "../contexts/auth/application/check-status.js";
-import type { LogIn } from "../contexts/auth/application/log-in.js";
-import type { LogOut } from "../contexts/auth/application/log-out.js";
-import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
-import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.js";
-import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
-import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
-import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
-import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
-import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
-import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
-import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.js";
-import type { UserPluginRemoveOptions } from "../contexts/installation/application/removal/remove-user-plugin.js";
-import type { ReportStatus } from "../contexts/installation/application/report-status.js";
-import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
-import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
-import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
-import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
-import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
-import type { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.js";
-import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
-import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
-import type { ResolveIdentityRequest } from "../contexts/telemetry/application/identity/resolve-identity-request.js";
-import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
-import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
-import type { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.js";
-import type { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
-import type { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
-import type { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.js";
-import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
-import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
-import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
+import type { CheckStatus } from "../contexts/auth/application/check-status.use-case.js";
+import type { LogIn } from "../contexts/auth/application/log-in.use-case.js";
+import type { LogOut } from "../contexts/auth/application/log-out.use-case.js";
+import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.use-case.js";
+import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.use-case.js";
+import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.use-case.js";
+import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.use-case.js";
+import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.use-case.js";
+import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.use-case.js";
+import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
+import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.use-case.js";
+import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.use-case.js";
+import type { RemoveUserPluginRequest } from "../contexts/installation/application/removal/remove-user-plugin.use-case.js";
+import type { ReportStatus } from "../contexts/installation/application/report-status.use-case.js";
+import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.use-case.js";
+import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.use-case.js";
+import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
+import type { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
+import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
+import type { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.use-case.js";
+import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.use-case.js";
+import type { ParseIdentityFlags } from "../contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
+import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.use-case.js";
+import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.use-case.js";
+import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.use-case.js";
+import type { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.use-case.js";
+import type { ParseReportFlags } from "../contexts/telemetry/application/report/parse-report-flags.use-case.js";
+import type { RequestReport } from "../contexts/telemetry/application/report/request-report.use-case.js";
+import type { CheckTelemetryOn } from "../contexts/telemetry/application/switch/check-telemetry-on.use-case.js";
+import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.use-case.js";
+import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
+import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.use-case.js";
 import type {
   BuildNativeTree,
   FrameworkBuildContext,
-} from "../contexts/translate/application/build-native-tree.js";
-import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
-import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
-import type { SelfUpdate } from "../contexts/update/application/self-update.js";
+} from "../contexts/translate/application/build-native-tree.use-case.js";
+import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.use-case.js";
+import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.use-case.js";
+import type { SelfUpdate } from "../contexts/update/application/self-update.use-case.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
-import type { SetAgentModels } from "./agent-models/set-agent-models.js";
-import type { CleanProject } from "./clean/clean-project.js";
-import type { CleanUserScope } from "./clean/clean-user-scope.js";
-import type { RunDoctor } from "./doctor/run-doctor.js";
-import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.js";
+import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js";
+import type { CleanProject } from "./clean/clean-project.use-case.js";
+import type { CleanUserScope } from "./clean/clean-user-scope.use-case.js";
+import type { RunDoctor } from "./doctor/run-doctor.use-case.js";
+import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.use-case.js";
 import type { Output } from "./domain/output.js";
 import type { DoctorAll } from "./global/doctor-all.js";
-import type { ReportAllStatus } from "./global/report-all-status.js";
-import type { UpdateTools } from "./global/update-tools.js";
-import type { AddMarketplace } from "./marketplace/add-marketplace.js";
-import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-upstream.js";
-import type { RemoveProjectMarketplace } from "./marketplace/remove-project-marketplace.js";
-import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.js";
-import type { InstallPlugin } from "./plugin/install-plugin.js";
-import type { UpdateUserPlugin } from "./plugin/update-user-plugin.js";
-import type { RunSetup } from "./setup/run-setup.js";
-import type { RunSync } from "./sync/run-sync.js";
-import type { RunUserScopeSync } from "./sync/run-user-scope-sync.js";
-import type { SyncNativeActivation } from "./sync/sync-native-activation.js";
-import type { SyncSettings } from "./sync/sync-settings.js";
+import type { ReportAllStatus } from "./global/report-all-status.use-case.js";
+import type { UpdateTools } from "./global/update-tools.use-case.js";
+import type { AddMarketplace } from "./marketplace/add-marketplace.use-case.js";
+import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-upstream.use-case.js";
+import type { RemoveProjectMarketplace } from "./marketplace/remove-project-marketplace.use-case.js";
+import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.use-case.js";
+import type { InstallPlugin } from "./plugin/install-plugin.use-case.js";
+import type { UpdateUserPlugin } from "./plugin/update-user-plugin.use-case.js";
+import type { RunSetup } from "./setup/run-setup.use-case.js";
+import type { RunSync } from "./sync/run-sync.use-case.js";
+import type { RunUserScopeSync } from "./sync/run-user-scope-sync.use-case.js";
+import type { SyncNativeActivation } from "./sync/sync-native-activation.use-case.js";
+import type { SyncSettings } from "./sync/sync-settings.use-case.js";
 
 export interface FactoryOptions {
   verbose: boolean;
@@ -87,11 +87,11 @@ export type CommandRunner = (command: string[]) => Promise<number>;
 /** What a telemetry command's request alone can answer, built with no I/O so a refusal comes
  * before the dependencies are wired. */
 export interface TelemetryRequests {
-  resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
-  resolveReportRequest: Pick<ResolveReportRequest, "execute">;
-  checkOnRequest: Pick<CheckOnRequest, "execute">;
+  parseTaskFlags: Pick<ParseTaskFlags, "execute">;
+  parseReportFlags: Pick<ParseReportFlags, "execute">;
+  checkTelemetryOn: Pick<CheckTelemetryOn, "execute">;
   checkFilterValue: Pick<CheckFilterValue, "execute">;
-  resolveIdentityRequest: Pick<ResolveIdentityRequest, "execute">;
+  parseIdentityFlags: Pick<ParseIdentityFlags, "execute">;
 }
 
 export interface Deps {
@@ -107,7 +107,7 @@ export interface Deps {
   checkStatus: Pick<CheckStatus, "execute">;
   pluginRemoveUseCase: Pick<RemovePlugin, "execute">;
   /** The user-scope removal, its home directory already bound. */
-  userPluginRemove: { execute: (options: Omit<UserPluginRemoveOptions, "home">) => Promise<void> };
+  userPluginRemove: { execute: (options: Omit<RemoveUserPluginRequest, "home">) => Promise<void> };
   pluginListUseCase: Pick<ListPlugins, "execute">;
   pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;

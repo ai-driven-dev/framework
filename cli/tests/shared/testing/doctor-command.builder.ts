@@ -1,10 +1,10 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
-import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.js";
-import { registerDoctorCommand } from "../../../src/presentation/commands/doctor.js";
-import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
+import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.use-case.js";
+import { registerDoctorCommand } from "../../../src/presentation/controllers/doctor.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { processOutputFactory } from "./output-factory.builder.js";
 import { parseToExit } from "./parse-to-exit.builder.js";
 import { manifestRepositoryLoading } from "./partial-ports.builder.js";

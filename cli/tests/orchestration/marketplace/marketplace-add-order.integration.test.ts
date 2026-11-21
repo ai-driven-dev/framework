@@ -1,18 +1,18 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PrepareMarketplace } from "../../../src/contexts/distribution/application/add/prepare-marketplace.js";
-import { RecordMarketplace } from "../../../src/contexts/distribution/application/add/record-marketplace.js";
-import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
-import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { PrepareMarketplace } from "../../../src/contexts/distribution/application/add/prepare-marketplace.use-case.js";
+import { RecordMarketplace } from "../../../src/contexts/distribution/application/add/record-marketplace.use-case.js";
+import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
+import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
-import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.js";
-import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.js";
+import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.use-case.js";
+import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.use-case.js";
 import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";
 import {

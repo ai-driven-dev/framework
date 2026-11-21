@@ -1,5 +1,5 @@
 import { type Command, CommanderError } from "commander";
-import { outputOf } from "../../../src/presentation/commands/global-options.js";
+import { outputOf } from "../../../src/presentation/controllers/global-options.controller.js";
 import { failCommand } from "../../../src/presentation/errors/error-translator.presenter.js";
 import { ExitRequested } from "./capturing-output.fake.js";
 

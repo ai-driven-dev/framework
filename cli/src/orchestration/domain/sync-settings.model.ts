@@ -2,7 +2,7 @@ import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 
-export interface SyncSettingsOptions {
+export interface SyncSettingsRequest {
   projectRoot: string;
   /** Limits both the settings sync and the native activation to these tools; every
    * installed tool when absent. */

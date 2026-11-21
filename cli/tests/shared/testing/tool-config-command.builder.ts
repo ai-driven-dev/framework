@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
-import { bindOutput } from "../../../src/presentation/commands/global-options.js";
-import { registerToolConfigCommand } from "../../../src/presentation/commands/tool-config.js";
+import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
+import { registerToolConfigCommand } from "../../../src/presentation/controllers/tool-config.controller.js";
 import { processOutputFactory } from "./output-factory.builder.js";
 import { parseToExit } from "./parse-to-exit.builder.js";
 import { registeredTools, TOOL } from "./registered-tools.builder.js";

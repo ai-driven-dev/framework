@@ -1,9 +1,9 @@
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
-import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
-import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.js";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
+import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
-import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean-project-files.js";
+import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean-project-files.use-case.js";
 import {
   RemoveProjectFiles,
   type RemoveProjectFilesDeps,
@@ -14,7 +14,7 @@ import type { UserSourceReferences } from "../../../src/contexts/machine-claims/
 import {
   CleanProject,
   type CleanProjectDeps,
-} from "../../../src/orchestration/clean/clean-project.js";
+} from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";

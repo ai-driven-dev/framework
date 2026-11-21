@@ -7,14 +7,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
   IngestUsage,
   IngestUsageResult,
-} from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
+} from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import {
   ReportUsage,
-  type ReportUsageCommand,
-} from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+  type ReportUsageRequest,
+} from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import type { ReportFilters } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
@@ -252,7 +252,7 @@ async function inZone<T>(zone: Zone, work: () => Promise<T>): Promise<T> {
 async function report(
   held: Scenario,
   ledger: UsageLedgerAdapter,
-  request: ReportUsageCommand,
+  request: ReportUsageRequest,
   facts: Run,
   zone: Zone
 ) {
@@ -371,7 +371,7 @@ describe("the figures of a report", () => {
       { day: "2026-10-01", text: "x" },
       { day: "2026-10-01", text: "x" },
     ]);
-    const request: ReportUsageCommand = {
+    const request: ReportUsageRequest = {
       axis: "day",
       period: { from: "2026-10-01", to: "2026-10-01" },
     };

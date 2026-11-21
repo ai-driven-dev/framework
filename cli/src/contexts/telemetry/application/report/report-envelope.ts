@@ -11,7 +11,7 @@ import {
 } from "../../contract/usage-report.js";
 import { filtersOf } from "../../domain/report/report-filter.js";
 import type { LeftOutReason } from "../../ports/usage-ledger.js";
-import type { ReportUsageResult } from "./report-usage.js";
+import type { ReportUsageResult } from "./report-usage.use-case.js";
 
 /** A counter: the sum of the calls that reported it, and how many calls did not. A call that
  * did not report a counter is left out of the sum, never counted as zero. */

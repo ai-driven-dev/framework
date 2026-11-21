@@ -11,7 +11,7 @@ export interface MarketplaceToBuild {
   readonly scope: Scope;
 }
 
-export interface EnsureBuiltMarketplaceCommand {
+export interface EnsureBuiltMarketplaceRequest {
   readonly projectRoot: string;
   readonly marketplace: MarketplaceToBuild;
   readonly target: AiToolId;
@@ -38,6 +38,6 @@ export interface ResolvedMarketplace {
  */
 export interface BuiltMarketplaceEnsurer {
   readonly execute: (
-    options: EnsureBuiltMarketplaceCommand
+    options: EnsureBuiltMarketplaceRequest
   ) => Promise<EnsureBuiltMarketplaceResult>;
 }

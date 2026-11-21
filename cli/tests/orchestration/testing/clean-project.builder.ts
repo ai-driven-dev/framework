@@ -4,7 +4,7 @@ import type { HostActions } from "../../../src/contexts/host-registration/ports/
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.js";
+import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";

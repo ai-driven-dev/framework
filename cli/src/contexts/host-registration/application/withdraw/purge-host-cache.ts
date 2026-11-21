@@ -13,7 +13,7 @@ import type {
   CacheCandidateResolver,
   RemovedFromHost,
   WithdrawalDeps,
-  WithdrawFromHostCommand,
+  WithdrawFromHostRequest,
 } from "./withdrawal.js";
 
 /** What a purge reads and deletes with. */
@@ -56,7 +56,7 @@ async function deleteWhenJudged(
  */
 export async function purgeCachedPlugin(
   deps: PurgeDeps,
-  command: WithdrawFromHostCommand,
+  command: WithdrawFromHostRequest,
   confirmed: boolean
 ): Promise<void> {
   const { tool, plugin, claims, pluginCacheRoot } = command;

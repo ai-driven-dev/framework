@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import type {
   RegisterFrameworkMarketplace,
-  RegisterFrameworkMarketplaceCommand,
-} from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+  RegisterFrameworkMarketplaceRequest,
+} from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { BUILT_CACHE_SUBDIR } from "../../../src/shared/domain/layout/aidd-layout.js";
@@ -56,7 +56,7 @@ export function staleCacheAndCatalog(): InMemoryFileAdapter {
 }
 
 export function recordingRegister(
-  calls: RegisterFrameworkMarketplaceCommand[]
+  calls: RegisterFrameworkMarketplaceRequest[]
 ): Pick<RegisterFrameworkMarketplace, "execute"> {
   return {
     execute: async (options) => {

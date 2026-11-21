@@ -1,0 +1,236 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
+import { SearchPlugins } from "../../../../../src/contexts/distribution/application/plugin-source/search-plugins.use-case.js";
+import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { unusedRawCatalog } from "../../../../shared/testing/raw-catalog.fake.js";
+
+const PROJECT_ROOT = "/test-project";
+const MKT1_PATH = "/mkt1";
+const MKT2_PATH = "/mkt2";
+
+function seedMarketplace(
+  fs: InMemoryFileAdapter,
+  dir: string,
+  plugins: Array<Record<string, unknown>>
+): void {
+  fs.setFile(join(dir, ".claude-plugin", "marketplace.json"), JSON.stringify({ plugins }));
+}
+
+function buildUseCase(
+  fs: InMemoryFileAdapter,
+  registry: InMemoryMarketplaceRegistry
+): SearchPlugins {
+  const fetcher = new FixturePluginFetcher({
+    [MKT1_PATH]: MKT1_PATH,
+    [MKT2_PATH]: MKT2_PATH,
+  });
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: fetcher,
+    rawCatalog: unusedRawCatalog(),
+  });
+  const resolveMarketplace = new ResolveMarketplace(
+    fetchMarketplaceSource,
+    new PluginCatalogRepositoryAdapter(fs)
+  );
+  return new SearchPlugins(registry, resolveMarketplace);
+}
+
+describe("SearchPlugins", () => {
+  it("matches by name and description across marketplaces", async () => {
+    const fs = new InMemoryFileAdapter();
+    seedMarketplace(fs, MKT1_PATH, [
+      {
+        name: "sample-plugin",
+        source: { kind: "github", repo: "x/y" },
+        description: "Hello world",
+      },
+    ]);
+    seedMarketplace(fs, MKT2_PATH, [
+      {
+        name: "different",
+        source: { kind: "github", repo: "a/b" },
+        description: "Greets the world",
+      },
+    ]);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+
+    const result = await buildUseCase(fs, registry).execute({
+      query: "world",
+      recommendedOnly: false,
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(result.hits.map((h) => h.entry.name).sort()).toEqual(["different", "sample-plugin"]);
+  });
+
+  it("filters by --recommended", async () => {
+    const fs = new InMemoryFileAdapter();
+    seedMarketplace(fs, MKT1_PATH, [
+      { name: "a", source: { kind: "github", repo: "x/y" }, metadata: { recommended: true } },
+      { name: "b", source: { kind: "github", repo: "x/y" }, metadata: { recommended: false } },
+    ]);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+
+    const result = await buildUseCase(fs, registry).execute({
+      query: "",
+      recommendedOnly: true,
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(result.hits.map((h) => h.entry.name)).toEqual(["a"]);
+  });
+
+  it("filters by --marketplace", async () => {
+    const fs = new InMemoryFileAdapter();
+    const entry = { name: "shared", source: { kind: "github", repo: "x/y" } };
+    seedMarketplace(fs, MKT1_PATH, [entry]);
+    seedMarketplace(fs, MKT2_PATH, [entry]);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "mkt1",
+        source: { kind: "local", path: MKT1_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "mkt2",
+        source: { kind: "local", path: MKT2_PATH },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+
+    const result = await buildUseCase(fs, registry).execute({
+      query: "shared",
+      recommendedOnly: false,
+      marketplace: "mkt2",
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(result.hits).toHaveLength(1);
+    expect(result.hits[0]?.marketplace.name).toBe("mkt2");
+  });
+
+  describe("what a query matches", () => {
+    async function registryWith(entry: Record<string, unknown>): Promise<{
+      fs: InMemoryFileAdapter;
+      registry: InMemoryMarketplaceRegistry;
+    }> {
+      const fs = new InMemoryFileAdapter();
+      seedMarketplace(fs, MKT1_PATH, [entry]);
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        PROJECT_ROOT,
+        Marketplace.create({
+          name: "mkt1",
+          source: { kind: "local", path: MKT1_PATH },
+          scope: "project",
+          addedAt: "2026-04-29T10:00:00.000Z",
+        })
+      );
+      return { fs, registry };
+    }
+
+    it("matches nothing when neither name nor description contains the query", async () => {
+      const { fs, registry } = await registryWith({
+        name: "sample-plugin",
+        source: { kind: "github", repo: "x/y" },
+        description: "Hello world",
+      });
+
+      const result = await buildUseCase(fs, registry).execute({
+        query: "zzz",
+        recommendedOnly: false,
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(result.hits).toStrictEqual([]);
+    });
+
+    it("does not match a description an entry lacks", async () => {
+      const { fs, registry } = await registryWith({
+        name: "sample-plugin",
+        source: { kind: "github", repo: "x/y" },
+      });
+
+      const result = await buildUseCase(fs, registry).execute({
+        query: "was here",
+        recommendedOnly: false,
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(result.hits).toStrictEqual([]);
+    });
+  });
+
+  it("yields no hit for a marketplace without a catalog", async () => {
+    const fs = new InMemoryFileAdapter();
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "no-catalog",
+        source: { kind: "local", path: "/no-catalog" },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
+
+    const result = await buildUseCase(fs, registry).execute({
+      query: "",
+      recommendedOnly: false,
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(result.hits).toStrictEqual([]);
+  });
+
+  it("returns empty when no marketplaces are registered", async () => {
+    const fs = new InMemoryFileAdapter();
+    const registry = new InMemoryMarketplaceRegistry();
+    const result = await buildUseCase(fs, registry).execute({
+      query: "anything",
+      recommendedOnly: false,
+      projectRoot: PROJECT_ROOT,
+    });
+    expect(result.hits).toEqual([]);
+  });
+});

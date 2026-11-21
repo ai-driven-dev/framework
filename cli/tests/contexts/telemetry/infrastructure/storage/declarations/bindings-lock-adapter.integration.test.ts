@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
+import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";

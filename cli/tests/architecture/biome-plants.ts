@@ -139,7 +139,7 @@ export const PLANTS: readonly Plant[] = [
   // process.exit: shared, contexts and presentation never call it; the composition root does.
   ["src/shared/domain/exit.ts", exits, "plugin", 1],
   ["src/shared/infrastructure/exit.ts", exits, "plugin", 1],
-  ["src/presentation/commands/exit.ts", exits, "plugin", 1],
+  ["src/presentation/controllers/exit.controller.ts", exits, "plugin", 1],
   ["src/presentation/project-root.ts", exits, "plugin", 1],
   ["src/presentation/terminal/inquirer-prompter.adapter.ts", exits, "plugin", 1],
   // export default, under src/ and tests/ alike.
@@ -188,7 +188,7 @@ export const PLANTS: readonly Plant[] = [
     1,
   ],
   [
-    "src/presentation/display/reaches-shared.ts",
+    "src/presentation/presenters/reaches-shared.presenter.ts",
     reaches("../../shared/infrastructure/http-client.js"),
     IMPORT,
     1,
@@ -214,7 +214,7 @@ export const PLANTS: readonly Plant[] = [
     1,
   ],
   [
-    "src/presentation/display/reaches-composition.ts",
+    "src/presentation/presenters/reaches-composition.presenter.ts",
     reaches("../../composition/auth.js"),
     IMPORT,
     1,
@@ -253,13 +253,13 @@ export const PLANTS: readonly Plant[] = [
     1,
   ],
   [
-    "src/presentation/display/reaches-recipes-domain.ts",
+    "src/presentation/presenters/reaches-recipes-domain.presenter.ts",
     reaches("../../contexts/recipes/domain/x.js"),
     IMPORT,
     1,
   ],
   [
-    "src/presentation/display/reaches-recipes-application.ts",
+    "src/presentation/presenters/reaches-recipes-application.presenter.ts",
     reaches("../../contexts/recipes/application/x.js"),
     IMPORT,
     0,
@@ -319,7 +319,7 @@ export const PLANTS: readonly Plant[] = [
   ...AUTH_FOLDERS.flatMap((folder) =>
     (
       [
-        ["src/presentation/display", "../../contexts/", AUTH_PUBLIC.has(folder) ? 0 : 1],
+        ["src/presentation/presenters", "../../contexts/", AUTH_PUBLIC.has(folder) ? 0 : 1],
         ["src/composition", "../contexts/", 0],
         ["src/contexts/distribution/infrastructure", "../../", AUTH_PUBLIC.has(folder) ? 0 : 1],
         // An application reaching an infrastructure breaks the layer pattern and auth's interior.

@@ -1,5 +1,5 @@
-import type { ReportUsageResult } from "../../../src/contexts/telemetry/application/report/report-usage.js";
-import type { RequestReportResult } from "../../../src/contexts/telemetry/application/report/request-report.js";
+import type { ReportUsageResult } from "../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
+import type { RequestReportResult } from "../../../src/contexts/telemetry/application/report/request-report.use-case.js";
 import type { Period } from "../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,
@@ -11,7 +11,7 @@ import type {
   Tally,
 } from "../../../src/contexts/telemetry/contract/usage-report.js";
 import { selectorsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
-import { printUsageReport } from "../../../src/presentation/display/telemetry/telemetry-report-display.js";
+import { printUsageReport } from "../../../src/presentation/presenters/telemetry/telemetry-report.presenter.js";
 import { CapturingOutput } from "./capturing-output.fake.js";
 
 export const sum = (known: number, unknownRecords = 0) => ({ known, unknownRecords });

@@ -23,7 +23,7 @@ function areaOf(file: string): string {
   if (contextInner) return `${contextInner[2]}:${contextInner[1]}`;
   const scenario = /^src\/orchestration\/([^/]+)\//.exec(file);
   if (scenario) return `scenario:${scenario[1]}`;
-  if (file.startsWith("src/presentation/commands/")) return "commands";
+  if (file.startsWith("src/presentation/controllers/")) return "controllers";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/shared/")) return "shared";
   return "other";
@@ -186,7 +186,7 @@ describe("the guard itself", () => {
         earned,
         new Set([
           "src/contexts/framework/application/doctor/a.ts",
-          "src/presentation/commands/doctor.ts",
+          "src/presentation/controllers/doctor.controller.ts",
         ]),
       ],
     ]);
@@ -215,7 +215,10 @@ describe("the guard itself", () => {
       [adapter]: "class A implements Reader {}",
     };
     const importers = new Map([
-      ["src/shared/domain/lonely.ts", new Set([A, "src/presentation/commands/doctor.ts"])],
+      [
+        "src/shared/domain/lonely.ts",
+        new Set([A, "src/presentation/controllers/doctor.controller.ts"]),
+      ],
       ["src/shared/domain/earned.ts", new Set([A, B])],
       [port, new Set([A, B])],
       [leaf, new Set([adapter])],
@@ -267,8 +270,8 @@ describe("the guard itself", () => {
     expect(areaOf("src/contexts/tools/domain/registry.ts")).toBe("domain:tools");
     expect(areaOf("src/contexts/tools/infrastructure/a.ts")).toBe("infrastructure:tools");
     expect(areaOf("src/orchestration/setup/a.ts"), "one area per scenario").toBe("scenario:setup");
-    expect(areaOf("src/presentation/commands/doctor.ts")).toBe("commands");
-    expect(areaOf("src/presentation/display/a.ts")).toBe("presentation");
+    expect(areaOf("src/presentation/controllers/doctor.controller.ts")).toBe("controllers");
+    expect(areaOf("src/presentation/presenters/a.presenter.ts")).toBe("presentation");
     expect(areaOf("src/shared/domain/tool.ts")).toBe("shared");
     expect(areaOf("src/composition/auth.ts"), "the composition of a migrated context").toBe(
       "composition-root"

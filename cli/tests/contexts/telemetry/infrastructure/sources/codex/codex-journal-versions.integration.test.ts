@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import * as zlib from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { ReadUsage } from "../../../../../../src/contexts/telemetry/application/read-usage.js";
+import { ReadUsage } from "../../../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { CodexTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 
 const SESSIONS = resolve(import.meta.dirname, "../../../../../fixtures/codex-usage/sessions");

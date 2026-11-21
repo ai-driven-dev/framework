@@ -1,6 +1,6 @@
-import { PrintUpdateNotice } from "../../../../src/contexts/update/application/print-update-notice.js";
-import { RefreshUpdateCheck } from "../../../../src/contexts/update/application/refresh-update-check.js";
-import { SelfUpdate } from "../../../../src/contexts/update/application/self-update.js";
+import { PrintUpdateNotice } from "../../../../src/contexts/update/application/print-update-notice.use-case.js";
+import { RefreshUpdateCheck } from "../../../../src/contexts/update/application/refresh-update-check.use-case.js";
+import { SelfUpdate } from "../../../../src/contexts/update/application/self-update.use-case.js";
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
 import type { CliReleaseSource } from "../../../../src/contexts/update/ports/cli-release-source.js";
 import type { UpdateCheckCache } from "../../../../src/contexts/update/ports/update-check-cache.js";

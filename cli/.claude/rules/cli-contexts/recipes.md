@@ -18,7 +18,7 @@ paths:
 
 - `RecipeFiles`: reads one recipe and lists the recipes of a directory.
 - Its contract kit runs on the in-memory fake and on the disk adapter, so a test over the fake can be trusted.
-- The context has no `contract/`: presentation reads `ValidateRecipes` and `ValidateRecipesResult` from `application/validate-recipes.ts`.
+- The context has no `contract/`: presentation reads `ValidateRecipes` and `ValidateRecipesResult` from `application/validate-recipes.use-case.ts`.
 
 ## Suppliers
 
@@ -29,4 +29,4 @@ paths:
 
 - Read the disk in `application/` or `domain/`: files arrive through `RecipeFiles`.
 - Import another context: recipes knows none.
-- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.unit.test.ts` and `tests/presentation/commands/tool-config-validate-recipes.integration.test.ts` freeze the findings, the display test freezes the table and the goldens hold help text only.
+- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.use-case.unit.test.ts` and `tests/presentation/controllers/tool-config-validate-recipes.integration.test.ts` freeze the findings, the display test freezes the table and the goldens hold help text only.

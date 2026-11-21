@@ -110,7 +110,7 @@ async function buildProgram(): Promise<Command> {
   const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
   const depsFactory: DepsFactory = bindContainer(tools);
   const { registerCommands } = await import(
-    "../../../src/presentation/commands/register-commands.js"
+    "../../../src/presentation/controllers/register-commands.controller.js"
   );
   const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
   registerCommands(program, {
@@ -130,7 +130,9 @@ async function parseToExitCode(
   args: readonly string[],
   err: string[]
 ): Promise<number> {
-  const { outputOf } = await import("../../../src/presentation/commands/global-options.js");
+  const { outputOf } = await import(
+    "../../../src/presentation/controllers/global-options.controller.js"
+  );
   const { failCommand } = await import(
     "../../../src/presentation/errors/error-translator.presenter.js"
   );

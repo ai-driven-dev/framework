@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { AddPlugin } from "../../../../src/contexts/installation/application/plugin/add-plugin.js";
+import type { AddPlugin } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";

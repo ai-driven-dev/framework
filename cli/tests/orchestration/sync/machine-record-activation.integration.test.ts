@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
-import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.js";
+import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";

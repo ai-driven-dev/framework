@@ -141,7 +141,7 @@ describe("the mutation scripts", () => {
     ).toEqual(["telemetry"]);
     expect(
       scopesToRun(
-        ["cli/tests/presentation/display/telemetry/telemetry-report-display.golden.test.ts"],
+        ["cli/tests/presentation/presenters/telemetry/telemetry-report.presenter.golden.test.ts"],
         scopes
       )
     ).toEqual(["telemetry"]);
@@ -192,7 +192,9 @@ describe("the mutation scripts", () => {
       (project) => typeof project === "object" && "test" in project && project.test?.name === "unit"
     );
     const excluded = typeof unit === "object" && "test" in unit ? unit.test?.exclude : undefined;
-    expect(excluded).toContain("tests/presentation/commands/unknown-commands.integration.test.ts");
+    expect(excluded).toContain(
+      "tests/presentation/controllers/unknown-commands.integration.test.ts"
+    );
   });
 
   it("names a harness of exactly the three files that reshape every scope", () => {

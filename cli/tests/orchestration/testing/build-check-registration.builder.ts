@@ -1,14 +1,14 @@
 import { registrationRecordRules } from "../../../src/composition/installation.js";
-import { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.js";
+import { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
-import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.js";
-import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
-import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
+import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
+import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
+import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
+import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
-import type { CheckRegistrationCommand } from "../../../src/orchestration/doctor/check-registration.js";
-import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
+import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
+import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -41,7 +41,7 @@ export function buildCheckRegistration(
     : never
 ) {
   return {
-    execute: ({ manifest, ...command }: CheckRegistrationCommand & { manifest: Manifest }) =>
+    execute: ({ manifest, ...command }: CheckRegistrationRequest & { manifest: Manifest }) =>
       checkRegistrationOver(
         new LoadManifest(new InMemoryManifestRepository(manifest)),
         ...wiring

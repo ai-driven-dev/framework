@@ -1,4 +1,4 @@
-import type { OutputFactory } from "../../../src/presentation/commands/global-options.js";
+import type { OutputFactory } from "../../../src/presentation/controllers/global-options.controller.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 

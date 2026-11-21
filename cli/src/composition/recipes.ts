@@ -1,4 +1,4 @@
-import { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
+import { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.use-case.js";
 import { RecipeFilesAdapter } from "../contexts/recipes/infrastructure/recipe-files-adapter.js";
 
 export interface RecipesDeps {

@@ -1,7 +1,7 @@
-import type { RestoreTool } from "../../../src/contexts/installation/application/restore/project/restore-tool.js";
+import type { RestoreTool } from "../../../src/contexts/installation/application/restore/project/restore-tool.use-case.js";
 import type { SyncSettingsResult } from "../../../src/orchestration/domain/sync-settings.model.js";
-import type { RestoreAllResult } from "../../../src/orchestration/global/restore-all.js";
-import { RunSync, type RunSyncReport } from "../../../src/orchestration/sync/run-sync.js";
+import type { RestoreAllResult } from "../../../src/orchestration/global/restore-all.use-case.js";
+import { RunSync, type RunSyncReport } from "../../../src/orchestration/sync/run-sync.use-case.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 type ToolRestoreResult = Awaited<ReturnType<RestoreTool["execute"]>>;

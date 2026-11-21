@@ -147,7 +147,11 @@ describe("architecture paths select the same files on every platform", () => {
   it.each([
     ["src\\contexts\\tools\\domain\\tool.ts", "tools", "src/contexts/**/*.ts"],
     ["src\\shared\\domain\\errors.ts", "shared", "src/shared/**/*.ts"],
-    ["src\\presentation\\commands\\setup.ts", "presentation", "src/presentation/commands/**"],
+    [
+      "src\\presentation\\controllers\\setup.controller.ts",
+      "presentation",
+      "src/presentation/controllers/**",
+    ],
   ])("selects the explicit backslash path %s", (nativePath, context, glob) => {
     const file = canonicalPath(nativePath);
     expect(contextOf(file)).toBe(context);

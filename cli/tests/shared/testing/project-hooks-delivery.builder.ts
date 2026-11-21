@@ -1,9 +1,9 @@
 import { createPluginTranslation } from "../../../src/composition/translate.js";
 import type {
-  ProjectHooksMaterialized,
   ProjectHooksMaterializer,
   ProjectHooksMaterializerRequest,
-} from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
+  ProjectHooksMaterializerResult,
+} from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import type { AiToolProfile } from "../../../src/contexts/tools/contract/tool-profile.js";
 import { registeredTools } from "./registered-tools.builder.js";
 
@@ -12,7 +12,7 @@ import { registeredTools } from "./registered-tools.builder.js";
 export function deliverProjectHooks(
   materializer: ProjectHooksMaterializer,
   request: Omit<ProjectHooksMaterializerRequest, "hooks"> & { readonly tool: AiToolProfile }
-): Promise<ProjectHooksMaterialized> {
+): Promise<ProjectHooksMaterializerResult> {
   const { projectHooks } = createPluginTranslation(registeredTools()).execute({
     distribution: request.dist,
     tool: request.tool,

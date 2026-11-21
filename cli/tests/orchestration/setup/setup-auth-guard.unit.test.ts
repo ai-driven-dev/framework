@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
-import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.js";
-import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
+import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
+import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
+import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import {
   localFrameworkSource,
   remoteFrameworkSource,
@@ -11,12 +11,12 @@ import {
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
-import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
-import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
-import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
+import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
+import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
+import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
-import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
-import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
+import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
+import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";

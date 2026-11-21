@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
-import { outputOf } from "../commands/global-options.js";
+import { outputOf } from "../controllers/global-options.controller.js";
 import { render } from "../errors/error-translator.presenter.js";
 
 /** What this command reads of the graph. */

@@ -19,7 +19,7 @@ paths:
 - `CredentialRecordRepository`: the record of each level, read, saved and deleted by level.
 - `ExternalTokenSource`, `CliAuthProvider`: a provider's token and its identity check (`gh`).
 - `IdentityVerifier`: who a stored token belongs to.
-- `contract/`: `TokenProvider`, read by distribution and update through the `ALLOWED` edges, and by `src/orchestration/doctor/check-authentication.ts`.
+- `contract/`: `TokenProvider`, read by distribution and update through the `ALLOWED` edges, and by `src/orchestration/doctor/check-authentication.use-case.ts`.
 - `contract/`: the credential types, read by presentation.
 
 ## Suppliers

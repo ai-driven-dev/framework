@@ -208,7 +208,7 @@ function norm(path: string): string {
 }
 
 // The real adapter's `stat` and `readdir` accept a trailing separator on a directory, and
-// callers spell directories that way (`report-status.ts` joins a tool directory ending in "/").
+// callers spell directories that way (`report-status.use-case.ts` joins a tool directory ending in "/").
 function dirKey(path: string): string {
   const key = norm(path);
   return key.length > 1 && key.endsWith("/") ? key.replace(/\/+$/, "") || "/" : key;

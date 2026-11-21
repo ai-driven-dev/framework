@@ -6,7 +6,7 @@ import type { NativeRegistrations } from "../../domain/manifest/native-registrat
 import type { Manifest } from "../../domain/manifest.js";
 import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { ActivatedTool } from "../../ports/tool-sections.js";
-import type { UpdatePluginCommand } from "./update-plugin.js";
+import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 
 /** A host refresh whose proofs all held: applying it is the only step left. */
 export interface ProvenNativeRefresh {
@@ -30,7 +30,7 @@ export type NativeTargets = ReturnType<typeof nativeTargets>;
 export function nativeTargets(
   records: RegistrationRecordRules,
   manifest: Manifest,
-  selection: { readonly toolIds: readonly AiToolId[]; readonly options: UpdatePluginCommand }
+  selection: { readonly toolIds: readonly AiToolId[]; readonly options: UpdatePluginRequest }
 ) {
   const { toolIds, options } = selection;
   return (options.rebuild === true ? [] : toolIds).flatMap((toolId) =>
@@ -47,7 +47,7 @@ export function nativeTargets(
 /** Refuses a plugin selection that resolves to nothing, or to several native catalogues. */
 export function assertSelectionResolves(
   records: RegistrationRecordRules,
-  options: UpdatePluginCommand,
+  options: UpdatePluginRequest,
   selected: { files: number; native: NativeTargets }
 ): void {
   const { pluginNames } = options;

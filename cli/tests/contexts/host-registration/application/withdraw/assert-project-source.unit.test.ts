@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { assertProjectSource } from "../../../../../src/contexts/host-registration/application/withdraw/assert-project-source.js";
 import type {
-  ProjectSourceCommand,
+  ProjectSourceRequest,
   WithdrawalDeps,
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
@@ -42,7 +42,7 @@ function depsOf(
   };
 }
 
-function commandOf(recorded = true): ProjectSourceCommand {
+function commandOf(recorded = true): ProjectSourceRequest {
   return {
     tool: registeredTools().aiProfile(TOOL.claude),
     plugin: { name: "plugin", marketplace: HOST_NAME, scope: "project" },

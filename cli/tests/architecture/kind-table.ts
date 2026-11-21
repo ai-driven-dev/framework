@@ -154,7 +154,6 @@ export const KINDS: readonly Kind[] = [
     ],
     fallback: [
       "src/presentation/presenters/**/*",
-      "src/presentation/display/**/*",
       "src/presentation/errors/**/*",
       "src/presentation/menu/**/*",
     ],
@@ -167,11 +166,7 @@ export const KINDS: readonly Kind[] = [
     id: "controller",
     suffix: /\.controller\.ts$/,
     folders: ["src/presentation/controllers/**/*", "src/presentation/hooks/**/*"],
-    fallback: [
-      "src/presentation/controllers/**/*",
-      "src/presentation/commands/**/*",
-      "src/presentation/hooks/**/*",
-    ],
+    fallback: ["src/presentation/controllers/**/*", "src/presentation/hooks/**/*"],
     except: [],
     imports: ["use-case", "presenter", "model", "controller", "error"],
     externals: "any",

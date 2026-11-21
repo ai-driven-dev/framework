@@ -154,11 +154,11 @@ src/
 │   │   └── steps/
 │   └── sync/
 ├── presentation/    # everything that talks to a human
-│   ├── commands/
-│   ├── display/
-│   │   └── telemetry/
+│   ├── controllers/
 │   ├── errors/
 │   ├── hooks/
+│   ├── presenters/
+│   │   └── telemetry/
 │   └── terminal/
 └── shared/    # what two or more contexts need
     ├── domain/    # the vocabulary
@@ -191,7 +191,7 @@ src/
 
 | What | Where |
 | --- | --- |
-| a command | `presentation/commands/`, its logic in the context that owns the concept |
+| a command | `presentation/controllers/`, its logic in the context that owns the concept |
 | a tool | one directory under `contexts/tools/domain/profiles/`, procedure in the `tools` skill |
 | a port used by one context | its `ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |

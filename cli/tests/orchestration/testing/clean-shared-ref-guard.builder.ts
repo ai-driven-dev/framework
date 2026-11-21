@@ -2,10 +2,10 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { NativeMarketplaceRegistration } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
-import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
+import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import type { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";

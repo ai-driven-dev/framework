@@ -20,7 +20,7 @@ export interface WithdrawnPlugin {
   readonly scope: Scope;
 }
 
-export interface WithdrawFromHostCommand {
+export interface WithdrawFromHostRequest {
   readonly tool: NativeHostTool;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
@@ -30,8 +30,8 @@ export interface WithdrawFromHostCommand {
   readonly pluginCacheRoot: string | undefined;
 }
 
-export type ProjectSourceCommand = Pick<
-  WithdrawFromHostCommand,
+export type ProjectSourceRequest = Pick<
+  WithdrawFromHostRequest,
   "tool" | "projectRoot" | "registrations"
 > & {
   readonly plugin: WithdrawnPlugin;
@@ -105,9 +105,9 @@ export interface ProjectCleanFacts {
 
 /** Every question a withdrawal answers, told apart by `kind`: the proofs refuse before any host
  * change, the withdrawals act. */
-export type WithdrawalCommand =
-  | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostCommand)
-  | ({ readonly kind: "prove-project-source" } & ProjectSourceCommand)
+export type WithdrawalRequest =
+  | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostRequest)
+  | ({ readonly kind: "prove-project-source" } & ProjectSourceRequest)
   | {
       readonly kind: "prove-claimed-ref";
       readonly registrationData: RegistrationRecordData;
@@ -140,9 +140,9 @@ export type WithdrawalCommand =
       readonly resolveCacheCandidate: CacheCandidateResolver;
     };
 
-export type WithdrawPluginCommand = Extract<WithdrawalCommand, { kind: "withdraw-plugin" }>;
-export type ProveClaimedRefCommand = Extract<WithdrawalCommand, { kind: "prove-claimed-ref" }>;
-export type WithdrawalStepCommand = Exclude<
-  WithdrawalCommand,
-  WithdrawPluginCommand | ProveClaimedRefCommand
+export type WithdrawPluginRequest = Extract<WithdrawalRequest, { kind: "withdraw-plugin" }>;
+export type ProveClaimedRefRequest = Extract<WithdrawalRequest, { kind: "prove-claimed-ref" }>;
+export type WithdrawalStepRequest = Exclude<
+  WithdrawalRequest,
+  WithdrawPluginRequest | ProveClaimedRefRequest
 >;

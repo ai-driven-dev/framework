@@ -142,7 +142,7 @@ export default defineConfig({
       // Excluded because measuring them here would report a false zero, not because
       // they are untested. `cli.ts` is exercised by the e2e suite and the smoke checks, which
       // spawn a built `cli.js` as a subprocess; v8 coverage does not cross a process boundary:
-      // including it reports 0%. `presentation/commands/` is counted: the command tests run
+      // including it reports 0%. `presentation/controllers/` is counted: the command tests run
       // it in process.
       // Ports are interfaces with no runtime body, `shared/ports/` and a migrated context's
       // `ports/` included; `composition/` is composition. Their real net is the e2e suite and
@@ -163,7 +163,7 @@ export default defineConfig({
         "src/shared/ports/**",
         "src/composition/**",
       ],
-      // Set a little under 98.81 / 96.08 / 99.47 / 99.34, measured once `presentation/commands/`
+      // Set a little under 98.81 / 96.08 / 99.47 / 99.34, measured once `presentation/controllers/`
       // was counted: a threshold with no headroom fails on an honest change, and one far below
       // what is measured is not a gate. `pnpm test:coverage` runs them, and CI runs that.
       thresholds: {

@@ -14,10 +14,10 @@
     "telemetry": {
       "mutate": [
         "src/contexts/telemetry/**/*.ts",
-        "src/presentation/display/telemetry/**/*.ts",
+        "src/presentation/presenters/telemetry/**/*.ts",
         "!src/contexts/telemetry/infrastructure/storage/private-storage-adapter.ts"
       ],
-      "tests": ["tests/contexts/telemetry/**", "tests/presentation/display/telemetry/**"],
+      "tests": ["tests/contexts/telemetry/**", "tests/presentation/presenters/telemetry/**"],
       "break": 96,
       "shards": 4
     },

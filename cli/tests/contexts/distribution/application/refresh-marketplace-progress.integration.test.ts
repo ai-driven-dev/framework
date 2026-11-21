@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
-import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
+import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../../src/shared/domain/source.js";

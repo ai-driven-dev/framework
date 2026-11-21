@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.js";
-import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
-import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
+import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
+import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import { cloneOf, grantedBy } from "./clone.builder.js";
