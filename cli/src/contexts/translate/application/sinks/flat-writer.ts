@@ -15,7 +15,7 @@ import type {
   FlatPluginWriter,
   FlatTarget,
 } from "../../ports/flat-plugin-writer.js";
-import { writeFlatAgent, writeFlatSkill } from "./flat-content-writer.js";
+import { writeFlatAgent } from "./flat-content-writer.js";
 import { writeFlatHooks } from "./flat-hooks-writer.js";
 import { writeFlatMcp } from "./flat-mcp-writer.js";
 
@@ -99,10 +99,6 @@ export class FlatWriter implements FlatPluginWriter {
 
   writeAgent(step: FlatFileStep): Promise<number> {
     return writeFlatAgent(this.fs, step);
-  }
-
-  writeSkill(step: FlatFileStep): Promise<number> {
-    return writeFlatSkill(this.fs, step);
   }
 
   writeHooks(step: FlatHooksStep): Promise<number> {

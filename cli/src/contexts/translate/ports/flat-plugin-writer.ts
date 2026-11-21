@@ -42,7 +42,6 @@ export interface FlatPluginWriter {
   /** Once every plugin is built: the tool's config artefact. Returns the files written. */
   writeConfig(target: FlatTarget, builtPlugins: readonly { name: string }[]): Promise<number>;
   writeAgent(step: FlatFileStep): Promise<number>;
-  writeSkill(step: FlatFileStep): Promise<number>;
   /** One plugin's hooks: the hooks file or the bridge, then the scripts it points at. */
   writeHooks(step: FlatHooksStep): Promise<number>;
   writeMcp(step: FlatMcpStep): Promise<number>;

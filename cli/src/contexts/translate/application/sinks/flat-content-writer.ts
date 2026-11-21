@@ -29,30 +29,6 @@ export async function writeFlatAgent(
   return 1;
 }
 
-/** One file of a plugin's skills, written where the flat layout puts it. */
-export async function writeFlatSkill(
-  fs: FlatFiles,
-  { target, artifact, pluginName, absPath, srcRoot }: FlatFileStep
-): Promise<number> {
-  const relFromSkills = relative(srcRoot, absPath).replace(/\\/g, "/");
-  const flatRelPath = artifact.path(pluginName, `skills/${relFromSkills}`);
-  const destPath = join(target.outDir, flatRelPath);
-  await assertFlatDestinationFree(fs, { target, destPath, pluginName });
-  const content = await fs.readFile(absPath);
-  if (!absPath.endsWith(".md")) {
-    await fs.writeFile(destPath, content);
-    return 1;
-  }
-  assertNoToolsPlaceholder(content, pluginName, relFromSkills);
-  const rewritten = rewriteFlatLinks(target, { content, flatRelPath, pluginName });
-  const outContent =
-    artifact.rewriteSkillName && basename(absPath) === "SKILL.md"
-      ? rewriteSkillNameFrontmatter(rewritten, flatRelPath)
-      : rewritten;
-  await fs.writeFile(destPath, outContent);
-  return 1;
-}
-
 function rewriteFlatLinks(
   target: FlatTarget,
   { content, flatRelPath, pluginName }: { content: string; flatRelPath: string; pluginName: string }
@@ -69,12 +45,4 @@ function rewriteAgentLinks(
 ): string {
   const { frontmatter, body } = parseFrontmatter(step.content);
   return serializeFrontmatter(frontmatter, rewriteFlatLinks(target, { ...step, content: body }));
-}
-
-function rewriteSkillNameFrontmatter(content: string, flatRelPath: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const parts = flatRelPath.split("/");
-  const skillFolder = parts[parts.length - 2];
-  if (!skillFolder) return content;
-  return serializeFrontmatter({ ...frontmatter, name: skillFolder }, body);
 }

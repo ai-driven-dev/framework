@@ -28,26 +28,3 @@ export async function writePluginAgents(
   }
   return count;
 }
-
-/** One plugin's skills in the flat layout; the marketplace one is built by the engine. Returns the
- * files written. */
-export async function writePluginSkills(
-  deps: ContentDeps,
-  t: DiskTarget,
-  plugin: PluginSource
-): Promise<number> {
-  const artifact = t.contract.artifacts.skills;
-  if (!artifact.supported || t.mode === "marketplace") return 0;
-  const skillsSrc = join(plugin.src, "skills");
-  let count = 0;
-  for (const absPath of await deps.fs.listFilesRecursive(skillsSrc)) {
-    count += await deps.flat.writeSkill({
-      target: t,
-      artifact,
-      pluginName: plugin.name,
-      absPath,
-      srcRoot: skillsSrc,
-    });
-  }
-  return count;
-}

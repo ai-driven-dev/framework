@@ -4,14 +4,16 @@ import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js
 import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
 import { translateBuildLayout } from "../../domain/build-layout/index.js";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../domain/canon-format.js";
+import type { OutputFile } from "../../domain/output-file.js";
 import {
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
 } from "../../domain/translate.error.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";
+import { assertFlatDestinationFree } from "./flat-collision.js";
 import { writeMarketplaceCatalog } from "./marketplace-catalog-writer.js";
-import { writePluginAgents, writePluginSkills } from "./plugin-content-writer.js";
+import { writePluginAgents } from "./plugin-content-writer.js";
 import { writePluginHooks, writePluginMcp } from "./plugin-runtime-writer.js";
 import { presenceOf, readPluginCanon } from "./plugin-source-tree-reader.js";
 
@@ -51,13 +53,11 @@ export class DiskSink implements PluginTreeSink {
     const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
     const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
     const built = translateBuildLayout(canon, t.contract, t.mode);
-    for (const file of built)
-      await this.deps.fs.writeFile(join(t.outDir, file.relativePath), file.content);
+    for (const file of built) await this.writeBuilt(t, plugin.name, file);
     return (
       manifest +
       built.length +
       (await writePluginAgents(this.deps, t, plugin)) +
-      (await writePluginSkills(this.deps, t, plugin)) +
       (await writePluginHooks(this.deps, t, plugin)) +
       (await writePluginMcp(this.deps, t, plugin))
     );
@@ -81,6 +81,14 @@ export class DiskSink implements PluginTreeSink {
       this.deps.assetProvider.loadSchema("plugin-manifest"),
       JSON.parse(raw)
     );
+  }
+
+  /** A built file, at its place under outDir. A flat build refuses one a first build wrote. */
+  private async writeBuilt(t: DiskTarget, pluginName: string, file: OutputFile): Promise<void> {
+    const destPath = join(t.outDir, file.relativePath);
+    if (t.mode === "flat")
+      await assertFlatDestinationFree(this.deps.fs, { target: t, destPath, pluginName });
+    await this.deps.fs.writeFile(destPath, file.content);
   }
 
   private async writeManifest(t: DiskTarget, canon: PluginDistribution, pluginSrc: string) {

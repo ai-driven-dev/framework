@@ -3,6 +3,7 @@ import type { ToolBuildContract } from "../../../tools/contract/build-contract.j
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { OutputFile } from "../output-file.js";
 import { marketplaceAgents } from "./agents.js";
+import { flatSkills } from "./flat-skills.js";
 import { marketplaceHooks } from "./hooks.js";
 import { marketplaceMcp } from "./mcp.js";
 import { marketplaceSkills } from "./skills.js";
@@ -14,7 +15,10 @@ export function translateBuildLayout(
   contract: ToolBuildContract,
   mode: FrameworkBuildMode
 ): OutputFile[] {
-  if (mode !== "marketplace") return [];
+  if (mode === "flat") {
+    const { skills } = contract.artifacts;
+    return skills.supported ? flatSkills(canon, contract, skills) : [];
+  }
   const { agents, hooks, mcp, skills } = contract.artifacts;
   return [
     ...(agents.supported ? marketplaceAgents(canon, agents) : []),
