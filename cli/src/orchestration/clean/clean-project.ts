@@ -49,7 +49,7 @@ export class CleanProject {
 
   async execute(options: CleanOptions): Promise<CleanResult> {
     const { projectRoot } = options;
-    const plan = await this.cleanProject.plan();
+    const plan = await this.cleanProject.execute({ kind: "plan" });
     if (plan === null) {
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0, nativeRegistrations: [] };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
@@ -73,7 +73,11 @@ export class CleanProject {
       withdrawals: plan.withdrawals,
       facts,
     });
-    await this.cleanProject.assertRemovable(projectRoot, options.force);
+    await this.cleanProject.execute({
+      kind: "assert-removable",
+      projectRoot,
+      force: options.force,
+    });
     // Read the other projects before host cleanup, but keep this project's claim until every
     // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
     const sharedSource = await this.claims.sharedClaim({
@@ -89,7 +93,11 @@ export class CleanProject {
       withdrawals: plan.withdrawals,
       facts: { ...facts, sharedSource },
     });
-    const fileCount = await this.cleanProject.remove(projectRoot, options.force);
+    const fileCount = await this.cleanProject.execute({
+      kind: "remove",
+      projectRoot,
+      force: options.force,
+    });
     // One project-level decrement, only after the local projection has been cleaned successfully.
     await this.claims.dropClaim(sharedSource?.resolvedRoot);
     await this.claims.detach(projectRoot, plan.userPlugins, plan.nativeRefs);

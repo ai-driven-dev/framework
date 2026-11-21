@@ -1,7 +1,17 @@
-import type { FileHash } from "./file-hash.js";
+import { FileHash } from "./file-hash.js";
 import type { MergeStrategy } from "./merge.js";
 
 export class InstallationFile {
+  /** A file whose hash is that of `content`. */
+  static hashing(relativePath: string, content: string, mergeStrategy?: MergeStrategy) {
+    return new InstallationFile({
+      relativePath,
+      content,
+      hash: FileHash.of(content),
+      mergeStrategy,
+    });
+  }
+
   readonly relativePath: string;
   readonly content: string;
   readonly hash: FileHash;

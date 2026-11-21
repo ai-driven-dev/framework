@@ -42,10 +42,7 @@
     "src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
     "src/contexts/installation/infrastructure/manifest-file-io.ts"
   ],
-  "shape": [
-    "src/contexts/installation/application/clean-project-files.ts",
-    "src/contexts/installation/application/install/config/tracked-config-files.ts"
-  ],
+  "shape": [],
   "thrown": [],
   "instructs": [],
   "composition": [],

@@ -1,11 +1,6 @@
 import { join } from "node:path";
-import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
-import {
-  extractMergeEntries,
-  type MergeFileEntry,
-  type MergeStrategy,
-} from "../../../../../shared/domain/merge.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../../shared/ports/logger.js";
@@ -14,6 +9,31 @@ import type { FileMerger } from "../../../ports/file-merger.js";
 
 /** Decides, for one file about to be written, whether the write goes ahead. */
 export type BeforeWriteGate = (relativePath: string) => Promise<"write" | "skip">;
+
+export interface IsUserOwnedCommand {
+  kind: "is-user-owned";
+  relativePath: string;
+  projectRoot: string;
+  manifest: Manifest;
+}
+
+export interface WriteAndTrackCommand {
+  kind: "write-and-track";
+  files: InstallationFile[];
+  projectRoot: string;
+  onBeforeWrite?: BeforeWriteGate;
+}
+
+export interface MergeAndTrackCommand {
+  kind: "merge-and-track";
+  files: InstallationFile[];
+  projectRoot: string;
+}
+
+export type TrackedConfigFilesCommand =
+  | IsUserOwnedCommand
+  | WriteAndTrackCommand
+  | MergeAndTrackCommand;
 
 /** Writes and merges the config files of a tool while keeping what the manifest must record
  * about each: the hash of a written file, the hash of what a skipped file holds on disk, and the
@@ -24,23 +44,30 @@ export class TrackedConfigFiles {
     private readonly logger: Logger
   ) {}
 
-  /** A file whose hash is that of `content`. */
-  fileOf(relativePath: string, content: string, mergeStrategy?: MergeStrategy): InstallationFile {
-    return new InstallationFile({
-      relativePath,
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy,
-    });
+  /** `is-user-owned` answers whether the file exists without the manifest tracking it, which marks
+   * it as the user's: it is left alone and a warning says so. `write-and-track` answers the files
+   * to record, `merge-and-track` the entries the merged files now hold. */
+  async execute(command: IsUserOwnedCommand): Promise<boolean>;
+  async execute(command: WriteAndTrackCommand): Promise<InstallationFile[]>;
+  async execute(command: MergeAndTrackCommand): Promise<MergeFileEntry[]>;
+  async execute(
+    command: TrackedConfigFilesCommand
+  ): Promise<boolean | InstallationFile[] | MergeFileEntry[]> {
+    switch (command.kind) {
+      case "is-user-owned":
+        return this.isUserOwned(command);
+      case "write-and-track":
+        return this.writeAndTrack(command);
+      case "merge-and-track":
+        return this.mergeAndTrack(command);
+    }
   }
 
-  /** Whether the file exists in the project without the manifest tracking it, which marks it as
-   * the user's: it is left alone and a warning says so. */
-  async isUserOwned(
-    relativePath: string,
-    projectRoot: string,
-    manifest: Manifest
-  ): Promise<boolean> {
+  private async isUserOwned({
+    relativePath,
+    projectRoot,
+    manifest,
+  }: IsUserOwnedCommand): Promise<boolean> {
     if (!(await this.fs.fileExists(join(projectRoot, relativePath)))) return false;
     if (manifest.isFileTracked(relativePath)) return false;
     this.logger.warn(`Skipping ${relativePath} — exists but not tracked by aidd`);
@@ -49,11 +76,11 @@ export class TrackedConfigFiles {
 
   /** Writes each file the gate lets through. A file the gate skips stays as it is on disk and is
    * tracked by the hash it holds there. */
-  async writeAndTrack(
-    files: InstallationFile[],
-    projectRoot: string,
-    onBeforeWrite?: BeforeWriteGate
-  ): Promise<InstallationFile[]> {
+  private async writeAndTrack({
+    files,
+    projectRoot,
+    onBeforeWrite,
+  }: WriteAndTrackCommand): Promise<InstallationFile[]> {
     const tracked: InstallationFile[] = [];
     for (const file of files) {
       const decision = onBeforeWrite ? await onBeforeWrite(file.relativePath) : "write";
@@ -68,7 +95,10 @@ export class TrackedConfigFiles {
   }
 
   /** Merges each file into the one on disk and answers what the merged file now holds. */
-  async mergeAndTrack(files: InstallationFile[], projectRoot: string): Promise<MergeFileEntry[]> {
+  private async mergeAndTrack({
+    files,
+    projectRoot,
+  }: MergeAndTrackCommand): Promise<MergeFileEntry[]> {
     for (const file of files) {
       await this.fs.mergeJsonFile(
         join(projectRoot, file.relativePath),

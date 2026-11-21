@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
-import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
@@ -74,15 +74,17 @@ export class InstallRuntimeConfig {
     mergeFiles: InstallationFile[],
     options: InstallRuntimeConfigCommand
   ): Promise<void> {
-    const allTracked = await this.trackedConfigFiles.writeAndTrack(
-      regularFiles,
-      options.projectRoot,
-      options.onBeforeWriteRegularFile
-    );
-    const mergeEntries = await this.trackedConfigFiles.mergeAndTrack(
-      mergeFiles,
-      options.projectRoot
-    );
+    const allTracked = await this.trackedConfigFiles.execute({
+      kind: "write-and-track",
+      files: regularFiles,
+      projectRoot: options.projectRoot,
+      onBeforeWrite: options.onBeforeWriteRegularFile,
+    });
+    const mergeEntries = await this.trackedConfigFiles.execute({
+      kind: "merge-and-track",
+      files: mergeFiles,
+      projectRoot: options.projectRoot,
+    });
     options.manifest.addTool(options.toolId, options.version, allTracked, mergeEntries);
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
@@ -99,14 +101,13 @@ export class InstallRuntimeConfig {
       const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      if (
-        await this.trackedConfigFiles.isUserOwned(
-          resolvedPath,
-          options.projectRoot,
-          options.manifest
-        )
-      )
-        continue;
+      const userOwned = await this.trackedConfigFiles.execute({
+        kind: "is-user-owned",
+        relativePath: resolvedPath,
+        projectRoot: options.projectRoot,
+        manifest: options.manifest,
+      });
+      if (userOwned) continue;
       const mcp = profile.mcpConfig();
       if (mcp?.isFrameworkPrimeJson(fileName)) {
         content = mcp.frameworkConfigOver(
@@ -115,7 +116,7 @@ export class InstallRuntimeConfig {
           {}
         );
       }
-      files.push(this.trackedConfigFiles.fileOf(resolvedPath, content));
+      files.push(InstallationFile.hashing(resolvedPath, content));
     }
     return files;
   }
@@ -163,6 +164,6 @@ export class InstallRuntimeConfig {
       this.assets.loadConfigAsset(options.toolId, fileName)
     );
     if (content === null) return null;
-    return this.trackedConfigFiles.fileOf(cap.outputPath(), content, cap.mergeStrategy());
+    return InstallationFile.hashing(cap.outputPath(), content, cap.mergeStrategy());
   }
 }
