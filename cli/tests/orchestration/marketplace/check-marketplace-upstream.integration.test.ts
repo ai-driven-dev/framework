@@ -24,7 +24,9 @@ async function buildUseCase() {
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = new InMemoryManifestRepository();
-  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: new FixturePluginFetcher(),
+  });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)

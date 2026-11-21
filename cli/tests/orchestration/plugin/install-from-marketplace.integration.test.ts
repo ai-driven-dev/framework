@@ -64,7 +64,7 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
     },
     registeredTools()
   );
-  const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
+  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);
   const useCase = new InstallFromMarketplace(
     new ResolvePluginSource(registry, new ResolveMarketplace(fetchMarketplaceSource, catalogRepo)),

@@ -75,7 +75,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     },
     catalogOf()
   );
-  const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
+  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(deps.fs)

@@ -52,12 +52,11 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const github = new GitHubAdapter(shared.http, { tokenProvider: shared.tokenProvider });
   const releaseResolver = github;
   const rawCatalogFetcher = github;
-  const fetchMarketplaceSource = new FetchMarketplaceSource(
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
     pluginFetcher,
-    rawCatalogFetcher,
-    shared.fs,
-    shared.logger
-  );
+    rawCatalog: { fetcher: rawCatalogFetcher, fs: shared.fs },
+    logger: shared.logger,
+  });
   const resolveMarketplaceUseCase = new ResolveMarketplace(
     fetchMarketplaceSource,
     pluginCatalogRepository,
@@ -68,13 +67,13 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
     resolveMarketplaceUseCase,
     shared.logger
   );
-  const refreshMarketplace = new RefreshMarketplace(
-    marketplaceRegistry,
-    resolveMarketplaceUseCase,
-    marketplaceCache,
-    shared.logger,
-    shared.fs
-  );
+  const refreshMarketplace = new RefreshMarketplace({
+    registry: marketplaceRegistry,
+    resolveMarketplace: resolveMarketplaceUseCase,
+    cache: marketplaceCache,
+    logger: shared.logger,
+    fs: shared.fs,
+  });
   const registerFrameworkMarketplace = new RegisterFrameworkMarketplace(marketplaceRegistry);
   return {
     pluginCatalogRepository,

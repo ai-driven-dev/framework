@@ -69,7 +69,7 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   };
   const trustStore = new InMemoryMarketplaceTrustStore();
   const resolveMarketplace = new ResolveMarketplace(
-    new FetchMarketplaceSource(new FixturePluginFetcher()),
+    new FetchMarketplaceSource({ pluginFetcher: new FixturePluginFetcher() }),
     new PluginCatalogRepositoryAdapter(fs)
   );
   const resolve = resolveMarketplace.execute.bind(resolveMarketplace);

@@ -23,18 +23,18 @@ async function buildUseCase() {
   const pluginFetcher = new FixturePluginFetcher({
     [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]: VALID_FIXTURE,
   });
-  const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
+  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
   const logger = new CapturingLogger();
-  const useCase = new RefreshMarketplace(
+  const useCase = new RefreshMarketplace({
     registry,
     resolveMarketplace,
-    new InMemoryMarketplaceCache(),
-    logger
-  );
+    cache: new InMemoryMarketplaceCache(),
+    logger,
+  });
   return { useCase, registry, logger };
 }
 

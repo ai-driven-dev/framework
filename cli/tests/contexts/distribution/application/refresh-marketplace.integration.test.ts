@@ -28,13 +28,13 @@ async function buildUseCase() {
       VERSIONED_FIXTURE,
   };
   const pluginFetcher = new FixturePluginFetcher(fetchers);
-  const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
+  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
   const cache = new InMemoryMarketplaceCache();
-  const useCase = new RefreshMarketplace(registry, resolveMarketplace, cache);
+  const useCase = new RefreshMarketplace({ registry, resolveMarketplace, cache });
   return { useCase, registry, cache };
 }
 
@@ -213,7 +213,7 @@ describe("RefreshMarketplace", () => {
         [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]:
           VALID_FIXTURE,
       });
-      const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
+      const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher });
       const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
 
       const cacheDir = join(PROJECT_ROOT, MARKETPLACE_CACHE_SUBDIR, "stale-mkt");
@@ -226,13 +226,13 @@ describe("RefreshMarketplace", () => {
         fetchMarketplaceSource,
         new PluginCatalogRepositoryAdapter(fs)
       );
-      const useCase = new RefreshMarketplace(
+      const useCase = new RefreshMarketplace({
         registry,
         resolveMarketplace,
-        new InMemoryMarketplaceCache(),
+        cache: new InMemoryMarketplaceCache(),
         logger,
-        fs
-      );
+        fs,
+      });
       await registry.save(
         PROJECT_ROOT,
         Marketplace.create({
@@ -258,7 +258,7 @@ describe("RefreshMarketplace", () => {
         [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]:
           VALID_FIXTURE,
       });
-      const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
+      const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher });
       const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
 
       const cacheDir = join(PROJECT_ROOT, MARKETPLACE_CACHE_SUBDIR, "fresh-mkt");
@@ -274,13 +274,13 @@ describe("RefreshMarketplace", () => {
         fetchMarketplaceSource,
         new PluginCatalogRepositoryAdapter(fs)
       );
-      const useCase = new RefreshMarketplace(
+      const useCase = new RefreshMarketplace({
         registry,
         resolveMarketplace,
-        new InMemoryMarketplaceCache(),
+        cache: new InMemoryMarketplaceCache(),
         logger,
-        fs
-      );
+        fs,
+      });
       await registry.save(
         PROJECT_ROOT,
         Marketplace.create({

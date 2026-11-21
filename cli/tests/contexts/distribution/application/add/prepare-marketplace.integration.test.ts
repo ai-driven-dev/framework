@@ -23,7 +23,9 @@ async function build() {
   await seedFromDirectory(fs, MARKETPLACE_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const trustStore = new InMemoryMarketplaceTrustStore();
-  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: new FixturePluginFetcher(),
+  });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)

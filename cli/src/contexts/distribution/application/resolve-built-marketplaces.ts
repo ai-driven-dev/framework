@@ -16,28 +16,30 @@ export interface ResolveBuiltMarketplacesCommand {
   toolIds: readonly AiToolId[];
 }
 
+export interface ResolveBuiltMarketplacesDeps {
+  readonly fs: FileReader;
+  readonly registry: MarketplaceRegistry;
+  /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s own
+   * `userCacheRoot`. No default: a caller with nothing real to pass would silently recompute a
+   * path this run never built. */
+  readonly userCacheRoot: () => string;
+  /** This run's own CLI version: the shared source is one directory per version, so recomputing
+   * the expected path needs the same version a build would use. No default: an empty version
+   * collapses `join(…, "", …)` to the pre-version path shape, a different, wrong path silently
+   * recomputed rather than a failure. */
+  readonly currentVersion: VersionReader;
+}
+
 /**
  * Recomputes, never reads back, where each registered marketplace was built for each tool:
  * `builtMarketplaceDir` and `userBuiltMarketplaceDir` are the same pure functions
  * `CacheBuiltMarketplace` calls to decide where it builds, so nothing here triggers a build.
  */
 export class ResolveBuiltMarketplaces {
-  constructor(
-    private readonly fs: FileReader,
-    private readonly registry: MarketplaceRegistry,
-    /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s own
-     * `userCacheRoot`. No default: a caller with nothing real to pass would silently recompute a
-     * path this run never built. */
-    private readonly userCacheRoot: () => string,
-    /** This run's own CLI version: the shared source is one directory per version, so recomputing
-     * the expected path needs the same version a build would use. No default: an empty version
-     * collapses `join(…, "", …)` to the pre-version path shape, a different, wrong path silently
-     * recomputed rather than a failure. */
-    private readonly currentVersion: VersionReader
-  ) {}
+  constructor(private readonly deps: ResolveBuiltMarketplacesDeps) {}
 
   async execute(command: ResolveBuiltMarketplacesCommand): Promise<MarketplaceBuilds> {
-    const registered = await this.registry.list(command.projectRoot);
+    const registered = await this.deps.registry.list(command.projectRoot);
     const built = new Map<AiToolId, readonly BuiltMarketplace[]>();
     for (const toolId of command.toolIds) {
       const marketplaces: BuiltMarketplace[] = [];
@@ -49,7 +51,7 @@ export class ResolveBuiltMarketplaces {
     }
     return {
       registeredNames: registered.map((m) => m.name),
-      userCacheRoot: this.userCacheRoot(),
+      userCacheRoot: this.deps.userCacheRoot(),
       built,
     };
   }
@@ -72,12 +74,12 @@ export class ResolveBuiltMarketplaces {
     const raw =
       marketplace.scope === "user" || marketplace.name === FRAMEWORK_MARKETPLACE_NAME
         ? userBuiltMarketplaceDir({
-            userConfigDir: this.userCacheRoot(),
-            cliVersion: this.currentVersion.get(),
+            userConfigDir: this.deps.userCacheRoot(),
+            cliVersion: this.deps.currentVersion.get(),
             marketplaceName: marketplace.name,
             target: toolId,
           })
         : builtMarketplaceDir(projectRoot, marketplace.name, toolId);
-    return this.fs.realpath(resolve(raw)).catch(() => undefined);
+    return this.deps.fs.realpath(resolve(raw)).catch(() => undefined);
   }
 }

@@ -25,7 +25,12 @@ async function refreshOver(catalogs: Parameters<typeof resolvingCatalogs>[0], ..
   for (const name of names) await registry.save(PROJECT, marketplaceAt(name));
   const cache = new InMemoryMarketplaceCache();
   const resolver = resolvingCatalogs(catalogs);
-  return { registry, cache, resolver, refresh: new RefreshMarketplace(registry, resolver, cache) };
+  return {
+    registry,
+    cache,
+    resolver,
+    refresh: new RefreshMarketplace({ registry, resolveMarketplace: resolver, cache }),
+  };
 }
 
 const EMPTY: PluginCatalog = { plugins: [] };
@@ -97,7 +102,13 @@ describe("RefreshMarketplace", () => {
     });
     const logger = new CapturingLogger();
 
-    await new RefreshMarketplace(registry, resolver, cache, logger, fs).execute({
+    await new RefreshMarketplace({
+      registry,
+      resolveMarketplace: resolver,
+      cache,
+      logger,
+      fs,
+    }).execute({
       projectRoot: PROJECT,
     });
 
@@ -116,7 +127,13 @@ describe("RefreshMarketplace", () => {
     });
     const logger = new CapturingLogger();
 
-    await new RefreshMarketplace(registry, resolver, cache, logger, fs).execute({
+    await new RefreshMarketplace({
+      registry,
+      resolveMarketplace: resolver,
+      cache,
+      logger,
+      fs,
+    }).execute({
       projectRoot: PROJECT,
     });
 
