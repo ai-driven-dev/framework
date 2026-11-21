@@ -59,9 +59,9 @@ import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/stor
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
 import type { Prompter } from "../orchestration/ports/prompter.js";
+import { ChooseIdentity } from "../orchestration/telemetry/choose-identity.use-case.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
-import { wireChooseIdentity } from "./orchestration/telemetry.js";
-import { userConfigDirOf } from "./shared.js";
+import { userConfigDirOf } from "./user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 export function wireTelemetryRequests(): TelemetryRequests {
@@ -224,7 +224,7 @@ function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
   return {
     manageIdentity,
     proposeIdentity,
-    chooseIdentity: wireChooseIdentity({
+    chooseIdentity: new ChooseIdentity({
       decideIdentity: new DecideIdentity({ manageIdentity, proposeIdentity }),
       checkIdentity: new CheckIdentity(),
       prompter,

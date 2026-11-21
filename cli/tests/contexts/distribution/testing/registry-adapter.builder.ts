@@ -1,4 +1,4 @@
-import { userConfigDir } from "../../../../src/composition/shared.js";
+import { userConfigDir } from "../../../../src/composition/user-config-dir.js";
 import { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
 

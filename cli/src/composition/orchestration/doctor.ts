@@ -15,7 +15,8 @@ import { RunDoctor } from "../../orchestration/doctor/run-doctor.use-case.js";
 import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.use-case.js";
 import { doctorAll } from "../../orchestration/global/doctor-all.js";
 import type { Installation } from "../installation.js";
-import { type Base, userConfigDir } from "../shared.js";
+import type { Base } from "../shared.js";
+import { userConfigDir } from "../user-config-dir.js";
 
 /** Whether the host CLI behind a binary is reachable, as the activator that drives it answers;
  * a binary no activator drives is not. */

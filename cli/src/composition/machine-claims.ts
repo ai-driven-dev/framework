@@ -2,15 +2,13 @@ import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastr
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 export interface MachineClaimsDeps {
   userSourceReferences: UserSourceReferences;
 }
 
 /** Wires the machine-wide claims over the file system and the user directory. */
-export function wireMachineClaims(
-  fs: FileReader & FileWriter,
-  userConfigDir: () => string
-): MachineClaimsDeps {
+export function wireMachineClaims(fs: FileReader & FileWriter): MachineClaimsDeps {
   return { userSourceReferences: new UserSourceReferencesAdapter(fs, userConfigDir) };
 }

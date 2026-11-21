@@ -10,13 +10,13 @@ import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
 import type { Logger } from "../shared/ports/logger.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 export interface AuthWiring {
   projectRoot: string;
   logger: Logger;
   http: HttpGet;
   environment: Environment;
-  userConfigDir: () => string;
   /** A token the command line carried: composed in, never published to the environment. */
   explicitToken?: string;
 }
@@ -31,7 +31,7 @@ export interface AuthDeps {
 export function wireAuth(shared: AuthWiring): AuthDeps {
   const records = new CredentialRecordFileAdapter(
     shared.projectRoot,
-    shared.userConfigDir,
+    userConfigDir,
     () => new Date()
   );
   const gh = new GhCliAdapter();

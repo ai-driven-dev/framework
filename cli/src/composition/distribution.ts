@@ -23,13 +23,13 @@ import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { ReleaseLister } from "../shared/ports/release-lister.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter;
   http: HttpClient;
   tokenProvider: TokenProvider;
   logger: Logger;
-  userConfigDir: () => string;
   projectRoot: string;
 }
 
@@ -72,7 +72,7 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
   const resolveMarketplaceUseCase = new ResolveMarketplace(
     fetchMarketplaceSource,
     inputs.pluginCatalogRepository,
-    shared.userConfigDir
+    userConfigDir
   );
   const listMarketplaces = new ListMarketplaces(
     marketplaceRegistry,
@@ -98,7 +98,7 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
-  const marketplaceRegistry = new MarketplaceRegistryAdapter(shared.userConfigDir, atomicWriteFile);
+  const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter();
   const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
   const github = new GitHubAdapter(shared.http, { tokenProvider: shared.tokenProvider });

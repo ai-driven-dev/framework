@@ -43,12 +43,13 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
 import type { Logger } from "../shared/ports/logger.js";
-import { type Base, userConfigDir } from "./shared.js";
+import type { Base } from "./shared.js";
 import {
   createFrameworkBuildUseCase,
   createPluginTranslation,
   type FrameworkBuildDeps,
 } from "./translate.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 /** A project is set up once the installation has recorded a manifest for it. */
 export function projectSetupOf(manifestRepo: ManifestRepository): ProjectSetupState {

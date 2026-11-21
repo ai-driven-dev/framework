@@ -104,7 +104,8 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | orchestration reads `machine-claims` beyond its `contract/` | each flow moves into orchestration behind a claims port |
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/controllers/setup.controller.ts` (each carries a `biome-ignore lint/plugin` above its import) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | installation restore asks through an injected `ConflictResolver` on the single-tool interactive restore (`run-sync`) | sync lists the drift through `status`, asks per modified file, and hands restore a keep list, once the log line order and the refusal before writes may change |
-| `folder-size.arch.test.ts` lets the folders it lists hold more than 10 source files, each was grown before the cap was checked, and a split moves files between kits and imports | the folder is split or shrinks to 10, and its line leaves the list: the list only ever gets shorter |
+| `userConfigDirOf` sits beside its wrapper in `composition/user-config-dir.ts`, where the target has `shared/domain` | a second context reads it, which earns it a `shared/domain` file |
+| `folder-size.arch.test.ts` lets the folders it lists hold more than 10 source files: each was grown before the cap was checked, and a split moves files between kits and imports | the folder is split or shrinks to 10, and its line leaves the list: the list only ever gets shorter |
 
 ## 10. Checklist for a context's migration PR
 

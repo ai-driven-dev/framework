@@ -27,7 +27,8 @@ import type { FileWriter } from "../../shared/ports/file-writer.js";
 import type { Lock } from "../../shared/ports/lock.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Installation } from "../installation.js";
-import { type Base, userConfigDir } from "../shared.js";
+import type { Base } from "../shared.js";
+import { userConfigDir } from "../user-config-dir.js";
 
 /** What a clean asks of the machine record, over the user manifest and the shared source's references. */
 export function wireCleanClaims(parts: {

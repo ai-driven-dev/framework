@@ -1,5 +1,3 @@
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
@@ -23,24 +21,7 @@ import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
 import { wireMachineClaims } from "./machine-claims.js";
-
-/** What belongs to the user rather than to a project. `AIDD_USER_CONFIG_DIR` overrides it
- * outright, which is how the suites stay out of a real home directory; `XDG_CONFIG_HOME`
- * names a config root a person already chose, honored before the `~/.config` default. An
- * empty variable is an unset one. */
-export function userConfigDirOf(
-  env: NodeJS.ProcessEnv,
-  home: string,
-  joinPath: (...parts: string[]) => string = join
-): string {
-  if (env.AIDD_USER_CONFIG_DIR) return env.AIDD_USER_CONFIG_DIR;
-  if (env.XDG_CONFIG_HOME) return joinPath(env.XDG_CONFIG_HOME, "aidd");
-  return joinPath(home, ".config", "aidd");
-}
-
-export function userConfigDir(): string {
-  return userConfigDirOf(process.env, homedir());
-}
+import { userConfigDir } from "./user-config-dir.js";
 
 /** The version of the running binary, for the entry point that may not import infrastructure. */
 export function currentVersion(): string {
@@ -124,21 +105,13 @@ function wireRemote(
 ) {
   const http = new HttpClient();
   const environment = new EnvironmentAdapter();
-  const auth = wireAuth({
-    projectRoot,
-    logger,
-    http,
-    environment,
-    userConfigDir,
-    explicitToken: token,
-  });
+  const auth = wireAuth({ projectRoot, logger, http, environment, explicitToken: token });
   const distribution = wireDistribution({
     fs,
     http,
     tokenProvider: auth.tokenProvider,
     logger,
     projectRoot,
-    userConfigDir,
   });
   return { http, environment, ...auth, ...distribution };
 }
@@ -155,7 +128,7 @@ export function wireBase(options: BaseOptions) {
   const host = wireHost({ tools, fs: storage.fs, logger });
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
-  const { userSourceReferences } = wireMachineClaims(storage.fs, userConfigDir);
+  const { userSourceReferences } = wireMachineClaims(storage.fs);
   return {
     ...host,
     ...remote,

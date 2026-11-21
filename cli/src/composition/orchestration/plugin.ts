@@ -44,7 +44,8 @@ import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.
 import { withdrawalClaimsOf } from "../../orchestration/plugin/withdrawal-claims.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
-import { type Base, userConfigDir } from "../shared.js";
+import type { Base } from "../shared.js";
+import { userConfigDir } from "../user-config-dir.js";
 
 /** Where a fetched plugin distribution is kept between runs. */
 export function pluginCacheDir(): string {

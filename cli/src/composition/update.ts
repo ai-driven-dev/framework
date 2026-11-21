@@ -13,7 +13,7 @@ import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
-import { userConfigDir } from "./shared.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 export interface UpdateWiring {
   logger: Logger;

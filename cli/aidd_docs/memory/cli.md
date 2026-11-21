@@ -29,4 +29,4 @@ Read them live: `aidd --help`, then each group's; `tests/golden/help-surface.gol
 
 - npm bin `aidd` to `dist/cli.js`; `files` ships `dist` and the README.
 - `npx @ai-driven-dev/cli@latest`, or a global install; build and publish in `deployment.md`.
-- `AIDD_USER_CONFIG_DIR` relocates what is machine-owned, read by `src/composition/shared.ts`.
+- `AIDD_USER_CONFIG_DIR` relocates what is machine-owned, read by `src/composition/user-config-dir.ts`.

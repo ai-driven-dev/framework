@@ -21,11 +21,18 @@ const ASK = { cwd: "/repo", yes: false, anonymous: false, onRefused: () => undef
 
 describe("ChooseIdentity", () => {
   it.each<IdentityDecision>([{ set: "Ada Example" }, "none", "keep"])(
-    "returns what telemetry decided, asking nothing: %j",
+    "never reaches the prompter for a decision that asks nothing: %j",
     async (decision) => {
-      const { choose, select } = chooser(decision);
+      const fail = vi.fn(async () => {
+        throw new Error("the prompter was called");
+      });
+      const choose = new ChooseIdentity({
+        decideIdentity: { execute: async () => decision },
+        checkIdentity: new CheckIdentity(),
+        prompter: prompterAnswering({ select: fail, input: fail }),
+      });
       expect(await choose.execute(ASK)).toEqual(decision);
-      expect(select).not.toHaveBeenCalled();
+      expect(fail).not.toHaveBeenCalled();
     }
   );
 
