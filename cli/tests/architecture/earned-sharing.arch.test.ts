@@ -106,9 +106,19 @@ function unearnedShared(
       (i) => i.startsWith("src/shared/infrastructure/") && earned.has(i)
     );
   const ports = shared.filter((file) => file.startsWith("src/shared/ports/"));
+  const readByEarnedPort = (file: string): boolean =>
+    [...(importers.get(file) ?? [])].some(
+      (i) => i.startsWith("src/shared/ports/") && earned.has(i)
+    );
+  const types = shared.filter((file) => file.startsWith("src/shared/domain/"));
 
   for (let grew = true; grew; ) {
     grew = false;
+    for (const file of types) {
+      if (earned.has(file) || !readByEarnedPort(file)) continue;
+      earned.add(file);
+      grew = true;
+    }
     for (const file of ports) {
       if (earned.has(file) || !readByEarnedAdapter(file)) continue;
       earned.add(file);
@@ -219,6 +229,20 @@ describe("the guard itself", () => {
     ]);
 
     expect(unearnedShared([read, lonely, adapter], importers, () => "")).toEqual([lonely]);
+  });
+
+  it("clears a domain type one context imports when an earned port in shared declares it in its signature", () => {
+    const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
+    const port = "src/shared/ports/port.ts";
+    const read = "src/shared/domain/read.ts";
+    const lonely = "src/shared/domain/lonely.ts";
+    const importers = new Map([
+      [port, new Set([A, B])],
+      [read, new Set([A, port])],
+      [lonely, new Set([A])],
+    ]);
+
+    expect(unearnedShared([port, read, lonely], importers, () => "")).toEqual([lonely]);
   });
 
   it("names an area for every place a caller lives, so two callers are not both 'other'", () => {

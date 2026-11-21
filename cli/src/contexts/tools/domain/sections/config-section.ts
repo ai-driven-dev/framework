@@ -1,6 +1,6 @@
+import type { ConfigAsset } from "../../../../shared/domain/config-asset.js";
 import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
-import type { ConfigAsset } from "../../../../shared/domain/tool.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
 
 type ConfigSectionParams = {
