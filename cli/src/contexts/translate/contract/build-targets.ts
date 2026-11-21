@@ -16,8 +16,7 @@ export interface FrameworkBuildTargetMode {
 }
 
 /** A tool supports a mode when its profile declares a build contract for it. Takes the catalog
- * explicitly so the rule can be probed with synthetic tools. Walks the catalog's canonical order, never
- * the order the tools were registered in. */
+ * explicitly so the rule can be probed with synthetic tools. Walks the catalog's canonical order. */
 export function buildTargetModesOf(tools: ToolCatalog): readonly FrameworkBuildTargetMode[] {
   const pairs: FrameworkBuildTargetMode[] = [];
   for (const target of tools.idsInCanonicalOrder("ai")) {

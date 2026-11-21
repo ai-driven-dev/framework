@@ -1,4 +1,4 @@
-import { CANONICAL_PROFILES, REGISTERED_PROFILES } from "../../../src/composition/tools.js";
+import { REGISTERED_PROFILES } from "../../../src/composition/tools.js";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type {
@@ -14,13 +14,10 @@ import {
   resolveRegisteredToolId as registeredToolIdResolver,
 } from "./registered-tools.builder.js";
 
-/** A catalog over the given profiles, the registered ones when none is given, canonical order
- * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a
- * value, never shared state. */
+/** A catalog over the given profiles, in the given order, the registered ones when none is given.
+ * Built inside the `it` that reads it: a catalog is a value, never shared state. */
 export function catalogOf(profiles: readonly BuiltToolConfig[] = REGISTERED_PROFILES): ToolCatalog {
-  const registered = CANONICAL_PROFILES.filter((profile) => profiles.includes(profile));
-  const others = profiles.filter((profile) => !registered.includes(profile));
-  return new RegisteredToolCatalog(profiles, [...registered, ...others]);
+  return new RegisteredToolCatalog(profiles);
 }
 
 /** The registered profile of one AI tool, for a test that hands a profile to code that asks one. */

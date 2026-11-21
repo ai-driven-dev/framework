@@ -90,11 +90,3 @@ export class OpencodeDualConfigError extends AiddError {
     this.name = "OpencodeDualConfigError";
   }
 }
-
-export class ToolListMismatchError extends AiddError {
-  readonly code = "tool-list-mismatch";
-  constructor(toolIds: readonly string[]) {
-    super(`Tool lists differ on: ${toolIds.join(", ")}.`);
-    this.name = "ToolListMismatchError";
-  }
-}

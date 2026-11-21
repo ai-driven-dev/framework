@@ -11,10 +11,10 @@ describe("a catalog declaring synthetic tools", () => {
     expect(() => catalog.aiProfile(TOOL.cursor)).toThrow(UnregisteredToolError);
   });
 
-  it("answers the declared ids in the order given for help and the registered order otherwise", () => {
+  it("answers the declared ids in the registered order, whatever order they were given in", () => {
     const catalog = catalogDeclaring([{ id: TOOL.cursor }, { id: TOOL.claude }]);
 
-    expect(catalog.inHelpOrder("ai")).toEqual<AiToolId[]>([TOOL.cursor, TOOL.claude]);
+    expect(catalog.inHelpOrder("ai")).toEqual<AiToolId[]>([TOOL.claude, TOOL.cursor]);
     expect(catalog.idsInCanonicalOrder("ai")).toEqual<AiToolId[]>([TOOL.claude, TOOL.cursor]);
   });
 });
