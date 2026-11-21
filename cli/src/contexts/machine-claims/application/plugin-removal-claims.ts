@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../shared/domain/describe-error.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
@@ -70,7 +71,7 @@ function otherProjectsOf(
 }
 
 function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {
-  return async (query: PluginRefGuardQuery): Promise<string | undefined> => {
+  return async (query: PluginRefGuardQuery): Promise<string | HintedMessage | undefined> => {
     const { userSourceReferences } = deps;
     if (userSourceReferences === undefined) return undefined;
     if (!(await marketplaceIsSharedSource(deps, query))) return undefined;

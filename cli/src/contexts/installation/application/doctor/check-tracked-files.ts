@@ -46,7 +46,7 @@ export class CheckTrackedFiles {
         issues.push({
           severity: "error",
           message: `Missing tracked file: ${file.relativePath}`,
-          fix: `Restore the file or run \`aidd sync\` to reinstall tracked files.`,
+          fix: { code: "restore-or-sync" },
         });
       }
     }
@@ -70,7 +70,7 @@ export class CheckTrackedFiles {
       issues.push({
         severity: "warning",
         message: `Modified tracked file: ${file.relativePath}`,
-        fix: `Run \`aidd sync --force\` to revert to the framework version.`,
+        fix: { code: "sync-force", effect: "revert-file" },
       });
     }
     return issues;

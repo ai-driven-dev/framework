@@ -32,7 +32,7 @@ describe("registration issues", () => {
       location: "/registry",
     });
 
-    expect(issue).toMatchObject({ severity: "error", fix: "Run `aidd sync` to re-register it." });
+    expect(issue).toMatchObject({ severity: "error", fix: { code: "sync-reregister" } });
   });
 
   it("words a disabled plugin as an error that points at the tool's install", () => {
@@ -44,7 +44,7 @@ describe("registration issues", () => {
     });
 
     expect(issue.severity).toBe("error");
-    expect(issue.fix).toContain(`--tool ${tool}`);
+    expect(issue.fix).toEqual({ code: "install-framework", tool });
   });
 
   it("words a different-catalog conflict as an error that names both sources", () => {

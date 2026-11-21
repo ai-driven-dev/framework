@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { HostWithdrawal } from "../../ports/native-host.js";
 import type {
@@ -19,7 +20,7 @@ export interface PluginRemovalClaims extends RemovalClaims {
     readonly ref: string;
     readonly marketplaceAlias: string;
     readonly projectRoot: string;
-  }) => Promise<string | undefined>;
+  }) => Promise<string | HintedMessage | undefined>;
   readonly resolveCacheCandidate: (
     cacheRoot: string,
     relativeSegments: string,

@@ -10,6 +10,7 @@ import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.builder.js";
 
 const ROOT = "/project";
@@ -119,7 +120,7 @@ describe("RemoveProjectPlugin.assertLocalIntegrationRemovable", () => {
         pluginWithHookScript(),
         ROOT
       )
-    ).rejects.toThrow("edited after install");
+    ).rejects.toThrow(saying("edited after install"));
   });
 
   it("passes while the contributed servers are as installed", async () => {

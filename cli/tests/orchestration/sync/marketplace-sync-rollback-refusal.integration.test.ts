@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import {
   BUILT_CACHE_SUBDIR,
   userBuiltMarketplaceDir,
@@ -151,7 +152,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
         (m) => m.includes("2.0.0") && m.includes("1.0.0") && m.includes("aidd update")
       )
     ).toBe(true);
-    expect(result.warnings.some((m) => m.includes("aidd update"))).toBe(true);
+    expect(result.warnings.some((m) => describeMessage(m).includes("aidd update"))).toBe(true);
   });
 
   // The migration itself: the host still points at this project's own pre-migration
@@ -198,7 +199,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
 
     const refusal =
       "claude's marketplace registry (/home/.claude/plugins/known_marketplaces.json) already carries a newer aidd-framework build, 2.0.0, than this run's own 1.0.0 — not registering this run's build over it. Run `aidd update` to bring this project's CLI to at least the version the host already follows.";
-    expect(result.warnings).toStrictEqual([refusal]);
+    expect(result.warnings.map(describeMessage)).toStrictEqual([refusal]);
     expect(logger.warnMessages).toStrictEqual([refusal]);
   });
 

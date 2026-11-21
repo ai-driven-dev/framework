@@ -15,6 +15,7 @@ import {
 } from "../../../../shared/testing/faulting-file-adapter.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";
@@ -163,7 +164,7 @@ describe("ProjectHooksMaterializer", () => {
         projectRoot: PROJECT_ROOT,
         previous: first.projectHooks,
       })
-    ).rejects.toThrow(/edited during reinstall.*removal refused/);
+    ).rejects.toThrow(saying(/edited during reinstall.*removal refused/));
 
     expect(fs.getFile(oldPath)).toBe("concurrent user edit");
     expect(first.projectHooks?.scripts.has(`.cursor/hooks/${PLUGIN_NAME}/old.js`)).toBe(true);
@@ -219,7 +220,7 @@ describe("ProjectHooksMaterializer", () => {
         projectRoot: PROJECT_ROOT,
         previous: first.projectHooks,
       })
-    ).rejects.toThrow(/edited after install; detach refused\. Rerun aidd sync --force/);
+    ).rejects.toThrow(saying(/edited after install; detach refused\. Rerun aidd sync --force/));
     await materializer.execute({
       dist,
       tool: registeredTools().aiProfile(TOOL.cursor),

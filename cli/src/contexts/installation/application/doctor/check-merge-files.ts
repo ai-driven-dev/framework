@@ -35,7 +35,7 @@ export class CheckMergeFiles {
         {
           severity: "error",
           message: `Missing merge file: ${mergeFile.relativePath}`,
-          fix: `Run \`aidd sync --force\` to reinstall tracked files.`,
+          fix: { code: "sync-force", effect: "reinstall-files" },
         },
       ];
     }
@@ -52,13 +52,13 @@ export class CheckMergeFiles {
         issues.push({
           severity: "error",
           message: `Missing key in ${mergeFile.relativePath} > ${key}`,
-          fix: `Run \`aidd sync --force\` to restore managed keys.`,
+          fix: { code: "sync-force", effect: "restore-keys" },
         });
       } else if (verdict === "modified") {
         issues.push({
           severity: "warning",
           message: `Modified key in ${mergeFile.relativePath} > ${key}`,
-          fix: `Run \`aidd sync --force\` to restore the original value.`,
+          fix: { code: "sync-force", effect: "restore-value" },
         });
       }
     }

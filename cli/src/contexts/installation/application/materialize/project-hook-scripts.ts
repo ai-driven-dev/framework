@@ -3,11 +3,9 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
+import { ProjectHooksEditedError } from "../../domain/installation.error.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
-import {
-  OVERWRITE_EDITED_HINT,
-  type ProjectHooksGuard,
-} from "../shared/assert-project-hooks-unchanged.js";
+import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 
 export const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
 
@@ -78,7 +76,7 @@ async function assertUnedited(
 ): Promise<void> {
   if (guard.overwriteEdited === true) return;
   if ((await fs.readFileHash(script.path)).value === script.digest) return;
-  throw new Error(
-    `${location.toolName} hook script '${script.relativePath}' was edited during reinstall; removal refused. ${OVERWRITE_EDITED_HINT}`
+  throw new ProjectHooksEditedError(
+    `${location.toolName} hook script '${script.relativePath}' was edited during reinstall; removal refused.`
   );
 }

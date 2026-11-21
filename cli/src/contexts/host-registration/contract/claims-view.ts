@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../shared/domain/describe-error.js";
 /** A registration record as the machine keeps it: opaque here, narrowed by the one reader that
  * owns its shape. */
 export type RegistrationRecordView = Readonly<Record<string, unknown>>;
@@ -30,7 +31,7 @@ export interface WithdrawalClaimsView {
     binary: string,
     ref: string,
     alias: string
-  ) => Promise<string | undefined>;
+  ) => Promise<string | HintedMessage | undefined>;
   /** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
   readonly resolveCacheCandidate: (
     cacheRoot: string,

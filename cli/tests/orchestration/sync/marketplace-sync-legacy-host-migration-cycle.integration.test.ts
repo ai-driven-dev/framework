@@ -137,7 +137,11 @@ describe("settings migration: legacy host entries", () => {
         projectRoot: PROJECT_A,
         allowedIds: null,
       });
-      expect(before.some((issue) => issue.fix.includes("aidd sync"))).toBe(true);
+      expect(
+        before.some(
+          (issue) => typeof issue.fix !== "string" && issue.fix.code === "sync-migrate-source"
+        )
+      ).toBe(true);
 
       const activator = new RegisteringActivator(hostEntries);
       const syncFs = fsAt(PROJECT_ROOT, {

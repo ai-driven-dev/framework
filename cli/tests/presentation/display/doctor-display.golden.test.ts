@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { DoctorFix } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import {
+  describeDoctorFix,
   printAllToolsDrift,
   printInventory,
   printPluginIssues,
@@ -75,17 +77,25 @@ describe("printScopeIssues", () => {
 
     printScopeIssues(output, "AI", {
       issues: [
-        { severity: "error", message: "claude is not registered", fix: "Run `aidd sync`" },
-        { severity: "info", message: "claude never ran", fix: "Start claude once" },
-        { severity: "warning", message: "codex is ahead", fix: "Run `aidd update`" },
+        {
+          severity: "error",
+          message: "claude is not registered",
+          fix: { code: "sync-reregister" },
+        },
+        {
+          severity: "info",
+          message: "claude never ran",
+          fix: "The plugin does not load until claude's own CLI has run and answered this.",
+        },
+        { severity: "warning", message: "codex is ahead", fix: { code: "update-cli" } },
       ],
     });
 
     expect(output.lines).toEqual([
       "\nAI:",
-      "  claude never ran\n    Fix: Start claude once",
-      "  claude is not registered\n    Fix: Run `aidd sync`",
-      "  codex is ahead\n    Fix: Run `aidd update`",
+      "  claude never ran\n    Fix: The plugin does not load until claude's own CLI has run and answered this.",
+      "  claude is not registered\n    Fix: Run `aidd sync` to re-register it.",
+      "  codex is ahead\n    Fix: Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
     ]);
   });
 
@@ -94,13 +104,21 @@ describe("printScopeIssues", () => {
 
     printScopeIssues(output, "User scope", {
       issues: [
-        { severity: "error", message: "claude is not registered", fix: "Run `aidd sync`" },
-        { severity: "warning", message: "codex is ahead", fix: "Run `aidd update`" },
+        {
+          severity: "error",
+          message: "claude is not registered",
+          fix: { code: "sync-reregister" },
+        },
+        { severity: "warning", message: "codex is ahead", fix: { code: "update-cli" } },
       ],
     });
 
-    expect(output.at("error")).toEqual(["  claude is not registered\n    Fix: Run `aidd sync`"]);
-    expect(output.at("warn")).toEqual(["  codex is ahead\n    Fix: Run `aidd update`"]);
+    expect(output.at("error")).toEqual([
+      "  claude is not registered\n    Fix: Run `aidd sync` to re-register it.",
+    ]);
+    expect(output.at("warn")).toEqual([
+      "  codex is ahead\n    Fix: Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
+    ]);
   });
 });
 
@@ -233,5 +251,58 @@ describe("printUserScopeTools", () => {
       "  claude (v7.0.0): expects activation in /home/me/.claude/settings.json",
       "  codex (vunknown): expects activation in no user-scope settings file",
     ]);
+  });
+});
+
+describe("the words of what a person does about a doctor issue", () => {
+  const cases: [string | DoctorFix, string][] = [
+    [
+      { code: "remove-or-track-directory" },
+      "Remove the directory manually, or run `aidd install <tool>` to track it.",
+    ],
+    [
+      { code: "restore-or-sync" },
+      "Restore the file or run `aidd sync` to reinstall tracked files.",
+    ],
+    [
+      { code: "sync-force", effect: "reinstall-files" },
+      "Run `aidd sync --force` to reinstall tracked files.",
+    ],
+    [
+      { code: "sync-force", effect: "revert-file" },
+      "Run `aidd sync --force` to revert to the framework version.",
+    ],
+    [
+      { code: "sync-force", effect: "restore-keys" },
+      "Run `aidd sync --force` to restore managed keys.",
+    ],
+    [
+      { code: "sync-force", effect: "restore-value" },
+      "Run `aidd sync --force` to restore the original value.",
+    ],
+    [{ code: "sync-reregister" }, "Run `aidd sync` to re-register it."],
+    [
+      { code: "sync-migrate-source" },
+      "Run `aidd sync` to move it to the shared, machine-scope source.",
+    ],
+    [
+      { code: "update-cli" },
+      "Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
+    ],
+    [{ code: "authenticate" }, "Run aidd auth login"],
+    [{ code: "install-framework", tool: "claude" }, "Run `aidd framework install --tool claude`."],
+    [
+      { code: "replace-conflicting-source", name: "m" },
+      "Run `claude plugin marketplace remove m`, then `aidd sync` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.",
+    ],
+    [
+      { code: "refresh-marketplace", file: "f.json" },
+      "Run `aidd marketplace refresh` to write it back to f.json.",
+    ],
+    ["a sentence naming no command", "a sentence naming no command"],
+  ];
+
+  it.each(cases)("words %j", (fix, words) => {
+    expect(describeDoctorFix(fix)).toBe(words);
   });
 });

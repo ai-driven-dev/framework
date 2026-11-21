@@ -11,6 +11,7 @@ import type { Output } from "../orchestration/domain/output.js";
 import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-prompter.adapter.js";
 import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
 import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
+import type { HintedMessage } from "../shared/domain/describe-error.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
@@ -27,10 +28,18 @@ export function currentVersion(): string {
   return new CurrentVersionAdapter().get();
 }
 
+const plainText = (message: string | HintedMessage): string =>
+  typeof message === "string" ? message : message.text;
+
 /** The output of a run: it writes to the terminal and ends the process. `words` says a caught
- * value a log line carries; the entry point hands in the catalogue's, `String` reads only a plain one. */
-export function createOutput(verbose: boolean, words: (cause: unknown) => string = String): Output {
-  return new OutputAdapter(verbose, (code) => process.exit(code), words);
+ * value a log line carries and `describeMessage` a message with its hint; the entry point hands in
+ * the catalogue's, the defaults read only a plain one. */
+export function createOutput(
+  verbose: boolean,
+  words: (cause: unknown) => string = String,
+  describeMessage: (message: string | HintedMessage) => string = plainText
+): Output {
+  return new OutputAdapter(verbose, (code) => process.exit(code), words, describeMessage);
 }
 
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */

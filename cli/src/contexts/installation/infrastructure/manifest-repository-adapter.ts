@@ -26,7 +26,7 @@ export class ManifestRepositoryAdapter implements ManifestRepository {
       {
         path: this.path,
         location: "in this project",
-        reinstallCommand: "aidd setup",
+        scope: "project",
       },
       this.resolveToolId
     );

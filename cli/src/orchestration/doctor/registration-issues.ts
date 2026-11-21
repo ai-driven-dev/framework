@@ -23,13 +23,13 @@ export function registrationIssueOf(finding: HostRegistrationFinding): DoctorIss
       return {
         severity: "error",
         message: `${tool}'s registry (${finding.location}) does not carry ${finding.ref}`,
-        fix: "Run `aidd sync` to re-register it.",
+        fix: { code: "sync-reregister" },
       };
     case "plugin-disabled":
       return {
         severity: "error",
         message: `${tool}'s registry (${finding.location}) carries ${finding.ref} and records it disabled`,
-        fix: `Run \`aidd framework install --tool ${tool}\`.`,
+        fix: { code: "install-framework", tool },
       };
     case "source-drift":
       return driftIssue(tool, finding.found);
@@ -38,7 +38,7 @@ export function registrationIssueOf(finding: HostRegistrationFinding): DoctorIss
       return {
         severity: "error",
         message: `${tool}'s marketplace registry (${check.location}) carries '${check.name}' from a different catalog (${check.registeredSource}) than this project's own (${check.requestedSource}) — plugins ${finding.pluginDiff}`,
-        fix: `Run \`claude plugin marketplace remove ${check.name}\`, then \`aidd sync\` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.`,
+        fix: { code: "replace-conflicting-source", name: check.name },
       };
     }
   }
@@ -52,19 +52,19 @@ function driftIssue(toolId: AiToolId, found: MarketplaceSourceDriftFound): Docto
     return {
       severity: "warning",
       message: `${toolId}'s marketplace registry (${found.location}) already carries a newer aidd-framework build, ${drift.registeredVersion}, than this run's own ${drift.requestedVersion}`,
-      fix: "Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
+      fix: { code: "update-cli" },
     };
   }
   if (drift.kind === "unmigrated-foreign-project-source") {
     return {
       severity: "warning",
       message: `${toolId}'s marketplace registry (${found.location}) still carries '${found.name}' from another project's pre-migration cache (${found.registeredSource})`,
-      fix: "Run `aidd sync` to move it to the shared, machine-scope source.",
+      fix: { code: "sync-migrate-source" },
     };
   }
   return {
     severity: "warning",
     message: `${toolId}'s marketplace registry (${found.location}) still carries '${found.name}' from this project's own pre-migration cache (${found.registeredSource})`,
-    fix: "Run `aidd sync` to move it to the shared, machine-scope source.",
+    fix: { code: "sync-migrate-source" },
   };
 }

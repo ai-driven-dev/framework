@@ -13,6 +13,7 @@ import {
 } from "../../../../shared/testing/faulting-file-adapter.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 import {
   entry,
@@ -43,7 +44,7 @@ describe("removeProjectHooks", () => {
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/edited after install; detach refused\. Rerun aidd sync --force/);
+    ).rejects.toThrow(saying(/edited after install; detach refused\. Rerun aidd sync --force/));
     expect(
       await removeProjectHooks({
         fs,
@@ -155,7 +156,7 @@ describe("removeProjectHooks", () => {
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/edited after install/);
+    ).rejects.toThrow(saying(/edited after install/));
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(SCRIPT_PATH)).toBe(script);
@@ -279,7 +280,7 @@ describe("removeProjectHooks", () => {
           tool: registeredTools().aiProfile(cursor),
           projectRoot: PROJECT_ROOT,
         })
-      ).rejects.toThrow(/edited after install/);
+      ).rejects.toThrow(saying(/edited after install/));
 
       expect(fs.getFile(HOOKS_PATH)).toBe(current);
       expect(fs.getFile(SCRIPT_PATH)).toBe(script);

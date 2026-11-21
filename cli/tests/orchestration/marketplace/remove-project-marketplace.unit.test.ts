@@ -1,13 +1,16 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import { MarketplaceNotFoundError } from "../../../src/contexts/distribution/domain/distribution.error.js";
+import {
+  MarketplaceNotFoundError,
+  SharedMarketplaceRemovalError,
+} from "../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InvalidMarketplaceNameError } from "../../../src/shared/domain/shared.error.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import {
   buildUseCase,
@@ -217,7 +220,7 @@ describe("RemoveProjectMarketplace", () => {
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
       })
-    ).rejects.toThrow(InvalidMarketplaceNameError);
+    ).rejects.toThrow(SharedMarketplaceRemovalError);
 
     const list = await registry.list(PROJECT_ROOT);
     expect(list).toHaveLength(1);
@@ -234,8 +237,8 @@ describe("RemoveProjectMarketplace", () => {
         autoConfirm: true,
       })
     ).rejects.toThrow(
-      new InvalidMarketplaceNameError(
-        '"aidd-framework" is shared by every project on this machine and is not removed with `aidd marketplace remove` — it is removed with the framework itself, by `aidd clean`, once machine scope lands there.'
+      saying(
+        "is shared by every project on this machine and is not removed with `aidd marketplace remove` — it is removed with the framework itself, by `aidd clean`, once machine scope lands there."
       )
     );
   });

@@ -7,6 +7,6 @@ export class CheckAuthentication {
 
   async execute(): Promise<DoctorIssue[]> {
     if ((await this.tokenProvider.resolve()) !== null) return [];
-    return [{ severity: "info", message: "Not authenticated", fix: "Run aidd auth login" }];
+    return [{ severity: "info", message: "Not authenticated", fix: { code: "authenticate" } }];
   }
 }

@@ -12,6 +12,7 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { userScopeFileGuard } from "../../testing/user-scope-file-guard.fake.js";
 
@@ -139,7 +140,7 @@ describe("PluginMaterializer public update contract", () => {
         logger: f.logger,
         isWithinUserScope: insideUserScope,
       })
-    ).rejects.toThrow("run `aidd setup --global`");
+    ).rejects.toThrow(saying("run `aidd setup --global`"));
   });
 
   it("rechecks planned new-file containment when a parent becomes a symlink", async () => {

@@ -35,7 +35,7 @@ export class CheckProjectLayout {
           issues.push({
             severity: "warning",
             message: `Orphaned directory: ${tool.directory} (not tracked in manifest)`,
-            fix: "Remove the directory manually, or run `aidd install <tool>` to track it.",
+            fix: { code: "remove-or-track-directory" },
           });
         }
       }

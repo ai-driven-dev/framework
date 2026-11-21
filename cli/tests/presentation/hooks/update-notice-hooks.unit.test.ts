@@ -5,7 +5,7 @@ import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
-const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
+const printNotice = vi.fn(async () => ({ notice: { current: "1.0.0", latest: "2.0.0" } }));
 const refresh = vi.fn(async () => ({ checkedAt: 0, latest: "0.0.0" }));
 const warn = vi.fn();
 const debug = vi.fn();
@@ -47,7 +47,10 @@ beforeEach(() => {
 describe("the update notice hook", () => {
   it("warns with the notice before a command", async () => {
     await run("sync");
-    expect(warn).toHaveBeenCalledWith("CLI update available");
+    expect(warn.mock.calls.map(([line]) => line)).toStrictEqual([
+      "CLI update available: v1.0.0 → v2.0.0",
+      "Run `aidd update`.",
+    ]);
   });
 
   it("stays silent before `update`, which resolves the latest version itself", async () => {

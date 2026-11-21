@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
@@ -311,7 +312,9 @@ describe("native activation: reclaim", () => {
       expect(activator.enabledPlugins).toEqual([]);
       expect(activator.addedMarketplaces).toEqual([]);
       expect(
-        result.warnings.some((warning) => warning.includes("registration left untouched"))
+        result.warnings.some((warning) =>
+          describeMessage(warning).includes("registration left untouched")
+        )
       ).toBe(true);
       const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
       expect(recorded?.pluginRefs).toEqual([]);

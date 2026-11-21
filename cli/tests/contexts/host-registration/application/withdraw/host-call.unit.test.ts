@@ -83,7 +83,7 @@ describe("what survives a shared registration left in place", () => {
         alias: HOST_NAME,
         otherProjects: ["/a"],
       })
-    ).toBe(`${survives} Still referenced by 1 other project on this machine.`);
+    ).toEqual({ text: `${survives} Still referenced by 1 other project on this machine.` });
   });
 
   // A verb-agreement bug hides in the plural alone: only the plural case can pin it.
@@ -93,15 +93,16 @@ describe("what survives a shared registration left in place", () => {
         alias: HOST_NAME,
         otherProjects: ["/a", "/b"],
       })
-    ).toBe(`${survives} Still referenced by 2 other projects on this machine.`);
+    ).toEqual({ text: `${survives} Still referenced by 2 other projects on this machine.` });
   });
 
   it("says nothing removes the source yet once no project references it", () => {
     expect(
       describeSharedSourceSurvival(HOST_NAME, CACHE_ROOT, { alias: HOST_NAME, otherProjects: [] })
-    ).toBe(
-      `${survives} No project on this machine still references it — \`aidd clean --scope user\` is what purges it for the machine.`
-    );
+    ).toEqual({
+      text: `${survives} No project on this machine still references it`,
+      hint: "purge-user-scope",
+    });
   });
 });
 

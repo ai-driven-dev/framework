@@ -2,10 +2,27 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 
 export type IssueSeverity = "info" | "warning" | "error";
 
+/** What a person does about an issue: a sentence naming no command, or a code and its facts that
+ * presentation words. */
+export type DoctorFix =
+  | { readonly code: "remove-or-track-directory" }
+  | { readonly code: "restore-or-sync" }
+  | {
+      readonly code: "sync-force";
+      readonly effect: "reinstall-files" | "revert-file" | "restore-keys" | "restore-value";
+    }
+  | { readonly code: "sync-reregister" }
+  | { readonly code: "sync-migrate-source" }
+  | { readonly code: "update-cli" }
+  | { readonly code: "authenticate" }
+  | { readonly code: "install-framework"; readonly tool: string }
+  | { readonly code: "replace-conflicting-source"; readonly name: string }
+  | { readonly code: "refresh-marketplace"; readonly file: string };
+
 export interface DoctorIssue {
   severity: IssueSeverity;
   message: string;
-  fix: string;
+  fix: string | DoctorFix;
 }
 
 export interface ToolHealth {

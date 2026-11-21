@@ -15,17 +15,17 @@ const KEY = "editor.formatOnSave";
 const MISSING_FILE = {
   severity: "error",
   message: `Missing merge file: ${MERGE_PATH}`,
-  fix: "Run `aidd sync --force` to reinstall tracked files.",
+  fix: { code: "sync-force", effect: "reinstall-files" },
 };
 const MISSING_KEY = {
   severity: "error",
   message: `Missing key in ${MERGE_PATH} > ${KEY}`,
-  fix: "Run `aidd sync --force` to restore managed keys.",
+  fix: { code: "sync-force", effect: "restore-keys" },
 };
 const MODIFIED_KEY = {
   severity: "warning",
   message: `Modified key in ${MERGE_PATH} > ${KEY}`,
-  fix: "Run `aidd sync --force` to restore the original value.",
+  fix: { code: "sync-force", effect: "restore-value" },
 };
 
 function manifestMerging(toolId: ToolId): Manifest {

@@ -1,10 +1,10 @@
 import type { VersionReader } from "../../../shared/ports/version-reader.js";
-import { noticeFor } from "../domain/update-notice.js";
+import { noticeFor, type UpdateNotice } from "../domain/update-notice.js";
 import type { UpdateCheckCache } from "../ports/update-check-cache.js";
 
-/** The lines to show, none when there is nothing to say. */
+/** The newer release to tell of, none when there is nothing to say. */
 export interface PrintUpdateNoticeResult {
-  lines: string[];
+  notice: UpdateNotice | null;
 }
 
 /** The hot path: what the last check kept, fresh or stale, never the network. */
@@ -16,7 +16,7 @@ export class PrintUpdateNotice {
 
   async execute(): Promise<PrintUpdateNoticeResult> {
     const entry = await this.cache.read();
-    if (entry === null) return { lines: [] };
-    return { lines: noticeFor(entry, this.version.get()) };
+    if (entry === null) return { notice: null };
+    return { notice: noticeFor(entry, this.version.get()) };
   }
 }

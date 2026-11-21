@@ -27,7 +27,7 @@ const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
 const UNDECLARED = {
   severity: "warning",
   message: "claude no longer declares marketplace 'aidd-framework'",
-  fix: "Run `aidd marketplace refresh` to write it back to .claude/settings.local.json.",
+  fix: { code: "refresh-marketplace", file: ".claude/settings.local.json" },
 };
 
 function settingsDeclaring(names: string[]): string {
@@ -224,7 +224,7 @@ describe("CheckRegistration - native registrations against the host's own regist
     expect(issues[0].severity).toBe("error");
     expect(issues[0].message).toContain(REF);
     expect(issues[0].message).toContain(REGISTRY_LOCATION);
-    expect(issues[0].fix).toContain("aidd sync");
+    expect(issues[0].fix).toEqual({ code: "sync-reregister" });
   });
 
   it("reports an error naming `aidd framework install --tool claude` when the registry disabled it", async () => {
@@ -237,7 +237,7 @@ describe("CheckRegistration - native registrations against the host's own regist
     expect(issues[0].severity).toBe("error");
     expect(issues[0].message).toContain(REF);
     expect(issues[0].message).toContain("disabled");
-    expect(issues[0].fix).toContain("aidd framework install --tool claude");
+    expect(issues[0].fix).toEqual({ code: "install-framework", tool: "claude" });
   });
 
   it("names the registry nobody has measured, never an error, when nothing here can read it", async () => {

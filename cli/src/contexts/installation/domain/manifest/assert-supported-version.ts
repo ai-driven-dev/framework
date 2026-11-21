@@ -1,5 +1,6 @@
 import { AIDD_DIR } from "../../../../shared/domain/layout/aidd-layout.js";
-import { InvalidManifestDataError } from "../installation.error.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
+import { UnsupportedManifestVersionError } from "../installation.error.js";
 import { MANIFEST_VERSION } from "../manifest-serialization.js";
 import { MANIFEST_FILENAME } from "../project-layout.js";
 
@@ -10,18 +11,18 @@ const MANIFEST_PATH_HINT = `${AIDD_DIR}/${MANIFEST_FILENAME}`;
 export const DEFAULT_MANIFEST_CONTEXT: ManifestFileContext = {
   path: MANIFEST_PATH_HINT,
   location: "in this project",
-  reinstallCommand: "aidd setup",
+  scope: "project",
 };
 
 /**
  * What a version-refusal message names: the file on disk, in words fitting the sentence it lands
- * in, and the command that reinstalls once it is gone. `UserManifestRepositoryAdapter` passes its
+ * in, and the scope whose reinstall command follows once it is gone. `UserManifestRepositoryAdapter` passes its
  * own before reaching the guard, so a `--scope user` refusal never names the project's path.
  */
 export interface ManifestFileContext {
   readonly path: string;
   readonly location: string;
-  readonly reinstallCommand: string;
+  readonly scope: Scope;
 }
 
 // This CLI reads exactly MANIFEST_VERSION and refuses every other one, naming a fix for each
@@ -37,16 +38,16 @@ export function assertSupportedManifestVersion(
 ): void {
   const version = raw.version;
   if (version === MANIFEST_VERSION) return;
-  if (typeof version === "number" && version > MANIFEST_VERSION) {
-    throw new InvalidManifestDataError(
-      `manifest version ${version} was written by a newer CLI than this one. Run \`aidd update\` to update this CLI, then try again.`
-    );
-  }
   // A v6 document is the one case admitting a remedy richer than deletion: 5.2.2's own manifest
   // reader accepts exactly version 6: measured against that published version: so its
   // `clean --force` can still run against this project before the manifest naming what it
   // registered is gone. 5.2.2 refuses a v7 document too, so naming it there would be a false
   // remedy. A v6 document is one the project repository ever produced, never the user-scope one.
+  if (typeof version === "number" && version > MANIFEST_VERSION) {
+    throw new UnsupportedManifestVersionError(
+      `manifest version ${version} was written by a newer CLI than this one.`
+    );
+  }
   const remedy =
     version === 6
       ? "5.2.2, a published CLI, wrote this version. Before deleting it, run " +
@@ -54,9 +55,9 @@ export function assertSupportedManifestVersion(
         "what it registered and clears its own cache — once the manifest naming those " +
         "is gone, nothing can drive that anymore. Then delete"
       : "No published CLI can write this version: delete";
-  throw new InvalidManifestDataError(
+  throw new UnsupportedManifestVersionError(
     `manifest version ${String(version)} predates version ${MANIFEST_VERSION}, the only one this CLI reads. ` +
-      `${remedy} ${context.path} ${context.location}, then run ` +
-      `\`${context.reinstallCommand}\` to reinstall the framework.`
+      `${remedy} ${context.path} ${context.location}`,
+    context.scope
   );
 }

@@ -25,6 +25,7 @@ export type Rule =
   | "repository"
   | "translate"
   | "scope"
+  | "binary"
   | "profile"
   | "controllerBuildsError"
   | "size";

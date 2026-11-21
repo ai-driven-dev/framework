@@ -24,6 +24,17 @@ function graphOf(program: Command, createDeps: DepsSliceFactory<UpdateNoticeKeys
   );
 }
 
+/** The lines that tell a person a newer release exists and what to run. */
+export function describeUpdateNotice({
+  current,
+  latest,
+}: {
+  current: string;
+  latest: string;
+}): string[] {
+  return [`CLI update available: v${current} → v${latest}`, "Run `aidd update`."];
+}
+
 export function registerUpdateNoticeHooks(
   program: Command,
   createDeps: DepsSliceFactory<UpdateNoticeKeys>
@@ -39,8 +50,9 @@ export function registerUpdateNoticeHooks(
     if (actionCommand.name() === "update") return;
     await deps.printUpdateNotice
       .execute()
-      .then(({ lines }) => {
-        for (const line of lines) deps.logger.warn(line);
+      .then(({ notice }) => {
+        if (notice === null) return;
+        for (const line of describeUpdateNotice(notice)) deps.logger.warn(line);
       })
       .catch((err: unknown) => {
         deps.logger.debug(`CLI update check failed: ${render(err)}`);

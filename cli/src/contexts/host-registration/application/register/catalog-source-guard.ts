@@ -66,8 +66,7 @@ export async function guardAgainstConflict(
     `Marketplace '${conflict.name}' is already registered from a different catalog: ` +
       `${conflict.registeredSource} differs from the one requested, ${conflict.requestedSource} ` +
       `— plugins ${describePluginDiff(diff)}, per ${conflict.location}. ` +
-      `Do not remove a catalogue another user or project may depend on. ` +
-      `Reconcile the host source manually before retrying \`aidd sync\`.`
+      `Do not remove a catalogue another user or project may depend on.`
   );
 }
 
@@ -84,12 +83,12 @@ function decideOnDrift(
   const verdict = judgeDrift(found.drift);
   if (verdict.outcome !== "skip") return undefined;
   const { registeredVersion, requestedVersion } = verdict.reason;
-  warnRegistration(
-    run,
-    `${run.toolId}'s marketplace registry (${found.location}) already carries a newer ` +
+  warnRegistration(run, {
+    text:
+      `${run.toolId}'s marketplace registry (${found.location}) already carries a newer ` +
       `aidd-framework build, ${registeredVersion}, than this run's own ${requestedVersion} — ` +
-      "not registering this run's build over it. Run `aidd update` to bring this project's " +
-      "CLI to at least the version the host already follows."
-  );
+      "not registering this run's build over it.",
+    hint: "update-cli",
+  });
   return "skip";
 }

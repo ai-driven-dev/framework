@@ -20,7 +20,7 @@ const PROJECT_ROOT = "/test-project";
 
 const issueOf =
   (severity: DoctorIssue["severity"]) =>
-  (message: string): DoctorIssue => ({ severity, message, fix: "" });
+  (message: string): DoctorIssue => ({ severity, message, fix: { code: "sync-reregister" } });
 
 async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "warning") {
   const issue = issueOf(severity);

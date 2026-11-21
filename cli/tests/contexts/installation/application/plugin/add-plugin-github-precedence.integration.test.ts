@@ -8,6 +8,7 @@ import {
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
@@ -80,7 +81,7 @@ describe("AddPlugin from a github marketplace with the fetch down", () => {
     const pluginMetadata = { ...add.pluginMetadata, version: undefined };
 
     await expect(useCase.execute({ ...add, pluginMetadata, replace: true })).rejects.toThrow(
-      /edited after install/
+      saying(/edited after install/)
     );
   });
 });

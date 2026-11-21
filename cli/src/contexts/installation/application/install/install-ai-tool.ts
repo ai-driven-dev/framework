@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { Manifest } from "../../domain/manifest.js";
@@ -16,7 +17,7 @@ export interface NativeActivationReport {
   /** Tools with a native activation whose binary was not on PATH: nothing of theirs ran. */
   binaryMissing: readonly { toolId: ToolId; binary: string }[];
   /** What a recoverable, best-effort step logged. */
-  warnings: readonly string[];
+  warnings: readonly (string | HintedMessage)[];
   /** A hard failure returned rather than thrown, so whether the command fails stays the caller's call. */
   errors: readonly { scope: string; error: unknown }[];
   /** The verdict on `errors`, decided where they are produced. */

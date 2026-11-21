@@ -19,12 +19,12 @@ const CONTENT = "one\n";
 const MISSING = {
   severity: "error",
   message: `Missing tracked file: ${FILE}`,
-  fix: "Restore the file or run `aidd sync` to reinstall tracked files.",
+  fix: { code: "restore-or-sync" },
 };
 const MODIFIED = {
   severity: "warning",
   message: `Modified tracked file: ${FILE}`,
-  fix: "Run `aidd sync --force` to revert to the framework version.",
+  fix: { code: "sync-force", effect: "revert-file" },
 };
 
 function manifestTracking(toolId: ToolId): Manifest {

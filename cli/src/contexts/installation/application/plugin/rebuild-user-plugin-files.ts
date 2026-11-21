@@ -4,6 +4,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
+import { SharedSourceUnregisteredError } from "../../domain/installation.error.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { withoutHooks } from "../materialize/project-hooks-materializer.js";
 import {
@@ -85,8 +86,8 @@ function translateUserPluginFiles(
   const { dist, tool, plugin } = source;
   // Without the built tree, translation would write a project's layout in the user directory.
   if (tool.plugins()?.globalFiles() != null) {
-    throw new Error(
-      `${tool.toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
+    throw new SharedSourceUnregisteredError(
+      `${tool.toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt`
     );
   }
   const forGlobalFiles =

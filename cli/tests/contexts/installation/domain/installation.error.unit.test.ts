@@ -26,7 +26,11 @@ describe("an installation error carries its data and says nothing itself", () =>
       "active-machine-dependents",
     ],
     [new AiddFilesDetectedError(), {}, "aidd-files-detected"],
-    [new AlreadyInitializedError("custom"), { detail: "custom" }, "already-initialized"],
+    [
+      new AlreadyInitializedError("clean-then-setup"),
+      { remedy: "clean-then-setup" },
+      "already-initialized",
+    ],
     [new DuplicatePluginError("aidd-dev"), { pluginName: "aidd-dev" }, "duplicate-plugin"],
     [new InvalidManifestDataError("bad"), { detail: "bad" }, "invalid-manifest-data"],
     [new InvalidManifestToolIdError("zed"), { key: "zed" }, "invalid-manifest-tool-id"],

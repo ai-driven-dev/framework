@@ -1,5 +1,7 @@
 import type { InstallationOwners, MessagesOf } from "./error-messages.types.js";
 
+const REINSTALL = { project: "aidd setup", user: "aidd setup --global" } as const;
+
 /** The words of the errors of installing, registering and orchestrating tools and plugins. */
 export const INSTALLATION: MessagesOf<InstallationOwners> = {
   "active-machine-dependents": (error) =>
@@ -7,7 +9,17 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
   "aidd-files-detected": () =>
     "AIDD files detected but no manifest found.\nRun `aidd setup` to register existing files.",
   "already-initialized": (error) =>
-    error.detail ?? "Already initialized. Use `aidd update` to upgrade.",
+    error.remedy === "update"
+      ? "Already initialized. Use `aidd update` to upgrade."
+      : "Already initialized. Run `aidd clean --force` then `aidd setup` to reset completely.",
+  "project-hooks-edited": (error) =>
+    `${error.detail} Rerun aidd sync --force to restore it, or aidd clean --force to remove it.`,
+  "shared-source-unregistered": (error) => `${error.detail}; run \`aidd setup --global\`.`,
+  "unsupported-manifest-version": ({ detail, reinstall }) =>
+    `Invalid manifest data: ${detail}` +
+    (reinstall
+      ? `, then run \`${REINSTALL[reinstall]}\` to reinstall the framework.`
+      : " Run `aidd update` to update this CLI, then try again."),
   "duplicate-plugin": (error) => `Plugin '${error.pluginName}' is already installed.`,
   "invalid-manifest-data": (error) =>
     error.detail ? `Invalid manifest data: ${error.detail}` : "Invalid manifest data.",
@@ -35,7 +47,8 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
       : `${error.toolId} is not installed`,
   "unresolvable-user-scope": (error) =>
     `Manifest records a user-scope plugin for "${error.toolId}", but this tool's profile declares no user-scope plugins directory. Refusing to guess a base directory rather than silently resolving under the project root.`,
-  "marketplace-source-conflict": (error) => error.detail,
+  "marketplace-source-conflict": (error) =>
+    `${error.detail} Reconcile the host source manually before retrying \`aidd sync\`.`,
   "native-plugin-cli": (error) => error.detail,
   "unreadable-built-catalog": (error) =>
     `Cannot read the marketplace catalog this project just built, at ${error.path} — nothing was ` +

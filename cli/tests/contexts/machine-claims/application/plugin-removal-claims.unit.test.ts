@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { pluginRemovalClaims } from "../../../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import type { ListedMarketplace } from "../../../../src/contexts/machine-claims/ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { describeMessage } from "../../../../src/presentation/errors/describe-message.presenter.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
@@ -10,7 +11,7 @@ import { RecordingSourceReferences } from "../testing/recording-source-reference
 const REF = "aidd-test@aidd-framework";
 const SHARED: ListedMarketplace = { name: "aidd-framework", scope: "user" };
 
-function guard(options: {
+async function guard(options: {
   references?: UserSourceReferences;
   listed?: readonly ListedMarketplace[];
 }) {
@@ -26,13 +27,14 @@ function guard(options: {
     resolveCacheCandidate: async () => null,
     frameworkMarketplaceName: "aidd-framework",
   });
-  return claims.guardMessage({
+  const message = await claims.guardMessage({
     binary: "codex",
     tool: registeredTools().aiProfile(TOOL.codex),
     ref: REF,
     marketplaceAlias: "aidd-framework",
     projectRoot: "/project",
   });
+  return message === undefined ? undefined : describeMessage(message);
 }
 
 describe("the plugin removal guard on the shared source", () => {

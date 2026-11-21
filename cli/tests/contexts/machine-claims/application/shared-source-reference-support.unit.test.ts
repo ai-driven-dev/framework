@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  describeFullRemovalInstruction,
   describeGuardedPluginRefMessage,
   frameworkSourceIsShared,
   refAnotherProjectStillNeeds,
@@ -72,7 +71,7 @@ describe("describeGuardedPluginRefMessage", () => {
       ref: "aidd-vcs@aidd-framework",
       otherProjects: ["/other-project"],
     });
-    expect(message).toContain("1 other project still references");
+    expect(message.text).toContain("1 other project still references");
   });
 
   it("uses plural wording and lists every project for more than one other project", () => {
@@ -81,27 +80,23 @@ describe("describeGuardedPluginRefMessage", () => {
       ref: "aidd-vcs@aidd-framework",
       otherProjects: ["/other-project", "/third-project"],
     });
-    expect(message).toBe(
-      "codex: 'aidd-vcs@aidd-framework' left enabled — codex enables a plugin machine-wide, and " +
+    expect(message).toEqual({
+      text:
+        "codex: 'aidd-vcs@aidd-framework' left enabled — codex enables a plugin machine-wide, and " +
         "2 other projects still reference the shared source: /other-project, /third-project — " +
-        "which is why it stays; full removal is `aidd clean` in each of them, then `aidd clean --scope user`."
-    );
+        "which is why it stays",
+      hint: "full-removal",
+    });
   });
 
-  // Full removal names both commands in order - `aidd clean` in each other project before
-  // `aidd clean --scope user` - the same clause `clean --scope user`'s own report states.
-  it("names the projects and both removal commands, in order, sharing the same clause clean --scope user uses", () => {
+  it("names the projects and asks for the full-removal hint", () => {
     const message = describeGuardedPluginRefMessage({
       binary: "codex",
       ref: "aidd-vcs@aidd-framework",
       otherProjects: ["/other-project"],
     });
-    expect(message).toContain("/other-project");
-    expect(message).toContain(describeFullRemovalInstruction());
-    expect(message.indexOf("`aidd clean`")).toBeGreaterThanOrEqual(0);
-    expect(message.indexOf("`aidd clean`")).toBeLessThan(
-      message.indexOf("`aidd clean --scope user`")
-    );
+    expect(message.text).toContain("/other-project");
+    expect(message.hint).toBe("full-removal");
   });
 
   it("states the fact once, not twice ('still reference' the source, not also 'still need it')", () => {
@@ -110,18 +105,7 @@ describe("describeGuardedPluginRefMessage", () => {
       ref: "aidd-vcs@aidd-framework",
       otherProjects: ["/other-project"],
     });
-    expect(message).toContain("still references the shared source");
-    expect(message).not.toContain("need it");
-  });
-});
-
-describe("describeFullRemovalInstruction", () => {
-  it("names both commands, aidd clean before aidd clean --scope user", () => {
-    const instruction = describeFullRemovalInstruction();
-    expect(instruction).toContain("`aidd clean`");
-    expect(instruction).toContain("`aidd clean --scope user`");
-    expect(instruction.indexOf("`aidd clean`")).toBeLessThan(
-      instruction.indexOf("`aidd clean --scope user`")
-    );
+    expect(message.text).toContain("still references the shared source");
+    expect(message.text).not.toContain("need it");
   });
 });

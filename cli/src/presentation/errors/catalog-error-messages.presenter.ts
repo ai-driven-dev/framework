@@ -1,4 +1,17 @@
+import type { CredentialAdvice } from "../../contexts/distribution/domain/distribution.error.js";
 import type { CatalogOwners, MessagesOf } from "./error-messages.types.js";
+
+const CREDENTIAL_ADVICE: Record<CredentialAdvice, string> = {
+  "ssh-key": "Check your SSH key is registered on the remote host.",
+  token:
+    "Set AIDD_TOKEN, run `aidd auth login`, or pass --token <value>. Required scope depends on the host (github: `repo`, gitlab: `read_repository`, bitbucket: `repository:read`).",
+};
+
+const SHARED_MARKETPLACE_REMOVAL = {
+  project:
+    "is shared by every project on this machine and is not removed with `aidd marketplace remove` — it is removed with the framework itself, by `aidd clean`, once machine scope lands there.",
+  user: "is shared by every project on this machine and is removed by `aidd clean --scope user`, not marketplace remove.",
+} as const;
 
 /** The words of the errors of marketplaces, builds and tool profiles. */
 export const CATALOG: MessagesOf<CatalogOwners> = {
@@ -13,7 +26,10 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
   "marketplace-already-registered": (error) =>
     `Marketplace '${error.marketplace}' is already registered.`,
   "marketplace-not-found": (error) => `Marketplace '${error.marketplace}' is not registered.`,
-  "plugin-fetch": (error) => `Failed to fetch plugin: ${error.detail}`,
+  "plugin-fetch": (error) =>
+    `Failed to fetch plugin: ${error.detail}${error.advice ? ` ${CREDENTIAL_ADVICE[error.advice]}` : ""}`,
+  "shared-marketplace-removal": (error) =>
+    `Invalid marketplace name: ""${error.marketplace}" ${SHARED_MARKETPLACE_REMOVAL[error.scope]}". Use lowercase alphanumeric characters and hyphens only.`,
   "plugin-not-in-marketplace": (error) =>
     `Plugin '${error.plugin}' was not found in any registered marketplace.`,
   "unreadable-marketplace-registry": (error) =>

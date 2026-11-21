@@ -144,7 +144,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
     expect(issues[0]?.message).toMatch(/different catalog/);
     expect(issues[0]?.message).toMatch(/\+sample-plugin/);
     expect(issues[0]?.message).toMatch(/-different-plugin/);
-    expect(issues[0]?.fix).toMatch(/claude plugin marketplace remove/);
+    expect(issues[0]?.fix).toMatchObject({ code: "replace-conflicting-source" });
   });
 
   it("does not report a conflict when only the version differs under the same name and plugin set - an upgrade, not a conflict", async () => {

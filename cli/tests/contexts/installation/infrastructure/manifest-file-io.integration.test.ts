@@ -17,7 +17,7 @@ describe("manifest file io", () => {
   const contextOf = (file: string) => ({
     path: file,
     location: "in this project",
-    reinstallCommand: "aidd setup",
+    scope: "project" as const,
   });
 
   beforeEach(async () => {

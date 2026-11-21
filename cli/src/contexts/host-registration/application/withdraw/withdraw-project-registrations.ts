@@ -90,10 +90,15 @@ async function removeProjectMarketplace(
     // project's `clean` must never unregister it. Three things survive, not one: the host's
     // own registration, the `userConfigDir()/marketplaces.json` entry, and this tool's own
     // plugin cache, named by its absolute path when the profile declares one.
-    deps.logger.warn(
-      `${binary}: '${hostName}' is shared by every project on this machine — left registered. ` +
-        describeSharedSourceSurvival(hostName, withdrawal.cacheRoot, facts.sharedSource)
+    const survival = describeSharedSourceSurvival(
+      hostName,
+      withdrawal.cacheRoot,
+      facts.sharedSource
     );
+    deps.logger.warn({
+      ...survival,
+      text: `${binary}: '${hostName}' is shared by every project on this machine — left registered. ${survival.text}`,
+    });
     return false;
   }
   return facts.exclusive(async () => {

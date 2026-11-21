@@ -66,7 +66,7 @@ describe("aidd doctor --scope user", () => {
 
   it("fails the process on a registration error, and stays quiet about health", async () => {
     doctorRegistration.mockResolvedValue([
-      { severity: "error", message: "claude is not registered", fix: "aidd sync" },
+      { severity: "error", message: "claude is not registered", fix: { code: "sync-reregister" } },
     ]);
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));
@@ -74,7 +74,9 @@ describe("aidd doctor --scope user", () => {
 
     await expect(run("--scope", "user")).rejects.toThrow(ExitRequested);
 
-    expect(errors[0]).toBe("Error:   claude is not registered\n    Fix: aidd sync\n");
+    expect(errors[0]).toBe(
+      "Error:   claude is not registered\n    Fix: Run `aidd sync` to re-register it.\n"
+    );
     expect(exit).toHaveBeenCalledWith(1);
   });
 
@@ -107,13 +109,15 @@ describe("aidd doctor --scope user - what a tool without user-scope settings rep
 
   it("names a warning under its own heading, and still calls the machine healthy", async () => {
     doctorRegistration.mockResolvedValue([
-      { severity: "warning", message: "claude is ahead of this aidd", fix: "aidd update" },
+      { severity: "warning", message: "claude is ahead of this aidd", fix: { code: "update-cli" } },
     ]);
 
     const lines = await run("--scope", "user");
 
     expect(lines).toContain("User scope:");
-    expect(errors.join("")).toBe("Warning:   claude is ahead of this aidd\n    Fix: aidd update\n");
+    expect(errors.join("")).toBe(
+      "Warning:   claude is ahead of this aidd\n    Fix: Run `aidd update` to bring this project's CLI to at least the version the host already follows.\n"
+    );
     expect(lines[lines.length - 1]).toBe("User-scope installation is healthy");
   });
 });

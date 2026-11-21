@@ -69,9 +69,7 @@ export class InitProject {
     }
 
     if (existing !== null) {
-      throw new AlreadyInitializedError(
-        `Already initialized. Run \`aidd clean --force\` then \`aidd setup\` to reset completely.`
-      );
+      throw new AlreadyInitializedError("clean-then-setup");
     }
 
     if (await this.hasAiddSignals(projectRoot)) {

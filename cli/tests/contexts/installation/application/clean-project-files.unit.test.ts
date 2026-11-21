@@ -12,6 +12,7 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.j
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 import { cursorHookScriptDir } from "../testing/cursor-hook-scripts.builder.js";
 import { aManifest } from "../testing/manifest.builder.js";
 
@@ -78,7 +79,7 @@ describe("CleanProjectFiles assert-removable", () => {
 
     await expect(
       clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: false })
-    ).rejects.toThrow("edited after install");
+    ).rejects.toThrow(saying("edited after install"));
     await expect(
       clean.execute({ kind: "assert-removable", projectRoot: ROOT, force: true })
     ).resolves.toBeUndefined();

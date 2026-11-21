@@ -8,12 +8,14 @@ export interface CheckEntry {
 
 const withoutV = (version: string): string => version.replace(/^v/, "");
 
-/** The lines to show a person running `current`, none when nothing newer is known or when
- * `current` is no release (a development build). */
-export function noticeFor(entry: CheckEntry, current: string): string[] {
-  if (!isSemver(current) || compareSemver(current, entry.latest) >= 0) return [];
-  return [
-    `CLI update available: v${withoutV(current)} → v${withoutV(entry.latest)}`,
-    "Run `aidd update`.",
-  ];
+/** The two versions a person running `current` is told about, none when nothing newer is
+ * known or when `current` is no release (a development build). */
+export interface UpdateNotice {
+  current: string;
+  latest: string;
+}
+
+export function noticeFor(entry: CheckEntry, current: string): UpdateNotice | null {
+  if (!isSemver(current) || compareSemver(current, entry.latest) >= 0) return null;
+  return { current: withoutV(current), latest: withoutV(entry.latest) };
 }

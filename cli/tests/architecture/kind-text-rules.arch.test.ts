@@ -6,12 +6,13 @@
 import { describe, expect, it } from "vitest";
 import { entries, expectNone, src, textsOf } from "./kind-rule-fixtures.js";
 import {
+  binaryViolations,
   repositoryViolations,
   scopeViolations,
   sizeViolations,
   translateViolations,
 } from "./kind-text-rules.js";
-import { tsFilesUnder } from "./source-graph.js";
+import { declaredCommands, tsFilesUnder } from "./source-graph.js";
 
 describe("translate holds no list of the other hosts' manifest paths", () => {
   const found = (path: string, text: string) => entries(translateViolations({ [path]: text }));
@@ -118,5 +119,32 @@ describe("the project-or-user union has one spelling", () => {
       )
     );
     expectNone(scopeViolations(files));
+  });
+});
+
+describe("only presentation names the binary", () => {
+  const found = (text: string, path = "src/contexts/a/application/b.ts") =>
+    entries(binaryViolations({ [path]: text }, new Set(["sync", "setup"])));
+
+  it("reports a string and a template naming a command, backticked or not", () => {
+    expect(found('const m = "Run `aidd sync` again";')).toEqual([
+      'src/contexts/a/application/b.ts :: "Run `aidd sync` again"',
+    ]);
+    expect(found("const m = `Rerun aidd sync --force to restore it`;")).toHaveLength(1);
+    expect(found('const m = "run aidd <command>";')).toHaveLength(1);
+    expect(found('const m = "aidd setup";')).toHaveLength(1);
+  });
+
+  it("clears presentation, a comment and a word that only starts with the name", () => {
+    expect(found('const m = "Run `aidd sync`";', "src/presentation/errors/x.ts")).toEqual([]);
+    expect(found("// `aidd sync` runs this\nconst x = 1;")).toEqual([]);
+    expect(found('const m = "aidd-framework and aidd\'s own key";')).toEqual([]);
+    expect(found('const m = "not an aidd command";')).toEqual([]);
+  });
+});
+
+describe("the tree below presentation names no binary", () => {
+  it("holds the tree", () => {
+    expectNone(binaryViolations(src(), declaredCommands()));
   });
 });

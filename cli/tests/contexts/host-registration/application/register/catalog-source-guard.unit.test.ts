@@ -70,7 +70,10 @@ describe("guardAgainstConflict", () => {
     });
     expect(decision).toBe("skip");
     expect(warnings).toEqual([
-      "claude's marketplace registry (r) already carries a newer aidd-framework build, 2.0.0, than this run's own 1.0.0 — not registering this run's build over it. Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
+      {
+        text: "claude's marketplace registry (r) already carries a newer aidd-framework build, 2.0.0, than this run's own 1.0.0 — not registering this run's build over it.",
+        hint: "update-cli",
+      },
     ]);
   });
 });

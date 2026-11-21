@@ -4,6 +4,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const skill = { relativePath: "skills/demo/SKILL.md", content: "# Skill" };
@@ -42,6 +43,6 @@ describe("rebuildUserPluginFiles", () => {
         plugin,
         projectRoot: "/A",
       })
-    ).rejects.toThrow("run `aidd setup --global`");
+    ).rejects.toThrow(saying("run `aidd setup --global`"));
   });
 });

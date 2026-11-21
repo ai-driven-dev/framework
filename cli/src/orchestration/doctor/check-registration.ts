@@ -84,7 +84,7 @@ export class CheckRegistration {
     return declared.findings.map((finding) => ({
       severity: "warning",
       message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
-      fix: `Run \`aidd marketplace refresh\` to write it back to ${finding.file}.`,
+      fix: { code: "refresh-marketplace", file: finding.file },
     }));
   }
 

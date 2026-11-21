@@ -6,6 +6,7 @@ import {
   MarketplaceNotFoundError,
   PluginFetchError,
   PluginNotInMarketplaceError,
+  SharedMarketplaceRemovalError,
   UnreadableMarketplaceRegistryError,
 } from "../../../src/contexts/distribution/domain/distribution.error.js";
 import {
@@ -45,6 +46,22 @@ const cases: [() => Error, string][] = [
   [() => new MarketplaceAlreadyRegisteredError("m"), "Marketplace 'm' is already registered."],
   [() => new MarketplaceNotFoundError("m"), "Marketplace 'm' is not registered."],
   [() => new PluginFetchError("boom"), "Failed to fetch plugin: boom"],
+  [
+    () => new PluginFetchError('Authentication failed for "u".', "ssh-key"),
+    'Failed to fetch plugin: Authentication failed for "u". Check your SSH key is registered on the remote host.',
+  ],
+  [
+    () => new PluginFetchError('Authentication failed for "u".', "token"),
+    'Failed to fetch plugin: Authentication failed for "u". Set AIDD_TOKEN, run `aidd auth login`, or pass --token <value>. Required scope depends on the host (github: `repo`, gitlab: `read_repository`, bitbucket: `repository:read`).',
+  ],
+  [
+    () => new SharedMarketplaceRemovalError("aidd-framework", "project"),
+    'Invalid marketplace name: ""aidd-framework" is shared by every project on this machine and is not removed with `aidd marketplace remove` — it is removed with the framework itself, by `aidd clean`, once machine scope lands there.". Use lowercase alphanumeric characters and hyphens only.',
+  ],
+  [
+    () => new SharedMarketplaceRemovalError("aidd-framework", "user"),
+    'Invalid marketplace name: ""aidd-framework" is shared by every project on this machine and is removed by `aidd clean --scope user`, not marketplace remove.". Use lowercase alphanumeric characters and hyphens only.',
+  ],
   [
     () => new PluginNotInMarketplaceError("p"),
     "Plugin 'p' was not found in any registered marketplace.",

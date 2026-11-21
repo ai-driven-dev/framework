@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { InvalidManifestDataError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { UnsupportedManifestVersionError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import {
   assertSupportedManifestVersion,
   DEFAULT_MANIFEST_CONTEXT,
 } from "../../../../../src/contexts/installation/domain/manifest/assert-supported-version.js";
 import { MANIFEST_VERSION } from "../../../../../src/contexts/installation/domain/manifest-serialization.js";
 
-function refusal(version: unknown, context = DEFAULT_MANIFEST_CONTEXT): string {
+function refusal(
+  version: unknown,
+  context = DEFAULT_MANIFEST_CONTEXT
+): UnsupportedManifestVersionError {
   try {
     assertSupportedManifestVersion({ version }, context);
   } catch (error) {
-    if (error instanceof InvalidManifestDataError) return error.detail ?? "";
+    if (error instanceof UnsupportedManifestVersionError) return error;
     throw error;
   }
   throw new Error("expected a refusal");
@@ -23,23 +26,23 @@ describe("assertSupportedManifestVersion", () => {
     ).not.toThrow();
   });
 
-  it("tells a newer document to update the CLI", () => {
-    expect(refusal(MANIFEST_VERSION + 1)).toContain("Run `aidd update`");
+  it("tells a newer document apart, to be answered by updating the CLI", () => {
+    expect(refusal(MANIFEST_VERSION + 1)).toMatchObject({ reinstall: undefined });
   });
 
-  it("names the file and reinstall command from the context for an older document", () => {
-    const message = refusal(MANIFEST_VERSION - 1, {
+  it("carries the file and the scope from the context for an older document", () => {
+    const error = refusal(MANIFEST_VERSION - 1, {
       path: "~/.aidd/manifest.json",
       location: "on this machine",
-      reinstallCommand: "aidd setup --global",
+      scope: "user",
     });
 
-    expect(message).toContain("delete ~/.aidd/manifest.json on this machine");
-    expect(message).toContain("`aidd setup --global`");
+    expect(error.reinstall).toBe("user");
+    expect(error.detail).toContain("~/.aidd/manifest.json on this machine");
   });
 
-  it("offers the published clean remedy for a version 6 document only", () => {
-    expect(refusal(6)).toContain("clean --force");
-    expect(refusal(5)).not.toContain("clean --force");
+  it("singles out a version 6 document, the only one a published CLI can still clean", () => {
+    expect(refusal(6).detail).toContain("5.2.2");
+    expect(refusal(5).detail).not.toContain("5.2.2");
   });
 });

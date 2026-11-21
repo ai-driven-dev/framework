@@ -6,6 +6,7 @@ import type {
   ProjectHookEntry,
   ProjectHooksFormat,
 } from "../../../tools/contract/tool-vocabulary.js";
+import { ProjectHooksEditedError } from "../../domain/installation.error.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import { assertScriptPath } from "../ownership/assert-script-path.js";
@@ -15,9 +16,6 @@ import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.
 export interface ProjectHooksGuard {
   readonly overwriteEdited?: boolean;
 }
-
-export const OVERWRITE_EDITED_HINT =
-  "Rerun aidd sync --force to restore it, or aidd clean --force to remove it.";
 
 export interface RecordedProjectHooks {
   readonly pluginName: string;
@@ -82,8 +80,8 @@ function assertEntriesUnchanged(check: {
     );
   }
   if (!overwriteEdited && recorded.sort().join("\n") !== current.sort().join("\n")) {
-    throw new Error(
-      `${toolName} project hooks for '${pluginName}' were edited after install; detach refused. ${OVERWRITE_EDITED_HINT}`
+    throw new ProjectHooksEditedError(
+      `${toolName} project hooks for '${pluginName}' were edited after install; detach refused.`
     );
   }
 }
@@ -120,8 +118,8 @@ async function assertScriptDigest(
     );
   }
   if (!overwriteEdited && (await fs.readFileHash(path)).value !== digest) {
-    throw new Error(
-      `${toolName} hook script '${relativePath}' was edited after install; detach refused. ${OVERWRITE_EDITED_HINT}`
+    throw new ProjectHooksEditedError(
+      `${toolName} hook script '${relativePath}' was edited after install; detach refused.`
     );
   }
 }

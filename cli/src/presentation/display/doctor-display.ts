@@ -1,3 +1,4 @@
+import type { DoctorFix } from "../../contexts/installation/contract/doctor-issue.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { render } from "../errors/error-translator.presenter.js";
 import { printPluginDrift, printScopeReport } from "./status-display.js";
@@ -91,16 +92,16 @@ export function printScopeIssues(
   output: Output,
   label: string,
   report: {
-    issues: { severity: string; message: string; fix: string }[];
+    issues: { severity: string; message: string; fix: string | DoctorFix }[];
   } | null
 ): void {
   if (report === null || report.issues.length === 0) return;
   output.print(`\n${label}:`);
   for (const issue of report.issues.filter((i) => i.severity === "info")) {
-    output.warn(`  ${issue.message}\n    Fix: ${issue.fix}`);
+    output.warn(`  ${issue.message}\n    Fix: ${describeDoctorFix(issue.fix)}`);
   }
   for (const issue of report.issues.filter((i) => i.severity !== "info")) {
-    const text = `  ${issue.message}\n    Fix: ${issue.fix}`;
+    const text = `  ${issue.message}\n    Fix: ${describeDoctorFix(issue.fix)}`;
     if (issue.severity === "error") output.error(text);
     else output.warn(text);
   }
@@ -118,5 +119,39 @@ export function printPluginIssues(output: Output, pluginIssues: readonly PluginI
     output.error(
       `  Plugin ${pi.pluginName} (${pi.toolId}): ${pi.issue} — ${pi.filePath}\n    Fix: Run \`aidd sync\``
     );
+  }
+}
+
+const SYNC_FORCE_EFFECT = {
+  "reinstall-files": "reinstall tracked files",
+  "revert-file": "revert to the framework version",
+  "restore-keys": "restore managed keys",
+  "restore-value": "restore the original value",
+} as const;
+
+/** The words of what a person does about a doctor issue. */
+export function describeDoctorFix(fix: string | DoctorFix): string {
+  if (typeof fix === "string") return fix;
+  switch (fix.code) {
+    case "remove-or-track-directory":
+      return "Remove the directory manually, or run `aidd install <tool>` to track it.";
+    case "restore-or-sync":
+      return "Restore the file or run `aidd sync` to reinstall tracked files.";
+    case "sync-force":
+      return `Run \`aidd sync --force\` to ${SYNC_FORCE_EFFECT[fix.effect]}.`;
+    case "sync-reregister":
+      return "Run `aidd sync` to re-register it.";
+    case "sync-migrate-source":
+      return "Run `aidd sync` to move it to the shared, machine-scope source.";
+    case "update-cli":
+      return "Run `aidd update` to bring this project's CLI to at least the version the host already follows.";
+    case "authenticate":
+      return "Run aidd auth login";
+    case "install-framework":
+      return `Run \`aidd framework install --tool ${fix.tool}\`.`;
+    case "replace-conflicting-source":
+      return `Run \`claude plugin marketplace remove ${fix.name}\`, then \`aidd sync\` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.`;
+    case "refresh-marketplace":
+      return `Run \`aidd marketplace refresh\` to write it back to ${fix.file}.`;
   }
 }

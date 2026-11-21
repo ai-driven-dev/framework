@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -28,7 +29,7 @@ export interface RegistrationRun {
   readonly userCacheRoot: () => string;
   readonly platform: string;
   readonly logger: Logger;
-  readonly warnings: string[];
+  readonly warnings: (string | HintedMessage)[];
 }
 
 /** The per-tool registries a host's native state is read and written through. */
@@ -39,7 +40,7 @@ export interface HostRegistries {
 }
 
 /** Every warning goes to the logger and is kept, in order, for the caller's result. */
-export function warnRegistration(run: RegistrationRun, message: string): void {
+export function warnRegistration(run: RegistrationRun, message: string | HintedMessage): void {
   run.logger.warn(message);
   run.warnings.push(message);
 }

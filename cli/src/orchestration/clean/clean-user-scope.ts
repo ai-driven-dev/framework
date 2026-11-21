@@ -1,6 +1,6 @@
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.js";
 import type { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
-import { describeFullRemovalInstruction } from "../../contexts/machine-claims/application/shared-source-reference-support.js";
+import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
@@ -92,11 +92,14 @@ export class CleanUserScope {
    * confirmation: no host registration exists to undo, and, when `references.json` still lists
    * other projects, that each must run its own `aidd clean` first: their hosts still resolve the
    * shared source this run is about to purge. */
-  private describeNoUserRegistration(preview: CleanUserScopePreview): string {
+  private describeNoUserRegistration(preview: CleanUserScopePreview): string | HintedMessage {
     const base = "No host registration was undone: nothing was registered at user scope.";
     if (preview.referencingProjects.length === 0) return base;
     const projects = preview.referencingProjects.join(", ");
-    return `${base} ${projects} still resolve the shared source through their own host; ${describeFullRemovalInstruction()}`;
+    return {
+      text: `${base} ${projects} still resolve the shared source through their own host`,
+      hint: "full-removal",
+    };
   }
 
   private async confirmOrDryRun(

@@ -18,9 +18,12 @@ import {
   ManifestUnavailableError,
   MissingPluginMetadataError,
   PluginNotFoundError,
+  ProjectHooksEditedError,
   ProjectScopeUnsupportedError,
+  SharedSourceUnregisteredError,
   ToolNotInstalledError,
   UnresolvableUserScopeError,
+  UnsupportedManifestVersionError,
 } from "../../../src/contexts/installation/domain/installation.error.js";
 import {
   AmbiguousPluginMatchError,
@@ -43,7 +46,10 @@ import { render } from "../../../src/presentation/errors/error-translator.presen
 
 /** Every error of installing, registering and orchestrating tools and plugins, built with fixed arguments, and the exact words it shows. */
 const cases: [() => Error, string][] = [
-  [() => new MarketplaceSourceConflictError("conflict"), "conflict"],
+  [
+    () => new MarketplaceSourceConflictError("conflict"),
+    "conflict Reconcile the host source manually before retrying `aidd sync`.",
+  ],
   [() => new NativePluginCliError("cli failed"), "cli failed"],
   [
     () => new UnreadableBuiltCatalogError("/p/c.json"),
@@ -58,7 +64,46 @@ const cases: [() => Error, string][] = [
     "AIDD files detected but no manifest found.\nRun `aidd setup` to register existing files.",
   ],
   [() => new AlreadyInitializedError(), "Already initialized. Use `aidd update` to upgrade."],
-  [() => new AlreadyInitializedError("custom"), "custom"],
+  [
+    () => new AlreadyInitializedError("clean-then-setup"),
+    "Already initialized. Run `aidd clean --force` then `aidd setup` to reset completely.",
+  ],
+  [
+    () =>
+      new ProjectHooksEditedError(
+        "claude project hooks for 'p' were edited after install; detach refused."
+      ),
+    "claude project hooks for 'p' were edited after install; detach refused. Rerun aidd sync --force to restore it, or aidd clean --force to remove it.",
+  ],
+  [
+    () =>
+      new ProjectHooksEditedError(
+        "claude hook script 'a/b.sh' was edited during reinstall; removal refused."
+      ),
+    "claude hook script 'a/b.sh' was edited during reinstall; removal refused. Rerun aidd sync --force to restore it, or aidd clean --force to remove it.",
+  ],
+  [
+    () =>
+      new SharedSourceUnregisteredError(
+        "claude: the shared framework source is not registered, so 'p' cannot be rebuilt"
+      ),
+    "claude: the shared framework source is not registered, so 'p' cannot be rebuilt; run `aidd setup --global`.",
+  ],
+  [
+    () =>
+      new UnsupportedManifestVersionError(
+        "manifest version 9 was written by a newer CLI than this one."
+      ),
+    "Invalid manifest data: manifest version 9 was written by a newer CLI than this one. Run `aidd update` to update this CLI, then try again.",
+  ],
+  [
+    () =>
+      new UnsupportedManifestVersionError(
+        "manifest version 5 predates version 8, the only one this CLI reads. No published CLI can write this version: delete m on this machine",
+        "user"
+      ),
+    "Invalid manifest data: manifest version 5 predates version 8, the only one this CLI reads. No published CLI can write this version: delete m on this machine, then run `aidd setup --global` to reinstall the framework.",
+  ],
   [() => new DuplicatePluginError("p"), "Plugin 'p' is already installed."],
   [() => new InvalidManifestDataError(), "Invalid manifest data."],
   [() => new InvalidManifestDataError("detail"), "Invalid manifest data: detail"],

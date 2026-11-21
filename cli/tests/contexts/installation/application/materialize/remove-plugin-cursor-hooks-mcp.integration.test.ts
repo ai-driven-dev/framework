@@ -2,6 +2,7 @@
  * hooks.json is not tracked in Plugin.files: hooksDestination:"project" merges its entries
  * into the project's own .cursor/hooks.json, which baseDir-relative deletion cannot find.
  */
+
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createOutput } from "../../../../../src/composition/shared.js";
@@ -12,6 +13,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
@@ -160,7 +162,9 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
     fs.setFile(SCRIPT_PATH, "edited by user");
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
-    await expect(installPlugin(fs, manifest, PLUGIN_NAME, previous)).rejects.toThrow(/edited/);
+    await expect(installPlugin(fs, manifest, PLUGIN_NAME, previous)).rejects.toThrow(
+      saying(/edited/)
+    );
     expect(fs.getFile(SCRIPT_PATH)).toBe("edited by user");
   });
 
@@ -206,7 +210,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/edited.*pre.js|pre.js.*edited/);
+    ).rejects.toThrow(saying(/edited.*pre.js|pre.js.*edited/));
     expect(fs.getFile(SCRIPT_PATH)).toBe("user-edited script");
     expect(
       repo
@@ -235,7 +239,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/edited.*hooks|hooks.*edited/);
+    ).rejects.toThrow(saying(/edited.*hooks|hooks.*edited/));
     expect(fs.getFile(HOOKS_PATH)).toContain("--user-flag");
     expect(fs.has(OTHER_SCRIPT_PATH)).toBe(true);
     expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(2);

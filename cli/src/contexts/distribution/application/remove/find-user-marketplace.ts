@@ -1,7 +1,9 @@
-import { InvalidMarketplaceNameError } from "../../../../shared/domain/shared.error.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
 import type { FoundUserMarketplace } from "../../contract/marketplace-removal.js";
-import { MarketplaceNotFoundError } from "../../domain/distribution.error.js";
+import {
+  MarketplaceNotFoundError,
+  SharedMarketplaceRemovalError,
+} from "../../domain/distribution.error.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 
 export interface FindUserMarketplaceCommand {
@@ -17,9 +19,7 @@ export class FindUserMarketplace {
 
   async execute(command: FindUserMarketplaceCommand): Promise<FoundUserMarketplace> {
     if (command.name === FRAMEWORK_MARKETPLACE_NAME) {
-      throw new InvalidMarketplaceNameError(
-        `"${FRAMEWORK_MARKETPLACE_NAME}" is shared by every project on this machine and is removed by \`aidd clean --scope user\`, not marketplace remove.`
-      );
+      throw new SharedMarketplaceRemovalError(FRAMEWORK_MARKETPLACE_NAME, "user");
     }
     const found = (await this.registry.list(command.projectRoot)).find(
       (entry) => entry.name === command.name && entry.scope === "user"

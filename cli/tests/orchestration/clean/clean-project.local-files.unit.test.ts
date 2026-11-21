@@ -19,6 +19,7 @@ import {
 import { present } from "../../shared/testing/present.builder.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import {
   AT_PROJECT,
   CleanWithKnownHostSource,
@@ -252,7 +253,7 @@ describe("clean: local files", () => {
 
       await expect(
         useCase.execute({ ...AT_PROJECT, force: false, interactive: true })
-      ).rejects.toThrow("edited after install");
+      ).rejects.toThrow(saying("edited after install"));
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
       expect(await references.listAllReferencingProjects()).toContain("/other-project");

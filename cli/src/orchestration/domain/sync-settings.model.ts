@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 
@@ -35,7 +36,7 @@ export interface SyncSettingsResult {
    * ran, so the settings this pass wrote will not load until it has. */
   binaryMissing: readonly { toolId: ToolId; binary: string }[];
   /** What a recoverable, best-effort step logged: the same text `logger.warn` received. */
-  warnings: readonly string[];
+  warnings: readonly (string | HintedMessage)[];
   /** A hard failure that is not the recoverable `NativePluginCliError` family: a bug in an
    * activator, or the source-conflict guard's deliberate refusal. Returned rather than thrown,
    * so whether the whole command fails stays the caller's decision. */

@@ -69,7 +69,12 @@ describe("native activation: recorded refs", () => {
         allowedIds: null,
       });
       expect(
-        before.some((issue) => issue.severity === "error" && issue.fix.includes("aidd sync"))
+        before.some(
+          (issue) =>
+            issue.severity === "error" &&
+            typeof issue.fix !== "string" &&
+            issue.fix.code === "sync-reregister"
+        )
       ).toBe(true);
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });

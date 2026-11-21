@@ -34,7 +34,7 @@ export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
       {
         path: this.path,
         location: "for this machine",
-        reinstallCommand: "aidd setup --global",
+        scope: "user",
       },
       this.resolveToolId
     );

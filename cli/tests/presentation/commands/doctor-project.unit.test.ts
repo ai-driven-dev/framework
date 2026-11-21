@@ -74,7 +74,13 @@ describe("aidd doctor - every tool at once", () => {
       errors: [],
       ai: {
         toolHealth: [],
-        issues: [{ severity: "error", message: "claude is not registered", fix: "aidd sync" }],
+        issues: [
+          {
+            severity: "error",
+            message: "claude is not registered",
+            fix: { code: "sync-reregister" },
+          },
+        ],
       },
       ide: HEALTHY_SCOPE,
       pluginIssues: [],
@@ -86,7 +92,9 @@ describe("aidd doctor - every tool at once", () => {
 
     await expect(run()).rejects.toThrow(ExitRequested);
 
-    expect(errors[0]).toBe("Error:   claude is not registered\n    Fix: aidd sync\n");
+    expect(errors[0]).toBe(
+      "Error:   claude is not registered\n    Fix: Run `aidd sync` to re-register it.\n"
+    );
     expect(written.join("")).not.toContain("healthy");
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -96,7 +104,13 @@ describe("aidd doctor - every tool at once", () => {
       errors: [],
       ai: {
         toolHealth: [],
-        issues: [{ severity: "error", message: "claude is not registered", fix: "aidd sync" }],
+        issues: [
+          {
+            severity: "error",
+            message: "claude is not registered",
+            fix: { code: "sync-reregister" },
+          },
+        ],
       },
       ide: HEALTHY_SCOPE,
       pluginIssues: [],
@@ -144,11 +158,23 @@ describe("aidd doctor - the two categories, told apart", () => {
       errors: [],
       ai: {
         toolHealth: [{ toolId: TOOL.claude, fileCount: 1, mergeFileCount: 0 }],
-        issues: [{ severity: "info", message: "claude has never run", fix: "run claude" }],
+        issues: [
+          {
+            severity: "info",
+            message: "claude has never run",
+            fix: "The plugin does not load until claude's own CLI has run and answered this.",
+          },
+        ],
       },
       ide: {
         toolHealth: [{ toolId: TOOL.vscode, fileCount: 2, mergeFileCount: 0 }],
-        issues: [{ severity: "info", message: "vscode has never run", fix: "run vscode" }],
+        issues: [
+          {
+            severity: "info",
+            message: "vscode has never run",
+            fix: "The plugin does not load until vscode's own CLI has run and answered this.",
+          },
+        ],
       },
       pluginIssues: [],
       healthy: true,
@@ -177,8 +203,8 @@ describe("aidd doctor - the two categories, told apart", () => {
       "Installation is healthy",
     ]);
     expect(errors.join("")).toBe(
-      "Warning:   claude has never run\n    Fix: run claude\n" +
-        "Warning:   vscode has never run\n    Fix: run vscode\n"
+      "Warning:   claude has never run\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\n" +
+        "Warning:   vscode has never run\n    Fix: The plugin does not load until vscode's own CLI has run and answered this.\n"
     );
   });
 });
@@ -247,7 +273,13 @@ describe("aidd doctor --tool", () => {
   it("names that tool's own scope issues when no plugin narrows the run", async () => {
     doctorScoped.mockResolvedValue({
       toolHealth: [],
-      issues: [{ severity: "error", message: "claude is not registered", fix: "aidd sync" }],
+      issues: [
+        {
+          severity: "error",
+          message: "claude is not registered",
+          fix: { code: "sync-reregister" },
+        },
+      ],
       pluginIssues: [],
       healthy: false,
     });
@@ -257,7 +289,9 @@ describe("aidd doctor --tool", () => {
 
     await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
 
-    expect(errors[0]).toBe("Error:   claude is not registered\n    Fix: aidd sync\n");
+    expect(errors[0]).toBe(
+      "Error:   claude is not registered\n    Fix: Run `aidd sync` to re-register it.\n"
+    );
   });
 
   it("fails the process when that one tool's category is unhealthy", async () => {
@@ -281,7 +315,13 @@ describe("aidd doctor --tool with a plugin named", () => {
   it("holds that tool's scope issues back, and gates on the plugin alone", async () => {
     doctorScoped.mockResolvedValue({
       toolHealth: [],
-      issues: [{ severity: "error", message: "claude is not registered", fix: "aidd sync" }],
+      issues: [
+        {
+          severity: "error",
+          message: "claude is not registered",
+          fix: { code: "sync-reregister" },
+        },
+      ],
       pluginIssues: [],
       healthy: false,
     });

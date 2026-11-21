@@ -10,6 +10,7 @@ import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN = "aidd-context";
@@ -95,7 +96,7 @@ describe("removeObsoleteScripts", () => {
     const fs = new InMemoryFileAdapter({ [SCRIPT_PATH]: "edited" });
 
     await expect(removeObsoleteScripts(fs, delivery({ previous }), new Map())).rejects.toThrow(
-      /was edited during reinstall; removal refused/
+      saying(/was edited during reinstall; removal refused/)
     );
     await removeObsoleteScripts(fs, delivery({ previous, overwriteEdited: true }), new Map());
 

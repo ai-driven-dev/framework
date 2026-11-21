@@ -316,9 +316,7 @@ describe("what the user is told when a clone fails", () => {
 
       await expect(
         fetcher.fetch({ kind: "url", url: "https://example.com/private.git" }, CACHE)
-      ).rejects.toThrow(
-        expect.objectContaining({ detail: expect.stringMatching(/aidd auth login/) })
-      );
+      ).rejects.toThrow(expect.objectContaining({ advice: "token" }));
     });
 
     it("tells an ssh user to check their key instead", async () => {
@@ -327,7 +325,7 @@ describe("what the user is told when a clone fails", () => {
 
       await expect(
         fetcher.fetch({ kind: "url", url: "git@example.com:acme/private.git" }, CACHE)
-      ).rejects.toThrow(expect.objectContaining({ detail: expect.stringMatching(/SSH key/) }));
+      ).rejects.toThrow(expect.objectContaining({ advice: "ssh-key" }));
     });
   });
 

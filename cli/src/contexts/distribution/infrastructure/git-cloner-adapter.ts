@@ -52,17 +52,11 @@ export class GitCloner {
     const safeUrl = withoutCredentials(displayUrl);
     if (AUTH_ERROR_PATTERN.test(msg)) {
       throw new PluginFetchError(
-        `Authentication failed for "${safeUrl}". ${this.authHint(safeUrl)}`
+        `Authentication failed for "${safeUrl}".`,
+        safeUrl.startsWith("git@") ? "ssh-key" : "token"
       );
     }
     throw new PluginFetchError(`git clone failed for "${safeUrl}": ${scrubCredentials(msg)}`);
-  }
-
-  private authHint(url: string): string {
-    if (url.startsWith("git@")) {
-      return "Check your SSH key is registered on the remote host.";
-    }
-    return "Set AIDD_TOKEN, run `aidd auth login`, or pass --token <value>. Required scope depends on the host (github: `repo`, gitlab: `read_repository`, bitbucket: `repository:read`).";
   }
 }
 

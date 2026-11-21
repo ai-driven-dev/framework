@@ -20,7 +20,7 @@ export function genericFlatAgentPath({
 
 /**
  * Assumes every immediate child of `skills/` is a self-contained skill folder: the hyphen
- * lands on that child's own name, so a non-skill sibling (a shared helper directory, a
+ * lands on that child's own name, so a non-skill sibling (a directory of files shared across skills, a
  * manifest file) is renamed exactly like one and any relative path reaching it by its
  * original name stops resolving. A plugin where that does not hold takes
  * `genericFlatSkillTreePath` instead.

@@ -7,35 +7,16 @@ import type { BuiltCatalogs } from "../../contexts/host-registration/contract/bu
 import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";
 import type { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.js";
 import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
+import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
-
-type SyncedManifest = SyncContext["manifest"];
-type SyncedMarketplaces = SyncContext["marketplaces"];
-
-/** What the record rules answer about refs: the host name a ref sits under, and which recorded
- * refs sit on which host. */
-interface RefRules {
-  readonly refOnHostName: (plugin: string, hostName: string) => string;
-  readonly refsOnHosts: (
-    record: NonNullable<ReturnType<SyncedManifest["getNativeRegistrations"]>>,
-    hostNames: Iterable<string>
-  ) => string[];
-}
-
-interface PluginRefsRun {
-  toolId: ToolId;
-  manifest: SyncedManifest;
-  marketplaces: SyncedMarketplaces;
-  hostNameByAlias: ReadonlyMap<string, string>;
-  scope: Scope;
-}
+import type { PluginRefsRun, RefRules, SyncedMarketplaces } from "./plugin-refs-run.js";
 
 export interface ActivationRun {
   outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
   binaryMissing: readonly { toolId: ToolId; binary: string }[];
-  warnings: readonly string[];
+  warnings: readonly (string | HintedMessage)[];
   errors: readonly { scope: string; error: unknown }[];
 }
 
@@ -43,7 +24,7 @@ export interface ActivationRun {
 interface ActivationAccumulator {
   outcomes: Map<ToolId, HostRegistrationOutcome>;
   binaryMissing: { toolId: ToolId; binary: string }[];
-  warnings: string[];
+  warnings: (string | HintedMessage)[];
   errors: { scope: string; error: unknown }[];
 }
 
@@ -96,7 +77,11 @@ export class ActivateNativeTools {
     return run;
   }
 
-  private register(toolId: ToolId, request: ActivateNativeToolsRequest, warnings: string[]) {
+  private register(
+    toolId: ToolId,
+    request: ActivateNativeToolsRequest,
+    warnings: (string | HintedMessage)[]
+  ) {
     const { projectRoot, context, claims, scope, enablePlugins } = request;
     const { manifest, marketplaces } = context;
     return this.deps.registerPluginWithHost.execute({
@@ -130,11 +115,10 @@ export class ActivateNativeTools {
     if (result.status === "activated") {
       run.outcomes.set(toolId, result.outcome);
     } else if (result.status === "binary-missing") {
-      const rerun =
-        enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : "";
-      this.deps.logger.warn(
-        `${result.binary} CLI not found on PATH — skipping native plugin activation.${rerun}`
-      );
+      this.deps.logger.warn({
+        text: `${result.binary} CLI not found on PATH — skipping native plugin activation.`,
+        hint: enablePlugins.length > 0 ? "rerun-setup-global" : undefined,
+      });
       run.binaryMissing.push({ toolId, binary: result.binary });
     }
   }

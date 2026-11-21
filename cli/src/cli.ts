@@ -8,6 +8,7 @@ import { wireTools } from "./composition/tools.js";
 import { outputOf } from "./presentation/commands/global-options.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerCommands } from "./presentation/commands/register-commands.js";
+import { describeMessage } from "./presentation/errors/describe-message.presenter.js";
 import { describeCause, failCommand } from "./presentation/errors/error-translator.presenter.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { spawnCliCommand } from "./presentation/terminal/child-command.js";
@@ -19,7 +20,8 @@ function formatVersion(version: string): string {
 }
 
 const tools = wireTools();
-const createOutput = (verbose: boolean) => createOutputWith(verbose, describeCause);
+const createOutput = (verbose: boolean) =>
+  createOutputWith(verbose, describeCause, describeMessage);
 
 // The composition edge: commands receive these factories and never import the wiring.
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared

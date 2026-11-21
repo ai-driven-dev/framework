@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MarketplaceNotFoundError } from "../../../src/contexts/distribution/domain/distribution.error.js";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { describeCause } from "../../../src/presentation/errors/error-translator.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 
@@ -18,7 +19,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(true, ended, String);
+        const output = new OutputAdapter(true, ended, String, describeMessage);
         output.debug("debug message");
         expect(written.some((m) => m.includes("[verbose]") && m.includes("debug message"))).toBe(
           true
@@ -37,7 +38,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.debug("debug message");
         expect(written.length).toBe(0);
       } finally {
@@ -54,7 +55,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.debug("silent debug");
         expect(written.length).toBe(0);
       } finally {
@@ -73,7 +74,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.debug("env verbose debug");
         expect(written.some((m) => m.includes("env verbose debug"))).toBe(true);
       } finally {
@@ -93,7 +94,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.info("info message");
         expect(written.some((m) => m.includes("info message"))).toBe(true);
       } finally {
@@ -112,7 +113,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.warn("something wrong");
         expect(written.some((m) => m.includes("Warning:") && m.includes("something wrong"))).toBe(
           true
@@ -131,7 +132,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, describeCause);
+        const output = new OutputAdapter(false, ended, describeCause, describeMessage);
         output.warn("skip: ", new Error("offline"));
         output.warn("skip: ", new MarketplaceNotFoundError("aidd"));
         expect(written).toEqual([
@@ -154,7 +155,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.error("something failed");
         expect(written.some((m) => m.includes("Error:") && m.includes("something failed"))).toBe(
           true
@@ -175,7 +176,7 @@ describe("OutputAdapter", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, String);
+        const output = new OutputAdapter(false, ended, String, describeMessage);
         output.success("Installed claude (42 files)");
         output.print("  + .claude/CLAUDE.md");
         expect(written.some((m) => m.includes("Installed claude (42 files)"))).toBe(true);
@@ -195,7 +196,8 @@ describe("OutputAdapter", () => {
           codes.push(code);
           throw new Error("stopped");
         },
-        String
+        String,
+        describeMessage
       );
 
       expect(() => output.exit(3)).toThrow("stopped");

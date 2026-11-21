@@ -5,6 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
 import type { DepsFactory } from "../../../src/orchestration/deps.js";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { sandboxedEnv } from "./cli-sandbox.builder.js";
 
@@ -117,7 +118,8 @@ async function buildProgram(): Promise<Command> {
     createSlice: depsFactory,
     telemetryRequests: wireTelemetryRequests(),
     runCommand: async () => 0,
-    createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code), String),
+    createOutput: (verbose) =>
+      new OutputAdapter(verbose, (code) => process.exit(code), String, describeMessage),
   });
   return program;
 }

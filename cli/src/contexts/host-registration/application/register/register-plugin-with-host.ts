@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -34,7 +35,10 @@ export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
   readonly refsToEnable: (hostNameByAlias: ReadonlyMap<string, string>) => string[];
   readonly userCacheRoot: () => string;
   /** Every warning goes to the logger and is kept, in order, for the caller's result. */
-  readonly sink: { readonly logger: RegistrationLogger; readonly warnings: string[] };
+  readonly sink: {
+    readonly logger: RegistrationLogger;
+    readonly warnings: (string | HintedMessage)[];
+  };
 }
 
 export type RegisterPluginWithHostResult =

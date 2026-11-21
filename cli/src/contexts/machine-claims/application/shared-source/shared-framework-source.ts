@@ -77,19 +77,21 @@ export class SharedFrameworkSource {
     );
     if (framework === undefined) return;
     if (activation.binaryMissing.length > 0) {
-      this.deps.logger.warn(
-        "This project's own pre-migration framework cache kept: a requested tool's CLI " +
-          "was not on PATH this run, so its own registration may still point at it — run " +
-          "`aidd sync` again once every tool's CLI is on PATH."
-      );
+      this.deps.logger.warn({
+        text:
+          "This project's own pre-migration framework cache kept: a requested tool's CLI " +
+          "was not on PATH this run, so its own registration may still point at it",
+        hint: "sync-after-path",
+      });
       return;
     }
     if ([...activation.outcomes.values()].some((outcome) => outcome.buildFailed)) {
-      this.deps.logger.warn(
-        "This project's own pre-migration framework cache kept: a requested tool's build " +
-          "failed this run, so its own registration may still point at it — fix the build " +
-          "warning above, then run `aidd sync` again."
-      );
+      this.deps.logger.warn({
+        text:
+          "This project's own pre-migration framework cache kept: a requested tool's build " +
+          "failed this run, so its own registration may still point at it",
+        hint: "sync-after-build",
+      });
       return;
     }
     const candidate = await this.deps.purgeCache.resolveCandidate(

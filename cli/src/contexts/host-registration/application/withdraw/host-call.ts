@@ -1,6 +1,7 @@
 /** What every withdrawal step shares: the host call, the host's own names, and what survives a skip.
  * A step imports this and `withdrawal.ts`, never another step. */
 import { join } from "node:path";
+import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { NativePluginCliError } from "../../domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
@@ -68,15 +69,20 @@ export function describeSharedSourceSurvival(
   hostName: string,
   cacheRoot: string | undefined,
   sharedSource: ProjectCleanFacts["sharedSource"]
-): string {
+): HintedMessage {
   const base = `Its entry survives at userConfigDir()/marketplaces.json${survivingCachePath(hostName, cacheRoot)}.`;
-  if (sharedSource === undefined) return base;
+  if (sharedSource === undefined) return { text: base };
   const { otherProjects } = sharedSource;
   if (otherProjects.length > 0) {
     const plural = otherProjects.length === 1 ? "project" : "projects";
-    return `${base} Still referenced by ${otherProjects.length} other ${plural} on this machine.`;
+    return {
+      text: `${base} Still referenced by ${otherProjects.length} other ${plural} on this machine.`,
+    };
   }
-  return `${base} No project on this machine still references it — \`aidd clean --scope user\` is what purges it for the machine.`;
+  return {
+    text: `${base} No project on this machine still references it`,
+    hint: "purge-user-scope",
+  };
 }
 
 /** The host's own name for `alias`; `undefined` when `registrations` is absent or names no entry

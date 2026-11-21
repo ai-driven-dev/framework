@@ -1,8 +1,10 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { InvalidMarketplaceNameError } from "../../../../shared/domain/shared.error.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
 import type { RemovableMarketplace } from "../../contract/marketplace-removal.js";
-import { MarketplaceNotFoundError } from "../../domain/distribution.error.js";
+import {
+  MarketplaceNotFoundError,
+  SharedMarketplaceRemovalError,
+} from "../../domain/distribution.error.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 
 export interface FindMarketplaceToRemoveCommand {
@@ -20,9 +22,7 @@ export class FindMarketplaceToRemove {
     // host's own registration for every other project, with no confirmation and no way back short
     // of `aidd setup` running again. It is removed with the framework itself, by `aidd clean`.
     if (command.name === FRAMEWORK_MARKETPLACE_NAME) {
-      throw new InvalidMarketplaceNameError(
-        `"${FRAMEWORK_MARKETPLACE_NAME}" is shared by every project on this machine and is not removed with \`aidd marketplace remove\` — it is removed with the framework itself, by \`aidd clean\`, once machine scope lands there.`
-      );
+      throw new SharedMarketplaceRemovalError(FRAMEWORK_MARKETPLACE_NAME, "project");
     }
     if (command.scope === "user")
       throw new Error("User-scope marketplace removal requires RemoveUserMarketplace.");

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { wireTools } from "../../../src/composition/tools.js";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
 import { MenuLoop } from "../../../src/orchestration/menu/menu-loop.js";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
@@ -72,7 +73,7 @@ async function loopUntilExit(): Promise<void> {
     runMenuLoop(
       menuOf,
       resolveProjectRoot(),
-      new OutputAdapter(false, (code) => process.exit(code), String)
+      new OutputAdapter(false, (code) => process.exit(code), String, describeMessage)
     )
   ).rejects.toThrow(/^exit /);
 }

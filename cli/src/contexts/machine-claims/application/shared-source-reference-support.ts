@@ -1,3 +1,4 @@
+import type { HintedMessage } from "../../../shared/domain/describe-error.js";
 import { samePathSegment } from "../../../shared/domain/paths.js";
 import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { Scope } from "../../../shared/domain/scope.js";
@@ -36,16 +37,6 @@ export function refAnotherProjectStillNeeds(input: {
 }
 
 /**
- * The instruction for fully removing the shared source, once a message has already named which
- * other projects still need it. Each command name stays whole inside this one string literal:
- * the `instructs` rule of `tests/architecture/kind-rules.ts` reads every string and template literal under `application/`
- * and checks each command it names against the ones the CLI declares.
- */
-export function describeFullRemovalInstruction(): string {
-  return "full removal is `aidd clean` in each of them, then `aidd clean --scope user`.";
-}
-
-/**
  * The message both `clean` and `plugin remove` warn with instead of ever uninstalling `ref`, once
  * `refAnotherProjectStillNeeds` says it is guarded: the two callers differ only in how they
  * resolve the inputs, never in the sentence itself.
@@ -54,15 +45,17 @@ export function describeGuardedPluginRefMessage(input: {
   binary: string;
   ref: string;
   otherProjects: readonly string[];
-}): string {
+}): HintedMessage {
   const { binary, ref, otherProjects } = input;
   const plural = otherProjects.length === 1 ? "project" : "projects";
   const verb = otherProjects.length === 1 ? "references" : "reference";
-  return (
-    `${binary}: '${ref}' left enabled — ${binary} enables a plugin machine-wide, and ` +
-    `${otherProjects.length} other ${plural} still ${verb} the shared source: ` +
-    `${otherProjects.join(", ")} — which is why it stays; ${describeFullRemovalInstruction()}`
-  );
+  return {
+    text:
+      `${binary}: '${ref}' left enabled — ${binary} enables a plugin machine-wide, and ` +
+      `${otherProjects.length} other ${plural} still ${verb} the shared source: ` +
+      `${otherProjects.join(", ")} — which is why it stays`,
+    hint: "full-removal",
+  };
 }
 
 /**

@@ -6,7 +6,7 @@ describe("CheckAuthentication", () => {
     const issues = await new CheckAuthentication({ resolve: async () => null }).execute();
 
     expect(issues).toStrictEqual([
-      { severity: "info", message: "Not authenticated", fix: "Run aidd auth login" },
+      { severity: "info", message: "Not authenticated", fix: { code: "authenticate" } },
     ]);
   });
 

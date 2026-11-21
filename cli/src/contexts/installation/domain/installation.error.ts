@@ -17,7 +17,36 @@ export class AiddFilesDetectedError extends AiddError {
 
 export class AlreadyInitializedError extends AiddError {
   readonly code = "already-initialized";
-  constructor(readonly detail?: string) {
+  /** `update` upgrades what is there; `clean-then-setup` is the way back to nothing. */
+  constructor(readonly remedy: "update" | "clean-then-setup" = "update") {
+    super();
+  }
+}
+
+/** A hook entry or script is not what the install recorded, so removing or replacing it is refused. */
+export class ProjectHooksEditedError extends AiddError {
+  readonly code = "project-hooks-edited";
+  constructor(readonly detail: string) {
+    super();
+  }
+}
+
+/** A user-scope plugin cannot be rebuilt: the shared framework source it is built from is gone. */
+export class SharedSourceUnregisteredError extends AiddError {
+  readonly code = "shared-source-unregistered";
+  constructor(readonly detail: string) {
+    super();
+  }
+}
+
+/** A manifest this CLI cannot read by its version. `reinstall` is the scope to set up again once
+ * the file is deleted; absent, the CLI is behind and updating answers. */
+export class UnsupportedManifestVersionError extends AiddError {
+  readonly code = "unsupported-manifest-version";
+  constructor(
+    readonly detail: string,
+    readonly reinstall?: Scope
+  ) {
     super();
   }
 }

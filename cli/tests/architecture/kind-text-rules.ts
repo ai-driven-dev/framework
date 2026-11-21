@@ -130,3 +130,37 @@ export function scopeViolations(files: Readonly<Record<string, string>>): Violat
       )
     );
 }
+
+// A command the binary names is spoken by presentation alone.
+
+/** `aidd` and the word after it: a command the CLI declares or a placeholder, never the prose
+ * word that follows the name ("not an aidd command"). */
+const BINARY_NAMED = /\baidd ([a-z][a-z-]*|<)/g;
+
+/** A string or template outside presentation that names the binary: a layer below presentation
+ * returns a code and its facts, and presentation words the command a person is told to run. */
+export function binaryViolations(
+  files: Readonly<Record<string, string>>,
+  declared: ReadonlySet<string>
+): Violation[] {
+  const below = Object.fromEntries(
+    Object.entries(files).filter(
+      ([path, text]) => !path.startsWith("src/presentation/") && text.includes("aidd ")
+    )
+  );
+  return readEach(below, (path, root) =>
+    literalsOf(root)
+      .filter((text) =>
+        [...text.matchAll(BINARY_NAMED)].some(([, word]) => word === "<" || declared.has(word))
+      )
+      .map((text) =>
+        violation(
+          "binary",
+          `${path} :: ${JSON.stringify(text)}`,
+          "names the binary outside presentation",
+          "a command a person is told to run is worded by presentation, from a code and its facts",
+          "return the code and its facts, and word the command in src/presentation"
+        )
+      )
+  );
+}

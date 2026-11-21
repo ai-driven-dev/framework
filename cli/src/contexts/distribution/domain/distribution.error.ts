@@ -1,3 +1,4 @@
+import type { Scope } from "../../../shared/domain/scope.js";
 import { AiddError } from "../../../shared/domain/shared.error.js";
 
 export class InvalidMarketplaceScopeError extends AiddError {
@@ -33,9 +34,15 @@ export class MarketplaceNotFoundError extends AiddError {
   }
 }
 
+/** What a refused clone tells the person to do next, by how the remote is reached. */
+export type CredentialAdvice = "ssh-key" | "token";
+
 export class PluginFetchError extends AiddError {
   readonly code = "plugin-fetch";
-  constructor(readonly detail: string) {
+  constructor(
+    readonly detail: string,
+    readonly advice?: CredentialAdvice
+  ) {
     super();
   }
 }
@@ -55,6 +62,18 @@ export class UnreadableMarketplaceRegistryError extends AiddError {
   constructor(
     readonly path: string,
     readonly reason: string
+  ) {
+    super();
+  }
+}
+
+/** Removing the framework marketplace by name: every project on the machine shares it, so only
+ * a clean undoes it. `scope` is the scope the removal was asked at. */
+export class SharedMarketplaceRemovalError extends AiddError {
+  readonly code = "shared-marketplace-removal";
+  constructor(
+    readonly marketplace: string,
+    readonly scope: Scope
   ) {
     super();
   }

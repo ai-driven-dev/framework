@@ -1,4 +1,6 @@
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
+import type { HintedMessage } from "../../../src/shared/domain/describe-error.js";
 
 export type OutputLevel = "debug" | "info" | "warn" | "print" | "success" | "error";
 
@@ -25,7 +27,8 @@ export class CapturingOutput extends OutputAdapter {
       (code) => {
         throw new ExitRequested(code);
       },
-      String
+      String,
+      describeMessage
     );
   }
 
@@ -41,11 +44,11 @@ export class CapturingOutput extends OutputAdapter {
   override debug(message: string): void {
     this.captured.push({ level: "debug", message });
   }
-  override info(message: string): void {
-    this.captured.push({ level: "info", message });
+  override info(message: string | HintedMessage): void {
+    this.captured.push({ level: "info", message: describeMessage(message) });
   }
-  override warn(message: string): void {
-    this.captured.push({ level: "warn", message });
+  override warn(message: string | HintedMessage): void {
+    this.captured.push({ level: "warn", message: describeMessage(message) });
   }
   override print(message: string): void {
     this.captured.push({ level: "print", message });

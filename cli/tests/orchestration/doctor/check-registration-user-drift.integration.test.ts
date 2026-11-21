@@ -90,7 +90,7 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
     expect(issues[0]?.severity).toBe("warning");
     expect(issues[0]?.message).toContain("3.0.0");
     expect(issues[0]?.message).toContain(CURRENT_VERSION);
-    expect(issues[0]?.fix).toContain("aidd update");
+    expect(issues[0]?.fix).toEqual({ code: "update-cli" });
   });
 
   it("warns naming `aidd sync` when the host still points at this project's own pre-migration cache", async () => {
@@ -106,7 +106,7 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
       {
         severity: "warning",
         message: `claude's marketplace registry (${REGISTRY_LOCATION}) still carries '${NAME}' from this project's own pre-migration cache (${projectCache})`,
-        fix: "Run `aidd sync` to move it to the shared, machine-scope source.",
+        fix: { code: "sync-migrate-source" },
       },
     ]);
   });
@@ -127,6 +127,6 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
     // reading its own pre-migration path back would be told the wrong story.
     expect(issues[0]?.message).not.toContain("this project's own pre-migration cache");
     expect(issues[0]?.message).toContain("another project's pre-migration cache");
-    expect(issues[0]?.fix).toContain("aidd sync");
+    expect(issues[0]?.fix).toEqual({ code: "sync-migrate-source" });
   });
 });

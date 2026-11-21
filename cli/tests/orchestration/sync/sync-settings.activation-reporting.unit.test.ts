@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { ActivatorFailingAtUpgrade, sync } from "../testing/sync-settings.builder.js";
 
@@ -99,8 +100,9 @@ describe("what execute reports about activation", () => {
       failOnPlugins: ["aidd-context@aidd-framework"],
     });
 
-    expect(result.warnings).toEqual(logger.warnMessages);
-    expect(result.warnings.some((w) => w.includes("aidd-context@aidd-framework"))).toBe(true);
+    const warnings = result.warnings.map(describeMessage);
+    expect(warnings).toEqual(logger.warnMessages);
+    expect(warnings.some((w) => w.includes("aidd-context@aidd-framework"))).toBe(true);
   });
 
   // A failure shape a real adapter never produces: activation must not swallow it as

@@ -10,6 +10,7 @@ import {
 } from "../../../../shared/testing/faulting-file-adapter.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -244,7 +245,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
           hooksGuard: guard,
         });
 
-      await expect(reinstall()).rejects.toThrow(/edited after install/);
+      await expect(reinstall()).rejects.toThrow(saying(/edited after install/));
       expect(fs.getFile(scriptPath)).toBe("user edit");
 
       await reinstall({ overwriteEdited: true });
@@ -288,7 +289,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
           marketplace: undefined,
           previousMcpEntries: new Map([["old-tool", "digest-of-old-tool"]]),
         })
-      ).rejects.toThrow(/edited after install/);
+      ).rejects.toThrow(saying(/edited after install/));
 
       expect(fs.getFile(configPath)).toBe(userContent);
       expect(manifest.getPlugins(TOOL.opencode)).toEqual([]);
