@@ -3,8 +3,10 @@
 
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
-  genericFlatAgentPath,
-  genericFlatSkillTreePath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type {
   AgentMarkdown,
@@ -30,18 +32,11 @@ type KiloHooks = HooksRouting & {
   readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
 };
 
-function kiloFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: `${KILO_DIRECTORY}agents/`,
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: ".md",
-  });
-}
-
-function kiloFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillTreePath(`${KILO_DIRECTORY}skills/`, plugin, rel.replace(/^skills\//, ""));
-}
+/** Where a flat build, and a flat install, put kilo's skills and agents. */
+export const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
 
 const kiloAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => kiloAgentFrontmatter(frontmatter),
@@ -92,13 +87,13 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: kiloFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(KILO_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: kiloFlatAgentPath,
+        path: (plugin, rel) => flatAgentFilePath(KILO_FLAT_LAYOUT, plugin, rel),
         agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false },

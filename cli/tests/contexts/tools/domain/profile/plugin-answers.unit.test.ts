@@ -8,6 +8,7 @@ import {
   flatPlacement,
   nativeLayout,
 } from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
+import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import {
   answersOf,
@@ -178,7 +179,10 @@ describe("a layout composed by hand", () => {
 });
 
 describe("which hooks deliveries a flat layout takes", () => {
-  const flat = flatPlacement({ namespacePrefix: "x-" });
+  const flat = flatPlacement({
+    artifacts: flatArtifactLayout(".x/", { skills: "nested", agent: { ext: ".md" } }),
+    namespacePrefix: "x-",
+  });
   const bridge = { kind: "bridge", flat: { dir: ".x/hooks/" } } as const;
 
   it("takes a bridge, and a project merge that declares a flat part", () => {

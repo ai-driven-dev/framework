@@ -5,8 +5,10 @@
  */
 
 import {
-  genericFlatAgentPath,
-  genericFlatSkillPath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
@@ -30,18 +32,11 @@ export function buildClaudeContract(hooks: HooksRouting): ToolBuildContract {
   });
 }
 
-function claudeFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: ".claude/agents/",
-    plugin,
-    agentBaseName: rel.slice("agents/".length),
-    outputExt: ".md",
-  });
-}
-
-function claudeFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(".claude/skills/", plugin, rel.slice("skills/".length));
-}
+/** Where a flat build puts claude's skills and agents. */
+const CLAUDE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".claude/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
 const claudeAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter),
@@ -61,13 +56,13 @@ export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: claudeFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(CLAUDE_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: claudeFlatAgentPath,
+        path: (plugin, rel) => flatAgentFilePath(CLAUDE_FLAT_LAYOUT, plugin, rel),
         agentMarkdown: claudeFlatAgentMarkdown,
       },
       mcp: {

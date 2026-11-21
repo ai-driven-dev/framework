@@ -1,6 +1,9 @@
 import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
-import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
+} from "../../../shared/domain/materialization/flat-paths.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
@@ -57,7 +60,7 @@ export type FrameworkBuildMode = (typeof FRAMEWORK_BUILD_MODES)[number];
 export type HooksAcceptance = { accepts: true } | { accepts: false; reason: string };
 
 /** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
-export type FlatSkillLayout = "nested" | "single-level";
+export type FlatSkillLayout = FlatArtifactLayout["skills"];
 
 /** The sections a flat plugin's files are installed under. */
 export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";

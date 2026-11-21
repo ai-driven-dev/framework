@@ -5,8 +5,10 @@
  */
 
 import {
-  genericFlatAgentPath,
-  genericFlatSkillPath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
@@ -36,18 +38,11 @@ export function buildCursorContract(hooks: HooksRouting): ToolBuildContract {
   });
 }
 
-function cursorFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: ".cursor/agents/",
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: ".md",
-  });
-}
-
-function cursorFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(".cursor/skills/", plugin, rel.replace(/^skills\//, ""));
-}
+/** Where a flat build puts cursor's skills and agents. */
+const CURSOR_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".cursor/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
 export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
@@ -58,13 +53,13 @@ export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: cursorFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(CURSOR_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: cursorFlatAgentPath,
+        path: (plugin, rel) => flatAgentFilePath(CURSOR_FLAT_LAYOUT, plugin, rel),
         agentMarkdown: cursorAgentMarkdown,
       },
       mcp: {

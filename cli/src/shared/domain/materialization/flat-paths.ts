@@ -10,50 +10,87 @@ export function pluginAgentName(plugin: string, agentFile: string): string {
 }
 
 /**
- * Flat mode carries no `<plugin>/` directory segment: the plugin name is hyphen-prefixed
- * onto the leaf filename instead, so a tool discovers the file at the depth it expects and
- * the plugin origin still survives in the name.
+ * Where a tool's flat plugin files land, declared once. A build writes them there, an install
+ * writes them there, and the owner of a built path is read back from the same declaration.
+ * Flat mode carries no `<plugin>/` segment on an agent, and a skill is either nested under its
+ * plugin (every name below it survives, so a script's `require()` still resolves) or prefixed by
+ * it on a single-level scan (the hyphen lands on the skill folder).
  */
-export function genericFlatAgentPath({
-  agentsPrefix,
-  plugin,
-  agentBaseName,
-  outputExt,
-}: {
-  agentsPrefix: string;
-  plugin: string;
-  agentBaseName: string;
-  outputExt: string;
-}): string {
-  return `${agentsPrefix}${pluginAgentName(plugin, agentBaseName)}${outputExt}`;
+export interface FlatArtifactLayout {
+  readonly directory: string;
+  readonly skillsDir: string;
+  readonly agentsDir: string;
+  readonly skills: "nested" | "single-level";
+  readonly agent: { readonly ext: string } | { readonly folderFile: string };
 }
 
-/**
- * Assumes every immediate child of `skills/` is a self-contained skill folder: the hyphen
- * lands on that child's own name, so a non-skill sibling (a shared helper directory, a
- * manifest file) is renamed exactly like one and any relative path reaching it by its
- * original name stops resolving. A plugin where that does not hold takes
- * `genericFlatSkillTreePath` instead.
- */
-export function genericFlatSkillPath(
-  skillsPrefix: string,
+export function flatArtifactLayout(
+  directory: string,
+  parts: Pick<FlatArtifactLayout, "skills" | "agent"> &
+    Partial<Pick<FlatArtifactLayout, "skillsDir" | "agentsDir">>
+): FlatArtifactLayout {
+  return {
+    directory,
+    skillsDir: parts.skillsDir ?? `${directory}skills/`,
+    agentsDir: parts.agentsDir ?? `${directory}agents/`,
+    skills: parts.skills,
+    agent: parts.agent,
+  };
+}
+
+/** A skill file's path, given its path below `skills/`. */
+export function flatSkillPath(
+  layout: FlatArtifactLayout,
   plugin: string,
   skillRelPath: string
 ): string {
-  return `${skillsPrefix}${plugin}-${skillRelPath}`;
+  const rest = skillRelPath.replace(/^skills\//, "");
+  return layout.skills === "nested"
+    ? `${layout.skillsDir}${plugin}/${rest}`
+    : `${layout.skillsDir}${plugin}-${rest}`;
 }
 
-/**
- * Nests the plugin's entire `skills/` subtree under one `<plugin>/` segment, so every name
- * below `skillsPrefix` survives: a script's `require()` is never rewritten, so a path
- * crossing a renamed name would stop resolving.
- */
-export function genericFlatSkillTreePath(
-  skillsPrefix: string,
+/** An agent's path, given its file name or its path below `agents/`. */
+export function flatAgentFilePath(
+  layout: FlatArtifactLayout,
   plugin: string,
-  skillRelPath: string
+  agentFile: string
 ): string {
-  return `${skillsPrefix}${plugin}/${skillRelPath}`;
+  const name = pluginAgentName(plugin, agentFile.replace(/^agents\//, ""));
+  return "folderFile" in layout.agent
+    ? `${layout.agentsDir}${name}/${layout.agent.folderFile}`
+    : `${layout.agentsDir}${name}${layout.agent.ext}`;
+}
+
+/** Where a file of a section lands: skills and agents as a build places them, every other section
+ * nested under its plugin. */
+export function flatSectionPath(
+  layout: FlatArtifactLayout,
+  section: "commands" | "agents" | "rules" | "skills",
+  file: { readonly plugin: string; readonly name: string }
+): string {
+  const { plugin, name } = file;
+  if (section === "skills") return flatSkillPath(layout, plugin, name);
+  if (section === "agents") return flatAgentFilePath(layout, plugin, name);
+  return `${layout.directory}${section}/${plugin}/${name}`;
+}
+
+/** Whether a project-relative path is one of the plugin's skills or agents: the inverse of the
+ * two placements above, read from the same declaration. */
+export function ownsFlatArtifact(
+  layout: FlatArtifactLayout,
+  relativePath: string,
+  plugin: string
+): boolean {
+  const below = (dir: string): string | null =>
+    relativePath.startsWith(dir) ? relativePath.slice(dir.length) : null;
+  const skill = below(layout.skillsDir);
+  if (skill !== null) {
+    return layout.skills === "nested"
+      ? skill.startsWith(`${plugin}/`)
+      : skill.startsWith(`${plugin}-`);
+  }
+  return below(layout.agentsDir)?.startsWith(`${plugin}-`) ?? false;
 }
 
 export function genericFlatHooksFile(hooksPrefix: string, plugin: string): string {

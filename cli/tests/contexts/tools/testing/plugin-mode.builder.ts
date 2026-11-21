@@ -20,6 +20,7 @@ import {
   type ManifestSection,
   manifestSection,
 } from "../../../../src/contexts/tools/domain/sections/manifest-section.js";
+import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
 /** The way a tool takes plugins, as its answers' own `kind` states it. */
 export function pluginModeOf(plugins: PluginAnswers): "native" | "flat" | "unsupported" {
@@ -57,7 +58,14 @@ export function flatPlugins(
       : hooks === "accepts"
         ? { kind: "bridge", flat: { dir: ".fake/hooks/" } }
         : { kind: "none", reason: "synthetic" };
-  return { layout: flatPlacement({ namespacePrefix }), manifest: null, hooks: { delivery } };
+  return {
+    layout: flatPlacement({
+      artifacts: flatArtifactLayout(".x/", { skills: "nested", agent: { ext: ".md" } }),
+      namespacePrefix,
+    }),
+    manifest: null,
+    hooks: { delivery },
+  };
 }
 
 export interface NativeKitExtra extends Partial<NativeLayoutParams>, Partial<ManifestParams> {

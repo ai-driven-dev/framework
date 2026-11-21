@@ -4,8 +4,10 @@
 
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
-  genericFlatAgentPath,
-  genericFlatSkillTreePath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type {
   AgentMarkdown,
@@ -32,18 +34,11 @@ type OpencodeHooks = HooksRouting & {
   readonly bridgeRuntime: NonNullable<HooksDescriptor["bridgeRuntime"]>;
 };
 
-function opencodeFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: ".opencode/agents/",
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: ".md",
-  });
-}
-
-function opencodeFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillTreePath(".opencode/skills/", plugin, rel.replace(/^skills\//, ""));
-}
+/** Where a flat build, and a flat install, put opencode's skills and agents. */
+export const OPENCODE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".opencode/", {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
 
 const opencodeAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => opencodeAgentFrontmatter(frontmatter),
@@ -111,13 +106,13 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: opencodeFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(OPENCODE_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: opencodeFlatAgentPath,
+        path: (plugin, rel) => flatAgentFilePath(OPENCODE_FLAT_LAYOUT, plugin, rel),
         agentMarkdown: opencodeAgentMarkdown,
       },
       mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)

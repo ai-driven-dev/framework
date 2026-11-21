@@ -3,7 +3,12 @@
  * materialization); what they merge, strip and list lives in the sibling models.
  */
 
-import { genericFlatSkillPath } from "../../../../../shared/domain/materialization/flat-paths.js";
+import {
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
@@ -79,16 +84,11 @@ export function buildCodexContract(toml: TomlCodec, hooks: HooksRouting): ToolBu
 // Codex scans `.agents/skills/` (cwd to repo root) for workspace skills, the documented project
 // skill root; verified live, a SKILL.md there appears in Codex's "Available skills" context.
 // `.codex/skills/` also resolves but is undocumented, so the documented root is what is used.
-const CODEX_SKILLS_PREFIX = ".agents/skills/";
-
-function codexFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(CODEX_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));
-}
-
-function codexFlatAgentPath(plugin: string, rel: string): string {
-  const base = rel.replace(/^agents\//, "").replace(/\.md$/, ".toml");
-  return `.codex/agents/${plugin}-${base}`;
-}
+const CODEX_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".codex/", {
+  skillsDir: ".agents/skills/",
+  skills: "single-level",
+  agent: { ext: ".toml" },
+});
 
 function collectMcpServers(
   builtPlugins: readonly string[],
@@ -118,13 +118,13 @@ function codexFlatArtifacts(toml: TomlCodec, hooks: FlatHooks): ToolBuildContrac
     skills: {
       supported: true,
       source: { kind: "fullTree", srcDir: "skills" },
-      path: codexFlatSkillPath,
+      path: (plugin, rel) => flatSkillPath(CODEX_FLAT_LAYOUT, plugin, rel),
       rewriteSkillName: true,
     },
     agents: {
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      path: codexFlatAgentPath,
+      path: (plugin, rel) => flatAgentFilePath(CODEX_FLAT_LAYOUT, plugin, rel),
       transform: tomlAgentMarkdownToToml(toml),
     },
     mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)

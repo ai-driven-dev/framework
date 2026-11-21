@@ -111,7 +111,7 @@ function flatLayoutOf(layout: FlatPlacement, delivery: HooksDelivery): FlatLayou
   const flat =
     delivery.kind === "bridge" || delivery.kind === "project-merge" ? delivery.flat : undefined;
   return {
-    skillLayout: layout.skillLayout,
+    skillLayout: layout.artifacts.skills,
     namespacePrefix: layout.namespacePrefix,
     hooksDir: flat?.dir ?? null,
     hooksLoaderEntry: flat?.loaderEntry ?? null,

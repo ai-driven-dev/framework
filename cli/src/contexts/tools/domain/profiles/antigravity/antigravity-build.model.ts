@@ -1,24 +1,21 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
 import {
-  genericFlatSkillPath,
-  pluginAgentName,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
 
-const ANTIGRAVITY_SKILLS_DIR = ".agents/skills/";
-const ANTIGRAVITY_AGENTS_DIR = ".agents/agents/";
-
-function antigravityFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(ANTIGRAVITY_SKILLS_DIR, plugin, rel.replace(/^skills\//, ""));
-}
-
-function antigravityFlatAgentPath(plugin: string, rel: string): string {
-  return `${ANTIGRAVITY_AGENTS_DIR}${pluginAgentName(plugin, rel.replace(/^agents\//, ""))}/agent.md`;
-}
+/** Where a flat build, and a flat install, put antigravity's skills and agents. */
+export const ANTIGRAVITY_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".agents/", {
+  skills: "single-level",
+  agent: { folderFile: "agent.md" },
+});
 
 const antigravityAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => portableAgentFrontmatter(frontmatter, String(frontmatter.name)),
@@ -34,13 +31,13 @@ export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuild
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: antigravityFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(ANTIGRAVITY_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: antigravityFlatAgentPath,
+        path: (plugin, rel) => flatAgentFilePath(ANTIGRAVITY_FLAT_LAYOUT, plugin, rel),
         agentMarkdown: antigravityAgentMarkdown,
       },
       mcp: { supported: false },
