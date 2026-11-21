@@ -165,7 +165,7 @@ describe("printReportErrors", () => {
   it("warns each error under the scope it came from", () => {
     const output = new CapturingOutput(false);
 
-    printReportErrors(output, [{ scope: "claude", message: "settings unreadable" }]);
+    printReportErrors(output, [{ scope: "claude", error: "settings unreadable" }]);
 
     expect(output.at("warn")).toEqual(["[claude] settings unreadable"]);
   });

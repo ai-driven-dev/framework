@@ -17,7 +17,7 @@ export interface NativeActivationReport {
   /** What a recoverable, best-effort step logged. */
   warnings: readonly string[];
   /** A hard failure returned rather than thrown, so whether the command fails stays the caller's call. */
-  errors: readonly { scope: string; message: string }[];
+  errors: readonly { scope: string; error: unknown }[];
   /** The verdict on `errors`, decided where they are produced. */
   failed: boolean;
 }

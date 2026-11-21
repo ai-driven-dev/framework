@@ -115,20 +115,17 @@ describe("UpdateTool", () => {
   });
 
   it.each([
-    ["an Error", new Error("disk full"), "disk full"],
-    ["a plain string", "plain string", "plain string"],
-  ])(
-    "answers failed with the message of %s the installer rejected with",
-    async (_n, rejection, message) => {
-      const { tool } = setup({
-        runtime: async () => {
-          throw rejection;
-        },
-      });
+    ["an Error", new Error("disk full")],
+    ["a plain string", "plain string"],
+  ])("answers failed with %s the installer rejected with", async (_n, rejection) => {
+    const { tool } = setup({
+      runtime: async () => {
+        throw rejection;
+      },
+    });
 
-      expect(await tool.execute(commandOf())).toStrictEqual({ kind: "failed", message });
-    }
-  );
+    expect(await tool.execute(commandOf())).toStrictEqual({ kind: "failed", error: rejection });
+  });
 
   it("lets an InputRequiredError stop the run", async () => {
     const { tool } = setup({

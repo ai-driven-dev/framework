@@ -1,4 +1,5 @@
 import type { Output } from "../../orchestration/domain/output.js";
+import { render } from "../errors/error-translator.presenter.js";
 import { printPluginDrift, printScopeReport } from "./status-display.js";
 
 type PluginIssue = { pluginName: string; toolId: string; issue: string; filePath?: string };
@@ -51,9 +52,9 @@ export function printInventory(
 
 export function printReportErrors(
   output: Output,
-  errors: readonly { scope: string; message: string }[]
+  errors: readonly { scope: string; error: unknown }[]
 ): void {
-  for (const e of errors) output.warn(`[${e.scope}] ${e.message}`);
+  for (const e of errors) output.warn(`[${e.scope}] ${render(e.error)}`);
 }
 
 export function printAllToolsDrift(

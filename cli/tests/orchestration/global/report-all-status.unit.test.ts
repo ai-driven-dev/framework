@@ -68,7 +68,7 @@ describe("ReportAllStatus", () => {
       aiTools: { tools: [], pluginDrift: [], inSync: true },
       ideTools: report(),
       pluginDrift: [],
-      errors: [{ scope: "ai", message: "ai scope exploded" }],
+      errors: [{ scope: "ai", error: new Error("ai scope exploded") }],
     });
   });
 
@@ -99,7 +99,7 @@ describe("ReportAllStatus", () => {
       aiTools: report(),
       ideTools: { tools: [], pluginDrift: [], inSync: true },
       pluginDrift: [],
-      errors: [{ scope: "ide", message: "ide scope exploded" }],
+      errors: [{ scope: "ide", error: new Error("ide scope exploded") }],
     });
   });
 });

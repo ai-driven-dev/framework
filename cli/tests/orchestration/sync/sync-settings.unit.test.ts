@@ -373,7 +373,7 @@ describe("what execute reports about activation", () => {
     const { result } = await sync({ crashOnAddMarketplace: true });
 
     expect(result.errors).toEqual([
-      { scope: "claude", message: "activator crashed adding a marketplace" },
+      { scope: "claude", error: new Error("activator crashed adding a marketplace") },
     ]);
     expect(result.activated).toEqual([]);
     expect(result.failed, "one returned error fails the run").toBe(true);
@@ -527,7 +527,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
 
     const { result } = await sync({ activator, ownedCatalog: true });
 
-    expect(result.errors).toStrictEqual([{ scope: "claude", message: "activator bug" }]);
+    expect(result.errors).toStrictEqual([{ scope: "claude", error: new Error("activator bug") }]);
     expect(result.warnings).toStrictEqual([]);
   });
 });

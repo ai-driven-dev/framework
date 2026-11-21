@@ -68,7 +68,7 @@ export class UpdateTools {
       if (result.kind === "updated") {
         updatedTools.push({ toolId: result.toolId, fileCount: result.fileCount });
       } else if (result.kind === "failed") {
-        errors.push({ scope: toolId, message: result.message });
+        errors.push({ scope: toolId, error: result.error });
       }
     }
     return { updatedTools, errors };

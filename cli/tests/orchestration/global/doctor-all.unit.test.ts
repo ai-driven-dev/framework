@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { doctorAll } from "../../../src/orchestration/global/doctor-all.js";
@@ -12,7 +13,7 @@ import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildDoctorUseCase } from "../testing/build-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
-const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";
+const NO_MANIFEST = expect.any(ManifestUnavailableError);
 const PLUGIN_FILE = ".claude/plugins/sample/agents/reviewer.md";
 
 async function depsWithBothCategories() {
@@ -67,8 +68,8 @@ describe("doctorAll", () => {
       pluginIssues: [],
       healthy: false,
       errors: [
-        { scope: "ai", message: NO_MANIFEST },
-        { scope: "ide", message: NO_MANIFEST },
+        { scope: "ai", error: NO_MANIFEST },
+        { scope: "ide", error: NO_MANIFEST },
       ],
     });
   });
@@ -133,7 +134,9 @@ describe("doctorAll", () => {
       const result = await doctorAll(doctor, PROJECT_ROOT);
 
       expect(result.healthy).toBe(false);
-      expect(result.errors).toStrictEqual([{ scope: unchecked, message: "could not be checked" }]);
+      expect(result.errors).toStrictEqual([
+        { scope: unchecked, error: new Error("could not be checked") },
+      ]);
     }
   );
 

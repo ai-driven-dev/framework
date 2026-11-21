@@ -716,7 +716,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
 
     const result = await sync.execute({ projectRoot });
 
-    expect(result.errors).toEqual([{ scope: "codex", message: "host plugin registry unreadable" }]);
+    expect(result.errors).toEqual([
+      { scope: "codex", error: new Error("host plugin registry unreadable") },
+    ]);
     expect(activator.enabledPlugins).toEqual([]);
     expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs ?? []).toEqual([]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims ?? []).toEqual([]);

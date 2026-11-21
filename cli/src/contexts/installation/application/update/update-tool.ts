@@ -21,7 +21,7 @@ export interface UpdateToolCommand {
 export type UpdateToolResult =
   | { kind: "updated"; toolId: ToolId; fileCount: number }
   | { kind: "skipped" }
-  | { kind: "failed"; message: string };
+  | { kind: "failed"; error: unknown };
 
 export class UpdateTool {
   constructor(
@@ -44,7 +44,7 @@ export class UpdateTool {
       return await this.runInstall(command, manifest, guard);
     } catch (err) {
       if (err instanceof InputRequiredError) throw err;
-      return { kind: "failed", message: err instanceof Error ? err.message : String(err) };
+      return { kind: "failed", error: err };
     }
   }
 

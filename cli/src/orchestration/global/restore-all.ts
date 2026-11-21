@@ -68,7 +68,7 @@ export class RestoreAll {
     } catch (err) {
       errors.push({
         scope: "config-restore",
-        message: err instanceof Error ? err.message : String(err),
+        error: err,
       });
       return {
         totalRestored: 0,

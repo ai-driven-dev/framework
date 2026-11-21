@@ -114,7 +114,7 @@ describe("RestoreAll", () => {
     const result = await useCase.execute(PROJECT, true, false);
 
     expect(result.failed).toBe(true);
-    expect(result.errors).toEqual([{ scope: "config-restore", message: "disk full" }]);
+    expect(result.errors).toEqual([{ scope: "config-restore", error: new Error("disk full") }]);
     expect(result.totalRestored).toBe(0);
   });
 });

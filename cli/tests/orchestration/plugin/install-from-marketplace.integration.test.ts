@@ -513,7 +513,7 @@ describe("InstallFromMarketplace", () => {
           interactive: false,
         })
       ).rejects.toThrow(
-        "Plugin 'sample-plugin' matches multiple marketplaces: mkt1, mkt2. Use --from <marketplace>."
+        expect.objectContaining({ plugin: "sample-plugin", marketplaces: ["mkt1", "mkt2"] })
       );
     });
 

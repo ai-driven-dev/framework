@@ -26,7 +26,19 @@ describe("SetupFlow", () => {
     it("throws InvalidSetupToolIdError for unknown AI tool IDs, naming every valid one", () => {
       expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(InvalidSetupToolIdError);
       expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(
-        'Invalid tool ID: "unknown-tool". Valid IDs: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode'
+        expect.objectContaining({
+          id: "unknown-tool",
+          validIds: [
+            "claude",
+            "cursor",
+            "copilot",
+            "opencode",
+            "kilo",
+            "codex",
+            "antigravity",
+            "vscode",
+          ],
+        })
       );
     });
 
@@ -53,19 +65,29 @@ describe("SetupFlow", () => {
       const noName = () => makeFlow({ pluginMode: "named", pluginNames: [] });
 
       expect(noName).toThrow(InvalidPluginModeConfigError);
-      expect(noName).toThrow('Plugin mode "named" requires at least one plugin name.');
+      expect(noName).toThrow(
+        expect.objectContaining({
+          detail: 'Plugin mode "named" requires at least one plugin name.',
+        })
+      );
     });
 
     it("names the mode that was given when names arrive under another mode", () => {
       const stray = () => makeFlow({ pluginMode: "all", pluginNames: ["my-plugin"] });
 
       expect(stray).toThrow(InvalidPluginModeConfigError);
-      expect(stray).toThrow('Plugin names provided but mode is "all" (expected "named").');
+      expect(stray).toThrow(
+        expect.objectContaining({
+          detail: 'Plugin names provided but mode is "all" (expected "named").',
+        })
+      );
     });
 
     it("reads an unsaid mode as none when names arrive", () => {
       expect(() => makeFlow({ pluginNames: ["my-plugin"] })).toThrow(
-        'Plugin names provided but mode is "none" (expected "named").'
+        expect.objectContaining({
+          detail: 'Plugin names provided but mode is "none" (expected "named").',
+        })
       );
     });
   });

@@ -28,7 +28,7 @@ describe("printRestoreOutcome", () => {
     const output = new CapturingOutput(false);
 
     printRestoreOutcome(output, {
-      errors: [{ scope: "claude", message: "settings unreadable" }],
+      errors: [{ scope: "claude", error: "settings unreadable" }],
       totalRestored: 0,
       totalKept: 0,
       pluginNamesRestored: [],
@@ -155,7 +155,7 @@ describe("printActivationOutcome", () => {
 
     printActivationOutcome(output, {
       binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
-      errors: [{ scope: "codex", message: "add refused" }],
+      errors: [{ scope: "codex", error: "add refused" }],
     });
 
     expect(output.at("warn")).toEqual([
@@ -217,8 +217,8 @@ describe("printScopedFailures", () => {
     const output = new CapturingOutput(false);
 
     printScopedFailures(output, [
-      { scope: "claude", message: "add refused" },
-      { scope: "codex", message: "not on PATH" },
+      { scope: "claude", error: "add refused" },
+      { scope: "codex", error: "not on PATH" },
     ]);
 
     expect(output.at("warn")).toEqual(["[claude] add refused", "[codex] not on PATH"]);

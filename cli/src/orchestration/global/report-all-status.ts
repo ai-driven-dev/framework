@@ -55,7 +55,7 @@ export class ReportAllStatus {
     try {
       return await fn();
     } catch (err) {
-      errors.push({ scope, message: err instanceof Error ? err.message : String(err) });
+      errors.push({ scope, error: err });
       return null;
     }
   }

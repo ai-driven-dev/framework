@@ -5,6 +5,7 @@ import type * as telemetry from "../../contexts/telemetry/domain/telemetry.error
 import type * as tools from "../../contexts/tools/domain/tools.error.js";
 import type * as translate from "../../contexts/translate/domain/translate.error.js";
 import type * as update from "../../contexts/update/domain/update.error.js";
+import type * as orchestration from "../../orchestration/orchestration.error.js";
 import type { AiddError } from "../../shared/domain/shared.error.js";
 
 type Classes<Module> = Module[keyof Module];
@@ -16,16 +17,58 @@ type Catalogued = InstanceType<
   | Classes<typeof distribution>
   | Classes<typeof translate>
   | Classes<typeof tools>
+  | Classes<typeof orchestration>
 >;
 type ByCode = { [Error in Catalogued as Error["code"]]: Error };
 
 /** One entry says what its own error class carries; a method signature lets the table widen to any code. */
 interface Words {
-  say(error: AiddError): string;
+  say(error: AiddError, words: (cause: unknown) => string): string;
 }
 
-const entries: { [Code in keyof ByCode]: (error: ByCode[Code]) => string } = {
+const entries: {
+  [Code in keyof ByCode]: (error: ByCode[Code], words: (cause: unknown) => string) => string;
+} = {
   "auth-storage": (error) => error.detail,
+  "ambiguous-plugin-match": (error) =>
+    `Plugin '${error.plugin}' matches multiple marketplaces: ${error.marketplaces.join(", ")}. Use --from <marketplace>.`,
+  "category-mismatch": (error) => {
+    const label = error.category === "ai" ? "AI" : "IDE";
+    const verb = error.wrong.length === 1 ? `is not an ${label} tool` : `are not ${label} tools`;
+    return `${error.wrong.join(", ")} ${verb}. Valid ${label} tools: ${error.validToolIds.join(", ")}`;
+  },
+  "interactive-only": (error) => `'${error.action}' requires an interactive terminal.`,
+  "invalid-plugin-mode-config": (error) => error.detail,
+  "invalid-setup-tool-id": (error) =>
+    `Invalid tool ID: "${error.id}". Valid IDs: ${error.validIds.join(", ")}`,
+  "no-marketplaces-registered": () =>
+    "No marketplaces registered. Use `aidd marketplace add <name> <source>` first.",
+  "agent-plugin-activation": (error, words) =>
+    error.errors.map((failure) => words(failure.error)).join("\n"),
+  "sync-failed": (error) =>
+    `Sync failed for: ${error.errors.map((failure) => failure.scope).join(", ")}. See the warnings above.`,
+  "trust-denied": (error) => `Trust denied for marketplace '${error.marketplace}'. Aborting.`,
+  "unknown-ai-tool-id": (error) =>
+    `Unknown AI tool: ${error.tool}. Valid AI tools: ${error.validIds.join(", ")}`,
+  "user-scope-filter-unsupported": (error) =>
+    `--scope user tracks nothing ${error.flag} can narrow — it names every requested tool, ` +
+    `not one plugin or one file. Drop ${error.flag}, or run \`aidd ${error.command}\` at project scope.`,
+  "user-scope-ide-tools": (error) =>
+    `--global installs no project files, so an editor (${error.ideTools.join(", ")}) has ` +
+    "nothing to install machine-wide. Drop it from --ide, or run `aidd setup --ide <ids>` " +
+    "separately in the project.",
+  "user-scope-no-tools": () =>
+    "--global with no --ide registers the shared source for no tool at all. Pass " +
+    "`--ide <ids>` naming which tool to activate machine-wide.",
+  "user-scope-plugin-mode": () =>
+    "--global cannot ask which plugins to install. Pass --plugins all, recommended, " +
+    "none, or comma-separated names.",
+  "user-scope-unavailable": () =>
+    "--scope user is not wired for this command yet — no user-scope manifest " +
+    "repository was provided at construction.",
+  "user-scope-unsupported-ai-tools": (error) =>
+    `--global installs through an IDE's own plugin CLI or its user configuration directory, and neither exists for: ${error.aiTools.join(", ")}. ` +
+    "Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead.",
   "gh-cli": (error) => error.detail,
   "elevated-permission-update": (error) =>
     "Update failed: the global package directory is not writable (EPERM/EACCES).\n" +

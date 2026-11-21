@@ -9,6 +9,7 @@ import { InstallTools } from "../../../src/contexts/installation/application/ins
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
@@ -147,7 +148,7 @@ describe("setup surfaces a marketplace source conflict instead of exiting clean"
 
     expect(activator.addedMarketplaces).toHaveLength(0);
     expect(result.activation.errors).toHaveLength(1);
-    expect(result.activation.errors[0]?.message).toMatch(/different catalog/);
-    expect(result.activation.errors[0]?.message).toMatch(/probe-mkt/);
+    expect(render(result.activation.errors[0]?.error)).toMatch(/different catalog/);
+    expect(render(result.activation.errors[0]?.error)).toMatch(/probe-mkt/);
   });
 });

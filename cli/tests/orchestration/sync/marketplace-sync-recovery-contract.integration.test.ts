@@ -345,7 +345,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       activated: [],
       binaryMissing: [],
       warnings: [RECLAIM],
-      errors: [{ scope: "claude", message: "retry crashed" }],
+      errors: [{ scope: "claude", error: new Error("retry crashed") }],
       failed: true,
     });
     expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({

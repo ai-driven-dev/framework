@@ -439,7 +439,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
     activation.mockResolvedValue({
       binaryMissing: [],
       failed: true,
-      errors: [{ scope: "claude", message: "claude CLI refused" }],
+      errors: [{ scope: "claude", error: "claude CLI refused" }],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));

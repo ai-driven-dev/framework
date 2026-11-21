@@ -98,7 +98,7 @@ describe("PickPlugins", () => {
       interactive: false,
     });
     await expect(run).rejects.toThrow(InteractiveOnlyError);
-    await expect(run).rejects.toThrow(/plugin install/u);
+    await expect(run).rejects.toThrow(expect.objectContaining({ action: "plugin install" }));
   });
 
   it("throws NoMarketplacesRegisteredError when registry is empty", async () => {

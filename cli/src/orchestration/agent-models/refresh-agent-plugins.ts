@@ -2,6 +2,7 @@ import type { AgentPluginHosts } from "../../contexts/installation/application/a
 import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
+import { AgentPluginActivationError } from "../orchestration.error.js";
 import type { UpdateUserPlugin } from "../plugin/update-user-plugin.js";
 import type { SyncSettings } from "../sync/sync-settings.js";
 
@@ -65,6 +66,6 @@ export class RefreshAgentPlugins {
       toolIds,
       ...(scope === undefined ? {} : { scope }),
     });
-    if (errors.length > 0) throw new Error(errors.map((error) => error.message).join("\n"));
+    if (errors.length > 0) throw new AgentPluginActivationError(errors);
   }
 }

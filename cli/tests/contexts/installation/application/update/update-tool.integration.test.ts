@@ -103,19 +103,16 @@ describe("UpdateTool integration", () => {
   });
 
   it.each([
-    ["an Error", new Error("disk full"), "disk full"],
-    ["a plain string", "plain string", "plain string"],
-  ])(
-    "answers failed with the message of %s the installer rejected with",
-    async (_name, rejection, message) => {
-      const deps = await buildInstallationDeps();
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue(rejection);
+    ["an Error", new Error("disk full")],
+    ["a plain string", "plain string"],
+  ])("answers failed with %s the installer rejected with", async (_name, rejection) => {
+    const deps = await buildInstallationDeps();
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue(rejection);
 
-      expect(await buildUpdateTool(deps).execute(commandOf(vi.fn()))).toStrictEqual({
-        kind: "failed",
-        message,
-      });
-    }
-  );
+    expect(await buildUpdateTool(deps).execute(commandOf(vi.fn()))).toStrictEqual({
+      kind: "failed",
+      error: rejection,
+    });
+  });
 });

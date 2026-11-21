@@ -371,7 +371,7 @@ describe("InstallPlugin", () => {
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
-      ).rejects.toThrow("'plugin install' requires an interactive terminal.");
+      ).rejects.toThrow(expect.objectContaining({ action: "plugin install" }));
     });
 
     it("hands the pick its tools, project and an interactive flag", async () => {

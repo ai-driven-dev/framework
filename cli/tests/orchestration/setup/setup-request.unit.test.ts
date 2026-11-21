@@ -43,7 +43,11 @@ describe("selectTools refusal", () => {
 
     expect(refuse).toThrow(CategoryMismatchError);
     expect(refuse).toThrow(
-      "vscode, nope are not AI tools. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity"
+      expect.objectContaining({
+        wrong: ["vscode", "nope"],
+        category: "ai",
+        validToolIds: ["claude", "cursor", "copilot", "opencode", "kilo", "codex", "antigravity"],
+      })
     );
   });
 });
