@@ -32,6 +32,14 @@ export interface CleanUserScopeResult {
   preview: CleanUserScopePreview;
 }
 
+export interface CleanUserScopeDeps {
+  readonly purgeFiles: PurgeUserScopeFiles;
+  readonly withdrawFromHost: WithdrawFromHost;
+  readonly claims: CleanClaims;
+  readonly logger: Logger;
+  readonly prompter?: Prompter;
+}
+
 /**
  * `aidd clean --scope user`: undoes the machine-scope registration and purges the shared source
  * itself, which a project-scope `clean` refuses to do for a registration every project shares.
@@ -42,31 +50,25 @@ export interface CleanUserScopeResult {
  * host's own CLI at scope `"user"`, before any cache is purged.
  */
 export class CleanUserScope {
-  constructor(
-    private readonly purgeFiles: PurgeUserScopeFiles,
-    private readonly withdrawFromHost: WithdrawFromHost,
-    private readonly claims: CleanClaims,
-    private readonly logger: Logger,
-    private readonly prompter?: Prompter
-  ) {}
+  constructor(private readonly deps: CleanUserScopeDeps) {}
 
   async execute(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
-    return this.purgeFiles.exclusive(() => this.executeLocked(options));
+    return this.deps.purgeFiles.exclusive(() => this.executeLocked(options));
   }
 
   private async executeLocked(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
-    const inspection = await this.purgeFiles.inspect(
-      async () => (await this.claims.referencingProjects?.listAllReferencingProjects()) ?? []
+    const inspection = await this.deps.purgeFiles.inspect(
+      async () => (await this.deps.claims.referencingProjects?.listAllReferencingProjects()) ?? []
     );
     const { manifestFound, ...preview } = inspection;
-    if (!manifestFound) this.logger.info(this.describeNoUserRegistration(preview));
+    if (!manifestFound) this.deps.logger.info(this.describeNoUserRegistration(preview));
     const dryRunResult = await this.confirmOrDryRun(options, preview, manifestFound);
     if (dryRunResult !== null) return dryRunResult;
-    this.purgeFiles.assertNothingDepends(inspection);
+    this.deps.purgeFiles.assertNothingDepends(inspection);
 
-    const withdrawals = await this.purgeFiles.proveWithdrawals();
-    await this.withdrawFromHost.execute({ kind: "check-user-hosts", withdrawals });
-    await this.withdrawFromHost.execute({
+    const withdrawals = await this.deps.purgeFiles.proveWithdrawals();
+    await this.deps.withdrawFromHost.execute({ kind: "check-user-hosts", withdrawals });
+    await this.deps.withdrawFromHost.execute({
       kind: "prove-user-registrations",
       withdrawals,
       projectRoot: options.projectRoot,
@@ -75,13 +77,13 @@ export class CleanUserScope {
     // what it is unregistering against the built tree still on disk, and the purge removes
     // exactly that tree. Absent a manifest there is nothing recorded to undo, so there are no
     // withdrawals and each step below does nothing.
-    await this.withdrawFromHost.execute({
+    await this.deps.withdrawFromHost.execute({
       kind: "withdraw-user-registrations",
       withdrawals,
       resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-        this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label),
+        this.deps.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label),
     });
-    await this.purgeFiles.purge(options.projectRoot);
+    await this.deps.purgeFiles.purge(options.projectRoot);
 
     return { dryRun: false, manifestFound, preview };
   }
@@ -103,8 +105,8 @@ export class CleanUserScope {
     manifestFound: boolean
   ): Promise<CleanUserScopeResult | null> {
     if (options.force) return null;
-    if (options.interactive && this.prompter) {
-      const confirmed = await this.prompter.confirm(this.confirmationMessage(preview));
+    if (options.interactive && this.deps.prompter) {
+      const confirmed = await this.deps.prompter.confirm(this.confirmationMessage(preview));
       if (!confirmed) return { dryRun: true, manifestFound, preview };
       return null;
     }
@@ -119,7 +121,7 @@ export class CleanUserScope {
         ? preview.referencingProjects.join(", ")
         : "no other project";
     return (
-      `Remove the shared '${this.claims.frameworkMarketplaceName}' source for this machine ` +
+      `Remove the shared '${this.deps.claims.frameworkMarketplaceName}' source for this machine ` +
       `(versions: ${versions})? Still referenced by: ${projects}.`
     );
   }

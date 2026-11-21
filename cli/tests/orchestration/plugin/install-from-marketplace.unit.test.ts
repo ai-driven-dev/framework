@@ -36,16 +36,16 @@ function build(matches: PluginSourceMatch[], chosenName = "") {
   const added: PluginAddOptions[] = [];
   const logger = new CapturingLogger();
   const resolve = vi.fn(async () => matches);
-  const useCase = new InstallFromMarketplace(
-    { execute: resolve },
-    {
+  const useCase = new InstallFromMarketplace({
+    resolvePluginSource: { execute: resolve },
+    addPlugin: {
       execute: async (command) => {
         added.push(command);
       },
     },
-    new ChoosingPrompter(chosenName),
-    logger
-  );
+    prompter: new ChoosingPrompter(chosenName),
+    logger,
+  });
   return { useCase, added, logger, resolve };
 }
 

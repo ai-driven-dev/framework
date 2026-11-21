@@ -35,12 +35,12 @@ function promptingWith(answer: "overwrite-all"): { prompter: Prompter; asked: ()
 
 function build(deps: Deps, prompter: Prompter = promptingWith("overwrite-all").prompter) {
   const updateTool = buildUpdateTool(deps);
-  const useCase = new UpdateTools(
-    new ListInstalledTools(deps.manifestRepo, registeredTools()),
+  const useCase = new UpdateTools({
+    listInstalledTools: new ListInstalledTools(deps.manifestRepo, registeredTools()),
     updateTool,
-    new ResolveUpdateDecision(prompter),
-    CURRENT_VERSION
-  );
+    resolveUpdateDecision: new ResolveUpdateDecision(prompter),
+    versionReader: CURRENT_VERSION,
+  });
   return { useCase, updateTool };
 }
 

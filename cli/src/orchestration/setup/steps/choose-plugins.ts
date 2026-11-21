@@ -15,13 +15,15 @@ export interface ChoosePluginsResult {
   installed: readonly string[];
 }
 
+export interface ChoosePluginsDeps {
+  readonly pickPlugins: PluginPick;
+  readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace;
+  readonly listMarketplaces: Pick<ListMarketplaces, "execute">;
+  readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">;
+}
+
 export class ChoosePlugins {
-  constructor(
-    private readonly pickPlugins: PluginPick,
-    private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace,
-    private readonly listMarketplaces: Pick<ListMarketplaces, "execute">,
-    private readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">
-  ) {}
+  constructor(private readonly deps: ChoosePluginsDeps) {}
 
   async execute(options: ChoosePluginsCommand): Promise<ChoosePluginsResult> {
     if (options.mode === "none") return { installed: [] };
@@ -31,7 +33,7 @@ export class ChoosePlugins {
 
   private async runInteractive(options: ChoosePluginsCommand): Promise<ChoosePluginsResult> {
     if (!options.interactive) return { installed: [] };
-    const result = await this.pickPlugins.execute({
+    const result = await this.deps.pickPlugins.execute({
       toolIds: "all",
       projectRoot: options.projectRoot,
       interactive: true,
@@ -43,7 +45,7 @@ export class ChoosePlugins {
     const names = await this.resolveScriptedNames(options);
     const installed: string[] = [];
     for (const name of names) {
-      await this.pluginInstallFromMarketplaceUseCase.execute({
+      await this.deps.pluginInstallFromMarketplaceUseCase.execute({
         pluginName: name,
         toolIds: "all",
         projectRoot: options.projectRoot,
@@ -65,10 +67,10 @@ export class ChoosePlugins {
   }
 
   private async loadCatalogEntries(projectRoot: string): Promise<readonly PluginCatalogEntry[]> {
-    const { marketplaces } = await this.listMarketplaces.execute({ projectRoot });
+    const { marketplaces } = await this.deps.listMarketplaces.execute({ projectRoot });
     const entries: PluginCatalogEntry[] = [];
     for (const marketplace of marketplaces) {
-      const { catalog } = await this.resolveMarketplaceUseCase.execute({
+      const { catalog } = await this.deps.resolveMarketplaceUseCase.execute({
         marketplace,
         projectRoot,
       });

@@ -32,25 +32,27 @@ export interface PluginInstallFromMarketplace {
   ): Promise<PluginInstallFromMarketplaceResult>;
 }
 
+export interface InstallFromMarketplaceDeps {
+  readonly resolvePluginSource: Pick<ResolvePluginSource, "execute">;
+  readonly addPlugin: PluginAdd;
+  readonly prompter: Prompter;
+  readonly logger?: Logger;
+}
+
 /** Installs a plugin a registered marketplace catalogues, asking which one when several do. */
 export class InstallFromMarketplace implements PluginInstallFromMarketplace {
-  constructor(
-    private readonly resolvePluginSource: Pick<ResolvePluginSource, "execute">,
-    private readonly addPlugin: PluginAdd,
-    private readonly prompter: Prompter,
-    private readonly logger?: Logger
-  ) {}
+  constructor(private readonly deps: InstallFromMarketplaceDeps) {}
 
   async execute(
     options: PluginInstallFromMarketplaceOptions
   ): Promise<PluginInstallFromMarketplaceResult> {
     const policy = options.requestedVersionPolicy ?? "strict";
-    const matches = await this.resolvePluginSource.execute({
+    const matches = await this.deps.resolvePluginSource.execute({
       pluginName: options.pluginName,
       projectRoot: options.projectRoot,
       fromMarketplace: options.fromMarketplace,
     });
-    const chosen = await askWhichMatch(this.prompter, {
+    const chosen = await askWhichMatch(this.deps.prompter, {
       pluginName: options.pluginName,
       matches,
       interactive: options.interactive,
@@ -61,7 +63,7 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
       options.version,
       policy
     );
-    await this.addPlugin.execute({
+    await this.deps.addPlugin.execute({
       source: chosen.source,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
@@ -88,7 +90,7 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
   ): string | undefined {
     if (policy === "prefer-catalog") {
       if (requested && entry.version && entry.version !== requested) {
-        this.logger?.info(
+        this.deps.logger?.info(
           `Plugin '${entry.name}': catalog version ${entry.version} differs from requested ${requested}; using catalog version.`
         );
       }

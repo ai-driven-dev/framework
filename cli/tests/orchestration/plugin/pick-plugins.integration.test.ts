@@ -80,12 +80,12 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(deps.fs)
   );
-  const useCase = new PickPlugins(
-    new ListMarketplaces(registry),
+  const useCase = new PickPlugins({
+    listMarketplaces: new ListMarketplaces(registry),
     resolveMarketplace,
-    pluginAdd,
-    prompter
-  );
+    pluginAddUseCase: pluginAdd,
+    prompter,
+  });
   return { useCase, deps, registry, pluginAdd };
 }
 

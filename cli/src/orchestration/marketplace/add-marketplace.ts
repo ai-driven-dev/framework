@@ -19,32 +19,37 @@ export interface AddMarketplaceResult {
   marketplace: PrepareMarketplaceResult["marketplace"];
 }
 
+export interface AddMarketplaceDeps {
+  readonly removeRegistered: Pick<RemoveRegisteredMarketplace, "execute">;
+  readonly prepare: Pick<PrepareMarketplace, "execute">;
+  readonly record: Pick<RecordMarketplace, "execute">;
+  readonly prompter: Prompter;
+}
+
 /** Adds a marketplace. With `overwrite`, the registered one is removed first: removing deletes
  * installed plugin files, which distribution does not own. An untrusted source is asked about
  * before the marketplace is saved. */
 export class AddMarketplace {
-  constructor(
-    private readonly removeRegistered: Pick<RemoveRegisteredMarketplace, "execute">,
-    private readonly prepare: Pick<PrepareMarketplace, "execute">,
-    private readonly record: Pick<RecordMarketplace, "execute">,
-    private readonly prompter: Prompter
-  ) {}
+  constructor(private readonly deps: AddMarketplaceDeps) {}
 
   async execute(command: AddMarketplaceCommand): Promise<AddMarketplaceResult> {
     if (command.overwrite) {
-      await this.removeRegistered.execute({ name: command.name, projectRoot: command.projectRoot });
+      await this.deps.removeRegistered.execute({
+        name: command.name,
+        projectRoot: command.projectRoot,
+      });
     }
-    const { marketplace, trusted } = await this.prepare.execute({
+    const { marketplace, trusted } = await this.deps.prepare.execute({
       ...command,
       replace: command.overwrite,
     });
     const trust = !trusted && (command.autoTrust || (await this.confirmTrust(command.name)));
-    await this.record.execute({ marketplace, projectRoot: command.projectRoot, trust });
+    await this.deps.record.execute({ marketplace, projectRoot: command.projectRoot, trust });
     return { marketplace };
   }
 
   private async confirmTrust(name: string): Promise<true> {
-    if (!(await this.prompter.confirm(`Trust marketplace '${name}'?`))) {
+    if (!(await this.deps.prompter.confirm(`Trust marketplace '${name}'?`))) {
       throw new TrustDeniedError(name);
     }
     return true;

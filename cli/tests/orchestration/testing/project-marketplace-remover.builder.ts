@@ -18,12 +18,15 @@ export function projectMarketplaceRemover(
   prompter: Prompter,
   records: RegistrationRecordRules = registrationRecordRules
 ): RemoveProjectMarketplace {
-  return new RemoveProjectMarketplace(
-    new FindMarketplaceToRemove(registry),
-    new RemovePluginsFromMarketplace({ manifestRepo, cleanup, records }, registeredTools()),
-    new RemoveMarketplace(registry),
-    (projectRoot, { nativeRefs, plugins }) =>
+  return new RemoveProjectMarketplace({
+    find: new FindMarketplaceToRemove(registry),
+    plugins: new RemovePluginsFromMarketplace(
+      { manifestRepo, cleanup, records },
+      registeredTools()
+    ),
+    remove: new RemoveMarketplace(registry),
+    detachClaims: (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),
-    prompter
-  );
+    prompter,
+  });
 }

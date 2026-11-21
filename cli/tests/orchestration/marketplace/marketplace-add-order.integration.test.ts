@@ -98,12 +98,16 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
       throw new Error("a project marketplace is removed by the project scenario");
     },
   };
-  const add = new AddMarketplace(
-    new RemoveRegisteredMarketplace(new ListMarketplaces(registry), removeProject, removeUser),
-    new PrepareMarketplace(registry, trustStore, resolveMarketplace),
-    new RecordMarketplace(registry, trustStore),
-    prompter
-  );
+  const add = new AddMarketplace({
+    removeRegistered: new RemoveRegisteredMarketplace(
+      new ListMarketplaces(registry),
+      removeProject,
+      removeUser
+    ),
+    prepare: new PrepareMarketplace(registry, trustStore, resolveMarketplace),
+    record: new RecordMarketplace(registry, trustStore),
+    prompter,
+  });
   const command = {
     name: NAME,
     source: SOURCE,

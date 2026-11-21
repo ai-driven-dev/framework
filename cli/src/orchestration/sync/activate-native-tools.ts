@@ -54,14 +54,16 @@ export interface ActivationMarketplace {
   readonly userCacheRoot: () => string;
 }
 
+export interface ActivateNativeToolsDeps {
+  readonly registerPluginWithHost: Pick<RegisterPluginWithHost, "execute">;
+  readonly buildMarketplace: Pick<BuildMarketplaceForTool, "forTool">;
+  readonly logger: Logger;
+  readonly marketplace: ActivationMarketplace;
+  readonly records: RefRules;
+}
+
 export class ActivateNativeTools {
-  constructor(
-    private readonly registerPluginWithHost: Pick<RegisterPluginWithHost, "execute">,
-    private readonly buildMarketplace: Pick<BuildMarketplaceForTool, "forTool">,
-    private readonly logger: Logger,
-    private readonly marketplace: ActivationMarketplace,
-    private readonly records: RefRules
-  ) {}
+  constructor(private readonly deps: ActivateNativeToolsDeps) {}
 
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
    * anything, so a settings file that differs for it differs because a person changed it. */
@@ -74,7 +76,7 @@ export class ActivateNativeTools {
     const errors: { scope: string; error: unknown }[] = [];
     for (const toolId of context.toolIds) {
       try {
-        const result = await this.registerPluginWithHost.execute({
+        const result = await this.deps.registerPluginWithHost.execute({
           toolId,
           projectRoot,
           scope,
@@ -90,11 +92,11 @@ export class ActivateNativeTools {
               scope,
               enablePlugins,
             }),
-          userCacheRoot: this.marketplace.userCacheRoot,
-          sink: { logger: this.logger, warnings },
+          userCacheRoot: this.deps.marketplace.userCacheRoot,
+          sink: { logger: this.deps.logger, warnings },
         });
         if (result.status === "binary-missing") {
-          this.logger.warn(
+          this.deps.logger.warn(
             `${result.binary} CLI not found on PATH — skipping native plugin activation.${
               enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : ""
             }`
@@ -113,18 +115,18 @@ export class ActivateNativeTools {
 
   /** Each catalogue's tree, built for one tool the moment its registration asks for it. */
   private builtFor(toolId: ToolId, projectRoot: string): BuiltCatalogs<SyncedMarketplaces[number]> {
-    return (marketplace) => this.buildMarketplace.forTool(toolId, marketplace, projectRoot);
+    return (marketplace) => this.deps.buildMarketplace.forTool(toolId, marketplace, projectRoot);
   }
 
   /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked
    * for, which only the framework marketplace can resolve. */
   private refsToEnableOn(run: PluginRefsRun & { enablePlugins: readonly string[] }): string[] {
     const { hostNameByAlias, enablePlugins } = run;
-    const frameworkHost = hostNameByAlias.get(this.marketplace.name);
+    const frameworkHost = hostNameByAlias.get(this.deps.marketplace.name);
     const requested =
       frameworkHost === undefined
         ? []
-        : enablePlugins.map((name) => this.records.refOnHostName(name, frameworkHost));
+        : enablePlugins.map((name) => this.deps.records.refOnHostName(name, frameworkHost));
     return [...new Set([...this.pluginRefsToEnable(run), ...requested])];
   }
 
@@ -140,14 +142,14 @@ export class ActivateNativeTools {
       if (marketplace === undefined) continue;
       const hostName = hostNameByAlias.get(marketplace.name);
       if (hostName === undefined) continue;
-      refs.push(this.records.refOnHostName(plugin.name, hostName));
+      refs.push(this.deps.records.refOnHostName(plugin.name, hostName));
     }
     // Native-only global installs record successful activations, not copied plugin files.
     // Claims also recover a selection an older sync dropped from its projection.
     if (scope === "user") {
       const native = manifest.getNativeRegistrations(toolId);
       const provenHosts = [...hostNameByAlias.values()];
-      if (native !== undefined) refs.push(...this.records.refsOnHosts(native, provenHosts));
+      if (native !== undefined) refs.push(...this.deps.records.refsOnHosts(native, provenHosts));
     }
     return refs;
   }

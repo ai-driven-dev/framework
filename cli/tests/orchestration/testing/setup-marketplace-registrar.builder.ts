@@ -28,9 +28,9 @@ export function setupMarketplaceRegistrar(
   releaseResolver?: RepositoryVisibility,
   userSourceReferences?: UserSourceReferences
 ): { resolveSource: ResolveSetupSource; register: RegisterFrameworkSource } {
-  const registration = new RegisterMarketplace(
-    new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
-    new RecordSourceReference({
+  const registration = new RegisterMarketplace({
+    ensure: new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
+    recordReference: new RecordSourceReference({
       fs,
       currentVersionProvider,
       logger,
@@ -38,8 +38,8 @@ export function setupMarketplaceRegistrar(
       userSourceReferences,
     }),
     refresh,
-    environment
-  );
+    environment,
+  });
   return {
     resolveSource: new ResolveSetupSource((options) => source.execute(options)),
     register: (flow, chosen) =>

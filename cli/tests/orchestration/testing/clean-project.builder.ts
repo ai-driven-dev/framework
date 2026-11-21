@@ -13,7 +13,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
-import { type ProjectCleanerParts, projectCleanerArgs } from "./project-cleaner.builder.js";
+import { type ProjectCleanerParts, projectCleanerDeps } from "./project-cleaner.builder.js";
 
 export const PROJECT_ROOT = "/test-project";
 export const AT_PROJECT = { tools: registeredTools(), projectRoot: PROJECT_ROOT } as const;
@@ -87,7 +87,7 @@ export type TestCleanArgs = [
 export class CleanWithKnownHostSource extends ProductionCleanUseCase {
   constructor(...args: TestCleanArgs) {
     super(
-      ...projectCleanerArgs({
+      projectCleanerDeps({
         fs: args[0],
         manifestRepo: args[1],
         logger: args[2],

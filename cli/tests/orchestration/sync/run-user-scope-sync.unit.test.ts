@@ -32,21 +32,23 @@ function aRun(failed = false) {
     )
     .build();
   const useCase = new RunUserScopeSync(
-    new ReadMachineInstallation(manifestRepositoryLoading(async () => machine)),
     {
-      execute: async (command) => {
-        calls.push("refresh");
-        refreshes.push(command);
-        return ["aidd-dev"];
+      machine: new ReadMachineInstallation(manifestRepositoryLoading(async () => machine)),
+      userPlugins: {
+        execute: async (command) => {
+          calls.push("refresh");
+          refreshes.push(command);
+          return ["aidd-dev"];
+        },
       },
-    },
-    {
-      execute: async (command) => {
-        calls.push("syncSettings");
-        syncs.push(command);
-        return failed
-          ? { ...ACTIVATED_NOTHING, errors: [{ scope: "claude", error: "x" }], failed: true }
-          : { ...ACTIVATED_NOTHING, activated: [TOOL.claude] };
+      syncSettings: {
+        execute: async (command) => {
+          calls.push("syncSettings");
+          syncs.push(command);
+          return failed
+            ? { ...ACTIVATED_NOTHING, errors: [{ scope: "claude", error: "x" }], failed: true }
+            : { ...ACTIVATED_NOTHING, activated: [TOOL.claude] };
+        },
       },
     },
     catalogOf()

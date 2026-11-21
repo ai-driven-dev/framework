@@ -9,7 +9,12 @@ const FOUND = { name: "market", scope: "user", fingerprint: "fp" } as const;
 function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const find = { execute: vi.fn().mockResolvedValue(FOUND) };
   const remove = { execute: vi.fn().mockResolvedValue(undefined) };
-  const useCase = new RemoveUserMarketplace(find, { execute: purge }, remove, "/home");
+  const useCase = new RemoveUserMarketplace({
+    find,
+    purge: { execute: purge },
+    remove,
+    home: "/home",
+  });
   return { useCase, find, remove };
 }
 

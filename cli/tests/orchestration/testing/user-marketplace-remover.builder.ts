@@ -23,9 +23,9 @@ export function userMarketplaceRemover(
   nativeHost: NativeHostRegistrationGate,
   records: RegistrationRecordRules = registrationRecordRules
 ): RemoveUserMarketplace {
-  return new RemoveUserMarketplace(
-    new FindUserMarketplace(registry),
-    new PurgeMarketplacePlugins(
+  return new RemoveUserMarketplace({
+    find: new FindUserMarketplace(registry),
+    purge: new PurgeMarketplacePlugins(
       {
         repo,
         nativeHost,
@@ -34,7 +34,7 @@ export function userMarketplaceRemover(
       },
       registeredTools()
     ),
-    new RemoveMarketplace(registry),
-    resolveHomeDir()
-  );
+    remove: new RemoveMarketplace(registry),
+    home: resolveHomeDir(),
+  });
 }

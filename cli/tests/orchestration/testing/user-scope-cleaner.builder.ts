@@ -15,7 +15,10 @@ import { UserScopePluginFiles } from "../../../src/contexts/installation/applica
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { CleanUserScope } from "../../../src/orchestration/clean/clean-user-scope.js";
+import {
+  CleanUserScope,
+  type CleanUserScopeDeps,
+} from "../../../src/orchestration/clean/clean-user-scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -30,7 +33,7 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   userConfigDir?: () => string;
   homeDir?: () => string;
   userSourceReferences?: UserSourceReferences;
-  prompter?: ConstructorParameters<typeof CleanUserScope>[4];
+  prompter?: CleanUserScopeDeps["prompter"];
 }
 
 export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
@@ -44,8 +47,8 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       purgeCache.resolveCandidate(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
-  return new CleanUserScope(
-    new PurgeUserScopeFiles(
+  return new CleanUserScope({
+    purgeFiles: new PurgeUserScopeFiles(
       {
         userManifestRepo: parts.repo,
         purgeMachineState: new PurgeMachineState({
@@ -61,13 +64,13 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       },
       registeredTools()
     ),
-    new WithdrawFromHost(fs, logger, {
+    withdrawFromHost: new WithdrawFromHost(fs, logger, {
       activators: parts.activators ?? new Map(),
       pluginRegistries: parts.pluginRegistries ?? new Map(),
       marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
       sources: parts.sources ?? new Map(),
     }),
-    wireCleanClaims({
+    claims: wireCleanClaims({
       fs,
       logger,
       userManifestRepo: parts.repo,
@@ -75,6 +78,6 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       purgeCache,
     }),
     logger,
-    parts.prompter
-  );
+    prompter: parts.prompter,
+  });
 }

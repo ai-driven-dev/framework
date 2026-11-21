@@ -31,7 +31,7 @@ function addWith(trusted: boolean, prompter = new ScriptedPrompter([])) {
       calls.push("record");
     }),
   };
-  const useCase = new AddMarketplace(removeRegistered, prepare, record, prompter);
+  const useCase = new AddMarketplace({ removeRegistered, prepare, record, prompter });
   return { useCase, removeRegistered, prepare, record, calls };
 }
 

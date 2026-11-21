@@ -78,7 +78,13 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
     },
     tools
   );
-  return new CleanUserScope(purgeUserScopeFiles, withdrawFromHost, claims, logger, prompter);
+  return new CleanUserScope({
+    purgeFiles: purgeUserScopeFiles,
+    withdrawFromHost,
+    claims,
+    logger,
+    prompter,
+  });
 }
 
 /** Clean and uninstall. */
@@ -130,12 +136,12 @@ export function wireClean(base: Base, inst: Installation) {
     },
     tools
   );
-  const cleanUseCase = new CleanProject(
-    cleanProjectFiles,
+  const cleanUseCase = new CleanProject({
+    cleanProject: cleanProjectFiles,
     withdrawFromHost,
     claims,
-    new ListMarketplaces(marketplaceRegistry),
-    prompter
-  );
+    marketplaces: new ListMarketplaces(marketplaceRegistry),
+    prompter,
+  });
   return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
 }

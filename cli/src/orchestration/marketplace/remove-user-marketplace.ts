@@ -11,27 +11,33 @@ export interface RemoveUserMarketplaceCommand {
   scope?: Scope;
 }
 
+export interface RemoveUserMarketplaceDeps {
+  readonly find: Pick<FindUserMarketplace, "execute">;
+  readonly purge: Pick<PurgeMarketplacePlugins, "execute">;
+  readonly remove: Pick<RemoveMarketplace, "execute">;
+  readonly home: string;
+}
+
 /** Removes a user-scope marketplace: finds it, and under the machine lock proves it is unchanged,
  * purges what the machine holds for it, then forgets it. */
 export class RemoveUserMarketplace {
-  constructor(
-    private readonly find: Pick<FindUserMarketplace, "execute">,
-    private readonly purge: Pick<PurgeMarketplacePlugins, "execute">,
-    private readonly remove: Pick<RemoveMarketplace, "execute">,
-    private readonly home: string
-  ) {}
+  constructor(private readonly deps: RemoveUserMarketplaceDeps) {}
 
   async execute(command: RemoveUserMarketplaceCommand): Promise<MarketplaceRemovalResult> {
     const { name, projectRoot } = command;
-    const marketplace = await this.find.execute({ name, projectRoot });
-    const removedPluginCount = await this.purge.execute({
+    const marketplace = await this.deps.find.execute({ name, projectRoot });
+    const removedPluginCount = await this.deps.purge.execute({
       marketplace: name,
       projectRoot,
-      home: this.home,
+      home: this.deps.home,
       whileLocked: async () => {
-        await this.find.execute({ name, projectRoot, unchangedSince: marketplace.fingerprint });
+        await this.deps.find.execute({
+          name,
+          projectRoot,
+          unchangedSince: marketplace.fingerprint,
+        });
       },
-      forget: () => this.remove.execute({ projectRoot, marketplace }),
+      forget: () => this.deps.remove.execute({ projectRoot, marketplace }),
     });
     return { marketplace, removedPluginCount, orphanCount: 0 };
   }

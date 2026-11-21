@@ -31,17 +31,19 @@ export interface PluginPick {
   execute(options: PickPluginsCommand): Promise<PickPluginsResult>;
 }
 
+export interface PickPluginsDeps {
+  readonly listMarketplaces: Pick<ListMarketplaces, "execute">;
+  readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">;
+  readonly pluginAddUseCase: PluginAdd;
+  readonly prompter: Prompter;
+}
+
 export class PickPlugins implements PluginPick {
-  constructor(
-    private readonly listMarketplaces: Pick<ListMarketplaces, "execute">,
-    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
-    private readonly pluginAddUseCase: PluginAdd,
-    private readonly prompter: Prompter
-  ) {}
+  constructor(private readonly deps: PickPluginsDeps) {}
 
   async execute(options: PickPluginsCommand): Promise<PickPluginsResult> {
     if (!options.interactive) throw new InteractiveOnlyError("plugin install");
-    const { marketplaces } = await this.listMarketplaces.execute({
+    const { marketplaces } = await this.deps.listMarketplaces.execute({
       projectRoot: options.projectRoot,
     });
     if (marketplaces.length === 0) throw new NoMarketplacesRegisteredError();
@@ -56,14 +58,14 @@ export class PickPlugins implements PluginPick {
   ): Promise<MarketplaceView> {
     const head = marketplaces[0];
     if (marketplaces.length === 1 && head !== undefined) return head;
-    return this.prompter.select("Select a marketplace:", marketplaceChoices(marketplaces));
+    return this.deps.prompter.select("Select a marketplace:", marketplaceChoices(marketplaces));
   }
 
   private async loadCatalog(
     marketplace: MarketplaceView,
     projectRoot: string
   ): Promise<PluginCatalog> {
-    const { catalog, localPath } = await this.resolveMarketplace.execute({
+    const { catalog, localPath } = await this.deps.resolveMarketplace.execute({
       marketplace,
       projectRoot,
     });
@@ -77,7 +79,7 @@ export class PickPlugins implements PluginPick {
     entries: readonly PluginCatalogEntry[]
   ): Promise<readonly PluginCatalogEntry[]> {
     if (entries.length === 0) return [];
-    return this.prompter.checkbox("Select plugins to install:", pluginChoices(entries));
+    return this.deps.prompter.checkbox("Select plugins to install:", pluginChoices(entries));
   }
 
   private async installSelected(
@@ -87,7 +89,7 @@ export class PickPlugins implements PluginPick {
   ): Promise<PickPluginsResult> {
     const installed: string[] = [];
     for (const entry of entries) {
-      await this.pluginAddUseCase.execute({
+      await this.deps.pluginAddUseCase.execute({
         source: entry.source,
         toolIds: options.toolIds,
         projectRoot: options.projectRoot,

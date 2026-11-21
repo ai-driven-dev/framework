@@ -66,13 +66,13 @@ function activatorOf(register: Register["execute"]) {
     refOnHostName: (name: string, hostName: string) => `${name}@${hostName}`,
     refsOnHosts: vi.fn(() => ["recorded@host-market"]),
   };
-  const useCase = new ActivateNativeTools(
-    { execute: register },
-    { forTool: vi.fn() },
+  const useCase = new ActivateNativeTools({
+    registerPluginWithHost: { execute: register },
+    buildMarketplace: { forTool: vi.fn() },
     logger,
-    { name: "framework", userCacheRoot: () => "/cache" },
-    records
-  );
+    marketplace: { name: "framework", userCacheRoot: () => "/cache" },
+    records,
+  });
   return { useCase, logger, records };
 }
 

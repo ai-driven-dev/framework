@@ -19,27 +19,32 @@ export function buildDoctorUseCase(
 ): RunDoctor {
   const loadManifest = new LoadManifest(deps.manifestRepo);
   return new RunDoctor(
-    new LoadManifestForDoctor(loadManifest),
     {
-      tracked: new CheckTrackedFiles(loadManifest, deps.fs),
-      merge: new CheckMergeFiles(loadManifest, deps.fs),
-      references: new CheckFileReferences(loadManifest, deps.fs),
-      layout: new CheckProjectLayout(loadManifest, deps.fs, registeredTools()),
-      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, registeredTools())),
+      load: new LoadManifestForDoctor(loadManifest),
+      checks: {
+        tracked: new CheckTrackedFiles(loadManifest, deps.fs),
+        merge: new CheckMergeFiles(loadManifest, deps.fs),
+        references: new CheckFileReferences(loadManifest, deps.fs),
+        layout: new CheckProjectLayout(loadManifest, deps.fs, registeredTools()),
+        plugin: new CheckPluginDrift(
+          loadManifest,
+          new DetectPluginDrift(deps.fs, registeredTools())
+        ),
+      },
+      registration: checkRegistrationOver(
+        loadManifest,
+        deps.fs,
+        deps.marketplaceRegistry,
+        (binary) =>
+          binary === TOOL.codex &&
+          deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
+        registeredHostInspector(deps.fs, hostRegistries, new Map()),
+        () => "/user-cache",
+        { get: () => "1.0.0" },
+        registeredTools()
+      ),
+      authentication: { execute: async () => [] },
     },
-    checkRegistrationOver(
-      loadManifest,
-      deps.fs,
-      deps.marketplaceRegistry,
-      (binary) =>
-        binary === TOOL.codex &&
-        deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
-      registeredHostInspector(deps.fs, hostRegistries, new Map()),
-      () => "/user-cache",
-      { get: () => "1.0.0" },
-      registeredTools()
-    ),
-    { execute: async () => [] },
     registeredTools()
   );
 }

@@ -154,12 +154,12 @@ async function buildUseCase(
     deps.installIdeConfig
   );
   const pluginInstallFromMarketplace = makeNoOpPluginInstallFromMarketplace();
-  const choosePlugins = new ChoosePlugins(
-    makeNoOpPluginPick(),
-    pluginInstallFromMarketplace,
-    new ListMarketplaces(new InMemoryMarketplaceRegistry()),
-    makeNoOpResolveMarketplace()
-  );
+  const choosePlugins = new ChoosePlugins({
+    pickPlugins: makeNoOpPluginPick(),
+    pluginInstallFromMarketplaceUseCase: pluginInstallFromMarketplace,
+    listMarketplaces: new ListMarketplaces(new InMemoryMarketplaceRegistry()),
+    resolveMarketplaceUseCase: makeNoOpResolveMarketplace(),
+  });
   const marketplaceRegisterFramework = makeNoOpMarketplaceRegisterFramework();
   const marketplaceRefresh = makeNoOpMarketplaceRefresh();
   const syncSettingsUseCase = options?.syncSettingsUseCase ?? makeNoOpMarketplaceSyncSettings();
@@ -178,13 +178,18 @@ async function buildUseCase(
   const machineScope =
     options?.userManifestRepo === undefined
       ? undefined
-      : new SetupMachineScope(
-          new ConfigureMachineScope(options.userManifestRepo, CURRENT_VERSION),
-          setupMarketplaceRegistration.resolveSource,
-          setupMarketplaceRegistration.register,
-          (syncOptions) => syncSettingsUseCase.execute(syncOptions),
-          options.installGlobalPlugins ?? { execute: async () => ({ plugins: [] }) }
-        );
+      : new SetupMachineScope({
+          configureMachineScope: new ConfigureMachineScope(
+            options.userManifestRepo,
+            CURRENT_VERSION
+          ),
+          resolveSource: setupMarketplaceRegistration.resolveSource,
+          register: setupMarketplaceRegistration.register,
+          syncMachineScope: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
+          installPlugins: options.installGlobalPlugins ?? {
+            execute: async () => ({ plugins: [] }),
+          },
+        });
   const useCase = runSetupOf(
     deps.fs,
     deps.manifestRepo,

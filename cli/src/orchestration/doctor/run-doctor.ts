@@ -26,6 +26,13 @@ export interface DoctorChecks {
   readonly plugin: CheckPluginDrift;
 }
 
+export interface RunDoctorDeps {
+  readonly load: LoadManifestForDoctor;
+  readonly checks: DoctorChecks;
+  readonly registration: Pick<CheckRegistration, "execute">;
+  readonly authentication: Pick<CheckAuthentication, "execute">;
+}
+
 /**
  * Runs every doctor check over the installation and gathers one report. The order of the
  * issues is the order of the checks: tracked files, merge files, references, registration, then
@@ -34,29 +41,26 @@ export interface DoctorChecks {
  */
 export class RunDoctor {
   constructor(
-    private readonly load: LoadManifestForDoctor,
-    private readonly checks: DoctorChecks,
-    private readonly registration: Pick<CheckRegistration, "execute">,
-    private readonly authentication: Pick<CheckAuthentication, "execute">,
+    private readonly deps: RunDoctorDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
     const { projectRoot, category, pluginName } = options;
     const allowedIds = category ? new Set<string>(this.tools.idsInCanonicalOrder(category)) : null;
-    const installed: InstalledToolsView = await this.load.execute({ allowedIds });
+    const installed: InstalledToolsView = await this.deps.load.execute({ allowedIds });
     const check = { projectRoot, allowedIds };
     const issues = [
-      ...(await this.checks.tracked.execute(check)),
-      ...(await this.checks.merge.execute(check)),
-      ...(await this.checks.references.execute(check)),
-      ...(await this.registration.execute({ projectRoot, allowedIds })),
+      ...(await this.deps.checks.tracked.execute(check)),
+      ...(await this.deps.checks.merge.execute(check)),
+      ...(await this.deps.checks.references.execute(check)),
+      ...(await this.deps.registration.execute({ projectRoot, allowedIds })),
     ];
     if (!category) {
-      issues.push(...(await this.checks.layout.execute({ projectRoot })));
-      issues.push(...(await this.authentication.execute()));
+      issues.push(...(await this.deps.checks.layout.execute({ projectRoot })));
+      issues.push(...(await this.deps.authentication.execute()));
     }
-    const pluginIssues = await this.checks.plugin.execute({
+    const pluginIssues = await this.deps.checks.plugin.execute({
       projectRoot,
       allowedIds,
       pluginName,

@@ -76,25 +76,27 @@ function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
 function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
   const loadManifest = new LoadManifest(makeManifestRepo(manifest));
   return new RunDoctor(
-    new LoadManifestForDoctor(loadManifest),
     {
-      tracked: new CheckTrackedFiles(loadManifest, fs),
-      merge: new CheckMergeFiles(loadManifest, fs),
-      references: new CheckFileReferences(loadManifest, fs),
-      layout: new CheckProjectLayout(loadManifest, fs, catalogOf()),
-      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs, catalogOf())),
+      load: new LoadManifestForDoctor(loadManifest),
+      checks: {
+        tracked: new CheckTrackedFiles(loadManifest, fs),
+        merge: new CheckMergeFiles(loadManifest, fs),
+        references: new CheckFileReferences(loadManifest, fs),
+        layout: new CheckProjectLayout(loadManifest, fs, catalogOf()),
+        plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs, catalogOf())),
+      },
+      registration: checkRegistrationOver(
+        loadManifest,
+        fs,
+        new InMemoryMarketplaceRegistry(),
+        () => false,
+        registeredHostInspector(fs, new Map(), new Map()),
+        () => "/user-cache",
+        { get: () => "1.0.0" },
+        catalogOf()
+      ),
+      authentication: { execute: async () => [] },
     },
-    checkRegistrationOver(
-      loadManifest,
-      fs,
-      new InMemoryMarketplaceRegistry(),
-      () => false,
-      registeredHostInspector(fs, new Map(), new Map()),
-      () => "/user-cache",
-      { get: () => "1.0.0" },
-      catalogOf()
-    ),
-    { execute: async () => [] },
     catalogOf()
   );
 }

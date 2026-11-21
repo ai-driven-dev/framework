@@ -62,12 +62,12 @@ async function buildUseCaseWithConflict() {
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig
   );
-  const choosePlugins = new ChoosePlugins(
-    { execute: vi.fn() },
-    makeNoOpPluginInstallFromMarketplace(),
-    new ListMarketplaces(new InMemoryMarketplaceRegistry()),
-    { execute: vi.fn() }
-  );
+  const choosePlugins = new ChoosePlugins({
+    pickPlugins: { execute: vi.fn() },
+    pluginInstallFromMarketplaceUseCase: makeNoOpPluginInstallFromMarketplace(),
+    listMarketplaces: new ListMarketplaces(new InMemoryMarketplaceRegistry()),
+    resolveMarketplaceUseCase: { execute: vi.fn() },
+  });
 
   // The marketplace this project already knows, and the built catalog a real sync would
   // read back, driven here through `setup` rather than against the use case directly.

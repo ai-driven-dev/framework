@@ -25,9 +25,11 @@ const CATALOG = catalogOf();
 const createDeps = vi.fn(async () => ({
   runSync: new RunSync({ execute: restoreAll }, { execute: restoreOne }, { execute: activation }),
   runUserScopeSync: new RunUserScopeSync(
-    new ReadMachineInstallation(userManifestRepo),
-    { execute: userPluginUpdate },
-    { execute: activation },
+    {
+      machine: new ReadMachineInstallation(userManifestRepo),
+      userPlugins: { execute: userPluginUpdate },
+      syncSettings: { execute: activation },
+    },
     CATALOG
   ),
 }));

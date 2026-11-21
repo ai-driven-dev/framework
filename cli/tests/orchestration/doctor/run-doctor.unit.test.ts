@@ -41,10 +41,12 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
   const registration = { execute: async () => [issue("registration")] };
   const authentication = { execute: async () => [issue("authentication")] };
   return await new RunDoctor(
-    new LoadManifestForDoctor(loadManifest),
-    checks,
-    registration,
-    authentication,
+    {
+      load: new LoadManifestForDoctor(loadManifest),
+      checks,
+      registration,
+      authentication,
+    },
     catalogOf()
   ).execute({ projectRoot: PROJECT_ROOT, category });
 }

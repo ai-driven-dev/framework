@@ -30,6 +30,14 @@ export interface CleanResult {
   fileCount: number;
 }
 
+export interface CleanProjectDeps {
+  readonly cleanProject: CleanProjectFiles;
+  readonly withdrawFromHost: WithdrawFromHost;
+  readonly claims: CleanClaims;
+  readonly marketplaces: ListMarketplaces;
+  readonly prompter?: Prompter;
+}
+
 /**
  * `aidd clean`: removes what this project installed, in a fixed order. Confirmation comes first,
  * then the host's own registrations are undone while the built tree they resolve against still
@@ -37,17 +45,11 @@ export interface CleanResult {
  * so a failed local cleanup never frees the shared source.
  */
 export class CleanProject {
-  constructor(
-    private readonly cleanProject: CleanProjectFiles,
-    private readonly withdrawFromHost: WithdrawFromHost,
-    private readonly claims: CleanClaims,
-    private readonly marketplaces: ListMarketplaces,
-    private readonly prompter?: Prompter
-  ) {}
+  constructor(private readonly deps: CleanProjectDeps) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
     const { projectRoot } = options;
-    const plan = await this.cleanProject.execute({ kind: "plan" });
+    const plan = await this.deps.cleanProject.execute({ kind: "plan" });
     if (plan === null) {
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0, nativeRegistrations: [] };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
@@ -57,7 +59,7 @@ export class CleanProject {
       totalFileCount: plan.totalFileCount,
       nativeRegistrations: plan.nativeRegistrations,
       sharedSourceOtherProjects: (
-        await this.claims.sharedClaim({
+        await this.deps.claims.sharedClaim({
           projectRoot,
           list: () => this.registered(projectRoot),
         })
@@ -66,19 +68,19 @@ export class CleanProject {
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
     const facts = this.cleanFacts(projectRoot, await this.marketplaceScopes(projectRoot));
-    await this.withdrawFromHost.execute({
+    await this.deps.withdrawFromHost.execute({
       kind: "prove-project-registrations",
       withdrawals: plan.withdrawals,
       facts,
     });
-    await this.cleanProject.execute({
+    await this.deps.cleanProject.execute({
       kind: "assert-removable",
       projectRoot,
       force: options.force,
     });
     // Read the other projects before host cleanup, but keep this project's claim until every
     // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
-    const sharedSource = await this.claims.sharedClaim({
+    const sharedSource = await this.deps.claims.sharedClaim({
       projectRoot,
       list: () => this.registered(projectRoot),
     });
@@ -86,24 +88,24 @@ export class CleanProject {
     // resolves the marketplace name against the built tree under `.aidd/cache/`, which the
     // removal of AIDD's state deletes next, and a host may refuse to unregister a source that is
     // gone.
-    await this.withdrawFromHost.execute({
+    await this.deps.withdrawFromHost.execute({
       kind: "withdraw-project-registrations",
       withdrawals: plan.withdrawals,
       facts: { ...facts, sharedSource },
     });
-    const fileCount = await this.cleanProject.execute({
+    const fileCount = await this.deps.cleanProject.execute({
       kind: "remove",
       projectRoot,
       force: options.force,
     });
     // One project-level decrement, only after the local projection has been cleaned successfully.
-    await this.claims.dropClaim(sharedSource?.resolvedRoot);
-    await this.claims.detach(projectRoot, plan.userPlugins, plan.nativeRefs);
+    await this.deps.claims.dropClaim(sharedSource?.resolvedRoot);
+    await this.deps.claims.detach(projectRoot, plan.userPlugins, plan.nativeRefs);
     return { dryRun: false, manifestFound: true, preview, fileCount };
   }
 
   private async registered(projectRoot: string) {
-    return (await this.marketplaces.execute({ projectRoot })).marketplaces;
+    return (await this.deps.marketplaces.execute({ projectRoot })).marketplaces;
   }
 
   private async marketplaceScopes(projectRoot: string) {
@@ -119,11 +121,11 @@ export class CleanProject {
       projectRoot,
       marketplaceScopes,
       sharedSource: undefined,
-      frameworkAlias: this.claims.frameworkMarketplaceName,
-      machineClaims: (toolId) => this.claims.machineClaims(toolId),
-      exclusive: (action) => this.claims.exclusive.withExclusiveAccess(action),
+      frameworkAlias: this.deps.claims.frameworkMarketplaceName,
+      machineClaims: (toolId) => this.deps.claims.machineClaims(toolId),
+      exclusive: (action) => this.deps.claims.exclusive.withExclusiveAccess(action),
       resolveCacheCandidate: (cacheRoot, segments, label) =>
-        this.claims.purgeCache.resolveCandidate(cacheRoot, segments, label),
+        this.deps.claims.purgeCache.resolveCandidate(cacheRoot, segments, label),
     };
   }
 
@@ -132,8 +134,8 @@ export class CleanProject {
     preview: CleanPreview
   ): Promise<CleanResult | null> {
     if (options.force) return null;
-    if (options.interactive && this.prompter) {
-      const confirmed = await this.prompter.confirm("Remove all AIDD files?");
+    if (options.interactive && this.deps.prompter) {
+      const confirmed = await this.deps.prompter.confirm("Remove all AIDD files?");
       if (!confirmed) return { dryRun: true, manifestFound: true, preview, fileCount: 0 };
       return null;
     }

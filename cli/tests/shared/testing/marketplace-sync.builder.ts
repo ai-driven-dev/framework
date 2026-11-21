@@ -51,15 +51,15 @@ export interface MarketplaceSyncParts {
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, registeredTools());
-  return new SyncSettings(
-    new LoadSyncContext({
+  return new SyncSettings({
+    loadContext: new LoadSyncContext({
       manifestRepo: parts.manifestRepo,
       marketplaceRegistry: parts.marketplaceRegistry,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       marketplaceRegisterFrameworkUseCase: parts.marketplaceRegisterFrameworkUseCase,
       userManifestRepo: parts.userManifestRepo,
     }),
-    new SyncToolSettingsFiles(
+    settingsFiles: new SyncToolSettingsFiles(
       {
         fs: parts.fs,
         logger: parts.logger,
@@ -68,8 +68,8 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       },
       registeredTools()
     ),
-    new ActivateNativeTools(
-      new RegisterPluginWithHost(
+    activateNativeTools: new ActivateNativeTools({
+      registerPluginWithHost: new RegisterPluginWithHost(
         {
           fs: parts.fs,
           activators: parts.activators ?? new Map(),
@@ -82,16 +82,19 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         },
         registeredTools()
       ),
-      build,
-      parts.logger,
-      { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: parts.userCacheRoot ?? (() => "") },
-      registrationRecordRules
-    ),
-    new RecordActivation(
+      buildMarketplace: build,
+      logger: parts.logger,
+      marketplace: {
+        name: FRAMEWORK_MARKETPLACE_NAME,
+        userCacheRoot: parts.userCacheRoot ?? (() => ""),
+      },
+      records: registrationRecordRules,
+    }),
+    recordActivation: new RecordActivation(
       { fs: parts.fs, records: registrationRecordRules, userManifestRepo: parts.userManifestRepo },
       registeredTools()
     ),
-    new SharedFrameworkSource({
+    sharedSource: new SharedFrameworkSource({
       fs: parts.fs,
       logger: parts.logger,
       recordReference: new RecordSourceReference({
@@ -103,6 +106,6 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       }),
       purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    })
-  );
+    }),
+  });
 }

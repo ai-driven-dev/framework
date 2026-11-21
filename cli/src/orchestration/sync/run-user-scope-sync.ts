@@ -16,15 +16,19 @@ export interface RunUserScopeSyncReport {
   synced(synced: { activated: readonly string[]; refreshed: readonly string[] }): void;
 }
 
+export interface RunUserScopeSyncDeps {
+  readonly machine: Pick<ReadMachineInstallation, "execute">;
+  readonly userPlugins: Pick<UpdateUserPlugin, "execute">;
+  readonly syncSettings: Pick<SyncSettings, "execute">;
+}
+
 /** A user-scope install writes nothing under any project, so this skips the project restore: it
  * rebuilds the global files aidd copied into each tool's user directory from the shared source,
  * then drives native activation, through the machine's installation and never this project's own
  * manifest. */
 export class RunUserScopeSync {
   constructor(
-    private readonly machine: Pick<ReadMachineInstallation, "execute">,
-    private readonly userPlugins: Pick<UpdateUserPlugin, "execute">,
-    private readonly syncSettings: Pick<SyncSettings, "execute">,
+    private readonly deps: RunUserScopeSyncDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -43,20 +47,20 @@ export class RunUserScopeSync {
     const aiToolIds = (names: readonly string[]) =>
       names.flatMap((name) => this.tools.aiToolId(name) ?? []);
     const toolIds = tool === undefined ? undefined : aiToolIds([tool]);
-    const machine = await this.machine.execute();
+    const machine = await this.deps.machine.execute();
     const withFiles = (toolIds ?? aiToolIds(machine?.toolIds ?? [])).filter((id) =>
       machine?.hasUserPlugins(id)
     );
     const refreshed =
       withFiles.length === 0
         ? []
-        : await this.userPlugins.execute({
+        : await this.deps.userPlugins.execute({
             toolIds: withFiles,
             projectRoot,
             scope: "user",
             rebuild: true,
           });
-    const activation = await this.syncSettings.execute({
+    const activation = await this.deps.syncSettings.execute({
       projectRoot,
       scope: "user",
       toolIds,

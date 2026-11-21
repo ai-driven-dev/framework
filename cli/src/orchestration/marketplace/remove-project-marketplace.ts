@@ -13,30 +13,34 @@ export interface RemoveProjectMarketplaceCommand {
   scope?: Scope;
 }
 
+export interface RemoveProjectMarketplaceDeps {
+  readonly find: FindMarketplaceToRemove;
+  readonly plugins: RemovePluginsFromMarketplace;
+  readonly remove: RemoveMarketplace;
+  readonly detachClaims: DetachPluginClaims;
+  readonly prompter: Prompter;
+}
+
 /** Removes a project marketplace: finds it, removes the plugins installed from it once the person
  * agrees, forgets it, then lets go of what those plugins claimed. */
 export class RemoveProjectMarketplace {
-  constructor(
-    private readonly find: FindMarketplaceToRemove,
-    private readonly plugins: RemovePluginsFromMarketplace,
-    private readonly remove: RemoveMarketplace,
-    private readonly detachClaims: DetachPluginClaims,
-    private readonly prompter: Prompter
-  ) {}
+  constructor(private readonly deps: RemoveProjectMarketplaceDeps) {}
 
   async execute(command: RemoveProjectMarketplaceCommand): Promise<MarketplaceRemovalResult> {
     const { name, projectRoot } = command;
-    const marketplace = await this.find.execute({ name, projectRoot, scope: command.scope });
-    const removal = await this.plugins.execute({
+    const marketplace = await this.deps.find.execute({ name, projectRoot, scope: command.scope });
+    const removal = await this.deps.plugins.execute({
       marketplace: name,
       projectRoot,
       confirm: (count) =>
         command.autoConfirm
           ? Promise.resolve(true)
-          : this.prompter.confirm(`Remove ${count} plugin(s) installed from this marketplace?`),
+          : this.deps.prompter.confirm(
+              `Remove ${count} plugin(s) installed from this marketplace?`
+            ),
     });
-    await this.remove.execute({ projectRoot, marketplace });
-    if (removal.claims !== undefined) await this.detachClaims(projectRoot, removal.claims);
+    await this.deps.remove.execute({ projectRoot, marketplace });
+    if (removal.claims !== undefined) await this.deps.detachClaims(projectRoot, removal.claims);
     return {
       marketplace,
       removedPluginCount: removal.removedCount,

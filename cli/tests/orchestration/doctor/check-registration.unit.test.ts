@@ -348,13 +348,19 @@ describe("the tools whose built marketplaces are resolved", () => {
       },
     };
     const check = new CheckRegistration(
-      new ListRegisteredPlugins(
-        new LoadManifest(new InMemoryManifestRepository(manifest)),
-        registrationRecordRules
-      ),
-      builds,
-      new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false, catalogOf()),
-      { execute: async () => ({ findings: [] }) },
+      {
+        listPlugins: new ListRegisteredPlugins(
+          new LoadManifest(new InMemoryManifestRepository(manifest)),
+          registrationRecordRules
+        ),
+        builds,
+        declared: new InspectDeclaredMarketplaces(
+          new InMemoryFileAdapter(),
+          () => false,
+          catalogOf()
+        ),
+        inspectHost: { execute: async () => ({ findings: [] }) },
+      },
       catalogOf()
     );
 
@@ -374,22 +380,28 @@ describe("the hosts handed to the registry inspection", () => {
     manifest.addTool(TOOL.claude, "test", []);
     const inspected: unknown[] = [];
     const check = new CheckRegistration(
-      new ListRegisteredPlugins(
-        new LoadManifest(new InMemoryManifestRepository(manifest)),
-        registrationRecordRules
-      ),
       {
-        execute: async () => ({
-          registeredNames: [],
-          userCacheRoot: "/user-cache",
-          built: new Map(),
-        }),
-      },
-      new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false, catalogOf()),
-      {
-        execute: async ({ hosts }) => {
-          inspected.push(...hosts);
-          return { findings: [] };
+        listPlugins: new ListRegisteredPlugins(
+          new LoadManifest(new InMemoryManifestRepository(manifest)),
+          registrationRecordRules
+        ),
+        builds: {
+          execute: async () => ({
+            registeredNames: [],
+            userCacheRoot: "/user-cache",
+            built: new Map(),
+          }),
+        },
+        declared: new InspectDeclaredMarketplaces(
+          new InMemoryFileAdapter(),
+          () => false,
+          catalogOf()
+        ),
+        inspectHost: {
+          execute: async ({ hosts }) => {
+            inspected.push(...hosts);
+            return { findings: [] };
+          },
         },
       },
       catalogOf()

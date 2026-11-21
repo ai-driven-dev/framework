@@ -12,24 +12,27 @@ export interface RegisterMarketplaceCommand {
   source: FrameworkSource | null;
 }
 
+export interface RegisterMarketplaceDeps {
+  readonly ensure: EnsureFrameworkMarketplace;
+  readonly recordReference: RecordSourceReference;
+  readonly refresh: Pick<RefreshMarketplace, "execute">;
+  readonly environment: Environment;
+}
+
 /** The one sequence project-scope and machine-scope setup both run, in the same order: register,
  * record the project's claim on the shared source, refresh the catalog. */
 export class RegisterMarketplace {
-  constructor(
-    private readonly ensure: EnsureFrameworkMarketplace,
-    private readonly recordReference: RecordSourceReference,
-    private readonly refresh: Pick<RefreshMarketplace, "execute">,
-    private readonly environment: Environment
-  ) {}
+  constructor(private readonly deps: RegisterMarketplaceDeps) {}
 
   async execute(command: RegisterMarketplaceCommand): Promise<void> {
     const { projectRoot, source } = command;
     if (source === null) return;
-    const marketplace = await this.ensure.execute({ projectRoot, source });
+    const marketplace = await this.deps.ensure.execute({ projectRoot, source });
     // `--scope user` has no project-scope manifest for a later `clean` to ever decrement this
     // claim from, so absence, not a recorded reference, is the honest state there.
-    if (command.scope !== "user") await this.recordReference.execute({ projectRoot, marketplace });
-    if (this.environment.get("AIDD_SKIP_MARKETPLACE_REFRESH") === "1") return;
-    await this.refresh.execute({ projectRoot });
+    if (command.scope !== "user")
+      await this.deps.recordReference.execute({ projectRoot, marketplace });
+    if (this.deps.environment.get("AIDD_SKIP_MARKETPLACE_REFRESH") === "1") return;
+    await this.deps.refresh.execute({ projectRoot });
   }
 }

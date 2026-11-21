@@ -84,12 +84,12 @@ async function build(
   for (const name of catalogs.keys()) await registry.save(PROJECT_ROOT, marketplace(name));
   const pick = new RecordingPluginPick(installedByPick);
   const installer = new RecordingInstaller();
-  const useCase = new ChoosePlugins(
-    pick,
-    installer,
-    new ListMarketplaces(registry),
-    new SeededResolveMarketplace(catalogs)
-  );
+  const useCase = new ChoosePlugins({
+    pickPlugins: pick,
+    pluginInstallFromMarketplaceUseCase: installer,
+    listMarketplaces: new ListMarketplaces(registry),
+    resolveMarketplaceUseCase: new SeededResolveMarketplace(catalogs),
+  });
   return { useCase, pick, installer, registry };
 }
 
@@ -177,12 +177,14 @@ describe("ChoosePlugins — the mode decides what is installed", () => {
     await registry.save(PROJECT_ROOT, marketplace("empty"));
     await registry.save(PROJECT_ROOT, marketplace("local"));
     const installer = new RecordingInstaller();
-    const useCase = new ChoosePlugins(
-      new RecordingPluginPick([]),
-      installer,
-      new ListMarketplaces(registry),
-      new SeededResolveMarketplace(new Map([["local", [entry("aidd-dev", true)]]]))
-    );
+    const useCase = new ChoosePlugins({
+      pickPlugins: new RecordingPluginPick([]),
+      pluginInstallFromMarketplaceUseCase: installer,
+      listMarketplaces: new ListMarketplaces(registry),
+      resolveMarketplaceUseCase: new SeededResolveMarketplace(
+        new Map([["local", [entry("aidd-dev", true)]]])
+      ),
+    });
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -275,12 +277,12 @@ describe("ChoosePlugins — the interactive pick", () => {
     await registry.save(PROJECT_ROOT, marketplace("local"));
     const resolve = new SeededResolveMarketplace(new Map([["local", [entry("aidd-dev", true)]]]));
     const resolveSpy = vi.spyOn(resolve, "execute");
-    const useCase = new ChoosePlugins(
-      new RecordingPluginPick([]),
-      new RecordingInstaller(),
-      new ListMarketplaces(registry),
-      resolve
-    );
+    const useCase = new ChoosePlugins({
+      pickPlugins: new RecordingPluginPick([]),
+      pluginInstallFromMarketplaceUseCase: new RecordingInstaller(),
+      listMarketplaces: new ListMarketplaces(registry),
+      resolveMarketplaceUseCase: resolve,
+    });
 
     await useCase.execute({
       projectRoot: PROJECT_ROOT,

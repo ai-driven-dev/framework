@@ -75,19 +75,19 @@ export function wireAgentModels({
     settings: jsoncMainSessionSettings,
     mainSessionLocator: new MainSessionLocator({ fs, homedir, environment }, base.tools),
   });
-  const refresh = new RefreshAgentPlugins(
-    new AgentPluginHosts(manifestRepo, userManifestRepo),
-    p.pluginUpdateUseCase,
-    p.userPluginUpdateUseCase,
-    m.syncSettingsUseCase
-  );
-  return new SetAgentModels(
-    new RecordAgentProviders(agentModelStore, base.tools),
-    new RestoreAgentProviders(agentModelStore),
+  const refresh = new RefreshAgentPlugins({
+    pluginHosts: new AgentPluginHosts(manifestRepo, userManifestRepo),
+    updatePlugin: p.pluginUpdateUseCase,
+    updateUserPlugin: p.userPluginUpdateUseCase,
+    syncSettings: m.syncSettingsUseCase,
+  });
+  return new SetAgentModels({
+    recordProviders: new RecordAgentProviders(agentModelStore, base.tools),
+    restoreProviders: new RestoreAgentProviders(agentModelStore),
     mainSessions,
-    new RestoreMainSessionModels(agentModelStore, mainSessions),
-    refresh
-  );
+    restoreMainSessions: new RestoreMainSessionModels(agentModelStore, mainSessions),
+    refresh,
+  });
 }
 
 /** `setup`: the questions it asks about plugins and tools, and the scenario that runs them. */
@@ -107,12 +107,12 @@ export function wireSetup({
   const { fs, manifestRepo, prompter } = base;
   const { resolveMarketplaceUseCase } = base;
   const { pluginInstallFromMarketplaceUseCase, pickPlugins } = p;
-  const choosePlugins = new ChoosePlugins(
+  const choosePlugins = new ChoosePlugins({
     pickPlugins,
     pluginInstallFromMarketplaceUseCase,
-    base.listMarketplaces,
-    resolveMarketplaceUseCase
-  );
+    listMarketplaces: base.listMarketplaces,
+    resolveMarketplaceUseCase,
+  });
   const chooseTools = new ChooseTools(prompter, base.tools);
   const runSetup = new RunSetup(
     setupStepsOf(base, m, g),

@@ -68,9 +68,9 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
     installRuntimeConfigUseCase,
     installIdeConfig
   );
-  const updateToolsUseCase = new UpdateTools(
-    new ListInstalledTools(manifestRepo, tools),
-    new UpdateTool(
+  const updateToolsUseCase = new UpdateTools({
+    listInstalledTools: new ListInstalledTools(manifestRepo, tools),
+    updateTool: new UpdateTool(
       {
         installRuntimeConfig: installRuntimeConfigUseCase,
         installIdeConfig,
@@ -79,9 +79,9 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
       },
       tools
     ),
-    new ResolveUpdateDecision(prompter),
-    currentVersionProvider
-  );
+    resolveUpdateDecision: new ResolveUpdateDecision(prompter),
+    versionReader: currentVersionProvider,
+  });
   return { installAiToolUseCase, installIdeToolUseCase, setupToolsUseCase, updateToolsUseCase };
 }
 
@@ -135,13 +135,13 @@ export function wireGlobal(parts: GlobalParts) {
       tools
     )
   );
-  const setupMachineScope = new SetupMachineScope(
-    new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
-    resolveSetupSource,
-    registerSetupSource,
-    userScopeSyncOf(syncSettingsUseCase),
-    installGlobalPlugins
-  );
+  const setupMachineScope = new SetupMachineScope({
+    configureMachineScope: new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
+    resolveSource: resolveSetupSource,
+    register: registerSetupSource,
+    syncMachineScope: userScopeSyncOf(syncSettingsUseCase),
+    installPlugins: installGlobalPlugins,
+  });
   const statusUseCase = new ReportStatus(
     { fs, manifestRepo, detectPluginDrift: installation.detectPluginDriftUseCase },
     tools
@@ -156,9 +156,11 @@ export function wireGlobal(parts: GlobalParts) {
       syncSettingsUseCase
     ),
     runUserScopeSync: new RunUserScopeSync(
-      installation.readMachineInstallation,
-      plugin.userPluginUpdateUseCase,
-      syncSettingsUseCase,
+      {
+        machine: installation.readMachineInstallation,
+        userPlugins: plugin.userPluginUpdateUseCase,
+        syncSettings: syncSettingsUseCase,
+      },
       tools
     ),
     projectContextDetector: new DetectProjectContext(fs),

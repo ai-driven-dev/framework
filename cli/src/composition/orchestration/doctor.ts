@@ -26,60 +26,60 @@ export function hostBinaryAvailableIn(
   return (binary) => activators.get(binary)?.isAvailable() ?? false;
 }
 
-/** The doctor checks and the commands that run them. */
-export function wireDoctor(base: Base, inst: Installation) {
-  const {
-    fs,
-    tokenProvider,
-    currentVersionProvider,
-    manifestRepo,
-    userManifestRepo,
-    nativePluginActivators,
-    hostMarketplaceRegistries,
-    hostPluginRegistries,
-    marketplaceRegistry,
-    tools,
-  } = base;
-  const { detectPluginDriftUseCase, registrationRecordRules } = inst;
-  const loadManifest = new LoadManifest(manifestRepo);
-  const registrationOver = (manifests: LoadManifest) =>
-    new CheckRegistration(
-      new ListRegisteredPlugins(manifests, registrationRecordRules),
-      new ResolveBuiltMarketplaces({
+/** The registration check, over whichever manifest the scope reads. */
+function registrationCheckOver(base: Base, inst: Installation, manifests: LoadManifest) {
+  const { fs, tools } = base;
+  return new CheckRegistration(
+    {
+      listPlugins: new ListRegisteredPlugins(manifests, inst.registrationRecordRules),
+      builds: new ResolveBuiltMarketplaces({
         fs,
-        registry: marketplaceRegistry,
+        registry: base.marketplaceRegistry,
         userCacheRoot: userConfigDir,
-        currentVersion: currentVersionProvider,
+        currentVersion: base.currentVersionProvider,
       }),
-      new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators), tools),
-      new InspectHostRegistration(
+      declared: new InspectDeclaredMarketplaces(
+        fs,
+        hostBinaryAvailableIn(base.nativePluginActivators),
+        tools
+      ),
+      inspectHost: new InspectHostRegistration(
         {
           fs,
-          pluginRegistries: hostPluginRegistries,
-          marketplaceRegistries: hostMarketplaceRegistries,
+          pluginRegistries: base.hostPluginRegistries,
+          marketplaceRegistries: base.hostMarketplaceRegistries,
           platform: process.platform,
         },
         tools
       ),
-      tools
-    );
-  const doctorUseCase = new RunDoctor(
-    new LoadManifestForDoctor(loadManifest),
-    {
-      tracked: new CheckTrackedFiles(loadManifest, fs),
-      merge: new CheckMergeFiles(loadManifest, fs),
-      references: new CheckFileReferences(loadManifest, fs),
-      layout: new CheckProjectLayout(loadManifest, fs, tools),
-      plugin: new CheckPluginDrift(loadManifest, detectPluginDriftUseCase),
     },
-    registrationOver(loadManifest),
-    new CheckAuthentication(tokenProvider),
+    tools
+  );
+}
+
+/** The doctor checks and the commands that run them. */
+export function wireDoctor(base: Base, inst: Installation) {
+  const { fs, tools } = base;
+  const loadManifest = new LoadManifest(base.manifestRepo);
+  const doctorUseCase = new RunDoctor(
+    {
+      load: new LoadManifestForDoctor(loadManifest),
+      checks: {
+        tracked: new CheckTrackedFiles(loadManifest, fs),
+        merge: new CheckMergeFiles(loadManifest, fs),
+        references: new CheckFileReferences(loadManifest, fs),
+        layout: new CheckProjectLayout(loadManifest, fs, tools),
+        plugin: new CheckPluginDrift(loadManifest, inst.detectPluginDriftUseCase),
+      },
+      registration: registrationCheckOver(base, inst, loadManifest),
+      authentication: new CheckAuthentication(base.tokenProvider),
+    },
     tools
   );
   // `doctor --scope user` checks the same registrations against the machine-wide manifest.
   const runUserScopeDoctor = new RunUserScopeDoctor(
     inst.readMachineInstallation,
-    registrationOver(new LoadManifest(userManifestRepo))
+    registrationCheckOver(base, inst, new LoadManifest(base.userManifestRepo))
   );
   const doctorAllUseCase = {
     execute: (projectRoot: string, pluginName?: string) =>

@@ -103,12 +103,12 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig
   );
-  const choosePlugins = new ChoosePlugins(
-    makeNoOpPluginPick(),
-    makeNoOpPluginInstallFromMarketplace(),
-    new ListMarketplaces(new InMemoryMarketplaceRegistry()),
-    makeNoOpResolveMarketplace()
-  );
+  const choosePlugins = new ChoosePlugins({
+    pickPlugins: makeNoOpPluginPick(),
+    pluginInstallFromMarketplaceUseCase: makeNoOpPluginInstallFromMarketplace(),
+    listMarketplaces: new ListMarketplaces(new InMemoryMarketplaceRegistry()),
+    resolveMarketplaceUseCase: makeNoOpResolveMarketplace(),
+  });
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
     askSource,

@@ -87,13 +87,13 @@ function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlu
     trustStore,
     prompter,
   } = makeUseCases(overrides);
-  return new InstallPlugin(
-    new PlanPluginInstall(manifestRepo, registeredTools()),
-    pickPlugins,
-    pluginAddUseCase,
-    pluginInstallFromMarketplaceUseCase,
-    new ConfirmPluginSourceTrust(new TrustPluginSource(trustStore), prompter)
-  );
+  return new InstallPlugin({
+    planPluginInstall: new PlanPluginInstall(manifestRepo, registeredTools()),
+    pickPlugin: pickPlugins,
+    addPlugin: pluginAddUseCase,
+    installFromMarketplace: pluginInstallFromMarketplaceUseCase,
+    trustPluginSource: new ConfirmPluginSourceTrust(new TrustPluginSource(trustStore), prompter),
+  });
 }
 
 describe("InstallPlugin", () => {

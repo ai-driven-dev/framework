@@ -59,18 +59,20 @@ const EMPTY_RESULT: SyncSettingsResult = {
   failed: false,
 };
 
+export interface SyncSettingsDeps {
+  readonly loadContext: LoadSyncContext;
+  readonly settingsFiles: SyncToolSettingsFiles;
+  readonly activateNativeTools: ActivateNativeTools;
+  readonly recordActivation: RecordActivation;
+  readonly sharedSource: SharedFrameworkSource;
+}
+
 /** Brings a project's (or the machine's) tool settings and native registrations in line with its manifest. */
 export class SyncSettings {
-  constructor(
-    private readonly loadContext: LoadSyncContext,
-    private readonly settingsFiles: SyncToolSettingsFiles,
-    private readonly activateNativeTools: ActivateNativeTools,
-    private readonly recordActivation: RecordActivation,
-    private readonly sharedSource: SharedFrameworkSource
-  ) {}
+  constructor(private readonly deps: SyncSettingsDeps) {}
 
   execute(options: SyncSettingsOptions): Promise<SyncSettingsResult> {
-    return this.loadContext.runLocked(options.scope ?? "project", () =>
+    return this.deps.loadContext.runLocked(options.scope ?? "project", () =>
       this.executeLocked(options)
     );
   }
@@ -78,7 +80,7 @@ export class SyncSettings {
   private async executeLocked(options: SyncSettingsOptions): Promise<SyncSettingsResult> {
     const { projectRoot } = options;
     const scope = options.scope ?? "project";
-    const context = await this.loadContext.execute({
+    const context = await this.deps.loadContext.execute({
       projectRoot,
       toolIds: options.toolIds,
       recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
@@ -90,7 +92,7 @@ export class SyncSettings {
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
     if (
       scope === "project" &&
-      (await this.settingsFiles.execute({
+      (await this.deps.settingsFiles.execute({
         kind: "project-tools",
         projectRoot,
         manifest,
@@ -99,7 +101,7 @@ export class SyncSettings {
       }))
     )
       await context.save();
-    const activation = await this.activateNativeTools.execute({
+    const activation = await this.deps.activateNativeTools.execute({
       projectRoot,
       context,
       claims: (toolId) => claimsViewOf(context, toolId),
@@ -108,7 +110,7 @@ export class SyncSettings {
     });
     if (
       scope === "project" &&
-      (await this.settingsFiles.execute({
+      (await this.deps.settingsFiles.execute({
         kind: "proven-plugins",
         projectRoot,
         manifest,
@@ -139,27 +141,27 @@ export class SyncSettings {
     // A refused or unproven host registration cannot establish a new shared-source claim.
     // User-scope runs have no project manifest for a later `clean` to decrement it.
     if (scope !== "user") {
-      await this.sharedSource.execute({
+      await this.deps.sharedSource.execute({
         kind: "record-reference",
         projectRoot,
         marketplaces,
         outcomes: activation.outcomes,
       });
     }
-    const wroteHashes = await this.recordActivation.execute({
+    const wroteHashes = await this.deps.recordActivation.execute({
       kind: "settings-written-by-host",
       projectRoot,
       manifest,
       activated: [...activation.outcomes.keys()],
     });
-    const wroteRegistrations = await this.recordActivation.execute({
+    const wroteRegistrations = await this.deps.recordActivation.execute({
       kind: "native-registrations",
       manifest,
       activated: activation.outcomes,
       narrowed: options.marketplaceNames !== undefined,
     });
     if (wroteHashes || wroteRegistrations) await context.save();
-    await this.recordActivation.execute({
+    await this.deps.recordActivation.execute({
       kind: "machine-claims",
       project: manifest,
       outcomes: activation.outcomes,
@@ -168,7 +170,7 @@ export class SyncSettings {
       projectRoot: scope === "project" ? projectRoot : undefined,
     });
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
-      await this.sharedSource.execute({
+      await this.deps.sharedSource.execute({
         kind: "purge-stale-project-cache",
         projectRoot,
         marketplaces,

@@ -20,24 +20,26 @@ export interface UpdateToolsResult {
   errors: GlobalExecutionError[];
 }
 
+export interface UpdateToolsDeps {
+  readonly listInstalledTools: ListInstalledTools;
+  readonly updateTool: UpdateTool;
+  readonly resolveUpdateDecision: ResolveUpdateDecision;
+  readonly versionReader: VersionReader;
+}
+
 /**
  * Updates the installed tools of the project, or the one named, category by category. A tool that
  * fails is reported and the rest go on.
  */
 export class UpdateTools {
-  constructor(
-    private readonly listInstalledTools: ListInstalledTools,
-    private readonly updateTool: UpdateTool,
-    private readonly resolveUpdateDecision: ResolveUpdateDecision,
-    private readonly versionReader: VersionReader
-  ) {}
+  constructor(private readonly deps: UpdateToolsDeps) {}
 
   async execute(command: UpdateToolsCommand): Promise<UpdateToolsResult> {
     const { toolArg } = command;
     if (toolArg !== undefined) return this.updateTools(command, [toolArg]);
     const perCategory: UpdateToolsResult[] = [];
     for (const category of CATEGORIES) {
-      const installed = await this.listInstalledTools.execute({ category });
+      const installed = await this.deps.listInstalledTools.execute({ category });
       perCategory.push(await this.updateTools(command, installed));
     }
     return {
@@ -51,19 +53,24 @@ export class UpdateTools {
     targetIds: ToolId[]
   ): Promise<UpdateToolsResult> {
     const { projectRoot, userForce, interactive } = command;
-    const version = this.versionReader.get();
+    const version = this.deps.versionReader.get();
     // Scoped to this run only, never a field, so an "overwrite all" choice cannot leak
     // into a later, unrelated update run.
     const bulkState = new BulkConflictState();
     const updatedTools: UpdateToolsResult["updatedTools"] = [];
     const errors: GlobalExecutionError[] = [];
     for (const toolId of targetIds) {
-      const result = await this.updateTool.execute({
+      const result = await this.deps.updateTool.execute({
         toolId,
         projectRoot,
         version,
         overwriteModified: (relativePath) =>
-          this.resolveUpdateDecision.execute({ relativePath, userForce, interactive, bulkState }),
+          this.deps.resolveUpdateDecision.execute({
+            relativePath,
+            userForce,
+            interactive,
+            bulkState,
+          }),
       });
       if (result.kind === "updated") {
         updatedTools.push({ toolId: result.toolId, fileCount: result.fileCount });

@@ -51,31 +51,31 @@ function setup(
   const userUpdates: UpdatePluginCommand[] = [];
   const activations: SyncSettingsOptions[] = [];
   const store = new AgentModelStoreAdapter(fs, () => CONFIG);
-  const refresh = new RefreshAgentPlugins(
-    new AgentPluginHosts(
+  const refresh = new RefreshAgentPlugins({
+    pluginHosts: new AgentPluginHosts(
       new InMemoryManifestRepository(manifest, PROJECT),
       new InMemoryManifestRepository(userManifest, CONFIG)
     ),
-    {
+    updatePlugin: {
       execute: async (options) => {
         if (updateFails) throw new Error("build failed");
         updates.push(options);
         return ["aidd-orchestrator"];
       },
     },
-    {
+    updateUserPlugin: {
       execute: async (options) => {
         userUpdates.push(options);
         return [];
       },
     },
-    {
+    syncSettings: {
       execute: async (options) => {
         activations.push(options);
         return { activated: [], binaryMissing: [], warnings: [], errors: [], failed: false };
       },
-    }
-  );
+    },
+  });
   const tools = registeredTools();
   const mainSessions = new MainSessionModels({
     fs,
@@ -86,13 +86,13 @@ function setup(
       tools
     ),
   });
-  const useCase = new SetAgentModels(
-    new RecordAgentProviders(store, tools),
-    new RestoreAgentProviders(store),
+  const useCase = new SetAgentModels({
+    recordProviders: new RecordAgentProviders(store, tools),
+    restoreProviders: new RestoreAgentProviders(store),
     mainSessions,
-    new RestoreMainSessionModels(store, mainSessions),
-    refresh
-  );
+    restoreMainSessions: new RestoreMainSessionModels(store, mainSessions),
+    refresh,
+  });
   return { fs, useCase, updates, userUpdates, activations };
 }
 

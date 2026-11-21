@@ -35,19 +35,21 @@ export interface PickPlugin {
   }): Promise<{ installed: readonly string[] }>;
 }
 
+export interface InstallPluginDeps {
+  readonly planPluginInstall: Pick<PlanPluginInstall, "execute">;
+  readonly pickPlugin: PickPlugin;
+  readonly addPlugin: PluginAdd;
+  readonly installFromMarketplace: PluginInstallFromMarketplace;
+  readonly trustPluginSource: Pick<ConfirmPluginSourceTrust, "execute">;
+}
+
 /** Installs a plugin the way `plugin install` was asked: picked, from a source, or by name. */
 export class InstallPlugin {
-  constructor(
-    private readonly planPluginInstall: Pick<PlanPluginInstall, "execute">,
-    private readonly pickPlugin: PickPlugin,
-    private readonly addPlugin: PluginAdd,
-    private readonly installFromMarketplace: PluginInstallFromMarketplace,
-    private readonly trustPluginSource: Pick<ConfirmPluginSourceTrust, "execute">
-  ) {}
+  constructor(private readonly deps: InstallPluginDeps) {}
 
   async execute(options: PluginInstallOptions): Promise<PluginInstallResult> {
     if (options.scope !== undefined) {
-      await this.planPluginInstall.execute({
+      await this.deps.planPluginInstall.execute({
         toolIds: options.toolIds,
         scope: options.scope,
       });
@@ -67,7 +69,7 @@ export class InstallPlugin {
 
   private async executeNoArg(options: PluginInstallOptions): Promise<PluginInstallResult> {
     if (!options.interactive) throw new InteractiveOnlyError("plugin install");
-    const result = await this.pickPlugin.execute({
+    const result = await this.deps.pickPlugin.execute({
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
       interactive: true,
@@ -80,12 +82,12 @@ export class InstallPlugin {
     pluginArg: string
   ): Promise<PluginInstallResult> {
     const source = parsePluginSourceShorthand(pluginArg);
-    await this.trustPluginSource.execute({
+    await this.deps.trustPluginSource.execute({
       projectRoot: options.projectRoot,
       source,
       yes: options.yes,
     });
-    await this.addPlugin.execute({
+    await this.deps.addPlugin.execute({
       source,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
@@ -100,7 +102,7 @@ export class InstallPlugin {
     pluginArg: string
   ): Promise<PluginInstallResult> {
     const { name, version } = parsePluginSpec(pluginArg);
-    const result = await this.installFromMarketplace.execute({
+    const result = await this.deps.installFromMarketplace.execute({
       pluginName: name,
       version,
       fromMarketplace: options.fromMarketplace,

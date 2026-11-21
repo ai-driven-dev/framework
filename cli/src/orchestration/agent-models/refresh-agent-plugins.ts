@@ -1,4 +1,7 @@
-import type { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
+import type {
+  AgentPluginHosts,
+  AgentPluginPlacement,
+} from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
 import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
@@ -13,6 +16,13 @@ export interface RefreshAgentPluginsOptions {
   readonly scope: Scope;
 }
 
+export interface RefreshAgentPluginsDeps {
+  readonly pluginHosts: Pick<AgentPluginHosts, "locate">;
+  readonly updatePlugin: Pick<UpdatePlugin, "execute">;
+  readonly updateUserPlugin: Pick<UpdateUserPlugin, "execute">;
+  readonly syncSettings: Pick<SyncSettings, "execute">;
+}
+
 /**
  * Rewrites the files a plugin wrote from the rebuilt tree, and drives again a host that installs
  * plugins itself, which hands it that tree. The provider is machine-wide, so this project is
@@ -20,20 +30,26 @@ export interface RefreshAgentPluginsOptions {
  * `--global` adds the machine-scope registrations.
  */
 export class RefreshAgentPlugins {
-  constructor(
-    private readonly pluginHosts: Pick<AgentPluginHosts, "locate">,
-    private readonly updatePlugin: Pick<UpdatePlugin, "execute">,
-    private readonly updateUserPlugin: Pick<UpdateUserPlugin, "execute">,
-    private readonly syncSettings: Pick<SyncSettings, "execute">
-  ) {}
+  constructor(private readonly deps: RefreshAgentPluginsDeps) {}
 
   /** The plugins re-installed with the new models. */
   async execute(options: RefreshAgentPluginsOptions): Promise<readonly string[]> {
-    const { projectRoot, hosts } = options;
-    const placed = await this.pluginHosts.locate(hosts);
+    const placed = await this.deps.pluginHosts.locate(options.hosts);
+    const rewritten = await this.rewrite(placed, options.projectRoot);
+    if (placed.installed.length > 0) await this.activate(options, placed.installed);
+    if (options.scope === "user" && placed.machine.length > 0) {
+      await this.activate(options, placed.machine, "user");
+    }
+    return rewritten;
+  }
+
+  private async rewrite(
+    placed: AgentPluginPlacement<AiToolId>,
+    projectRoot: string
+  ): Promise<readonly string[]> {
     const rewritten = new Set<string>();
     if (placed.userPlugins.length > 0) {
-      const names = await this.updateUserPlugin.execute({
+      const names = await this.deps.updateUserPlugin.execute({
         toolIds: [...placed.userPlugins],
         projectRoot,
         scope: "user",
@@ -42,16 +58,12 @@ export class RefreshAgentPlugins {
       for (const name of names) rewritten.add(name);
     }
     if (placed.projectPlugins.length > 0) {
-      const names = await this.updatePlugin.execute({
+      const names = await this.deps.updatePlugin.execute({
         toolIds: [...placed.projectPlugins],
         projectRoot,
         rebuild: true,
       });
       for (const name of names) rewritten.add(name);
-    }
-    if (placed.installed.length > 0) await this.activate(options, placed.installed);
-    if (options.scope === "user" && placed.machine.length > 0) {
-      await this.activate(options, placed.machine, "user");
     }
     return [...rewritten];
   }
@@ -61,7 +73,7 @@ export class RefreshAgentPlugins {
     toolIds: readonly AiToolId[],
     scope?: Scope
   ): Promise<void> {
-    const { errors } = await this.syncSettings.execute({
+    const { errors } = await this.deps.syncSettings.execute({
       projectRoot,
       toolIds,
       ...(scope === undefined ? {} : { scope }),

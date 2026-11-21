@@ -12,8 +12,8 @@ type Placed = Partial<Record<keyof AgentPluginPlacement<AiToolId>, boolean>>;
 function refreshOver(placed: Placed, activationErrors: string[] = []) {
   const calls: string[] = [];
   const activations: { toolIds: readonly ToolId[]; scope?: Scope }[] = [];
-  const useCase = new RefreshAgentPlugins(
-    {
+  const useCase = new RefreshAgentPlugins({
+    pluginHosts: {
       locate: async <Host extends string>(hosts: readonly Host[]) => ({
         userPlugins: placed.userPlugins ? hosts : [],
         projectPlugins: placed.projectPlugins ? hosts : [],
@@ -21,19 +21,19 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
         machine: placed.machine ? hosts : [],
       }),
     },
-    {
+    updatePlugin: {
       execute: async () => {
         calls.push("project");
         return ["project-plugin"];
       },
     },
-    {
+    updateUserPlugin: {
       execute: async () => {
         calls.push("user");
         return ["user-plugin"];
       },
     },
-    {
+    syncSettings: {
       execute: async ({ toolIds, scope }) => {
         activations.push({ toolIds: toolIds ?? [], ...(scope === undefined ? {} : { scope }) });
         return {
@@ -44,8 +44,8 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
           failed: activationErrors.length > 0,
         };
       },
-    }
-  );
+    },
+  });
   const run = (scope: Scope) =>
     useCase.execute({ projectRoot: PROJECT, hosts: [TOOL.claude], scope });
   return { run, calls, activations };

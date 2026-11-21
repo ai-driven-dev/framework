@@ -29,6 +29,14 @@ export interface ResetAgentModelsResult extends MainSessionOutcome {
   readonly providers: readonly string[];
 }
 
+export interface SetAgentModelsDeps {
+  readonly recordProviders: Pick<RecordAgentProviders, "execute">;
+  readonly restoreProviders: Pick<RestoreAgentProviders, "execute">;
+  readonly mainSessions: Pick<MainSessionModels, "execute">;
+  readonly restoreMainSessions: Pick<RestoreMainSessionModels, "execute">;
+  readonly refresh: Pick<RefreshAgentPlugins, "execute">;
+}
+
 /**
  * The setter for agent models, run once the install has succeeded. Records the provider each
  * host's agents run on, which every later build of that host applies, re-installs this project's
@@ -36,35 +44,29 @@ export interface ResetAgentModelsResult extends MainSessionOutcome {
  * model.
  */
 export class SetAgentModels {
-  constructor(
-    private readonly recordProviders: Pick<RecordAgentProviders, "execute">,
-    private readonly restoreProviders: Pick<RestoreAgentProviders, "execute">,
-    private readonly mainSessions: Pick<MainSessionModels, "execute">,
-    private readonly restoreMainSessions: Pick<RestoreMainSessionModels, "execute">,
-    private readonly refresh: Pick<RefreshAgentPlugins, "execute">
-  ) {}
+  constructor(private readonly deps: SetAgentModelsDeps) {}
 
   async execute(options: SetAgentModelsOptions): Promise<SetAgentModelsResult> {
-    const { chosen, before } = await this.recordProviders.execute(options);
+    const { chosen, before } = await this.deps.recordProviders.execute(options);
     let reinstalled: readonly string[];
     try {
-      reinstalled = await this.refresh.execute(options);
+      reinstalled = await this.deps.refresh.execute(options);
     } catch (error) {
       // A rebuild that failed leaves the machine on the provider it had.
-      await this.restoreProviders.execute({ providers: before });
+      await this.deps.restoreProviders.execute({ providers: before });
       throw error;
     }
     return {
       reinstalled,
-      ...(await this.mainSessions.execute({ hosts: options.hosts, chosen })),
+      ...(await this.deps.mainSessions.execute({ hosts: options.hosts, chosen })),
     };
   }
 
   /** `clean --global`: forgets every host's provider and gives each main session back what it
    * held before aidd, machine-wide. `dryRun` says what it would restore and changes nothing. */
   async reset(options: { readonly dryRun: boolean }): Promise<ResetAgentModelsResult> {
-    const restored = await this.restoreMainSessions.execute(options);
-    const providers = await this.restoreProviders.execute({
+    const restored = await this.deps.restoreMainSessions.execute(options);
+    const providers = await this.deps.restoreProviders.execute({
       providers: {},
       dryRun: options.dryRun,
     });

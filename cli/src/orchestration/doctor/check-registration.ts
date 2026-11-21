@@ -21,6 +21,13 @@ export interface CheckRegistrationCommand {
   globalInstall?: boolean;
 }
 
+export interface CheckRegistrationDeps {
+  readonly listPlugins: ListRegisteredPlugins;
+  readonly builds: Pick<ResolveBuiltMarketplaces, "execute">;
+  readonly declared: InspectDeclaredMarketplaces;
+  readonly inspectHost: Pick<InspectHostRegistration, "execute">;
+}
+
 /**
  * Checks the registrations the CLI writes but does not track, worded as doctor issues.
  *
@@ -33,21 +40,18 @@ export interface CheckRegistrationCommand {
  */
 export class CheckRegistration {
   constructor(
-    private readonly listPlugins: ListRegisteredPlugins,
-    private readonly builds: Pick<ResolveBuiltMarketplaces, "execute">,
-    private readonly declared: InspectDeclaredMarketplaces,
-    private readonly inspectHost: Pick<InspectHostRegistration, "execute">,
+    private readonly deps: CheckRegistrationDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: CheckRegistrationCommand): Promise<DoctorIssue[]> {
     const { projectRoot, allowedIds } = command;
-    const registered = await this.listPlugins.execute({ allowedIds });
+    const registered = await this.deps.listPlugins.execute({ allowedIds });
     const aiToolIds: AiToolId[] = [];
     for (const { toolId } of registered.tools) {
       if (this.tools.isAiTool(toolId)) aiToolIds.push(toolId);
     }
-    const { registeredNames, userCacheRoot, built } = await this.builds.execute({
+    const { registeredNames, userCacheRoot, built } = await this.deps.builds.execute({
       projectRoot,
       toolIds: aiToolIds,
     });
@@ -73,7 +77,7 @@ export class CheckRegistration {
     toolIds: readonly string[],
     marketplaceNames: readonly string[]
   ): Promise<DoctorIssue[]> {
-    const declared: InspectDeclaredMarketplacesResult = await this.declared.execute({
+    const declared: InspectDeclaredMarketplacesResult = await this.deps.declared.execute({
       projectRoot: command.projectRoot,
       toolIds,
       marketplaceNames,
@@ -111,7 +115,7 @@ export class CheckRegistration {
         marketplaces: built.get(toolId) ?? [],
       });
     }
-    const { findings } = await this.inspectHost.execute({
+    const { findings } = await this.deps.inspectHost.execute({
       projectRoot: command.projectRoot,
       userCacheRoot,
       hosts,

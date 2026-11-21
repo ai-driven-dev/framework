@@ -59,7 +59,13 @@ function build(initialized: boolean) {
       return { plugins: ["alpha"] };
     }),
   };
-  const useCase = new SetupMachineScope(configure, resolveSource, register, sync, installPlugins);
+  const useCase = new SetupMachineScope({
+    configureMachineScope: configure,
+    resolveSource,
+    register,
+    syncMachineScope: sync,
+    installPlugins,
+  });
   return { useCase, calls, register, sync, installPlugins, configuredTools };
 }
 

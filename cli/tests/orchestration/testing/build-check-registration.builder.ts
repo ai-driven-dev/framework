@@ -25,10 +25,12 @@ export function checkRegistrationOver(
   tools: ToolCatalog
 ): CheckRegistration {
   return new CheckRegistration(
-    new ListRegisteredPlugins(loadManifest, registrationRecordRules),
-    new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
-    new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
-    inspectHost,
+    {
+      listPlugins: new ListRegisteredPlugins(loadManifest, registrationRecordRules),
+      builds: new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
+      declared: new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
+      inspectHost,
+    },
     tools
   );
 }

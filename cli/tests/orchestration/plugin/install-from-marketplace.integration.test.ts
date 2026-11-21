@@ -66,12 +66,15 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);
-  const useCase = new InstallFromMarketplace(
-    new ResolvePluginSource(registry, new ResolveMarketplace(fetchMarketplaceSource, catalogRepo)),
-    pluginAdd,
-    options.prompter ?? new KeepPrompter(),
-    logger
-  );
+  const useCase = new InstallFromMarketplace({
+    resolvePluginSource: new ResolvePluginSource(
+      registry,
+      new ResolveMarketplace(fetchMarketplaceSource, catalogRepo)
+    ),
+    addPlugin: pluginAdd,
+    prompter: options.prompter ?? new KeepPrompter(),
+    logger,
+  });
   return { useCase, deps, registry };
 }
 

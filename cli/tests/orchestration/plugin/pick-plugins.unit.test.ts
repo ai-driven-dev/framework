@@ -77,16 +77,16 @@ function build(options: {
       catalog: options.plugins === null ? null : { plugins: options.plugins ?? [] },
     })),
   };
-  const useCase = new PickPlugins(
-    { execute: async () => ({ marketplaces: options.marketplaces }) },
+  const useCase = new PickPlugins({
+    listMarketplaces: { execute: async () => ({ marketplaces: options.marketplaces }) },
     resolveMarketplace,
-    {
+    pluginAddUseCase: {
       execute: async (command) => {
         added.push(command);
       },
     },
-    prompter
-  );
+    prompter,
+  });
   return { useCase, added, prompter, resolveMarketplace };
 }
 

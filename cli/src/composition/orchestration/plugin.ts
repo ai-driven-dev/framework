@@ -236,25 +236,28 @@ export function wirePlugin(base: Base, inst: Installation) {
     },
     tools
   );
-  const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(
-    new ResolvePluginSource(marketplaceRegistry, resolveMarketplaceUseCase),
+  const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace({
+    resolvePluginSource: new ResolvePluginSource(marketplaceRegistry, resolveMarketplaceUseCase),
+    addPlugin: pluginAddUseCase,
+    prompter,
+    logger,
+  });
+  const pickPlugins = new PickPlugins({
+    listMarketplaces,
+    resolveMarketplace: resolveMarketplaceUseCase,
     pluginAddUseCase,
     prompter,
-    logger
-  );
-  const pickPlugins = new PickPlugins(
-    listMarketplaces,
-    resolveMarketplaceUseCase,
-    pluginAddUseCase,
-    prompter
-  );
-  const pluginInstallUseCase = new InstallPlugin(
-    new PlanPluginInstall(manifestRepo, tools),
-    pickPlugins,
-    pluginAddUseCase,
-    pluginInstallFromMarketplaceUseCase,
-    new ConfirmPluginSourceTrust(new TrustPluginSource(marketplaceTrustStore), prompter)
-  );
+  });
+  const pluginInstallUseCase = new InstallPlugin({
+    planPluginInstall: new PlanPluginInstall(manifestRepo, tools),
+    pickPlugin: pickPlugins,
+    addPlugin: pluginAddUseCase,
+    installFromMarketplace: pluginInstallFromMarketplaceUseCase,
+    trustPluginSource: new ConfirmPluginSourceTrust(
+      new TrustPluginSource(marketplaceTrustStore),
+      prompter
+    ),
+  });
   return {
     ...wirePluginRemoval(base, inst),
     ...wirePluginUpdate(base, inst),

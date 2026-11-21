@@ -13,6 +13,14 @@ export type SyncMachineScope = (options: {
   readonly enablePlugins: readonly string[];
 }) => Promise<NativeActivationReport>;
 
+export interface SetupMachineScopeDeps {
+  readonly configureMachineScope: Pick<ConfigureMachineScope, "execute">;
+  readonly resolveSource: Pick<ResolveSetupSource, "execute">;
+  readonly register: RegisterFrameworkSource;
+  readonly syncMachineScope: SyncMachineScope;
+  readonly installPlugins: Pick<InstallGlobalPlugins, "execute">;
+}
+
 /**
  * `--scope user`: registers the shared framework source, installs the requested plugins in each
  * tool's user configuration directory and drives native activation machine-wide, writing nothing
@@ -25,17 +33,11 @@ export type SyncMachineScope = (options: {
  * state until `clean --scope user` purges the source unconditionally regardless.
  */
 export class SetupMachineScope {
-  constructor(
-    private readonly configureMachineScope: Pick<ConfigureMachineScope, "execute">,
-    private readonly resolveSource: Pick<ResolveSetupSource, "execute">,
-    private readonly register: RegisterFrameworkSource,
-    private readonly syncMachineScope: SyncMachineScope,
-    private readonly installPlugins: Pick<InstallGlobalPlugins, "execute">
-  ) {}
+  constructor(private readonly deps: SetupMachineScopeDeps) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
-    const source = await this.resolveSource.execute(flow);
-    return this.configureMachineScope.execute({
+    const source = await this.deps.resolveSource.execute(flow);
+    return this.deps.configureMachineScope.execute({
       toolIds: flow.aiTools,
       whileHeld: (isNew) => this.executeLocked(flow, source, isNew),
     });
@@ -46,9 +48,9 @@ export class SetupMachineScope {
     source: Awaited<ReturnType<ResolveSetupSource["execute"]>>,
     isNew: boolean
   ): Promise<SetupResult> {
-    await this.register(flow, source);
+    await this.deps.register(flow, source);
     const plugins = await this.installGlobalPlugins(flow);
-    const activation = await this.syncMachineScope({
+    const activation = await this.deps.syncMachineScope({
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
       enablePlugins: plugins,
@@ -61,7 +63,7 @@ export class SetupMachineScope {
   /** Copies the chosen plugins' global files and returns their names, which every tool with
    * native activation then enables machine-wide. */
   private async installGlobalPlugins(flow: SetupFlow): Promise<readonly string[]> {
-    const { plugins } = await this.installPlugins.execute({
+    const { plugins } = await this.deps.installPlugins.execute({
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
       mode: flow.pluginMode,
