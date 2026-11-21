@@ -243,7 +243,7 @@ describe("a tool never names an identifier outside its profile, in the code ever
 // A tool's hooks facts live in the `declareHooks(` call of its profile alone. Read lexically, with strings and
 // comments blanked, because `typescript` 7 ships no in-process parser.
 
-const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/(?!hooks\.ts$)[^/]+\.ts$/;
+const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/[^/]+\.ts$/;
 const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks/descriptor.ts";
 
 const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g;
