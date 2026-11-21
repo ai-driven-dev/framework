@@ -180,6 +180,23 @@ test("a broken run.md is answered with an IMPLEMENT finding", () => {
   assert.ok(lines(s.stop()).some((line) => /^aidd_docs\/tasks\/x\/run\.md:\d+ IMPLEMENT-\d\d /u.test(line)));
 });
 
+for (const host of ["codex", "cursor", "opencode"]) {
+  test(`${host}: a broken run.md is answered with an IMPLEMENT finding`, () => {
+    const s = session("aidd-dev", host, { [PLAN]: "---\nstatus: implemented\n---\n\n# Plan\n", "aidd_docs/tasks/x/run.md": "# Run\n\nnothing\n" });
+    s.start();
+    s.wrote("aidd_docs/tasks/x/run.md");
+    assert.ok(lines(s.stop()).some((line) => /^aidd_docs\/tasks\/x\/run\.md:\d+ IMPLEMENT-\d\d /u.test(line)));
+  });
+
+  test(`${host}: a shell-written broken story is answered`, () => {
+    const s = session("aidd-pm", host, { [STORY]: BROKEN_STORY });
+    s.start();
+    past(path.join(s.root, STORY), -60);
+    s.shell();
+    assert.ok(lines(s.stop()).every((line) => line.startsWith(`${STORY}:`)));
+  });
+}
+
 // ---- silent rows -----------------------------------------------------------------------------------
 
 test("silent: a conforming story, a file no contract claims, a phase with no plan.md above it, a Stop with no write", () => {
@@ -213,6 +230,44 @@ test("a finding on a plan.md the turn did not write is dropped", () => {
   s.start();
   s.wrote(PHASE);
   assert.equal(s.stop(), "");
+});
+
+test("a broken plan.md written by the model is answered with a PLAN-01 finding", () => {
+  const s = session("aidd-dev", "claude", { [PLAN]: "# Plan\n" });
+  s.start();
+  s.wrote(PLAN);
+  assert.ok(lines(s.stop()).some((line) => /^aidd_docs\/tasks\/x\/plan\.md:\d+ PLAN-01 \S/u.test(line)));
+});
+
+test("no generated contract scope matches a raw template under a plugin's assets, nor a folder above it", () => {
+  const assets = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(file);
+      else if (dir.split(path.sep).includes("assets")) assets.push(path.relative(REPO, file).split(path.sep).join("/"));
+    }
+  };
+  for (const plugin of fs.readdirSync(path.join(REPO, "plugins"))) {
+    const skills = path.join(REPO, "plugins", plugin, "skills");
+    if (!fs.existsSync(skills)) continue;
+    for (const skill of fs.readdirSync(skills)) if (fs.existsSync(path.join(skills, skill, "assets"))) walk(path.join(skills, skill, "assets"));
+  }
+  assert.ok(assets.length > 0);
+  let globs = 0;
+  for (const plugin of ["aidd-context", "aidd-dev", "aidd-pm"]) {
+    const root = path.join(REPO, "plugins", plugin, "hooks/lib/contracts");
+    for (const name of fs.readdirSync(root)) {
+      const contract = JSON.parse(fs.readFileSync(path.join(root, name, "scripts/contract.json"), "utf8"));
+      const { globRegex } = require(path.join(root, name, "scripts/lib/engine.cjs"));
+      for (const glob of contract.scope ?? []) {
+        globs += 1;
+        const regex = globRegex(glob);
+        for (const rel of assets) for (let at = rel; at !== "."; at = path.posix.dirname(at)) assert.equal(regex.test(at), false, `${glob} matches ${at}`);
+      }
+    }
+  }
+  assert.ok(globs > 0);
 });
 
 test("a broken file in scope that no PostToolUse named is not reported", () => {
