@@ -17,6 +17,8 @@ import {
   assertProjectHooksUnchanged,
   OVERWRITE_EDITED_HINT,
   type ProjectHooksGuard,
+} from "../shared/assert-project-hooks-unchanged.js";
+import {
   recordedProjectHookEntries,
   removeRecordedProjectHooks,
 } from "../shared/remove-project-hooks.js";

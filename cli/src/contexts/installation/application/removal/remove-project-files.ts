@@ -19,7 +19,8 @@ import { AIDD_CONFIG_FILENAME, PLUGIN_CACHE_SUBDIR } from "../../domain/project-
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
-import { type ProjectHooksGuard, removeProjectHooks } from "../shared/remove-project-hooks.js";
+import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
+import { removeProjectHooks } from "../shared/remove-project-hooks.js";
 import type { UpdateGitignore } from "../update-gitignore.js";
 
 /** What RemoveProjectFiles is built from. */

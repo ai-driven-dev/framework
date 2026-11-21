@@ -7,7 +7,6 @@
   "src/contexts/host-registration/infrastructure/marketplace-registry-reader.ts": 1,
   "src/contexts/installation/application/agents/main-session-models.ts": 2,
   "src/contexts/installation/application/detect-project-context.ts": 1,
-  "src/contexts/installation/application/shared/remove-project-hooks.ts": 1,
   "src/contexts/installation/domain/manifest-serialization.ts": 2,
   "src/contexts/installation/domain/manifest.ts": 1,
   "src/contexts/installation/domain/plugins/installed-plugin.ts": 3,
