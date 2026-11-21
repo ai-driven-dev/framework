@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { reshapeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
@@ -126,16 +127,14 @@ describe("present(codex.buildContracts.marketplace)()", () => {
   });
 
   it("keeps only the three frontmatter fields Codex reads in a skill", () => {
-    const transform = supported(
+    const { skillFrontmatter } = supported(
       present(codex.buildContracts.marketplace)().artifacts.skills
-    ).transform;
+    );
 
     expect(
-      transform?.(
-        "---\nname: plan\ndescription: Plan it\nmodel: opus\n---\nBody.\n",
-        "aidd-dev",
-        "SKILL.md"
-      )
+      reshapeFrontmatter("---\nname: plan\ndescription: Plan it\nmodel: opus\n---\nBody.\n", {
+        frontmatter: (fm) => skillFrontmatter?.(fm) ?? fm,
+      })
     ).toBe("---\nname: 'plan'\ndescription: 'Plan it'\n---\nBody.\n");
   });
 

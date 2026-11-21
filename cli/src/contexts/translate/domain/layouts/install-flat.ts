@@ -1,3 +1,4 @@
+import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -11,7 +12,6 @@ import { flatLinkTarget } from "../flat-layout.js";
 import { basename, isProse } from "../plugin-paths.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
-import { reshapeFrontmatter } from "../rules/frontmatter.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";

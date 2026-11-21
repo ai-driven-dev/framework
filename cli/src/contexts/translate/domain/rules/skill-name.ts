@@ -1,4 +1,4 @@
-import { reshapeFrontmatter } from "./frontmatter.js";
+import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 
 /** A skill entry named after the folder it sits in, for a tool that finds a skill by that name. */
 export function namedAfterFolder(content: string, path: string): string {

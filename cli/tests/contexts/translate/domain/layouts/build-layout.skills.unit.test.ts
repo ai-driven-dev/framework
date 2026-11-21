@@ -35,9 +35,8 @@ describe("the marketplace layout of a plugin's skills", () => {
     });
   });
 
-  it("hands the skill's entry file to the transform, and no other file", () => {
-    const transform = (content: string, plugin: string, base: string): string =>
-      `${plugin}:${base}\n${content}`;
+  it("reshapes the skill's entry frontmatter, and no other file's", () => {
+    const skillFrontmatter = (fm: Record<string, unknown>) => ({ ...fm, shaped: true });
     const contract = aStubBuildContract();
     const built = marketplaceFiles(
       {
@@ -47,11 +46,11 @@ describe("the marketplace layout of a plugin's skills", () => {
       },
       {
         ...contract,
-        artifacts: { ...contract.artifacts, skills: aSupportedArtifact({ transform }) },
+        artifacts: { ...contract.artifacts, skills: aSupportedArtifact({ skillFrontmatter }) },
       }
     );
     expect(built).toEqual({
-      [`plugins/${PLUGIN}/skills/hello/SKILL.md`]: "aidd-test:SKILL.md\n# Entry\n",
+      [`plugins/${PLUGIN}/skills/hello/SKILL.md`]: "---\nshaped: true\n---\n# Entry\n",
       [`plugins/${PLUGIN}/skills/hello/actions/run.md`]: "# Action\n",
       [`plugins/${PLUGIN}/skills/hello/reference.json`]: assetContent,
     });

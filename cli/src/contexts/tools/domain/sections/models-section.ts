@@ -1,4 +1,4 @@
-import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { ToolBuildContract } from "../../contract/build-contract.js";
 import type { AgentModelAnswers, ModelChoice, RoleModels } from "../../contract/tool-profile.js";
 import { AGENT_MODELS, type ModelTier, roleTier } from "../models/agent-models.js";
@@ -93,10 +93,12 @@ export class ModelsSection {
       };
     }
     const write = agents.transform ?? ((content: string) => content);
-    const transform = (content: string, plugin: string, fileName: string): string => {
-      const { frontmatter, body } = parseFrontmatter(content);
-      return write(serializeFrontmatter(modelled(frontmatter, fileName), body), plugin, fileName);
-    };
+    const transform = (content: string, plugin: string, fileName: string): string =>
+      write(
+        reshapeFrontmatter(content, { frontmatter: (fm) => modelled(fm, fileName) }),
+        plugin,
+        fileName
+      );
     return { ...contract, artifacts: { ...contract.artifacts, agents: { ...agents, transform } } };
   }
 

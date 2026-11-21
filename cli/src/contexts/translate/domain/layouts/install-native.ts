@@ -1,3 +1,4 @@
+import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -6,7 +7,6 @@ import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-
 import type { NativePluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
-import { reshapeFrontmatter } from "../rules/frontmatter.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";

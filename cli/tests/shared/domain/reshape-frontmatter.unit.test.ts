@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reshapeFrontmatter } from "../../../../../src/contexts/translate/domain/rules/frontmatter.js";
+import { reshapeFrontmatter } from "../../../src/shared/domain/markdown.js";
 
 const DOC = "---\nname: old\nkind: a\n---\nBody\n";
 

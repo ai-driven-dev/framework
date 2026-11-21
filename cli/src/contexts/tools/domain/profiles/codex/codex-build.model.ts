@@ -21,7 +21,7 @@ import {
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.model.js";
-import { transformCodexSkill } from "./codex-skill.model.js";
+import { stripCodexSkillFrontmatter } from "./codex-skill.model.js";
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
@@ -34,7 +34,7 @@ function codexPluginArtifacts(
       supported: true,
       source: { kind: "fullTree", srcDir: "skills" },
       path: (_p, rel) => rel,
-      transform: transformCodexSkill,
+      skillFrontmatter: stripCodexSkillFrontmatter,
     },
     agents: {
       supported: true,

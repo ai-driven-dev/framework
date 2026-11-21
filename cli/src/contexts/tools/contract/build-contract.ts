@@ -49,6 +49,8 @@ export type ArtifactContract =
       readonly path: (plugin: string, relPath: string) => string;
       /** An agent's markdown, as the tool keeps it. Wins over `transform` for an agent. */
       readonly agentMarkdown?: AgentMarkdown;
+      /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */
+      readonly skillFrontmatter?: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
       /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
        * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;

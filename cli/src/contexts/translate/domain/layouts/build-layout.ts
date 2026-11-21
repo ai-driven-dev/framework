@@ -1,10 +1,11 @@
+import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
-import { PLUGIN_MCP_RELATIVE, PLUGIN_SKILL_ENTRY_FILE } from "../canon-format.js";
+import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { buildFlatPlans } from "./build-flat.js";
@@ -92,6 +93,7 @@ function marketplaceSkills(
   artifact: SupportedArtifact
 ): ComponentPlan[] {
   const plugin = canon.manifest.name;
+  const { skillFrontmatter } = artifact;
   return canon.components.skills.map(({ relativePath, content }) => {
     const path = `plugins/${plugin}/${relativePath}`;
     if (!relativePath.endsWith(".md")) return { source: relativePath, path, content };
@@ -102,8 +104,8 @@ function marketplaceSkills(
       guard: { plugin, name: relativePath.slice("skills/".length) },
       links: { kind: "relative", currentFilePluginRelative: relativePath },
       shape:
-        isEntry(relativePath) && artifact.transform
-          ? (text) => artifact.transform?.(text, plugin, PLUGIN_SKILL_ENTRY_FILE) ?? text
+        isEntry(relativePath) && skillFrontmatter
+          ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatter })
           : undefined,
     };
   });
