@@ -14,8 +14,34 @@ interface Transcript {
   readonly unrecognised?: readonly string[];
 }
 
-/** A tool whose lines say what they are: `call:KEY` is a billed call, `ctx:X` sets the context
+/** What a tool's `decode` says of one line: `call:KEY` is a billed call, `ctx:X` sets the context
  * the next line is decoded with, `named` names a directory, `odd` is not recognised. */
+function decodeLine(line: string, context: unknown) {
+  if (line.startsWith("call:")) {
+    const { repository_id: _, ...record } = aUsageRecord()
+      .withKey(line.slice(5))
+      .with({ session_id: String(context) })
+      .build();
+    return { records: [record], unrecognised: [] };
+  }
+  if (line.startsWith("ctx:")) return { records: [], unrecognised: [], context: line.slice(4) };
+  if (line === "named") {
+    return { records: [], unrecognised: [], named: { cwd: "/work/a", at: null } };
+  }
+  return { records: [], unrecognised: ["odd"] };
+}
+
+function readingOf(file: Transcript) {
+  return {
+    position: file.position === undefined ? END : file.position,
+    restarted: false,
+    skipped: file.skipped ?? false,
+    modifiedAt: file.modifiedAt ?? null,
+    ...(file.unrecognised ? { unrecognised: file.unrecognised } : {}),
+  };
+}
+
+/** A tool whose lines say what they are, see `decodeLine`. */
 function source(files: Readonly<Record<string, Transcript>>) {
   const seen: (TranscriptPosition | null)[] = [];
   const subject: UsageSource = {
@@ -25,28 +51,9 @@ function source(files: Readonly<Record<string, Transcript>>) {
       if (file === undefined) throw new Error(`no transcript ${path}`);
       seen.push(since);
       for (const [line, counted] of file.lines) each(line, counted);
-      return {
-        position: file.position === undefined ? END : file.position,
-        restarted: false,
-        skipped: file.skipped ?? false,
-        modifiedAt: file.modifiedAt ?? null,
-        ...(file.unrecognised ? { unrecognised: file.unrecognised } : {}),
-      };
+      return readingOf(file);
     },
-    decode: (line, context) => {
-      if (line.startsWith("call:")) {
-        const { repository_id: _, ...record } = aUsageRecord()
-          .withKey(line.slice(5))
-          .with({ session_id: String(context) })
-          .build();
-        return { records: [record], unrecognised: [] };
-      }
-      if (line.startsWith("ctx:")) return { records: [], unrecognised: [], context: line.slice(4) };
-      if (line === "named") {
-        return { records: [], unrecognised: [], named: { cwd: "/work/a", at: null } };
-      }
-      return { records: [], unrecognised: ["odd"] };
-    },
+    decode: decodeLine,
   };
   return { subject, seen };
 }
