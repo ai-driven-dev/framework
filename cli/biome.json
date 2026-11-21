@@ -5889,7 +5889,7 @@
             "noExcessiveLinesPerFunction": {
               "level": "error",
               "options": {
-                "maxLines": 50,
+                "maxLines": 30,
                 "skipBlankLines": true
               }
             }
@@ -5905,7 +5905,80 @@
             "noExcessiveCognitiveComplexity": {
               "level": "error",
               "options": {
-                "maxAllowedComplexity": 15
+                "maxAllowedComplexity": 8
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": {
+              "level": "error",
+              "options": {
+                "maxAllowedComplexity": 8
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!**/*.error.ts",
+        "!src/composition/**",
+        "!src/contexts/tools/domain/profiles/**",
+        "!src/contexts/*/contract/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveLinesPerFile": {
+              "level": "error",
+              "options": {
+                "maxLines": 150,
+                "skipBlankLines": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/composition/**",
+        "src/contexts/tools/domain/profiles/**",
+        "src/contexts/*/contract/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveLinesPerFile": {
+              "level": "error",
+              "options": {
+                "maxLines": 300,
+                "skipBlankLines": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveLinesPerFile": {
+              "level": "error",
+              "options": {
+                "maxLines": 400,
+                "skipBlankLines": true
               }
             }
           }
@@ -5921,22 +5994,6 @@
               "level": "error",
               "options": {
                 "maxClasses": 1
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": ["src/**", "!**/*.error.ts"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noExcessiveLinesPerFile": {
-              "level": "error",
-              "options": {
-                "maxLines": 400,
-                "skipBlankLines": true
               }
             }
           }

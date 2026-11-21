@@ -1,12 +1,11 @@
 /**
- * The size guards Biome carries: each guard's plugin, rule and baseline in `biome.json`, the
- * baselines that only shrink, and a planted violator that makes each guard bite.
+ * The size guards Biome carries, per kind of file: each guard's rule, scope and cap in
+ * `biome.json`, and a planted violator that makes each guard bite, one step past its cap.
  */
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { present } from "../shared/testing/present.builder.js";
 import { biomeConfig, type Override } from "./biome-config.js";
 import {
   branches,
@@ -16,247 +15,209 @@ import {
   tangled,
   twoClasses,
 } from "./size-plants.js";
-import { biomeFindings, CLI_ROOT, expectRatchet } from "./source-graph.js";
+import { biomeFindings, CLI_ROOT } from "./source-graph.js";
 
-type SizeGuard =
-  | {
-      readonly name: string;
-      readonly kind: "rule";
-      readonly group: string;
-      readonly rule: string;
-      readonly options: Readonly<Record<string, unknown>>;
-      /** Excused for a whole kind of file, not one by one: the error catalogue. */
-      readonly sparesErrorFiles?: true;
-    }
-  | { readonly name: string; readonly kind: "plugin"; readonly file: string };
+const ERROR_FILES = "!**/*.error.ts";
+/** Files that declare shape, not behaviour: the composition, the profiles and the contracts. */
+const DECLARATIONS = [
+  "src/composition/**",
+  "src/contexts/tools/domain/profiles/**",
+  "src/contexts/*/contract/**",
+];
 
-const GUARDS: readonly SizeGuard[] = [
+interface RuleGuard {
+  readonly name: string;
+  readonly group: string;
+  readonly rule: string;
+  readonly includes: readonly string[];
+  readonly options: Readonly<Record<string, unknown>>;
+}
+
+const lines = (maxLines: number): Record<string, unknown> => ({ maxLines, skipBlankLines: true });
+
+const RULES: readonly RuleGuard[] = [
   {
-    name: "function length",
-    kind: "rule",
+    name: "function length in src",
     group: "complexity",
     rule: "noExcessiveLinesPerFunction",
-    options: { maxLines: 50, skipBlankLines: true },
+    includes: ["src/**"],
+    options: lines(30),
   },
   {
-    name: "cognitive complexity",
-    kind: "rule",
+    name: "cognitive complexity in src",
     group: "complexity",
     rule: "noExcessiveCognitiveComplexity",
-    options: { maxAllowedComplexity: 15 },
+    includes: ["src/**"],
+    options: { maxAllowedComplexity: 8 },
+  },
+  {
+    name: "cognitive complexity in tests",
+    group: "complexity",
+    rule: "noExcessiveCognitiveComplexity",
+    includes: ["tests/**"],
+    options: { maxAllowedComplexity: 8 },
   },
   {
     name: "one class per file",
-    kind: "rule",
     group: "style",
     rule: "noExcessiveClassesPerFile",
+    includes: ["src/**", ERROR_FILES],
     options: { maxClasses: 1 },
-    sparesErrorFiles: true,
   },
   {
-    name: "file length",
-    kind: "rule",
+    name: "file length in src",
     group: "style",
     rule: "noExcessiveLinesPerFile",
-    options: { maxLines: 400, skipBlankLines: true },
-    sparesErrorFiles: true,
+    includes: ["src/**", ERROR_FILES, ...DECLARATIONS.map((glob) => `!${glob}`)],
+    options: lines(150),
   },
-  { name: "function parameters", kind: "plugin", file: "max-function-params.grit" },
+  {
+    name: "file length of declarations",
+    group: "style",
+    rule: "noExcessiveLinesPerFile",
+    includes: DECLARATIONS,
+    options: lines(300),
+  },
+  {
+    name: "file length in tests",
+    group: "style",
+    rule: "noExcessiveLinesPerFile",
+    includes: ["tests/**"],
+    options: lines(400),
+  },
 ];
+
+const PARAMS_PLUGIN = "./biome-plugins/max-function-params.grit";
 
 const overrides = (): readonly Override[] => biomeConfig().overrides ?? [];
 
-/** A file of the error catalogue holds many small classes: no guard counts them per file. */
-const ERROR_FILES = "!**/*.error.ts";
-
-const pluginPath = (file: string): string => `./biome-plugins/${file}`;
-
-function carriersOf(guard: SizeGuard): Override[] {
-  return overrides().filter((o) =>
-    guard.kind === "rule"
-      ? o.linter?.rules?.[guard.group]?.[guard.rule] !== undefined
-      : o.plugins?.includes(pluginPath(guard.file))
-  );
-}
-
-function carrierOf(guard: SizeGuard): Override {
-  const [carrier] = carriersOf(guard);
-  if (carrier === undefined) throw new Error(`no override carries ${guard.name}`);
-  return carrier;
-}
-
-/** The files a guard's override excludes: its baseline. */
-function baselineOf(guard: SizeGuard): string[] {
-  return (carrierOf(guard).includes ?? [])
-    .slice(1)
-    .filter((entry) => entry !== ERROR_FILES)
-    .map((entry) => entry.slice(1))
-    .sort();
-}
-
-/** The finding id biome prints for a guard: a rule's path, or `plugin`. */
-const findingId = (guard: SizeGuard): string =>
-  guard.kind === "rule" ? `lint/${guard.group}/${guard.rule}` : "plugin";
+const carriesRule = (override: Override, guard: RuleGuard): boolean =>
+  override.linter?.rules?.[guard.group]?.[guard.rule] !== undefined &&
+  JSON.stringify(override.includes) === JSON.stringify(guard.includes);
 
 describe("biome carries the size guards", () => {
-  for (const guard of GUARDS) {
-    describe(guard.name, () => {
-      it("is carried by exactly one override, and that override carries nothing else", () => {
-        const carriers = carriersOf(guard);
-        expect(carriers, `${guard.name} must sit in exactly one override`).toHaveLength(1);
-        const carrier = present(carriers[0]);
-
-        if (guard.kind === "plugin") {
-          expect(Object.keys(carrier).sort()).toEqual(["includes", "plugins"]);
-          expect(carrier.plugins).toEqual([pluginPath(guard.file)]);
-          return;
-        }
-        expect(Object.keys(carrier).sort()).toEqual(["includes", "linter"]);
-        expect(Object.keys(carrier.linter ?? {})).toEqual(["rules"]);
-        expect(Object.keys(carrier.linter?.rules ?? {})).toEqual([guard.group]);
-        expect(Object.keys(carrier.linter?.rules?.[guard.group] ?? {})).toEqual([guard.rule]);
-        expect(carrier.linter?.rules?.[guard.group]?.[guard.rule]).toEqual({
-          level: "error",
-          options: guard.options,
-        });
+  for (const guard of RULES) {
+    it(`${guard.name}: one override carries it alone, scoped and capped`, () => {
+      const carriers = overrides().filter((override) => carriesRule(override, guard));
+      expect(carriers, `${guard.name} must sit in exactly one override`).toHaveLength(1);
+      const [carrier] = carriers;
+      expect(Object.keys(carrier ?? {}).sort()).toEqual(["includes", "linter"]);
+      expect(Object.keys(carrier?.linter ?? {})).toEqual(["rules"]);
+      expect(carrier?.linter?.rules?.[guard.group]).toEqual({
+        [guard.rule]: { level: "error", options: guard.options },
       });
-
-      it("excludes no file", () => {
-        expect(
-          baselineOf(guard),
-          `${guard.name} excludes nothing: a new violator is fixed, never excluded`
-        ).toEqual([]);
-      });
-
-      it("applies to src/** and excludes exact, sorted, unique files only", () => {
-        const includes = carrierOf(guard).includes ?? [];
-        expect(includes[0]).toBe("src/**");
-        const excluded = includes.slice(1).filter((entry) => entry !== ERROR_FILES);
-        expect(includes.includes(ERROR_FILES), guard.name).toBe("sparesErrorFiles" in guard);
-        for (const entry of excluded) {
-          expect(entry, "an exclusion names one file, never a glob").toMatch(
-            /^!src\/[^*?{}[\]]+\.ts$/
-          );
-        }
-        expect(excluded, "sorted").toEqual([...excluded].sort());
-        expect(new Set(excluded).size, "unique").toBe(excluded.length);
-      });
-    });
-  }
-});
-
-describe("the size baselines only shrink", () => {
-  let measured: ReadonlyMap<string, string[]>;
-  let dir: string;
-
-  beforeAll(() => {
-    dir = mkdtempSync(join(tmpdir(), "aidd-size-guards-"));
-    cpSync(join(CLI_ROOT, "src"), join(dir, "src"), { recursive: true });
-    cpSync(join(CLI_ROOT, "biome-plugins"), join(dir, "biome-plugins"), { recursive: true });
-    const found = new Map<string, string[]>();
-    for (const guard of GUARDS) {
-      const base = { vcs: { enabled: false }, formatter: { enabled: false } };
-      const config =
-        guard.kind === "rule"
-          ? {
-              ...base,
-              assist: { enabled: false },
-              linter: {
-                rules: {
-                  preset: "none",
-                  [guard.group]: {
-                    [guard.rule]: carrierOf(guard).linter?.rules?.[guard.group]?.[guard.rule],
-                  },
-                },
-              },
-            }
-          : { ...base, assist: { enabled: false }, plugins: [pluginPath(guard.file)] };
-      writeFileSync(join(dir, "biome.json"), JSON.stringify(config));
-      const id = findingId(guard);
-      const files = biomeFindings(dir)
-        .filter((finding) => finding.endsWith(`:${id}`))
-        .map((finding) => finding.slice(0, finding.lastIndexOf(":")))
-        .filter((file) => !("sparesErrorFiles" in guard) || !file.endsWith(".error.ts"));
-      found.set(guard.name, [...new Set(files)].sort());
-    }
-    measured = found;
-  }, 60_000);
-
-  afterAll(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-
-  for (const guard of GUARDS) {
-    it(`lists exactly the files that still break ${guard.name}`, () => {
-      const { added, fixed } = expectRatchet(measured.get(guard.name) ?? [], baselineOf(guard));
-      expect(added, `new violator of ${guard.name}: fix it, never list it`).toEqual([]);
-      expect(
-        fixed,
-        `no longer violates ${guard.name}: remove it from its override in biome.json`
-      ).toEqual([]);
+      expect(Object.keys(carrier?.linter?.rules ?? {})).toEqual([guard.group]);
     });
   }
 
-  it("names a baseline entry whose file no longer violates", () => {
-    expect(expectRatchet(["src/a.ts"], ["src/a.ts", "src/gone.ts"]).fixed).toEqual(["src/gone.ts"]);
+  it("function parameters: one plugin override on src, and no second mechanism beside it", () => {
+    const carriers = overrides().filter((o) => o.plugins?.includes(PARAMS_PLUGIN));
+    expect(carriers).toHaveLength(1);
+    expect(carriers[0]).toEqual({ includes: ["src/**"], plugins: [PARAMS_PLUGIN] });
+    expect(JSON.stringify(biomeConfig())).not.toContain("useMaxParams");
+  });
+
+  it("every override naming a size rule is one of the guards above", () => {
+    const sizeRule = (override: Override): boolean =>
+      Object.values(override.linter?.rules ?? {}).some((group) =>
+        Object.keys(group ?? {}).some((rule) => /^noExcessive/.test(rule))
+      );
+    expect(overrides().filter(sizeRule)).toHaveLength(RULES.length);
   });
 });
 
-const ALL_IDS = new Set(GUARDS.map(findingId));
+const FN = "lint/complexity/noExcessiveLinesPerFunction";
+const COMPLEXITY = "lint/complexity/noExcessiveCognitiveComplexity";
+const CLASSES = "lint/style/noExcessiveClassesPerFile";
+const FILE = "lint/style/noExcessiveLinesPerFile";
+const PARAMS = "plugin";
+const SIZE_IDS = new Set([FN, COMPLEXITY, CLASSES, FILE, PARAMS]);
+
+interface Plant {
+  readonly path: string;
+  readonly content: string;
+  /** The guards that must flag the file, and no others. */
+  readonly flags: readonly string[];
+}
+
+const threeParams =
+  "export function three(a: number, b: number, c: number): number {\n  return a + b + c;\n}\n";
+
+const PLANTS: readonly Plant[] = [
+  // src: function 30, complexity 8, file 150, one class, three parameters.
+  { path: "src/kernel/over-function.ts", content: longFunction("over", 29), flags: [FN] },
+  { path: "src/kernel/at-function.ts", content: longFunction("at", 28), flags: [] },
+  { path: "src/kernel/over-complexity.ts", content: branches("over", 9), flags: [COMPLEXITY] },
+  { path: "src/kernel/at-complexity.ts", content: branches("at", 8), flags: [] },
+  { path: "src/kernel/over-file.ts", content: constants(151, "v"), flags: [FILE] },
+  { path: "src/kernel/at-file.ts", content: constants(150, "w"), flags: [] },
+  { path: "src/kernel/two-classes.ts", content: twoClasses(""), flags: [CLASSES] },
+  { path: "src/kernel/four-params.ts", content: fourParams(""), flags: [PARAMS] },
+  { path: "src/kernel/three-params.ts", content: threeParams, flags: [] },
+  // an error file holds many small classes: no class or line cap, every other guard applies.
+  { path: "src/kernel/errors.error.ts", content: twoClasses("Errors"), flags: [] },
+  { path: "src/kernel/long.error.ts", content: constants(420, "e"), flags: [] },
+  { path: "src/kernel/tangled.error.ts", content: tangled("tangleErrors"), flags: [COMPLEXITY] },
+  // declarations: file 300, and the same function and complexity caps as any src file.
+  { path: "src/composition/over-file.ts", content: constants(301, "a"), flags: [FILE] },
+  { path: "src/composition/at-file.ts", content: constants(300, "b"), flags: [] },
+  { path: "src/composition/over-function.ts", content: longFunction("over", 29), flags: [FN] },
+  {
+    path: "src/contexts/tools/domain/profiles/over-file.ts",
+    content: constants(301, "c"),
+    flags: [FILE],
+  },
+  {
+    path: "src/contexts/tools/domain/profiles/at-file.ts",
+    content: constants(300, "d"),
+    flags: [],
+  },
+  {
+    path: "src/contexts/telemetry/contract/over-file.ts",
+    content: constants(301, "f"),
+    flags: [FILE],
+  },
+  { path: "src/contexts/telemetry/contract/at-file.ts", content: constants(300, "g"), flags: [] },
+  {
+    path: "src/contexts/telemetry/contract/tangled.ts",
+    content: tangled("tangle"),
+    flags: [COMPLEXITY],
+  },
+  // tests: file 400 and complexity 8 only.
+  { path: "tests/kernel/over-file.ts", content: constants(401, "t"), flags: [FILE] },
+  { path: "tests/kernel/at-file.ts", content: constants(400, "u"), flags: [] },
+  { path: "tests/kernel/mid-file.ts", content: constants(151, "m"), flags: [] },
+  { path: "tests/kernel/over-complexity.ts", content: branches("over", 9), flags: [COMPLEXITY] },
+  { path: "tests/kernel/at-complexity.ts", content: branches("at", 8), flags: [] },
+  {
+    path: "tests/kernel/other-caps.ts",
+    content: [longFunction("sixty", 60), twoClasses("Tests"), fourParams("Tests")].join("\n"),
+    flags: [],
+  },
+];
 
 describe("the size guards bite", () => {
   let planted: string;
   let findings: string[];
-  const baselinePath = "src/kernel/baselined.ts";
 
-  const sizeFindings = (prefix: string): string[] =>
-    findings.filter(
-      (finding) =>
-        finding.startsWith(prefix) && ALL_IDS.has(finding.slice(finding.lastIndexOf(":") + 1))
-    );
+  const idsFlagging = (path: string): string[] =>
+    [
+      ...new Set(
+        findings
+          .filter((finding) => finding.startsWith(`${path}:`))
+          .map((finding) => finding.slice(finding.lastIndexOf(":") + 1))
+          .filter((id) => SIZE_IDS.has(id))
+      ),
+    ].sort();
 
   beforeAll(() => {
     planted = mkdtempSync(join(tmpdir(), "aidd-size-guards-bite-"));
     cpSync(join(CLI_ROOT, "biome-plugins"), join(planted, "biome-plugins"), { recursive: true });
-    mkdirSync(join(planted, "src/kernel"), { recursive: true });
-    mkdirSync(join(planted, "tests/kernel"), { recursive: true });
-
-    const files: Record<string, string> = {
-      "src/kernel/long-function.ts": longFunction("sixty", 60),
-      "src/kernel/tangled.ts": tangled("tangle"),
-      "src/kernel/two-classes.ts": twoClasses(""),
-      "src/kernel/long-file.ts": constants(420, "v"),
-      "src/kernel/two-classes.error.ts": twoClasses("Errors"),
-      "src/kernel/long-file.error.ts": constants(420, "e"),
-      "src/kernel/tangled.error.ts": tangled("tangleErrors"),
-      "src/kernel/four-params.ts": fourParams(""),
-      "src/kernel/at-limit-function.ts": `${longFunction("fifty", 48)}export const one = (): number => 1;\nexport const two = (): number => 2;\n`,
-      "src/kernel/at-limit-file.ts": constants(400, "w"),
-      "src/kernel/at-limit-complexity.ts": branches("fifteen", 15),
-      "src/kernel/over-limit-function.ts": longFunction("fiftyOne", 49),
-      "src/kernel/over-limit-file.ts": constants(401, "x"),
-      "src/kernel/over-limit-complexity.ts": branches("sixteen", 16),
-      "src/kernel/at-limit-params.ts":
-        "export function three(a: number, b: number, c: number): number {\n  return a + b + c;\n}\n",
-      "tests/kernel/oversized.ts": [
-        longFunction("sixty", 60),
-        tangled("tangle"),
-        twoClasses("Tests"),
-        constants(420, "t"),
-        fourParams("Tests"),
-      ].join("\n"),
-    };
-    for (const [path, content] of Object.entries(files)) {
+    for (const { path, content } of PLANTS) {
+      mkdirSync(join(planted, dirname(path)), { recursive: true });
       writeFileSync(join(planted, path), content);
     }
-
-    const config = structuredClone(biomeConfig());
-    for (const o of config.overrides ?? []) {
-      if (o.plugins?.includes(pluginPath("max-function-params.grit")))
-        o.includes?.push(`!${baselinePath}`);
-    }
-    writeFileSync(join(planted, "biome.json"), JSON.stringify(config));
-    writeFileSync(join(planted, baselinePath), fourParams("Baseline"));
+    writeFileSync(join(planted, "biome.json"), JSON.stringify(biomeConfig()));
     findings = biomeFindings(planted);
   }, 60_000);
 
@@ -264,56 +225,15 @@ describe("the size guards bite", () => {
     rmSync(planted, { recursive: true, force: true });
   });
 
-  it("flags each planted violator for its own guard", () => {
-    const expected: Record<string, string> = {
-      "src/kernel/long-function.ts": "lint/complexity/noExcessiveLinesPerFunction",
-      "src/kernel/tangled.ts": "lint/complexity/noExcessiveCognitiveComplexity",
-      "src/kernel/two-classes.ts": "lint/style/noExcessiveClassesPerFile",
-      "src/kernel/long-file.ts": "lint/style/noExcessiveLinesPerFile",
-      "src/kernel/four-params.ts": "plugin",
-    };
-    for (const [file, id] of Object.entries(expected)) {
-      expect(findings, `${file} must yield ${id}: ${findings.join(", ")}`).toContain(
-        `${file}:${id}`
-      );
-      expect([...new Set(sizeFindings(file).map((f) => f.slice(f.lastIndexOf(":") + 1)))]).toEqual([
-        id,
-      ]);
-    }
-  });
-
-  it("flags one step past each limit, for its own guard", () => {
-    const expected: Record<string, string> = {
-      "src/kernel/over-limit-function.ts": "lint/complexity/noExcessiveLinesPerFunction",
-      "src/kernel/over-limit-file.ts": "lint/style/noExcessiveLinesPerFile",
-      "src/kernel/over-limit-complexity.ts": "lint/complexity/noExcessiveCognitiveComplexity",
-    };
-    for (const [file, id] of Object.entries(expected)) {
-      expect(findings, `${file} must yield ${id}`).toContain(`${file}:${id}`);
-    }
-  });
+  for (const { path, flags } of PLANTS) {
+    it(`${path} is flagged by ${flags.length === 0 ? "no size guard" : flags.join(", ")}`, () => {
+      expect(idsFlagging(path), findings.join(", ")).toEqual([...flags].sort());
+    });
+  }
 
   it("counts a function, an arrow, a method and a signature, four times over", () => {
     expect(
-      findings.filter((finding) => finding === "src/kernel/four-params.ts:plugin")
+      findings.filter((finding) => finding === `src/kernel/four-params.ts:${PARAMS}`)
     ).toHaveLength(4);
-  });
-
-  it("flags nothing at the limit", () => {
-    expect(sizeFindings("src/kernel/at-limit")).toEqual([]);
-  });
-
-  it("spares an error file the class and line caps, and no other guard", () => {
-    expect(sizeFindings("src/kernel/two-classes.error.ts")).toEqual([]);
-    expect(sizeFindings("src/kernel/long-file.error.ts")).toEqual([]);
-    expect(sizeFindings("src/kernel/tangled.error.ts")).toHaveLength(1);
-  });
-
-  it("applies none of the six under tests/", () => {
-    expect(sizeFindings("tests/")).toEqual([]);
-  });
-
-  it("lets a baseline file through, and no other file", () => {
-    expect(sizeFindings(baselinePath)).toEqual([]);
   });
 });
