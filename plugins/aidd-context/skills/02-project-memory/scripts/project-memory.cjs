@@ -150,7 +150,11 @@ function wireKiloContext(root) {
       if (relative === "" || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
         throw new UsageError(`${file} resolves outside the project; wire it manually.`);
       }
-      fd = fs.openSync(resolved, fs.constants.O_RDONLY | safeFlags);
+      try { fd = fs.openSync(resolved, fs.constants.O_RDWR | safeFlags); }
+      catch (error) {
+        if (error.code === "EACCES" || error.code === "EPERM") throw new UsageError(`${file} cannot be opened for writing; wire it manually.`);
+        throw error;
+      }
       opened = fs.fstatSync(fd);
       if (!opened.isFile() || opened.nlink !== 1) throw new UsageError(`${file} must be a regular file with one hard link.`);
       original = fs.readFileSync(fd);
@@ -158,9 +162,7 @@ function wireKiloContext(root) {
       catch { throw new UsageError(`${file} is not valid UTF-8; wire it manually.`); }
       if (MARKERS.some((marker) => text.includes(marker))) return `${file}: kept, it holds the markers`;
       if (process.platform !== "win32" && !(opened.mode & 0o222)) throw new UsageError(`${file} is read-only; wire it manually.`);
-      writable = fs.openSync(resolved, fs.constants.O_WRONLY | safeFlags);
-      const stat = fs.fstatSync(writable);
-      if (stat.dev !== opened.dev || stat.ino !== opened.ino || stat.nlink !== 1) throw new UsageError(`${file} changed while wiring; try again.`);
+      writable = fd;
     } else {
       text = fs.readFileSync(path.join(TEMPLATES, "AGENTS.md"), "utf8");
     }
@@ -218,7 +220,7 @@ function wireKiloContext(root) {
     }
     return `${file}: marker pair added`;
   } finally {
-    try { if (writable !== undefined) fs.closeSync(writable); }
+    try { if (writable !== undefined && writable !== fd) fs.closeSync(writable); }
     finally {
       try { if (fd !== undefined) fs.closeSync(fd); }
       finally { if (temp !== undefined && !keepBackup) fs.rmSync(temp, { force: true }); }

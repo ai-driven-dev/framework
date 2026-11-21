@@ -268,12 +268,10 @@ function kiloSnapshot(root, file, shown, notSynced) {
     const resolved = fs.realpathSync(file);
     const relative = path.relative(root, resolved);
     if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) throw new Error("outside project");
-    const before = fs.lstatSync(resolved);
-    if (!before.isFile() || before.nlink !== 1) throw new Error("not a private regular file");
     const fd = fs.openSync(resolved, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
     try {
       const stat = fs.fstatSync(fd);
-      if (stat.dev !== before.dev || stat.ino !== before.ino || stat.nlink !== 1 || fs.realpathSync(file) !== resolved) throw new Error("context changed while opening");
+      if (!stat.isFile() || stat.nlink !== 1 || fs.realpathSync(file) !== resolved) throw new Error("context changed while opening");
       const bytes = fs.readFileSync(fd);
       return { file, resolved, stat, bytes, text: new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes) };
     } finally { fs.closeSync(fd); }

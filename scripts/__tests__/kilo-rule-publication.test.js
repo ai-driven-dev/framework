@@ -301,7 +301,7 @@ test("late failure restores existing file bytes and modes", { skip: process.plat
 test("rollback includes a published file when a subsequent stat fails", (t) => {
   const p = publisher(t);
   p.put(".kilo/kilo.jsonc", "{}\n");
-  const env = injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;const stat=fs.lstatSync;let armed=false;fs.renameSync=function(from,to){const r=rename.apply(this,arguments);if(to.endsWith('/aidd_docs/rules/01-standards/1-naming.md'))armed=true;return r};fs.lstatSync=function(file,...args){if(armed&&typeof file==='string'&&file.endsWith('/.kilo/rules/01-standards/1-naming.md')){armed=false;throw Object.assign(new Error('injected stat failure'),{code:'EIO'})}return stat.call(this,file,...args)};");
+  const env = injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;const stat=fs.lstatSync;const normalize=value=>String(value).split(String.fromCharCode(92)).join('/');let armed=false;fs.renameSync=function(from,to){const r=rename.apply(this,arguments);if(normalize(to).endsWith('/aidd_docs/rules/01-standards/1-naming.md'))armed=true;return r};fs.lstatSync=function(file,...args){if(armed&&typeof file==='string'&&normalize(file).endsWith('/.kilo/rules/01-standards/1-naming.md')){armed=false;throw Object.assign(new Error('injected stat failure'),{code:'EIO'})}return stat.call(this,file,...args)};");
   const before = p.snapshot();
   const result = p.run(rule, "kilo", [], env);
   assert.notEqual(result.status, 0);
