@@ -399,6 +399,9 @@ fs.writeSync = function(fd, buffer, offset, length, position) {
 
 test("Kilo wiring keeps a recovery copy when writing fails", () => {
   within({ "AGENTS.md": "# Original\n" }, (root) => {
+    const target = path.join(root, "AGENTS.md");
+    if (process.platform !== "win32") fs.chmodSync(target, 0o644);
+    const originalMode = fs.statSync(target).mode & 0o777;
     const preload = path.join(root, "inject.cjs");
     fs.writeFileSync(preload, `
 const fs = require("node:fs");
@@ -418,11 +421,16 @@ fs.writeSync = function(fd, buffer, offset, length, position) {
       cwd: root, encoding: "utf8", env: GIT_ENV,
     });
     assert.notEqual(result.status, 0);
+    assert.equal(fs.statSync(target).mode & 0o777, originalMode);
     const backup = fs.readdirSync(root).find((name) => name.startsWith(".aidd-memory-") && name.endsWith(".tmp"));
     assert.ok(backup);
     assert.match(result.stderr, /Original content retained at/u);
     assert.ok(result.stderr.includes(backup));
     assert.equal(read(root, backup), "# Original\n");
+    if (process.platform !== "win32") assert.equal(fs.statSync(path.join(root, backup)).mode & 0o777, 0o600);
+    fs.writeFileSync(target, read(root, backup));
+    assert.equal(read(root, "AGENTS.md"), "# Original\n");
+    assert.equal(fs.statSync(target).mode & 0o777, originalMode);
   });
 });
 

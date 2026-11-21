@@ -171,7 +171,7 @@ function wireKiloContext(root) {
     temp = path.join(path.dirname(resolved ?? full), `.aidd-memory-${randomUUID()}.tmp`);
     let staged;
     try {
-      staged = fs.openSync(temp, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | safeFlags, opened ? opened.mode & 0o7777 : 0o666);
+      staged = fs.openSync(temp, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | safeFlags, 0o600);
       let offset = 0;
       while (offset < backup.length) {
         const written = fs.writeSync(staged, backup, offset, backup.length - offset, offset);
@@ -181,7 +181,6 @@ function wireKiloContext(root) {
       if (opened && process.platform !== "win32") {
         const tempStat = fs.fstatSync(staged);
         if (tempStat.uid !== opened.uid || tempStat.gid !== opened.gid) fs.fchownSync(staged, opened.uid, opened.gid);
-        fs.fchmodSync(staged, opened.mode & 0o7777);
       }
       fs.fsyncSync(staged);
     } finally { if (staged !== undefined) fs.closeSync(staged); }
