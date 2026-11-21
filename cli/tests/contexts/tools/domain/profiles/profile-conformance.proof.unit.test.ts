@@ -288,7 +288,7 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(withBridgeGeneratingNothing(FLAT)),
   "comes with one captured payload per event it relays": () =>
     subjectOf(NATIVE, { payloadFixtures: [] }),
-  "writes the same files for the same plugin, whatever order its files arrive in": () => {
+  "writes its files sorted by path, whatever order its files arrive in": () => {
     return subjectOf(flatPathIgnoring(FLAT, (name) => `${name}-${counter++}`));
   },
   "writes no path that two distinct plugins share": () =>

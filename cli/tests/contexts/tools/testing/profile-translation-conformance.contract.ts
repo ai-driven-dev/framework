@@ -19,10 +19,6 @@ function filesOf(profile: AiTool, name: string, arrival: "given" | "reversed" = 
   return files;
 }
 
-function byPath(files: readonly { relativePath: string; content: string }[]) {
-  return files.map((file) => [file.relativePath, file.content]).sort();
-}
-
 function withPersonKey(content: string): string {
   return JSON.stringify({ ...JSON.parse(content), [PERSON_KEY]: 1 });
 }
@@ -36,9 +32,11 @@ const PRESENCE = {
 };
 
 export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
-  aiCheck("writes the same files for the same plugin, whatever order its files arrive in", (p) => {
-    expect(filesOf(p, "alpha")).toEqual(filesOf(p, "alpha"));
-    expect(byPath(filesOf(p, "alpha", "reversed"))).toEqual(byPath(filesOf(p, "alpha")));
+  aiCheck("writes its files sorted by path, whatever order its files arrive in", (p) => {
+    const given = filesOf(p, "alpha");
+    const paths = given.map((file) => file.relativePath);
+    expect(paths).toEqual([...paths].sort());
+    expect(filesOf(p, "alpha", "reversed")).toEqual(given);
   }),
   aiCheck("writes no path that two distinct plugins share", (p) => {
     const alpha = filesOf(p, "alpha").map((file) => file.relativePath);
