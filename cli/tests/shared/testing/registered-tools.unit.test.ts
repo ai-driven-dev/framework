@@ -3,7 +3,10 @@ import { registeredTools, resolveRegisteredToolId, TOOL } from "./registered-too
 
 describe("the registered tools kit", () => {
   it("mints one id per registered tool, in the catalog's canonical order", () => {
-    expect(Object.values(TOOL)).toEqual([...registeredTools().idsInCanonicalOrder()]);
+    const canonical = [...registeredTools().idsInCanonicalOrder()];
+
+    expect(Object.keys(TOOL)).toEqual(canonical);
+    expect(Object.values(TOOL)).toEqual(canonical);
   });
 
   it("answers a profile for a minted id", () => {

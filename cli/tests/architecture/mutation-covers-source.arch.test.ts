@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import { strykerArgs } from "../../scripts/run-mutation.mjs";
+import { wireTools } from "../../src/composition/tools.js";
 import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./helpers.js";
 
 interface Scope {
@@ -25,6 +26,11 @@ interface ScopeDeclaration {
 function declaration(): ScopeDeclaration {
   const parsed = JSON.parse(read("mutation-scopes.json")) as ScopeDeclaration;
   return parsed;
+}
+
+function packageScripts(): string[] {
+  const { scripts } = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
+  return Object.keys(scripts);
 }
 
 function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
@@ -101,8 +107,7 @@ describe("mutation covers every source file", () => {
   });
 
   it("package.json runs every scope, and nothing it does not", () => {
-    const { scripts } = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
-    const scripted = Object.keys(scripts)
+    const scripted = packageScripts()
       .filter((name) => name.startsWith("test:mutation:"))
       .map((name) => name.slice("test:mutation:".length));
 
@@ -112,6 +117,38 @@ describe("mutation covers every source file", () => {
   it("no other file lists what mutation covers", () => {
     const stryker = JSON.parse(read("stryker.conf.json")) as Record<string, unknown>;
     expect("mutate" in stryker, "stryker.conf.json declares its own mutate again").toBe(false);
+  });
+});
+
+describe("every AI tool is mutated in a scope of its own", () => {
+  const aiIds = () => [...wireTools().idsInCanonicalOrder("ai")].sort();
+  const profileFolder = (id: string) => `src/contexts/tools/domain/profiles/${id}/**/*.ts`;
+
+  it("declares one tools-<id> scope per registered AI tool, each over its profile folder", () => {
+    const { scopes } = declaration();
+    const scoped = Object.keys(scopes)
+      .filter((name) => name.startsWith("tools-"))
+      .map((name) => name.slice("tools-".length));
+
+    expect(scoped.sort()).toEqual(aiIds());
+    for (const id of aiIds()) expect(scopes[`tools-${id}`]?.mutate).toBe(profileFolder(id));
+  });
+
+  it("carves exactly those profile folders out of the tools scope", () => {
+    const negated = [declaration().scopes.tools?.mutate ?? []]
+      .flat()
+      .filter((glob) => glob.startsWith("!src/contexts/tools/domain/profiles/"))
+      .map((glob) => glob.slice(1));
+
+    expect(negated.sort()).toEqual(aiIds().map(profileFolder));
+  });
+
+  it("scripts test:mutation:tools-<id> for each, and for no other tool", () => {
+    const scripted = packageScripts()
+      .filter((name) => name.startsWith("test:mutation:tools-"))
+      .map((name) => name.slice("test:mutation:tools-".length));
+
+    expect(scripted.sort()).toEqual(aiIds());
   });
 });
 

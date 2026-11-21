@@ -12,6 +12,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../src/composition/tools.js";
+import { buildTargetModesOf } from "../../src/contexts/translate/contract/build-targets.js";
 import { present } from "../shared/testing/present.builder.js";
 import { CLI_ROOT } from "./helpers.js";
 
@@ -168,6 +170,31 @@ describe("the automation calls scripts this package still has", () => {
 
     expect(found, "the real workflow calls this package's scripts").toContain("knip");
     expect(found, "`pnpm install` is not a script").not.toContain("install");
+  });
+});
+
+describe("the automation lists the tools the catalog registers", () => {
+  it("builds each (tool, mode) pair the catalog supports in ci.yml, and no other", () => {
+    const pairs = [
+      ...readFileSync(join(WORKFLOWS, "ci.yml"), "utf8").matchAll(
+        /-\s*\{\s*tool:\s*(\w+),\s*mode:\s*(\w+)\s*\}/g
+      ),
+    ].map(([, tool, mode]) => `${tool}:${mode}`);
+    const supported = buildTargetModesOf(wireTools()).map(
+      ({ target, mode }) => `${target}:${mode}`
+    );
+
+    expect(pairs.sort()).toEqual(supported.sort());
+  });
+
+  it("names the AI tools and the IDE tools of the catalog in smoke-tools.sh, in help order", () => {
+    const script = readFileSync(join(CLI_ROOT, "scripts", "smoke-tools.sh"), "utf8");
+    const listed = (name: string) =>
+      new RegExp(`^${name}=\\(([^)]*)\\)`, "m").exec(script)?.[1]?.trim().split(/\s+/);
+    const catalog = wireTools();
+
+    expect(listed("AI_TOOLS")).toEqual([...catalog.inHelpOrder("ai")]);
+    expect(listed("IDE_TOOLS")).toEqual([...catalog.inHelpOrder("ide")]);
   });
 });
 
