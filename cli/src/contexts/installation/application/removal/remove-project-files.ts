@@ -1,13 +1,4 @@
 import { dirname, join } from "node:path";
-import {
-  AIDD_DIR,
-  AIDD_MARKETPLACES_FILENAME,
-} from "../../../../shared/domain/layout/aidd-layout.js";
-import {
-  isMergeContentEmpty,
-  type MergeFileEntry,
-  removeEntriesFromJson,
-} from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -15,13 +6,14 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { aiddGitignoreEntries } from "../../domain/manifest-gitignore-entries.js";
-import { AIDD_CONFIG_FILENAME, PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 import { removeProjectHooks } from "../shared/remove-project-hooks.js";
 import type { UpdateGitignore } from "../update-gitignore.js";
+import { cleanMergeFileKeys } from "./clean-merge-file-keys.js";
+import { removeAiddState } from "./remove-aidd-state.js";
 
 /** What RemoveProjectFiles is built from. */
 export interface RemoveProjectFilesDeps {
@@ -49,7 +41,7 @@ export class RemoveProjectFiles {
     deleted += await this.deleteMachineLocalFiles(manifest, projectRoot, {
       overwriteEdited: force,
     });
-    await this.removeAiddState(projectRoot);
+    await removeAiddState(this.deps, projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.deps.updateGitignore.remove(
       projectRoot,
@@ -60,27 +52,6 @@ export class RemoveProjectFiles {
 
   private machineLocalFilesOf(toolId: ToolId): readonly string[] {
     return this.tools.profile(toolId).machineLocalFiles();
-  }
-
-  // `config.json` is a committed file clean did not write, so clean never
-  // removes it. Everything AIDD did write must go before the emptiness check, or its own presence
-  // blocks a removal that should happen, the registry `marketplace add` writes included.
-  private async removeAiddState(projectRoot: string): Promise<void> {
-    const aiddDir = join(projectRoot, AIDD_DIR);
-    const configKept = await this.deps.fs.fileExists(join(aiddDir, AIDD_CONFIG_FILENAME));
-
-    await this.deps.fs.deleteDirectory(join(aiddDir, "cache"));
-    await this.deps.fs.deleteDirectory(join(projectRoot, PLUGIN_CACHE_SUBDIR));
-    await this.deps.fs.deleteFile(join(aiddDir, AIDD_MARKETPLACES_FILENAME));
-    await this.deps.manifestRepo.delete();
-
-    if (!(await this.deps.fs.fileExists(aiddDir))) return;
-    const remaining = await this.deps.fs.listDirectory(aiddDir);
-    if (remaining.length === 0) {
-      await this.deps.fs.deleteDirectory(aiddDir);
-      return;
-    }
-    if (configKept) this.deps.logger.info(`Kept ${AIDD_DIR}/${AIDD_CONFIG_FILENAME}`);
   }
 
   /** The files a tool writes that `plugins[].files` never tracks: a machine-local settings file
@@ -145,7 +116,11 @@ export class RemoveProjectFiles {
     for (const toolId of manifest.getInstalledToolIds()) {
       this.deps.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), projectRoot);
-      deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), projectRoot);
+      deleted += await cleanMergeFileKeys(
+        this.deps.fs,
+        manifest.getMergeFiles(toolId),
+        projectRoot
+      );
       if (this.tools.isAiTool(toolId)) {
         deleted += await this.deleteToolPluginFiles(
           manifest,
@@ -174,37 +149,6 @@ export class RemoveProjectFiles {
       count += deleted.length;
     }
     return count;
-  }
-
-  private async cleanMergeFileKeys(
-    mergeFiles: readonly MergeFileEntry[],
-    projectRoot: string
-  ): Promise<number> {
-    let count = 0;
-    for (const mergeFile of mergeFiles) {
-      const fullPath = join(projectRoot, mergeFile.relativePath);
-      if (!(await this.deps.fs.fileExists(fullPath))) continue;
-      await this.applyMergeFileCleaning(fullPath, mergeFile);
-      count++;
-    }
-    return count;
-  }
-
-  private async applyMergeFileCleaning(fullPath: string, mergeFile: MergeFileEntry): Promise<void> {
-    const keys = Object.keys(mergeFile.entries);
-    if (keys.length === 0) {
-      await this.deps.fs.deleteFile(fullPath);
-      await this.deps.fs.deleteEmptyDirectories(dirname(fullPath));
-      return;
-    }
-    const content = await this.deps.fs.readFile(fullPath);
-    const cleaned = removeEntriesFromJson(content, mergeFile.sectionKey, keys);
-    if (isMergeContentEmpty(cleaned, mergeFile.sectionKey)) {
-      await this.deps.fs.deleteFile(fullPath);
-      await this.deps.fs.deleteEmptyDirectories(dirname(fullPath));
-    } else {
-      await this.deps.fs.writeFile(fullPath, cleaned);
-    }
   }
 
   private async deleteFiles(
