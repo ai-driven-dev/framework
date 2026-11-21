@@ -271,6 +271,7 @@ export type Rule =
   | "mirror"
   | "shape"
   | "thrown"
+  | "errorText"
   | "instructs"
   | "composition"
   | "ports"

@@ -12,6 +12,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import {
   AT_PROJECT,
   BINARY,
@@ -399,7 +400,7 @@ describe("clean: shared source", () => {
           userSourceReferences: references,
         });
         await expect(userClean.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(
-          "the shared framework source"
+          saying("the shared framework source")
         );
       });
 

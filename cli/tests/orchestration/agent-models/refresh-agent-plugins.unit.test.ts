@@ -40,7 +40,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
           activated: [],
           binaryMissing: [],
           warnings: [],
-          errors: activationErrors.map((message) => ({ scope: "sync", message })),
+          errors: activationErrors.map((message) => ({ scope: "sync", error: new Error(message) })),
           failed: activationErrors.length > 0,
         };
       },
@@ -98,7 +98,14 @@ describe("RefreshAgentPlugins", () => {
   it("fails with every message the activation reported", async () => {
     const { run } = refreshOver({ installed: true }, ["first", "second"]);
 
-    await expect(run("project")).rejects.toThrow("first\nsecond");
+    await expect(run("project")).rejects.toThrow(
+      expect.objectContaining({
+        errors: [
+          { scope: "sync", error: new Error("first") },
+          { scope: "sync", error: new Error("second") },
+        ],
+      })
+    );
   });
 
   it("goes on when the activation reported no error", async () => {

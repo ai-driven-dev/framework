@@ -116,7 +116,7 @@ describe("declaring a tool's hooks", () => {
 
   it.each(BROKEN)("says what $case broke", ({ invariant, owner = OWNER, broken, detail }) => {
     expect(() => declareHooks(owner, broken())).toThrow(
-      `The hooks descriptor of '${owner.toolId}' breaks '${invariant}': ${detail}`
+      expect.objectContaining({ toolId: owner.toolId, invariant, detail })
     );
   });
 

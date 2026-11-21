@@ -23,6 +23,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 
 const ALIAS = "project-alias";
@@ -118,7 +119,7 @@ for (const toolId of [TOOL.codex]) {
           ...options(),
           name: FRAMEWORK_MARKETPLACE_NAME,
         })
-      ).rejects.toThrow(/shared by every project.*aidd clean --scope user/);
+      ).rejects.toThrow(saying(/shared by every project.*aidd clean --scope user/));
       expect(list).not.toHaveBeenCalled();
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
@@ -206,7 +207,7 @@ for (const toolId of [TOOL.codex]) {
     it("refuses B's live claim, including with autoConfirm", async () => {
       const f = await fixture(enabled(), { dependents: ["/B"] });
       await expect(f.useCase.execute(options())).rejects.toThrow(
-        /user-scope marketplace 'project-alias'.*active projects.*\/B/
+        saying(/user-scope marketplace 'project-alias'.*active projects.*\/B/)
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(
@@ -225,7 +226,9 @@ for (const toolId of [TOOL.codex]) {
           addedAt: "2026-09-02T00:00:00.000Z",
         })
       );
-      await expect(f.useCase.execute(options())).rejects.toThrow(/Marketplace.*not registered/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        expect.objectContaining({ marketplace: ALIAS })
+      );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
@@ -349,7 +352,9 @@ for (const toolId of [TOOL.codex]) {
 
     it("keeps the canonical claim and registry if the host refuses unregister", async () => {
       const f = await fixture(enabled(), { failOnUninstall: true });
-      await expect(f.useCase.execute(options())).rejects.toThrow(/not installed/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringMatching(/not installed/) })
+      );
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);
@@ -359,7 +364,9 @@ for (const toolId of [TOOL.codex]) {
 
     it("retains the claim and catalogue record if catalogue removal fails after ref uninstall", async () => {
       const f = await fixture(enabled(), { throwOnRemove: true });
-      await expect(f.useCase.execute(options())).rejects.toThrow(/marketplace remove.*failed/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringMatching(/marketplace remove.*failed/) })
+      );
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
@@ -581,7 +588,7 @@ describe("Cursor targeted user marketplace removal", () => {
 
   it("refuses B's live file claim before deleting any bytes", async () => {
     const f = await fixture({ dependents: ["/B"] });
-    await expect(f.useCase.execute(options())).rejects.toThrow(/active projects.*\/B/);
+    await expect(f.useCase.execute(options())).rejects.toThrow(saying(/active projects.*\/B/));
     expect(f.fs.getFile(join(f.pluginDir, "skills/demo/SKILL.md"))).toBe("bytes");
     expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
   });

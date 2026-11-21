@@ -106,7 +106,11 @@ describe("MarketplaceRegistration", () => {
 
   it("refuses to register without a native activation, and says why", () => {
     expect(() => new MarketplaceRegistration(settings, null)).toThrow(
-      "marketplaceSettings requires a nativeActivation to drive the registration."
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "marketplaceSettings requires a nativeActivation to drive the registration."
+        ),
+      })
     );
   });
 

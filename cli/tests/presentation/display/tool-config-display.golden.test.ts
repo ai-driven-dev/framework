@@ -72,7 +72,7 @@ describe("printUpdateResult", () => {
         { toolId: TOOL.claude, fileCount: 4 },
         { toolId: TOOL.cursor, fileCount: 1 },
       ],
-      [{ scope: "codex", message: "binary missing" }]
+      [{ scope: "codex", error: "binary missing" }]
     );
 
     expect(output.captured).toEqual([
@@ -93,7 +93,7 @@ describe("printUpdateResult", () => {
   it("stays silent about missing tools once an error alone came back", () => {
     const output = new CapturingOutput(false);
 
-    printUpdateResult(output, [], [{ scope: "claude", message: "refused" }]);
+    printUpdateResult(output, [], [{ scope: "claude", error: "refused" }]);
 
     expect(output.captured).toEqual([{ level: "warn", message: "[claude] refused" }]);
   });

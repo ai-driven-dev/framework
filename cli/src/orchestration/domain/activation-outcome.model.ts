@@ -2,7 +2,7 @@ import { SyncFailedError } from "../orchestration.error.js";
 
 /** What an activation reported: the scopes it could not finish, and whether that fails the run. */
 export interface ActivationOutcome {
-  readonly errors: readonly { scope: string; message: string }[];
+  readonly errors: readonly { scope: string; error: unknown }[];
   readonly failed: boolean;
 }
 

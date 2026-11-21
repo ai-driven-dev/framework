@@ -2,17 +2,12 @@ import { describe, expect, it } from "vitest";
 import { AuthStorageError, GhCliError } from "../../../../src/contexts/auth/domain/auth.error.js";
 
 describe("AuthStorageError", () => {
-  it("carries the provided message", () => {
-    const error = new AuthStorageError("Failed to write auth file");
-    expect(error.name).toBe("AuthStorageError");
-    expect(error.message).toBe("Failed to write auth file");
-  });
-
-  it("says exactly what went wrong", () => {
+  it("carries its detail and says nothing itself", () => {
     const error = new AuthStorageError("no write");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "AuthStorageError",
-      message: "no write",
+      detail: "no write",
+      message: "",
     });
   });
 
@@ -22,11 +17,12 @@ describe("AuthStorageError", () => {
 });
 
 describe("GhCliError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its detail and says nothing itself", () => {
     const error = new GhCliError("gh exited 1");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "GhCliError",
-      message: "gh exited 1",
+      detail: "gh exited 1",
+      message: "",
     });
   });
 

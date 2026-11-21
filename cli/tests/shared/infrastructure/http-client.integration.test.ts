@@ -6,6 +6,7 @@ import {
   HttpRedirectError,
 } from "../../../src/shared/domain/shared.error.js";
 import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
+import { saying } from "../testing/saying.builder.js";
 
 function startServer(handler: (req: IncomingMessage, res: ServerResponse) => void) {
   const server = createServer(handler);
@@ -146,7 +147,8 @@ describe("HttpClient", () => {
         res.writeHead(404);
         res.end();
       },
-      (url) => expect(new HttpClient().get(url)).rejects.toThrow("Resource not found (HTTP 404)")
+      (url) =>
+        expect(new HttpClient().get(url)).rejects.toThrow(saying("Resource not found (HTTP 404)"))
     );
   });
 

@@ -72,7 +72,7 @@ async function loopUntilExit(): Promise<void> {
     runMenuLoop(
       menuOf,
       resolveProjectRoot(),
-      new OutputAdapter(false, (code) => process.exit(code))
+      new OutputAdapter(false, (code) => process.exit(code), String)
     )
   ).rejects.toThrow(/^exit /);
 }

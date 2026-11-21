@@ -53,7 +53,7 @@ export class ListMarketplaces {
       });
       if (catalog !== null) catalogs.set(marketplace.name, catalog);
     } catch (err) {
-      this.logger?.warn(`Skipping marketplace '${marketplace.name}': ${String(err)}`);
+      this.logger?.warn(`Skipping marketplace '${marketplace.name}': `, err);
     }
   }
 }

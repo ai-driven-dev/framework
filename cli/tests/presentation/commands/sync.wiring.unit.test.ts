@@ -120,12 +120,12 @@ describe("aidd sync — the whole project", () => {
   it("names both the restoration's and the activation's refusals, and fails the process", async () => {
     restoreAll.mockResolvedValue({
       ...NOTHING_RESTORED,
-      errors: [{ scope: "claude", message: "file is not ours" }],
+      errors: [{ scope: "claude", error: "file is not ours" }],
       failed: true,
     });
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "codex", message: "codex CLI refused" }],
+      errors: [{ scope: "codex", error: "codex CLI refused" }],
       failed: true,
       activated: [],
     });
@@ -146,7 +146,7 @@ describe("aidd sync — the whole project", () => {
   it("fails the process on the restoration's refusal alone, the activation being clean", async () => {
     restoreAll.mockResolvedValue({
       ...NOTHING_RESTORED,
-      errors: [{ scope: "claude", message: "file is not ours" }],
+      errors: [{ scope: "claude", error: "file is not ours" }],
       failed: true,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
@@ -234,7 +234,7 @@ describe("aidd sync --tool — a refused activation", () => {
   it("names the refusal and fails the process rather than calling one tool synced", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "claude", message: "claude CLI refused" }],
+      errors: [{ scope: "claude", error: "claude CLI refused" }],
       failed: true,
       activated: [],
     });
@@ -350,7 +350,7 @@ describe("aidd sync --scope user", () => {
   it("names a refused user-scope activation and fails before reporting success", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "claude", message: "claude CLI refused" }],
+      errors: [{ scope: "claude", error: "claude CLI refused" }],
       failed: true,
       activated: ["claude"],
     });

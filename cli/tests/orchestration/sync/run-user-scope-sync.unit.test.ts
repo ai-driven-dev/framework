@@ -45,7 +45,7 @@ function aRun(failed = false) {
         calls.push("syncSettings");
         syncs.push(command);
         return failed
-          ? { ...ACTIVATED_NOTHING, errors: [{ scope: "claude", message: "x" }], failed: true }
+          ? { ...ACTIVATED_NOTHING, errors: [{ scope: "claude", error: "x" }], failed: true }
           : { ...ACTIVATED_NOTHING, activated: [TOOL.claude] };
       },
     },
@@ -93,7 +93,7 @@ describe("RunUserScopeSync", () => {
     const run = aRun(true);
 
     await expect(run.useCase.execute(GIVEN, run.report)).rejects.toThrow(
-      new SyncFailedError([{ scope: "claude", message: "x" }])
+      new SyncFailedError([{ scope: "claude", error: "x" }])
     );
     expect(run.calls.at(-1)).toBe("report activated");
   });

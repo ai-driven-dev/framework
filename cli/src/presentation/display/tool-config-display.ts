@@ -6,7 +6,7 @@ import { printScopedFailures } from "./sync-display.js";
 
 interface ScopedFailure {
   readonly scope: string;
-  readonly message: string;
+  readonly error: unknown;
 }
 
 interface UpdatedTool {

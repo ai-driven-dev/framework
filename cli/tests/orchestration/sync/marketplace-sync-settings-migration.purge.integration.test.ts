@@ -400,8 +400,8 @@ describe("settings migration: stale cache purge", () => {
       });
 
       expect(logger.warnMessages).toStrictEqual([
-        "Native plugin activation — build 'aidd-framework' for claude skipped: translator refused the source",
-        "Native plugin activation — build 'aidd-framework' for claude skipped: translator refused the source",
+        "Native plugin activation — build 'aidd-framework' for claude skipped: Error: translator refused the source",
+        "Native plugin activation — build 'aidd-framework' for claude skipped: Error: translator refused the source",
         "This project's own pre-migration framework cache kept: a requested tool's build failed this run, so its own registration may still point at it — fix the build warning above, then run `aidd sync` again.",
       ]);
     });

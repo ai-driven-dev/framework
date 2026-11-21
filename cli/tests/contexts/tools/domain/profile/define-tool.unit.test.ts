@@ -168,7 +168,7 @@ describe("defineAiTool", () => {
     );
 
     expect(refusal.invariant).toBe("shipped-config-disagrees");
-    expect(refusal.message).toContain("settings.json");
+    expect(refusal.detail).toContain("settings.json");
   });
 
   it("refuses a section's shipped config landing elsewhere than the section writes it", () => {
@@ -230,7 +230,7 @@ describe("defineIdeTool", () => {
     );
 
     expect(refusal.invariant).toBe("shipped-config-disagrees");
-    expect(refusal.message).toContain("settings.json");
+    expect(refusal.detail).toContain("settings.json");
   });
 
   it("refuses a section's shipped config landing elsewhere than the section writes it", () => {
@@ -399,28 +399,28 @@ describe("plugin sections that disagree", () => {
   it("refuses a native layout without a manifest", () => {
     const error = refused({ layout: native.layout, hooks: native.hooks });
 
-    expect([error.invariant, error.message]).toEqual([
+    expect([error.invariant, error.detail]).toEqual([
       "plugin-sections-disagree",
-      "The profile of 'claude' breaks 'plugin-sections-disagree': a native layout requires a manifest section.",
+      "a native layout requires a manifest section.",
     ]);
   });
 
   it("refuses a manifest beside a layout that is not native", () => {
     const sections = sectionsOf(flat);
 
-    expect(refused({ ...sections, manifest: native.manifest }).message).toContain(
+    expect(refused({ ...sections, manifest: native.manifest }).detail).toContain(
       "a flat layout takes no manifest section."
     );
   });
 
   it("refuses a manifest with no layout", () => {
-    expect(refused({ manifest: native.manifest }).message).toContain(
+    expect(refused({ manifest: native.manifest }).detail).toContain(
       "a manifest needs a native layout."
     );
   });
 
   it("refuses a layout with no hooks section to state its delivery", () => {
-    expect(refused({ layout: flat.layout }).message).toContain(
+    expect(refused({ layout: flat.layout }).detail).toContain(
       "a layout requires a hooks section to state its delivery."
     );
   });
@@ -428,14 +428,17 @@ describe("plugin sections that disagree", () => {
   it("refuses a hooks delivery its layout cannot take", () => {
     const bridge = { delivery: { kind: "bridge", flat: { dir: ".x/hooks/" } } } as const;
 
-    expect(refused({ ...sectionsOf(native), hooks: bridge }).message).toContain(
+    expect(refused({ ...sectionsOf(native), hooks: bridge }).detail).toContain(
       "hooks delivery 'bridge' does not suit a native layout."
     );
   });
 });
 
-describe("what a refused profile says", () => {
-  const sayOf = (build: () => unknown) => refusalOf(build).message;
+describe("what a refused profile carries", () => {
+  const sayOf = (build: () => unknown) => {
+    const { toolId, invariant, detail } = refusalOf(build);
+    return { toolId, invariant, detail };
+  };
   const shipped = (name: string, destination: string, delivery: "install" | "section") => ({
     name,
     content: {},
@@ -444,12 +447,16 @@ describe("what a refused profile says", () => {
   });
 
   it("names the tool and the directory it refuses", () => {
-    expect(sayOf(() => defineAiTool({ ...aiSpec, directory: "/abs/" }))).toBe(
-      "The profile of 'claude' breaks 'directory-not-relative': '/abs/' must be relative to the project root."
-    );
-    expect(sayOf(() => defineAiTool({ ...aiSpec, directory: ".x" }))).toBe(
-      "The profile of 'claude' breaks 'directory-without-trailing-slash': '.x' must end with '/'."
-    );
+    expect(sayOf(() => defineAiTool({ ...aiSpec, directory: "/abs/" }))).toEqual({
+      toolId: "claude",
+      invariant: "directory-not-relative",
+      detail: "'/abs/' must be relative to the project root.",
+    });
+    expect(sayOf(() => defineAiTool({ ...aiSpec, directory: ".x" }))).toEqual({
+      toolId: "claude",
+      invariant: "directory-without-trailing-slash",
+      detail: "'.x' must end with '/'.",
+    });
   });
 
   it("names the section no tool can declare", () => {
@@ -457,13 +464,15 @@ describe("what a refused profile says", () => {
       sayOf(() =>
         defineAiTool({ ...aiSpec, capabilities: () => ({ config: [settings], bogus: 1 }) })
       )
-    ).toBe("The profile of 'claude' breaks 'unknown-section': 'bogus' is no section.");
+    ).toEqual({ toolId: "claude", invariant: "unknown-section", detail: "'bogus' is no section." });
   });
 
   it("says an AI tool needs a marketplace or a flat build contract", () => {
-    expect(sayOf(() => defineAiTool({ ...aiSpec, buildContracts: {} }))).toBe(
-      "The profile of 'claude' breaks 'no-build-contract': an AI tool declares a marketplace or a flat build contract."
-    );
+    expect(sayOf(() => defineAiTool({ ...aiSpec, buildContracts: {} }))).toEqual({
+      toolId: "claude",
+      invariant: "no-build-contract",
+      detail: "an AI tool declares a marketplace or a flat build contract.",
+    });
   });
 
   it("names the shipped file declared twice, and the one no section writes", () => {
@@ -477,14 +486,20 @@ describe("what a refused profile says", () => {
           ],
         })
       )
-    ).toBe("The profile of 'claude' breaks 'shipped-config-disagrees': 'a.json' is shipped twice.");
+    ).toEqual({
+      toolId: "claude",
+      invariant: "shipped-config-disagrees",
+      detail: "'a.json' is shipped twice.",
+    });
     expect(
       sayOf(() =>
         defineAiTool({ ...aiSpec, configAssets: [shipped("a.json", ".x/a.json", "section")] })
       )
-    ).toBe(
-      "The profile of 'claude' breaks 'shipped-config-disagrees': 'a.json' lands at .x/a.json, which no settings section writes."
-    );
+    ).toEqual({
+      toolId: "claude",
+      invariant: "shipped-config-disagrees",
+      detail: "'a.json' lands at .x/a.json, which no settings section writes.",
+    });
   });
 });
 

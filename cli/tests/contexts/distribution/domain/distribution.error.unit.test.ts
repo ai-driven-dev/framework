@@ -10,11 +10,12 @@ import {
 } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 
 describe("InvalidMarketplaceScopeError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidMarketplaceScopeError("global");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, scope: error.scope, message: error.message }).toStrictEqual({
       name: "InvalidMarketplaceScopeError",
-      message: 'Invalid marketplace scope: "global". Expected "project" or "user".',
+      scope: "global",
+      message: "",
     });
   });
 
@@ -24,21 +25,37 @@ describe("InvalidMarketplaceScopeError", () => {
 });
 
 describe("MalformedMarketplaceCatalogError", () => {
-  it("says exactly what went wrong (1)", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new MalformedMarketplaceCatalogError("/c.json", "not json", true);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      path: error.path,
+      detail: error.detail,
+      cached: error.cached,
+      message: error.message,
+    }).toStrictEqual({
       name: "MalformedMarketplaceCatalogError",
-      message:
-        "Invalid plugin manifest: catalog at \"/c.json\" is malformed (not json). Run 'aidd marketplace refresh --force' to re-fetch a clean copy.",
+      path: "/c.json",
+      detail: "not json",
+      cached: true,
+      message: "",
     });
   });
 
-  it("says exactly what went wrong (2)", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new MalformedMarketplaceCatalogError("/c.json", "not json", false);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      path: error.path,
+      detail: error.detail,
+      cached: error.cached,
+      message: error.message,
+    }).toStrictEqual({
       name: "MalformedMarketplaceCatalogError",
-      message:
-        'Invalid plugin manifest: catalog at "/c.json" is malformed (not json). Fix or re-create the marketplace catalog file.',
+      path: "/c.json",
+      detail: "not json",
+      cached: false,
+      message: "",
     });
   });
 
@@ -50,11 +67,16 @@ describe("MalformedMarketplaceCatalogError", () => {
 });
 
 describe("MarketplaceAlreadyRegisteredError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new MarketplaceAlreadyRegisteredError("aidd");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      marketplace: error.marketplace,
+      message: error.message,
+    }).toStrictEqual({
       name: "MarketplaceAlreadyRegisteredError",
-      message: "Marketplace 'aidd' is already registered.",
+      marketplace: "aidd",
+      message: "",
     });
   });
 
@@ -66,11 +88,16 @@ describe("MarketplaceAlreadyRegisteredError", () => {
 });
 
 describe("MarketplaceNotFoundError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new MarketplaceNotFoundError("aidd");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      marketplace: error.marketplace,
+      message: error.message,
+    }).toStrictEqual({
       name: "MarketplaceNotFoundError",
-      message: "Marketplace 'aidd' is not registered.",
+      marketplace: "aidd",
+      message: "",
     });
   });
 
@@ -80,11 +107,12 @@ describe("MarketplaceNotFoundError", () => {
 });
 
 describe("PluginFetchError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new PluginFetchError("clone refused");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "PluginFetchError",
-      message: "Failed to fetch plugin: clone refused",
+      detail: "clone refused",
+      message: "",
     });
   });
 
@@ -94,11 +122,12 @@ describe("PluginFetchError", () => {
 });
 
 describe("PluginNotInMarketplaceError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new PluginNotInMarketplaceError("aidd-dev");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, plugin: error.plugin, message: error.message }).toStrictEqual({
       name: "PluginNotInMarketplaceError",
-      message: "Plugin 'aidd-dev' was not found in any registered marketplace.",
+      plugin: "aidd-dev",
+      message: "",
     });
   });
 
@@ -108,12 +137,18 @@ describe("PluginNotInMarketplaceError", () => {
 });
 
 describe("UnreadableMarketplaceRegistryError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new UnreadableMarketplaceRegistryError("/r.json", "EACCES");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      path: error.path,
+      reason: error.reason,
+      message: error.message,
+    }).toStrictEqual({
       name: "UnreadableMarketplaceRegistryError",
-      message:
-        "Cannot read the marketplace registry at /r.json: EACCES. Repair the file, or delete it to start from an empty registry.",
+      path: "/r.json",
+      reason: "EACCES",
+      message: "",
     });
   });
 

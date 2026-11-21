@@ -3,6 +3,7 @@ import { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -282,8 +283,8 @@ describe("settings migration", () => {
 
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.addedMarketplaces).toEqual([]);
-      expect(result.errors[0]?.message).toContain("different catalog");
-      expect(result.errors[0]?.message).toContain("/foreign/cache");
+      expect(render(result.errors[0]?.error)).toContain("different catalog");
+      expect(render(result.errors[0]?.error)).toContain("/foreign/cache");
     });
   });
 

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { SyncFailedError } from "../../../src/orchestration/orchestration.error.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { ACTIVATED_NOTHING, aRunSync, RESTORED_NOTHING } from "../testing/run-sync.builder.js";
 
@@ -38,21 +37,23 @@ describe("RunSync of the whole project", () => {
     const run = aRunSync({
       restoreAll: {
         ...RESTORED_NOTHING,
-        errors: [{ scope: "claude", message: "file is not ours" }],
+        errors: [{ scope: "claude", error: "file is not ours" }],
         failed: true,
       },
       activation: {
         ...ACTIVATED_NOTHING,
-        errors: [{ scope: "codex", message: "binary crashed" }],
+        errors: [{ scope: "codex", error: "binary crashed" }],
         failed: true,
       },
     });
 
     await expect(run.useCase.execute(GIVEN, run.report)).rejects.toThrow(
-      new SyncFailedError([
-        { scope: "claude", message: "" },
-        { scope: "codex", message: "" },
-      ])
+      expect.objectContaining({
+        errors: [
+          { scope: "claude", error: "file is not ours" },
+          { scope: "codex", error: "binary crashed" },
+        ],
+      })
     );
     expect(run.calls.at(-1)).toBe("report activated");
   });
@@ -61,13 +62,13 @@ describe("RunSync of the whole project", () => {
     const run = aRunSync({
       activation: {
         ...ACTIVATED_NOTHING,
-        errors: [{ scope: "codex", message: "x" }],
+        errors: [{ scope: "codex", error: "x" }],
         failed: true,
       },
     });
 
     await expect(run.useCase.execute(GIVEN, run.report)).rejects.toThrow(
-      new SyncFailedError([{ scope: "codex", message: "" }])
+      expect.objectContaining({ errors: [{ scope: "codex", error: "x" }] })
     );
   });
 });
@@ -114,13 +115,13 @@ describe("RunSync of one tool", () => {
     const run = aRunSync({
       activation: {
         ...ACTIVATED_NOTHING,
-        errors: [{ scope: "claude", message: "x" }],
+        errors: [{ scope: "claude", error: "x" }],
         failed: true,
       },
     });
 
     await expect(run.useCase.execute({ ...GIVEN, tool: "claude" }, run.report)).rejects.toThrow(
-      new SyncFailedError([{ scope: "claude", message: "" }])
+      expect.objectContaining({ errors: [{ scope: "claude", error: "x" }] })
     );
   });
 });

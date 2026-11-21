@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 describe("ManifestRepositoryAdapter", () => {
   let tempDir: string;
@@ -32,7 +33,7 @@ describe("ManifestRepositoryAdapter", () => {
       await mkdir(join(tempDir, ".aidd"), { recursive: true });
       await writeFile(manifestPath, '{"version": 6, "tools": {');
 
-      await expect(adapter.load()).rejects.toThrow(manifestPath);
+      await expect(adapter.load()).rejects.toThrow(saying(manifestPath));
     });
 
     it("rejects a refused manifest version naming this project as where it lives and `aidd setup` as the fix", async () => {
@@ -41,7 +42,9 @@ describe("ManifestRepositoryAdapter", () => {
       await writeFile(manifestPath, '{"version": 7, "tools": {}}');
 
       await expect(adapter.load()).rejects.toThrow(
-        `delete ${manifestPath} in this project, then run \`aidd setup\` to reinstall the framework.`
+        saying(
+          `delete ${manifestPath} in this project, then run \`aidd setup\` to reinstall the framework.`
+        )
       );
     });
   });

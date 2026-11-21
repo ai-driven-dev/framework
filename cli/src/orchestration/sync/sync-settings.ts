@@ -45,7 +45,7 @@ export interface SyncSettingsResult {
   /** A hard failure that is not the recoverable `NativePluginCliError` family: a bug in an
    * activator, or the source-conflict guard's deliberate refusal. Returned rather than thrown,
    * so whether the whole command fails stays the caller's decision. */
-  errors: readonly { scope: string; message: string }[];
+  errors: readonly { scope: string; error: unknown }[];
   /** The verdict on `errors`: one returned error fails the run. Decided here, where the errors
    * are produced, so a command only prints it and exits on it. */
   failed: boolean;

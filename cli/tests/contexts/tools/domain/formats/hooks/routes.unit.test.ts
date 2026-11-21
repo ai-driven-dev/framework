@@ -411,7 +411,11 @@ describe("a tool's plugins capability, as far as hooks go", () => {
 
 describe("what a descriptor refusal says", () => {
   it("names the plugin root token a native tool lacks", () => {
-    expect(() => nativeHooksSupport(routed({}))).toThrow("native mode requires a pluginRootToken.");
+    expect(() => nativeHooksSupport(routed({}))).toThrow(
+      expect.objectContaining({
+        detail: expect.stringContaining("native mode requires a pluginRootToken."),
+      })
+    );
   });
 
   it("carries the trust notice of a project route, and none without one", () => {

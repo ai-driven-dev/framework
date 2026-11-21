@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
+import { saying } from "../../../../../shared/testing/saying.builder.js";
 
 function _makeFs(existingPaths: string[]): FileReader {
   return {
@@ -93,11 +94,11 @@ describe("opencode mcp", () => {
     });
 
     it("throws with context on malformed JSON", () => {
-      expect(() => transform("mcp", "not-json")).toThrow("Cannot parse MCP config:");
+      expect(() => transform("mcp", "not-json")).toThrow(saying("Cannot parse MCP config:"));
     });
 
     it("throws when root is not an object (array)", () => {
-      expect(() => transform("mcp", "[]")).toThrow("MCP config must be a JSON object");
+      expect(() => transform("mcp", "[]")).toThrow(saying("MCP config must be a JSON object"));
     });
 
     it("transforms url-based server to remote format", () => {
@@ -123,9 +124,7 @@ describe("opencode mcp", () => {
 
     it("throws when a server has neither command nor url", () => {
       const input = JSON.stringify({ mcpServers: { bad: { token: "abc" } } });
-      expect(() => transform("mcp", input)).toThrow(
-        'MCP server "bad" must have either a "command" or "url" field'
-      );
+      expect(() => transform("mcp", input)).toThrow(expect.objectContaining({ serverName: "bad" }));
     });
 
     it("returns non-mcp content unchanged", () => {

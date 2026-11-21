@@ -95,7 +95,7 @@ describe("UpdateTools", () => {
     const { useCase, updateTool } = build(deps);
     vi.spyOn(updateTool, "execute").mockImplementation(async ({ toolId }) =>
       toolId === "cursor"
-        ? { kind: "failed", message: "cursor update failed" }
+        ? { kind: "failed", error: new Error("cursor update failed") }
         : { kind: "updated", toolId, fileCount: 3 }
     );
 
@@ -105,7 +105,9 @@ describe("UpdateTools", () => {
     });
 
     expect(result.updatedTools).toStrictEqual([{ toolId: "claude", fileCount: 3 }]);
-    expect(result.errors).toStrictEqual([{ scope: "cursor", message: "cursor update failed" }]);
+    expect(result.errors).toStrictEqual([
+      { scope: "cursor", error: new Error("cursor update failed") },
+    ]);
   });
 
   it("reports neither an update nor an error for a tool the update skipped", async () => {

@@ -286,7 +286,7 @@ describe("a source path a Windows host reports with backslashes", () => {
     );
 
     expect(failure).toBeInstanceOf(FrameworkPlaceholderInPluginError);
-    expect(String(failure)).toContain("(file: agents/sub/bad.md)");
+    expect(failure).toMatchObject({ relativePath: "agents/sub/bad.md" });
   });
 
   it("names a shared hooks file that is not JSON by its forward-slash path", async () => {
@@ -306,7 +306,7 @@ describe("a source path a Windows host reports with backslashes", () => {
     const failure = await write(fs, targetOf(contract, "flat")).catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(FlatMergeTargetNotJsonError);
-    expect(String(failure)).toContain("cfg/hooks.json is not valid JSON");
+    expect(failure).toMatchObject({ shownPath: "cfg/hooks.json" });
   });
 });
 
@@ -322,7 +322,7 @@ describe("the placeholder a plugin must not carry", () => {
     );
 
     expect(failure).toBeInstanceOf(FrameworkPlaceholderInPluginError);
-    expect(String(failure)).toContain(file.replace(/^(agents|skills)\//, ""));
+    expect(failure).toMatchObject({ relativePath: file.replace(/^(agents|skills)\//, "") });
   });
 });
 

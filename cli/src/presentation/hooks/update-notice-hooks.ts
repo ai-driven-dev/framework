@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import { outputOf } from "../commands/global-options.js";
+import { render } from "../errors/error-translator.presenter.js";
 
 /** What this command reads of the graph. */
 type UpdateNoticeKeys = "printUpdateNotice" | "logger" | "refreshUpdateCheck";
@@ -38,9 +39,7 @@ export function registerUpdateNoticeHooks(
         for (const line of lines) deps.logger.warn(line);
       })
       .catch((err: unknown) => {
-        deps.logger.debug(
-          `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
-        );
+        deps.logger.debug(`CLI update check failed: ${render(err)}`);
       });
   });
 
@@ -58,9 +57,7 @@ export function registerUpdateNoticeHooks(
     );
     if (!deps) return;
     await deps.refreshUpdateCheck.execute().catch((err: unknown) => {
-      deps.logger.debug(
-        `CLI update refresh failed: ${err instanceof Error ? err.message : String(err)}`
-      );
+      deps.logger.debug(`CLI update refresh failed: ${render(err)}`);
     });
   });
 }

@@ -252,11 +252,12 @@ describe("debugOnly", () => {
     const debug = vi.fn();
     const logger = debugOnly({ debug, info: vi.fn(), warn: vi.fn() });
 
+    const cause = new Error("boom");
     logger.debug("d");
     logger.info("i");
-    logger.warn("w");
+    logger.warn("w", cause);
 
-    expect(debug.mock.calls).toStrictEqual([["d"], ["i"], ["w"]]);
+    expect(debug.mock.calls).toStrictEqual([["d", undefined], ["i"], ["w", cause]]);
   });
 });
 

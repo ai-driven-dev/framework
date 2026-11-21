@@ -346,7 +346,7 @@ const cases: [() => Error, string][] = [
     "No marketplaces registered. Use `aidd marketplace add <name> <source>` first.",
   ],
   [
-    () => new SyncFailedError([{ scope: "a", message: "m" }]),
+    () => new SyncFailedError([{ scope: "a", error: "m" }]),
     "Sync failed for: a. See the warnings above.",
   ],
   [() => new TrustDeniedError("m"), "Trust denied for marketplace 'm'. Aborting."],

@@ -5,7 +5,7 @@ import { SyncFailedError } from "../../../src/orchestration/orchestration.error.
 describe("assertActivated", () => {
   it("lets an activation that did not fail through, warnings or not", () => {
     expect(() =>
-      assertActivated({ errors: [{ scope: "claude", message: "x" }], failed: false })
+      assertActivated({ errors: [{ scope: "claude", error: "x" }], failed: false })
     ).not.toThrow();
   });
 
@@ -13,15 +13,15 @@ describe("assertActivated", () => {
     expect(() =>
       assertActivated({
         errors: [
-          { scope: "claude", message: "x" },
-          { scope: "codex", message: "y" },
+          { scope: "claude", error: "x" },
+          { scope: "codex", error: "y" },
         ],
         failed: true,
       })
     ).toThrow(
       new SyncFailedError([
-        { scope: "claude", message: "" },
-        { scope: "codex", message: "" },
+        { scope: "claude", error: "x" },
+        { scope: "codex", error: "y" },
       ])
     );
   });

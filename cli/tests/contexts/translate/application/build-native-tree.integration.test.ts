@@ -14,6 +14,7 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.j
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
 
@@ -345,7 +346,7 @@ describe("BuildNativeTree", () => {
       const uc = makeUseCase(fs);
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
-      ).rejects.toThrow(/^Invalid source marketplace: malformed JSON: /);
+      ).rejects.toThrow(saying(/^Invalid source marketplace: malformed JSON: /));
     });
 
     it("throws InvalidSourceMarketplaceError when 'plugins' array is missing", async () => {
@@ -356,7 +357,7 @@ describe("BuildNativeTree", () => {
       const uc = makeUseCase(fs);
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
-      ).rejects.toThrow("Invalid source marketplace: missing 'plugins' array.");
+      ).rejects.toThrow(saying("Invalid source marketplace: missing 'plugins' array."));
     });
 
     it("throws InvalidSourceMarketplaceError when a plugin entry is null", async () => {
@@ -367,7 +368,9 @@ describe("BuildNativeTree", () => {
       const uc = makeUseCase(fs);
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
-      ).rejects.toThrow("Invalid source marketplace: each plugin entry must have a 'name' string.");
+      ).rejects.toThrow(
+        saying("Invalid source marketplace: each plugin entry must have a 'name' string.")
+      );
     });
 
     it("throws InvalidSourceMarketplaceError when a plugin name does not match a directory", async () => {
@@ -383,11 +386,13 @@ describe("BuildNativeTree", () => {
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
       ).rejects.toThrow(
-        `Invalid source marketplace: plugin 'nonexistent-plugin' not found at ${join(
-          SOURCE_DIR,
-          "plugins",
-          "nonexistent-plugin"
-        )}.`
+        saying(
+          `Invalid source marketplace: plugin 'nonexistent-plugin' not found at ${join(
+            SOURCE_DIR,
+            "plugins",
+            "nonexistent-plugin"
+          )}.`
+        )
       );
     });
 
@@ -397,10 +402,12 @@ describe("BuildNativeTree", () => {
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
       ).rejects.toThrow(
-        `Invalid source marketplace: cannot read ${join(
-          SOURCE_DIR,
-          ".claude-plugin/marketplace.json"
-        )}.`
+        saying(
+          `Invalid source marketplace: cannot read ${join(
+            SOURCE_DIR,
+            ".claude-plugin/marketplace.json"
+          )}.`
+        )
       );
     });
 
@@ -410,7 +417,7 @@ describe("BuildNativeTree", () => {
         const uc = makeUseCase(fs);
         await expect(
           uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
-        ).rejects.toThrow("Invalid source marketplace: root must be an object.");
+        ).rejects.toThrow(saying("Invalid source marketplace: root must be an object."));
       });
     }
 
@@ -424,7 +431,7 @@ describe("BuildNativeTree", () => {
         await expect(
           uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
         ).rejects.toThrow(
-          "Invalid source marketplace: each plugin entry must have a 'name' string."
+          saying("Invalid source marketplace: each plugin entry must have a 'name' string.")
         );
       });
     }

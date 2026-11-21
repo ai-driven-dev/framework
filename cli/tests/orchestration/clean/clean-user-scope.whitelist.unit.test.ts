@@ -11,6 +11,7 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import {
   HOME,
   RecordingFileAdapter,
@@ -310,7 +311,7 @@ describe("clean --scope user: whitelist", () => {
       const useCase = userScopeCleaner({ fs, repo: manifestRepo, userSourceReferences });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /active projects.*\/project-a/
+        saying(/active projects.*\/project-a/)
       );
       expect(manifestRepo.getCurrent()).not.toBeNull();
     });

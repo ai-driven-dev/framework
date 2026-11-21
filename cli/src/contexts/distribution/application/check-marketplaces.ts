@@ -36,11 +36,7 @@ export class CheckMarketplaces {
       if (!catalog) return { marketplace: m.name, plugins: null };
       return { marketplace: m.name, plugins: new Set(catalog.plugins.map((p) => p.name)) };
     } catch (err) {
-      return {
-        marketplace: m.name,
-        plugins: null,
-        error: err instanceof Error ? err.message : String(err),
-      };
+      return { marketplace: m.name, plugins: null, error: err };
     }
   }
 }

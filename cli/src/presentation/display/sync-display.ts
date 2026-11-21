@@ -1,11 +1,12 @@
 import { assertActivated } from "../../orchestration/domain/activation-outcome.model.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import type { ToolId } from "../../shared/domain/tool.js";
+import { render } from "../errors/error-translator.presenter.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";
 
 interface ScopedError {
   readonly scope: string;
-  readonly message: string;
+  readonly error: unknown;
 }
 
 interface RestoreAllResult {
@@ -29,7 +30,7 @@ interface ActivationOutcome {
 }
 
 export function printRestoreOutcome(output: Output, result: RestoreAllResult): void {
-  for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);
+  for (const e of result.errors) output.warn(`[${e.scope}] ${render(e.error)}`);
 
   const nothingToRestore =
     result.errors.length === 0 &&
@@ -65,7 +66,7 @@ export function printToolRestoreOutcome(output: Output, result: ToolRestoreResul
  * missing binary first, then whatever the run refused. The refusal itself stays the caller's. */
 export function printActivationOutcome(output: Output, activation: ActivationOutcome): void {
   printNativeActivation(output, activation.binaryMissing);
-  for (const e of activation.errors) output.warn(`[${e.scope}] ${e.message}`);
+  for (const e of activation.errors) output.warn(`[${e.scope}] ${render(e.error)}`);
 }
 
 export function printUserScopeSyncOutcome(
@@ -88,7 +89,7 @@ interface SyncActivationOutcome {
 }
 
 export function printScopedFailures(output: Output, failures: readonly ScopedError[]): void {
-  for (const failure of failures) output.warn(`[${failure.scope}] ${failure.message}`);
+  for (const failure of failures) output.warn(`[${failure.scope}] ${render(failure.error)}`);
 }
 
 /** Prints what an activation reported and turns its `failed` verdict into the failing exit.

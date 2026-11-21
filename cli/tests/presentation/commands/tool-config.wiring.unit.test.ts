@@ -112,7 +112,7 @@ describe("aidd framework install", () => {
   it("prints the runtime's own warnings before the propagation's, then the count", async () => {
     installAiTool.mockResolvedValue({
       runtimeResult: { skipped: false, fileCount: 5, warnings: ["merged settings.json"] },
-      propagationWarnings: ["aidd-dev was not propagated"],
+      propagationWarnings: [{ text: "aidd-dev was not propagated" }],
     });
 
     expect(await run("install", "--tool", "claude")).toEqual(["Installed claude (5 files)"]);
@@ -134,7 +134,7 @@ describe("aidd framework install", () => {
       runtimeResult: { skipped: false, fileCount: 5, warnings: [] },
       propagationWarnings: [],
       activation: {
-        errors: [{ scope: "claude", message: "claude CLI refused" }],
+        errors: [{ scope: "claude", error: "claude CLI refused" }],
         failed: true,
       },
     });
@@ -233,7 +233,7 @@ describe("aidd framework update", () => {
         { toolId: TOOL.claude, fileCount: 5 },
         { toolId: TOOL.vscode, fileCount: 2 },
       ],
-      errors: [{ scope: "vscode", message: "one file was kept" }],
+      errors: [{ scope: "vscode", error: "one file was kept" }],
     });
 
     expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);

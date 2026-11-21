@@ -166,7 +166,7 @@ describe("aidd plugin remove", () => {
   it("names a refused activation and fails the process, saying nothing was removed", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "claude", message: "claude CLI refused" }],
+      errors: [{ scope: "claude", error: "claude CLI refused" }],
       failed: true,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {

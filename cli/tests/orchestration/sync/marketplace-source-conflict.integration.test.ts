@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
@@ -193,11 +194,11 @@ describe("the sync guard against a marketplace name a host already holds", () =>
 
     expect(activator.addedMarketplaces).toHaveLength(0);
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]?.message).toMatch(/different catalog/);
-    expect(result.errors[0]?.message).toMatch(/probe-mkt/);
-    expect(result.errors[0]?.message).toMatch(/\/other\/src/);
-    expect(result.errors[0]?.message).toMatch(/\+sample-plugin/);
-    expect(result.errors[0]?.message).toMatch(/-different-plugin/);
+    expect(render(result.errors[0]?.error)).toMatch(/different catalog/);
+    expect(render(result.errors[0]?.error)).toMatch(/probe-mkt/);
+    expect(render(result.errors[0]?.error)).toMatch(/\/other\/src/);
+    expect(render(result.errors[0]?.error)).toMatch(/\+sample-plugin/);
+    expect(render(result.errors[0]?.error)).toMatch(/-different-plugin/);
   });
 
   it("does not refuse when only the version differs under the same name and plugin set — the host repointing to a newer build it already knows, not a different marketplace", async () => {
@@ -335,13 +336,10 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       registeredCatalog: { path: "/other/src", pluginNames: ["different-plugin"] },
     });
 
-    expect(result.errors).toStrictEqual([
-      {
-        scope: "claude",
-        message:
-          "Marketplace 'probe-mkt' is already registered from a different catalog: /other/src differs from the one requested, /built/claude — plugins differ (+sample-plugin, -different-plugin), per /home/.claude/plugins/known_marketplaces.json. Do not remove a catalogue another user or project may depend on. Reconcile the host source manually before retrying `aidd sync`.",
-      },
-    ]);
+    expect(result.errors).toHaveLength(1);
+    expect(render(result.errors[0]?.error)).toBe(
+      "Marketplace 'probe-mkt' is already registered from a different catalog: /other/src differs from the one requested, /built/claude — plugins differ (+sample-plugin, -different-plugin), per /home/.claude/plugins/known_marketplaces.json. Do not remove a catalogue another user or project may depend on. Reconcile the host source manually before retrying `aidd sync`."
+    );
   });
 
   it("registers from the built path as given when that path cannot be resolved", async () => {
@@ -373,7 +371,7 @@ describe("when the catalog this project just built cannot be read back", () => {
     expect(result.errors).toHaveLength(1);
     // join(), matching `marketplaceCatalogProbePath`: on win32 it produces a backslash-joined path,
     // which a forward-slash template literal would never find inside the thrown message.
-    expect(result.errors[0]?.message).toContain(join(builtDir, catalogRelative));
+    expect(render(result.errors[0]?.error)).toContain(join(builtDir, catalogRelative));
     // Never written as `hostName` — a manifest that guessed the alias would go on
     // claiming a registration the host was never asked to hold.
     const reloaded = await manifestRepo.load();

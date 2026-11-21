@@ -137,7 +137,7 @@ describe("ActivateNativeTools", () => {
       request(contextOf(emptyManifest(), [TOOL.claude, TOOL.codex]))
     );
 
-    expect(run.errors).toEqual([{ scope: TOOL.claude, message: "activator crashed" }]);
+    expect(run.errors).toEqual([{ scope: TOOL.claude, error: new Error("activator crashed") }]);
     expect([...run.outcomes.keys()]).toEqual([TOOL.codex]);
   });
 

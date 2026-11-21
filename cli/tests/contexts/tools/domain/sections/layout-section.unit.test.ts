@@ -17,7 +17,11 @@ const ACTIVATION = { binary: "claude", enableVerb: "install", disableVerb: "unin
 describe("a native layout", () => {
   it("refuses a user-scope install without the resolver of its user directory", () => {
     expect(() => nativeLayout({ pluginsDir: "", installScope: "user" })).toThrow(
-      "installScope 'user' requires a userPluginsDir resolver function."
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "installScope 'user' requires a userPluginsDir resolver function."
+        ),
+      })
     );
   });
 

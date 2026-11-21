@@ -35,7 +35,7 @@ export interface ActivationRun {
   outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
   binaryMissing: readonly { toolId: ToolId; binary: string }[];
   warnings: readonly string[];
-  errors: readonly { scope: string; message: string }[];
+  errors: readonly { scope: string; error: unknown }[];
 }
 
 export interface ActivateNativeToolsRequest {
@@ -73,7 +73,7 @@ export class ActivateNativeTools {
     const outcomes = new Map<ToolId, HostRegistrationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
     const warnings: string[] = [];
-    const errors: { scope: string; message: string }[] = [];
+    const errors: { scope: string; error: unknown }[] = [];
     for (const toolId of context.toolIds) {
       try {
         const result = await this.registerPluginWithHost.execute({
@@ -106,7 +106,7 @@ export class ActivateNativeTools {
       } catch (error) {
         errors.push({
           scope: toolId,
-          message: error instanceof Error ? error.message : String(error),
+          error,
         });
       }
     }

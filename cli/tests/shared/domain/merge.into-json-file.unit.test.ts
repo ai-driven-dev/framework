@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { JsonParseError } from "../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.fake.js";
+import { saying } from "../testing/saying.builder.js";
 
 const root = join("/", "merge");
 
@@ -186,7 +187,7 @@ describe("mergeIntoJsonFile, at the edges", () => {
         JsonParseError
       );
       await expect(files.mergeJsonFile(path, "{}", "framework-prime")).rejects.toThrow(
-        `Cannot parse existing JSON at ${path}: `
+        saying(`Cannot parse existing JSON at ${path}: `)
       );
     });
 

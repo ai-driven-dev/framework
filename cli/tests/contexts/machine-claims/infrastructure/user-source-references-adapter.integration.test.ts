@@ -4,6 +4,7 @@ import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-cl
 import { asPlainObject } from "../../../../src/shared/domain/reading/plain-object.js";
 import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const REFERENCES_PATH = join(USER_CONFIG_DIR, "references.json");
@@ -240,7 +241,7 @@ describe("the shared source's own project references", () => {
       const refs = adapter(fs);
 
       await expect(refs.listAllReferencingProjects()).rejects.toThrow(
-        `registry at ${REFERENCES_PATH}: Unexpected token`
+        saying(`registry at ${REFERENCES_PATH}: Unexpected token`)
       );
     });
 

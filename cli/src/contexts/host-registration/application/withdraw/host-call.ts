@@ -31,7 +31,7 @@ export function uninstallAtFirstAcceptedScope(
       return undefined;
     } catch (error) {
       if (!(error instanceof NativePluginCliError)) throw error;
-      lastMessage = error.message;
+      lastMessage = error.detail;
     }
   }
   return lastMessage;

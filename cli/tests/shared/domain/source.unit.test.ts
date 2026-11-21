@@ -6,6 +6,7 @@ import {
   parsePluginSourceShorthand,
   serializePluginSource,
 } from "../../../src/shared/domain/source.js";
+import { saying } from "../testing/saying.builder.js";
 
 /** The message every npm name refusal shares. */
 const npmNameDetail = (got: string): string =>
@@ -209,7 +210,7 @@ describe("parsePluginSource", () => {
   describe("a field that is present but empty", () => {
     it("refuses an empty path rather than recording a source pointing nowhere", () => {
       expect(() => parsePluginSource({ kind: "local", path: "" })).toThrow(
-        /"path" must be a non-empty string/
+        saying(/"path" must be a non-empty string/)
       );
     });
   });
@@ -334,7 +335,7 @@ describe("the source spellings a user types", () => {
 
     it("says what the spelling should have looked like when it is malformed", () => {
       expect(() => parsePluginSourceShorthand("gitlab:nope")).toThrow(
-        /gitlab:owner\/repo or gitlab:owner\/repo@ref/
+        saying(/gitlab:owner\/repo or gitlab:owner\/repo@ref/)
       );
     });
   });
@@ -389,13 +390,13 @@ describe("the source spellings a user types", () => {
       // Both branches throw InvalidPluginSourceError, so asserting the class alone would
       // pass even with the parser's own message swallowed by the generic one.
       expect(() => parsePluginSourceShorthand('{"kind":"github"}')).toThrow(
-        /"repo" must be a non-empty string/
+        saying(/"repo" must be a non-empty string/)
       );
     });
 
     it("names the string it was given when nothing recognizes it", () => {
       expect(() => parsePluginSourceShorthand("just some words")).toThrow(
-        /unrecognized source format: "just some words"/
+        saying(/unrecognized source format: "just some words"/)
       );
     });
   });
@@ -449,7 +450,7 @@ describe("the source shown back to a user", () => {
 describe("a manifest field of the wrong type", () => {
   it("refuses a non-string optional field", () => {
     expect(() => parsePluginSource({ kind: "github", repo: "owner/repo", ref: 3 })).toThrow(
-      /"ref" must be a string/
+      saying(/"ref" must be a string/)
     );
   });
 
@@ -462,7 +463,7 @@ describe("a manifest field of the wrong type", () => {
 
   it("refuses a sha that is not 40 lowercase hex characters", () => {
     expect(() => parsePluginSource({ kind: "github", repo: "owner/repo", sha: "ABC123" })).toThrow(
-      /40-character lowercase hex/
+      saying(/40-character lowercase hex/)
     );
   });
 
@@ -470,7 +471,7 @@ describe("a manifest field of the wrong type", () => {
     "refuses a sha with a stray character around the 40 hex ones: %s",
     (sha) => {
       expect(() => parsePluginSource({ kind: "github", repo: "owner/repo", sha })).toThrow(
-        /40-character lowercase hex/
+        saying(/40-character lowercase hex/)
       );
     }
   );
@@ -486,7 +487,7 @@ describe("a manifest field of the wrong type", () => {
 
   it("lists the kinds it knows when given one it does not", () => {
     expect(() => parsePluginSource({ kind: "svn" })).toThrow(
-      /Expected: github, url, git-subdir, npm, local/
+      saying(/Expected: github, url, git-subdir, npm, local/)
     );
   });
 });

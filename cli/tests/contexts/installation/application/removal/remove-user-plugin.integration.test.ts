@@ -14,6 +14,7 @@ import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fa
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import type { FakeNativeSource } from "../../testing/fake-host-marketplace-sources.fake.js";
 import type { FixedHostRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
@@ -191,7 +192,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
         },
       });
 
-      await expect(execute(f.remove, REF)).rejects.toThrow(/active projects.*\/B/);
+      await expect(execute(f.remove, REF)).rejects.toThrow(saying(/active projects.*\/B/));
 
       expect(acquired).toBe(true);
       expect(f.activator.uninstalledPlugins).toStrictEqual([]);
@@ -215,7 +216,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
     it("refuses B's live exact claim before contacting the host", async () => {
       const f = fixture({ dependents: ["/B"] });
       await expect(execute(f.remove, REF)).rejects.toThrow(
-        /user-scope plugin 'test-plugin@real-catalog': active projects.*\/B/
+        saying(/user-scope plugin 'test-plugin@real-catalog': active projects.*\/B/)
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(
@@ -243,7 +244,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
         refs: [],
         hostRefs: new Map([[REF, { enabled: true, scope: "user" as const }]]),
       });
-      await expect(execute(f.remove, REF)).rejects.toThrow(/not installed/i);
+      await expect(execute(f.remove, REF)).rejects.toThrow(saying(/not installed/i));
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
     });
@@ -265,7 +266,9 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
 
     it("retains the machine claim if the host refuses unregister", async () => {
       const f = fixture({ failOnUninstall: true });
-      await expect(execute(f.remove, REF)).rejects.toThrow(/not installed/);
+      await expect(execute(f.remove, REF)).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringMatching(/not installed/) })
+      );
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);

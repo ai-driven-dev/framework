@@ -9,6 +9,7 @@ import { DetectPluginDrift } from "../../../src/contexts/installation/applicatio
 import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
@@ -161,7 +162,7 @@ describe("RestoreAll — the --force flag", () => {
 
     expect(deps.fs.getFile(trackedPath)).toBe("EDITED OUTSIDE THE CLI");
     expect(result.totalRestored).toBe(0);
-    expect(result.errors.map((e) => e.message).join(" ")).toContain("--force");
+    expect(result.errors.map((e) => render(e.error)).join(" ")).toContain("--force");
     expect(result.failed, "a kept file is an error the run fails on").toBe(true);
   });
 });
@@ -575,7 +576,7 @@ describe("RestoreAll — before delegating", () => {
       totalRestored: 0,
       totalKept: 0,
       pluginNamesRestored: [],
-      errors: [{ scope: "config-restore", message: "disk on fire" }],
+      errors: [{ scope: "config-restore", error: new Error("disk on fire") }],
       failed: true,
       unrestorable: [],
       nativeOnlyToolIds: [],

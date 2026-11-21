@@ -62,9 +62,7 @@ export class FetchMarketplaceSource {
       if (catalog === null || !hasRelativePluginSources(catalog)) return cacheDir;
       return this.runFallback(fs, command);
     } catch (err) {
-      this.logger?.warn(
-        `Probe failed for ${marketplace.name}, falling back to cache: ${String(err)}`
-      );
+      this.logger?.warn(`Probe failed for ${marketplace.name}, falling back to cache: `, err);
       return cacheDir;
     }
   }
@@ -78,7 +76,7 @@ export class FetchMarketplaceSource {
       const raw: unknown = JSON.parse(await fs.readFile(catalogFilePath));
       return parsePluginCatalog(raw);
     } catch (err) {
-      this.logger?.warn(`Could not load raw catalog from ${cacheDir}: ${String(err)}`);
+      this.logger?.warn(`Could not load raw catalog from ${cacheDir}: `, err);
       return null;
     }
   }

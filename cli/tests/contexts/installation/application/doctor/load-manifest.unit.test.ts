@@ -25,10 +25,7 @@ describe("LoadManifest", () => {
   it("names a project with no manifest by a stable code", async () => {
     await expect(
       new LoadManifest(new InMemoryManifestRepository()).execute()
-    ).rejects.toMatchObject({
-      code: "manifest-missing",
-      message: "No AIDD manifest found. Run `aidd setup` to initialize your project.",
-    });
+    ).rejects.toMatchObject({ code: "manifest-missing" });
   });
 
   it.each([
@@ -40,9 +37,6 @@ describe("LoadManifest", () => {
 
     expect(failure).toBeInstanceOf(ManifestUnavailableError);
     expect((failure as ManifestUnavailableError).cause).toBe(cause);
-    expect(failure).toMatchObject({
-      code: "manifest-corrupted",
-      message: "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize.",
-    });
+    expect(failure).toMatchObject({ code: "manifest-corrupted" });
   });
 });

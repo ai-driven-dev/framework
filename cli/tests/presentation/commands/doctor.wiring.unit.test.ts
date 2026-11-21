@@ -147,7 +147,7 @@ describe("aidd doctor — every tool at once", () => {
 
   it("surfaces the report's own errors before anything it could measure", async () => {
     doctorAll.mockResolvedValue({
-      errors: [{ scope: "claude", message: "settings.json is unreadable" }],
+      errors: [{ scope: "claude", error: "settings.json is unreadable" }],
       ai: HEALTHY_SCOPE,
       ide: HEALTHY_SCOPE,
       pluginIssues: [],

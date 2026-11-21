@@ -3,5 +3,5 @@ import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter
 
 /** The output factory the binary builds: it ends the run through `process.exit`, which a test spies. */
 export function processOutputFactory(): OutputFactory {
-  return (verbose) => new OutputAdapter(verbose, (code) => process.exit(code));
+  return (verbose) => new OutputAdapter(verbose, (code) => process.exit(code), String);
 }

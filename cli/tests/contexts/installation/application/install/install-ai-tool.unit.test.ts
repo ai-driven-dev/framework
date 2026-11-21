@@ -375,7 +375,7 @@ describe("InstallAiTool", () => {
       });
 
       expect(result.propagationWarnings).toHaveLength(1);
-      expect(result.propagationWarnings[0]).toContain("orphan-plugin");
+      expect(result.propagationWarnings[0]?.text).toContain("orphan-plugin");
       expect(pluginInstallMock.execute).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalled();
     });
@@ -427,7 +427,10 @@ describe("InstallAiTool", () => {
 
       expect(result.propagatedPlugins).toContain("ok-plugin");
       expect(result.propagationWarnings).toHaveLength(1);
-      expect(result.propagationWarnings[0]).toContain("fail-plugin");
+      expect(result.propagationWarnings[0]).toEqual({
+        text: expect.stringContaining("fail-plugin"),
+        cause: new Error("catalog unavailable"),
+      });
     });
   });
 });

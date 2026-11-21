@@ -7,6 +7,7 @@ import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/f
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../../shared/testing/saying.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
@@ -81,18 +82,18 @@ describe("toTypedMcpSection()", () => {
 
   it("refuses a server that names neither a command nor a url", () => {
     expect(() => toTypedMcpSection(JSON.stringify({ mcpServers: { broken: {} } }))).toThrow(
-      /broken/
+      expect.objectContaining({ serverName: "broken" })
     );
   });
 
   it("refuses a config that is not a JSON object", () => {
-    expect(() => toTypedMcpSection("[]")).toThrow("MCP config must be a JSON object");
-    expect(() => toTypedMcpSection("{ not json")).toThrow(/Cannot parse MCP config/);
+    expect(() => toTypedMcpSection("[]")).toThrow(saying("MCP config must be a JSON object"));
+    expect(() => toTypedMcpSection("{ not json")).toThrow(saying(/Cannot parse MCP config/));
   });
 
   it("refuses a config that is null or a bare value", () => {
-    expect(() => toTypedMcpSection("null")).toThrow("MCP config must be a JSON object");
-    expect(() => toTypedMcpSection("42")).toThrow("MCP config must be a JSON object");
+    expect(() => toTypedMcpSection("null")).toThrow(saying("MCP config must be a JSON object"));
+    expect(() => toTypedMcpSection("42")).toThrow(saying("MCP config must be a JSON object"));
   });
 });
 

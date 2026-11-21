@@ -150,7 +150,7 @@ describe("CopilotCliAdapter", () => {
         upgradeVerb: "update",
         enableVerb: "install",
       }).enablePlugin("ghost@m1")
-    ).toThrow("Marketplace");
+    ).toThrow(expect.objectContaining({ detail: expect.stringContaining("Marketplace") }));
   });
 
   it("uninstalls a plugin via `copilot plugin uninstall <ref>`", () => {

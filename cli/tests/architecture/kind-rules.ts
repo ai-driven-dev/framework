@@ -149,6 +149,40 @@ export function errorViolations(
     );
 }
 
+// An error carries no text.
+
+/** A `super(` call of an error class that hands the base a string or a template: the words live in
+ * the presentation table. The empty string the base itself passes to `Error` is no text. */
+export function errorTextViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const declaring = Object.fromEntries(
+    Object.entries(files).filter(([path]) => path.endsWith(".error.ts"))
+  );
+  return readEach(declaring, (path, root) => {
+    const found: Violation[] = [];
+    walk(root, (node) => {
+      if (!isCallExpression(node) || node.expression.kind !== SyntaxKind.SuperKeyword) return;
+      const texts = node.arguments.some(
+        (argument) =>
+          ((isStringLiteral(argument) || isNoSubstitutionTemplateLiteral(argument)) &&
+            argument.text !== "") ||
+          isTemplateExpression(argument)
+      );
+      if (texts) {
+        found.push(
+          violation(
+            "errorText",
+            path,
+            "an error hands its base a text",
+            "an error carries a code and its data, never text",
+            "move the words to src/presentation/errors/error-messages.presenter.ts"
+          )
+        );
+      }
+    });
+    return found;
+  });
+}
+
 // A message that instructs names a command that exists.
 
 /** A string a person reads naming `aidd <command>` the CLI does not declare. */

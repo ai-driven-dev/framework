@@ -5,6 +5,7 @@ import {
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { parseManifestTools } from "../../../../src/contexts/installation/domain/manifest-serialization.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 describe("parseManifestTools — the tools section of a manifest document", () => {
   it("reads no tool from a document without a tools section", () => {
@@ -32,7 +33,7 @@ describe("parseManifestTools — the tools section of a manifest document", () =
     const raw = { version: 8, tools: { claude: { toolId: TOOL.claude, version: "1.0.0" } } };
 
     expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
-      "Invalid manifest data: tools.claude.files: expected an array, got missing."
+      saying("Invalid manifest data: tools.claude.files: expected an array, got missing.")
     );
     expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
       InvalidManifestDataError
@@ -46,7 +47,7 @@ describe("parseManifestTools — the tools section of a manifest document", () =
     };
 
     expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
-      "Invalid manifest data: tools.claude.files: expected an array, got string."
+      saying("Invalid manifest data: tools.claude.files: expected an array, got string.")
     );
   });
 });

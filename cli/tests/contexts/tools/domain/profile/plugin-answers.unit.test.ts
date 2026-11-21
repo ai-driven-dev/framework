@@ -131,7 +131,9 @@ describe("what a native tool answers", () => {
     const { layout, hooks } = nativePlugins();
 
     expect(() => pluginAnswers(layout, { manifest: null, hooks, mcp: null })).toThrow(
-      "a native layout requires a manifest."
+      expect.objectContaining({
+        detail: expect.stringContaining("a native layout requires a manifest."),
+      })
     );
   });
 });

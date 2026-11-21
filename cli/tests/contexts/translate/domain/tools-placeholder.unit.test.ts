@@ -14,6 +14,6 @@ describe("assertNoToolsPlaceholder", () => {
       assertNoToolsPlaceholder("see @{{TOOLS}}/skills", "aidd-dev", "skills/x/SKILL.md");
 
     expect(refused).toThrow(FrameworkPlaceholderInPluginError);
-    expect(refused).toThrow(/aidd-dev.*skills\/x\/SKILL\.md|skills\/x\/SKILL\.md.*aidd-dev/s);
+    expect(refused).toThrow(new FrameworkPlaceholderInPluginError("aidd-dev", "skills/x/SKILL.md"));
   });
 });

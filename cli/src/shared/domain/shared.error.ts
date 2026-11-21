@@ -1,46 +1,48 @@
-/** A catalogue error carries a stable kebab-case `code`, the key a presentation table maps to words. */
+/** A catalogue error carries a stable kebab-case `code`, the key a presentation table maps to words.
+ * It carries data and a cause, never text: the words live in the presentation table. */
 export abstract class AiddError extends Error {
   abstract readonly code: string;
-  constructor(message?: string, options?: ErrorOptions) {
-    super(message, options);
+  constructor(options?: ErrorOptions) {
+    super("", options);
     this.name = new.target.name;
   }
 }
 
 export class AssetNotFoundError extends AiddError {
   readonly code = "asset-not-found";
-  constructor(assetName: string) {
-    super(`Bundled asset not found: '${assetName}'`);
+  constructor(readonly assetName: string) {
+    super();
   }
 }
 
 export class AuthenticationError extends AiddError {
   readonly code = "authentication";
-  constructor(source: string) {
-    super(`Authentication failed (${source}). Run \`aidd auth login\` to authenticate.`);
+  constructor(readonly source: string) {
+    super();
   }
 }
 
 export class CatalogFetchAuthError extends AiddError {
   readonly code = "catalog-fetch-auth";
-  constructor(url: string) {
-    super(
-      `Authentication required to fetch catalog from "${url}". Run \`aidd auth login\` first or use \`--source local --path <dir>\`.`
-    );
+  constructor(readonly url: string) {
+    super();
   }
 }
 
 export class CatalogFetchError extends AiddError {
   readonly code = "catalog-fetch";
-  constructor(url: string, detail: string) {
-    super(`Failed to fetch catalog from "${url}": ${detail}`);
+  constructor(
+    readonly url: string,
+    readonly reason: unknown
+  ) {
+    super();
   }
 }
 
 export class CatalogFetchNotFoundError extends AiddError {
   readonly code = "catalog-fetch-not-found";
-  constructor(url: string) {
-    super(`Catalog not found (HTTP 404): ${url}`);
+  constructor(readonly url: string) {
+    super();
   }
 }
 
@@ -50,93 +52,94 @@ export class HttpError extends AiddError {
     readonly statusCode: number,
     readonly url: string
   ) {
-    super(`Unexpected HTTP ${statusCode} from ${url}`);
+    super();
   }
 }
 
 export class HttpNotFoundError extends AiddError {
   readonly code = "http-not-found";
   constructor(readonly url: string) {
-    super(`Resource not found (HTTP 404): ${url}`);
+    super();
   }
 }
 
 export class HttpRedirectError extends AiddError {
   readonly code = "http-redirect";
   constructor(readonly url: string) {
-    super(`HTTP redirect without location header from ${url}`);
+    super();
   }
 }
 
 export class InputRequiredError extends AiddError {
   readonly code = "input-required";
-  constructor(message: string) {
-    super(message);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class InvalidInstallScopeError extends AiddError {
   readonly code = "invalid-install-scope";
-  constructor(value: string) {
-    super(`Invalid scope '${value}'. Expected 'project' or 'user'.`);
+  constructor(readonly value: string) {
+    super();
   }
 }
 
 export class InvalidMarketplaceNameError extends AiddError {
   readonly code = "invalid-marketplace-name";
-  constructor(detail: string) {
-    super(
-      `Invalid marketplace name: "${detail}". Use lowercase alphanumeric characters and hyphens only.`
-    );
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class InvalidPluginManifestError extends AiddError {
   readonly code = "invalid-plugin-manifest";
-  constructor(detail?: string) {
-    super(detail ? `Invalid plugin manifest: ${detail}` : "Invalid plugin manifest.");
+  constructor(readonly detail?: string) {
+    super();
   }
 }
 
 export class InvalidPluginSourceError extends AiddError {
   readonly code = "invalid-plugin-source";
-  constructor(detail?: string) {
-    super(detail ? `Invalid plugin source: ${detail}` : "Invalid plugin source.");
+  constructor(readonly detail?: string) {
+    super();
   }
 }
 
 export class InvalidSourceMarketplaceError extends AiddError {
   readonly code = "invalid-source-marketplace";
-  constructor(detail: string) {
-    super(`Invalid source marketplace: ${detail}.`);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class JsonParseError extends AiddError {
   readonly code = "json-parse";
-  constructor(path: string, cause: string) {
-    super(`Cannot parse existing JSON at ${path}: ${cause}`);
+  constructor(
+    readonly path: string,
+    readonly reason: string
+  ) {
+    super();
   }
 }
 
 export class ManifestValidationError extends AiddError {
   readonly code = "manifest-validation";
-  constructor(message: string) {
-    super(message);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class McpConfigError extends AiddError {
   readonly code = "mcp-config";
-  constructor(message: string) {
-    super(message);
+  constructor(readonly detail: string) {
+    super();
   }
 }
 
 export class ToolNotInManifestError extends AiddError {
   readonly code = "tool-not-in-manifest";
-  constructor(toolId: string) {
-    super(`Tool '${toolId}' is not installed in the manifest.`);
+  constructor(readonly toolId: string) {
+    super();
   }
 }
 
@@ -145,26 +148,28 @@ export class ToolNotInManifestError extends AiddError {
  * other project's own reference on the very next write. */
 export class UnreadableUserSourceReferencesError extends AiddError {
   readonly code = "unreadable-user-source-references";
-  constructor(path: string, reason: string) {
-    super(
-      `Cannot read the shared-source reference registry at ${path}: ${reason}. Repair the ` +
-        `file, or delete it to start from an empty registry.`
-    );
+  constructor(
+    readonly path: string,
+    readonly reason: string
+  ) {
+    super();
   }
 }
 
 export class UnregisteredToolError extends AiddError {
   readonly code = "unregistered-tool";
-  constructor(toolId: string) {
-    super(`Tool '${toolId}' is not registered.`);
+  constructor(readonly toolId: string) {
+    super();
   }
 }
 
 export class VersionMismatchError extends AiddError {
   readonly code = "version-mismatch";
-  constructor(plugin: string, requested: string, actual: string) {
-    super(
-      `Plugin '${plugin}': requested version '${requested}' does not match catalog version '${actual}'.`
-    );
+  constructor(
+    readonly plugin: string,
+    readonly requested: string,
+    readonly actual: string
+  ) {
+    super();
   }
 }

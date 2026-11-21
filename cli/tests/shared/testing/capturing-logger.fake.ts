@@ -1,3 +1,4 @@
+import { describeCause } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 
 export class CapturingLogger implements Logger {
@@ -5,16 +6,16 @@ export class CapturingLogger implements Logger {
   readonly infoMessages: string[] = [];
   readonly warnMessages: string[] = [];
 
-  debug(message: string): void {
-    this.debugMessages.push(message);
+  debug(message: string, cause?: unknown): void {
+    this.debugMessages.push(cause === undefined ? message : message + describeCause(cause));
   }
 
   info(message: string): void {
     this.infoMessages.push(message);
   }
 
-  warn(message: string): void {
-    this.warnMessages.push(message);
+  warn(message: string, cause?: unknown): void {
+    this.warnMessages.push(cause === undefined ? message : message + describeCause(cause));
   }
 
   get allMessages(): string[] {

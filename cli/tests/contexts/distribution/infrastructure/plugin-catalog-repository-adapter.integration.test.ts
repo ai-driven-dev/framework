@@ -110,7 +110,9 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     const adapter = makeAdapter();
     try {
       await expect(adapter.load(cacheDir)).rejects.toThrow(MalformedMarketplaceCatalogError);
-      await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
+      await expect(adapter.load(cacheDir)).rejects.toThrow(
+        expect.objectContaining({ cached: true })
+      );
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
@@ -122,7 +124,9 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     await writeCatalog(cacheDir, "{ not valid json");
     const adapter = makeAdapter();
     try {
-      await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
+      await expect(adapter.load(cacheDir)).rejects.toThrow(
+        expect.objectContaining({ cached: true })
+      );
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
@@ -134,7 +138,7 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     const adapter = makeAdapter();
     try {
       await expect(adapter.load(tmp)).rejects.toThrow(MalformedMarketplaceCatalogError);
-      await expect(adapter.load(tmp)).rejects.toThrow(/Fix or re-create/);
+      await expect(adapter.load(tmp)).rejects.toThrow(expect.objectContaining({ cached: false }));
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }

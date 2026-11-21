@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { describeCause } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -154,7 +155,7 @@ describe("RemovePlugin undoes native activation", () => {
       });
 
       expect(list).toHaveBeenCalledTimes(readsLedger ? 1 : 0);
-      expect(logger.warnMessages).toEqual(readsLedger ? [ledgerError.message] : []);
+      expect(logger.warnMessages).toEqual(readsLedger ? [describeCause(ledgerError)] : []);
       expect(activator.uninstalledPlugins).toEqual([REF]);
       expect(activator.uninstalledPluginScopes).toEqual(["project"]);
       expect(manifest.getNativeRegistrations(claude)?.pluginRefs).toEqual([]);

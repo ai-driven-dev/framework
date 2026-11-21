@@ -70,7 +70,7 @@ describe("CheckMarketplaces", () => {
     const { readings } = await check.execute({ projectRoot: PROJECT });
 
     expect(readings).toEqual([
-      { marketplace: "a", plugins: null, error: "offline" },
+      { marketplace: "a", plugins: null, error: new Error("offline") },
       { marketplace: "b", plugins: new Set(["x"]) },
     ]);
   });

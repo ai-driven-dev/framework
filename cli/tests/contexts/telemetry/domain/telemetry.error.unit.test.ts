@@ -9,11 +9,11 @@ import {
 } from "../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
 describe("ConflictingIdentityFlagsError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new ConflictingIdentityFlagsError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "ConflictingIdentityFlagsError",
-      message: "--as names you and --anonymous names nobody: give one of them.",
+      message: "",
     });
   });
 
@@ -23,11 +23,11 @@ describe("ConflictingIdentityFlagsError", () => {
 });
 
 describe("InvalidIdentityError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new InvalidIdentityError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "InvalidIdentityError",
-      message: "An identity is one non-empty line of at most 128 characters. Nothing was changed.",
+      message: "",
     });
   });
 
@@ -37,11 +37,12 @@ describe("InvalidIdentityError", () => {
 });
 
 describe("InvalidReportPeriodError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its detail and says nothing itself", () => {
     const error = new InvalidReportPeriodError("m");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "InvalidReportPeriodError",
-      message: "m",
+      detail: "m",
+      message: "",
     });
   });
 
@@ -51,11 +52,11 @@ describe("InvalidReportPeriodError", () => {
 });
 
 describe("TaskDeclaredNoneWithNameError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new TaskDeclaredNoneWithNameError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "TaskDeclaredNoneWithNameError",
-      message: "--none declares no task: give it neither a name nor --ticket.",
+      message: "",
     });
   });
 
@@ -65,12 +66,11 @@ describe("TaskDeclaredNoneWithNameError", () => {
 });
 
 describe("TaskNameMissingError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new TaskNameMissingError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "TaskNameMissingError",
-      message:
-        "A task needs a name: aidd telemetry task <name> [--ticket <ref>], or --none. See what the work is bound to with aidd telemetry status.",
+      message: "",
     });
   });
 
@@ -80,11 +80,11 @@ describe("TaskNameMissingError", () => {
 });
 
 describe("IdentityOffWithIdentifierError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new IdentityOffWithIdentifierError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "IdentityOffWithIdentifierError",
-      message: "--off removes the identity: give it no identifier.",
+      message: "",
     });
   });
 

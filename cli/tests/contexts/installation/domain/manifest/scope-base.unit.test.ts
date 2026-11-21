@@ -3,6 +3,7 @@ import { UnresolvableUserScopeError } from "../../../../../src/contexts/installa
 import { resolveScopeBase } from "../../../../../src/contexts/installation/domain/manifest/scope-base.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_BASE = "/home/u/.tool/plugins";
@@ -39,6 +40,6 @@ describe("base directory of a recorded scope", () => {
   );
 
   it("names the tool in the refusal", () => {
-    expect(() => userScope(() => null, TOOL.claude)).toThrow(`"${TOOL.claude}"`);
+    expect(() => userScope(() => null, TOOL.claude)).toThrow(saying(`"${TOOL.claude}"`));
   });
 });

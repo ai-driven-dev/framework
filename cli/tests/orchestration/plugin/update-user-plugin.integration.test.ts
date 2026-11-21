@@ -23,6 +23,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 
 const { copilot, cursor } = TOOL;
 
@@ -166,7 +167,7 @@ describe("targeted machine native plugin update", () => {
 
   it("does not adopt a foreign enabled host ref without a machine claim", async () => {
     const f = fixture(copilot, { refs: [], hostRefs: new Map([[REF, { enabled: true }]]) });
-    await expect(f.execute(REF)).rejects.toThrow(/not installed/);
+    await expect(f.execute(REF)).rejects.toThrow(saying(/not installed/));
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 
@@ -275,7 +276,7 @@ describe("targeted machine native plugin update", () => {
 
   it("names the refs it cannot find when a rebuild leaves no native claim to update", async () => {
     const f = fixture(copilot);
-    await expect(f.execute(REF, true)).rejects.toThrow(`Plugin '${REF}' is not installed.`);
+    await expect(f.execute(REF, true)).rejects.toThrow(saying(`Plugin '${REF}' is not installed.`));
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 

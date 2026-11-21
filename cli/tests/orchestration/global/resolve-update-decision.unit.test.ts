@@ -3,6 +3,7 @@ import { BulkConflictState } from "../../../src/orchestration/domain/bulk-confli
 import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.js";
 import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 
 function buildFakePrompter(
   resolveConflictBulkReturn: "keep" | "overwrite" | "overwrite-all" | "skip-all"
@@ -44,7 +45,7 @@ describe("ResolveUpdateDecision", () => {
       });
 
       await expect(run).rejects.toThrow(
-        "Use --force to overwrite modified files in non-interactive mode."
+        saying("Use --force to overwrite modified files in non-interactive mode.")
       );
     });
 

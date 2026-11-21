@@ -13,7 +13,7 @@ export type UpstreamRemoved = PluginSource;
 
 export interface SkippedMarketplace {
   marketplace: string;
-  error: string;
+  error: unknown;
 }
 
 export interface CheckMarketplaceUpstreamResult {

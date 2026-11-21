@@ -204,7 +204,11 @@ describe("guardAgainstConflict", () => {
     });
     await expect(refusal).rejects.toBeInstanceOf(MarketplaceSourceConflictError);
     await expect(refusal).rejects.toThrow(
-      "Marketplace 'aidd' is already registered from a different catalog: /other differs from the one requested, /built/aidd"
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "Marketplace 'aidd' is already registered from a different catalog: /other differs from the one requested, /built/aidd"
+        ),
+      })
     );
   });
 

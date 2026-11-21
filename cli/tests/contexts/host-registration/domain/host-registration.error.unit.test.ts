@@ -6,11 +6,12 @@ import {
 } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 
 describe("MarketplaceSourceConflictError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new MarketplaceSourceConflictError("name taken");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "MarketplaceSourceConflictError",
-      message: "name taken",
+      detail: "name taken",
+      message: "",
     });
   });
 
@@ -22,11 +23,12 @@ describe("MarketplaceSourceConflictError", () => {
 });
 
 describe("NativePluginCliError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new NativePluginCliError("claude exited 2");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "NativePluginCliError",
-      message: "claude exited 2",
+      detail: "claude exited 2",
+      message: "",
     });
   });
 
@@ -36,12 +38,12 @@ describe("NativePluginCliError", () => {
 });
 
 describe("UnreadableBuiltCatalogError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new UnreadableBuiltCatalogError("/built/c.json");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, path: error.path, message: error.message }).toStrictEqual({
       name: "UnreadableBuiltCatalogError",
-      message:
-        "Cannot read the marketplace catalog this project just built, at /built/c.json — nothing was registered for it. Run `aidd sync` again once the source is fixed.",
+      path: "/built/c.json",
+      message: "",
     });
   });
 

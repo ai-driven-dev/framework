@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { TOOL } from "../testing/registered-tools.builder.js";
+import { saying } from "../testing/saying.builder.js";
 
 const { vscode } = TOOL;
 
@@ -85,7 +86,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   it("throws for an unknown file name", () => {
     expect(() => provider.loadConfigAsset(TOOL.claude, "missing.json")).toThrow(
-      "Bundled asset not found: 'claude/missing.json'"
+      saying("Bundled asset not found: 'claude/missing.json'")
     );
   });
 });

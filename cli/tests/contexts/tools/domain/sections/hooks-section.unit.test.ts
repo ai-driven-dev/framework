@@ -86,10 +86,14 @@ describe("HooksConfigPart output path", () => {
 
   it("names the refused path and the rule it broke", () => {
     expect(() => new HooksConfigPart({ outputPath: "/etc/h.json" })).toThrow(
-      'hooks outputPath "/etc/h.json" must be relative.'
+      expect.objectContaining({
+        detail: expect.stringContaining('hooks outputPath "/etc/h.json" must be relative.'),
+      })
     );
     expect(() => new HooksConfigPart({ outputPath: "../h.json" })).toThrow(
-      'hooks outputPath "../h.json" must stay in the project.'
+      expect.objectContaining({
+        detail: expect.stringContaining('hooks outputPath "../h.json" must stay in the project.'),
+      })
     );
   });
 });

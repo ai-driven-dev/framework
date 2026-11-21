@@ -24,7 +24,9 @@ describe("NativeActivation", () => {
 
   it("refuses a declaration whose binary is empty", () => {
     expect(() => new NativeActivation({ ...driven, binary: "" })).toThrow(
-      "A native activation declares an empty binary"
+      expect.objectContaining({
+        detail: expect.stringContaining("A native activation declares an empty binary"),
+      })
     );
   });
 
@@ -33,7 +35,11 @@ describe("NativeActivation", () => {
       () =>
         new NativeActivation({ ...driven, marketplaceSources: { from: "marketplace-registry" } })
     ).toThrow(
-      "A native activation reads its marketplace sources from a registry it does not declare"
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "A native activation reads its marketplace sources from a registry it does not declare"
+        ),
+      })
     );
   });
 

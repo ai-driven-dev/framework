@@ -14,6 +14,7 @@ import {
   printToolRemoved,
   printUpdateResult,
 } from "../display/tool-config-display.js";
+import { render } from "../errors/error-translator.presenter.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { type RecipesKeys, registerRecipesCommand } from "./recipes.js";
 
@@ -85,7 +86,12 @@ async function installAiTool({
   printToolInstalled(output, {
     toolId,
     fileCount: result.runtimeResult.fileCount,
-    warnings: [...result.runtimeResult.warnings, ...result.propagationWarnings],
+    warnings: [
+      ...result.runtimeResult.warnings,
+      ...result.propagationWarnings.map(
+        ({ text, cause }) => text + (cause === undefined ? "" : render(cause))
+      ),
+    ],
   });
   if (result.activation !== undefined) reportNativeActivation(output, result.activation);
 }

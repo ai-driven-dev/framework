@@ -10,11 +10,18 @@ import {
 } from "../../../../src/contexts/translate/domain/translate.error.js";
 
 describe("FlatMergeTargetNotJsonError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new FlatMergeTargetNotJsonError("f.json", "Unexpected token");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      shownPath: error.shownPath,
+      parseMessage: error.parseMessage,
+      message: error.message,
+    }).toStrictEqual({
       name: "FlatMergeTargetNotJsonError",
-      message: "f.json is not valid JSON (Unexpected token); left untouched.",
+      shownPath: "f.json",
+      parseMessage: "Unexpected token",
+      message: "",
     });
   });
 
@@ -26,12 +33,18 @@ describe("FlatMergeTargetNotJsonError", () => {
 });
 
 describe("FlatTargetExistsError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new FlatTargetExistsError("/out/a.md", "aidd-dev");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      targetPath: error.targetPath,
+      pluginName: error.pluginName,
+      message: error.message,
+    }).toStrictEqual({
       name: "FlatTargetExistsError",
-      message:
-        "Flat build conflict: '/out/a.md' already exists (plugin 'aidd-dev'). Re-run with --force to overwrite.",
+      targetPath: "/out/a.md",
+      pluginName: "aidd-dev",
+      message: "",
     });
   });
 
@@ -41,12 +54,18 @@ describe("FlatTargetExistsError", () => {
 });
 
 describe("FrameworkPlaceholderInPluginError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new FrameworkPlaceholderInPluginError("aidd-dev", "skills/x.md");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      pluginName: error.pluginName,
+      relativePath: error.relativePath,
+      message: error.message,
+    }).toStrictEqual({
       name: "FrameworkPlaceholderInPluginError",
-      message:
-        "Framework placeholder '@{{TOOLS}}/' is not allowed inside plugin 'aidd-dev' (file: skills/x.md).",
+      pluginName: "aidd-dev",
+      relativePath: "skills/x.md",
+      message: "",
     });
   });
 
@@ -58,12 +77,18 @@ describe("FrameworkPlaceholderInPluginError", () => {
 });
 
 describe("InvalidBuildPathsError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidBuildPathsError("/src", "/src/out");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      sourceDir: error.sourceDir,
+      outDir: error.outDir,
+      message: error.message,
+    }).toStrictEqual({
       name: "InvalidBuildPathsError",
-      message:
-        "Refusing to build: --out '/src/out' and --source '/src' must not contain each other.",
+      sourceDir: "/src",
+      outDir: "/src/out",
+      message: "",
     });
   });
 
@@ -73,11 +98,12 @@ describe("InvalidBuildPathsError", () => {
 });
 
 describe("JsonSchemaValidationError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new JsonSchemaValidationError(["a", "b"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, errors: error.errors, message: error.message }).toStrictEqual({
       name: "JsonSchemaValidationError",
-      message: "Manifest validation failed: a; b",
+      errors: ["a", "b"],
+      message: "",
     });
   });
 
@@ -87,12 +113,12 @@ describe("JsonSchemaValidationError", () => {
 });
 
 describe("MarketplaceOutDirNotEmptyError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new MarketplaceOutDirNotEmptyError("/out");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, outDir: error.outDir, message: error.message }).toStrictEqual({
       name: "MarketplaceOutDirNotEmptyError",
-      message:
-        "Refusing to build: '/out' is not empty. Re-run with --force to overwrite files this build produces, or choose an empty --out directory.",
+      outDir: "/out",
+      message: "",
     });
   });
 
@@ -102,11 +128,12 @@ describe("MarketplaceOutDirNotEmptyError", () => {
 });
 
 describe("OutDirNotDirectoryError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new OutDirNotDirectoryError("/out");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, outDir: error.outDir, message: error.message }).toStrictEqual({
       name: "OutDirNotDirectoryError",
-      message: "Refusing to build: --out '/out' does not exist or is not a directory.",
+      outDir: "/out",
+      message: "",
     });
   });
 

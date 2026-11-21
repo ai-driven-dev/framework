@@ -58,7 +58,7 @@ export class CredentialRecordFileAdapter implements CredentialRecordRepository {
         });
       } catch (err) {
         throw new AuthStorageError(
-          `Failed to set restrictive permissions on ${path}: ${err instanceof Error ? err.message : String(err)}`
+          `Failed to set restrictive permissions on ${path}: ${err instanceof AuthStorageError ? err.detail : err instanceof Error ? err.message : String(err)}`
         );
       }
     } else {

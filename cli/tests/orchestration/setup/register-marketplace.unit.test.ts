@@ -18,6 +18,7 @@ import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fa
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { flowTools } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
@@ -121,7 +122,9 @@ describe("RegisterMarketplace", () => {
 
       await expect(attempt).rejects.toThrow(CatalogFetchAuthError);
       await expect(attempt).rejects.toThrow(
-        'Authentication required to fetch catalog from "https://github.com/owner/repo". Run `aidd auth login` first or use `--source local --path <dir>`.'
+        saying(
+          'Authentication required to fetch catalog from "https://github.com/owner/repo". Run `aidd auth login` first or use `--source local --path <dir>`.'
+        )
       );
     });
 

@@ -61,7 +61,7 @@ describe("RefreshMarketplace", () => {
     const result = await refresh.execute({ projectRoot: PROJECT });
 
     expect(result.results).toEqual([
-      { name: "a", status: "failed", error: "offline" },
+      { name: "a", status: "failed", error: new Error("offline") },
       { name: "b", status: "ok" },
     ]);
     expect(result.failedCount).toBe(1);

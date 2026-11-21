@@ -18,11 +18,18 @@ import {
 } from "../../src/orchestration/orchestration.error.js";
 
 describe("AmbiguousPluginMatchError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new AmbiguousPluginMatchError("aidd-dev", ["a", "b"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      plugin: error.plugin,
+      marketplaces: error.marketplaces,
+      message: error.message,
+    }).toStrictEqual({
       name: "AmbiguousPluginMatchError",
-      message: "Plugin 'aidd-dev' matches multiple marketplaces: a, b. Use --from <marketplace>.",
+      plugin: "aidd-dev",
+      marketplaces: ["a", "b"],
+      message: "",
     });
   });
 
@@ -34,19 +41,37 @@ describe("AmbiguousPluginMatchError", () => {
 });
 
 describe("CategoryMismatchError", () => {
-  it("says exactly what went wrong (1)", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      wrong: error.wrong,
+      category: error.category,
+      validToolIds: error.validToolIds,
+      message: error.message,
+    }).toStrictEqual({
       name: "CategoryMismatchError",
-      message: "vscode is not an AI tool. Valid AI tools: claude, cursor",
+      wrong: ["vscode"],
+      category: "ai",
+      validToolIds: ["claude", "cursor"],
+      message: "",
     });
   });
 
-  it("says exactly what went wrong (2)", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new CategoryMismatchError(["claude", "cursor"], "ide", ["vscode"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      wrong: error.wrong,
+      category: error.category,
+      validToolIds: error.validToolIds,
+      message: error.message,
+    }).toStrictEqual({
       name: "CategoryMismatchError",
-      message: "claude, cursor are not IDE tools. Valid IDE tools: vscode",
+      wrong: ["claude", "cursor"],
+      category: "ide",
+      validToolIds: ["vscode"],
+      message: "",
     });
   });
 
@@ -58,11 +83,12 @@ describe("CategoryMismatchError", () => {
 });
 
 describe("InteractiveOnlyError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InteractiveOnlyError("aidd setup");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, action: error.action, message: error.message }).toStrictEqual({
       name: "InteractiveOnlyError",
-      message: "'aidd setup' requires an interactive terminal.",
+      action: "aidd setup",
+      message: "",
     });
   });
 
@@ -72,11 +98,12 @@ describe("InteractiveOnlyError", () => {
 });
 
 describe("InvalidPluginModeConfigError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidPluginModeConfigError("bad mode");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
       name: "InvalidPluginModeConfigError",
-      message: "bad mode",
+      detail: "bad mode",
+      message: "",
     });
   });
 
@@ -86,11 +113,18 @@ describe("InvalidPluginModeConfigError", () => {
 });
 
 describe("InvalidSetupToolIdError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new InvalidSetupToolIdError("zed", ["claude", "cursor"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      id: error.id,
+      validIds: error.validIds,
+      message: error.message,
+    }).toStrictEqual({
       name: "InvalidSetupToolIdError",
-      message: 'Invalid tool ID: "zed". Valid IDs: claude, cursor',
+      id: "zed",
+      validIds: ["claude", "cursor"],
+      message: "",
     });
   });
 
@@ -102,11 +136,11 @@ describe("InvalidSetupToolIdError", () => {
 });
 
 describe("NoMarketplacesRegisteredError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new NoMarketplacesRegisteredError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "NoMarketplacesRegisteredError",
-      message: "No marketplaces registered. Use `aidd marketplace add <name> <source>` first.",
+      message: "",
     });
   });
 
@@ -116,11 +150,16 @@ describe("NoMarketplacesRegisteredError", () => {
 });
 
 describe("TrustDeniedError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new TrustDeniedError("aidd");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      marketplace: error.marketplace,
+      message: error.message,
+    }).toStrictEqual({
       name: "TrustDeniedError",
-      message: "Trust denied for marketplace 'aidd'. Aborting.",
+      marketplace: "aidd",
+      message: "",
     });
   });
 
@@ -130,12 +169,12 @@ describe("TrustDeniedError", () => {
 });
 
 describe("UserScopeIdeToolsError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new UserScopeIdeToolsError(["vscode", "zed"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, ideTools: error.ideTools, message: error.message }).toStrictEqual({
       name: "UserScopeIdeToolsError",
-      message:
-        "--global installs no project files, so an editor (vscode, zed) has nothing to install machine-wide. Drop it from --ide, or run `aidd setup --ide <ids>` separately in the project.",
+      ideTools: ["vscode", "zed"],
+      message: "",
     });
   });
 
@@ -145,12 +184,11 @@ describe("UserScopeIdeToolsError", () => {
 });
 
 describe("UserScopeNoToolsError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new UserScopeNoToolsError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "UserScopeNoToolsError",
-      message:
-        "--global with no --ide registers the shared source for no tool at all. Pass `--ide <ids>` naming which tool to activate machine-wide.",
+      message: "",
     });
   });
 
@@ -160,12 +198,11 @@ describe("UserScopeNoToolsError", () => {
 });
 
 describe("UserScopePluginModeError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new UserScopePluginModeError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "UserScopePluginModeError",
-      message:
-        "--global cannot ask which plugins to install. Pass --plugins all, recommended, none, or comma-separated names.",
+      message: "",
     });
   });
 
@@ -175,12 +212,11 @@ describe("UserScopePluginModeError", () => {
 });
 
 describe("UserScopeUnavailableError", () => {
-  it("says exactly what went wrong", () => {
+  it("says nothing itself", () => {
     const error = new UserScopeUnavailableError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
       name: "UserScopeUnavailableError",
-      message:
-        "--scope user is not wired for this command yet — no user-scope manifest repository was provided at construction.",
+      message: "",
     });
   });
 
@@ -190,12 +226,12 @@ describe("UserScopeUnavailableError", () => {
 });
 
 describe("UserScopeUnsupportedAiToolsError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new UserScopeUnsupportedAiToolsError(["cursor", "opencode"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, aiTools: error.aiTools, message: error.message }).toStrictEqual({
       name: "UserScopeUnsupportedAiToolsError",
-      message:
-        "--global installs through an IDE's own plugin CLI or its user configuration directory, and neither exists for: cursor, opencode. Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead.",
+      aiTools: ["cursor", "opencode"],
+      message: "",
     });
   });
 
@@ -207,33 +243,44 @@ describe("UserScopeUnsupportedAiToolsError", () => {
 });
 
 describe("SyncFailedError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new SyncFailedError([
-      { scope: "claude", message: "x" },
-      { scope: "codex", message: "y" },
+      { scope: "claude", error: "x" },
+      { scope: "codex", error: "y" },
     ]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({ name: error.name, errors: error.errors, message: error.message }).toStrictEqual({
       name: "SyncFailedError",
-      message: "Sync failed for: claude, codex. See the warnings above.",
+      errors: [
+        { scope: "claude", error: "x" },
+        { scope: "codex", error: "y" },
+      ],
+      message: "",
     });
   });
 
   it("carries its stable code", () => {
     expect(
       new SyncFailedError([
-        { scope: "claude", message: "x" },
-        { scope: "codex", message: "y" },
+        { scope: "claude", error: "x" },
+        { scope: "codex", error: "y" },
       ]).code
     ).toBe("sync-failed");
   });
 });
 
 describe("UnknownAiToolIdError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new UnknownAiToolIdError("zed", ["claude", "cursor"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      tool: error.tool,
+      validIds: error.validIds,
+      message: error.message,
+    }).toStrictEqual({
       name: "UnknownAiToolIdError",
-      message: "Unknown AI tool: zed. Valid AI tools: claude, cursor",
+      tool: "zed",
+      validIds: ["claude", "cursor"],
+      message: "",
     });
   });
 
@@ -243,12 +290,18 @@ describe("UnknownAiToolIdError", () => {
 });
 
 describe("UserScopeFilterUnsupportedError", () => {
-  it("says exactly what went wrong", () => {
+  it("carries its data and says nothing itself", () => {
     const error = new UserScopeFilterUnsupportedError("--plugin", "sync");
-    expect({ name: error.name, message: error.message }).toStrictEqual({
+    expect({
+      name: error.name,
+      flag: error.flag,
+      command: error.command,
+      message: error.message,
+    }).toStrictEqual({
       name: "UserScopeFilterUnsupportedError",
-      message:
-        "--scope user tracks nothing --plugin can narrow — it names every requested tool, not one plugin or one file. Drop --plugin, or run `aidd sync` at project scope.",
+      flag: "--plugin",
+      command: "sync",
+      message: "",
     });
   });
 
