@@ -13,22 +13,13 @@ const inline = (text) => escaped(text).replace(/`([^`]+)`/g, "<code>$1</code>");
 const cellsOf = (line) => line.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((cell) => cell.trim());
 const isRule = (line) => /^\s*\|(\s*:?-+:?\s*\|)+\s*$/.test(line ?? "");
 
-/** A markdown file as a document: front matter as chips, then headings, paragraphs, lists, tables and inline code.
- * Every other line is an escaped paragraph. */
+/** A markdown file as a document: headings, paragraphs, lists, tables and inline code. Its front matter is
+ * dropped: the checks read it, a person does not. Every other line is an escaped paragraph. */
 function documentOf(text) {
   const lines = text.replaceAll("\r", "").split("\n");
   const html = [];
-  if (lines[0] === "---") {
-    const end = lines.indexOf("---", 1);
-    if (end > 0) {
-      const chips = lines.slice(1, end).filter((line) => line.trim()).map((line) => {
-        const at = line.indexOf(":");
-        return at < 0 ? `<span class="chip">${escaped(line.trim())}</span>` : `<span class="chip"><span class="key">${escaped(line.slice(0, at).trim())}</span>${escaped(line.slice(at + 1).trim())}</span>`;
-      });
-      html.push(`<div class="chips">${chips.join("")}</div>`);
-      lines.splice(0, end + 1);
-    }
-  }
+  const end = lines[0] === "---" ? lines.indexOf("---", 1) : -1;
+  if (end > 0) lines.splice(0, end + 1);
   for (let at = 0; at < lines.length; ) {
     const line = lines[at];
     const heading = /^(#{1,3}) (.+)$/.exec(line);

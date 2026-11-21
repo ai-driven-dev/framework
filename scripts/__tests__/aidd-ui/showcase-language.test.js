@@ -23,7 +23,7 @@ const SET = {
   axes: ["Tone"],
   fingerprint: "f1",
   problems: [],
-  variants: ["a", "b"].map((name) => ({ name, intent: `Intent ${name}`, axes: [["Tone", name]], files: [{ path: "preview.html", text: `<html><body><p>${name}</p></body></html>` }] })),
+  variants: ["a", "b"].map((name) => ({ name, intent: `Intent ${name}`, axes: [["Tone", name]], files: [{ path: "preview.html", text: `<html><body><p>${name}</p></body></html>` }, { path: "screens/home.md", text: `---\nid: home\nroute: /home/${name}\nstates: [default, focus]\n---\n\n# Home ${name}\n` }] })),
 };
 const PROBLEM = { rule: "V6", severity: "warning", file: `${UI}/screens/home.md`, message: "a literal pixel value", fix: "replace it with a token" };
 const pagesOf = (lang) => showcaseOf({ project: load(tmp), problems: [PROBLEM], tokens: ":root { --accent: #123456; }\n", captures: new Set(), lang, sets: [SET] });
@@ -53,6 +53,12 @@ describe("a French showcase", () => {
       if (!name.endsWith(".html")) continue;
       for (const text of readOf(html).all) assert.doesNotMatch(text, PATH, `${name}: ${text}`);
     }
+  });
+
+  it("shows no front matter of a variant's record on its set page", () => {
+    const set = readOf(pagesOf("fr")["_set-layout.html"]).all;
+    assert.ok(set.some((text) => text.includes("Home a")), "the variant's record is on the page");
+    for (const text of set) assert.ok(!/^(route|states|id)$|\/home\/|\[default, focus\]/.test(text), text);
   });
 
   it("shows no rule code nor check message, nor the route and code links of a screen", () => {

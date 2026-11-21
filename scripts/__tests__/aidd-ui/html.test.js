@@ -14,9 +14,9 @@ describe("aidd-ui html helpers", () => {
     assert.equal(escaped(`a & b < c > "d"`), "a &amp; b &lt; c &gt; &quot;d&quot;");
   });
 
-  it("renders a markdown file as a document: front matter as chips, headings, lists, inline code", () => {
-    const html = documentOf("---\nid: brand\n---\n\n# Brand\n\n- one `two`\n");
-    assert.match(html, /<span class="chip"><span class="key">id<\/span>brand<\/span>/);
+  it("renders a markdown file as a document: headings, lists, inline code, and no front matter, which the checks read", () => {
+    const html = documentOf("---\nid: brand\nroute: /home\n---\n\n# Brand\n\n- one `two`\n");
+    assert.doesNotMatch(html, /brand<\/span>|\/home|---/);
     assert.match(html, /<h1>Brand<\/h1>/);
     assert.match(html, /<li>one <code>two<\/code><\/li>/);
   });
