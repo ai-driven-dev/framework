@@ -13,6 +13,7 @@ import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { InMemoryMarketplaceTrustStore } from "../../../../shared/testing/in-memory-marketplace-trust-store.fake.js";
+import { unusedRawCatalog } from "../../../../shared/testing/raw-catalog.fake.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 
 const MARKETPLACE_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
@@ -25,6 +26,7 @@ async function build() {
   const trustStore = new InMemoryMarketplaceTrustStore();
   const fetchMarketplaceSource = new FetchMarketplaceSource({
     pluginFetcher: new FixturePluginFetcher(),
+    rawCatalog: unusedRawCatalog(),
   });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,

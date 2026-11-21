@@ -24,8 +24,8 @@ export function setupMarketplaceRegistrar(
   currentVersionProvider: VersionReader,
   logger: Logger,
   environment: Environment,
-  tokenProvider?: TokenProvider,
-  releaseResolver?: RepositoryVisibility,
+  tokenProvider: TokenProvider = { resolve: async () => "token" },
+  releaseResolver: RepositoryVisibility = { isRepoPublic: async () => true },
   userSourceReferences?: UserSourceReferences
 ): { resolveSource: ResolveSetupSource; register: RegisterFrameworkSource } {
   const registration = new RegisterMarketplace({

@@ -25,6 +25,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { InMemoryMarketplaceTrustStore } from "../../shared/testing/in-memory-marketplace-trust-store.fake.js";
+import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
@@ -69,7 +70,10 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   };
   const trustStore = new InMemoryMarketplaceTrustStore();
   const resolveMarketplace = new ResolveMarketplace(
-    new FetchMarketplaceSource({ pluginFetcher: new FixturePluginFetcher() }),
+    new FetchMarketplaceSource({
+      pluginFetcher: new FixturePluginFetcher(),
+      rawCatalog: unusedRawCatalog(),
+    }),
     new PluginCatalogRepositoryAdapter(fs)
   );
   const resolve = resolveMarketplace.execute.bind(resolveMarketplace);

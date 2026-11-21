@@ -1,6 +1,7 @@
 import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
 import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
+import { cloneRequiringRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 /** Where a marketplace fetched from a repository lands in these tests. */
 export function fetchedPathOf(repo: string): string {
@@ -26,6 +27,7 @@ export function resolvingCatalogs(
         return path;
       },
     },
+    rawCatalog: cloneRequiringRawCatalog(),
   });
   return new ResolveMarketplace(fetcher, {
     load: async (path) => {

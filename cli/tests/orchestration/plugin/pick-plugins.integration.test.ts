@@ -23,6 +23,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
+import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
@@ -75,7 +76,10 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     },
     catalogOf()
   );
-  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: deps.pluginFetcher,
+    rawCatalog: unusedRawCatalog(),
+  });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(deps.fs)

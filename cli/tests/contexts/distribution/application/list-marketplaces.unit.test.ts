@@ -6,6 +6,7 @@ import type { PluginCatalog } from "../../../../src/contexts/distribution/contra
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/ports/plugin-catalog-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { cloneRequiringRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const SAMPLE_MARKETPLACE = Marketplace.create({
   name: "awesome",
@@ -57,6 +58,7 @@ describe("ListMarketplaces", () => {
         pluginFetcher: {
           fetch: async () => "/fake/local-path",
         },
+        rawCatalog: cloneRequiringRawCatalog(),
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => fakeCatalog,
@@ -78,6 +80,7 @@ describe("ListMarketplaces", () => {
             throw new Error("network error");
           },
         },
+        rawCatalog: cloneRequiringRawCatalog(),
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => null,
@@ -99,6 +102,7 @@ describe("ListMarketplaces", () => {
             throw new Error("network error");
           },
         },
+        rawCatalog: cloneRequiringRawCatalog(),
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => null,
