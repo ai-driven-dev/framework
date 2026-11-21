@@ -4,6 +4,17 @@ import { textLoader } from "./tests/setup/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
+// Tests of the test tooling itself (mutation filter, sequencer, throwaway profile, platform
+// helpers). They run in the `tooling` project, which CI runs and the default run skips.
+const TOOLING_TESTS = [
+  "tests/helpers/stryker-filter.integration.test.ts",
+  "tests/helpers/ports/realpath-windows.unit.test.ts",
+  "tests/setup/mutation-sequencer.integration.test.ts",
+  "tests/setup/throwaway-profile.unit.test.ts",
+  "tests/setup/unloadable-file-as-failed-test.integration.test.ts",
+  "tests/setup/unloadable-file-as-failed-test.unit.test.ts",
+];
+
 export default defineConfig({
   plugins: [textLoader(TEXT_EXTENSIONS)],
   test: {
@@ -14,6 +25,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["tests/**/*.unit.test.ts"],
+          exclude: [...TOOLING_TESTS],
           globals: false,
           environment: "node",
           globalSetup: [
@@ -53,10 +65,27 @@ export default defineConfig({
         test: {
           name: "integration",
           include: ["tests/**/*.integration.test.ts"],
+          exclude: [...TOOLING_TESTS],
           globals: false,
           environment: "node",
           testTimeout: 60000,
           // A `beforeEach` that spawns git is slower than the 10s default on a loaded Windows runner.
+          hookTimeout: 60000,
+          globalSetup: [
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
+          ],
+        },
+      },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
+          name: "tooling",
+          include: TOOLING_TESTS,
+          globals: false,
+          environment: "node",
+          testTimeout: 60000,
           hookTimeout: 60000,
           globalSetup: [
             "./tests/setup/sweep-stale-temp-dirs.ts",

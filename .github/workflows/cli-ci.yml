@@ -581,6 +581,9 @@ jobs:
       - name: cli integration
         if: matrix.part == 'integration'
         run: cd cli && pnpm test:integration
+      - name: cli tooling
+        if: matrix.part == 'unit-contract'
+        run: cd cli && pnpm test:tooling
 
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
       # resolves on this platform's PATH. The recipe hook builds it first; this step
