@@ -37,6 +37,15 @@ export interface PurgeMarketplacePluginsDeps {
   readonly records: RegistrationRecordRules;
 }
 
+function applyNativeRemovals(
+  calls: readonly Awaited<ReturnType<PurgeMarketplacePlugins["planNativeRemovals"]>>[number][]
+): void {
+  for (const { registration, activator, refs, scopes } of calls) {
+    for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
+    activator.removeMarketplace(registration.hostName, "user");
+  }
+}
+
 /** Removes everything the machine holds on behalf of one user-scope marketplace: the plugins
  * installed from it, and the host's catalogue and plugin claims, once none is still in use. */
 export class PurgeMarketplacePlugins {
@@ -58,8 +67,7 @@ export class PurgeMarketplacePlugins {
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no user manifest.`
       );
-    const claims = this.claimsOn(manifest, marketplace);
-    const { plugins, native, nativeRefs } = claims;
+    const { plugins, native, nativeRefs } = this.claimsOn(manifest, marketplace);
     const dependents = [
       ...new Set([
         ...plugins.flatMap(({ plugin }) => plugin.dependents),
@@ -70,11 +78,7 @@ export class PurgeMarketplacePlugins {
       throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, dependents);
     const safeFiles = await this.proveFiles(plugins, home);
     const nativeCalls = await this.planNativeRemovals(native, projectRoot);
-    for (const { registration, activator, refs, scopes } of nativeCalls) {
-      for (const claim of refs)
-        activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
-      activator.removeMarketplace(registration.hostName, "user");
-    }
+    applyNativeRemovals(nativeCalls);
     for (const { toolId, plugin, files } of safeFiles) {
       await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), projectRoot);
       manifest.removePlugin(toolId, plugin.name);
