@@ -10,7 +10,6 @@ import { aDiskTarget, aStubBuildContract } from "../../testing/stub-build-contra
 const PLUGIN = { name: "plug", src: "/src/plugins/plug" };
 const UNUSED_FLAT = {
   writeConfig: async () => 0,
-  writeAgent: async () => 0,
   writeHooks: async () => 0,
   writeMcp: async () => 0,
 };

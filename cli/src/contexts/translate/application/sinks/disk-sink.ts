@@ -13,7 +13,6 @@ import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";
 import { assertFlatDestinationFree } from "./flat-collision.js";
 import { writeMarketplaceCatalog } from "./marketplace-catalog-writer.js";
-import { writePluginAgents } from "./plugin-content-writer.js";
 import { writePluginHooks, writePluginMcp } from "./plugin-runtime-writer.js";
 import { presenceOf, readPluginCanon } from "./plugin-source-tree-reader.js";
 
@@ -57,7 +56,6 @@ export class DiskSink implements PluginTreeSink {
     return (
       manifest +
       built.length +
-      (await writePluginAgents(this.deps, t, plugin)) +
       (await writePluginHooks(this.deps, t, plugin)) +
       (await writePluginMcp(this.deps, t, plugin))
     );

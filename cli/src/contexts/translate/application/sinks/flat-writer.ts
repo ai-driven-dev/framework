@@ -9,13 +9,11 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import { PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
 import { flatPluginRootAbsolute } from "../../domain/flat-layout.js";
 import type {
-  FlatFileStep,
   FlatHooksStep,
   FlatMcpStep,
   FlatPluginWriter,
   FlatTarget,
 } from "../../ports/flat-plugin-writer.js";
-import { writeFlatAgent } from "./flat-content-writer.js";
 import { writeFlatHooks } from "./flat-hooks-writer.js";
 import { writeFlatMcp } from "./flat-mcp-writer.js";
 
@@ -95,10 +93,6 @@ export class FlatWriter implements FlatPluginWriter {
       if (await this.fs.fileExists(path)) found.set(key, await this.fs.readFile(path));
     }
     return found;
-  }
-
-  writeAgent(step: FlatFileStep): Promise<number> {
-    return writeFlatAgent(this.fs, step);
   }
 
   writeHooks(step: FlatHooksStep): Promise<number> {
