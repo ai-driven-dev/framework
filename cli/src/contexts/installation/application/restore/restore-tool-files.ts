@@ -74,7 +74,7 @@ export class RestoreToolFiles {
         unrestorable: [],
       };
     }
-    return this.commitToolRestore(options, toolId, section, mergeSection);
+    return this.commitToolRestore(options, { toolId, section, mergeSection });
   }
 
   private async buildDistributionMap(
@@ -121,11 +121,14 @@ export class RestoreToolFiles {
 
   private commitToolRestore(
     options: RestoreToolFilesCommand,
-    toolId: ToolId,
-    section: SectionRestoreResult | null,
-    mergeSection: MergeSectionRestoreResult | null
+    sections: {
+      toolId: ToolId;
+      section: SectionRestoreResult | null;
+      mergeSection: MergeSectionRestoreResult | null;
+    }
   ): RestoreToolFilesResult {
     const { manifest, version } = options;
+    const { toolId, section, mergeSection } = sections;
     const files =
       section?.updatedFiles ?? this.existingFilesAsGenerated(manifest.getToolFiles(toolId));
     const mergeFiles = mergeSection?.updatedMergeFiles ?? [...manifest.getMergeFiles(toolId)];

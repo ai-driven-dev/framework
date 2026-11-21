@@ -5,6 +5,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { RemovedPlugin } from "../../contract/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
 import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
@@ -13,19 +14,23 @@ import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remov
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(
   fs: FileReader,
-  plugin: InstalledPlugin,
-  tool: FlatMcpSection,
-  projectRoot: string
+  removal: ProjectMcpRemoval
 ): Promise<void> {
-  await planProjectMcpRemoval(fs, plugin, tool, projectRoot);
+  await planProjectMcpRemoval(fs, removal);
+}
+
+/** The plugin whose MCP servers leave the project config of one tool. */
+export interface ProjectMcpRemoval {
+  readonly plugin: InstalledPlugin;
+  readonly tool: FlatMcpSection;
+  readonly projectRoot: string;
 }
 
 async function planProjectMcpRemoval(
   fs: FileReader,
-  plugin: InstalledPlugin,
-  tool: FlatMcpSection,
-  projectRoot: string
+  removal: ProjectMcpRemoval
 ): Promise<{ output: string; content: string } | undefined> {
+  const { plugin, tool, projectRoot } = removal;
   if (plugin.mcpEntries.size === 0) return undefined;
   const mcp = tool.flatPluginMcp();
   if (mcp === null) return undefined;
@@ -52,7 +57,7 @@ export interface RemovalClaims {
   readonly detachUserPlugin: (toolId: AiToolId, name: string, projectRoot: string) => Promise<void>;
 }
 
-export class RemoveProjectPlugin {
+export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly claims?: RemovalClaims
@@ -63,7 +68,7 @@ export class RemoveProjectPlugin {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, projectRoot);
+    await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
     await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
   }
 
@@ -72,7 +77,7 @@ export class RemoveProjectPlugin {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    const mcpUpdate = await planProjectMcpRemoval(this.fs, plugin, tool, projectRoot);
+    const mcpUpdate = await planProjectMcpRemoval(this.fs, { plugin, tool, projectRoot });
     await removeProjectHooks(this.fs, plugin, tool, projectRoot);
     if (mcpUpdate !== undefined) {
       await assertProjectPathWithinRoot(this.fs, projectRoot, mcpUpdate.output);
@@ -85,7 +90,10 @@ export class RemoveProjectPlugin {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    await deletePluginFilesForTool(plugin.files, plugin.scope, tool, projectRoot, this.fs);
+    await deletePluginFilesForTool(
+      { files: plugin.files, scope: plugin.scope, tool, projectRoot },
+      this.fs
+    );
   }
 
   async detachClaims(

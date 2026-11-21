@@ -1,9 +1,10 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/contexts/installation/domain/project-layout.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -21,7 +22,7 @@ const outsideUserScope: IsWithinUserScope = () => false;
 
 const { cursor } = TOOL;
 
-function fixture(installedVersion = "0.0.1") {
+function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => string } = {}) {
   const fs = new InMemoryFileAdapter();
   const logger = new CapturingLogger();
   const content = "# Updated skill";
@@ -32,11 +33,15 @@ function fixture(installedVersion = "0.0.1") {
     files: [skill],
     components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },
   });
+  const fetcher = {
+    fetch: vi.fn(new FixturePluginFetcher().fetch.bind(new FixturePluginFetcher())),
+  };
   const updater = new PluginMaterializer(
     fs,
-    new PluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
+    new PluginDistributionLoader(fetcher, { read: async () => dist }),
     userScopeFileGuard,
-    { ...fakeBuiltDeps(), homedir }
+    { ...fakeBuiltDeps(), homedir },
+    options.globalCacheDir
   );
   const plugin = InstalledPlugin.fromMetadata(
     "sample-plugin",
@@ -46,7 +51,7 @@ function fixture(installedVersion = "0.0.1") {
     "user"
   ).withDependents(["/A", "/B"]);
   const base = join(homedir(), ".cursor/plugins/local");
-  return { fs, logger, updater, plugin, base, content };
+  return { fs, logger, updater, plugin, base, content, fetcher };
 }
 
 describe("PluginMaterializer public update contract", () => {
@@ -55,13 +60,13 @@ describe("PluginMaterializer public update contract", () => {
     async (version) => {
       const f = fixture(version);
       expect(
-        await f.updater.update(
-          f.plugin,
-          registeredTools().aiProfile(cursor),
-          "/A",
-          f.logger,
-          insideUserScope
-        )
+        await f.updater.update({
+          plugin: f.plugin,
+          tool: registeredTools().aiProfile(cursor),
+          projectRoot: "/A",
+          logger: f.logger,
+          isWithinUserScope: insideUserScope,
+        })
       ).toBeNull();
       expect(await f.fs.fileExists(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(false);
       expect(f.plugin.version).toBe(version);
@@ -71,13 +76,13 @@ describe("PluginMaterializer public update contract", () => {
 
   it("applies a planned upgrade through the public convenience method and preserves dependents", async () => {
     const f = fixture();
-    const result = await f.updater.update(
-      f.plugin,
-      registeredTools().aiProfile(cursor),
-      "/A",
-      f.logger,
-      insideUserScope
-    );
+    const result = await f.updater.update({
+      plugin: f.plugin,
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: "/A",
+      logger: f.logger,
+      isWithinUserScope: insideUserScope,
+    });
     expect(result?.version).toBe("1.0.0");
     expect(result?.scope).toBe("user");
     expect(result?.dependents).toEqual(["/A", "/B"]);
@@ -92,7 +97,13 @@ describe("PluginMaterializer public update contract", () => {
     const unsafe = f.plugin.withFiles(new Map([["../foreign.txt", FileHash.of("foreign").value]]));
     await f.fs.writeFile(join(f.base, "../foreign.txt"), "foreign");
     await expect(
-      f.updater.update(unsafe, registeredTools().aiProfile(cursor), "/A", f.logger, insideUserScope)
+      f.updater.update({
+        plugin: unsafe,
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: "/A",
+        logger: f.logger,
+        isWithinUserScope: insideUserScope,
+      })
     ).rejects.toThrow(
       "cursor: 'sample-plugin' has unsafe recorded files; update refused without dropping its machine claim."
     );
@@ -105,13 +116,13 @@ describe("PluginMaterializer public update contract", () => {
     const path = "sample-plugin/skills/demo/SKILL.md";
     const owned = f.plugin.withFiles(new Map([[path, FileHash.of(f.content).value]]));
 
-    const result = await f.updater.update(
-      owned,
-      registeredTools().aiProfile(cursor),
-      "/A",
-      f.logger,
-      insideUserScope
-    );
+    const result = await f.updater.update({
+      plugin: owned,
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: "/A",
+      logger: f.logger,
+      isWithinUserScope: insideUserScope,
+    });
 
     expect(await f.fs.readFile(join(f.base, path))).toBe(f.content);
     expect(result?.files.has(path)).toBe(true);
@@ -121,32 +132,64 @@ describe("PluginMaterializer public update contract", () => {
   it("refuses to rebuild global files without the shared source, rather than write a project's layout", async () => {
     const f = fixture();
     await expect(
-      f.updater.update(
-        f.plugin,
-        registeredTools().aiProfile(TOOL.opencode),
-        "/A",
-        f.logger,
-        insideUserScope
-      )
+      f.updater.update({
+        plugin: f.plugin,
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        projectRoot: "/A",
+        logger: f.logger,
+        isWithinUserScope: insideUserScope,
+      })
     ).rejects.toThrow("run `aidd setup --global`");
   });
 
   it("rechecks planned new-file containment when a parent becomes a symlink", async () => {
     const f = fixture();
-    const plan = await f.updater.planUpdate(
-      f.plugin,
-      registeredTools().aiProfile(cursor),
-      "/A",
-      f.logger,
-      false,
-      insideUserScope
-    );
+    const plan = await f.updater.planUpdate({
+      plugin: f.plugin,
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: "/A",
+      logger: f.logger,
+      rebuild: false,
+      isWithinUserScope: insideUserScope,
+    });
     if (plan === null) throw new Error("Expected upgrade plan");
     await f.fs.writeFile("/foreign/skills/demo/SKILL.md", "foreign");
     f.fs.setSymlink(join(f.base, "sample-plugin"), "/foreign");
-    await expect(f.updater.applyUpdate(plan, f.logger, outsideUserScope)).rejects.toThrow(
+    await expect(
+      f.updater.applyUpdate(plan, { logger: f.logger, isWithinUserScope: outsideUserScope })
+    ).rejects.toThrow(
       `cursor: 'sample-plugin' directory is not safely inside ${f.base}; update refused.`
     );
     expect(await f.fs.readFile("/foreign/skills/demo/SKILL.md")).toBe("foreign");
+  });
+
+  it("refreshes the plugin in the project cache", async () => {
+    const f = fixture();
+    await f.updater.planUpdate({
+      plugin: f.plugin,
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: "/A",
+      logger: f.logger,
+      rebuild: false,
+      isWithinUserScope: insideUserScope,
+    });
+    expect(f.fetcher.fetch).toHaveBeenCalledWith(f.plugin.source, join("/A", PLUGIN_CACHE_SUBDIR), {
+      forceRefresh: true,
+    });
+  });
+
+  it("refreshes a global install's plugin in the given cache, outside the project", async () => {
+    const f = fixture("0.0.1", { globalCacheDir: () => "/config/cache" });
+    await f.updater.planUpdate({
+      plugin: f.plugin,
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: "/A",
+      logger: f.logger,
+      rebuild: false,
+      isWithinUserScope: insideUserScope,
+    });
+    expect(f.fetcher.fetch).toHaveBeenCalledWith(f.plugin.source, "/config/cache", {
+      forceRefresh: true,
+    });
   });
 });

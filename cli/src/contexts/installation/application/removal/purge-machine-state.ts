@@ -6,6 +6,7 @@ import { isErrnoException } from "../../../../shared/domain/reading/json-file.js
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import type { MachineStatePurge } from "../../ports/machine-state-purge.js";
 import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
 import type { CacheCandidateResolver } from "../../ports/native-host.js";
 
@@ -19,7 +20,7 @@ export interface MachineStateGuards {
 
 /** What a machine-scope clean removes from the machine itself: the whitelisted directories and
  * files under the user config directory, each behind its containment check. */
-export class PurgeMachineState {
+export class PurgeMachineState implements MachineStatePurge {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,

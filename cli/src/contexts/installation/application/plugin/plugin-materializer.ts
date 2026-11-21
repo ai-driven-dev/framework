@@ -4,10 +4,17 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
+import type {
+  ContainmentCheck,
+  PlannedUserPluginFileUpdate,
+  UserPluginMaterialization,
+  UserPluginUpdateRequest,
+  UserScopeFileGuard,
+} from "../../ports/plugin/user-plugin-materialization.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
@@ -15,105 +22,53 @@ import {
 import { withoutHooks } from "../materialize/project-hooks-materializer.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
-import {
-  assertGlobalFilesWritable,
-  type ContainmentCheck,
-  readGlobalPluginFiles,
-} from "./global-plugin-files.js";
+import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugin-files.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { deleteOldFiles, writePluginFiles } from "./plugin-helpers.js";
 import { scopeBaseOf } from "./plugin-target-resolution.js";
-
-export interface PlannedUserPluginFileUpdate {
-  readonly plugin: InstalledPlugin;
-  readonly tool: AiToolProfile;
-  readonly home: string;
-  readonly baseDir: string;
-  readonly files: readonly InstallationFile[];
-  readonly oldSafe: ReadonlyMap<string, string>;
-  readonly next: InstalledPlugin;
-}
-
-/** The machine-scope file safety checks, supplied by the composition root so installation never reaches machine claims. */
-export interface UserScopeFileGuard {
-  safeToDelete(
-    reach: { readonly fs: FileReader; readonly logger: Logger; readonly home: string },
-    plugin: InstalledPlugin,
-    tool: AiToolProfile
-  ): Promise<ReadonlyMap<string, string>>;
-  withoutMissing(
-    reach: { readonly fs: FileReader; readonly home: string },
-    plugin: InstalledPlugin,
-    tool: AiToolProfile
-  ): Promise<InstalledPlugin>;
-  assertWriteBoundary(
-    reach: { readonly fs: FileReader; readonly home: string },
-    tool: AiToolProfile,
-    write: { readonly pluginName: string; readonly files: readonly InstallationFile[] }
-  ): Promise<void>;
-}
-
-/** The same two steps with the containment rule already bound, for a caller that is not a scenario. */
-export interface BoundPluginMaterializer {
-  planUpdate(
-    plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    projectRoot: string,
-    logger: Logger,
-    rebuild?: boolean
-  ): Promise<PlannedUserPluginFileUpdate | null>;
-  applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin>;
-}
 
 /**
  * Plans and applies the file half of a machine-scope plugin update. The containment rule a
  * write must satisfy arrives with each call, from the scenario that owns it.
  */
-export class PluginMaterializer {
+export class PluginMaterializer implements UserPluginMaterialization {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly loader: PluginDistributionLoader,
     private readonly guard: UserScopeFileGuard,
-    private readonly builtDeps: BuiltMaterializationDeps
+    private readonly builtDeps: BuiltMaterializationDeps,
+    /** A global install's fetches: it writes nothing in the project. */
+    private readonly globalCacheDir?: () => string
   ) {}
 
-  async update(
-    plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    projectRoot: string,
-    logger: Logger,
-    isWithinUserScope: ContainmentCheck
-  ): Promise<InstalledPlugin | null> {
-    const plan = await this.planUpdate(plugin, tool, projectRoot, logger, false, isWithinUserScope);
-    return plan === null ? null : this.applyUpdate(plan, logger, isWithinUserScope);
+  async update(request: UserPluginUpdateRequest): Promise<InstalledPlugin | null> {
+    const plan = await this.planUpdate({ ...request, rebuild: false });
+    return plan === null ? null : this.applyUpdate(plan, request);
   }
 
   async planUpdate(
-    plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    projectRoot: string,
-    logger: Logger,
-    rebuild: boolean,
-    isWithinUserScope: ContainmentCheck
+    request: UserPluginUpdateRequest & { readonly rebuild: boolean }
   ): Promise<PlannedUserPluginFileUpdate | null> {
-    const toolId = tool.toolId;
-    const dist = await this.loader.loadLatest(plugin, projectRoot);
+    const { plugin, tool, projectRoot, logger, rebuild, isWithinUserScope } = request;
+    const cacheDir = this.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const dist = await this.loader.load(plugin.source, cacheDir, { forceRefresh: true });
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
-    const { files, componentPaths } = await this.materializeFiles(dist, tool, plugin, projectRoot);
+    const { files, componentPaths } = await this.materializeFiles({
+      dist,
+      tool,
+      plugin,
+      projectRoot,
+    });
     const home = this.builtDeps.homedir();
     const present = await this.guard.withoutMissing({ fs: this.fs, home }, plugin, tool);
     const oldSafe = await this.guard.safeToDelete({ fs: this.fs, logger, home }, present, tool);
     if (oldSafe.size !== present.files.size) {
       throw new Error(
-        `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
+        `${tool.toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
     }
-    await this.assertWritable(plugin, tool, files, home, isWithinUserScope);
-    const baseDir = scopeBaseOf(tool, {
-      scope: "user",
-      projectRoot: projectRoot,
-      homedir: () => home,
-    });
+    await this.assertWritable({ plugin, tool, files, home, isWithinUserScope });
+    const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot, homedir: () => home });
     return {
       plugin,
       tool,
@@ -134,13 +89,12 @@ export class PluginMaterializer {
 
   async applyUpdate(
     plan: PlannedUserPluginFileUpdate,
-    logger: Logger,
-    isWithinUserScope: ContainmentCheck
+    request: Pick<UserPluginUpdateRequest, "logger" | "isWithinUserScope">
   ): Promise<InstalledPlugin> {
     const { home } = plan;
     const present = await this.guard.withoutMissing({ fs: this.fs, home }, plan.plugin, plan.tool);
     const oldSafe = await this.guard.safeToDelete(
-      { fs: this.fs, logger, home },
+      { fs: this.fs, logger: request.logger, home },
       present,
       plan.tool
     );
@@ -149,7 +103,13 @@ export class PluginMaterializer {
         `${plan.tool.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
       );
     }
-    await this.assertWritable(plan.plugin, plan.tool, plan.files, plan.home, isWithinUserScope);
+    await this.assertWritable({
+      plugin: plan.plugin,
+      tool: plan.tool,
+      files: plan.files,
+      home: plan.home,
+      isWithinUserScope: request.isWithinUserScope,
+    });
     await writePluginFiles([...plan.files], plan.baseDir, this.fs);
     const newPaths = new Set(plan.files.map((file) => file.relativePath));
     await deleteOldFiles(
@@ -162,23 +122,24 @@ export class PluginMaterializer {
 
   /** A tool's global files spread across its user directory; a user-scope plugin directory
    * holds one plugin per subdirectory. Each layout has its own containment proof. */
-  private async assertWritable(
-    plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    files: readonly InstallationFile[],
-    home: string,
-    isWithinUserScope: ContainmentCheck
-  ): Promise<void> {
+  private async assertWritable(write: {
+    readonly plugin: InstalledPlugin;
+    readonly tool: AiToolProfile;
+    readonly files: readonly InstallationFile[];
+    readonly home: string;
+    readonly isWithinUserScope: ContainmentCheck;
+  }): Promise<void> {
+    const { plugin, tool, files, home, isWithinUserScope } = write;
     if (tool.plugins()?.globalFiles() != null) {
-      await assertGlobalFilesWritable(
-        this.fs,
+      await assertGlobalFilesWritable({
+        fs: this.fs,
         tool,
         plugin,
-        plugin.name,
+        pluginName: plugin.name,
         files,
-        home,
-        isWithinUserScope
-      );
+        homedir: home,
+        isWithinUserScope,
+      });
       return;
     }
     const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot: "", homedir: () => home });
@@ -191,15 +152,16 @@ export class PluginMaterializer {
       pluginName: plugin.name,
       files: [...files],
     });
-    await this.assertNewFilesDoNotCollide(plugin, tool.toolId, baseDir, files);
+    await this.assertNewFilesDoNotCollide({ plugin, toolId: tool.toolId, baseDir, files });
   }
 
-  private async assertNewFilesDoNotCollide(
-    plugin: InstalledPlugin,
-    toolId: AiToolProfile["toolId"],
-    baseDir: string,
-    files: readonly InstallationFile[]
-  ): Promise<void> {
+  private async assertNewFilesDoNotCollide(write: {
+    readonly plugin: InstalledPlugin;
+    readonly toolId: AiToolProfile["toolId"];
+    readonly baseDir: string;
+    readonly files: readonly InstallationFile[];
+  }): Promise<void> {
+    const { plugin, toolId, baseDir, files } = write;
     for (const file of files) {
       if (plugin.files.has(file.relativePath)) continue;
       const target = join(baseDir, file.relativePath);
@@ -210,12 +172,13 @@ export class PluginMaterializer {
     }
   }
 
-  private async materializeFiles(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    plugin: InstalledPlugin,
-    projectRoot: string
-  ): Promise<{ files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> }> {
+  private async materializeFiles(source: {
+    readonly dist: PluginDistribution;
+    readonly tool: AiToolProfile;
+    readonly plugin: InstalledPlugin;
+    readonly projectRoot: string;
+  }): Promise<{ files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> }> {
+    const { dist, tool, plugin, projectRoot } = source;
     const marketplace =
       plugin.marketplace === undefined
         ? undefined
@@ -230,7 +193,7 @@ export class PluginMaterializer {
         mode: tool.frameworkBuildMode(),
       });
       if (tool.plugins()?.globalFiles() != null) {
-        const files = await readGlobalPluginFiles(this.fs, builtDir, tool, dist);
+        const files = await readGlobalPluginFiles(this.fs, { builtDir, tool, dist });
         return { files, componentPaths: new Map() };
       }
       const built = await readBuiltUserPluginFiles(

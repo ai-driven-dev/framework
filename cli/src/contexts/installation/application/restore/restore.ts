@@ -105,7 +105,12 @@ export class Restore {
     const previousManifest = JSON.stringify(ctx.manifest.toJSON());
     const toolResults = await this.runToolRestores(ctx);
     const pluginResult = await this.runPluginRestore(ctx);
-    await this.saveIfChanged(toolResults, pluginResult.totalFiles, ctx.manifest, previousManifest);
+    await this.saveIfChanged({
+      toolResults,
+      totalPluginFilesRestored: pluginResult.totalFiles,
+      manifest: ctx.manifest,
+      previousManifest,
+    });
     return this.buildTotals(toolResults, pluginResult);
   }
 
@@ -128,12 +133,13 @@ export class Restore {
     });
   }
 
-  private async saveIfChanged(
-    toolResults: RestoreToolFilesResult[],
-    totalPluginFilesRestored: number,
-    manifest: Manifest,
-    previousManifest: string
-  ): Promise<void> {
+  private async saveIfChanged(outcome: {
+    toolResults: RestoreToolFilesResult[];
+    totalPluginFilesRestored: number;
+    manifest: Manifest;
+    previousManifest: string;
+  }): Promise<void> {
+    const { toolResults, totalPluginFilesRestored, manifest, previousManifest } = outcome;
     const hasChanges =
       toolResults.some((t) => t.restored.length > 0) ||
       totalPluginFilesRestored > 0 ||

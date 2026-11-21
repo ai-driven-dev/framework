@@ -33,19 +33,16 @@ export class GenerateToolDistribution {
   ) {}
 
   async execute(options: GenerateToolDistributionCommand): Promise<InstallationFile[]> {
-    const { config, descriptor, contentFiles, projectRoot } = options;
-    if (config.kind !== "ai") {
-      return this.generateIdeToolFiles(config, descriptor, contentFiles, projectRoot);
-    }
-    return this.generateAiToolFiles(config, descriptor, contentFiles, projectRoot);
+    const { config } = options;
+    if (config.kind !== "ai") return this.generateIdeToolFiles(config, options);
+    return this.generateAiToolFiles(config, options);
   }
 
   private async generateIdeToolFiles(
     config: RestoredIdeTool,
-    descriptor: FrameworkDescriptor,
-    contentFiles: Map<string, string>,
-    projectRoot: string
+    options: GenerateToolDistributionCommand
   ): Promise<InstallationFile[]> {
+    const { descriptor, contentFiles, projectRoot } = options;
     const configFiles = await this.installConfig.execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
@@ -58,10 +55,9 @@ export class GenerateToolDistribution {
 
   private async generateAiToolFiles(
     config: RestoredAiTool,
-    descriptor: FrameworkDescriptor,
-    contentFiles: Map<string, string>,
-    projectRoot: string
+    options: GenerateToolDistributionCommand
   ): Promise<InstallationFile[]> {
+    const { descriptor, contentFiles, projectRoot } = options;
     const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
     const configFiles = await this.installConfig.execute({
       writes: config.configWrites(),

@@ -26,12 +26,12 @@ describe("ProjectPluginWithdrawal.canDetachRef", () => {
     const cursor = registeredTools().aiProfile(TOOL.cursor);
 
     expect(
-      await new ProjectPluginWithdrawal(host, claims).canDetachRef(
-        TOOL.cursor,
-        cursor,
-        false,
-        "aidd-dev@framework"
-      )
+      await new ProjectPluginWithdrawal(host, claims).canDetachRef({
+        toolId: TOOL.cursor,
+        tool: cursor,
+        confirmed: false,
+        ref: "aidd-dev@framework",
+      })
     ).toBe(false);
   });
 });

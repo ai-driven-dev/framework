@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginSourceMatch } from "../../../../../src/contexts/distribution/contract/plugin-source-match.js";
 import { InstallUserPlugins } from "../../../../../src/contexts/installation/application/install/install-user-plugins.js";
-import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/installation/ports/plugin/user-plugin-materialization.js";
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
@@ -34,7 +34,13 @@ const PM = match("aidd-pm", false);
 function setup(seed: Manifest | null = defaultManifest()) {
   const repo = new InMemoryManifestRepository(seed);
   const planUpdate = vi.fn(
-    async (plugin: InstalledPlugin, tool: AiToolProfile): Promise<PlannedUserPluginFileUpdate> => {
+    async ({
+      plugin,
+      tool,
+    }: {
+      plugin: InstalledPlugin;
+      tool: AiToolProfile;
+    }): Promise<PlannedUserPluginFileUpdate> => {
       const relativePath = `agents/${plugin.name}-reviewer.md`;
       return {
         plugin,
@@ -94,7 +100,7 @@ describe("InstallUserPlugins", () => {
 
     await run(useCase, [DEV], [TOOL.opencode]);
 
-    expect(planUpdate.mock.calls[0][0].source).toEqual(DEV.source);
+    expect(planUpdate.mock.calls[0][0].plugin.source).toEqual(DEV.source);
   });
 
   it("also writes the plugins of a tool installing into a user plugins directory", async () => {
@@ -110,13 +116,13 @@ describe("InstallUserPlugins", () => {
         ?.getPlugins(TOOL.cursor)
         .map((p) => [p.name, p.scope])
     ).toEqual([["aidd-dev", "user"]]);
-    expect(planUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "aidd-dev" }),
-      expect.objectContaining({ toolId: TOOL.cursor }),
-      "/project",
-      expect.anything(),
-      true
-    );
+    expect(planUpdate).toHaveBeenCalledWith({
+      plugin: expect.objectContaining({ name: "aidd-dev" }),
+      tool: expect.objectContaining({ toolId: TOOL.cursor }),
+      projectRoot: "/project",
+      logger: expect.anything(),
+      rebuild: true,
+    });
   });
 
   it("takes the source this run resolved for a plugin it already owns, and keeps its files", async () => {
@@ -136,7 +142,7 @@ describe("InstallUserPlugins", () => {
 
     await run(useCase, [DEV], [TOOL.opencode]);
 
-    const planned = planUpdate.mock.calls[0][0];
+    const planned = planUpdate.mock.calls[0][0].plugin;
     expect(planned.source).not.toEqual({ kind: "local", path: "/moved-away" });
     expect([...planned.files.keys()]).toEqual(["agents/old.md"]);
   });

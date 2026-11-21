@@ -51,6 +51,21 @@ export interface AddPluginManifests {
   user: ManifestRepository & Lock;
 }
 
+/** The tools one add targets, with the project and machine manifests it edits. */
+interface AddTargets {
+  toolIds: AiToolId[];
+  manifest: Manifest;
+  machine: Manifest;
+}
+
+interface UserScopeClaim {
+  project: Manifest;
+  machine: Manifest;
+  toolIds: readonly AiToolId[];
+  projectRoot: string;
+  installedBefore: PluginsInstalledBefore;
+}
+
 export class AddPlugin implements PluginAdd {
   private readonly manifestRepo: ManifestRepository;
   private readonly userManifestRepo: ManifestRepository & Lock;
@@ -94,17 +109,21 @@ export class AddPlugin implements PluginAdd {
       catalog: options.pluginMetadata,
     });
     if (added.isGithubMarketplace) {
-      await this.addGithubMarketplacePlugin(options, added, manifest, machine);
+      await this.addGithubMarketplacePlugin(options, added, { manifest, machine });
     } else {
-      await this.addLocalPlugin(options, added.distribution, resolvedToolIds, manifest, machine);
+      await this.addLocalPlugin(options, added.distribution, {
+        toolIds: resolvedToolIds,
+        manifest,
+        machine,
+      });
     }
-    const claimed = await this.recordUserScopeOwnership(
-      manifest,
+    const claimed = await this.recordUserScopeOwnership({
+      project: manifest,
       machine,
-      resolvedToolIds,
+      toolIds: resolvedToolIds,
       projectRoot,
-      installedBefore
-    );
+      installedBefore,
+    });
     if (claimed) await this.userManifestRepo.save(machine);
     await this.manifestRepo.save(manifest);
   }
@@ -118,12 +137,11 @@ export class AddPlugin implements PluginAdd {
     const { pluginMetadata } = options;
     if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
     if (options.replace === true) {
-      await this.assertExistingContributionsUnchanged(
-        pluginMetadata.name,
+      await this.assertExistingContributionsUnchanged(pluginMetadata.name, {
         toolIds,
         manifest,
-        options.projectRoot
-      );
+        projectRoot: options.projectRoot,
+      });
       this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     } else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
   }
@@ -131,13 +149,12 @@ export class AddPlugin implements PluginAdd {
   private async addGithubMarketplacePlugin(
     options: PluginAddOptions,
     added: GithubAddedPluginSource,
-    manifest: Manifest,
-    machine: Manifest
+    manifests: Pick<AddTargets, "manifest" | "machine">
   ): Promise<void> {
     const { flat, distribution } = added;
     if (flat.length > 0 && distribution !== undefined)
-      await this.addLocalPlugin(options, distribution, flat, manifest, machine);
-    await this.registerNativeGithubPlugins(options, added, manifest);
+      await this.addLocalPlugin(options, distribution, { toolIds: flat, ...manifests });
+    await this.registerNativeGithubPlugins(options, added, manifests.manifest);
   }
 
   private async registerNativeGithubPlugins(
@@ -166,25 +183,22 @@ export class AddPlugin implements PluginAdd {
   private async addLocalPlugin(
     options: PluginAddOptions,
     read: PluginDistribution,
-    resolvedToolIds: AiToolId[],
-    manifest: Manifest,
-    machine: Manifest
+    targets: AddTargets
   ): Promise<void> {
+    const { toolIds: resolvedToolIds, manifest, machine } = targets;
     const { source, projectRoot, marketplace, requiredVersion, replace, pluginMetadata } = options;
     const dist = pluginMetadata === undefined ? read : read.withStrict(pluginMetadata.strict);
     const pluginName = dist.manifest.name;
     this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
     if (replace === true)
-      await this.assertExistingContributionsUnchanged(
-        pluginName,
-        resolvedToolIds,
+      await this.assertExistingContributionsUnchanged(pluginName, {
+        toolIds: resolvedToolIds,
         manifest,
-        projectRoot
-      );
+        projectRoot,
+      });
     const { prevMcpMap, prevHooksMap } = this.prepareForInstall(
       pluginName,
-      resolvedToolIds,
-      manifest,
+      { toolIds: resolvedToolIds, manifest },
       replace
     );
     await this.place.execute({
@@ -202,28 +216,27 @@ export class AddPlugin implements PluginAdd {
 
   private async assertExistingContributionsUnchanged(
     pluginName: string,
-    toolIds: readonly AiToolId[],
-    manifest: Manifest,
-    projectRoot: string
+    existing: { toolIds: readonly AiToolId[]; manifest: Manifest; projectRoot: string }
   ): Promise<void> {
+    const { toolIds, manifest, projectRoot } = existing;
     for (const toolId of toolIds) {
       const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
       if (previous === undefined) continue;
       const tool = this.tools.aiProfile(toolId);
-      await assertProjectMcpEntriesRemovable(this.fs, previous, tool, projectRoot);
+      await assertProjectMcpEntriesRemovable(this.fs, { plugin: previous, tool, projectRoot });
       await assertProjectHooksRemovable(this.fs, previous, tool, projectRoot);
     }
   }
 
   private prepareForInstall(
     pluginName: string,
-    toolIds: AiToolId[],
-    manifest: Manifest,
+    targets: Pick<AddTargets, "toolIds" | "manifest">,
     replace: boolean | undefined
   ): {
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>;
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>;
   } {
+    const { toolIds, manifest } = targets;
     const prevMcpMap = this.collectPreviousMcpEntries(pluginName, toolIds, manifest);
     const prevHooksMap = new Map<AiToolId, ProjectHooksProvenance>();
     for (const toolId of toolIds) {
@@ -240,32 +253,14 @@ export class AddPlugin implements PluginAdd {
     return { prevMcpMap, prevHooksMap };
   }
 
-  private async recordUserScopeOwnership(
-    project: Manifest,
-    machine: Manifest,
-    toolIds: readonly AiToolId[],
-    projectRoot: string,
-    installedBefore: PluginsInstalledBefore
-  ): Promise<boolean> {
+  private async recordUserScopeOwnership(claim: UserScopeClaim): Promise<boolean> {
+    const { project, machine, toolIds, projectRoot, installedBefore } = claim;
     const root = await this.fs.realpath(projectRoot);
     let claimed = false;
     for (const toolId of toolIds) {
       for (const plugin of project.getPlugins(toolId)) {
-        if (plugin.scope !== "user") continue;
-        const owned = machine.getPlugins(toolId).find((p) => p.name === plugin.name);
-        if (owned === undefined && installedBefore.has(installedKey(toolId, plugin.name))) continue;
-        if (owned === undefined && plugin.files.size === 0) continue;
-        if (!machine.hasTool(toolId)) {
-          const version = project.getToolVersion(toolId);
-          if (version === undefined) throw new ToolNotInManifestError(toolId);
-          machine.addTool(toolId, version, []);
-        }
-        const canonical = (
-          owned ?? InstalledPlugin.withMcpEntries(plugin, new Map())
-        ).withDependents([...(owned?.dependents ?? []), root]);
-        machine.withPlugin(toolId, canonical);
-        project.updatePlugin(toolId, plugin.withFiles(new Map()));
-        claimed = true;
+        if (claimUserPlugin({ project, machine, toolId, plugin, root, installedBefore }))
+          claimed = true;
       }
     }
     return claimed;
@@ -324,4 +319,32 @@ function pluginsInstalledBefore(
 
 function installedKey(toolId: AiToolId, pluginName: string): string {
   return `${toolId}/${pluginName}`;
+}
+
+/** Moves a user-scope plugin's ownership from the project manifest to the machine's. */
+function claimUserPlugin(claim: {
+  project: Manifest;
+  machine: Manifest;
+  toolId: AiToolId;
+  plugin: InstalledPlugin;
+  root: string;
+  installedBefore: PluginsInstalledBefore;
+}): boolean {
+  const { project, machine, toolId, plugin, root, installedBefore } = claim;
+  if (plugin.scope !== "user") return false;
+  const owned = machine.getPlugins(toolId).find((p) => p.name === plugin.name);
+  if (owned === undefined && installedBefore.has(installedKey(toolId, plugin.name))) return false;
+  if (owned === undefined && plugin.files.size === 0) return false;
+  if (!machine.hasTool(toolId)) {
+    const version = project.getToolVersion(toolId);
+    if (version === undefined) throw new ToolNotInManifestError(toolId);
+    machine.addTool(toolId, version, []);
+  }
+  const canonical = (owned ?? InstalledPlugin.withMcpEntries(plugin, new Map())).withDependents([
+    ...(owned?.dependents ?? []),
+    root,
+  ]);
+  machine.withPlugin(toolId, canonical);
+  project.updatePlugin(toolId, plugin.withFiles(new Map()));
+  return true;
 }

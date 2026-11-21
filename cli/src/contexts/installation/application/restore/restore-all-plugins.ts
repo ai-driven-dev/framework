@@ -18,6 +18,15 @@ interface RestoreAllPluginsCommand {
   force?: boolean;
 }
 
+interface PluginRestoreScope {
+  manifest: Manifest;
+  projectRoot: string;
+  cacheDir: string;
+  fileFilter: ((p: string) => boolean) | null;
+  pluginName: string | undefined;
+  force: boolean;
+}
+
 export interface RestoreAllPluginsResult {
   totalFiles: number;
   /** Names of plugins that had >=1 file actually restored, deduped across tools. */
@@ -36,7 +45,14 @@ export class RestoreAllPlugins {
 
   async execute(options: RestoreAllPluginsCommand): Promise<RestoreAllPluginsResult> {
     const { projectRoot, manifest, fileFilter, pluginName, toolIds, force = false } = options;
-    const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const scope: PluginRestoreScope = {
+      manifest,
+      projectRoot,
+      cacheDir: join(projectRoot, PLUGIN_CACHE_SUBDIR),
+      fileFilter,
+      pluginName,
+      force,
+    };
     let totalFiles = 0;
     const restoredNames = new Set<string>();
     const nativeOnlyToolIds: AiToolId[] = [];
@@ -52,16 +68,7 @@ export class RestoreAllPlugins {
       ) {
         nativeOnlyToolIds.push(toolId);
       }
-      const result = await this.restoreToolPlugins(
-        toolId,
-        manifest,
-        toolConfig,
-        projectRoot,
-        cacheDir,
-        fileFilter,
-        pluginName,
-        force
-      );
+      const result = await this.restoreToolPlugins(toolId, toolConfig, scope);
       totalFiles += result.totalFiles;
       for (const name of result.pluginNames) restoredNames.add(name);
     }
@@ -83,14 +90,10 @@ export class RestoreAllPlugins {
 
   private async restoreToolPlugins(
     toolId: AiToolId,
-    manifest: Manifest,
     toolConfig: AiToolProfile,
-    projectRoot: string,
-    cacheDir: string,
-    fileFilter: ((p: string) => boolean) | null,
-    pluginName: string | undefined,
-    force: boolean
+    scope: PluginRestoreScope
   ): Promise<{ totalFiles: number; pluginNames: string[] }> {
+    const { manifest, projectRoot, cacheDir, fileFilter, pluginName, force } = scope;
     let totalFiles = 0;
     const pluginNames: string[] = [];
     const targets = this.targetPlugins(toolId, manifest, pluginName);

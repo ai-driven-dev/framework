@@ -88,12 +88,12 @@ export class UninstallTools {
     manifest: Manifest,
     projectRoot: string
   ): Promise<UninstallToolsResult> {
-    const deletedFiles = await this.removeToolFiles.remove(
+    const deletedFiles = await this.removeToolFiles.remove({
       toolId,
       allToolIds,
       manifest,
-      projectRoot
-    );
+      projectRoot,
+    });
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
   }

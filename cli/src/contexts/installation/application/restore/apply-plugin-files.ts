@@ -87,8 +87,13 @@ export class ApplyPluginFiles {
       });
       await deleteOldFiles(plugin.files, baseDir, this.fs);
     }
-    return materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest, {
-      overwriteEdited: force,
+    return materializeViaTranslator(translator, {
+      dist,
+      tool,
+      plugin,
+      projectRoot,
+      manifest,
+      hooksGuard: { overwriteEdited: force },
     });
   }
 

@@ -47,15 +47,9 @@ export async function restoreMergeFiles(
   return restoreDriftEntries(
     prompter,
     {
-      collectDrift: () =>
-        collectMergeDrift(
-          fs,
-          options.mergeFiles,
-          options.distMap,
-          options.projectRoot,
-          options.fileFilter
-        ),
-      restore: (entry) => applyOneMergeRestore(fs, entry, options.projectRoot, mergeMap),
+      collectDrift: () => collectMergeDrift(fs, options),
+      restore: (entry) =>
+        applyOneMergeRestore(fs, entry, { projectRoot: options.projectRoot, mergeMap }),
       buildResult: (restored, kept, unrestorable) => ({
         restored,
         kept,
@@ -69,11 +63,9 @@ export async function restoreMergeFiles(
 
 async function collectMergeDrift(
   fs: FileReader,
-  mergeFiles: readonly MergeFileEntry[],
-  distMap: Map<string, InstallationFile>,
-  projectRoot: string,
-  fileFilter: ((p: string) => boolean) | null
+  options: RestoreMergeFilesCommand
 ): Promise<DriftCollection<MergeDriftEntry>> {
+  const { mergeFiles, distMap, projectRoot, fileFilter } = options;
   const recorded: RecordedVerdict[] = [];
   const entries = new Map<string, MergeFileEntry>();
   for (const entry of mergeFiles) {
@@ -124,9 +116,9 @@ async function mergeVerdictOf(
 async function applyOneMergeRestore(
   fs: FileMerger & FileReader,
   entry: MergeDriftEntry,
-  projectRoot: string,
-  mergeMap: Map<string, MergeFileEntry>
+  target: { projectRoot: string; mergeMap: Map<string, MergeFileEntry> }
 ): Promise<void> {
+  const { projectRoot, mergeMap } = target;
   const fullPath = join(projectRoot, entry.relativePath);
   await fs.mergeJsonFile(fullPath, entry.content, entry.mergeStrategy);
   const mergedContent = await fs.readFile(fullPath);

@@ -1,4 +1,4 @@
-import type { UserScopeFileGuard } from "../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import type { UserScopeFileGuard } from "../../../../src/contexts/installation/ports/plugin/user-plugin-materialization.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
