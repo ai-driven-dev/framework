@@ -47,20 +47,30 @@ function skipQuoted(source: string, from: number): number {
   return at + 1;
 }
 
-/** The offset just past the `]` or `/` a regex body reaches, and its flags. */
+/** The offset just past the run of word characters starting at `from`. */
+function skipWord(source: string, from: number): number {
+  let stop = from;
+  while (stop < source.length && isWordChar(source.charAt(stop))) stop++;
+  return stop;
+}
+
+/** Whether a regex body is inside a character class once `char` has been read. */
+function inClassAfter(char: string, inClass: boolean): boolean {
+  if (char === "[") return true;
+  return char === "]" ? false : inClass;
+}
+
+/** The offset just past a regex: its body up to the closing `/`, then its flags. */
 function skipRegex(source: string, from: number): number {
   let at = from + 1;
   let inClass = false;
   while (at < source.length && source[at] !== "\n") {
     const char = source.charAt(at);
     if (char === "/" && !inClass) break;
-    if (char === "[") inClass = true;
-    if (char === "]") inClass = false;
+    inClass = inClassAfter(char, inClass);
     at += char === "\\" ? 2 : 1;
   }
-  at++;
-  while (at < source.length && isWordChar(source.charAt(at))) at++;
-  return at;
+  return skipWord(source, at + 1);
 }
 
 const isQuote = (char: string): boolean => char === '"' || char === "'";
@@ -77,13 +87,6 @@ function commentEnd(source: string, at: number): number | undefined {
     return close === -1 ? source.length : close + 2;
   }
   return undefined;
-}
-
-/** The offset just past the run of word characters starting at `from`. */
-function skipWord(source: string, from: number): number {
-  let stop = from;
-  while (stop < source.length && isWordChar(source.charAt(stop))) stop++;
-  return stop;
 }
 
 class CommentScanner {
