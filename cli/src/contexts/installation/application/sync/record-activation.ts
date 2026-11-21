@@ -35,8 +35,7 @@ export class RecordActivation {
       const registrations = this.records.afterActivation(
         manifest.getNativeRegistrations(toolId),
         outcome,
-        binary,
-        narrowed
+        { binary, narrowed }
       );
       if (registrations === undefined) continue;
       manifest.setNativeRegistrations(toolId, registrations);

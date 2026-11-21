@@ -7,6 +7,43 @@ import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
 import type { UserScopePluginFiles } from "../ports/machine-manifest.js";
 import type { UserScopeTool } from "../ports/user-scope-tool.js";
 
+/** The disk a machine-scope plugin is judged on, and the home its user plugins directory sits under. */
+export interface UserScopeReach {
+  readonly fs: FileReader;
+  readonly home: string;
+}
+
+/** A reach that also says why a file is left in place. */
+export interface ReportingUserScopeReach extends UserScopeReach {
+  readonly logger: Logger;
+}
+
+/** The files an update is about to write into one plugin's directory. */
+export interface UserScopeWrite {
+  readonly pluginName: string;
+  readonly files: readonly InstallationFile[];
+}
+
+function userPluginsBoundary(tool: UserScopeTool, home: string): string | null {
+  return tool.plugins()?.userPluginsBaseDir(home) ?? null;
+}
+
+/** A recorded file is deletable only while its content still matches the digest recorded at install. */
+async function assertUnedited(
+  { fs, tool }: { fs: FileReader; tool: UserScopeTool },
+  plugin: UserScopePluginFiles<unknown>,
+  file: { path: string; relativePath: string; hash: string }
+): Promise<void> {
+  const label = `${tool.toolId}: '${plugin.name}' file '${file.relativePath}'`;
+  if (!FileHash.isDigest(file.hash)) {
+    throw new Error(`${label} has an unproven install digest; removal refused.`);
+  }
+  const current = await fs.readFileHash(file.path);
+  if (current.value !== file.hash) {
+    throw new Error(`${label} was edited after install; removal refused.`);
+  }
+}
+
 /**
  * The files of a user-scope plugin that are actually safe to delete: safe only once the real,
  * `realpath`-resolved location still sits strictly inside the tool's own declared user-scope
@@ -14,41 +51,26 @@ import type { UserScopeTool } from "../ports/user-scope-tool.js";
  * symlink escape, unreadable file, or user edit refuses a destructive operation before claim detach.
  */
 export async function userScopeFilesSafeToDelete(
-  fs: FileReader,
-  logger: Logger,
+  { fs, logger, home }: ReportingUserScopeReach,
   plugin: UserScopePluginFiles<unknown>,
-  tool: UserScopeTool,
-  homedir: string
+  tool: UserScopeTool
 ): Promise<ReadonlyMap<string, string>> {
-  const { toolId } = tool;
-  const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
-  if (boundary === null || boundary === undefined) return new Map();
+  const boundary = userPluginsBoundary(tool, home);
+  if (boundary === null) return new Map();
   const resolvedBoundary = await tryRealpath(fs, boundary);
   if (resolvedBoundary === null) return new Map();
   const allowed = new Map<string, string>();
   for (const [relativePath, hash] of plugin.files) {
-    const resolvedCandidate = await tryRealpath(fs, join(boundary, relativePath));
-    if (
-      resolvedCandidate !== null &&
-      isStrictlyWithinUserScope(resolvedCandidate, resolvedBoundary)
-    ) {
-      if (!FileHash.isDigest(hash)) {
-        throw new Error(
-          `${toolId}: '${plugin.name}' file '${relativePath}' has an unproven install digest; removal refused.`
-        );
-      }
-      const current = await fs.readFileHash(join(boundary, relativePath));
-      if (current.value !== hash) {
-        throw new Error(
-          `${toolId}: '${plugin.name}' file '${relativePath}' was edited after install; removal refused.`
-        );
-      }
-      allowed.set(relativePath, hash);
+    const path = join(boundary, relativePath);
+    const resolved = await tryRealpath(fs, path);
+    if (resolved === null || !isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
+      logger.warn(
+        `${tool.toolId}: '${plugin.name}' file '${relativePath}' does not resolve inside ${boundary}; left in place.`
+      );
       continue;
     }
-    logger.warn(
-      `${toolId}: '${plugin.name}' file '${relativePath}' does not resolve inside ${boundary}; left in place.`
-    );
+    await assertUnedited({ fs, tool }, plugin, { path, relativePath, hash });
+    allowed.set(relativePath, hash);
   }
   return allowed;
 }
@@ -56,13 +78,12 @@ export async function userScopeFilesSafeToDelete(
 /** The plugin without the recorded files nothing stands at any more, which an update writes back.
  * A dangling symlink counts as gone: the atomic write replaces the link, and never follows it. */
 export async function withoutMissingFiles<P extends UserScopePluginFiles<P>>(
-  fs: FileReader,
+  { fs, home }: UserScopeReach,
   plugin: P,
-  tool: UserScopeTool,
-  homedir: string
+  tool: UserScopeTool
 ): Promise<P> {
-  const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
-  if (boundary === null || boundary === undefined) return plugin;
+  const boundary = userPluginsBoundary(tool, home);
+  if (boundary === null) return plugin;
   const present = new Map<string, string>();
   for (const [relativePath, hash] of plugin.files) {
     if (await fs.fileExists(join(boundary, relativePath))) present.set(relativePath, hash);
@@ -70,18 +91,58 @@ export async function withoutMissingFiles<P extends UserScopePluginFiles<P>>(
   return plugin.withFiles(present);
 }
 
+function assertWithinPluginDirectory(
+  { pluginName }: UserScopeWrite,
+  tool: UserScopeTool,
+  rel: string
+) {
+  if (
+    posix.isAbsolute(rel) ||
+    rel.includes("\\") ||
+    posix.normalize(rel) !== rel ||
+    !rel.startsWith(`${pluginName}/`)
+  ) {
+    throw new Error(
+      `${tool.toolId}: '${pluginName}' update path '${rel}' escapes its plugin directory.`
+    );
+  }
+}
+
+/** The nearest existing parent of a new file must still sit inside the boundary. */
+async function assertParentInside(
+  fs: FileReader,
+  location: { toolId: string; pluginName: string; boundary: string; resolvedBoundary: string },
+  file: { pluginDir: string; path: string }
+): Promise<void> {
+  const { toolId, pluginName, boundary, resolvedBoundary } = location;
+  let parent = dirname(file.path);
+  while (true) {
+    const resolved = await tryRealpath(fs, parent);
+    if (resolved !== null) {
+      if (!isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
+        throw new Error(
+          `${toolId}: '${pluginName}' update parent '${parent}' escapes ${boundary}.`
+        );
+      }
+      return;
+    }
+    if (parent === file.pluginDir) {
+      throw new Error(`${toolId}: '${pluginName}' directory disappeared during update.`);
+    }
+    parent = dirname(parent);
+  }
+}
+
 /** Refuse a machine update if a new path, existing parent, or plugin directory escapes its declared base. */
 export async function assertUserScopeWriteBoundary(
-  fs: FileReader,
+  { fs, home }: UserScopeReach,
   tool: UserScopeTool,
-  pluginName: string,
-  files: readonly InstallationFile[],
-  homedir: string
+  write: UserScopeWrite
 ): Promise<void> {
   const { toolId } = tool;
-  const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
-  if (boundary === null || boundary === undefined)
-    throw new Error(`${toolId}: no user plugins directory is declared.`);
+  const { pluginName } = write;
+  const boundary = userPluginsBoundary(tool, home);
+  if (boundary === null) throw new Error(`${toolId}: no user plugins directory is declared.`);
   const resolvedBoundary = await tryRealpath(fs, boundary);
   const pluginDir = join(boundary, pluginName);
   const resolvedPluginDir = await tryRealpath(fs, pluginDir);
@@ -94,34 +155,10 @@ export async function assertUserScopeWriteBoundary(
       `${toolId}: '${pluginName}' directory is not safely inside ${boundary}; update refused.`
     );
   }
-  for (const file of files) {
-    const rel = file.relativePath;
-    if (
-      posix.isAbsolute(rel) ||
-      rel.includes("\\") ||
-      posix.normalize(rel) !== rel ||
-      !rel.startsWith(`${pluginName}/`)
-    ) {
-      throw new Error(
-        `${toolId}: '${pluginName}' update path '${rel}' escapes its plugin directory.`
-      );
-    }
-    let parent = dirname(join(boundary, rel));
-    while (true) {
-      const resolved = await tryRealpath(fs, parent);
-      if (resolved !== null) {
-        if (!isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
-          throw new Error(
-            `${toolId}: '${pluginName}' update parent '${parent}' escapes ${boundary}.`
-          );
-        }
-        break;
-      }
-      if (parent === pluginDir) {
-        throw new Error(`${toolId}: '${pluginName}' directory disappeared during update.`);
-      }
-      parent = dirname(parent);
-    }
+  const location = { toolId, pluginName, boundary, resolvedBoundary };
+  for (const { relativePath } of write.files) {
+    assertWithinPluginDirectory(write, tool, relativePath);
+    await assertParentInside(fs, location, { pluginDir, path: join(boundary, relativePath) });
   }
 }
 

@@ -95,7 +95,32 @@ const HTML_TAGS = new Set([
   "ul",
   "video",
 ]);
-export function maskHtmlComments(content: string): string {
+interface MaskedLine {
+  readonly text: string;
+  readonly commentOpen: boolean;
+}
+
+function maskLineComments(line: string, commentOpen: boolean): MaskedLine {
+  let text = "";
+  let position = 0;
+  let open = commentOpen;
+  while (position < line.length) {
+    const start = open ? position : line.indexOf("<!--", position);
+    if (start === -1) {
+      text += line.slice(position);
+      break;
+    }
+    text += line.slice(position, start);
+    const end = line.indexOf("-->", open ? start : start + 4);
+    const limit = end === -1 ? line.length : end + 3;
+    text += line.slice(start, limit).replace(/./gu, " ");
+    open = end === -1;
+    position = limit;
+  }
+  return { text, commentOpen: open };
+}
+
+function maskHtmlComments(content: string): string {
   let fence: { marker: string; length: number } | null = null;
   let commentOpen = false;
   return content
@@ -106,24 +131,11 @@ export function maskHtmlComments(content: string): string {
         if (close && close[1][0] === fence.marker && close[1].length >= fence.length) fence = null;
         return line;
       }
-      let masked = "";
-      let position = 0;
-      while (position < line.length) {
-        const start = commentOpen ? position : line.indexOf("<!--", position);
-        if (start === -1) {
-          masked += line.slice(position);
-          break;
-        }
-        masked += line.slice(position, start);
-        const end = line.indexOf("-->", commentOpen ? start : start + 4);
-        const limit = end === -1 ? line.length : end + 3;
-        masked += line.slice(start, limit).replace(/./gu, " ");
-        commentOpen = end === -1;
-        position = limit;
-      }
-      const open = masked.match(/^ {0,3}(`{3,}|~{3,})(.*)$/u);
+      const masked = maskLineComments(line, commentOpen);
+      commentOpen = masked.commentOpen;
+      const open = masked.text.match(/^ {0,3}(`{3,}|~{3,})(.*)$/u);
       if (open) fence = { marker: open[1][0], length: open[1].length };
-      return masked;
+      return masked.text;
     })
     .join("\n");
 }
@@ -132,17 +144,16 @@ export function lineNumberAt(content: string, index: number): number {
   return content.slice(0, index).split("\n").length;
 }
 
-export function addFinding(
-  findings: RecipeFinding[],
-  file: string,
-  line: number,
-  rule: string,
-  fix: string
-): void {
-  findings.push({ file, line: Math.max(1, line), rule, fix });
+/** Records one finding of the recipe being read; a line below 1 reads as the first. */
+export type Report = (line: number, rule: string, fix: string) => void;
+
+export function reporter(findings: RecipeFinding[], file: string): Report {
+  return (line, rule, fix) => {
+    findings.push({ file, line: Math.max(1, line), rule, fix });
+  };
 }
 
-export function scanFences(lines: string[], file: string, findings: RecipeFinding[]): FenceScan {
+function scanFences(lines: string[], report: Report): FenceScan {
   const fencedLines = new Set<number>();
   const blocks: Fence[] = [];
   let open: OpenFence | null = null;
@@ -155,9 +166,7 @@ export function scanFences(lines: string[], file: string, findings: RecipeFindin
       if (!match) continue;
       const language = match[2].trim().split(/\s+/u)[0] ?? "";
       if (!language) {
-        addFinding(
-          findings,
-          file,
+        report(
           index + 1,
           "fence-language",
           "Add a language after the opening fence, such as ```bash or ```text."
@@ -190,19 +199,13 @@ export function scanFences(lines: string[], file: string, findings: RecipeFindin
   }
 
   if (open) {
-    addFinding(
-      findings,
-      file,
-      open.start + 1,
-      "fence-balance",
-      "Close this fenced code block with the same marker."
-    );
+    report(open.start + 1, "fence-balance", "Close this fenced code block with the same marker.");
   }
 
   return { fencedLines, blocks };
 }
 
-export function parseHeadings(lines: string[], fencedLines: Set<number>): Heading[] {
+function parseHeadings(lines: string[], fencedLines: Set<number>): Heading[] {
   const headings: Heading[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     if (fencedLines.has(index)) continue;
@@ -235,14 +238,27 @@ function baseSlug(text: string): string {
     .replace(/\s/gu, "-");
 }
 
-export function headingAnchors(content: string): Set<string> {
+export interface ScannedRecipe {
+  readonly masked: string;
+  readonly lines: string[];
+  readonly fencedLines: Set<number>;
+  readonly blocks: Fence[];
+  readonly headings: Heading[];
+}
+
+/** The recipe with its HTML comments blanked, then split into fences and headings. */
+export function scanRecipe(content: string, report: Report): ScannedRecipe {
   const masked = maskHtmlComments(content);
   const lines = masked.split(/\r?\n/u);
-  const { fencedLines } = scanFences(lines, "", []);
+  const { fencedLines, blocks } = scanFences(lines, report);
+  return { masked, lines, fencedLines, blocks, headings: parseHeadings(lines, fencedLines) };
+}
+
+export function headingAnchors(content: string): Set<string> {
   const counts = new Map<string, number>();
   const anchors = new Set<string>();
 
-  for (const heading of parseHeadings(lines, fencedLines)) {
+  for (const heading of scanRecipe(content, () => {}).headings) {
     const slug = baseSlug(heading.text);
     const count = counts.get(slug) ?? 0;
     counts.set(slug, count + 1);

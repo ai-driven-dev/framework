@@ -63,14 +63,18 @@ export function askedFrom(ask: Pick<AskMarketplaceSource, "execute">) {
 /** Removing a user-scope plugin's files asks which are safe to delete; nobody reads why one is
  * left in place, so the reason is not logged. */
 export function quietUserScopeFilesSafeToDelete(
-  fs: Parameters<typeof userScopeFilesSafeToDelete>[0]
+  fs: Parameters<typeof userScopeFilesSafeToDelete>[0]["fs"]
 ): (
-  plugin: Parameters<typeof userScopeFilesSafeToDelete>[2],
-  tool: Parameters<typeof userScopeFilesSafeToDelete>[3],
+  plugin: Parameters<typeof userScopeFilesSafeToDelete>[1],
+  tool: Parameters<typeof userScopeFilesSafeToDelete>[2],
   home: string
 ) => ReturnType<typeof userScopeFilesSafeToDelete> {
   return (plugin, tool, home) =>
-    userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home);
+    userScopeFilesSafeToDelete(
+      { fs, logger: { debug() {}, info() {}, warn() {} }, home },
+      plugin,
+      tool
+    );
 }
 
 /** A setup flow registers its framework source for the scope the flow runs in. */

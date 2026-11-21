@@ -26,13 +26,13 @@ function guard(options: {
     resolveCacheCandidate: async () => null,
     frameworkMarketplaceName: "aidd-framework",
   });
-  return claims.guardMessage(
-    "codex",
-    registeredTools().aiProfile(TOOL.codex),
-    REF,
-    "aidd-framework",
-    "/project"
-  );
+  return claims.guardMessage({
+    binary: "codex",
+    tool: registeredTools().aiProfile(TOOL.codex),
+    ref: REF,
+    marketplaceAlias: "aidd-framework",
+    projectRoot: "/project",
+  });
 }
 
 describe("the plugin removal guard on the shared source", () => {

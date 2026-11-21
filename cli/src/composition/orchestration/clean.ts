@@ -97,7 +97,7 @@ export function wireClean(base: Base, inst: Installation) {
     new PurgeMachineState(fs, logger, marketplaceRegistry, guards),
     homedir,
     new UserScopePluginFiles(fs, (plugin, tool, home) =>
-      userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+      userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
     tools
   );

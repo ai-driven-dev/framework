@@ -39,12 +39,16 @@ describe("afterActivation", () => {
 
   describe("when nothing changed", () => {
     it("answers undefined for the same binary, marketplaces and refs", () => {
-      expect(afterActivation(recorded, sameOutcome(), "claude", false)).toBeUndefined();
+      expect(
+        afterActivation(recorded, sameOutcome(), { binary: "claude", narrowed: false })
+      ).toBeUndefined();
     });
 
     it("ignores the claims the manifest keeps beside the record", () => {
       const claimed = { ...recorded, pluginClaims: [{ ref: "a@catalog", dependents: ["/p"] }] };
-      expect(afterActivation(claimed, sameOutcome(), "claude", false)).toBeUndefined();
+      expect(
+        afterActivation(claimed, sameOutcome(), { binary: "claude", narrowed: false })
+      ).toBeUndefined();
     });
 
     it("takes a marketplace without a source on both sides for the same", () => {
@@ -53,17 +57,23 @@ describe("afterActivation", () => {
         marketplaces: [marketplace("local", "catalog")],
         pluginRefs: ["a@catalog", "b@catalog"],
       });
-      expect(afterActivation(legacy, current, "claude", false)).toBeUndefined();
+      expect(
+        afterActivation(legacy, current, { binary: "claude", narrowed: false })
+      ).toBeUndefined();
     });
   });
 
   describe("when something changed", () => {
     it("answers a record when none was recorded before", () => {
-      expect(afterActivation(undefined, sameOutcome(), "claude", false)).toEqual(recorded);
+      expect(
+        afterActivation(undefined, sameOutcome(), { binary: "claude", narrowed: false })
+      ).toEqual(recorded);
     });
 
     it("answers a record under the binary the tool now activates with", () => {
-      expect(afterActivation(recorded, sameOutcome(), "codex", false)?.binary).toBe("codex");
+      expect(
+        afterActivation(recorded, sameOutcome(), { binary: "codex", narrowed: false })?.binary
+      ).toBe("codex");
     });
 
     it("tells a different ref order apart", () => {
@@ -71,10 +81,9 @@ describe("afterActivation", () => {
         marketplaces: [marketplace("local", "catalog", registry("/built"))],
         pluginRefs: ["b@catalog", "a@catalog"],
       });
-      expect(afterActivation(recorded, reordered, "claude", false)?.pluginRefs).toEqual([
-        "b@catalog",
-        "a@catalog",
-      ]);
+      expect(
+        afterActivation(recorded, reordered, { binary: "claude", narrowed: false })?.pluginRefs
+      ).toEqual(["b@catalog", "a@catalog"]);
     });
 
     it("tells a different ref count apart", () => {
@@ -82,7 +91,7 @@ describe("afterActivation", () => {
         marketplaces: [marketplace("local", "catalog", registry("/built"))],
         pluginRefs: ["a@catalog"],
       });
-      expect(afterActivation(recorded, fewer, "claude", false)).toEqual({
+      expect(afterActivation(recorded, fewer, { binary: "claude", narrowed: false })).toEqual({
         binary: "claude",
         marketplaces: recorded.marketplaces,
         pluginRefs: ["a@catalog"],
@@ -97,7 +106,7 @@ describe("afterActivation", () => {
       ["a source it never had", [marketplace("local", "catalog")]],
     ])("tells %s apart", (_case, marketplaces) => {
       const current = outcome({ marketplaces, pluginRefs: ["a@catalog", "b@catalog"] });
-      expect(afterActivation(recorded, current, "claude", false)).toEqual({
+      expect(afterActivation(recorded, current, { binary: "claude", narrowed: false })).toEqual({
         binary: "claude",
         marketplaces,
         pluginRefs: ["a@catalog", "b@catalog"],
@@ -106,7 +115,9 @@ describe("afterActivation", () => {
 
     it("tells a source the record never had apart", () => {
       const legacy = { ...recorded, marketplaces: [marketplace("local", "catalog")] };
-      expect(afterActivation(legacy, sameOutcome(), "claude", false)).toEqual(recorded);
+      expect(afterActivation(legacy, sameOutcome(), { binary: "claude", narrowed: false })).toEqual(
+        recorded
+      );
     });
   });
 
@@ -121,7 +132,7 @@ describe("afterActivation", () => {
         marketplaces: [marketplace("live", "host-live")],
         pluginRefs: ["plugin-live@host-live"],
       });
-      expect(afterActivation(dead, live, "claude", false)).toEqual({
+      expect(afterActivation(dead, live, { binary: "claude", narrowed: false })).toEqual({
         binary: "claude",
         marketplaces: [marketplace("live", "host-live")],
         pluginRefs: ["plugin-live@host-live"],
@@ -140,8 +151,7 @@ describe("afterActivation", () => {
           preservedMarketplaces: [marketplace("kept", "host-kept")],
           pluginRefs: ["z@host-live"],
         }),
-        "claude",
-        false
+        { binary: "claude", narrowed: false }
       );
       expect(next?.pluginRefs).toEqual(["x@host-kept", "z@host-live"]);
       expect(next?.marketplaces).toEqual([marketplace("kept", "host-kept")]);
@@ -159,8 +169,7 @@ describe("afterActivation", () => {
           preservedMarketplaces: [marketplace("kept", "host-kept")],
           pluginRefs: ["x@host-kept", "x@host-kept"],
         }),
-        "claude",
-        false
+        { binary: "claude", narrowed: false }
       );
       expect(next?.pluginRefs).toEqual(["x@host-kept"]);
     });
@@ -177,8 +186,7 @@ describe("afterActivation", () => {
       const next = afterActivation(
         before,
         outcome({ marketplaces: [marketplace("alias-x", "shared")], pluginRefs: ["px@shared"] }),
-        "claude",
-        true
+        { binary: "claude", narrowed: true }
       );
       expect(next?.marketplaces).toEqual([
         marketplace("alias-y", "shared"),
@@ -190,8 +198,7 @@ describe("afterActivation", () => {
       const next = afterActivation(
         before,
         outcome({ marketplaces: [marketplace("alias-x", "shared")], pluginRefs: ["px@shared"] }),
-        "claude",
-        true
+        { binary: "claude", narrowed: true }
       );
       expect(next?.pluginRefs).toEqual(["px@shared", "py@shared", "pz@elsewhere"]);
     });
@@ -205,8 +212,7 @@ describe("afterActivation", () => {
       const next = afterActivation(
         solo,
         outcome({ marketplaces: [marketplace("alias-x", "shared")], pluginRefs: ["new@shared"] }),
-        "claude",
-        true
+        { binary: "claude", narrowed: true }
       );
       expect(next?.pluginRefs).toEqual(["pz@elsewhere", "new@shared"]);
     });
@@ -218,19 +224,21 @@ describe("afterActivation", () => {
       const next = afterActivation(
         { ...recorded, pluginClaims: claims },
         outcome({ pluginRefs: ["c@catalog"] }),
-        "claude",
-        false
+        { binary: "claude", narrowed: false }
       );
       expect(next?.pluginClaims).toBe(claims);
     });
 
     it("writes no claims key a record never had, and keeps its key order", () => {
-      const next = afterActivation(recorded, outcome(), "claude", false);
+      const next = afterActivation(recorded, outcome(), { binary: "claude", narrowed: false });
       expect(Object.keys(next ?? {})).toEqual(["binary", "marketplaces", "pluginRefs"]);
     });
 
     it("writes the claims key last when the record had claims", () => {
-      const next = afterActivation({ ...recorded, pluginClaims: [] }, outcome(), "claude", false);
+      const next = afterActivation({ ...recorded, pluginClaims: [] }, outcome(), {
+        binary: "claude",
+        narrowed: false,
+      });
       expect(Object.keys(next ?? {})).toEqual([
         "binary",
         "marketplaces",

@@ -404,11 +404,9 @@ describe("Cursor user plugin boundary", () => {
     expect(
       (
         await userScopeFilesSafeToDelete(
-          fs,
-          new CapturingLogger(),
+          { fs, logger: new CapturingLogger(), home: resolveHomeDir() },
           owned,
-          registeredTools().aiProfile(TOOL.cursor),
-          resolveHomeDir()
+          registeredTools().aiProfile(TOOL.cursor)
         )
       ).size
     ).toBe(0);

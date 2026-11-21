@@ -92,7 +92,7 @@ export function userPluginRemover(
       claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
       parts.records ?? registrationRecordRules,
       new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
       ),
       registeredTools()
     )
