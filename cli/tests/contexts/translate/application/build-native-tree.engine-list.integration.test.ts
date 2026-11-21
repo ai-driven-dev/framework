@@ -1,14 +1,17 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import { translateBuildLayout } from "../../../../src/contexts/translate/domain/build-layout/index.js";
+import { translate } from "../../../../src/contexts/translate/domain/engine.js";
+import type { OutputFile } from "../../../../src/contexts/translate/domain/output-file.js";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
+import { BUILD_ONLY_FOLDS, foldFilesOf } from "../testing/build-only-folds.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
 import {
   distributionOf,
@@ -48,6 +51,17 @@ async function build(
   return fs;
 }
 
+function listedBy(
+  seeded: InMemoryFileAdapter,
+  contract: ToolBuildContract,
+  mode: FrameworkBuildMode
+): OutputFile[] {
+  return readdirSync(join(FRAMEWORK_SOURCE, "plugins")).flatMap(
+    (name) =>
+      translate(distributionOf(seeded, name), { kind: "build", contract, mode, outDir: OUT }).files
+  );
+}
+
 describe("the engine's file list against what a build writes", () => {
   let seeded: InMemoryFileAdapter;
   beforeAll(async () => {
@@ -62,9 +76,7 @@ describe("the engine's file list against what a build writes", () => {
       const contract = id === null ? null : tools.aiProfile(id).buildContract(mode);
       if (contract === null) throw new Error(`no ${mode} contract for ${target}`);
       const built = await build(seeded, target, mode);
-      const listed = readdirSync(join(FRAMEWORK_SOURCE, "plugins")).flatMap((name) =>
-        translateBuildLayout(distributionOf(seeded, name), contract, mode)
-      );
+      const listed = listedBy(seeded, contract, mode);
 
       expect(listed.length, "the engine lists files for this cell").toBeGreaterThan(0);
       const written = listed.map((file) => [
@@ -72,6 +84,30 @@ describe("the engine's file list against what a build writes", () => {
         built.getFile(join(OUT, file.relativePath)),
       ]);
       expect(written).toEqual(listed.map((file) => [file.relativePath, file.content]));
+    }
+  );
+
+  it.each(CELLS)(
+    "$target $mode: a build writes nothing the engine does not list, bar the declared build-only folds",
+    async ({ target, mode }) => {
+      const id = tools.aiToolId(target);
+      const contract = id === null ? null : tools.aiProfile(id).buildContract(mode);
+      if (contract === null) throw new Error(`no ${mode} contract for ${target}`);
+      const built = await build(seeded, target, mode);
+      const listed = new Set(listedBy(seeded, contract, mode).map((file) => file.relativePath));
+      const prefix = `${OUT}/`;
+      const unlisted = built
+        .listUnder(OUT)
+        .map((path) => path.replaceAll("\\", "/").slice(prefix.length))
+        .filter((path) => !listed.has(path))
+        .sort();
+
+      const folds = foldFilesOf(
+        { target, mode, contract },
+        readdirSync(join(FRAMEWORK_SOURCE, "plugins"))
+      );
+      expect(Object.keys(folds).every((fold) => BUILD_ONLY_FOLDS.includes(fold))).toBe(true);
+      expect(unlisted).toEqual(Object.values(folds).flat().sort());
     }
   );
 });

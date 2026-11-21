@@ -4,14 +4,17 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
+import { translate } from "../../src/contexts/translate/domain/engine.js";
 import { AjvSchemaValidatorAdapter } from "../../src/contexts/translate/infrastructure/schema-validator.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
+import { foldFilesOf } from "../contexts/translate/testing/build-only-folds.builder.js";
 import { buildTree } from "../contexts/translate/testing/build-tree.builder.js";
+import { distributionOf } from "../contexts/translate/testing/framework-real-distribution.builder.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
@@ -126,6 +129,34 @@ describe.concurrent(`Framework build golden - ${CELL_COUNT}-cell matrix`, () => 
     const key = mode === "flat" ? `${target}:flat` : target;
     expect(await captureInMemory(seeded, target, mode)).toStrictEqual(stored[key]);
   });
+
+  it.each([
+    ...MARKETPLACE_TARGETS.map((target) => [target, "marketplace"] as const),
+    ...FLAT_TARGETS.map((target) => [target, "flat"] as const),
+  ])(
+    "%s %s: the engine's per-plugin files hash to the stored baseline, bar the folded ones",
+    (target, mode) => {
+      const id = registeredTools().aiToolId(target);
+      const contract = id === null ? null : registeredTools().aiProfile(id).buildContract(mode);
+      if (contract === null) throw new Error(`no ${mode} contract for ${target}`);
+      const plugins = readdirSync(join(FRAMEWORK_FIXTURE, "plugins"));
+      const folded = new Set(
+        Object.values(foldFilesOf({ target, mode, contract }, plugins)).flat()
+      );
+      const stored = storedBaseline()[mode === "flat" ? `${target}:flat` : target];
+      const listed = plugins.flatMap(
+        (name) =>
+          translate(distributionOf(seeded, name), { kind: "build", contract, mode, outDir: OUT })
+            .files
+      );
+
+      expect(listed.length).toBeGreaterThan(0);
+      for (const file of listed.filter((f) => !folded.has(f.relativePath))) {
+        const hash = createHash("sha256").update(file.content, "utf-8").digest("hex");
+        expect(hash, `${target} ${mode} ${file.relativePath}`).toBe(stored[file.relativePath]);
+      }
+    }
+  );
 
   it("snapshot is deterministic (two captures of each target are byte-identical)", async () => {
     const [snap1, snap2] = [await captureAllCells(seeded), await captureAllCells(seeded)];
