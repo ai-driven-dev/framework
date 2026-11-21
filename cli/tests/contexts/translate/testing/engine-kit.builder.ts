@@ -1,7 +1,6 @@
 import type { ToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import {
   flatHookPaths,
-  translate,
   translateWithComponentPaths,
 } from "../../../../src/contexts/translate/domain/engine.js";
 import {
@@ -16,7 +15,8 @@ const manifestPaths = registeredManifestPaths();
 
 /** The engine's functions with the registered manifest places filled in, as the composition hands them. */
 export const translator = {
-  translate: (dist: PluginDistribution, tool: ToolProfile) => translate(dist, tool, manifestPaths),
+  translate: (dist: PluginDistribution, tool: ToolProfile) =>
+    translateWithComponentPaths(dist, tool, manifestPaths).files,
   translateWithComponentPaths: (dist: PluginDistribution, tool: ToolProfile) =>
     translateWithComponentPaths(dist, tool, manifestPaths),
   flatHookPaths,

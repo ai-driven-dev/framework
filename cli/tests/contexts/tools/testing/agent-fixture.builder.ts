@@ -1,5 +1,6 @@
-import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
+import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
+import type { WithSections } from "./with-sections.builder.js";
 
 /** A Claude-format agent carrying every key a host may translate. */
 export const NAMED_AGENT = `---
