@@ -32,7 +32,7 @@ import {
 } from "./kinds.js";
 import { CLI_ROOT, canonicalPath, matchesGlob } from "./source-graph.js";
 import { walk, withVirtualProject } from "./ts-project.js";
-import { useCaseShapeBreaks } from "./use-case-shape.js";
+import { holdsUseCases, useCaseFilesWithoutSuffix, useCaseShapeBreaks } from "./use-case-shape.js";
 
 function shapesOf(files: Readonly<Record<string, string>>): Map<string, Shape> {
   if (Object.keys(files).length === 0) return new Map();
@@ -89,8 +89,6 @@ describe("every file is exactly one kind", () => {
     ["src/contexts/auth/domain/auth.error.ts", "error"],
     ["src/presentation/presentation.error.ts", "error"],
     ["src/presentation/presenters/auth.presenter.ts", "presenter"],
-    ["src/presentation/presenters/auth.presenter.ts", "presenter"],
-    ["src/presentation/controllers/auth.controller.ts", "controller"],
     ["src/presentation/controllers/auth.controller.ts", "controller"],
     ["src/composition/auth.composition.ts", "composition"],
     ["src/composition/orchestration/clean.ts", "composition"],
@@ -351,5 +349,41 @@ describe("a use case holds one shape", () => {
     expect(
       shapeViolations(useCaseShapeBreaks(files)).map((violation) => violation.message)
     ).toEqual([]);
+  });
+});
+
+describe("a class with a public execute is named as a use case", () => {
+  const home = "src/contexts/a/application/";
+  const executing = "export class LogIn { async execute(r: R) {} }";
+
+  it("flags a file without the suffix, and none that carries it", () => {
+    expect(
+      useCaseFilesWithoutSuffix({
+        [`${home}log-in.ts`]: executing,
+        [`${home}sign-in.use-case.ts`]: executing,
+        "src/orchestration/clean/wipe.ts": executing,
+      })
+    ).toEqual([`${home}log-in.ts`, "src/orchestration/clean/wipe.ts"]);
+  });
+
+  it("ignores private or static execute, other names, and files outside the use case folders", () => {
+    expect(
+      useCaseFilesWithoutSuffix({
+        [`${home}a.ts`]: "export class A { private execute() {} }",
+        [`${home}b.ts`]: "export class B { static execute() {} }",
+        [`${home}c.ts`]: "export class C { run() {} }",
+        [`${home}d.ts`]: "class D { execute() {} }",
+        "src/contexts/a/domain/e.ts": executing,
+      })
+    ).toEqual([]);
+  });
+
+  it("holds every file of the tree", () => {
+    const files: Record<string, string> = {};
+    for (const path of codeFilesUnder("src").filter(holdsUseCases)) {
+      files[path] = readFileSync(join(CLI_ROOT, path), "utf8");
+    }
+    expect(Object.keys(files).length, "the scope is stale").toBeGreaterThan(100);
+    expect(useCaseFilesWithoutSuffix(files)).toEqual([]);
   });
 });

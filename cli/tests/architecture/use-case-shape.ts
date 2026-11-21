@@ -184,3 +184,41 @@ export function useCaseShapeBreaks(files: Readonly<Record<string, string>>): Map
     }
   );
 }
+
+/** Where a class with a public `execute` is a use case, and so is named by its file. */
+export const holdsUseCases = (path: string): boolean =>
+  path.startsWith("src/orchestration/") || path.includes("/application/");
+
+const exportsExecutingClass = (root: SourceFile): boolean =>
+  root.statements
+    .filter(isClassDeclaration)
+    .filter((declaration) => hasModifier(declaration, SyntaxKind.ExportKeyword))
+    .some((declaration) =>
+      declaration.members
+        .filter(isMethodDeclaration)
+        .some(
+          (method) =>
+            nameOf(method) === "execute" &&
+            !isHidden(method) &&
+            !hasModifier(method, SyntaxKind.StaticKeyword)
+        )
+    );
+
+/** The files that export a class with a public `execute` and do not end in the use-case suffix. */
+export function useCaseFilesWithoutSuffix(files: Readonly<Record<string, string>>): string[] {
+  const candidates = Object.fromEntries(
+    Object.entries(files).filter(([file]) => holdsUseCases(file) && !file.endsWith(".use-case.ts"))
+  );
+  if (Object.keys(candidates).length === 0) return [];
+  return withVirtualProject(
+    "use-case-suffixes",
+    candidates,
+    { module: "esnext", target: "esnext" },
+    (project, at) =>
+      Object.keys(candidates).filter((file) => {
+        const source = project.program.getSourceFile(at(file));
+        if (!source) throw new Error(`the compiler returned no source for ${file}`);
+        return exportsExecutingClass(source);
+      })
+  );
+}
