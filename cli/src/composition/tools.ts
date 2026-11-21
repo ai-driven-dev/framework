@@ -13,24 +13,11 @@ import { SmolTomlCodec } from "../contexts/tools/infrastructure/smol-toml-codec.
 
 const codex = codexProfile(new SmolTomlCodec());
 
-/** The registration list, in the order a help text names the tools: AI tools first, then IDE
- * tools. A new tool adds its line here, before the IDE tools if it is an AI tool. The setup and
- * doctor flows walk the tools sorted by id instead, see `ToolCatalog.sortedIds`. */
+/** The registration list, in the canonical order: the order the messages that list tools name
+ * them and a manifest's tools are walked. The help order is derived from it, see
+ * `ToolCatalog.inHelpOrder`. A new tool adds its line here. The setup and doctor flows walk the
+ * tools sorted by id instead, see `ToolCatalog.sortedIds`. */
 export const REGISTERED_PROFILES: readonly BuiltToolConfig[] = [
-  claude,
-  cursor,
-  copilot,
-  codex,
-  opencode,
-  kilo,
-  antigravity,
-  vscode,
-];
-
-/** The same profiles in the order the tools are named in the messages that list them and in the
- * order a manifest's tools are walked. It is not the help order: opencode and kilo come before
- * codex. `ToolCatalog` refuses a list that is not the registration list's own set. */
-export const CANONICAL_PROFILES: readonly BuiltToolConfig[] = [
   claude,
   cursor,
   copilot,
@@ -44,5 +31,5 @@ export const CANONICAL_PROFILES: readonly BuiltToolConfig[] = [
 /** The catalog of every registered tool. Pure and root-independent: the composition root builds
  * it once, and each edge that resolves tools holds it. */
 export function wireTools(): ToolCatalog {
-  return new RegisteredToolCatalog(REGISTERED_PROFILES, CANONICAL_PROFILES);
+  return new RegisteredToolCatalog(REGISTERED_PROFILES);
 }

@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { REGISTERED_PROFILES, wireTools } from "../../../src/composition/tools.js";
+import { wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
@@ -196,9 +196,7 @@ describe("aidd translate — the help surface", () => {
     ).toEqual([
       [
         "--to <target>",
-        `Conversion target (${REGISTERED_PROFILES.filter((profile) => profile.kind === "ai")
-          .map((profile) => profile.toolId)
-          .join(", ")})`,
+        "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity)",
         undefined,
       ],
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],

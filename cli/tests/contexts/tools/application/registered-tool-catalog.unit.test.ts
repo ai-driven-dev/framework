@@ -1,20 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { CANONICAL_PROFILES, REGISTERED_PROFILES } from "../../../../src/composition/tools.js";
-import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
-import {
-  DuplicateToolIdError,
-  ToolListMismatchError,
-} from "../../../../src/contexts/tools/domain/tools.error.js";
+import { REGISTERED_PROFILES } from "../../../../src/composition/tools.js";
+import { DuplicateToolIdError } from "../../../../src/contexts/tools/domain/tools.error.js";
 import { UnregisteredToolError } from "../../../../src/shared/domain/shared.error.js";
 import { catalogOf } from "../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("the registered tool catalog", () => {
-  it("follows the order its profiles were registered in, not the id order", () => {
-    const catalog = catalogOf([...REGISTERED_PROFILES].reverse());
+  it("names every tool in the order it was registered", () => {
+    expect(catalogOf().idsInCanonicalOrder()).toEqual([
+      "claude",
+      "cursor",
+      "copilot",
+      "opencode",
+      "kilo",
+      "codex",
+      "antigravity",
+      "vscode",
+    ]);
+  });
 
-    expect(catalog.inHelpOrder("ai")[0]).toBe("antigravity");
-    expect(catalog.inHelpOrder("ai").at(-1)).toBe("claude");
+  it("puts the tools delivering a native plugin first in the help order, the rest after, each in registered order", () => {
+    expect(catalogOf().inHelpOrder("ai")).toEqual([
+      "claude",
+      "cursor",
+      "copilot",
+      "codex",
+      "opencode",
+      "kilo",
+      "antigravity",
+    ]);
+    expect(catalogOf().inHelpOrder("ide")).toEqual(["vscode"]);
+    expect(catalogOf([...REGISTERED_PROFILES].reverse()).inHelpOrder("ai")).toEqual([
+      "codex",
+      "copilot",
+      "cursor",
+      "claude",
+      "antigravity",
+      "kilo",
+      "opencode",
+    ]);
   });
 
   it("sorts by id whatever order its profiles were registered in", () => {
@@ -23,28 +47,9 @@ describe("the registered tool catalog", () => {
     expect(sorted[0]).toBe("antigravity");
   });
 
-  describe("the AI ids in the canonical order", () => {
-    it("is the order the shared vocabulary names the AI tools in, which is neither the help order nor the id order", () => {
-      const ids = catalogOf().idsInCanonicalOrder("ai");
-
-      expect(ids.indexOf(TOOL.opencode)).toBeLessThan(ids.indexOf(TOOL.codex));
-      expect(ids).not.toEqual(catalogOf().inHelpOrder("ai"));
-    });
-  });
-
   it("answers the profile of a registered id, and refuses an unregistered one", () => {
     expect(catalogOf().profile(TOOL.claude).toolId).toBe("claude");
     expect(() => catalogOf([]).profile(TOOL.claude)).toThrow(UnregisteredToolError);
-  });
-
-  it("refuses a canonical order that is not the registration's own set", () => {
-    const registered = REGISTERED_PROFILES.slice(1);
-    const missing = () => new RegisteredToolCatalog(registered, CANONICAL_PROFILES);
-    const extra = () => new RegisteredToolCatalog(REGISTERED_PROFILES, CANONICAL_PROFILES.slice(1));
-
-    expect(missing).toThrow(ToolListMismatchError);
-    expect(missing).toThrow("Tool lists differ on: claude.");
-    expect(extra).toThrow("Tool lists differ on: claude.");
   });
 
   it("answers the registered id a text names, and null for another text", () => {

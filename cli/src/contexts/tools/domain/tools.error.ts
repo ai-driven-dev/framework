@@ -85,11 +85,3 @@ export class DualConfigError extends AiddError {
     this.name = "DualConfigError";
   }
 }
-
-export class ToolListMismatchError extends AiddError {
-  readonly code = "tool-list-mismatch";
-  constructor(toolIds: readonly string[]) {
-    super(`Tool lists differ on: ${toolIds.join(", ")}.`);
-    this.name = "ToolListMismatchError";
-  }
-}

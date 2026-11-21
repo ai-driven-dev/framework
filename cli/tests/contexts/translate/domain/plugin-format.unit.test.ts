@@ -48,8 +48,8 @@ describe("distributionProbesOf", () => {
     ]);
 
     expect(distributionProbesOf(cursorFirst, "manifest").map((probe) => probe.format)).toEqual([
-      "cursor",
       "claude",
+      "cursor",
     ]);
     expect(distributionProbesOf(claudeFirst, "manifest").map((probe) => probe.format)).toEqual([
       "claude",

@@ -7,7 +7,6 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
-  ToolListMismatchError,
 } from "../../../../src/contexts/tools/domain/tools.error.js";
 
 describe("CapabilityConfigError", () => {
@@ -122,19 +121,5 @@ describe("DualConfigError", () => {
       toolId: "kilo",
       code: "dual-config",
     });
-  });
-});
-
-describe("ToolListMismatchError", () => {
-  it("says exactly what went wrong", () => {
-    const error = new ToolListMismatchError(["a", "b"]);
-    expect({ name: error.name, message: error.message }).toStrictEqual({
-      name: "ToolListMismatchError",
-      message: "Tool lists differ on: a, b.",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new ToolListMismatchError(["a", "b"]).code).toBe("tool-list-mismatch");
   });
 });

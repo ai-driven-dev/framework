@@ -32,13 +32,12 @@ function declaring(declared: DeclaredTool): Built {
   return Object.create(registeredTools().aiProfile(declared.id), ownMembers(overrides));
 }
 
-/** The real catalog over only the given tools: help order is the order given, canonical order the
- * registered one. A tool declares only its probes and build modes; every other answer is the
+/** The real catalog over only the given tools, in the registered order. A tool declares only its probes and build modes; every other answer is the
  * registered tool's own. An id it was not given is refused. */
 export function catalogDeclaring(tools: readonly DeclaredTool[]): ToolCatalog {
   const byId = new Map(tools.map((tool) => [tool.id, declaring(tool)]));
-  const canonical = registeredTools()
+  const registered = registeredTools()
     .idsInCanonicalOrder("ai")
     .flatMap((id) => byId.get(id) ?? []);
-  return new RegisteredToolCatalog([...byId.values()], canonical);
+  return new RegisteredToolCatalog(registered);
 }
