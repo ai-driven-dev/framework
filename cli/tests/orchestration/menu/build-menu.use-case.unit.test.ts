@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.use-case.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { makeQueuedPrompter, setUp } from "../testing/queued-menu-prompter.builder.js";
 

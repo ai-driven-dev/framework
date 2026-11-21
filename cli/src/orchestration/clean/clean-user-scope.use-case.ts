@@ -3,7 +3,7 @@ import type { PurgeUserScopeFiles } from "../../contexts/installation/applicatio
 import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
+import type { Prompter } from "../ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";
 
 export interface CleanUserScopeRequest {

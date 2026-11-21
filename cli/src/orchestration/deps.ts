@@ -17,7 +17,6 @@ import type { ValidateRecipes } from "../contexts/recipes/application/validate-r
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import type { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
 import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
-import type { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.use-case.js";
 import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.use-case.js";
 import type { ParseIdentityFlags } from "../contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
 import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.use-case.js";
@@ -39,7 +38,6 @@ import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-
 import type { SelfUpdate } from "../contexts/update/application/self-update.use-case.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { Logger } from "../shared/ports/logger.js";
-import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
 import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js";
 import type { CleanProject } from "./clean/clean-project.use-case.js";
@@ -56,11 +54,13 @@ import type { RemoveProjectMarketplace } from "./marketplace/remove-project-mark
 import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.use-case.js";
 import type { InstallPlugin } from "./plugin/install-plugin.use-case.js";
 import type { UpdateUserPlugin } from "./plugin/update-user-plugin.use-case.js";
+import type { Prompter } from "./ports/prompter.js";
 import type { RunSetup } from "./setup/run-setup.use-case.js";
 import type { RunSync } from "./sync/run-sync.use-case.js";
 import type { RunUserScopeSync } from "./sync/run-user-scope-sync.use-case.js";
 import type { SyncNativeActivation } from "./sync/sync-native-activation.use-case.js";
 import type { SyncSettings } from "./sync/sync-settings.use-case.js";
+import type { ChooseIdentity } from "./telemetry/choose-identity.use-case.js";
 
 export interface FactoryOptions {
   verbose: boolean;

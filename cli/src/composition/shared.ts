@@ -17,11 +17,11 @@ import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../shared/infrastructure/http-client.js";
-import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
 import { wireMachineClaims } from "./machine-claims.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 /** The version of the running binary, for the entry point that may not import infrastructure. */
 export function currentVersion(): string {

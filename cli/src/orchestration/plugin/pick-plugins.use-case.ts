@@ -12,8 +12,8 @@ import type { MarketplaceView } from "../../contexts/distribution/contract/marke
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add/plugin-add.js";
 import { InvalidPluginManifestError } from "../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
 import { InteractiveOnlyError, NoMarketplacesRegisteredError } from "../orchestration.error.js";
+import type { Prompter } from "../ports/prompter.js";
 
 export interface PickPluginsRequest {
   toolIds: AiToolId[] | "all";

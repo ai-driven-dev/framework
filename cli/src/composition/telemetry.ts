@@ -10,7 +10,7 @@ import { DirectoryResolver } from "../contexts/telemetry/application/directory-r
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
 import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
 import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.use-case.js";
-import { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.use-case.js";
+import { DecideIdentity } from "../contexts/telemetry/application/identity/decide-identity.use-case.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.use-case.js";
 import { ParseIdentityFlags } from "../contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.use-case.js";
@@ -58,9 +58,10 @@ import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/stor
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
+import type { Prompter } from "../orchestration/ports/prompter.js";
+import { ChooseIdentity } from "../orchestration/telemetry/choose-identity.use-case.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
-import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
-import type { Prompter } from "../shared/ports/prompter.js";
+import { userConfigDirOf } from "./user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 export function wireTelemetryRequests(): TelemetryRequests {
@@ -224,8 +225,7 @@ function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
     manageIdentity,
     proposeIdentity,
     chooseIdentity: new ChooseIdentity({
-      manageIdentity,
-      proposeIdentity,
+      decideIdentity: new DecideIdentity({ manageIdentity, proposeIdentity }),
       checkIdentity: new CheckIdentity(),
       prompter,
     }),

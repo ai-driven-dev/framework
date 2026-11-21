@@ -1,5 +1,4 @@
-import type { Prompter } from "../../../../shared/ports/prompter.js";
-import { resolveRestoreDecision } from "./resolve-restore-decision.js";
+import { type ConflictResolver, resolveRestoreDecision } from "./resolve-restore-decision.js";
 
 export interface DriftDescriptor {
   relativePath: string;
@@ -28,7 +27,7 @@ export interface RestoreDriftLeaf<TDrift extends DriftDescriptor, TResult> {
 /** The single place the keep/overwrite decision lives: both restore flows inject their own leaf
  * rather than duplicating the loop. */
 export async function restoreDriftEntries<TDrift extends DriftDescriptor, TResult>(
-  prompter: Prompter,
+  conflicts: ConflictResolver,
   leaf: RestoreDriftLeaf<TDrift, TResult>,
   { force, interactive }: { force: boolean; interactive: boolean }
 ): Promise<TResult | null> {
@@ -39,7 +38,7 @@ export async function restoreDriftEntries<TDrift extends DriftDescriptor, TResul
   const kept: string[] = [];
 
   for (const entry of drift) {
-    const skip = await resolveRestoreDecision(prompter, {
+    const skip = await resolveRestoreDecision(conflicts, {
       relativePath: entry.relativePath,
       reason: entry.reason,
       force,

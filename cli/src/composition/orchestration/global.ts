@@ -102,7 +102,7 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
         installation.assetProvider
       ),
       fs,
-      prompter,
+      conflicts: prompter,
       logger,
     },
     tools

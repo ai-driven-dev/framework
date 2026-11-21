@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ListInstalledTools } from "../../../src/contexts/installation/application/list-installed-tools.use-case.js";
 import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.use-case.js";
 import { UpdateTools } from "../../../src/orchestration/global/update-tools.use-case.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import {
   buildInstallationDeps,

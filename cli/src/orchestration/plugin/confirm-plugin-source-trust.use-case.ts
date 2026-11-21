@@ -3,8 +3,8 @@ import type {
   TrustPluginSourceRequest,
 } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.use-case.js";
 import { describePluginSource } from "../../shared/domain/source.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
 import { TrustDeniedError } from "../orchestration.error.js";
+import type { Prompter } from "../ports/prompter.js";
 
 export type ConfirmPluginSourceTrustRequest = TrustPluginSourceRequest;
 

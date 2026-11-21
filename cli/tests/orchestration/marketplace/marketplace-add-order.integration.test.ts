@@ -14,12 +14,12 @@ import { removalClaims } from "../../../src/contexts/machine-claims/application/
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.use-case.js";
 import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
 } from "../../../src/shared/domain/shared.error.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

@@ -22,13 +22,13 @@ import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
-import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
 import type { Lock } from "../../shared/ports/lock.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
+import { userConfigDir } from "../user-config-dir.js";
 
 /** What a clean asks of the machine record, over the user manifest and the shared source's references. */
 export function wireCleanClaims(parts: {

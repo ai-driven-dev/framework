@@ -1,7 +1,7 @@
 /** A scripted menu prompter that answers each select in turn and records what every level offered. */
 import { vi } from "vitest";
 import type { ProjectSetupState } from "../../../src/contexts/installation/contract/project-setup-state.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 
 export type SelectCall = [
   message: string,

@@ -7,13 +7,13 @@ import { NpmRegistryReleaseAdapter } from "../contexts/update/infrastructure/npm
 import { PackageManagerInstallerAdapter } from "../contexts/update/infrastructure/package-manager-installer-adapter.js";
 import { UpdateCheckCacheAdapter } from "../contexts/update/infrastructure/update-check-cache-adapter.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
-import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 export interface UpdateWiring {
   logger: Logger;

@@ -5,7 +5,7 @@ import type { PluginAdd } from "../../contexts/installation/application/plugin/a
 import { VersionMismatchError } from "../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
+import type { Prompter } from "../ports/prompter.js";
 import { askWhichMatch } from "../setup/plugin-questions.js";
 
 export interface InstallFromMarketplaceRequest {

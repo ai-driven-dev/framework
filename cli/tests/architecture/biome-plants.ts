@@ -310,7 +310,7 @@ export const PLANTS: readonly Plant[] = [
   ...ASKS_FOR_THE_PROMPTER.map(
     (layer): Plant => [
       `src/contexts/distribution/${layer}/plant-prompter.ts`,
-      reaches("../../../shared/ports/prompter.js"),
+      reaches("../../../orchestration/ports/prompter.js"),
       IMPORT,
       1,
     ]

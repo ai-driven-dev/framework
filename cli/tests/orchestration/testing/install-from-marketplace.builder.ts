@@ -6,8 +6,8 @@ import { ResolveMarketplace } from "../../../src/contexts/distribution/applicati
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import {

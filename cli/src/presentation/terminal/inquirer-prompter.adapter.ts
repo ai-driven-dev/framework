@@ -1,5 +1,5 @@
 import { checkbox, confirm, input, select } from "@inquirer/prompts";
-import type { Prompter } from "../../shared/ports/prompter.js";
+import type { Prompter } from "../../orchestration/ports/prompter.js";
 
 type PromptContext = {
   input?: NodeJS.ReadableStream;

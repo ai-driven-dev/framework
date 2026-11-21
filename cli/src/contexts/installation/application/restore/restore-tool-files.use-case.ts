@@ -5,13 +5,13 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { RestoredTool } from "../../ports/tool-sections.js";
 import type { GenerateToolDistribution } from "./generate-tool-distribution.use-case.js";
+import type { ConflictResolver } from "./resolve-restore-decision.js";
 import { restoreMergeFiles } from "./restore-merge-files.js";
 import { restoreRegularFiles } from "./restore-regular-files.js";
 
@@ -54,7 +54,7 @@ export interface RestoreToolFilesResult {
 export interface RestoreToolFilesDeps {
   readonly generateToolDistribution: GenerateToolDistribution;
   readonly fs: FileReader & FileWriter & FileMerger;
-  readonly prompter: Prompter;
+  readonly conflicts: ConflictResolver;
   readonly logger: Logger;
 }
 
@@ -101,7 +101,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesRequest,
     distMap: Map<string, InstallationFile>
   ): Promise<SectionRestoreResult | null> {
-    return restoreRegularFiles(this.deps.fs, this.deps.prompter, {
+    return restoreRegularFiles(this.deps.fs, this.deps.conflicts, {
       manifestFiles: options.manifest.getToolFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -115,7 +115,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesRequest,
     distMap: Map<string, InstallationFile>
   ): Promise<MergeSectionRestoreResult | null> {
-    return restoreMergeFiles(this.deps.fs, this.deps.prompter, {
+    return restoreMergeFiles(this.deps.fs, this.deps.conflicts, {
       mergeFiles: options.manifest.getMergeFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,

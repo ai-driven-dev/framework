@@ -19,11 +19,11 @@ import type { RepositoryVisibility } from "../contexts/distribution/ports/reposi
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
-import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { ReleaseLister } from "../shared/ports/release-lister.js";
+import { userConfigDir } from "./user-config-dir.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter;

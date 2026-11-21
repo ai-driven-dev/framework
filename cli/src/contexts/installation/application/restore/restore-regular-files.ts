@@ -3,9 +3,9 @@ import type { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import { planRestore, type RecordedVerdict } from "../../domain/manifest/restore-plan.js";
+import type { ConflictResolver } from "./resolve-restore-decision.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
 import { restoreDriftEntries } from "./restore-drift-entries.js";
 
@@ -33,13 +33,13 @@ export interface RestoreRegularFilesResult {
 
 export async function restoreRegularFiles(
   fs: FileReader & FileWriter,
-  prompter: Prompter,
+  conflicts: ConflictResolver,
   options: RestoreRegularFilesCommand
 ): Promise<RestoreRegularFilesResult | null> {
   const updatedHashMap = new Map(options.manifestFiles.map((f) => [f.relativePath, f.hash]));
 
   return restoreDriftEntries(
-    prompter,
+    conflicts,
     {
       collectDrift: () => collectDrift(fs, options),
       restore: async (entry) => {

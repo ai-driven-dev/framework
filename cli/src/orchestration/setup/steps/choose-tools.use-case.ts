@@ -1,7 +1,7 @@
 import type { ProjectContext } from "../../../contexts/installation/contract/project-context.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
-import type { Prompter } from "../../../shared/ports/prompter.js";
+import type { Prompter } from "../../ports/prompter.js";
 
 export interface ChooseToolsRequest {
   interactive: boolean;

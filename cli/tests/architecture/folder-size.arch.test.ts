@@ -11,7 +11,7 @@ const FOLDER_CAP = 10;
 
 /** Folders over the cap, by path under `src/`, and how many `.ts` files each holds. */
 const OVER_THE_CAP: Readonly<Record<string, number>> = {
-  composition: 13,
+  composition: 14,
   "contexts/host-registration/application/withdraw": 13,
   "contexts/host-registration/infrastructure": 11,
   "contexts/installation/application": 11,

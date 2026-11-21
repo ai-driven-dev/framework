@@ -6,7 +6,7 @@ import type { Restore } from "../../../src/contexts/installation/application/res
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.use-case.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import {
   restoreAllPluginsOf,
   restoreOf,

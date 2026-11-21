@@ -1,6 +1,6 @@
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
+import type { Prompter } from "../ports/prompter.js";
 import { isBranch, type MenuLeaf, type MenuNode, toChoice } from "./menu-node.js";
 import { installedNodes } from "./menu-tree.js";
 

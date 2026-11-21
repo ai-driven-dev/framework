@@ -2,8 +2,9 @@ import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
 import { wireTelemetryRequests } from "../../../src/composition/telemetry.js";
 import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
-import { ChooseIdentity } from "../../../src/contexts/telemetry/application/identity/choose-identity.use-case.js";
+import { DecideIdentity } from "../../../src/contexts/telemetry/application/identity/decide-identity.use-case.js";
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.use-case.js";
+import { ChooseIdentity } from "../../../src/orchestration/telemetry/choose-identity.use-case.js";
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { registerTelemetryCommand } from "../../../src/presentation/controllers/telemetry.controller.js";
 import { processOutputFactory } from "./output-factory.builder.js";
@@ -41,8 +42,7 @@ export const createDeps: Mock = vi.fn(async () => ({
     manageIdentity: identity,
     proposeIdentity,
     chooseIdentity: new ChooseIdentity({
-      manageIdentity: identity,
-      proposeIdentity,
+      decideIdentity: new DecideIdentity({ manageIdentity: identity, proposeIdentity }),
       checkIdentity: new CheckIdentity(),
       prompter,
     }),
