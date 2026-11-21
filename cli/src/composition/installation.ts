@@ -90,13 +90,13 @@ export function cacheBuildFor(
   tools: ToolCatalog,
   deps: FrameworkBuildDeps
 ): FrameworkBuilds["buildFor"] {
-  return (target, mode, outDir, provider) =>
+  return ({ target, mode, outDir, variant }) =>
     createFrameworkBuildUseCase(tools, deps, {
       target,
       mode,
       outDir,
       force: true,
-      ...(provider === undefined ? {} : { provider }),
+      ...(variant === undefined ? {} : { provider: variant }),
     });
 }
 

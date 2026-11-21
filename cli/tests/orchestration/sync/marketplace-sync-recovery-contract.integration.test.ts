@@ -251,7 +251,12 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
   it("recognizes an owned vanished user cache using the unresolved user root", async () => {
     const userRoot = "/users/alice/aidd";
-    const source = userBuiltMarketplaceDir(userRoot, "1.0.0", ALIAS, "claude");
+    const source = userBuiltMarketplaceDir({
+      userConfigDir: userRoot,
+      cliVersion: "1.0.0",
+      marketplaceName: ALIAS,
+      target: "claude",
+    });
     const { activator, result } = await recovery({
       source,
       userRoot,
@@ -280,7 +285,12 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     "/foreign/cache",
     builtMarketplaceDir(ROOT, "different-marketplace", "claude"),
     builtMarketplaceDir(ROOT, ALIAS, "codex"),
-    userBuiltMarketplaceDir("/users/alice/aidd", "1.0.0", ALIAS, "claude"),
+    userBuiltMarketplaceDir({
+      userConfigDir: "/users/alice/aidd",
+      cliVersion: "1.0.0",
+      marketplaceName: ALIAS,
+      target: "claude",
+    }),
   ])(
     "refuses force removal for a source outside this catalogue's recognized cache: %s",
     async (source) => {

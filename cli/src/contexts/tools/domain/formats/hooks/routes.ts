@@ -154,7 +154,12 @@ function hooksBridge(
 
 function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): string {
   if (route.loaderEntry !== undefined) {
-    return flatHooksPathWithLoaderEntry(route.scriptsDir, route.loaderEntry, plugin, rel);
+    return flatHooksPathWithLoaderEntry({
+      perPluginHooksDir: route.scriptsDir,
+      loaderEntry: route.loaderEntry,
+      plugin,
+      hooksRelativePath: rel,
+    });
   }
   if (rel === `${PLUGIN_HOOKS_SOURCE.scriptDir}/${plugin}.hooks.json`) {
     return genericFlatHooksFile(route.scriptsDir, plugin);

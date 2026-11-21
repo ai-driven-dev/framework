@@ -136,7 +136,7 @@ describe("the user marketplace removal the composition binds", () => {
       })
     );
     const base = {
-      ...wireBase("/project", { verbose: false }, output, registeredTools()),
+      ...wireBase({ projectRoot: "/project", verbose: false, output, tools: registeredTools() }),
       nativePluginActivators: new Map(),
       hostPluginRegistries: new Map(),
       nativeSources: new Map(),
@@ -174,16 +174,17 @@ describe("pluginCacheDir", () => {
 });
 
 describe("withinUserScope", () => {
-  const plugin = {} as Parameters<ReturnType<typeof withinUserScope>["planUpdate"]>[0];
-  const tool = {} as Parameters<ReturnType<typeof withinUserScope>["planUpdate"]>[1];
+  type PlanRequest = Parameters<ReturnType<typeof withinUserScope>["planUpdate"]>[0];
+  const plugin = {} as PlanRequest["plugin"];
+  const tool = {} as PlanRequest["tool"];
   const log = new CapturingLogger();
 
   it("plans an update with the containment rule bound, and without a rebuild unless asked", async () => {
     const planUpdate = vi.fn().mockResolvedValue(null);
     const bound = withinUserScope({ planUpdate, applyUpdate: vi.fn() });
 
-    await bound.planUpdate(plugin, tool, "/project", log);
-    await bound.planUpdate(plugin, tool, "/project", log, true);
+    await bound.planUpdate({ plugin, tool, projectRoot: "/project", logger: log });
+    await bound.planUpdate({ plugin, tool, projectRoot: "/project", logger: log, rebuild: true });
 
     expect(planUpdate).toHaveBeenNthCalledWith(
       1,
@@ -238,7 +239,7 @@ describe("cacheBuildFor", () => {
       fs,
       assetProvider: new BundledAssetProviderAdapter(wireTools()),
       logger: new CapturingLogger(),
-    })(TOOL.copilot, "flat", outDir);
+    })({ target: TOOL.copilot, mode: "flat", outDir });
 
     await build?.execute({ sourceDir: FIXTURE_DIR, outDir, target: TOOL.copilot });
 

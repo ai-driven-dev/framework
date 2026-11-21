@@ -59,7 +59,12 @@ describe("ResolveBuiltMarketplaces", () => {
   });
 
   it("finds a user marketplace's build under the user cache, per version", async () => {
-    const dir = userBuiltMarketplaceDir(USER_ROOT, VERSION, "shared", TOOL_ID);
+    const dir = userBuiltMarketplaceDir({
+      userConfigDir: USER_ROOT,
+      cliVersion: VERSION,
+      marketplaceName: "shared",
+      target: TOOL_ID,
+    });
     const resolver = await resolverOver([dir], registered("shared", "user"));
 
     const { built } = await resolver.execute({ projectRoot: PROJECT, toolIds: [TOOL_ID] });
@@ -68,7 +73,12 @@ describe("ResolveBuiltMarketplaces", () => {
   });
 
   it("looks for the framework marketplace under the user cache even when recorded at project scope", async () => {
-    const dir = userBuiltMarketplaceDir(USER_ROOT, VERSION, FRAMEWORK_MARKETPLACE_NAME, TOOL_ID);
+    const dir = userBuiltMarketplaceDir({
+      userConfigDir: USER_ROOT,
+      cliVersion: VERSION,
+      marketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      target: TOOL_ID,
+    });
     const resolver = await resolverOver([dir], registered(FRAMEWORK_MARKETPLACE_NAME, "project"));
 
     const { built } = await resolver.execute({ projectRoot: PROJECT, toolIds: [TOOL_ID] });

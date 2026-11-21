@@ -28,15 +28,17 @@ export function currentVersion(): string {
   return new CurrentVersionAdapter().get();
 }
 
+/** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
+export interface BaseOptions extends FactoryOptions {
+  projectRoot: string;
+  output?: CLIOutput;
+  tools: ToolCatalog;
+}
+
 /** The adapters and context wirings every area reads: the file system, the manifests, auth, host
  * registration and distribution. Built once per graph. */
-export function wireBase(
-  projectRoot: string,
-  options: FactoryOptions,
-  output: CLIOutput | undefined,
-  tools: ToolCatalog
-) {
-  const logger = output ?? new CLIOutput(options.verbose);
+export function wireBase({ projectRoot, verbose, token, output, tools }: BaseOptions) {
+  const logger = output ?? new CLIOutput(verbose);
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
@@ -56,7 +58,7 @@ export function wireBase(
     logger,
     http,
     environment,
-    explicitToken: options.token,
+    explicitToken: token,
   });
   const currentVersionProvider = new CurrentVersionAdapter();
   const platform = new PlatformAdapter();

@@ -38,7 +38,17 @@ export function userScopeSyncOf(sync: Pick<SyncSettings, "execute">): SyncMachin
 }
 
 /** The machine-wide commands: install and update tools, setup machine scope, status and restore. */
-export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Plugin) {
+export function wireGlobal({
+  base,
+  installation: inst,
+  marketplace: m,
+  plugin: p,
+}: {
+  base: Base;
+  installation: Installation;
+  marketplace: Marketplace;
+  plugin: Plugin;
+}) {
   const {
     fs,
     logger,

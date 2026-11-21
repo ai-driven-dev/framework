@@ -11,27 +11,47 @@ import {
 
 describe("genericFlatAgentPath", () => {
   it("strips .md suffix, adds outputExt, and prepends plugin prefix", () => {
-    expect(genericFlatAgentPath(".github/agents/", "aidd-dev", "implementer.md", ".agent.md")).toBe(
-      ".github/agents/aidd-dev-implementer.agent.md"
-    );
+    expect(
+      genericFlatAgentPath({
+        agentsPrefix: ".github/agents/",
+        plugin: "aidd-dev",
+        agentBaseName: "implementer.md",
+        outputExt: ".agent.md",
+      })
+    ).toBe(".github/agents/aidd-dev-implementer.agent.md");
   });
 
   it("does not double-strip when name has no .md", () => {
-    expect(genericFlatAgentPath(".github/agents/", "aidd-dev", "reviewer", ".agent.md")).toBe(
-      ".github/agents/aidd-dev-reviewer.agent.md"
-    );
+    expect(
+      genericFlatAgentPath({
+        agentsPrefix: ".github/agents/",
+        plugin: "aidd-dev",
+        agentBaseName: "reviewer",
+        outputExt: ".agent.md",
+      })
+    ).toBe(".github/agents/aidd-dev-reviewer.agent.md");
   });
 
   it("preserves .md output ext for tools that keep .md", () => {
-    expect(genericFlatAgentPath(".claude/agents/", "my-plugin", "agent.md", ".md")).toBe(
-      ".claude/agents/my-plugin-agent.md"
-    );
+    expect(
+      genericFlatAgentPath({
+        agentsPrefix: ".claude/agents/",
+        plugin: "my-plugin",
+        agentBaseName: "agent.md",
+        outputExt: ".md",
+      })
+    ).toBe(".claude/agents/my-plugin-agent.md");
   });
 
   it("plugin param is used as name prefix", () => {
-    expect(genericFlatAgentPath(".cursor/agents/", "aidd-context", "agent.md", ".md")).toBe(
-      ".cursor/agents/aidd-context-agent.md"
-    );
+    expect(
+      genericFlatAgentPath({
+        agentsPrefix: ".cursor/agents/",
+        plugin: "aidd-context",
+        agentBaseName: "agent.md",
+        outputExt: ".md",
+      })
+    ).toBe(".cursor/agents/aidd-context-agent.md");
   });
 });
 
@@ -115,24 +135,24 @@ describe("genericFlatHooksScriptPath", () => {
 describe("flatHooksPathWithLoaderEntry", () => {
   it("namespaces a plain hook script under <perPluginHooksDir>/<plugin>/", () => {
     expect(
-      flatHooksPathWithLoaderEntry(
-        ".opencode/hooks/",
-        null,
-        "aidd-context",
-        "hooks/update_memory.js"
-      )
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: ".opencode/hooks/",
+        loaderEntry: null,
+        plugin: "aidd-context",
+        hooksRelativePath: "hooks/update_memory.js",
+      })
     ).toBe(".opencode/hooks/aidd-context/update_memory.js");
   });
 
   it("routes a script matching the loader entry's name flat, renamed to the plugin", () => {
     const loaderEntry = { dir: ".opencode/plugin/", baseName: "opencode-plugin.js" };
     expect(
-      flatHooksPathWithLoaderEntry(
-        ".opencode/hooks/",
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: ".opencode/hooks/",
         loaderEntry,
-        "aidd-telemetry",
-        "hooks/opencode-plugin.js"
-      )
+        plugin: "aidd-telemetry",
+        hooksRelativePath: "hooks/opencode-plugin.js",
+      })
     ).toBe(".opencode/plugin/aidd-telemetry.js");
   });
 
@@ -141,30 +161,50 @@ describe("flatHooksPathWithLoaderEntry", () => {
     // matches the top-level script only, not anything sharing its leaf name deeper down.
     const loaderEntry = { dir: ".opencode/plugin/", baseName: "opencode-plugin.js" };
     expect(
-      flatHooksPathWithLoaderEntry(
-        ".opencode/hooks/",
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: ".opencode/hooks/",
         loaderEntry,
-        "aidd-telemetry",
-        "hooks/lib/opencode-plugin.js"
-      )
+        plugin: "aidd-telemetry",
+        hooksRelativePath: "hooks/lib/opencode-plugin.js",
+      })
     ).toBe(".opencode/hooks/aidd-telemetry/lib/opencode-plugin.js");
   });
 
   it("falls back to full namespacing when no loader entry is declared", () => {
-    expect(flatHooksPathWithLoaderEntry(".codex/hooks/", null, "aidd-dev", "hooks/check.sh")).toBe(
-      ".codex/hooks/aidd-dev/check.sh"
-    );
+    expect(
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: ".codex/hooks/",
+        loaderEntry: null,
+        plugin: "aidd-dev",
+        hooksRelativePath: "hooks/check.sh",
+      })
+    ).toBe(".codex/hooks/aidd-dev/check.sh");
   });
 
   it("keeps two plugins' same-named hook script from colliding", () => {
-    const a = flatHooksPathWithLoaderEntry(".opencode/hooks/", null, "plugin-a", "hooks/x.js");
-    const b = flatHooksPathWithLoaderEntry(".opencode/hooks/", null, "plugin-b", "hooks/x.js");
+    const a = flatHooksPathWithLoaderEntry({
+      perPluginHooksDir: ".opencode/hooks/",
+      loaderEntry: null,
+      plugin: "plugin-a",
+      hooksRelativePath: "hooks/x.js",
+    });
+    const b = flatHooksPathWithLoaderEntry({
+      perPluginHooksDir: ".opencode/hooks/",
+      loaderEntry: null,
+      plugin: "plugin-b",
+      hooksRelativePath: "hooks/x.js",
+    });
     expect(a).not.toBe(b);
   });
 
   it("strips only a leading hooks/ segment, never one deeper in the path", () => {
     expect(
-      flatHooksPathWithLoaderEntry(".opencode/hooks/", null, "aidd-dev", "scripts/hooks/x.js")
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: ".opencode/hooks/",
+        loaderEntry: null,
+        plugin: "aidd-dev",
+        hooksRelativePath: "scripts/hooks/x.js",
+      })
     ).toBe(".opencode/hooks/aidd-dev/scripts/hooks/x.js");
   });
 });

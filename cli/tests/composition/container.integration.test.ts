@@ -319,7 +319,7 @@ describe("the graph a container hands the commands", () => {
         }
       }
       const activator = new RealpathHostActions({ available: true });
-      const base = wireBase(root, { verbose: false }, undefined, tools);
+      const base = wireBase({ projectRoot: root, verbose: false, tools });
       const withHost = {
         ...base,
         nativePluginActivators: new Map([["claude", activator]]),
@@ -457,7 +457,7 @@ describe("the graph a container hands the commands", () => {
   });
 
   it("hands the IDE settings propagation the bundled assets, so a settings file kept in an asset is written", async () => {
-    const base = wireBase(root, { verbose: false }, undefined, registeredTools());
+    const base = wireBase({ projectRoot: root, verbose: false, tools: registeredTools() });
     const manifest = Manifest.create();
     manifest.addTool(TOOL.copilot, "1.0.0", []);
     await base.manifestRepo.save(manifest);

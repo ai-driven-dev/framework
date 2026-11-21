@@ -85,7 +85,12 @@ export function buildCursorContract(): ToolBuildContract {
 }
 
 function cursorFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath(".cursor/agents/", plugin, rel.replace(/^agents\//, ""), ".md");
+  return genericFlatAgentPath({
+    agentsPrefix: ".cursor/agents/",
+    plugin,
+    agentBaseName: rel.replace(/^agents\//, ""),
+    outputExt: ".md",
+  });
 }
 
 function cursorFlatSkillPath(plugin: string, rel: string): string {

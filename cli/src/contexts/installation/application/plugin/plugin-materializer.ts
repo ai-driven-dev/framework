@@ -55,13 +55,13 @@ export interface UserScopeFileGuard {
 
 /** The same two steps with the containment rule already bound, for a caller that is not a scenario. */
 export interface BoundPluginMaterializer {
-  planUpdate(
-    plugin: InstalledPlugin,
-    tool: AiToolProfile,
-    projectRoot: string,
-    logger: Logger,
-    rebuild?: boolean
-  ): Promise<PlannedUserPluginFileUpdate | null>;
+  planUpdate(request: {
+    plugin: InstalledPlugin;
+    tool: AiToolProfile;
+    projectRoot: string;
+    logger: Logger;
+    rebuild?: boolean;
+  }): Promise<PlannedUserPluginFileUpdate | null>;
   applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin>;
 }
 

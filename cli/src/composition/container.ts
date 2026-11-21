@@ -13,17 +13,10 @@ import { wireMarketplace } from "./orchestration/marketplace.js";
 import { wirePlugin } from "./orchestration/plugin.js";
 import { wireAgentModels, wireSetup } from "./orchestration/setup.js";
 import { wireRecipes } from "./recipes.js";
-import { currentVersion, wireBase } from "./shared.js";
+import { type BaseOptions, currentVersion, wireBase } from "./shared.js";
 import { wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 import { wireUpdate } from "./update.js";
-
-/** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
-export interface ContainerOptions extends FactoryOptions {
-  projectRoot: string;
-  output?: CLIOutput;
-  tools: ToolCatalog;
-}
 
 /** Each context's wiring is built the first time it is read, then handed back unchanged. */
 function memoized<T extends object>(build: () => T): () => T {
@@ -33,10 +26,10 @@ function memoized<T extends object>(build: () => T): () => T {
 
 /** The wiring of one project root and token. Every context is a getter that builds it on first
  * read, so a command pays only for the contexts it reads and two containers share nothing. */
-export function createContainer(options: ContainerOptions) {
+export function createContainer(options: BaseOptions) {
   const { projectRoot, verbose, token, output, tools } = options;
   const shared = memoized(() => ({
-    ...wireBase(projectRoot, { verbose, token }, output, tools),
+    ...wireBase({ projectRoot, verbose, token, output, tools }),
     version: currentVersion(),
   }));
   const installation = memoized(() => wireInstallation(shared()));
@@ -53,16 +46,34 @@ export function createContainer(options: ContainerOptions) {
   });
   const marketplace = memoized(() => wireMarketplace(shared(), installation()));
   const plugin = memoized(() => wirePlugin(shared(), installation()));
-  const global = memoized(() => wireGlobal(shared(), installation(), marketplace(), plugin()));
+  const global = memoized(() =>
+    wireGlobal({
+      base: shared(),
+      installation: installation(),
+      marketplace: marketplace(),
+      plugin: plugin(),
+    })
+  );
   const setup = memoized(() =>
-    wireSetup(shared(), installation(), plugin(), marketplace(), global())
+    wireSetup({
+      base: shared(),
+      installation: installation(),
+      plugin: plugin(),
+      marketplace: marketplace(),
+      global: global(),
+    })
   );
   const doctor = memoized(() => wireDoctor(shared(), installation()));
   const clean = memoized(() => wireClean(shared(), installation()));
   const recipes = memoized(() => wireRecipes());
   const telemetry = memoized(() => wireTelemetry(homedir, shared().prompter));
   const agentModels = memoized(() => ({
-    setAgentModels: wireAgentModels(shared(), installation(), plugin(), marketplace()),
+    setAgentModels: wireAgentModels({
+      base: shared(),
+      installation: installation(),
+      plugin: plugin(),
+      marketplace: marketplace(),
+    }),
   }));
   return {
     get shared() {

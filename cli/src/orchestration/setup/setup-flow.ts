@@ -83,7 +83,13 @@ export class SetupFlow {
     const pluginMode = params.pluginMode ?? "none";
     const scope = params.scope ?? "project";
     this.validatePluginMode(pluginMode, params.pluginNames ?? []);
-    this.validateScope(params.supportsUserScopeActivation, scope, aiTools, ideTools, pluginMode);
+    this.validateScope({
+      supportsUserScopeActivation: params.supportsUserScopeActivation,
+      scope,
+      aiTools,
+      ideTools,
+      pluginMode,
+    });
     this.projectRoot = params.projectRoot;
     this.source = params.source;
     this.aiTools = aiTools;
@@ -115,13 +121,19 @@ export class SetupFlow {
   // nowhere to be registered, an empty `--ai` list registers the shared source for no tool at
   // all, and an interactive pick has no project to offer it in. Each is refused rather than
   // silently dropped; named, recommended and all plugins install machine-wide.
-  private validateScope(
-    supportsUserScopeActivation: (toolId: ToolId) => boolean,
-    scope: Scope,
-    aiTools: readonly AiToolId[],
-    ideTools: readonly IdeToolId[],
-    pluginMode: PluginInstallMode
-  ): void {
+  private validateScope({
+    supportsUserScopeActivation,
+    scope,
+    aiTools,
+    ideTools,
+    pluginMode,
+  }: {
+    supportsUserScopeActivation: (toolId: ToolId) => boolean;
+    scope: Scope;
+    aiTools: readonly AiToolId[];
+    ideTools: readonly IdeToolId[];
+    pluginMode: PluginInstallMode;
+  }): void {
     if (scope !== "user") return;
     if (ideTools.length > 0) throw new UserScopeIdeToolsError(ideTools);
     if (aiTools.length === 0) throw new UserScopeNoToolsError();

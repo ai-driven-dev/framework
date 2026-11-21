@@ -38,12 +38,12 @@ describe("settings migration: legacy host entries", () => {
     const CURRENT_VERSION = "2.0.0";
 
     function sharedBuiltDir(): string {
-      return userBuiltMarketplaceDir(
-        USER_CACHE_ROOT,
-        CURRENT_VERSION,
-        FRAMEWORK_MARKETPLACE_NAME,
-        "claude"
-      );
+      return userBuiltMarketplaceDir({
+        userConfigDir: USER_CACHE_ROOT,
+        cliVersion: CURRENT_VERSION,
+        marketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        target: "claude",
+      });
     }
 
     it("leaves another project's cache and both references untouched without source provenance", async () => {
@@ -311,12 +311,12 @@ describe("settings migration: legacy host entries", () => {
       // compare against a resolved path, so a drive-less key is never looked up on win32.
       const USER_CACHE_ROOT = resolve("/user-cache");
       const sharedBuiltDir = resolve(
-        userBuiltMarketplaceDir(
-          USER_CACHE_ROOT,
-          CURRENT_VERSION,
-          FRAMEWORK_MARKETPLACE_NAME,
-          "claude"
-        )
+        userBuiltMarketplaceDir({
+          userConfigDir: USER_CACHE_ROOT,
+          cliVersion: CURRENT_VERSION,
+          marketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+          target: "claude",
+        })
       );
       const preMigrationCache = resolve(
         builtMarketplaceDir(PROJECT_A, FRAMEWORK_MARKETPLACE_NAME, "claude")

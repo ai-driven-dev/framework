@@ -150,7 +150,15 @@ describe("reclaimOrReport", () => {
 
   it.each([
     ["this project's own build", PROJECT_BUILT],
-    ["the shared user build", userBuiltMarketplaceDir(USER_ROOT, "1.0.0", "aidd", "claude")],
+    [
+      "the shared user build",
+      userBuiltMarketplaceDir({
+        userConfigDir: USER_ROOT,
+        cliVersion: "1.0.0",
+        marketplaceName: "aidd",
+        target: "claude",
+      }),
+    ],
   ])("re-registers a dead registration of %s, forced out first", async (_case, registered) => {
     const parts = setup({
       claims: KNOWN,

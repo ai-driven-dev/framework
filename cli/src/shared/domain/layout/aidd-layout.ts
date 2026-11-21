@@ -28,11 +28,16 @@ export function userBuiltCacheRoot(userConfigDir: string): string {
 /** The CLI version sits before the marketplace name, so purging one version is a single
  * `rm -rf` and two projects on two CLI versions never resolve to the same directory, which
  * is what keeps a second project from silently repointing a host away from the first. */
-export function userBuiltMarketplaceDir(
-  userConfigDir: string,
-  cliVersion: string,
-  marketplaceName: string,
-  target: string
-): string {
+export function userBuiltMarketplaceDir({
+  userConfigDir,
+  cliVersion,
+  marketplaceName,
+  target,
+}: {
+  userConfigDir: string;
+  cliVersion: string;
+  marketplaceName: string;
+  target: string;
+}): string {
   return join(userBuiltCacheRoot(userConfigDir), cliVersion, marketplaceName, target);
 }

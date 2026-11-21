@@ -210,8 +210,18 @@ describe("guardAgainstConflict", () => {
 
   it("skips, with a warning, a host already following a newer shared build", async () => {
     const root = "/home/.config/aidd";
-    const registered = userBuiltMarketplaceDir(root, "2.0.0", "aidd-framework", "claude");
-    const built = userBuiltMarketplaceDir(root, "1.0.0", "aidd-framework", "claude");
+    const registered = userBuiltMarketplaceDir({
+      userConfigDir: root,
+      cliVersion: "2.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
+    const built = userBuiltMarketplaceDir({
+      userConfigDir: root,
+      cliVersion: "1.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
     const { run, warnings } = setup({
       registry: { location: "r", entries: new Map([["aidd-framework", registered]]) },
       userCacheRoot: root,

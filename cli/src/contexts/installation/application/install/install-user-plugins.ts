@@ -59,13 +59,13 @@ export class InstallUserPlugins {
           owned === undefined
             ? resolved
             : resolved.withFiles(owned.files).withDependents(owned.dependents);
-        const plan = await this.materializer.planUpdate(
+        const plan = await this.materializer.planUpdate({
           plugin,
           tool,
-          command.projectRoot,
-          this.logger,
-          true
-        );
+          projectRoot: command.projectRoot,
+          logger: this.logger,
+          rebuild: true,
+        });
         if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;
         plans.push(plan);
       }

@@ -3,12 +3,17 @@
  * onto the leaf filename instead, so a tool discovers the file at the depth it expects and
  * the plugin origin still survives in the name.
  */
-export function genericFlatAgentPath(
-  agentsPrefix: string,
-  plugin: string,
-  agentBaseName: string,
-  outputExt: string
-): string {
+export function genericFlatAgentPath({
+  agentsPrefix,
+  plugin,
+  agentBaseName,
+  outputExt,
+}: {
+  agentsPrefix: string;
+  plugin: string;
+  agentBaseName: string;
+  outputExt: string;
+}): string {
   const withoutMd = agentBaseName.endsWith(".md") ? agentBaseName.slice(0, -3) : agentBaseName;
   return `${agentsPrefix}${plugin}-${withoutMd}${outputExt}`;
 }
@@ -74,12 +79,17 @@ export interface FlatHooksLoaderEntry {
  * `perPluginHooksDir`, giving a loader that also scans one flat directory a landing spot
  * for the scripts it does not import directly. `null` means no such convention.
  */
-export function flatHooksPathWithLoaderEntry(
-  perPluginHooksDir: string,
-  loaderEntry: FlatHooksLoaderEntry | null,
-  plugin: string,
-  hooksRelativePath: string
-): string {
+export function flatHooksPathWithLoaderEntry({
+  perPluginHooksDir,
+  loaderEntry,
+  plugin,
+  hooksRelativePath,
+}: {
+  perPluginHooksDir: string;
+  loaderEntry: FlatHooksLoaderEntry | null;
+  plugin: string;
+  hooksRelativePath: string;
+}): string {
   const rest = hooksRelativePath.replace(/^hooks\//, "");
   if (loaderEntry !== null && rest === loaderEntry.baseName) {
     return `${loaderEntry.dir}${plugin}.js`;

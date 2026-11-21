@@ -128,12 +128,12 @@ function flatAnswers(layout: FlatPlacement, hooks: HooksSection): FlatPluginAnsw
     hooksInstallPath: (pluginName, hooksRelativePath) =>
       flatLayout.hooksDir === null
         ? null
-        : flatHooksPathWithLoaderEntry(
-            flatLayout.hooksDir,
-            flatLayout.hooksLoaderEntry,
-            pluginName,
-            hooksRelativePath
-          ),
+        : flatHooksPathWithLoaderEntry({
+            perPluginHooksDir: flatLayout.hooksDir,
+            loaderEntry: flatLayout.hooksLoaderEntry,
+            plugin: pluginName,
+            hooksRelativePath,
+          }),
     hookScript: hookScriptOf(hooks.delivery),
   };
 }

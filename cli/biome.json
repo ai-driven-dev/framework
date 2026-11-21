@@ -5953,11 +5953,6 @@
     {
       "includes": [
         "src/**",
-        "!src/composition/installation.ts",
-        "!src/composition/orchestration/global.ts",
-        "!src/composition/orchestration/plugin.ts",
-        "!src/composition/orchestration/setup.ts",
-        "!src/composition/shared.ts",
         "!src/contexts/installation/application/install/config/install-runtime-config.ts",
         "!src/contexts/installation/application/install/content/install-content-section.ts",
         "!src/contexts/installation/application/install/install-ai-tool.ts",
@@ -5998,18 +5993,13 @@
         "!src/contexts/installation/domain/plugins/installed-plugin.ts",
         "!src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
         "!src/contexts/installation/ports/main-session-settings.ts",
-        "!src/orchestration/doctor/check-registration.ts",
-        "!src/orchestration/setup/run-setup.ts",
-        "!src/orchestration/setup/setup-flow.ts",
         "!src/presentation/commands/clean.ts",
         "!src/presentation/commands/doctor.ts",
         "!src/presentation/commands/setup.ts",
         "!src/presentation/commands/sync.ts",
         "!src/presentation/commands/tool-config.ts",
         "!src/presentation/display/doctor-display.ts",
-        "!src/presentation/display/tool-config-display.ts",
-        "!src/shared/domain/layout/aidd-layout.ts",
-        "!src/shared/domain/materialization/flat-paths.ts"
+        "!src/presentation/display/tool-config-display.ts"
       ],
       "plugins": ["./biome-plugins/max-function-params.grit"]
     },

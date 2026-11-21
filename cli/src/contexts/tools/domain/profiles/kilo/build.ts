@@ -17,12 +17,12 @@ import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
 import { chooseKiloConfigPath, KILO_CONFIG_CANDIDATES, KILO_DIRECTORY } from "./kilo-paths.js";
 
 function kiloFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath(
-    `${KILO_DIRECTORY}agents/`,
+  return genericFlatAgentPath({
+    agentsPrefix: `${KILO_DIRECTORY}agents/`,
     plugin,
-    rel.replace(/^agents\//, ""),
-    ".md"
-  );
+    agentBaseName: rel.replace(/^agents\//, ""),
+    outputExt: ".md",
+  });
 }
 
 function kiloFlatSkillPath(plugin: string, rel: string): string {

@@ -56,8 +56,15 @@ export function withinUserScope(
   materializer: Pick<PluginMaterializer, "planUpdate" | "applyUpdate">
 ): BoundPluginMaterializer {
   return {
-    planUpdate: (plugin, tool, projectRoot, log, rebuild = false) =>
-      materializer.planUpdate(plugin, tool, projectRoot, log, rebuild, isStrictlyWithinUserScope),
+    planUpdate: ({ plugin, tool, projectRoot, logger, rebuild = false }) =>
+      materializer.planUpdate(
+        plugin,
+        tool,
+        projectRoot,
+        logger,
+        rebuild,
+        isStrictlyWithinUserScope
+      ),
     applyUpdate: (plan, log) => materializer.applyUpdate(plan, log, isStrictlyWithinUserScope),
   };
 }

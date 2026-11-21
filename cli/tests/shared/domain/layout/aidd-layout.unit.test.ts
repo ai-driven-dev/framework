@@ -10,14 +10,29 @@ import { pathContainsOrEquals } from "../../../../src/shared/domain/paths.js";
 // two versions resolving to the same directory would take the other's registrations too.
 describe("userBuiltMarketplaceDir()", () => {
   it("places the version segment before the marketplace name", () => {
-    expect(userBuiltMarketplaceDir("/user-cache", "5.0.0", "aidd-framework", "claude")).toBe(
-      join("/user-cache", "cache", "built", "5.0.0", "aidd-framework", "claude")
-    );
+    expect(
+      userBuiltMarketplaceDir({
+        userConfigDir: "/user-cache",
+        cliVersion: "5.0.0",
+        marketplaceName: "aidd-framework",
+        target: "claude",
+      })
+    ).toBe(join("/user-cache", "cache", "built", "5.0.0", "aidd-framework", "claude"));
   });
 
   it("produces disjoint directories for two different CLI versions", () => {
-    const v1 = userBuiltMarketplaceDir("/user-cache", "1.0.0", "aidd-framework", "claude");
-    const v2 = userBuiltMarketplaceDir("/user-cache", "2.0.0", "aidd-framework", "claude");
+    const v1 = userBuiltMarketplaceDir({
+      userConfigDir: "/user-cache",
+      cliVersion: "1.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
+    const v2 = userBuiltMarketplaceDir({
+      userConfigDir: "/user-cache",
+      cliVersion: "2.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
 
     expect(v1).not.toBe(v2);
     expect(pathContainsOrEquals(v1, v2)).toBe(false);
@@ -28,7 +43,12 @@ describe("userBuiltMarketplaceDir()", () => {
 describe("userBuiltCacheRoot()", () => {
   it("is the parent every version directory sits under, one join above the version", () => {
     const root = userBuiltCacheRoot("/user-cache");
-    const versioned = userBuiltMarketplaceDir("/user-cache", "5.0.0", "aidd-framework", "claude");
+    const versioned = userBuiltMarketplaceDir({
+      userConfigDir: "/user-cache",
+      cliVersion: "5.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
 
     expect(root).toBe(join("/user-cache", "cache", "built"));
     expect(pathContainsOrEquals(root, versioned)).toBe(true);

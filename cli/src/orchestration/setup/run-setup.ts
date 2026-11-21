@@ -72,7 +72,7 @@ export class RunSetup {
     const install = await this.installTools(flow, context);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     const activation = await this.steps.syncSettings({ projectRoot: flow.projectRoot });
-    return this.buildResult(isNew, install, activation, context);
+    return { kind: isNew ? "initialized" : "up-to-date", install, activation, context };
   }
 
   private async runMachineScope(flow: SetupFlow): Promise<SetupResult> {
@@ -120,14 +120,5 @@ export class RunSetup {
       pluginNames: [...flow.pluginNames],
       interactive: flow.interactive,
     });
-  }
-
-  private buildResult(
-    isNew: boolean,
-    install: InstallToolsResult,
-    activation: NativeActivationReport,
-    context: ProjectContext | undefined
-  ): SetupResult {
-    return { kind: isNew ? "initialized" : "up-to-date", install, activation, context };
   }
 }
