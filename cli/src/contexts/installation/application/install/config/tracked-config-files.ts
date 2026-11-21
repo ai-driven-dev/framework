@@ -1,11 +1,7 @@
 import { join } from "node:path";
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
-import {
-  extractMergeEntries,
-  type MergeFileEntry,
-  type MergeStrategy,
-} from "../../../../../shared/domain/merge.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../../shared/ports/logger.js";
@@ -25,13 +21,8 @@ export class TrackedConfigFiles {
   ) {}
 
   /** A file whose hash is that of `content`. */
-  fileOf(relativePath: string, content: string, mergeStrategy?: MergeStrategy): InstallationFile {
-    return new InstallationFile({
-      relativePath,
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy,
-    });
+  fileOf(relativePath: string, content: string): InstallationFile {
+    return new InstallationFile({ relativePath, content, hash: FileHash.of(content) });
   }
 
   /** Whether the file exists in the project without the manifest tracking it, which marks it as

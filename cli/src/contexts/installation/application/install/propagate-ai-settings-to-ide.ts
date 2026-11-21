@@ -46,13 +46,7 @@ export class PropagateAiSettingsToIde {
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
       const [entry] = await this.trackedConfigFiles.mergeAndTrack(
-        [
-          this.trackedConfigFiles.fileOf(
-            cap.outputPath(),
-            this.resolveCapabilityContent(cap, aiId),
-            cap.mergeStrategy()
-          ),
-        ],
+        [cap.fileOf(this.resolveCapabilityContent(cap, aiId))],
         projectRoot
       );
       manifest.updateToolMergeFiles(aiId, this.replacing(existingEntries, entry));

@@ -163,6 +163,6 @@ export class InstallRuntimeConfig {
       this.assets.loadConfigAsset(options.toolId, fileName)
     );
     if (content === null) return null;
-    return this.trackedConfigFiles.fileOf(cap.outputPath(), content, cap.mergeStrategy());
+    return cap.fileOf(content);
   }
 }

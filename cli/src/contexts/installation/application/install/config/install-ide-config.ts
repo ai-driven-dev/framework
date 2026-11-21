@@ -92,6 +92,6 @@ export class InstallIdeConfig {
     const fileName = basename(outputPath);
     const asset = this.assets.loadConfigAsset(options.toolId, fileName);
     const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-    return this.trackedConfigFiles.fileOf(outputPath, content, capability.mergeStrategy());
+    return capability.fileOf(content);
   }
 }

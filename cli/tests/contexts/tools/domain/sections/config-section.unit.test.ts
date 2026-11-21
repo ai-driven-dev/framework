@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 describe("ConfigSection", () => {
@@ -169,13 +170,20 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("mergeStrategy", () => {
-    it("returns the configured merge strategy", () => {
+  describe("fileOf", () => {
+    it("writes the content at its path, merged its way, from the canonical file named", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "user-prime",
       });
-      expect(cap.mergeStrategy()).toBe("user-prime");
+      const file = cap.fileOf("{}", { frameworkPath: "config/s.json" });
+      expect(file).toMatchObject({
+        relativePath: ".vscode/settings.json",
+        content: "{}",
+        mergeStrategy: "user-prime",
+        frameworkPath: "config/s.json",
+      });
+      expect(file.hash).toEqual(FileHash.of("{}"));
     });
   });
 });

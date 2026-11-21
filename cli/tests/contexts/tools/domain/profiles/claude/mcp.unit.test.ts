@@ -19,7 +19,7 @@ describe("claude mcp", () => {
     });
 
     it("mcp config preserves user customizations during update", () => {
-      expect(claude.section("mcp").config?.mergeStrategy()).toBe("user-prime");
+      expect(claude.section("mcp").config?.fileOf("{}").mergeStrategy).toBe("user-prime");
     });
   });
 });

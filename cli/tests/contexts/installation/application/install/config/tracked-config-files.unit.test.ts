@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../../src/shared/domain/installation-file.js";
 import { extractMergeEntries } from "../../../../../../src/shared/domain/merge.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -24,12 +25,6 @@ describe("TrackedConfigFiles.fileOf", () => {
 
     expect(file.hash).toStrictEqual(FileHash.of("{}"));
     expect(file.mergeStrategy).toBe("none");
-  });
-
-  it("carries the merge strategy it was given", () => {
-    const { files } = setup();
-
-    expect(files.fileOf("a.json", "{}", "user-prime").mergeStrategy).toBe("user-prime");
   });
 });
 
@@ -105,7 +100,14 @@ describe("TrackedConfigFiles.mergeAndTrack", () => {
     const { files, fs } = setup({ [join(ROOT, "s.json")]: '{"user":1}' });
 
     const entries = await files.mergeAndTrack(
-      [files.fileOf("s.json", '{"framework":2}', "framework-prime")],
+      [
+        new InstallationFile({
+          relativePath: "s.json",
+          content: '{"framework":2}',
+          hash: FileHash.of('{"framework":2}'),
+          mergeStrategy: "framework-prime",
+        }),
+      ],
       ROOT
     );
 

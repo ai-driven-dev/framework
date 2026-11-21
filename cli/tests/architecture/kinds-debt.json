@@ -56,11 +56,7 @@
     "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.cliShape",
     "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.hostBinary",
     "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration",
-    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.mergeStrategy",
-    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath",
-    "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.mergeStrategy",
-    "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.outputPath",
-    "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.mergeStrategy"
+    "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath"
   ],
   "repository": [],
   "translate": [],

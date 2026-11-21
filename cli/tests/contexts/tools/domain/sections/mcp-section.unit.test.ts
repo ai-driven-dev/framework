@@ -121,6 +121,28 @@ describe("McpSection declarations", () => {
   });
 });
 
+describe("McpConfigPart fileOf", () => {
+  it("writes the servers at the path resolved, the person's file winning by default", () => {
+    const cap = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
+
+    expect(cap.fileOf("{}")).toMatchObject({
+      relativePath: ".mcp.json",
+      mergeStrategy: "user-prime",
+    });
+    expect(
+      cap.fileOf("{}", { relativePath: ".cursor/mcp.json", frameworkPath: "config/mcp.json" })
+    ).toMatchObject({ relativePath: ".cursor/mcp.json", frameworkPath: "config/mcp.json" });
+  });
+
+  it("answers whether the framework's half is written over the person's", () => {
+    const base = { outputPath: ".mcp.json", format: "json" as const };
+    expect(
+      new McpConfigPart({ ...base, mergeStrategy: "framework-prime" }).isFrameworkPrime()
+    ).toBe(true);
+    expect(new McpConfigPart(base).isFrameworkPrime()).toBe(false);
+  });
+});
+
 describe("McpSection isFrameworkPrimeJson", () => {
   const json = { outputPath: "opencode.json", format: "json" as const };
   const prime = { ...json, mergeStrategy: "framework-prime" as const };

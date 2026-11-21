@@ -91,8 +91,10 @@ describe("copilot declarations the rest of the CLI reads", () => {
   it("writes .vscode/settings.json from the CLI's own asset, gated on VS Code being present", () => {
     const declared = copilot.section("config");
     const settings = Array.isArray(declared) ? declared[0] : declared;
-    expect(settings.outputPath()).toBe(".vscode/settings.json");
-    expect(settings.mergeStrategy()).toBe("framework-prime");
+    expect(settings.fileOf("{}")).toMatchObject({
+      relativePath: ".vscode/settings.json",
+      mergeStrategy: "framework-prime",
+    });
     const loaded: string[] = [];
     expect(
       settings.resolveStaticContent((name) => {

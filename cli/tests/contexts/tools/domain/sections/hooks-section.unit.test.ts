@@ -5,13 +5,6 @@ import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/
 describe("HooksConfigPart", () => {
   const params = { outputPath: ".codex/hooks.json" };
 
-  describe("outputPath", () => {
-    it("returns the configured output path", () => {
-      const cap = new HooksConfigPart(params);
-      expect(cap.outputPath()).toBe(".codex/hooks.json");
-    });
-  });
-
   describe("accepts", () => {
     it("returns true for the exact output path", () => {
       const cap = new HooksConfigPart(params);
@@ -47,10 +40,14 @@ describe("HooksConfigPart declarations", () => {
     ).toBe(true);
   });
 
-  it("lets the user's file win unless the tool declares otherwise", () => {
-    expect(new HooksConfigPart({ outputPath: "h.json" }).mergeStrategy()).toBe("user-prime");
+  it("writes its file at its path, the user's file winning unless the tool declares otherwise", () => {
+    expect(new HooksConfigPart({ outputPath: "h.json" }).fileOf("{}")).toMatchObject({
+      relativePath: "h.json",
+      mergeStrategy: "user-prime",
+    });
     expect(
-      new HooksConfigPart({ outputPath: "h.json", mergeStrategy: "none" }).mergeStrategy()
+      new HooksConfigPart({ outputPath: "h.json", mergeStrategy: "none" }).fileOf("{}")
+        .mergeStrategy
     ).toBe("none");
   });
 
@@ -82,7 +79,7 @@ describe("HooksConfigPart output path", () => {
   );
 
   it("keeps a name that merely holds two dots", () => {
-    expect(new HooksConfigPart({ outputPath: ".tool/a..b.json" }).outputPath()).toBe(
+    expect(new HooksConfigPart({ outputPath: ".tool/a..b.json" }).fileOf("").relativePath).toBe(
       ".tool/a..b.json"
     );
   });

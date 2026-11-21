@@ -1,6 +1,6 @@
 import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
+import type { InstallationFile } from "../../../shared/domain/installation-file.js";
 import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
-import type { MergeStrategy } from "../../../shared/domain/merge.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
@@ -126,13 +126,21 @@ export interface McpPluginMerge {
   editedPreviousEntries: ReadonlyArray<string>;
 }
 
+/** Where a config file lands when its own path is not the answer: the path resolved for it, and
+ * the canonical file its content came from. */
+export interface ConfigFilePlace {
+  readonly relativePath?: string;
+  readonly frameworkPath?: string;
+}
+
 /** A tool's mcp file, as an install asks it. */
 export interface McpConfigAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
   /** Every config artifact this file takes in, with where the canonical source keeps it. */
   consumedRefs(): readonly ConfigRef[];
-  mergeStrategy(): "user-prime" | "framework-prime" | "none";
+  /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
+  fileOf(content: string, place?: ConfigFilePlace): InstallationFile;
   /** A plugin's mcp json rewritten to this tool's own shape. */
   transform(mcpJson: string): string;
   /** How a server launch is rewritten for `platform` once the tool's own transform has run,
@@ -172,7 +180,8 @@ export interface SettingsFileAnswers {
   /** Whether this file applies only because `toolId` is installed. */
   requires(toolId: string): boolean;
   outputPath(): string;
-  mergeStrategy(): MergeStrategy;
+  /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
+  fileOf(content: string, place?: ConfigFilePlace): InstallationFile;
   /** The file's fixed content, loaded through `loadAsset` when it lives in an asset. */
   resolveStaticContent(loadAsset?: (fileName: string) => ConfigAsset): string | null;
 }
@@ -181,8 +190,8 @@ export interface SettingsFileAnswers {
 export interface HooksFileAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
-  outputPath(): string;
-  mergeStrategy(): "user-prime" | "none";
+  /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
+  fileOf(content: string, place?: ConfigFilePlace): InstallationFile;
 }
 
 /** One config file a tool ships bundled: its content and where it lands, declared together so a

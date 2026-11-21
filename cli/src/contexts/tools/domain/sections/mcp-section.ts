@@ -1,4 +1,7 @@
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
+import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
 import type { TomlCodec } from "../formats/toml.js";
 import {
@@ -70,8 +73,19 @@ export class McpConfigPart {
     return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
-  mergeStrategy(): "user-prime" | "framework-prime" | "none" {
-    return this.#params.mergeStrategy ?? "user-prime";
+  fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
+    return new InstallationFile({
+      relativePath: place.relativePath ?? this.#params.outputPath,
+      content,
+      hash: FileHash.of(content),
+      mergeStrategy: this.#params.mergeStrategy ?? "user-prime",
+      frameworkPath: place.frameworkPath,
+    });
+  }
+
+  /** Whether the framework's half of the file is written over what a person keeps in it. */
+  isFrameworkPrime(): boolean {
+    return this.#params.mergeStrategy === "framework-prime";
   }
 
   /** Whether `fileName` is the JSON file this tool shares with a person, the framework's half of
@@ -80,7 +94,7 @@ export class McpConfigPart {
     return (
       this.#params.outputPath === fileName &&
       this.#params.format === "json" &&
-      this.mergeStrategy() === "framework-prime"
+      this.isFrameworkPrime()
     );
   }
 

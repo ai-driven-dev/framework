@@ -12,7 +12,7 @@ const codex = codexProfile(TOML);
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {
     it("outputs to .codex/hooks.json", () => {
-      expect(codex.section("hooks").config?.outputPath()).toBe(".codex/hooks.json");
+      expect(codex.section("hooks").config?.fileOf("{}").relativePath).toBe(".codex/hooks.json");
     });
 
     it("consumes the codex-hooks config name", () => {
@@ -20,7 +20,7 @@ describe("codex hooks", () => {
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.section("hooks").config?.mergeStrategy()).toBe("user-prime");
+      expect(codex.section("hooks").config?.fileOf("{}").mergeStrategy).toBe("user-prime");
     });
   });
 });

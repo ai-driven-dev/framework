@@ -302,8 +302,7 @@ function configAnswers(
     configAsset: (name: string) => configAssetNamed(assets, name),
     mcpConfig: () => capabilities.mcp?.config ?? null,
     flatPluginMcp: () =>
-      capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
-      capabilities.layout?.mode === "flat"
+      capabilities.mcp?.config?.isFrameworkPrime() && capabilities.layout?.mode === "flat"
         ? capabilities.mcp.config
         : null,
     settingsFiles: () => settingsOf(capabilities),

@@ -283,8 +283,10 @@ describe("the hooks file the framework install writes", () => {
       },
     });
 
-    expect(capability.outputPath()).toBe(".tool/hooks.json");
-    expect(capability.mergeStrategy()).toBe("none");
+    expect(capability.fileOf("{}")).toMatchObject({
+      relativePath: ".tool/hooks.json",
+      mergeStrategy: "none",
+    });
     expect(capability.consumes("tool-hooks")).toBe(true);
   });
 });

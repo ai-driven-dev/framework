@@ -12,7 +12,7 @@ describe("codex mcp", () => {
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.section("mcp").config?.mergeStrategy()).toBe("user-prime");
+      expect(codex.section("mcp").config?.fileOf("{}").mergeStrategy).toBe("user-prime");
     });
 
     it("writes its config in TOML", () => {

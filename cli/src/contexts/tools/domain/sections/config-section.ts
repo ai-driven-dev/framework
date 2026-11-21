@@ -1,6 +1,9 @@
 import type { ConfigAsset } from "../../../../shared/domain/config-asset.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
+import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import { CapabilityConfigError } from "../tools.error.js";
 
 type ConfigSectionParams = {
@@ -67,8 +70,14 @@ export class ConfigSection {
     return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
   }
 
-  mergeStrategy(): MergeStrategy {
-    return this.#params.mergeStrategy;
+  fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
+    return new InstallationFile({
+      relativePath: place.relativePath ?? this.#params.outputPath,
+      content,
+      hash: FileHash.of(content),
+      mergeStrategy: this.#params.mergeStrategy,
+      frameworkPath: place.frameworkPath,
+    });
   }
 
   outputPath(): string {
