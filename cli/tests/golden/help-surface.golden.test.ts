@@ -26,6 +26,15 @@ function normalize(text: string): string {
     .trimEnd();
 }
 
+const indentOf = (line: string) => line.length - line.trimStart().length;
+
+/** The command a line names, when it sits at the command column and is not `help`. */
+function commandNamed(line: string, indent: number): string[] {
+  if (indentOf(line) !== indent) return [];
+  const match = /^\s+([a-z][a-z-]*)(?:\||\s|$)/.exec(line);
+  return match && match[1] !== "help" ? [match[1]] : [];
+}
+
 /** Commander wraps a long description past the name column, so only lines at the first entry's
  * exact indentation are commands — reading a wrapped word as one hangs on the interactive menu. */
 function subcommandsOf(help: string): string[] {
@@ -34,18 +43,12 @@ function subcommandsOf(help: string): string[] {
   if (start === -1) return [];
 
   const body = lines.slice(start + 1);
-  const first = body.find((line) => line.trim() !== "");
-  if (first === undefined) return [];
-  const indent = first.length - first.trimStart().length;
+  const end = body.findIndex((line) => line.trim() === "");
+  const entries = end === -1 ? body : body.slice(0, end);
+  if (entries.length === 0) return [];
 
-  const names: string[] = [];
-  for (const line of body) {
-    if (line.trim() === "") break;
-    if (line.length - line.trimStart().length !== indent) continue;
-    const match = /^\s+([a-z][a-z-]*)(?:\||\s|$)/.exec(line);
-    if (match && match[1] !== "help") names.push(match[1]);
-  }
-  return names;
+  const indent = indentOf(entries[0]);
+  return entries.flatMap((line) => commandNamed(line, indent));
 }
 
 /** Depth-first walk of the command tree, capturing each node's help. */
