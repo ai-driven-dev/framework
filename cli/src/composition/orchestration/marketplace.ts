@@ -83,36 +83,14 @@ export function registerForFlow(
     register.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source });
 }
 
-/** Marketplace removal, check and sync, and the setup steps that register a marketplace. */
-export function wireMarketplace(base: Base, inst: Installation) {
-  const {
-    tools,
-    fs,
-    logger,
-    environment,
-    tokenProvider,
-    currentVersionProvider,
-    prompter,
-    manifestRepo,
-    userManifestRepo,
-    nativePluginActivators,
-    hostMarketplaceRegistries,
-    hostPluginRegistries,
-    nativeSources,
-    userSourceReferences,
-    marketplaceRegistry,
-    marketplaceTrustStore,
-    releaseResolver,
-    resolveMarketplaceUseCase,
-    listMarketplaces,
-    refreshMarketplace,
-    registerFrameworkMarketplace,
-  } = base;
-  const { ensureBuiltMarketplaceUseCase, registrationRecordRules } = inst;
+/** Removing a marketplace and its plugins, from a project or from the machine. */
+function wireMarketplaceRemoval(base: Base, inst: Installation) {
+  const { tools, fs, prompter, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
+  const { registrationRecordRules } = inst;
   const nativeHostRegistrationGate = new NativeHostRegistrationGate(
-    nativePluginActivators,
-    hostPluginRegistries,
-    nativeSources
+    base.nativePluginActivators,
+    base.hostPluginRegistries,
+    base.nativeSources
   );
   const projectCleanup = new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs));
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
@@ -134,20 +112,40 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new RemoveMarketplace(marketplaceRegistry),
     resolveHomeDir()
   );
-  const addMarketplace = new AddMarketplace(
-    new RemoveRegisteredMarketplace(
-      listMarketplaces,
-      marketplaceRemoveUseCase,
-      userMarketplaceRemoveUseCase
+  return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };
+}
+
+/** Registering the built marketplace's plugins with the hosts that load them natively. */
+function nativeActivationOf(
+  base: Base,
+  inst: Installation,
+  build: BuildMarketplaceForTool
+): ActivateNativeTools {
+  const { tools, fs, logger } = base;
+  return new ActivateNativeTools(
+    new RegisterPluginWithHost(
+      fs,
+      base.nativePluginActivators,
+      {
+        marketplaceRegistries: base.hostMarketplaceRegistries,
+        pluginRegistries: base.hostPluginRegistries,
+        sources: base.nativeSources,
+      },
+      process.platform,
+      tools
     ),
-    new PrepareMarketplace(marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase),
-    new RecordMarketplace(marketplaceRegistry, marketplaceTrustStore),
-    prompter
+    build,
+    logger,
+    { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
+    inst.registrationRecordRules
   );
-  const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
-    new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),
-    new ListPluginSources(manifestRepo, tools)
-  );
+}
+
+/** Syncing a project's settings and native activation against its marketplaces. */
+function wireMarketplaceSync(base: Base, inst: Installation) {
+  const { tools, fs, logger, currentVersionProvider, manifestRepo, userManifestRepo } = base;
+  const { marketplaceRegistry, registerFrameworkMarketplace } = base;
+  const { ensureBuiltMarketplaceUseCase, registrationRecordRules } = inst;
   const buildMarketplaceForTool = new BuildMarketplaceForTool(
     ensureBuiltMarketplaceUseCase,
     logger,
@@ -158,7 +156,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     currentVersionProvider,
     logger,
     FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences
+    base.userSourceReferences
   );
   const syncSettingsUseCase = new SyncSettings(
     new LoadSyncContext(
@@ -174,23 +172,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       registrationRecordRules,
       tools
     ),
-    new ActivateNativeTools(
-      new RegisterPluginWithHost(
-        fs,
-        nativePluginActivators,
-        {
-          marketplaceRegistries: hostMarketplaceRegistries,
-          pluginRegistries: hostPluginRegistries,
-          sources: nativeSources,
-        },
-        process.platform,
-        tools
-      ),
-      buildMarketplaceForTool,
-      logger,
-      { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
-      registrationRecordRules
-    ),
+    nativeActivationOf(base, inst, buildMarketplaceForTool),
     new RecordActivation(fs, registrationRecordRules, tools, userManifestRepo),
     new SharedFrameworkSource(
       fs,
@@ -200,7 +182,34 @@ export function wireMarketplace(base: Base, inst: Installation) {
       FRAMEWORK_MARKETPLACE_NAME
     )
   );
-  const syncNativeActivation = new SyncNativeActivation(syncSettingsUseCase);
+  return {
+    recordSourceReference,
+    syncSettingsUseCase,
+    syncNativeActivation: new SyncNativeActivation(syncSettingsUseCase),
+  };
+}
+
+/** Marketplace removal, check and sync, and the setup steps that register a marketplace. */
+export function wireMarketplace(base: Base, inst: Installation) {
+  const { tools, environment, tokenProvider, prompter, manifestRepo, marketplaceRegistry } = base;
+  const { marketplaceTrustStore, releaseResolver, resolveMarketplaceUseCase } = base;
+  const { listMarketplaces, refreshMarketplace, registerFrameworkMarketplace } = base;
+  const removal = wireMarketplaceRemoval(base, inst);
+  const { recordSourceReference, ...sync } = wireMarketplaceSync(base, inst);
+  const addMarketplace = new AddMarketplace(
+    new RemoveRegisteredMarketplace(
+      listMarketplaces,
+      removal.marketplaceRemoveUseCase,
+      removal.userMarketplaceRemoveUseCase
+    ),
+    new PrepareMarketplace(marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase),
+    new RecordMarketplace(marketplaceRegistry, marketplaceTrustStore),
+    prompter
+  );
+  const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
+    new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),
+    new ListPluginSources(manifestRepo, tools)
+  );
   const listFrameworkReleases = new ListFrameworkReleases(releaseResolver);
   const askMarketplaceSource = new AskMarketplaceSource(
     prompter,
@@ -213,18 +222,14 @@ export function wireMarketplace(base: Base, inst: Installation) {
     refreshMarketplace,
     environment
   );
-  const resolveSetupSource = new ResolveSetupSource(askedFrom(askMarketplaceSource));
-  const registerSetupSource = registerForFlow(registerMarketplace);
   return {
-    marketplaceRemoveUseCase,
-    userMarketplaceRemoveUseCase,
+    ...removal,
+    ...sync,
     addMarketplace,
     marketplaceCheckUseCase,
-    syncSettingsUseCase,
-    syncNativeActivation,
     askMarketplaceSource,
-    resolveSetupSource,
-    registerSetupSource,
+    resolveSetupSource: new ResolveSetupSource(askedFrom(askMarketplaceSource)),
+    registerSetupSource: registerForFlow(registerMarketplace),
   };
 }
 

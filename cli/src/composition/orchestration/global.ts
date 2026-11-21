@@ -37,41 +37,18 @@ export function userScopeSyncOf(sync: Pick<SyncSettings, "execute">): SyncMachin
   return (options) => sync.execute({ ...options, scope: "user" });
 }
 
-/** The machine-wide commands: install and update tools, setup machine scope, status and restore. */
-export function wireGlobal({
-  base,
-  installation: inst,
-  marketplace: m,
-  plugin: p,
-}: {
+/** What the machine-wide wirings read from the areas below them. */
+interface GlobalParts {
   base: Base;
   installation: Installation;
   marketplace: Marketplace;
   plugin: Plugin;
-}) {
-  const {
-    fs,
-    logger,
-    currentVersionProvider,
-    platform,
-    prompter,
-    manifestRepo,
-    userManifestRepo,
-    pluginDistributionReader,
-    pluginFetcher,
-    marketplaceRegistry,
-    resolveMarketplaceUseCase,
-  } = base;
-  const {
-    assetProvider,
-    installRuntimeConfigUseCase,
-    installIdeConfig,
-    propagateAiSettingsToIde,
-    builtMaterializationDeps,
-    detectPluginDriftUseCase,
-  } = inst;
-  const { syncSettingsUseCase, resolveSetupSource, registerSetupSource } = m;
-  const { pluginInstallFromMarketplaceUseCase, userPluginFileUpdater } = p;
+}
+
+/** Installing and updating a tool, and the setup of its tools. */
+function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalParts) {
+  const { fs, logger, prompter, manifestRepo, currentVersionProvider, tools } = base;
+  const { installRuntimeConfigUseCase, installIdeConfig, propagateAiSettingsToIde } = installation;
   const installIdeToolUseCase = new InstallIdeTool(
     manifestRepo,
     installIdeConfig,
@@ -80,8 +57,8 @@ export function wireGlobal({
   const installAiToolUseCase = new InstallAiTool(
     installRuntimeConfigUseCase,
     manifestRepo,
-    pluginInstallFromMarketplaceUseCase,
-    syncSettingsUseCase,
+    plugin.pluginInstallFromMarketplaceUseCase,
+    marketplace.syncSettingsUseCase,
     logger
   );
   const setupToolsUseCase = new InstallTools(
@@ -89,10 +66,63 @@ export function wireGlobal({
     installRuntimeConfigUseCase,
     installIdeConfig
   );
-  const projectContextDetector = new DetectProjectContext(fs);
+  const updateToolsUseCase = new UpdateTools(
+    new ListInstalledTools(manifestRepo, tools),
+    new UpdateTool(
+      installRuntimeConfigUseCase,
+      installIdeConfig,
+      new ResolveSyncConflict(fs),
+      manifestRepo,
+      tools
+    ),
+    new ResolveUpdateDecision(prompter),
+    currentVersionProvider
+  );
+  return { installAiToolUseCase, installIdeToolUseCase, setupToolsUseCase, updateToolsUseCase };
+}
+
+/** Restoring a project from its manifest, one tool or all of them. */
+function wireRestore(base: Base, installation: Installation, statusUseCase: ReportStatus) {
+  const { fs, prompter, logger, manifestRepo, currentVersionProvider, platform, tools } = base;
+  const restoreToolFiles = new RestoreToolFiles(
+    new GenerateToolDistribution(
+      new InstallConfig(fs),
+      contentSectionInstallers(),
+      platform,
+      installation.assetProvider
+    ),
+    fs,
+    prompter,
+    logger,
+    tools
+  );
+  const restoreAllPlugins = new RestoreAllPlugins(
+    new ApplyPluginFiles(
+      fs,
+      base.pluginFetcher,
+      base.pluginDistributionReader,
+      installation.builtMaterializationDeps
+    ),
+    tools
+  );
+  const restoreUseCase = new Restore(fs, manifestRepo, restoreToolFiles, restoreAllPlugins, tools);
+  const restoreAllUseCase = new RestoreAll(
+    prompter,
+    statusUseCase,
+    new RestoreGlobal(manifestRepo, restoreUseCase)
+  );
+  const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersionProvider);
+  return { restoreAllUseCase, restoreToolUseCase };
+}
+
+/** The machine-wide commands: install and update tools, setup machine scope, status and restore. */
+export function wireGlobal(parts: GlobalParts) {
+  const { base, installation, marketplace, plugin } = parts;
+  const { fs, logger, currentVersionProvider, manifestRepo, userManifestRepo, tools } = base;
+  const { syncSettingsUseCase, resolveSetupSource, registerSetupSource } = marketplace;
   const installGlobalPlugins = new InstallGlobalPlugins(
-    new ListFrameworkPlugins(marketplaceRegistry, resolveMarketplaceUseCase),
-    new InstallUserPlugins(userManifestRepo, userPluginFileUpdater, logger, base.tools)
+    new ListFrameworkPlugins(base.marketplaceRegistry, base.resolveMarketplaceUseCase),
+    new InstallUserPlugins(userManifestRepo, plugin.userPluginFileUpdater, logger, tools)
   );
   const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
@@ -101,60 +131,19 @@ export function wireGlobal({
     userScopeSyncOf(syncSettingsUseCase),
     installGlobalPlugins
   );
-  const statusUseCase = new ReportStatus(fs, manifestRepo, detectPluginDriftUseCase, base.tools);
-  const restoreToolFiles = new RestoreToolFiles(
-    new GenerateToolDistribution(
-      new InstallConfig(fs),
-      contentSectionInstallers(),
-      platform,
-      assetProvider
-    ),
-    fs,
-    prompter,
-    logger,
-    base.tools
-  );
-  const restoreAllPlugins = new RestoreAllPlugins(
-    new ApplyPluginFiles(fs, pluginFetcher, pluginDistributionReader, builtMaterializationDeps),
-    base.tools
-  );
-  const restoreUseCase = new Restore(
+  const statusUseCase = new ReportStatus(
     fs,
     manifestRepo,
-    restoreToolFiles,
-    restoreAllPlugins,
-    base.tools
-  );
-  const statusAllUseCase = new ReportAllStatus(statusUseCase);
-  const restoreAllUseCase = new RestoreAll(
-    prompter,
-    statusUseCase,
-    new RestoreGlobal(manifestRepo, restoreUseCase)
-  );
-  const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersionProvider);
-  const updateToolsUseCase = new UpdateTools(
-    new ListInstalledTools(manifestRepo, base.tools),
-    new UpdateTool(
-      installRuntimeConfigUseCase,
-      installIdeConfig,
-      new ResolveSyncConflict(fs),
-      manifestRepo,
-      base.tools
-    ),
-    new ResolveUpdateDecision(prompter),
-    currentVersionProvider
+    installation.detectPluginDriftUseCase,
+    tools
   );
   return {
-    installAiToolUseCase,
-    installIdeToolUseCase,
-    setupToolsUseCase,
-    projectContextDetector,
+    ...wireToolLifecycle(parts),
+    ...wireRestore(base, installation, statusUseCase),
+    projectContextDetector: new DetectProjectContext(fs),
     setupMachineScope,
     statusUseCase,
-    restoreToolUseCase,
-    statusAllUseCase,
-    restoreAllUseCase,
-    updateToolsUseCase,
+    statusAllUseCase: new ReportAllStatus(statusUseCase),
   };
 }
 

@@ -37,6 +37,27 @@ function isJsonArray(s: string): boolean {
   }
 }
 
+function serializeListItem(item: unknown): string {
+  const s = String(item);
+  // Glob patterns (*, ?, {) are syntactically ambiguous in YAML: quote them to prevent misinterpretation.
+  return s.includes("*") || s.includes("?") || s.startsWith("{") ? `  - "${s}"` : `  - ${s}`;
+}
+
+function serializeScalar(key: string, value: unknown, quote?: "single" | "double"): string {
+  if (typeof value === "boolean") return `${key}: ${value}`;
+  const s = String(value);
+  // JSON-array strings (e.g. from cursor globs) are emitted raw so they stay as YAML inline arrays.
+  if (isJsonArray(s)) return `${key}: ${s}`;
+  return quote === "double"
+    ? `${key}: ${JSON.stringify(s)}`
+    : `${key}: '${s.replaceAll("'", "''")}'`;
+}
+
+function serializeEntry(key: string, value: unknown, quote?: "single" | "double"): string[] {
+  if (Array.isArray(value)) return [`${key}:`, ...value.map(serializeListItem)];
+  return [serializeScalar(key, value, quote)];
+}
+
 /** `quote: "double"` writes strings as YAML double-quoted scalars, for readers that keep single quotes literally. */
 export function serializeFrontmatter(
   frontmatter: Record<string, unknown>,
@@ -47,36 +68,11 @@ export function serializeFrontmatter(
     return body.replace(/^\n/, "");
   }
 
-  const lines = [FRONTMATTER_DELIMITER];
-
-  for (const [key, value] of Object.entries(frontmatter)) {
-    if (Array.isArray(value)) {
-      lines.push(`${key}:`);
-      for (const item of value) {
-        const s = String(item);
-        // Glob patterns (*, ?, {) are syntactically ambiguous in YAML: quote them to prevent misinterpretation.
-        lines.push(
-          s.includes("*") || s.includes("?") || s.startsWith("{") ? `  - "${s}"` : `  - ${s}`
-        );
-      }
-    } else if (typeof value === "boolean") {
-      lines.push(`${key}: ${value}`);
-    } else {
-      const s = String(value);
-      // JSON-array strings (e.g. from cursor globs) are emitted raw so they stay as YAML inline arrays.
-      if (isJsonArray(s)) {
-        lines.push(`${key}: ${s}`);
-      } else {
-        lines.push(
-          quote === "double"
-            ? `${key}: ${JSON.stringify(s)}`
-            : `${key}: '${s.replaceAll("'", "''")}'`
-        );
-      }
-    }
-  }
-
-  lines.push(FRONTMATTER_DELIMITER);
+  const lines = [
+    FRONTMATTER_DELIMITER,
+    ...Object.entries(frontmatter).flatMap(([key, value]) => serializeEntry(key, value, quote)),
+    FRONTMATTER_DELIMITER,
+  ];
 
   return `${lines.join("\n")}\n${body}`;
 }

@@ -224,33 +224,34 @@ export function describePluginSource(src: PluginSource): string {
   }
 }
 
+/** The fields that are set, in the order given. */
+function definedFields(fields: Record<string, string | undefined>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(fields).filter((entry): entry is [string, string] => entry[1] !== undefined)
+  );
+}
+
 export function serializePluginSource(src: PluginSource): Record<string, unknown> {
-  const result: Record<string, unknown> = { kind: src.kind };
+  const kind = { kind: src.kind };
   switch (src.kind) {
     case "github":
-      result.repo = src.repo;
-      if (src.ref !== undefined) result.ref = src.ref;
-      if (src.sha !== undefined) result.sha = src.sha;
-      break;
+      return { ...kind, repo: src.repo, ...definedFields({ ref: src.ref, sha: src.sha }) };
     case "url":
-      result.url = src.url;
-      if (src.ref !== undefined) result.ref = src.ref;
-      if (src.sha !== undefined) result.sha = src.sha;
-      break;
+      return { ...kind, url: src.url, ...definedFields({ ref: src.ref, sha: src.sha }) };
     case "git-subdir":
-      result.url = src.url;
-      result.path = src.path;
-      if (src.ref !== undefined) result.ref = src.ref;
-      if (src.sha !== undefined) result.sha = src.sha;
-      break;
+      return {
+        ...kind,
+        url: src.url,
+        path: src.path,
+        ...definedFields({ ref: src.ref, sha: src.sha }),
+      };
     case "npm":
-      result.package = src.package;
-      if (src.version !== undefined) result.version = src.version;
-      if (src.registry !== undefined) result.registry = src.registry;
-      break;
+      return {
+        ...kind,
+        package: src.package,
+        ...definedFields({ version: src.version, registry: src.registry }),
+      };
     case "local":
-      result.path = src.path;
-      break;
+      return { ...kind, path: src.path };
   }
-  return result;
 }

@@ -145,6 +145,41 @@ export function builtMaterializationDepsOf(
   return { ensureBuilt, marketplaceRegistry, homedir, translate, platform: process.platform };
 }
 
+/** What installing a tool's configuration writes, and the steps that follow each install. */
+function wireConfigInstallation(base: Base, assetProvider: BundledAssetProviderAdapter) {
+  const { tools, fs, logger, manifestRepo } = base;
+  const updateGitignore = new UpdateGitignore(fs);
+  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore, tools);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfig(
+    trackedConfigFiles,
+    fs,
+    assetProvider,
+    runPostInstallPipeline,
+    tools
+  );
+  const installIdeConfig = new InstallIdeConfig(
+    trackedConfigFiles,
+    assetProvider,
+    runPostInstallPipeline,
+    tools
+  );
+  const propagateAiSettingsToIde = new PropagateAiSettingsToIde(
+    manifestRepo,
+    trackedConfigFiles,
+    runPostInstallPipeline,
+    tools,
+    assetProvider
+  );
+  return {
+    updateGitignore,
+    runPostInstallPipeline,
+    installRuntimeConfigUseCase,
+    installIdeConfig,
+    propagateAiSettingsToIde,
+  };
+}
+
 /** The installation context's shared commands and the build cache they read. */
 export function wireInstallation(base: Base) {
   const {
@@ -179,29 +214,6 @@ export function wireInstallation(base: Base) {
     cacheBuiltMarketplace
   );
   const detectPluginDriftUseCase = new DetectPluginDrift(fs, tools);
-  const updateGitignore = new UpdateGitignore(fs);
-  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore, tools);
-  const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
-  const installRuntimeConfigUseCase = new InstallRuntimeConfig(
-    trackedConfigFiles,
-    fs,
-    assetProvider,
-    runPostInstallPipeline,
-    tools
-  );
-  const installIdeConfig = new InstallIdeConfig(
-    trackedConfigFiles,
-    assetProvider,
-    runPostInstallPipeline,
-    tools
-  );
-  const propagateAiSettingsToIde = new PropagateAiSettingsToIde(
-    manifestRepo,
-    trackedConfigFiles,
-    runPostInstallPipeline,
-    tools,
-    assetProvider
-  );
   const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
   const readMachineInstallation = new ReadMachineInstallation(userManifestRepo);
   const pluginListUseCase = new ListPlugins(manifestRepo, tools);
@@ -216,11 +228,7 @@ export function wireInstallation(base: Base) {
     assetProvider,
     agentModelStore,
     ensureBuiltMarketplaceUseCase,
-    updateGitignore,
-    runPostInstallPipeline,
-    installRuntimeConfigUseCase,
-    installIdeConfig,
-    propagateAiSettingsToIde,
+    ...wireConfigInstallation(base, assetProvider),
     listInstalledRulesUseCase,
     readMachineInstallation,
     pluginListUseCase,
