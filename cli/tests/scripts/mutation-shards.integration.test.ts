@@ -43,15 +43,6 @@ describe("splitting a scope into shards", () => {
     expect(scopes.canary?.shards).toBeUndefined();
   });
 
-  it.each(sharded)("partitions %s: every file once, in exactly one shard", async (_name, scope) => {
-    const all = scopeFiles(scope.mutate, sourceFiles());
-    const of = scope.shards ?? 1;
-    const parts = await cutScope(scope.mutate, sourceFiles(), of);
-    expect(parts.flat().sort()).toEqual(all);
-    expect(new Set(parts.flat()).size).toBe(all.length);
-    for (const part of parts) expect(part.length).toBeGreaterThan(0);
-  });
-
   it("balances the shards by weight, the same way on every run", () => {
     const weights: Record<string, number> = {
       "src/a/h.ts": 9,
@@ -81,15 +72,23 @@ describe("splitting a scope into shards", () => {
     for (const file of scopeFiles(scope.mutate, files)) {
       expect(mutantsIn(file), file).toBe(await mutantCountOf(read(file), file));
     }
+    const of = scope.shards ?? 1;
+    expect(await cutScope(scope.mutate, files, of)).toEqual(
+      partition(scope.mutate, files, of, mutantsIn)
+    );
   });
 
   it.each(sharded)(
-    "keeps the heaviest shard of %s within a quarter of its fair share, or its heaviest file, in mutants",
+    "cuts %s with every file once, in exactly one shard, the heaviest within a quarter of its fair share or its heaviest file, in mutants",
     async (name, scope) => {
       const of = scope.shards ?? 1;
       const files = sourceFiles();
       const mutantsIn = await scopeWeights(scope.mutate, files);
       const parts = partition(scope.mutate, files, of, mutantsIn);
+      const all = scopeFiles(scope.mutate, files);
+      expect(parts.flat().sort()).toEqual(all);
+      expect(new Set(parts.flat()).size).toBe(all.length);
+      for (const part of parts) expect(part.length).toBeGreaterThan(0);
       const weight = (shard: string[]) => shard.reduce((sum, file) => sum + mutantsIn(file), 0);
       const fair = weight(parts.flat()) / of;
       const heaviestFile = Math.max(...parts.flat().map((file) => weight([file])));
