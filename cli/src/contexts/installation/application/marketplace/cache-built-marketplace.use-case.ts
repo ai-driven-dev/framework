@@ -11,7 +11,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type {
-  EnsureBuiltMarketplaceCommand,
+  EnsureBuiltMarketplaceRequest,
   EnsureBuiltMarketplaceResult,
   ResolvedMarketplace,
 } from "../../contract/built-marketplace.js";
@@ -79,7 +79,7 @@ export class CacheBuiltMarketplace {
   constructor(private readonly deps: CacheBuiltMarketplaceDeps) {}
 
   async execute(
-    options: EnsureBuiltMarketplaceCommand,
+    options: EnsureBuiltMarketplaceRequest,
     resolved: ResolvedMarketplace
   ): Promise<EnsureBuiltMarketplaceResult> {
     // `resolve()`, matching `sourceDir` below: on Windows a drive-less `projectRoot` yields a
@@ -127,7 +127,7 @@ export class CacheBuiltMarketplace {
    * Rebuilding the real framework costs about two tenths of a second, so the safe answer is also
    * the cheap one.
    */
-  private versionIsTrustworthy(options: EnsureBuiltMarketplaceCommand): boolean {
+  private versionIsTrustworthy(options: EnsureBuiltMarketplaceRequest): boolean {
     if (options.forceRefresh === true) return false;
     return options.marketplace.source.kind !== "local";
   }

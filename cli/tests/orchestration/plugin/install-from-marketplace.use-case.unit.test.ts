@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginSourceMatch } from "../../../src/contexts/distribution/contract/plugin-source-match.js";
-import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
+import type { PluginAddRequest } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import {
   InstallFromMarketplace,
   type InstallFromMarketplaceRequest,
@@ -33,7 +33,7 @@ const request: InstallFromMarketplaceRequest = {
 };
 
 function build(matches: PluginSourceMatch[], chosenName = "") {
-  const added: PluginAddOptions[] = [];
+  const added: PluginAddRequest[] = [];
   const logger = new CapturingLogger();
   const resolve = vi.fn(async () => matches);
   const useCase = new InstallFromMarketplace({

@@ -33,7 +33,7 @@ export interface ReportStatusResult {
   inSync: boolean;
 }
 
-export interface ReportStatusCommand {
+export interface ReportStatusRequest {
   projectRoot: string;
   filterToolId?: string;
   category?: ToolCategory;
@@ -47,7 +47,7 @@ export interface ReportStatusCommand {
  * implementation rather than a cast.
  */
 export interface StatusQuery {
-  execute(options: ReportStatusCommand): Promise<ReportStatusResult>;
+  execute(options: ReportStatusRequest): Promise<ReportStatusResult>;
 }
 
 /** What ReportStatus is built from. */
@@ -63,7 +63,7 @@ export class ReportStatus implements StatusQuery {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(options: ReportStatusCommand): Promise<ReportStatusResult> {
+  async execute(options: ReportStatusRequest): Promise<ReportStatusResult> {
     const { projectRoot, filterToolId, category, pluginName } = options;
     const manifest = options.manifest ?? (await requireManifest(this.deps.manifestRepo));
     if (filterToolId && !manifest.hasTool(filterToolId))

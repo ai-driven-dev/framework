@@ -26,12 +26,12 @@ const PROJECT_ROOT = "/test-project";
 type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 describe("RestoreAll - consent to overwrite", () => {
-  type RestoreCommand = Parameters<Restore["execute"]>[0];
+  type RestoreRequest = Parameters<Restore["execute"]>[0];
 
   /** Records what RestoreAll asks the restore to do, without doing it. */
-  function recordAsks(restoreUseCase: Restore): RestoreCommand[] {
-    const seen: RestoreCommand[] = [];
-    restoreUseCase.execute = async (options: RestoreCommand) => {
+  function recordAsks(restoreUseCase: Restore): RestoreRequest[] {
+    const seen: RestoreRequest[] = [];
+    restoreUseCase.execute = async (options: RestoreRequest) => {
       seen.push(options);
       return {
         tools: [],
@@ -46,7 +46,7 @@ describe("RestoreAll - consent to overwrite", () => {
     return seen;
   }
 
-  async function askedWith(interactive: boolean, force: boolean): Promise<RestoreCommand> {
+  async function askedWith(interactive: boolean, force: boolean): Promise<RestoreRequest> {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
@@ -125,7 +125,7 @@ describe("RestoreAll - native-only tools", () => {
   });
 });
 
-type RestoreCommand = Parameters<Restore["execute"]>[0];
+type RestoreRequest = Parameters<Restore["execute"]>[0];
 type RestoreOutcome = Awaited<ReturnType<Restore["execute"]>>;
 
 const NOTHING_RESTORED: RestoreOutcome = {
@@ -141,7 +141,7 @@ const NOTHING_RESTORED: RestoreOutcome = {
 function restoreAllDelegatingTo(
   deps: Deps,
   prompter: Prompter,
-  delegate: (options: RestoreCommand) => Promise<RestoreOutcome>
+  delegate: (options: RestoreRequest) => Promise<RestoreOutcome>
 ): RestoreAll {
   const statusUseCase = new ReportStatus(
     {
@@ -165,10 +165,10 @@ function restoreAllDelegatingTo(
 }
 
 function recordingDelegate(): {
-  asked: RestoreCommand[];
-  delegate: (o: RestoreCommand) => Promise<RestoreOutcome>;
+  asked: RestoreRequest[];
+  delegate: (o: RestoreRequest) => Promise<RestoreOutcome>;
 } {
-  const asked: RestoreCommand[] = [];
+  const asked: RestoreRequest[] = [];
   return {
     asked,
     delegate: async (options) => {

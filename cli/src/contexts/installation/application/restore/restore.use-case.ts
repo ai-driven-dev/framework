@@ -10,7 +10,7 @@ import type { RestoreAllPlugins, RestoreAllPluginsResult } from "./restore-all-p
 import { buildFileFilter, configRefsOf } from "./restore-inputs.js";
 import type { RestoreToolFiles, RestoreToolFilesResult } from "./restore-tool-files.use-case.js";
 
-interface RestoreCommand {
+interface RestoreRequest {
   frameworkPath?: string;
   version?: string;
   projectRoot: string;
@@ -61,14 +61,14 @@ export class Restore {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(options: RestoreCommand): Promise<RestoreResult> {
+  async execute(options: RestoreRequest): Promise<RestoreResult> {
     const manifest = options.manifest ?? (await requireManifest(this.deps.manifestRepo));
     const ctx = await this.buildRestoreContext(options, manifest);
     return this.executeRestore(ctx);
   }
 
   private async buildRestoreContext(
-    options: RestoreCommand,
+    options: RestoreRequest,
     manifest: Manifest
   ): Promise<RestoreCtx> {
     const resolvedVersion = options.version ?? "unknown";

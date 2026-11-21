@@ -13,7 +13,7 @@ import type {
 import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
 import type {
   BuildPluginResult,
-  FrameworkBuildOptions,
+  FrameworkBuildRequest,
   FrameworkBuildResult,
 } from "../contract/build-targets.js";
 import {
@@ -48,7 +48,7 @@ export interface BuildNativeTreeDeps {
 export class BuildNativeTree {
   constructor(private readonly deps: BuildNativeTreeDeps) {}
 
-  async execute(options: FrameworkBuildOptions): Promise<FrameworkBuildResult> {
+  async execute(options: FrameworkBuildRequest): Promise<FrameworkBuildResult> {
     const sourceDir = resolve(options.sourceDir);
     const outDir = resolve(options.outDir);
     this.guardPaths(sourceDir, outDir);

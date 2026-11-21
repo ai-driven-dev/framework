@@ -13,7 +13,7 @@ import { AgentModelStoreAdapter } from "../../../src/contexts/installation/infra
 import { jsoncMainSessionSettings } from "../../../src/contexts/installation/infrastructure/jsonc-main-session-settings.js";
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.use-case.js";
-import type { SyncSettingsOptions } from "../../../src/orchestration/domain/sync-settings.model.js";
+import type { SyncSettingsRequest } from "../../../src/orchestration/domain/sync-settings.model.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -49,7 +49,7 @@ function setup(
   seed?.(manifest);
   const updates: UpdatePluginRequest[] = [];
   const userUpdates: UpdatePluginRequest[] = [];
-  const activations: SyncSettingsOptions[] = [];
+  const activations: SyncSettingsRequest[] = [];
   const store = new AgentModelStoreAdapter(fs, () => CONFIG);
   const refresh = new RefreshAgentPlugins({
     pluginHosts: new AgentPluginHosts(

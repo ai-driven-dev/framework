@@ -7,7 +7,7 @@ import {
   type FrameworkBuilds,
 } from "../../../../../src/contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
 import type {
-  EnsureBuiltMarketplaceCommand,
+  EnsureBuiltMarketplaceRequest,
   EnsureBuiltMarketplaceResult,
 } from "../../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
@@ -72,7 +72,7 @@ function buildEnsurer(
   builds: FrameworkBuilds,
   version: VersionReader = fakeVersion("5.0.0")
 ): {
-  execute(command: EnsureBuiltMarketplaceCommand): Promise<EnsureBuiltMarketplaceResult>;
+  execute(command: EnsureBuiltMarketplaceRequest): Promise<EnsureBuiltMarketplaceResult>;
 } {
   const cache = new CacheBuiltMarketplace({
     fs,

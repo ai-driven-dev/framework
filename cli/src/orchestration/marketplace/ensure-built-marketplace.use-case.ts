@@ -2,7 +2,7 @@ import type { ResolveMarketplace } from "../../contexts/distribution/application
 import type { CacheBuiltMarketplace } from "../../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
 import type {
   BuiltMarketplaceEnsurer,
-  EnsureBuiltMarketplaceCommand,
+  EnsureBuiltMarketplaceRequest,
   EnsureBuiltMarketplaceResult,
 } from "../../contexts/installation/contract/built-marketplace.js";
 
@@ -13,7 +13,7 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
     private readonly cache: Pick<CacheBuiltMarketplace, "execute">
   ) {}
 
-  async execute(command: EnsureBuiltMarketplaceCommand): Promise<EnsureBuiltMarketplaceResult> {
+  async execute(command: EnsureBuiltMarketplaceRequest): Promise<EnsureBuiltMarketplaceResult> {
     const resolved = await this.resolveMarketplace.execute({
       marketplace: command.marketplace,
       projectRoot: command.projectRoot,

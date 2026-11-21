@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { CheckInstallationCommand } from "./check-installation-command.js";
+import type { CheckInstallationRequest } from "./check-installation-request.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
 export function collectTrackedFiles(
@@ -26,7 +26,7 @@ export class CheckTrackedFiles {
     private readonly fs: FileReader
   ) {}
 
-  async execute(command: CheckInstallationCommand): Promise<DoctorIssue[]> {
+  async execute(command: CheckInstallationRequest): Promise<DoctorIssue[]> {
     const { projectRoot, allowedIds } = command;
     const manifest = await this.loadManifest.execute();
     const trackedFiles = collectTrackedFiles(manifest, allowedIds);

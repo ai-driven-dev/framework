@@ -6,10 +6,10 @@ import { Manifest } from "../../../../../../src/contexts/installation/domain/man
 import { InMemoryManifestRepository } from "../../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
-type RestoreCommand = Parameters<Restore["execute"]>[0];
+type RestoreRequest = Parameters<Restore["execute"]>[0];
 
 function recordingRestore() {
-  const received: RestoreCommand[] = [];
+  const received: RestoreRequest[] = [];
   const restore: Pick<Restore, "execute"> = {
     execute: async (command) => {
       received.push(command);

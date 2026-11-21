@@ -17,23 +17,23 @@ export interface TrackedConfigFilesRequest {
   manifest: Manifest;
 }
 
-export interface WriteAndTrackCommand {
+export interface WriteAndTrackRequest {
   kind: "write-and-track";
   files: InstallationFile[];
   projectRoot: string;
   onBeforeWrite?: BeforeWriteGate;
 }
 
-export interface MergeAndTrackCommand {
+export interface MergeAndTrackRequest {
   kind: "merge-and-track";
   files: InstallationFile[];
   projectRoot: string;
 }
 
-export type TrackedConfigFilesCommand =
+export type AnyTrackedConfigFilesRequest =
   | TrackedConfigFilesRequest
-  | WriteAndTrackCommand
-  | MergeAndTrackCommand;
+  | WriteAndTrackRequest
+  | MergeAndTrackRequest;
 
 /** Writes and merges the config files of a tool while keeping what the manifest must record
  * about each: the hash of a written file, the hash of what a skipped file holds on disk, and the
@@ -48,10 +48,10 @@ export class TrackedConfigFiles {
    * it as the user's: it is left alone and a warning says so. `write-and-track` answers the files
    * to record, `merge-and-track` the entries the merged files now hold. */
   async execute(command: TrackedConfigFilesRequest): Promise<boolean>;
-  async execute(command: WriteAndTrackCommand): Promise<InstallationFile[]>;
-  async execute(command: MergeAndTrackCommand): Promise<MergeFileEntry[]>;
+  async execute(command: WriteAndTrackRequest): Promise<InstallationFile[]>;
+  async execute(command: MergeAndTrackRequest): Promise<MergeFileEntry[]>;
   async execute(
-    command: TrackedConfigFilesCommand
+    command: AnyTrackedConfigFilesRequest
   ): Promise<boolean | InstallationFile[] | MergeFileEntry[]> {
     switch (command.kind) {
       case "is-user-owned":
@@ -80,7 +80,7 @@ export class TrackedConfigFiles {
     files,
     projectRoot,
     onBeforeWrite,
-  }: WriteAndTrackCommand): Promise<InstallationFile[]> {
+  }: WriteAndTrackRequest): Promise<InstallationFile[]> {
     const tracked: InstallationFile[] = [];
     for (const file of files) {
       const decision = onBeforeWrite ? await onBeforeWrite(file.relativePath) : "write";
@@ -98,7 +98,7 @@ export class TrackedConfigFiles {
   private async mergeAndTrack({
     files,
     projectRoot,
-  }: MergeAndTrackCommand): Promise<MergeFileEntry[]> {
+  }: MergeAndTrackRequest): Promise<MergeFileEntry[]> {
     for (const file of files) {
       await this.fs.mergeJsonFile(
         join(projectRoot, file.relativePath),

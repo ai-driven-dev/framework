@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ResolveMarketplaceRequest } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
 import type { MarketplaceView } from "../../../src/contexts/distribution/contract/marketplace-view.js";
-import type { PluginAddOptions } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
+import type { PluginAddRequest } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import {
   InteractiveOnlyError,
   NoMarketplacesRegisteredError,
@@ -68,7 +68,7 @@ function build(options: {
   plugins?: PluginCatalogEntry[] | null;
   prompter?: PickingPrompter;
 }) {
-  const added: PluginAddOptions[] = [];
+  const added: PluginAddRequest[] = [];
   const prompter = options.prompter ?? new PickingPrompter([]);
   const resolveMarketplace = {
     execute: vi.fn(async ({ marketplace }: ResolveMarketplaceRequest) => ({

@@ -33,7 +33,7 @@ export function supportedBuildTargets(tools: ToolCatalog): readonly FrameworkBui
   return [...new Set(buildTargetModesOf(tools).map((entry) => entry.target))];
 }
 
-export interface FrameworkBuildOptions {
+export interface FrameworkBuildRequest {
   readonly sourceDir: string;
   readonly outDir: string;
   readonly target: FrameworkBuildTarget;

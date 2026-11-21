@@ -26,22 +26,22 @@ export interface CleanProjectFilesRequest {
   kind: "plan";
 }
 
-export interface AssertProjectRemovableCommand {
+export interface AssertProjectRemovableRequest {
   kind: "assert-removable";
   projectRoot: string;
   force: boolean;
 }
 
-export interface RemoveProjectFilesCommand {
+export interface RemoveProjectFilesRequest {
   kind: "remove";
   projectRoot: string;
   force: boolean;
 }
 
-export type CleanProjectFilesCommand =
+export type AnyCleanProjectFilesRequest =
   | CleanProjectFilesRequest
-  | AssertProjectRemovableCommand
-  | RemoveProjectFilesCommand;
+  | AssertProjectRemovableRequest
+  | RemoveProjectFilesRequest;
 
 /** What CleanProjectFiles is built from. */
 export interface CleanProjectFilesDeps {
@@ -70,9 +70,9 @@ export class CleanProjectFiles {
    * hook or an MCP entry of a tracked plugin could not be removed cleanly. `remove` answers how
    * many files it deleted. */
   async execute(command: CleanProjectFilesRequest): Promise<ProjectCleanPlan | null>;
-  async execute(command: AssertProjectRemovableCommand): Promise<void>;
-  async execute(command: RemoveProjectFilesCommand): Promise<number>;
-  async execute(command: CleanProjectFilesCommand): Promise<unknown> {
+  async execute(command: AssertProjectRemovableRequest): Promise<void>;
+  async execute(command: RemoveProjectFilesRequest): Promise<number>;
+  async execute(command: AnyCleanProjectFilesRequest): Promise<unknown> {
     switch (command.kind) {
       case "plan":
         return this.planProjectClean.execute();

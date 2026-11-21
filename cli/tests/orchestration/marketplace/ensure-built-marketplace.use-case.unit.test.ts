@@ -7,7 +7,7 @@ import type {
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { CacheBuiltMarketplace } from "../../../src/contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
 import type {
-  EnsureBuiltMarketplaceCommand,
+  EnsureBuiltMarketplaceRequest,
   EnsureBuiltMarketplaceResult,
   ResolvedMarketplace,
 } from "../../../src/contexts/installation/contract/built-marketplace.js";
@@ -44,7 +44,7 @@ function commandOf(forceRefresh?: boolean): RegisteredCommand {
 
 function ensurerOf(journal: string[] = []) {
   const resolveCommands: ResolveMarketplaceRequest[] = [];
-  const cacheCalls: { command: EnsureBuiltMarketplaceCommand; resolved: ResolvedMarketplace }[] =
+  const cacheCalls: { command: EnsureBuiltMarketplaceRequest; resolved: ResolvedMarketplace }[] =
     [];
   const resolution: ResolveMarketplaceResult = {
     marketplace,
@@ -59,7 +59,7 @@ function ensurerOf(journal: string[] = []) {
     },
   } satisfies Pick<ResolveMarketplace, "execute">;
   const cache = {
-    execute: async (command: EnsureBuiltMarketplaceCommand, resolved: ResolvedMarketplace) => {
+    execute: async (command: EnsureBuiltMarketplaceRequest, resolved: ResolvedMarketplace) => {
       journal.push("cache");
       cacheCalls.push({ command, resolved });
       return cacheResult;

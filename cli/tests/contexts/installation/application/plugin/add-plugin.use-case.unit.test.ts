@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlacePluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
-import type { PluginAddOptions } from "../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
+import type { PluginAddRequest } from "../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import {
   DuplicatePluginError,
@@ -66,7 +66,7 @@ function manifestWithClaude(): Manifest {
   return manifest;
 }
 
-const ADD: PluginAddOptions = {
+const ADD: PluginAddRequest = {
   source: SOURCE,
   toolIds: [TOOL.claude],
   projectRoot: PROJECT_ROOT,

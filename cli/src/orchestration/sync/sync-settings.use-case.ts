@@ -3,7 +3,7 @@ import type { RecordActivation } from "../../contexts/installation/application/s
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
-import type { SyncSettingsOptions, SyncSettingsResult } from "../domain/sync-settings.model.js";
+import type { SyncSettingsRequest, SyncSettingsResult } from "../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
 import { claimsViewOf } from "./claims-view-of.js";
 
@@ -18,7 +18,7 @@ const EMPTY_RESULT: SyncSettingsResult = {
 type LoadedSyncContext = NonNullable<Awaited<ReturnType<LoadSyncContext["execute"]>>>;
 
 interface ActivationRecording {
-  options: SyncSettingsOptions;
+  options: SyncSettingsRequest;
   scope: Scope;
   context: LoadedSyncContext;
   activation: Awaited<ReturnType<ActivateNativeTools["execute"]>>;
@@ -46,13 +46,13 @@ function resultOf(activation: ActivationRecording["activation"]): SyncSettingsRe
 export class SyncSettings {
   constructor(private readonly deps: SyncSettingsDeps) {}
 
-  execute(options: SyncSettingsOptions): Promise<SyncSettingsResult> {
+  execute(options: SyncSettingsRequest): Promise<SyncSettingsResult> {
     return this.deps.loadContext.runLocked(options.scope ?? "project", () =>
       this.executeLocked(options)
     );
   }
 
-  private async executeLocked(options: SyncSettingsOptions): Promise<SyncSettingsResult> {
+  private async executeLocked(options: SyncSettingsRequest): Promise<SyncSettingsResult> {
     const { projectRoot } = options;
     const scope = options.scope ?? "project";
     const context = await this.deps.loadContext.execute({

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type {
-  ReportStatusCommand,
+  ReportStatusRequest,
   ReportStatusResult,
   StatusQuery,
 } from "../../../src/contexts/installation/application/report-status.use-case.js";
@@ -10,7 +10,7 @@ import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 const PROJECT_ROOT = "/test-project";
 
 type Report = ReportStatusResult;
-type Options = ReportStatusCommand;
+type Options = ReportStatusRequest;
 
 const DRIFT = [
   {

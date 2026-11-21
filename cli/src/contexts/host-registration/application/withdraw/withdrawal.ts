@@ -105,7 +105,7 @@ export interface ProjectCleanFacts {
 
 /** Every question a withdrawal answers, told apart by `kind`: the proofs refuse before any host
  * change, the withdrawals act. */
-export type WithdrawalCommand =
+export type WithdrawalRequest =
   | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostCommand)
   | ({ readonly kind: "prove-project-source" } & ProjectSourceCommand)
   | {
@@ -140,9 +140,9 @@ export type WithdrawalCommand =
       readonly resolveCacheCandidate: CacheCandidateResolver;
     };
 
-export type WithdrawPluginCommand = Extract<WithdrawalCommand, { kind: "withdraw-plugin" }>;
-export type ProveClaimedRefCommand = Extract<WithdrawalCommand, { kind: "prove-claimed-ref" }>;
-export type WithdrawalStepCommand = Exclude<
-  WithdrawalCommand,
-  WithdrawPluginCommand | ProveClaimedRefCommand
+export type WithdrawPluginRequest = Extract<WithdrawalRequest, { kind: "withdraw-plugin" }>;
+export type ProveClaimedRefRequest = Extract<WithdrawalRequest, { kind: "prove-claimed-ref" }>;
+export type WithdrawalStepRequest = Exclude<
+  WithdrawalRequest,
+  WithdrawPluginRequest | ProveClaimedRefRequest
 >;

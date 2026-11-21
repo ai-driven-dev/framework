@@ -15,12 +15,12 @@ import {
   withdrawUserRegistrations,
 } from "./withdraw-user-registrations.js";
 import type {
-  ProveClaimedRefCommand,
+  ProveClaimedRefRequest,
   ProvenHostRef,
-  WithdrawalCommand,
   WithdrawalDeps,
-  WithdrawalStepCommand,
-  WithdrawPluginCommand,
+  WithdrawalRequest,
+  WithdrawalStepRequest,
+  WithdrawPluginRequest,
 } from "./withdrawal.js";
 
 /**
@@ -40,10 +40,10 @@ export class WithdrawFromHost {
    * applies either, otherwise whether the host's own CLI confirmed the removal. A claimed-ref
    * proof returns the ref it proved removable. Every other kind refuses before any change, or
    * acts, and returns nothing. */
-  async execute(command: WithdrawPluginCommand): Promise<boolean | undefined>;
-  async execute(command: ProveClaimedRefCommand): Promise<ProvenHostRef>;
-  async execute(command: WithdrawalStepCommand): Promise<void>;
-  async execute(command: WithdrawalCommand): Promise<unknown> {
+  async execute(command: WithdrawPluginRequest): Promise<boolean | undefined>;
+  async execute(command: ProveClaimedRefRequest): Promise<ProvenHostRef>;
+  async execute(command: WithdrawalStepRequest): Promise<void>;
+  async execute(command: WithdrawalRequest): Promise<unknown> {
     switch (command.kind) {
       case "withdraw-plugin":
         return this.withdrawPlugin(command);
@@ -69,7 +69,7 @@ export class WithdrawFromHost {
 
   /** Asks each tool's own CLI to forget what this project registered, then purges its cache. */
   private async withdrawProject(
-    command: Extract<WithdrawalCommand, { kind: "withdraw-project-registrations" }>
+    command: Extract<WithdrawalRequest, { kind: "withdraw-project-registrations" }>
   ): Promise<void> {
     const removed = await withdrawProjectRegistrations(
       this.deps,
@@ -81,7 +81,7 @@ export class WithdrawFromHost {
 
   // Nothing is undone for a tool whose binary is absent, and its canonical claims are kept.
   private checkUserHosts(
-    command: Extract<WithdrawalCommand, { kind: "check-user-hosts" }>
+    command: Extract<WithdrawalRequest, { kind: "check-user-hosts" }>
   ): undefined {
     for (const withdrawal of command.withdrawals) {
       reachableUserActivator(
@@ -95,13 +95,13 @@ export class WithdrawFromHost {
 
   /** Every claimed ref uninstalled, then every marketplace unregistered, then the caches purged. */
   private async withdrawUser(
-    command: Extract<WithdrawalCommand, { kind: "withdraw-user-registrations" }>
+    command: Extract<WithdrawalRequest, { kind: "withdraw-user-registrations" }>
   ): Promise<void> {
     const removed = await withdrawUserRegistrations(this.deps, command.withdrawals);
     return purgeMarketplaceCaches(this.deps, removed, command.resolveCacheCandidate);
   }
 
-  private async withdrawPlugin(command: WithdrawPluginCommand): Promise<boolean | undefined> {
+  private async withdrawPlugin(command: WithdrawPluginRequest): Promise<boolean | undefined> {
     await assertProjectSource(this.deps, {
       tool: command.tool,
       plugin: command.plugin,
