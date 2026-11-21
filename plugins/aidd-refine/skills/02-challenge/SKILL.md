@@ -1,6 +1,6 @@
 ---
 name: 02-challenge
-description: Challenge finished work, code, a plan, a doc or a decision, to find what breaks its aim, as deal breakers, questions to decide and suggestions. Use to challenge or critically review recent work. Not for line-by-line style review or writing code.
+description: Challenges finished work and what it was asked to do, when the user wants to know what breaks it before relying on it.
 argument-hint: work [techniques]
 ---
 
@@ -9,8 +9,7 @@ argument-hint: work [techniques]
 ```mermaid
 flowchart LR
   work([work and what it was asked to do]) --> challenge["actions/01-challenge.md"]
-  challenge --> report([deal breakers, what to decide, suggestions and what holds])
-  challenge -->|"a round appended"| file["challenge.md in the task folder"]
+  challenge --> report([report, kept in challenge.md])
 ```
 
 ## Transversal rules

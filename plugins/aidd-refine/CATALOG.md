@@ -44,7 +44,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-challenge.md](skills/02-challenge/actions/01-challenge.md) | - |
 | `assets` | [report-template.md](skills/02-challenge/assets/report-template.md) | - |
 | `references` | [techniques.md](skills/02-challenge/references/techniques.md) | - |
-| `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Challenge finished work, code, a plan, a doc or a decision, to find what breaks its aim, as deal breakers, questions to decide and suggestions. Use to challenge or critically review recent work. Not for line-by-line style review or writing code.` |
+| `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Challenges finished work and what it was asked to do, when the user wants to know what breaks it before relying on it.` |
 
 #### `skills/03-shadow-areas`
 
