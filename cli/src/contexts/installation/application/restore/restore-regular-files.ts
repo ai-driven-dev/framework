@@ -40,14 +40,7 @@ export async function restoreRegularFiles(
   return restoreDriftEntries(
     prompter,
     {
-      collectDrift: () =>
-        collectDrift(
-          fs,
-          options.manifestFiles,
-          options.distMap,
-          options.projectRoot,
-          options.fileFilter
-        ),
+      collectDrift: () => collectDrift(fs, options),
       restore: async (entry) => {
         const diskPath = join(options.projectRoot, entry.relativePath);
         await fs.writeFile(diskPath, entry.content);
@@ -68,11 +61,9 @@ export async function restoreRegularFiles(
 
 async function collectDrift(
   fs: FileReader,
-  manifestFiles: ReadonlyArray<{ relativePath: string; hash: { value: string } }>,
-  distMap: Map<string, InstallationFile>,
-  projectRoot: string,
-  fileFilter: ((p: string) => boolean) | null
+  options: RestoreRegularFilesCommand
 ): Promise<DriftCollection<DriftEntry>> {
+  const { manifestFiles, distMap, projectRoot, fileFilter } = options;
   const recorded: RecordedVerdict[] = [];
   for (const manifestFile of manifestFiles) {
     if (fileFilter && !fileFilter(manifestFile.relativePath)) continue;
