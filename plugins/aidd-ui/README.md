@@ -6,7 +6,7 @@ UI and UX design.
 
 | | |
 | --- | --- |
-| Status | alpha |
+| Status | beta |
 | Install | `/plugin install aidd-ui@aidd-framework` |
 | Start with | `/aidd-ui:01-journeys` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
