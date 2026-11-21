@@ -7,7 +7,10 @@ import type { AssetProvider } from "../../../../../shared/ports/asset-provider.j
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
-import type { SettingsFileAnswers } from "../../../../tools/contract/tool-profile.js";
+import type {
+  McpConfigAnswers,
+  SettingsFileAnswers,
+} from "../../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import type { RuntimeConfigSection } from "../../../ports/tool-sections.js";
 import type { RunPostInstallPipeline } from "../run-post-install-pipeline.js";
@@ -85,7 +88,8 @@ export class InstallRuntimeConfig {
       files: mergeFiles,
       projectRoot: options.projectRoot,
     });
-    options.manifest.addTool(options.toolId, options.version, allTracked, mergeEntries);
+    options.manifest.addTool(options.toolId, options.version, allTracked);
+    options.manifest.updateToolMergeFiles(options.toolId, mergeEntries);
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest: options.manifest,
@@ -98,7 +102,12 @@ export class InstallRuntimeConfig {
     const profile = this.tools.aiProfile(options.toolId);
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(profile.configFiles())) {
-      const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
+      const resolvedPath = await this.resolveConfigPath({
+        mcp: profile.mcpConfig(),
+        fileName,
+        outputPath,
+        projectRoot: options.projectRoot,
+      });
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       const userOwned = await this.trackedConfigFiles.execute({
@@ -121,16 +130,16 @@ export class InstallRuntimeConfig {
     return files;
   }
 
-  private async resolveConfigPath(
-    profile: RuntimeConfigSection,
-    fileName: string,
-    outputPath: string,
-    options: InstallRuntimeConfigCommand
-  ): Promise<string> {
-    const mcp = profile.mcpConfig();
+  private async resolveConfigPath(config: {
+    mcp: McpConfigAnswers | null;
+    fileName: string;
+    outputPath: string;
+    projectRoot: string;
+  }): Promise<string> {
+    const { mcp, fileName, outputPath, projectRoot } = config;
     if (mcp === null || !mcp.accepts(fileName)) return outputPath;
     return mcp.resolveOutputPath((relativePath) =>
-      this.fs.fileExists(join(options.projectRoot, relativePath))
+      this.fs.fileExists(join(projectRoot, relativePath))
     );
   }
 

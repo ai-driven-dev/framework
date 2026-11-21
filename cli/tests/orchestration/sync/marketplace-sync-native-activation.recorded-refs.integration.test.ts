@@ -111,14 +111,14 @@ describe("native activation: recorded refs", () => {
       manifest.addTool(claude, "test", []);
       manifest.addPlugin(
         claude,
-        InstalledPlugin.fromMetadata(
-          LIVE_PLUGIN,
-          "1.0.0",
-          { kind: "github", repo: "ai-driven-dev/framework" },
-          true,
-          "project",
-          LIVE_MARKETPLACE
-        )
+        InstalledPlugin.fromMetadata({
+          name: LIVE_PLUGIN,
+          version: "1.0.0",
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
+          strict: true,
+          scope: "project",
+          marketplace: LIVE_MARKETPLACE,
+        })
       );
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
@@ -200,25 +200,25 @@ describe("native activation: recorded refs", () => {
       manifest.addTool(claude, "test", []);
       manifest.addPlugin(
         claude,
-        InstalledPlugin.fromMetadata(
-          PLUGIN_X,
-          "1.0.0",
-          { kind: "github", repo: "ai-driven-dev/framework" },
-          true,
-          "project",
-          ALIAS_X
-        )
+        InstalledPlugin.fromMetadata({
+          name: PLUGIN_X,
+          version: "1.0.0",
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
+          strict: true,
+          scope: "project",
+          marketplace: ALIAS_X,
+        })
       );
       manifest.addPlugin(
         claude,
-        InstalledPlugin.fromMetadata(
-          PLUGIN_Y,
-          "1.0.0",
-          { kind: "github", repo: "ai-driven-dev/framework" },
-          true,
-          "project",
-          ALIAS_Y
-        )
+        InstalledPlugin.fromMetadata({
+          name: PLUGIN_Y,
+          version: "1.0.0",
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
+          strict: true,
+          scope: "project",
+          marketplace: ALIAS_Y,
+        })
       );
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({

@@ -47,14 +47,14 @@ function marketplaceNamed(name: string): Marketplace {
 }
 
 function pluginFrom(marketplace: string, name: string): InstalledPlugin {
-  return InstalledPlugin.fromMetadata(
+  return InstalledPlugin.fromMetadata({
     name,
-    "1.0.0",
-    { kind: "github", repo: `owner/${name}` },
-    false,
-    "project",
-    marketplace
-  );
+    version: "1.0.0",
+    source: { kind: "github", repo: `owner/${name}` },
+    strict: false,
+    scope: "project",
+    marketplace,
+  });
 }
 
 function manifestWithPlugins(...plugins: readonly InstalledPlugin[]): Manifest {

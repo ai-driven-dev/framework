@@ -7,7 +7,8 @@ import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
 const source = { kind: "local", path: "/p" } as const;
-const plugin = (scope: Scope) => InstalledPlugin.fromMetadata("a", "1.0.0", source, false, scope);
+const plugin = (scope: Scope) =>
+  InstalledPlugin.fromMetadata({ name: "a", version: "1.0.0", source, strict: false, scope });
 const HOSTS = [TOOL.claude, TOOL.cursor, TOOL.codex];
 
 describe("AgentPluginHosts", () => {

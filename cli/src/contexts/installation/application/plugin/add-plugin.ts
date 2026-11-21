@@ -170,14 +170,14 @@ export class AddPlugin implements PluginAdd {
     for (const toolId of native) {
       manifest.addPlugin(
         toolId,
-        InstalledPlugin.fromMetadata(
-          pluginMetadata.name,
+        InstalledPlugin.fromMetadata({
+          name: pluginMetadata.name,
           version,
           source,
-          pluginMetadata.strict,
-          resolveScopeForInstall(this.tools.aiProfile(toolId)),
-          marketplace
-        )
+          strict: pluginMetadata.strict,
+          scope: resolveScopeForInstall(this.tools.aiProfile(toolId)),
+          marketplace,
+        })
       );
     }
   }
@@ -226,7 +226,7 @@ export class AddPlugin implements PluginAdd {
       if (previous === undefined) continue;
       const tool = this.tools.aiProfile(toolId);
       await assertProjectMcpEntriesRemovable(this.fs, { plugin: previous, tool, projectRoot });
-      await assertProjectHooksRemovable(this.fs, previous, tool, projectRoot);
+      await assertProjectHooksRemovable({ fs: this.fs, plugin: previous, tool, projectRoot });
     }
   }
 

@@ -161,14 +161,14 @@ export class PlacePlugin {
     await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       tool.toolId,
-      InstalledPlugin.fromDistribution(
+      InstalledPlugin.fromDistribution({
         dist,
         source,
         files,
-        resolveScopeForInstall(tool),
+        scope: resolveScopeForInstall(tool),
         componentPaths,
-        marketplace
-      )
+        marketplace,
+      })
     );
     return { skipped, notices };
   }

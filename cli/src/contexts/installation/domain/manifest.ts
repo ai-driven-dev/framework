@@ -56,12 +56,7 @@ export class Manifest {
     return new Manifest({ tools: new Map() });
   }
 
-  addTool(
-    toolId: ToolId,
-    version: string,
-    files: InstallationFile[],
-    mergeFiles: MergeFileEntry[] = []
-  ): void {
+  addTool(toolId: ToolId, version: string, files: InstallationFile[]): void {
     const existing = this._tools.get(toolId);
     this._tools.set(
       toolId,
@@ -69,7 +64,7 @@ export class Manifest {
         toolId,
         version,
         files,
-        mergeFiles,
+        mergeFiles: [],
         existingPlugins: existing?.plugins ?? [],
       })
     );
@@ -93,17 +88,12 @@ export class Manifest {
   getTrackedPathsInDirectory(dir: string): Set<string> {
     const tracked = new Set<string>();
     for (const [, entry] of this._tools) {
-      for (const f of entry.files) {
-        if (f.relativePath.startsWith(dir)) tracked.add(f.relativePath);
-      }
-      for (const m of entry.mergeFiles) {
-        if (m.relativePath.startsWith(dir)) tracked.add(m.relativePath);
-      }
-      for (const plugin of entry.plugins) {
-        for (const relPath of plugin.files.keys()) {
-          if (relPath.startsWith(dir)) tracked.add(relPath);
-        }
-      }
+      const paths = [
+        ...entry.files.map((f) => f.relativePath),
+        ...entry.mergeFiles.map((m) => m.relativePath),
+        ...entry.plugins.flatMap((plugin) => [...plugin.files.keys()]),
+      ];
+      for (const path of paths) if (path.startsWith(dir)) tracked.add(path);
     }
     return tracked;
   }

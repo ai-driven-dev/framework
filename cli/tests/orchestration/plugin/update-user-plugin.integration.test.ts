@@ -211,13 +211,13 @@ describe("targeted machine native plugin update", () => {
     if (machine === null) throw new Error("fixture missing machine manifest");
     machine.addPlugin(
       copilot,
-      InstalledPlugin.fromMetadata(
-        "project-plugin",
-        "0.0.1",
-        { kind: "local", path: "/fixture" },
-        false,
-        "project"
-      )
+      InstalledPlugin.fromMetadata({
+        name: "project-plugin",
+        version: "0.0.1",
+        source: { kind: "local", path: "/fixture" },
+        strict: false,
+        scope: "project",
+      })
     );
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
@@ -250,13 +250,13 @@ describe("targeted machine native plugin update", () => {
     if (machine === null) throw new Error("fixture missing machine manifest");
     machine.addPlugin(
       copilot,
-      InstalledPlugin.fromMetadata(
-        "project-plugin",
-        "0.0.1",
-        { kind: "local", path: "/fixture" },
-        false,
-        "project"
-      ).withFiles(new Map([["skills/project/SKILL.md", "hash"]]))
+      InstalledPlugin.fromMetadata({
+        name: "project-plugin",
+        version: "0.0.1",
+        source: { kind: "local", path: "/fixture" },
+        strict: false,
+        scope: "project",
+      }).withFiles(new Map([["skills/project/SKILL.md", "hash"]]))
     );
     await expect(f.executeAll()).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
@@ -280,13 +280,13 @@ describe("targeted machine native plugin update", () => {
   });
 
   it("rebuilds an installed user plugin that is already current, and only when asked", async () => {
-    const installed = InstalledPlugin.fromMetadata(
-      "sample-plugin",
-      "1.0.0",
-      { kind: "local", path: "/source" },
-      false,
-      "user"
-    );
+    const installed = InstalledPlugin.fromMetadata({
+      name: "sample-plugin",
+      version: "1.0.0",
+      source: { kind: "local", path: "/source" },
+      strict: false,
+      scope: "user",
+    });
     const f = fixture(cursor, { refs: [], installed, distribution: currentDistribution("1.0.0") });
     expect(await f.execute("sample-plugin")).toEqual([]);
     expect(await f.execute("sample-plugin", true)).toEqual(["sample-plugin"]);

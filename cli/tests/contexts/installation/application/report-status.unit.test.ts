@@ -30,12 +30,10 @@ function tracking(manifest: Manifest, toolId: ToolId, relativePath: string, cont
 }
 
 function merging(manifest: Manifest) {
-  manifest.addTool(
-    TOOL.vscode,
-    "test",
-    [],
-    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } }]
-  );
+  manifest.addTool(TOOL.vscode, "test", []);
+  manifest.updateToolMergeFiles(TOOL.vscode, [
+    { relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } },
+  ]);
 }
 
 function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {

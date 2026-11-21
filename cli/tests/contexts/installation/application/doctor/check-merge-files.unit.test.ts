@@ -30,12 +30,10 @@ const MODIFIED_KEY = {
 
 function manifestMerging(toolId: ToolId): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(
-    toolId,
-    "1.0.0",
-    [],
-    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } }]
-  );
+  manifest.addTool(toolId, "1.0.0", []);
+  manifest.updateToolMergeFiles(toolId, [
+    { relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } },
+  ]);
   return manifest;
 }
 

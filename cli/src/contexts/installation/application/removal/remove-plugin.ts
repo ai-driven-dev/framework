@@ -44,7 +44,7 @@ export class RemovePlugin {
     for (const { toolId, plugin } of named) {
       const tool = this.tools.aiProfile(toolId);
       await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
-      await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
+      await assertProjectHooksRemovable({ fs: this.fs, plugin, tool, projectRoot });
       await this.withdrawal.assertSource({
         toolId,
         tool,
@@ -100,7 +100,7 @@ export class RemovePlugin {
       });
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
-      await removeProjectHooks(this.fs, plugin, tool, projectRoot);
+      await removeProjectHooks({ fs: this.fs, plugin, tool, projectRoot });
       const ref = this.records.refOf(registrations, plugin.name, plugin.marketplace);
       if (
         ref !== undefined &&

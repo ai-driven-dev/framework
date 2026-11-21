@@ -332,25 +332,25 @@ describe("clean --scope user", () => {
     fs.setFile(projectFile, "project bytes");
     const machine = Manifest.create();
     machine.addTool(TOOL.cursor, "1.0.0", []);
-    const shared = InstalledPlugin.fromMetadata(
-      "shared",
-      "1.0.0",
-      { kind: "local", path: "/source" },
-      false,
-      "user"
-    )
+    const shared = InstalledPlugin.fromMetadata({
+      name: "shared",
+      version: "1.0.0",
+      source: { kind: "local", path: "/source" },
+      strict: false,
+      scope: "user",
+    })
       .withFiles(new Map([["shared/skills/x.md", FileHash.of("shared bytes").value]]))
       .withDependents(["/B"]);
     machine.addPlugin(TOOL.cursor, shared);
     machine.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromMetadata(
-        "local",
-        "1.0.0",
-        { kind: "local", path: "/source" },
-        false,
-        "project"
-      )
+      InstalledPlugin.fromMetadata({
+        name: "local",
+        version: "1.0.0",
+        source: { kind: "local", path: "/source" },
+        strict: false,
+        scope: "project",
+      })
         .withFiles(new Map([["skills/local.md", "hash"]]))
         .withDependents(["/project-foreign"])
     );
@@ -606,13 +606,13 @@ describe("clean --scope user", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromMetadata(
-          "aidd-context",
-          "1.0.0",
-          { kind: "local", path: "/whatever" },
-          false,
-          "project"
-        ).withFiles(new Map([["skills/x.md", "hash"]]))
+        InstalledPlugin.fromMetadata({
+          name: "aidd-context",
+          version: "1.0.0",
+          source: { kind: "local", path: "/whatever" },
+          strict: false,
+          scope: "project",
+        }).withFiles(new Map([["skills/x.md", "hash"]]))
       );
       const useCase = userScopeCleaner({ fs, repo: new InMemoryManifestRepository(manifest) });
 

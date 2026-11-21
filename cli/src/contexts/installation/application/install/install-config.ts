@@ -28,7 +28,7 @@ export class InstallConfig {
     for (const ref of configRefs) {
       const write = writes.find((w) => w.capability.consumes(ref.name));
       if (write === undefined) continue;
-      const file = await this.processRef(ref, write, contentFiles, projectRoot, platformName);
+      const file = await this.processRef(ref, write, { contentFiles, projectRoot, platformName });
       if (file !== null) results.push(file);
     }
     for (const write of writes) {
@@ -42,10 +42,9 @@ export class InstallConfig {
   private async processRef(
     ref: ConfigRef,
     write: ConfigWrite,
-    contentFiles: Map<string, string>,
-    projectRoot: string,
-    platformName: string
+    context: { contentFiles: Map<string, string>; projectRoot: string; platformName: string }
   ): Promise<InstallationFile | null> {
+    const { contentFiles, projectRoot, platformName } = context;
     const rawContent = contentFiles.get(ref.path);
     if (rawContent === undefined) return null;
     const outputPath = await this.resolveOutputPath(write, projectRoot);

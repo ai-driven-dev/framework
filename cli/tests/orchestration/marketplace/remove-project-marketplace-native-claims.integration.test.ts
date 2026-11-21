@@ -44,14 +44,14 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     .withTool(codex, [])
     .withPlugin(
       codex,
-      InstalledPlugin.fromMetadata(
-        "sample-plugin",
-        "1.0.0",
-        { kind: "local", path: "/fixture" },
-        false,
-        "project",
-        NAME
-      )
+      InstalledPlugin.fromMetadata({
+        name: "sample-plugin",
+        version: "1.0.0",
+        source: { kind: "local", path: "/fixture" },
+        strict: false,
+        scope: "project",
+        marketplace: NAME,
+      })
     )
     .build();
   if (options.nativeMapping !== "absent")

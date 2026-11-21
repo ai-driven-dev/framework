@@ -138,15 +138,15 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       await this.fs.writeFile(outputPath, file.content);
       written++;
     }
-    const plugin = InstalledPlugin.fromDistributionWithMcp(
+    const plugin = InstalledPlugin.fromDistributionWithMcp({
       dist,
       source,
       files,
       mcpEntries,
       scope,
       componentPaths,
-      marketplace
-    );
+      marketplace,
+    });
     manifest.addPlugin(toolId, InstalledPlugin.withProjectHooks(plugin, projectHooks));
     return written;
   }

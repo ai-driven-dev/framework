@@ -16,7 +16,8 @@ export function aManifest() {
   const manifest = Manifest.create();
   const builder = {
     withTool(toolId: ToolId, files: InstallationFile[], options: ToolOptions = {}) {
-      manifest.addTool(toolId, options.version ?? DEFAULT_TOOL_VERSION, files, options.mergeFiles);
+      manifest.addTool(toolId, options.version ?? DEFAULT_TOOL_VERSION, files);
+      manifest.updateToolMergeFiles(toolId, options.mergeFiles ?? []);
       return builder;
     },
     withPlugin(toolId: ToolId, plugin: InstalledPlugin) {

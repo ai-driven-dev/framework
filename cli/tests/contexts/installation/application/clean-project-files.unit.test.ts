@@ -39,7 +39,13 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
 }
 
 function localPlugin(name: string, scope: Scope = "project"): InstalledPlugin {
-  return InstalledPlugin.fromMetadata(name, "1.0.0", { kind: "local", path: "/p" }, false, scope);
+  return InstalledPlugin.fromMetadata({
+    name,
+    version: "1.0.0",
+    source: { kind: "local", path: "/p" },
+    strict: false,
+    scope,
+  });
 }
 
 describe("CleanProjectFiles assert-removable", () => {
@@ -48,13 +54,13 @@ describe("CleanProjectFiles assert-removable", () => {
     const installed = FileHash.of("// installed").value;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
-    const plugin = InstalledPlugin.fromMetadata(
-      "aidd-context",
-      "1.0.0",
-      { kind: "local", path: "/p" },
-      false,
-      "project"
-    );
+    const plugin = InstalledPlugin.fromMetadata({
+      name: "aidd-context",
+      version: "1.0.0",
+      source: { kind: "local", path: "/p" },
+      strict: false,
+      scope: "project",
+    });
     manifest.addPlugin(
       TOOL.cursor,
       InstalledPlugin.withProjectHooks(plugin, {

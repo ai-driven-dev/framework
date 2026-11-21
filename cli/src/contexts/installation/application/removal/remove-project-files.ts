@@ -121,13 +121,13 @@ export class RemoveProjectFiles {
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (
-        await removeProjectHooks(
-          this.fs,
+        await removeProjectHooks({
+          fs: this.fs,
           plugin,
-          this.tools.aiProfile(toolId),
+          tool: this.tools.aiProfile(toolId),
           projectRoot,
-          hooksGuard
-        )
+          guard: hooksGuard,
+        })
       )
         count++;
     }

@@ -230,14 +230,14 @@ describe("clean: native registration", () => {
         manifest.addTool(TOOL.claude, "1.0.0", []);
         manifest.addPlugin(
           TOOL.claude,
-          InstalledPlugin.fromMetadata(
-            "aidd-context",
-            "1.0.0",
-            { kind: "github", repo: "ai-driven-dev/framework" },
-            true,
-            pluginScope,
-            CLAUDE_MARKETPLACE
-          )
+          InstalledPlugin.fromMetadata({
+            name: "aidd-context",
+            version: "1.0.0",
+            source: { kind: "github", repo: "ai-driven-dev/framework" },
+            strict: true,
+            scope: pluginScope,
+            marketplace: CLAUDE_MARKETPLACE,
+          })
         );
         manifest.setNativeRegistrations(TOOL.claude, {
           binary: CLAUDE_BINARY,
@@ -470,14 +470,14 @@ describe("clean: native registration", () => {
         for (const plugin of plugins) {
           manifest.addPlugin(
             TOOL.claude,
-            InstalledPlugin.fromMetadata(
-              plugin.name,
-              "1.0.0",
-              { kind: "github", repo: "ai-driven-dev/framework" },
-              true,
-              plugin.scope,
-              plugin.marketplace
-            )
+            InstalledPlugin.fromMetadata({
+              name: plugin.name,
+              version: "1.0.0",
+              source: { kind: "github", repo: "ai-driven-dev/framework" },
+              strict: true,
+              scope: plugin.scope,
+              marketplace: plugin.marketplace,
+            })
           );
         }
         manifest.setNativeRegistrations(TOOL.claude, {

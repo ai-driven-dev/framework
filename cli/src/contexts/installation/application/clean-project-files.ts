@@ -126,8 +126,14 @@ export class CleanProjectFiles {
       if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         const tool = this.tools.aiProfile(toolId);
-        await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot, {
-          overwriteEdited: force,
+        await assertProjectHooksRemovable({
+          fs: this.fs,
+          plugin,
+          tool,
+          projectRoot,
+          guard: {
+            overwriteEdited: force,
+          },
         });
         await this.asks.assertMcpRemovable(plugin, tool, projectRoot);
       }

@@ -61,25 +61,25 @@ function manifestWithTwoPlugins(): Manifest {
     .withTool(TOOL.claude, [], { version: "test" })
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata(
-        "plugin-a",
-        "1.0.0",
-        { kind: "github", repo: "ai-driven-dev/A" },
-        true,
-        "project",
-        "market-a"
-      )
+      InstalledPlugin.fromMetadata({
+        name: "plugin-a",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/A" },
+        strict: true,
+        scope: "project",
+        marketplace: "market-a",
+      })
     )
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata(
-        "plugin-b",
-        "1.0.0",
-        { kind: "github", repo: "ai-driven-dev/B" },
-        true,
-        "project",
-        "market-b"
-      )
+      InstalledPlugin.fromMetadata({
+        name: "plugin-b",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/B" },
+        strict: true,
+        scope: "project",
+        marketplace: "market-b",
+      })
     )
     .build();
   return manifest;

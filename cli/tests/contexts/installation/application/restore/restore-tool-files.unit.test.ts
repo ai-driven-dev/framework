@@ -60,15 +60,15 @@ function installedVscode(extraTracked: string[] = []): Installed {
           content: "",
           hash: FileHash.of(relativePath === KEYBINDINGS ? KEYBINDINGS_CONTENT : relativePath),
         })
-    ),
-    [
-      {
-        relativePath: EXTENSIONS,
-        sectionKey: null,
-        entries: { recommendations: FileHash.of(JSON.stringify(["a.ext"])) },
-      },
-    ]
+    )
   );
+  manifest.updateToolMergeFiles(TOOL.vscode, [
+    {
+      relativePath: EXTENSIONS,
+      sectionKey: null,
+      entries: { recommendations: FileHash.of(JSON.stringify(["a.ext"])) },
+    },
+  ]);
   return { fs, manifest };
 }
 

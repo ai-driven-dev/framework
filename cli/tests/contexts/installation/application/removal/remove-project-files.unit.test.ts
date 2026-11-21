@@ -24,13 +24,13 @@ function removalOver(
 }
 
 function localPlugin(name: string): InstalledPlugin {
-  return InstalledPlugin.fromMetadata(
+  return InstalledPlugin.fromMetadata({
     name,
-    "1.0.0",
-    { kind: "local", path: "/p" },
-    false,
-    "project"
-  );
+    version: "1.0.0",
+    source: { kind: "local", path: "/p" },
+    strict: false,
+    scope: "project",
+  });
 }
 
 describe("RemoveProjectFiles.remove", () => {

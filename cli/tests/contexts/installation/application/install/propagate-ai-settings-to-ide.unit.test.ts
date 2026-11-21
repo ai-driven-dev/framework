@@ -35,10 +35,11 @@ function propagate(
 
 async function withCopilotRegistered(
   deps: Deps,
-  mergeFiles: Parameters<Manifest["addTool"]>[3] = []
+  mergeFiles: Parameters<Manifest["updateToolMergeFiles"]>[1] = []
 ): Promise<Manifest> {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-  manifest.addTool(TOOL.copilot, VERSION, [], mergeFiles);
+  manifest.addTool(TOOL.copilot, VERSION, []);
+  manifest.updateToolMergeFiles(TOOL.copilot, mergeFiles);
   await deps.manifestRepo.save(manifest);
   return manifest;
 }

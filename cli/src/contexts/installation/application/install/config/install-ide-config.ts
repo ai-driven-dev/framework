@@ -53,7 +53,8 @@ export class InstallIdeConfig {
       projectRoot: options.projectRoot,
     });
     const allFiles = [...regularFiles, ...mergeFiles];
-    manifest.addTool(toolId, options.version, allTracked, mergeEntries);
+    manifest.addTool(toolId, options.version, allTracked);
+    manifest.updateToolMergeFiles(toolId, mergeEntries);
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest,

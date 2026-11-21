@@ -233,13 +233,13 @@ describe("clean --scope user: whitelist", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromMetadata(
-          "rogue-plugin",
-          "1.0.0",
-          { kind: "local", path: "/whatever" },
-          false,
-          "user"
-        ).withFiles(new Map([["rogue-plugin/evil.md", "hash"]]))
+        InstalledPlugin.fromMetadata({
+          name: "rogue-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/whatever" },
+          strict: false,
+          scope: "user",
+        }).withFiles(new Map([["rogue-plugin/evil.md", "hash"]]))
       );
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({

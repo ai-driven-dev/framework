@@ -35,9 +35,25 @@ describe("ListRegisteredPlugins", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata("a", "1.0.0", source, false, "project", "m")
+        InstalledPlugin.fromMetadata({
+          name: "a",
+          version: "1.0.0",
+          source,
+          strict: false,
+          scope: "project",
+          marketplace: "m",
+        })
       )
-      .withPlugin(TOOL.claude, InstalledPlugin.fromMetadata("b", "1.0.0", source, false, "project"))
+      .withPlugin(
+        TOOL.claude,
+        InstalledPlugin.fromMetadata({
+          name: "b",
+          version: "1.0.0",
+          source,
+          strict: false,
+          scope: "project",
+        })
+      )
       .build();
 
     await expect(listerOver(manifest).execute({ allowedIds: null })).resolves.toEqual({

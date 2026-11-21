@@ -33,6 +33,17 @@ export interface InstallContentSectionCommand {
   contentFiles: Map<string, string>;
 }
 
+interface SectionContext<Cap extends ContentSectionCapability> {
+  section: ContentSection;
+  cap: Cap;
+  toolConfig: ContentSections;
+}
+
+interface ContentEntry {
+  filePath: string;
+  rawContent: string;
+}
+
 export class InstallContentSection<Cap extends ContentSectionCapability> {
   constructor(private readonly descriptor: ContentSectionDescriptor<Cap>) {}
 
@@ -42,19 +53,15 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
     if (cap === null) return [];
     const results: InstallationFile[] = [];
     for (const [filePath, rawContent] of contentFiles) {
-      const file = this.processFile(filePath, rawContent, section, cap, toolConfig);
+      const file = this.processFile({ filePath, rawContent }, { section, cap, toolConfig });
       if (file !== null) results.push(file);
     }
     return results;
   }
 
-  private processFile(
-    filePath: string,
-    rawContent: string,
-    section: ContentSection,
-    cap: Cap,
-    toolConfig: ContentSections
-  ): InstallationFile | null {
+  private processFile(entry: ContentEntry, context: SectionContext<Cap>): InstallationFile | null {
+    const { filePath } = entry;
+    const { section, cap } = context;
     if (!filePath.startsWith(`${section.directory}/`)) return null;
     const relativeFileName = filePath.slice(`${section.directory}/`.length);
     if (!cap.acceptsFileName(relativeFileName)) return null;
@@ -72,17 +79,17 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
         frameworkPath: filePath,
       });
     }
-    return this.buildFile(filePath, outputPath, relativeFileName, rawContent, cap, toolConfig);
+    return this.buildFile(entry, { outputPath, relativeFileName }, context);
   }
 
   private buildFile(
-    filePath: string,
-    outputPath: string,
-    relativeFileName: string,
-    rawContent: string,
-    cap: Cap,
-    toolConfig: ContentSections
+    entry: ContentEntry,
+    target: { outputPath: string; relativeFileName: string },
+    context: SectionContext<Cap>
   ): InstallationFile {
+    const { filePath, rawContent } = entry;
+    const { outputPath, relativeFileName } = target;
+    const { cap, toolConfig } = context;
     const rewrittenRaw = toolConfig.rewriteContent(rawContent);
     const { frontmatter, body } = parseFrontmatter(rewrittenRaw);
     const convertedFrontmatter = this.descriptor.convertFrontmatter(

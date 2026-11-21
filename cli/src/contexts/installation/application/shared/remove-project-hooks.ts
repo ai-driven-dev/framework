@@ -22,15 +22,26 @@ export interface ProjectHooksGuard {
 export const OVERWRITE_EDITED_HINT =
   "Rerun aidd sync --force to restore it, or aidd clean --force to remove it.";
 
+interface RecordedProjectHooks {
+  readonly pluginName: string;
+  readonly provenance: ProjectHooksProvenance | undefined;
+  readonly tool: ProjectHooksSection;
+  readonly projectRoot: string;
+  readonly guard?: ProjectHooksGuard;
+}
+
+interface PluginProjectHooks {
+  readonly plugin: InstalledPlugin;
+  readonly tool: ProjectHooksSection;
+  readonly projectRoot: string;
+  readonly guard?: ProjectHooksGuard;
+}
+
 /** Preflight the exact project hook entries and scripts installed by AIDD. Does not mutate. */
 export async function assertProjectHooksUnchanged(
-  fs: FileReader,
-  pluginName: string,
-  provenance: ProjectHooksProvenance | undefined,
-  tool: ProjectHooksSection,
-  projectRoot: string,
-  { overwriteEdited = false }: ProjectHooksGuard = {}
+  request: RecordedProjectHooks & { readonly fs: FileReader }
 ): Promise<{ existing: string | null }> {
+  const { fs, pluginName, provenance, tool, projectRoot, guard } = request;
   const delivery = tool.projectHooksDelivery();
   if (delivery === null) return { existing: null };
   const { format, toolName } = delivery;
@@ -50,6 +61,20 @@ export async function assertProjectHooksUnchanged(
     }
     return { existing };
   }
+  const overwriteEdited = guard?.overwriteEdited ?? false;
+  assertEntriesUnchanged({ provenance, currentEntries, toolName, pluginName, overwriteEdited });
+  await assertScriptsUnchanged(request, { format, toolName }, overwriteEdited);
+  return { existing };
+}
+
+function assertEntriesUnchanged(check: {
+  provenance: ProjectHooksProvenance;
+  currentEntries: ReturnType<ProjectHooksFormat["contributedEntries"]>;
+  toolName: string;
+  pluginName: string;
+  overwriteEdited: boolean;
+}): void {
+  const { provenance, currentEntries, toolName, pluginName, overwriteEdited } = check;
   const recorded = provenance.entries.map(
     ({ event, command, digest }) => `${event}\u0000${command}\u0000${digest}`
   );
@@ -66,8 +91,17 @@ export async function assertProjectHooksUnchanged(
       `${toolName} project hooks for '${pluginName}' were edited after install; detach refused. ${OVERWRITE_EDITED_HINT}`
     );
   }
-  for (const [relativePath, digest] of provenance.scripts) {
-    assertScriptPath(format, toolName, pluginName, relativePath);
+}
+
+async function assertScriptsUnchanged(
+  request: RecordedProjectHooks & { readonly fs: FileReader },
+  delivery: { format: ProjectHooksFormat; toolName: string },
+  overwriteEdited: boolean
+): Promise<void> {
+  const { fs, pluginName, provenance, projectRoot } = request;
+  const { format, toolName } = delivery;
+  for (const [relativePath, digest] of provenance?.scripts ?? []) {
+    assertScriptPath({ format, toolName, pluginName, relativePath });
     const path = join(projectRoot, relativePath);
     await assertProjectPathWithinRoot(fs, projectRoot, path);
     if (!(await fs.fileExists(path))) continue;
@@ -82,39 +116,28 @@ export async function assertProjectHooksUnchanged(
       );
     }
   }
-  return { existing };
 }
 
 export async function assertProjectHooksRemovable(
-  fs: FileReader,
-  plugin: InstalledPlugin,
-  tool: ProjectHooksSection,
-  projectRoot: string,
-  guard: ProjectHooksGuard = {}
+  request: PluginProjectHooks & { readonly fs: FileReader }
 ): Promise<void> {
-  await assertProjectHooksUnchanged(fs, plugin.name, plugin.projectHooks, tool, projectRoot, guard);
+  const { plugin, ...rest } = request;
+  await assertProjectHooksUnchanged({
+    ...rest,
+    pluginName: plugin.name,
+    provenance: plugin.projectHooks,
+  });
 }
 
 /** Unmerge only verified hook entries and tracked scripts; never delete a directory by name. */
 export async function removeRecordedProjectHooks(
-  fs: FileReader & FileWriter,
-  pluginName: string,
-  provenance: ProjectHooksProvenance | undefined,
-  tool: ProjectHooksSection,
-  projectRoot: string,
-  guard: ProjectHooksGuard = {}
+  request: RecordedProjectHooks & { readonly fs: FileReader & FileWriter }
 ): Promise<boolean> {
+  const { fs, pluginName, provenance, tool, projectRoot } = request;
   const delivery = tool.projectHooksDelivery();
   if (delivery === null) return false;
   const { format } = delivery;
-  const { existing } = await assertProjectHooksUnchanged(
-    fs,
-    pluginName,
-    provenance,
-    tool,
-    projectRoot,
-    guard
-  );
+  const { existing } = await assertProjectHooksUnchanged(request);
   const hooksPath = join(projectRoot, delivery.relativePath);
   const hasEntries =
     existing !== null && format.contributedEntries(existing, pluginName).length > 0;
@@ -124,26 +147,36 @@ export async function removeRecordedProjectHooks(
     if (format.isEmpty(unmerged)) await fs.deleteFile(hooksPath);
     else await fs.writeFile(hooksPath, unmerged);
   }
-  let removedScript = false;
+  const removedScript = await removeRecordedScripts(fs, projectRoot, provenance);
+  return hasEntries || removedScript;
+}
+
+async function removeRecordedScripts(
+  fs: FileReader & FileWriter,
+  projectRoot: string,
+  provenance: ProjectHooksProvenance | undefined
+): Promise<boolean> {
+  let removed = false;
   for (const relativePath of provenance?.scripts.keys() ?? []) {
     const path = join(projectRoot, relativePath);
     if (!(await fs.fileExists(path))) continue;
     await assertProjectPathWithinRoot(fs, projectRoot, path);
     await fs.deleteFile(path);
     await fs.deleteEmptyDirectories(dirname(path));
-    removedScript = true;
+    removed = true;
   }
-  return hasEntries || removedScript;
+  return removed;
 }
 
 export async function removeProjectHooks(
-  fs: FileReader & FileWriter,
-  plugin: InstalledPlugin,
-  tool: ProjectHooksSection,
-  projectRoot: string,
-  guard: ProjectHooksGuard = {}
+  request: PluginProjectHooks & { readonly fs: FileReader & FileWriter }
 ): Promise<boolean> {
-  return removeRecordedProjectHooks(fs, plugin.name, plugin.projectHooks, tool, projectRoot, guard);
+  const { plugin, ...rest } = request;
+  return removeRecordedProjectHooks({
+    ...rest,
+    pluginName: plugin.name,
+    provenance: plugin.projectHooks,
+  });
 }
 
 /** Hash of one merged hook entry, independent of other plugins' entries. */
@@ -174,12 +207,13 @@ function assertParsableJson(content: string, relativePath: string): void {
   }
 }
 
-function assertScriptPath(
-  format: ProjectHooksFormat,
-  toolName: string,
-  pluginName: string,
-  relativePath: string
-): void {
+function assertScriptPath(script: {
+  format: ProjectHooksFormat;
+  toolName: string;
+  pluginName: string;
+  relativePath: string;
+}): void {
+  const { format, toolName, pluginName, relativePath } = script;
   const prefix = format.scriptDir(pluginName);
   if (
     !relativePath.startsWith(prefix) ||

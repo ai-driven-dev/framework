@@ -5,7 +5,7 @@ import { ToolNotInstalledError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../ports/native-host.js";
-import type { RemoveToolFiles } from "./removal/remove-tool-files.js";
+import type { RemoveToolFiles, ToolRemoval } from "./removal/remove-tool-files.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
 export interface UninstallToolsCommand {
@@ -67,7 +67,9 @@ export class UninstallTools {
 
     const results: UninstallToolsResult[] = [];
     for (const toolId of toolIds) {
-      results.push(await this.removeOneTool(toolId, toolIds, manifest, projectRoot));
+      results.push(
+        await this.removeOneTool({ toolId, allToolIds: toolIds, manifest, projectRoot })
+      );
     }
 
     await this.manifestRepo.save(manifest);
@@ -83,18 +85,9 @@ export class UninstallTools {
     return manifest;
   }
 
-  private async removeOneTool(
-    toolId: ToolId,
-    allToolIds: ToolId[],
-    manifest: Manifest,
-    projectRoot: string
-  ): Promise<UninstallToolsResult> {
-    const deletedFiles = await this.removeToolFiles.remove({
-      toolId,
-      allToolIds,
-      manifest,
-      projectRoot,
-    });
+  private async removeOneTool(removal: ToolRemoval): Promise<UninstallToolsResult> {
+    const { toolId, manifest } = removal;
+    const deletedFiles = await this.removeToolFiles.remove(removal);
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
   }

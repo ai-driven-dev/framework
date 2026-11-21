@@ -19,9 +19,25 @@ describe("ListPluginSources", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata("a", "1.0.0", source, false, "project", "mkt")
+        InstalledPlugin.fromMetadata({
+          name: "a",
+          version: "1.0.0",
+          source,
+          strict: false,
+          scope: "project",
+          marketplace: "mkt",
+        })
       )
-      .withPlugin(TOOL.claude, InstalledPlugin.fromMetadata("b", "1.0.0", source, false, "project"))
+      .withPlugin(
+        TOOL.claude,
+        InstalledPlugin.fromMetadata({
+          name: "b",
+          version: "1.0.0",
+          source,
+          strict: false,
+          scope: "project",
+        })
+      )
       .build();
     const useCase = new ListPluginSources(
       new InMemoryManifestRepository(manifest),

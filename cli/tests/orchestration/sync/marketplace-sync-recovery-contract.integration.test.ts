@@ -96,14 +96,14 @@ async function recovery(options: RecoveryOptions = {}) {
   ]);
   manifest.addPlugin(
     TOOL.claude,
-    InstalledPlugin.fromMetadata(
-      "review",
-      "1.0.0",
-      { kind: "local", path: "/plugins/review" },
-      true,
-      "project",
-      ALIAS
-    )
+    InstalledPlugin.fromMetadata({
+      name: "review",
+      version: "1.0.0",
+      source: { kind: "local", path: "/plugins/review" },
+      strict: true,
+      scope: "project",
+      marketplace: ALIAS,
+    })
   );
   manifest.setNativeRegistrations(TOOL.claude, {
     binary: "claude",
@@ -547,14 +547,14 @@ async function ownedNativeSettings(
     if (options.withPlugins !== false)
       project.addPlugin(
         toolId,
-        InstalledPlugin.fromMetadata(
-          `review-${name}`,
-          "1.0.0",
-          { kind: "local", path: `/sources/${name}/review` },
-          true,
-          "project",
-          registration.alias
-        )
+        InstalledPlugin.fromMetadata({
+          name: `review-${name}`,
+          version: "1.0.0",
+          source: { kind: "local", path: `/sources/${name}/review` },
+          strict: true,
+          scope: "project",
+          marketplace: registration.alias,
+        })
       );
   }
   const activator = new FakeHostActions({ available: true });

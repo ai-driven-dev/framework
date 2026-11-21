@@ -43,13 +43,13 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
     { ...fakeBuiltDeps(), homedir },
     options.globalCacheDir
   );
-  const plugin = InstalledPlugin.fromMetadata(
-    "sample-plugin",
-    installedVersion,
-    { kind: "local", path: "/source" },
-    false,
-    "user"
-  ).withDependents(["/A", "/B"]);
+  const plugin = InstalledPlugin.fromMetadata({
+    name: "sample-plugin",
+    version: installedVersion,
+    source: { kind: "local", path: "/source" },
+    strict: false,
+    scope: "user",
+  }).withDependents(["/A", "/B"]);
   const base = join(homedir(), ".cursor/plugins/local");
   return { fs, logger, updater, plugin, base, content, fetcher };
 }

@@ -112,14 +112,15 @@ export class InstalledPlugin {
     this.dependents = params.dependents;
   }
 
-  static fromMetadata(
-    name: string,
-    version: string,
-    source: PluginSource,
-    strict: boolean,
-    scope: Scope,
-    marketplace?: string
-  ): InstalledPlugin {
+  static fromMetadata(metadata: {
+    name: string;
+    version: string;
+    source: PluginSource;
+    strict: boolean;
+    scope: Scope;
+    marketplace?: string;
+  }): InstalledPlugin {
+    const { name, version, source, strict, scope, marketplace } = metadata;
     const data: PluginEntryData = {
       name,
       source: serializePluginSource(source),
@@ -170,14 +171,15 @@ export class InstalledPlugin {
     });
   }
 
-  static fromDistribution(
-    dist: PluginDistribution,
-    source: PluginSource,
-    files: InstallationFile[],
-    scope: Scope,
-    componentPaths?: ReadonlyMap<string, string>,
-    marketplace?: string
-  ): InstalledPlugin {
+  static fromDistribution(installed: {
+    dist: PluginDistribution;
+    source: PluginSource;
+    files: InstallationFile[];
+    scope: Scope;
+    componentPaths?: ReadonlyMap<string, string>;
+    marketplace?: string;
+  }): InstalledPlugin {
+    const { dist, source, files, scope, componentPaths, marketplace } = installed;
     const filesRecord: Record<string, string> = {};
     for (const f of files) {
       filesRecord[f.relativePath] = f.hash.value;
@@ -200,23 +202,15 @@ export class InstalledPlugin {
   }
 
   static fromDistributionWithMcp(
-    dist: PluginDistribution,
-    source: PluginSource,
-    files: InstallationFile[],
-    mcpEntries: ReadonlyMap<string, string>,
-    scope: Scope,
-    componentPaths?: ReadonlyMap<string, string>,
-    marketplace?: string
+    installed: Parameters<typeof InstalledPlugin.fromDistribution>[0] & {
+      mcpEntries: ReadonlyMap<string, string>;
+    }
   ): InstalledPlugin {
-    const base = InstalledPlugin.fromDistribution(
-      dist,
-      source,
-      files,
-      scope,
-      componentPaths,
-      marketplace
+    const { mcpEntries, ...distribution } = installed;
+    return InstalledPlugin.withMcpEntries(
+      InstalledPlugin.fromDistribution(distribution),
+      mcpEntries
     );
-    return InstalledPlugin.withMcpEntries(base, mcpEntries);
   }
 
   static fromJSON(data: PluginEntryData): InstalledPlugin {

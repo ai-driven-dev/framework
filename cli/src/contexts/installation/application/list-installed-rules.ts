@@ -56,12 +56,12 @@ export class ListInstalledRules {
     for (const file of found.filter((path) => path.endsWith(location.extension))) {
       const content = await this.files.readFile(file);
       rules.push(
-        toInstalledRule(
-          toolId,
-          projectRelative(projectRoot, file, this.platform),
-          location.extension,
-          content
-        )
+        toInstalledRule({
+          tool: toolId,
+          path: projectRelative(projectRoot, file, this.platform),
+          extension: location.extension,
+          content,
+        })
       );
     }
     return rules;

@@ -40,14 +40,14 @@ describe("native catalogue source provenance", () => {
     if (options.plugin !== false)
       project.addPlugin(
         toolId,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          "alias"
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: "alias",
+        })
       );
     const projectRepo = new InMemoryManifestRepository(project);
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
@@ -383,14 +383,14 @@ describe("native catalogue source provenance", () => {
         .withTool(codex, [])
         .withPlugin(
           codex,
-          InstalledPlugin.fromMetadata(
-            "test-plugin",
-            "1.0.0",
-            { kind: "local", path: "/source" },
-            true,
-            "project",
-            "alias"
-          )
+          InstalledPlugin.fromMetadata({
+            name: "test-plugin",
+            version: "1.0.0",
+            source: { kind: "local", path: "/source" },
+            strict: true,
+            scope: "project",
+            marketplace: "alias",
+          })
         )
         .build();
       const projectRepo = new InMemoryManifestRepository(project);
@@ -511,14 +511,14 @@ describe("native catalogue source provenance", () => {
         .withTool(copilot, [])
         .withPlugin(
           copilot,
-          InstalledPlugin.fromMetadata(
-            "test-plugin",
-            "1.0.0",
-            { kind: "local", path: "/source" },
-            true,
-            "project",
-            "alias"
-          )
+          InstalledPlugin.fromMetadata({
+            name: "test-plugin",
+            version: "1.0.0",
+            source: { kind: "local", path: "/source" },
+            strict: true,
+            scope: "project",
+            marketplace: "alias",
+          })
         )
         .build();
       const projectRepo = new InMemoryManifestRepository(project);
@@ -580,14 +580,14 @@ describe("native catalogue source provenance", () => {
       .withTool(codex, [])
       .withPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          "alias"
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: "alias",
+        })
       )
       .build();
     const projectRepo = new InMemoryManifestRepository(project);
@@ -661,14 +661,14 @@ describe("native catalogue source provenance", () => {
       .withTool(codex, [])
       .withPlugin(
         codex,
-        InstalledPlugin.fromMetadata(
-          "test-plugin",
-          "1.0.0",
-          { kind: "local", path: "/source" },
-          true,
-          "project",
-          "alias"
-        )
+        InstalledPlugin.fromMetadata({
+          name: "test-plugin",
+          version: "1.0.0",
+          source: { kind: "local", path: "/source" },
+          strict: true,
+          scope: "project",
+          marketplace: "alias",
+        })
       )
       .build();
     const registryB = new InMemoryMarketplaceRegistry();
