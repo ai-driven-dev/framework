@@ -1,17 +1,16 @@
 import { resolve } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
-import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/manifest/drift.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
+import type { Manifest } from "../../domain/manifest.js";
+import type { HostRegistrationOutcome } from "../../ports/native-host.js";
+import {
+  type MachineClaimsRequest,
+  RecordMachineClaims,
+  type RecordMachineClaimsDeps,
+} from "./record-machine-claims.js";
 
 /** What a run observed or caused. Each answer says whether it changed a manifest. */
 export type RecordActivationRequest =
@@ -27,30 +26,23 @@ export type RecordActivationRequest =
       readonly manifest: Manifest;
       readonly activated: readonly ToolId[];
     }
-  | {
-      readonly kind: "machine-claims";
-      readonly project: Manifest;
-      readonly outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
-      readonly marketplaces: readonly DeclaredMarketplace[];
-      readonly scope: Scope;
-      readonly projectRoot?: string;
-    };
+  | MachineClaimsRequest;
 
 type Of<K extends RecordActivationRequest["kind"]> = Extract<RecordActivationRequest, { kind: K }>;
 
 /** What RecordActivation is built from. */
-export interface RecordActivationDeps {
-  readonly fs: FileReader & FileWriter;
-  readonly records: RegistrationRecordRules;
-  readonly userManifestRepo?: ManifestRepository & Lock;
-}
+export type RecordActivationDeps = RecordMachineClaimsDeps;
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
+  private readonly machineClaims: RecordMachineClaims;
+
   constructor(
     private readonly deps: RecordActivationDeps,
     private readonly tools: ToolCatalog
-  ) {}
+  ) {
+    this.machineClaims = new RecordMachineClaims(deps, tools);
+  }
 
   async execute(request: RecordActivationRequest): Promise<boolean> {
     switch (request.kind) {
@@ -59,7 +51,7 @@ export class RecordActivation {
       case "settings-written-by-host":
         return this.recordWhatActivationWrote(request);
       case "machine-claims":
-        return this.recordMachinePluginClaims(request);
+        return this.machineClaims.execute(request);
     }
   }
 
@@ -97,22 +89,26 @@ export class RecordActivation {
   }: Of<"settings-written-by-host">): Promise<boolean> {
     let changed = false;
     for (const toolId of activated) {
-      const settingsPath = this.marketplaceSettingsOf(toolId)?.sharedSettingsFile();
-      if (settingsPath === undefined) continue;
-      const tracked = manifest
-        .getToolFiles(toolId)
-        .find((file) => file.relativePath === settingsPath);
-      if (tracked === undefined) continue;
-      const content = await this.deps.fs
-        .readFile(resolve(projectRoot, settingsPath))
-        .catch(() => null);
-      if (content === null) continue;
-      const hash = FileHash.of(content);
-      if (driftOf(tracked.hash.value, hash) === "ok") continue;
-      manifest.recordFileHash(toolId, settingsPath, hash);
-      changed = true;
+      if (await this.rehashHostSettings({ projectRoot, manifest }, toolId)) changed = true;
     }
     return changed;
+  }
+
+  private async rehashHostSettings(
+    { projectRoot, manifest }: { projectRoot: string; manifest: Manifest },
+    toolId: ToolId
+  ): Promise<boolean> {
+    const settingsPath = this.marketplaceSettingsOf(toolId)?.sharedSettingsFile();
+    const tracked = manifest.getToolFiles(toolId).find((f) => f.relativePath === settingsPath);
+    if (settingsPath === undefined || tracked === undefined) return false;
+    const content = await this.deps.fs
+      .readFile(resolve(projectRoot, settingsPath))
+      .catch(() => null);
+    if (content === null) return false;
+    const hash = FileHash.of(content);
+    if (driftOf(tracked.hash.value, hash) === "ok") return false;
+    manifest.recordFileHash(toolId, settingsPath, hash);
+    return true;
   }
 
   private marketplaceSettingsOf(toolId: ToolId): MarketplaceRegistrationAnswers | undefined {
@@ -121,61 +117,5 @@ export class RecordActivation {
 
   private nativeActivationBinary(toolId: ToolId): string | undefined {
     return this.tools.aiProfileIfAny(toolId)?.nativeActivation()?.hostBinary();
-  }
-
-  private async recordMachinePluginClaims(request: Of<"machine-claims">): Promise<boolean> {
-    if (this.deps.userManifestRepo === undefined) return false;
-    const machine = (await this.deps.userManifestRepo.load()) ?? Manifest.create();
-    const root =
-      request.projectRoot === undefined
-        ? undefined
-        : await this.deps.fs.realpath(request.projectRoot);
-    let changed = false;
-    for (const [toolId, outcome] of request.outcomes) {
-      const claims = this.machineClaimsOf(toolId, outcome, request);
-      if (claims.refs.length === 0 && claims.marketplaces.length === 0) continue;
-      if (!this.machineTracks(machine, request.project, toolId)) continue;
-      const merged = this.deps.records.mergeCatalogueClaims(
-        machine.getNativeRegistrations(toolId),
-        { ...claims, dependent: root },
-        this.nativeActivationBinary(toolId) ?? toolId
-      );
-      changed ||= merged.changed;
-      if (changed) machine.setNativeRegistrations(toolId, merged.record);
-    }
-    if (changed) await this.deps.userManifestRepo.save(machine);
-    return changed;
-  }
-
-  /** Adds the tool to the machine record at the project's version; false when the project has none. */
-  private machineTracks(machine: Manifest, project: Manifest, toolId: ToolId): boolean {
-    if (machine.hasTool(toolId)) return true;
-    const version = project.getToolVersion(toolId);
-    if (version === undefined) return false;
-    machine.addTool(toolId, version, []);
-    return true;
-  }
-
-  /** What of one tool's outcome reaches the machine record. */
-  private machineClaimsOf(
-    toolId: ToolId,
-    outcome: HostRegistrationOutcome,
-    { scope, marketplaces }: Pick<Of<"machine-claims">, "scope" | "marketplaces">
-  ) {
-    const global = this.enablementIsMachineGlobal(toolId);
-    return {
-      refs: scope === "user" || global ? outcome.pluginRefs : [],
-      marketplaces: outcome.catalogClaims.filter((registration) =>
-        marketplaces.some(
-          (marketplace) =>
-            marketplace.name === registration.alias && (marketplace.scope === "user" || global)
-        )
-      ),
-    };
-  }
-
-  /** Whether enabling a plugin acts on the whole machine; true for an editor. */
-  private enablementIsMachineGlobal(toolId: ToolId): boolean {
-    return this.tools.aiProfileIfAny(toolId)?.pluginEnablementIsMachineGlobal() ?? true;
   }
 }

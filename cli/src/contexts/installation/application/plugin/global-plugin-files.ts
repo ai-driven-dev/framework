@@ -80,6 +80,31 @@ async function tryRealpath(fs: FileReader, path: string): Promise<string | null>
   }
 }
 
+/** The nearest existing parent of the file must resolve inside the boundary; nothing to check
+ * above a parent that does not exist yet. */
+async function assertParentWithin(
+  write: {
+    fs: FileReader;
+    tool: PluginPlacement;
+    pluginName: string;
+    file: InstallationFile;
+    boundary: string;
+    resolvedBoundary: string;
+  },
+  isWithinUserScope: ContainmentCheck
+): Promise<void> {
+  const { fs, tool, pluginName, file, boundary, resolvedBoundary } = write;
+  let parent = dirname(join(boundary, file.relativePath));
+  while (parent !== boundary) {
+    const resolved = await tryRealpath(fs, parent);
+    if (resolved !== null) {
+      if (isWithinUserScope(resolved, resolvedBoundary)) return;
+      throw new Error(`${tool.toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);
+    }
+    parent = dirname(parent);
+  }
+}
+
 async function assertFileWritable(
   write: {
     readonly fs: FileReader & FileWriter;
@@ -92,23 +117,13 @@ async function assertFileWritable(
   },
   isWithinUserScope: ContainmentCheck
 ): Promise<void> {
-  const { fs, tool, plugin, pluginName, file, boundary, resolvedBoundary } = write;
+  const { fs, tool, plugin, pluginName, file, boundary } = write;
   const { toolId } = tool;
   const rel = file.relativePath;
   if (posix.isAbsolute(rel) || rel.includes("\\") || posix.normalize(rel) !== rel) {
     throw new Error(`${toolId}: '${pluginName}' path '${rel}' escapes ${boundary}.`);
   }
-  let parent = dirname(join(boundary, rel));
-  while (parent !== boundary) {
-    const resolved = await tryRealpath(fs, parent);
-    if (resolved !== null) {
-      if (!isWithinUserScope(resolved, resolvedBoundary)) {
-        throw new Error(`${toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);
-      }
-      break;
-    }
-    parent = dirname(parent);
-  }
+  await assertParentWithin(write, isWithinUserScope);
   if (plugin?.files.has(rel) === true) return;
   const target = join(boundary, rel);
   if (!(await fs.fileExists(target))) return;

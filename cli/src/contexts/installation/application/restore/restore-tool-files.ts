@@ -140,10 +140,14 @@ export class RestoreToolFiles {
     const mergeFiles = mergeSection?.updatedMergeFiles ?? [...manifest.getMergeFiles(toolId)];
     manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, files);
     manifest.updateToolMergeFiles(toolId, mergeFiles);
-    const restored = [...(section?.restored ?? []), ...(mergeSection?.restored ?? [])];
-    const kept = [...(section?.kept ?? []), ...(mergeSection?.kept ?? [])];
-    const unrestorable = [...(section?.unrestorable ?? []), ...(mergeSection?.unrestorable ?? [])];
-    return { toolId, nothingToRestore: false, restored, kept, unrestorable };
+    const sectionsDone = [section, mergeSection];
+    return {
+      toolId,
+      nothingToRestore: false,
+      restored: sectionsDone.flatMap((s) => s?.restored ?? []),
+      kept: sectionsDone.flatMap((s) => s?.kept ?? []),
+      unrestorable: sectionsDone.flatMap((s) => s?.unrestorable ?? []),
+    };
   }
 
   private existingFilesAsGenerated(

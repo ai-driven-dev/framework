@@ -1,7 +1,9 @@
+import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
+import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { MachineStatePurge } from "../ports/machine-state-purge.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { UserRegistrationWithdrawal } from "../ports/native-host.js";
@@ -102,22 +104,30 @@ export class PurgeUserScopeFiles implements UserScopePurge {
 
   private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {
     const home = this.deps.homeDir();
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (!this.tools.isAiTool(toolId)) continue;
-      for (const plugin of manifest.getPlugins(toolId)) {
-        if (plugin.scope !== "user") continue;
-        const safe = await this.deps.userScopePluginFiles.proven(
-          plugin,
-          this.tools.aiProfile(toolId),
-          home
+    for (const { toolId, plugin } of this.userPluginsOf(manifest)) {
+      const safe = await this.deps.userScopePluginFiles.proven(
+        plugin,
+        this.tools.aiProfile(toolId),
+        home
+      );
+      if (safe.size !== plugin.files.size) {
+        throw new Error(
+          `User clean refused: a tracked file of '${plugin.name}' escaped its user-scope boundary; canonical claims retained.`
         );
-        if (safe.size !== plugin.files.size) {
-          throw new Error(
-            `User clean refused: a tracked file of '${plugin.name}' escaped its user-scope boundary; canonical claims retained.`
-          );
-        }
       }
     }
+  }
+
+  private userPluginsOf(manifest: Manifest): Array<{ toolId: AiToolId; plugin: InstalledPlugin }> {
+    return manifest
+      .getInstalledToolIds()
+      .filter((toolId) => this.tools.isAiTool(toolId))
+      .flatMap((toolId) =>
+        manifest
+          .getPlugins(toolId)
+          .filter((plugin) => plugin.scope === "user")
+          .map((plugin) => ({ toolId, plugin }))
+      );
   }
 
   /** The host registrations this machine recorded, one per tool, each with the refs a canonical
@@ -150,14 +160,10 @@ export class PurgeUserScopeFiles implements UserScopePurge {
    * install, is left in place and named. */
   private async purgeUserPluginFiles(manifest: Manifest, projectRoot: string): Promise<void> {
     const home = this.deps.homeDir();
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (!this.tools.isAiTool(toolId)) continue;
-      for (const plugin of manifest.getPlugins(toolId)) {
-        if (plugin.scope !== "user") continue;
-        const tool = this.tools.aiProfile(toolId);
-        const files = await this.deps.userScopePluginFiles.proven(plugin, tool, home);
-        await this.deps.userScopePluginFiles.remove(files, tool, projectRoot);
-      }
+    for (const { toolId, plugin } of this.userPluginsOf(manifest)) {
+      const tool = this.tools.aiProfile(toolId);
+      const files = await this.deps.userScopePluginFiles.proven(plugin, tool, home);
+      await this.deps.userScopePluginFiles.remove(files, tool, projectRoot);
     }
   }
 }

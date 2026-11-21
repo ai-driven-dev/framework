@@ -48,16 +48,22 @@ export class DetectPluginDrift {
   async execute(options: DetectPluginDriftCommand): Promise<PluginDrift[]> {
     const { manifest, projectRoot, toolIds, pluginName } = options;
     const drifts: PluginDrift[] = [];
-    for (const toolId of toolIds) {
-      if (!this.tools.isAiTool(toolId)) continue;
-      const plugins = manifest.getPlugins(toolId);
-      const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
-      for (const plugin of targets) {
+    for (const toolId of [...toolIds].filter((id) => this.tools.isAiTool(id))) {
+      for (const plugin of this.targetPlugins(manifest, toolId, pluginName)) {
         const drift = await this.driftOfPlugin(plugin, toolId, projectRoot);
         if (drift !== null) drifts.push(drift);
       }
     }
     return drifts;
+  }
+
+  private targetPlugins(
+    manifest: DetectPluginDriftCommand["manifest"],
+    toolId: AiToolId,
+    pluginName: string | undefined
+  ): readonly InstalledPlugin[] {
+    const plugins = manifest.getPlugins(toolId);
+    return pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
   }
 
   private async driftOfPlugin(

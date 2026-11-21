@@ -7,24 +7,8 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { RestoreAllPlugins, RestoreAllPluginsResult } from "./restore-all-plugins.js";
+import { buildFileFilter, configRefsOf } from "./restore-inputs.js";
 import type { RestoreToolFiles, RestoreToolFilesResult } from "./restore-tool-files.js";
-
-/**
- * Where each config artifact sits in the canonical source, asked of every registered profile
- * through the artifacts its capabilities consume, so restoring knows artifacts, not tools.
- * An artifact several tools consume is named once.
- */
-function configRefsOf(tools: ToolCatalog): readonly ConfigRef[] {
-  const byName = new Map<string, ConfigRef>();
-  for (const id of tools.sortedIds()) {
-    const profile = tools.profile(id);
-    for (const write of profile.configWrites()) {
-      if (write.kind === "hooks") continue;
-      for (const ref of write.capability.consumedRefs()) byName.set(ref.name, ref);
-    }
-  }
-  return [...byName.values()];
-}
 
 interface RestoreCommand {
   frameworkPath?: string;
@@ -179,18 +163,4 @@ export class Restore {
     }
     return contentFiles;
   }
-}
-
-function buildFileFilter(files: string[] | undefined): ((p: string) => boolean) | null {
-  if (!files || files.length === 0) return null;
-  return (relativePath: string) =>
-    files.some((entry) => {
-      const basename = entry.split("/").at(-1) ?? entry;
-      const isDirectoryPrefix = entry.endsWith("/") || !basename.includes(".");
-      if (isDirectoryPrefix) {
-        const prefix = entry.endsWith("/") ? entry : `${entry}/`;
-        return relativePath.startsWith(prefix);
-      }
-      return relativePath === entry;
-    });
 }
