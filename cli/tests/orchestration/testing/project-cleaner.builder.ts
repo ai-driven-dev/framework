@@ -39,7 +39,7 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
       {
         homeDir: parts.homeDir ?? resolveHomeDir,
         assertMcpRemovable: (plugin, tool, projectRoot) =>
-          assertProjectMcpEntriesRemovable(parts.fs, plugin, tool, projectRoot),
+          assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
         records: registrationRecordRules,
       },
       new RemoveProjectFiles(

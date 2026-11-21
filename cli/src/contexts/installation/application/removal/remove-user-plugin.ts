@@ -5,6 +5,7 @@ import {
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
@@ -18,6 +19,9 @@ export interface UserPluginRemoveOptions {
   /** The home directory the plugin's files are proven under. */
   home: string;
 }
+
+type FileTargets = ReturnType<RemoveUserPlugin<unknown>["fileTargets"]>;
+type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 
 /** Removes a machine-scope plugin, serialised through the machine manifest. */
 export class RemoveUserPlugin<Proof> {
@@ -37,22 +41,63 @@ export class RemoveUserPlugin<Proof> {
   }
 
   private async removeUserPlugin(options: UserPluginRemoveOptions): Promise<void> {
-    const repo = this.userRepo;
-    const manifest = await requireManifest(repo);
+    const manifest = await requireManifest(this.userRepo);
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
-    const targets = toolIds.flatMap((toolId) => {
+    const targets = this.fileTargets(manifest, toolIds, options);
+    const nativeTargets = this.nativeTargets(manifest, toolIds, options);
+    this.assertRemovable(options, targets, nativeTargets);
+    const safeFiles = await this.proveFiles(targets, options);
+    const nativeRemoval = await this.proveNativeRefs(nativeTargets, options);
+    for (const target of nativeRemoval) {
+      await this.withdrawFromHost.uninstallProven(target.proven);
+      manifest.setNativeRegistrations(
+        target.toolId,
+        this.records.withoutClaimedRef(target.registrations, target.claim.ref)
+      );
+    }
+    for (const { toolId, plugin, files } of safeFiles) {
+      await this.userScopePluginFiles.remove(
+        files,
+        this.tools.aiProfile(toolId),
+        options.projectRoot
+      );
+      manifest.removePlugin(toolId, plugin.name);
+    }
+    await this.userRepo.save(manifest);
+  }
+
+  private fileTargets(
+    manifest: Manifest,
+    toolIds: readonly AiToolId[],
+    options: UserPluginRemoveOptions
+  ) {
+    return toolIds.flatMap((toolId) => {
       const plugin = manifest
         .getPlugins(toolId)
         .find((p) => p.name === options.pluginName && p.scope === "user");
       return plugin === undefined ? [] : [{ toolId, plugin }];
     });
-    const nativeTargets = toolIds.flatMap((toolId) => {
+  }
+
+  private nativeTargets(
+    manifest: Manifest,
+    toolIds: readonly AiToolId[],
+    options: UserPluginRemoveOptions
+  ) {
+    return toolIds.flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return (registrations.pluginClaims ?? [])
         .filter((claim) => this.records.refSelectedBy(claim.ref, options.pluginName))
         .map((claim) => ({ toolId, registrations, claim }));
     });
+  }
+
+  private assertRemovable(
+    options: UserPluginRemoveOptions,
+    targets: FileTargets,
+    nativeTargets: NativeTargets
+  ): void {
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
     if (!this.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
@@ -72,7 +117,10 @@ export class RemoveUserPlugin<Proof> {
         dependents
       );
     }
-    const safeFiles = await Promise.all(
+  }
+
+  private proveFiles(targets: FileTargets, options: UserPluginRemoveOptions) {
+    return Promise.all(
       targets.map(async ({ toolId, plugin }) => {
         const files = await this.userScopePluginFiles.proven(
           plugin,
@@ -86,7 +134,10 @@ export class RemoveUserPlugin<Proof> {
         return { toolId, plugin, files };
       })
     );
-    const nativeRemoval = await Promise.all(
+  }
+
+  private proveNativeRefs(nativeTargets: NativeTargets, options: UserPluginRemoveOptions) {
+    return Promise.all(
       nativeTargets.map(async ({ toolId, registrations, claim }) => ({
         toolId,
         registrations,
@@ -98,21 +149,5 @@ export class RemoveUserPlugin<Proof> {
         ),
       }))
     );
-    for (const target of nativeRemoval) {
-      await this.withdrawFromHost.uninstallProven(target.proven);
-      manifest.setNativeRegistrations(
-        target.toolId,
-        this.records.withoutClaimedRef(target.registrations, target.claim.ref)
-      );
-    }
-    for (const { toolId, plugin, files } of safeFiles) {
-      await this.userScopePluginFiles.remove(
-        files,
-        this.tools.aiProfile(toolId),
-        options.projectRoot
-      );
-      manifest.removePlugin(toolId, plugin.name);
-    }
-    await repo.save(manifest);
   }
 }

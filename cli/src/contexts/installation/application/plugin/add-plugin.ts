@@ -210,7 +210,7 @@ export class AddPlugin implements PluginAdd {
       const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
       if (previous === undefined) continue;
       const tool = this.tools.aiProfile(toolId);
-      await assertProjectMcpEntriesRemovable(this.fs, previous, tool, projectRoot);
+      await assertProjectMcpEntriesRemovable(this.fs, { plugin: previous, tool, projectRoot });
       await assertProjectHooksRemovable(this.fs, previous, tool, projectRoot);
     }
   }

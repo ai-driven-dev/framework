@@ -43,7 +43,7 @@ export class RemovePlugin {
     });
     for (const { toolId, plugin } of named) {
       const tool = this.tools.aiProfile(toolId);
-      await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, projectRoot);
+      await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
       await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
       await this.withdrawal.assertSource({
         toolId,

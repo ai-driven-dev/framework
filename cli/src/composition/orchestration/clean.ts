@@ -114,7 +114,7 @@ export function wireClean(base: Base, inst: Installation) {
     {
       homeDir: resolveHomeDir,
       assertMcpRemovable: (plugin, tool, projectRoot) =>
-        assertProjectMcpEntriesRemovable(fs, plugin, tool, projectRoot),
+        assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
       records: registrationRecordRules,
     },
     new RemoveProjectFiles(fs, manifestRepo, logger, updateGitignore, tools),

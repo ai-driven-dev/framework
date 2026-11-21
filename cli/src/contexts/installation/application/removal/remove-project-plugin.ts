@@ -14,19 +14,23 @@ import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remov
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(
   fs: FileReader,
-  plugin: InstalledPlugin,
-  tool: FlatMcpSection,
-  projectRoot: string
+  removal: ProjectMcpRemoval
 ): Promise<void> {
-  await planProjectMcpRemoval(fs, plugin, tool, projectRoot);
+  await planProjectMcpRemoval(fs, removal);
+}
+
+/** The plugin whose MCP servers leave the project config of one tool. */
+export interface ProjectMcpRemoval {
+  readonly plugin: InstalledPlugin;
+  readonly tool: FlatMcpSection;
+  readonly projectRoot: string;
 }
 
 async function planProjectMcpRemoval(
   fs: FileReader,
-  plugin: InstalledPlugin,
-  tool: FlatMcpSection,
-  projectRoot: string
+  removal: ProjectMcpRemoval
 ): Promise<{ output: string; content: string } | undefined> {
+  const { plugin, tool, projectRoot } = removal;
   if (plugin.mcpEntries.size === 0) return undefined;
   const mcp = tool.flatPluginMcp();
   if (mcp === null) return undefined;
@@ -64,7 +68,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, projectRoot);
+    await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
     await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
   }
 
@@ -73,7 +77,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    const mcpUpdate = await planProjectMcpRemoval(this.fs, plugin, tool, projectRoot);
+    const mcpUpdate = await planProjectMcpRemoval(this.fs, { plugin, tool, projectRoot });
     await removeProjectHooks(this.fs, plugin, tool, projectRoot);
     if (mcpUpdate !== undefined) {
       await assertProjectPathWithinRoot(this.fs, projectRoot, mcpUpdate.output);
