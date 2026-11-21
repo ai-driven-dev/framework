@@ -7,8 +7,8 @@
  * reach this instead.
  */
 import { join } from "node:path";
-import { InvalidSourceMarketplaceError } from "../../../shared/domain/errors/invalid-source-marketplace-error.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { InvalidSourceMarketplaceError } from "../../../shared/domain/shared.error.js";
 import type { BuildFileReader, PluginPresence } from "../contract/build-contract.js";
 
 type SrcEntry =

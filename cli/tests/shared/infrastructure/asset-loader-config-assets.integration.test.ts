@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { AssetNotFoundError } from "../../../src/shared/domain/errors/asset-not-found-error.js";
+import { AssetNotFoundError } from "../../../src/shared/domain/shared.error.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { registeredTools, TOOL } from "../testing/registered-tools.builder.js";
 

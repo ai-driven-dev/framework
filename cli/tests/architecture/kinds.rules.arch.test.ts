@@ -13,6 +13,7 @@ import {
   compositionViolations,
   constructionViolations,
   contractReaderViolations,
+  controllerBuildsErrorViolations,
   drivingPortViolations,
   errorViolations,
   instructionViolations,
@@ -63,7 +64,7 @@ function errorCodeViolations(files: Record<string, string>): {
   malformed: string[];
 } {
   const codes = Object.entries(files)
-    .filter(([path]) => path.endsWith(".error.ts") || path.startsWith("src/shared/domain/errors/"))
+    .filter(([path]) => path.endsWith(".error.ts"))
     .flatMap(([, text]) => [
       ...[...text.matchAll(/readonly code = "([^"]+)"/g)].map((match) => match[1] ?? ""),
       ...[...(/type \w+Code = ([^;]+);/.exec(text)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
@@ -123,9 +124,7 @@ describe("an error class is thrown", () => {
 
   it("holds the catalog of the tree", () => {
     const files = src();
-    const declaring = Object.keys(files).filter(
-      (path) => path.startsWith("src/shared/domain/errors/") || path.endsWith(".error.ts")
-    );
+    const declaring = Object.keys(files).filter((path) => path.endsWith(".error.ts"));
     expect(declaring.length, "the catalog moved").toBeGreaterThan(0);
     expectUpToDebt(errorViolations(files, declaring), "thrown");
   });
@@ -641,5 +640,34 @@ describe("a reader names the sections of a tool it reads: the flow reading", () 
     const call = "handoff(tools.aiProfile('x'));";
     expect(flows(call, [LISTED_CALLEE])).toEqual([]);
     expect(flows(call)).toHaveLength(1);
+  });
+});
+
+describe("a controller builds no error", () => {
+  const error = 'import { GhostError, type Shape } from "../../shared/domain/shared.error.js";\n';
+  const found = (path: string, body: string) =>
+    entries(controllerBuildsErrorViolations({ [path]: error + body }));
+
+  it("flags a controller that builds an error it imports from an error file", () => {
+    expect(found("src/presentation/commands/a.ts", "throw new GhostError('x');")).toEqual([
+      "src/presentation/commands/a.ts :: new GhostError",
+    ]);
+    expect(found("src/presentation/hooks/a.ts", "const e = new GhostError();")).toEqual([
+      "src/presentation/hooks/a.ts :: new GhostError",
+    ]);
+  });
+
+  it("clears an error only tested, a class of another file, and a file that is no controller", () => {
+    expect(found("src/presentation/commands/a.ts", "if (e instanceof GhostError) return;")).toEqual(
+      []
+    );
+    expect(found("src/presentation/commands/a.ts", "new Other();")).toEqual([]);
+    expect(found("src/presentation/display/a.ts", "throw new GhostError();")).toEqual([]);
+  });
+
+  it("holds the tree", () => {
+    const files = textsOf(tsFilesUnder("src/presentation"));
+    expect(Object.keys(files).length).toBeGreaterThan(0);
+    expectUpToDebt(controllerBuildsErrorViolations(files), "controllerBuildsError");
   });
 });

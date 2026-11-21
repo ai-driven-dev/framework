@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { CliAuthProvider } from "../../../../src/contexts/auth/ports/cli-auth-provider.js";
-import { AuthenticationError } from "../../../../src/shared/domain/errors/authentication-error.js";
+import { AuthenticationError } from "../../../../src/shared/domain/shared.error.js";
 
 /** What one scenario asks of a subject: the provider as it behaves with this on the machine. */
 export type CliScenario =

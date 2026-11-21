@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import type { PluginFetcher } from "../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { PluginFetchError } from "../../../../src/shared/domain/errors/plugin-fetch-error.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
 
 /** The file every plugin the subject can fetch holds. */

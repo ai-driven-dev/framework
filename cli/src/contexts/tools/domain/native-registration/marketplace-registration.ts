@@ -1,7 +1,7 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { MarketplaceSettings } from "../../contract/native-registration-spec.js";
 import type { MarketplaceSettingsInput } from "../../contract/tool-vocabulary.js";
+import { CapabilityConfigError } from "../tools.error.js";
 import type { NativeActivation } from "./native-activation.js";
 
 /** Where and how a tool records the marketplaces it knows about, held only by a tool whose own

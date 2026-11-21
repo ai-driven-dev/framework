@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import { PrepareMarketplace } from "../../../../../src/contexts/distribution/application/add/prepare-marketplace.js";
 import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
 import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { MarketplaceAlreadyRegisteredError } from "../../../../../src/contexts/distribution/domain/distribution.error.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { InvalidMarketplaceNameError } from "../../../../../src/shared/domain/errors/invalid-marketplace-name-error.js";
-import { InvalidPluginManifestError } from "../../../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
-import { MarketplaceAlreadyRegisteredError } from "../../../../../src/shared/domain/errors/marketplace-already-registered-error.js";
+import {
+  InvalidMarketplaceNameError,
+  InvalidPluginManifestError,
+} from "../../../../../src/shared/domain/shared.error.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";

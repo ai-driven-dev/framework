@@ -8,7 +8,7 @@ import type {
   MachineNativeRegistrations,
   MachineUserPlugin,
 } from "../../src/contexts/machine-claims/ports/machine-manifest.js";
-import { ToolNotInManifestError } from "../../src/shared/domain/errors/tool-not-in-manifest-error.js";
+import { ToolNotInManifestError } from "../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../src/shared/domain/tool.js";
 import { InMemoryMachineManifest } from "../contexts/machine-claims/testing/in-memory-machine-manifest.fake.js";
 import { MachinePlugin } from "../contexts/machine-claims/testing/machine-plugin.fake.js";

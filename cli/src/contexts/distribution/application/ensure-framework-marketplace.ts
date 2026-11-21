@@ -1,4 +1,4 @@
-import { CatalogFetchAuthError } from "../../../shared/domain/errors/catalog-fetch-auth-error.js";
+import { CatalogFetchAuthError } from "../../../shared/domain/shared.error.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import type { EnsuredFrameworkMarketplace, FrameworkSource } from "../contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";

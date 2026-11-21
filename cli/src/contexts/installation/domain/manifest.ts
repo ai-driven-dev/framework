@@ -1,10 +1,10 @@
-import { InvalidManifestDataError } from "../../../shared/domain/errors/invalid-manifest-data-error.js";
-import { ToolNotInManifestError } from "../../../shared/domain/errors/tool-not-in-manifest-error.js";
 import type { FileHash } from "../../../shared/domain/file-hash.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
+import { ToolNotInManifestError } from "../../../shared/domain/shared.error.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
+import { InvalidManifestDataError } from "./installation.error.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import { type Ownership, ownerOf } from "./manifest/ownership.js";
 import {

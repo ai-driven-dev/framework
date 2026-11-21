@@ -2,13 +2,13 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { InvalidPluginNameError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { InvalidPluginManifestError } from "../../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
-import { InvalidPluginNameError } from "../../../../src/shared/domain/errors/invalid-plugin-name-error.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InvalidPluginManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";

@@ -1,10 +1,10 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import type {
   MarketplaceRegistryLayout,
   NativeActivationSpec,
   PluginRegistryLayout,
 } from "../../contract/native-registration-spec.js";
 import type { EnvironmentReader, NativeActivationAnswers } from "../../contract/tool-profile.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 /** Where a host's registry sits for one home, and the layout its file is read as. */
 export interface HostRegistryPlacement<Layout extends string> {

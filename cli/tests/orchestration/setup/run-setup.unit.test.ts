@@ -17,6 +17,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { UserScopeUnavailableError } from "../../../src/orchestration/orchestration.error.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
 import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/install-global-plugins.js";
@@ -25,7 +26,6 @@ import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machin
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
-import { UserScopeUnavailableError } from "../../../src/shared/domain/errors/user-scope-unavailable-error.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";

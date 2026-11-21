@@ -1,8 +1,8 @@
-import { InvalidPluginManifestError } from "../../../../shared/domain/errors/invalid-plugin-manifest-error.js";
-import { MarketplaceAlreadyRegisteredError } from "../../../../shared/domain/errors/marketplace-already-registered-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
+import { InvalidPluginManifestError } from "../../../../shared/domain/shared.error.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import { assertNotReservedMarketplaceName } from "../../contract/marketplace.js";
+import { MarketplaceAlreadyRegisteredError } from "../../domain/distribution.error.js";
 import { Marketplace } from "../../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 import type { MarketplaceTrustStore } from "../../ports/marketplace-trust-store.js";

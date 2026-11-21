@@ -27,7 +27,7 @@ import {
 } from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.builder.js";
 import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./helpers.js";
-import type { Rule, Violation } from "./kinds.js";
+import { kindsOf, type Rule, type Violation } from "./kinds.js";
 import { PROFILE_MODULE_FILE, profileReaders, wholeProfileFlows } from "./profile-flow.js";
 import { walk, withVirtualProject } from "./ts-project.js";
 
@@ -618,4 +618,34 @@ export function profileViolations(
       "name the sections it reads, in its own ports/"
     )
   );
+}
+
+const ERROR_IMPORT = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+"[^"]*\.error\.js"/g;
+
+/** The error classes a controller builds with `new`. Importing one to test it is no violation;
+ * building one is a decision the scenario owns. A name is read from an import of an `*.error.ts`. */
+export function controllerBuildsErrorViolations(
+  files: Readonly<Record<string, string>>
+): Violation[] {
+  return Object.entries(files)
+    .filter(([path]) => kindsOf(path).includes("controller"))
+    .flatMap(([path, text]) =>
+      [...text.matchAll(ERROR_IMPORT)]
+        .flatMap((match) =>
+          present(match[1])
+            .split(",")
+            .map((name) => name.trim().replace(/^type\s+/, ""))
+        )
+        .filter((name) => new RegExp(`\\bnew ${name}\\(`).test(text))
+        .sort()
+        .map((name) =>
+          violation(
+            "controllerBuildsError",
+            `${path} :: new ${name}`,
+            `builds ${name}`,
+            "a controller builds no error: the scenario decides and the translator renders",
+            "return the outcome and let the scenario throw it"
+          )
+        )
+    );
 }

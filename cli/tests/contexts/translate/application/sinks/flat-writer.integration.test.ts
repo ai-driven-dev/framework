@@ -6,11 +6,13 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.js";
+import {
+  FlatTargetExistsError,
+  FrameworkPlaceholderInPluginError,
+  JsonSchemaValidationError,
+  OutDirNotDirectoryError,
+} from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
-import { FlatTargetExistsError } from "../../../../../src/shared/domain/errors/flat-target-exists-error.js";
-import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors/framework-placeholder-in-plugin-error.js";
-import { JsonSchemaValidationError } from "../../../../../src/shared/domain/errors/json-schema-validation-error.js";
-import { OutDirNotDirectoryError } from "../../../../../src/shared/domain/errors/out-dir-not-directory-error.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

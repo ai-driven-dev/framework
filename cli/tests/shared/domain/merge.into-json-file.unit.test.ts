@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { JsonParseError } from "../../../src/shared/domain/errors/json-parse-error.js";
+import { JsonParseError } from "../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../testing/in-memory-file-adapter.fake.js";
 
 const root = join("/", "merge");

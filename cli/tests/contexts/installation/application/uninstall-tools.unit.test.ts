@@ -6,16 +6,18 @@ import {
   type DetachProjectClaims,
   UninstallTools,
 } from "../../../../src/contexts/installation/application/uninstall-tools.js";
+import {
+  ManifestUnavailableError,
+  ToolNotInstalledError,
+} from "../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/detach-project-claims.js";
-import { InputRequiredError } from "../../../../src/shared/domain/errors/input-required-error.js";
-import { ManifestUnavailableError } from "../../../../src/shared/domain/errors/manifest-unavailable-error.js";
-import { ToolNotInstalledError } from "../../../../src/shared/domain/errors/tool-not-installed-error.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
+import { InputRequiredError } from "../../../../src/shared/domain/shared.error.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";

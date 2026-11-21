@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ManifestValidationError } from "../../../src/shared/domain/errors/manifest-validation-error.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { ManifestValidationError } from "../../../src/shared/domain/shared.error.js";
 
 describe("FileHash", () => {
   const validHash = "d41d8cd98f00b204e9800998ecf8427e";

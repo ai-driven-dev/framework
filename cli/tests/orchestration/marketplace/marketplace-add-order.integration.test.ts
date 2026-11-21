@@ -13,10 +13,12 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.js";
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.js";
+import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
-import { InvalidMarketplaceNameError } from "../../../src/shared/domain/errors/invalid-marketplace-name-error.js";
-import { InvalidPluginManifestError } from "../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
-import { TrustDeniedError } from "../../../src/shared/domain/errors/trust-denied-error.js";
+import {
+  InvalidMarketplaceNameError,
+  InvalidPluginManifestError,
+} from "../../../src/shared/domain/shared.error.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";

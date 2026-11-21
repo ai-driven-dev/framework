@@ -5,8 +5,8 @@ import {
   resolveScopeForInstall,
   scopeBaseOf,
 } from "../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
+import { UnresolvableUserScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors/unresolvable-user-scope-error.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";

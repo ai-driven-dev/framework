@@ -22,7 +22,7 @@ paths:
 
 ## Suppliers
 
-- `shared/domain/errors/input-required-error.ts`: `InputRequiredError`.
+- `shared/domain/shared.error.ts`: `InputRequiredError`.
 - Nothing else: the disk is reached through its own port.
 
 ## Never

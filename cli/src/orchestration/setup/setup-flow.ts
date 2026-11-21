@@ -2,14 +2,16 @@ import type { FrameworkSource } from "../../contexts/distribution/contract/frame
 import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.js";
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
-import { InvalidPluginModeConfigError } from "../../shared/domain/errors/invalid-plugin-mode-config-error.js";
-import { InvalidSetupToolIdError } from "../../shared/domain/errors/invalid-setup-tool-id-error.js";
-import { UserScopeIdeToolsError } from "../../shared/domain/errors/user-scope-ide-tools-error.js";
-import { UserScopeNoToolsError } from "../../shared/domain/errors/user-scope-no-tools-error.js";
-import { UserScopePluginModeError } from "../../shared/domain/errors/user-scope-plugin-mode-error.js";
-import { UserScopeUnsupportedAiToolsError } from "../../shared/domain/errors/user-scope-unsupported-ai-tools-error.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
+import {
+  InvalidPluginModeConfigError,
+  InvalidSetupToolIdError,
+  UserScopeIdeToolsError,
+  UserScopeNoToolsError,
+  UserScopePluginModeError,
+  UserScopeUnsupportedAiToolsError,
+} from "../orchestration.error.js";
 
 /** Registers the chosen framework source for a setup. The registration sequence is not the setup's own:
  * composition hands it in. */

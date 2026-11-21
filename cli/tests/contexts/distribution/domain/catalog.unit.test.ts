@@ -3,8 +3,10 @@ import {
   hasRelativePluginSources,
   parsePluginCatalog,
 } from "../../../../src/contexts/distribution/domain/catalog.js";
-import { InvalidPluginManifestError } from "../../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
-import { InvalidPluginSourceError } from "../../../../src/shared/domain/errors/invalid-plugin-source-error.js";
+import {
+  InvalidPluginManifestError,
+  InvalidPluginSourceError,
+} from "../../../../src/shared/domain/shared.error.js";
 
 const VALID_RAW = {
   plugins: [

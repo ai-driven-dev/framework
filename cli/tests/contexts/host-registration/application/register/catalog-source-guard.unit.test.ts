@@ -7,10 +7,10 @@ import {
   warnRegistration,
 } from "../../../../../src/contexts/host-registration/application/register/catalog-source-guard.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
+import { MarketplaceSourceConflictError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { MarketplaceSourceConflictError } from "../../../../../src/shared/domain/errors/marketplace-source-conflict-error.js";
 import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { RestoreTool } from "../../../../../../src/contexts/installation/application/restore/project/restore-tool.js";
 import type { Restore } from "../../../../../../src/contexts/installation/application/restore/restore.js";
+import { ManifestUnavailableError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { ManifestUnavailableError } from "../../../../../../src/shared/domain/errors/manifest-unavailable-error.js";
 import { InMemoryManifestRepository } from "../../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 

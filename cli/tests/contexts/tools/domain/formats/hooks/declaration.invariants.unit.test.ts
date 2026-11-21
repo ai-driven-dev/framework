@@ -9,7 +9,7 @@ import {
   CANONICAL_HOOK_EVENTS,
   type HookEventRoute,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
-import type { HooksInvariant } from "../../../../../../src/shared/domain/errors/invalid-hooks-descriptor-error.js";
+import type { HooksInvariant } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';

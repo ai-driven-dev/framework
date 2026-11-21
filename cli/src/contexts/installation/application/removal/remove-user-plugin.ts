@@ -1,8 +1,10 @@
-import { ActiveMachineDependentsError } from "../../../../shared/domain/errors/active-machine-dependents-error.js";
-import { PluginNotFoundError } from "../../../../shared/domain/errors/plugin-not-found-error.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import {
+  ActiveMachineDependentsError,
+  PluginNotFoundError,
+} from "../../domain/installation.error.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";

@@ -1,7 +1,4 @@
 import { join } from "node:path";
-import { InvalidPluginManifestError } from "../../../shared/domain/errors/invalid-plugin-manifest-error.js";
-import { InvalidPluginNameError } from "../../../shared/domain/errors/invalid-plugin-name-error.js";
-import { InvalidPluginVersionError } from "../../../shared/domain/errors/invalid-plugin-version-error.js";
 import {
   type PluginComponentFile,
   type PluginComponents,
@@ -10,8 +7,10 @@ import {
 } from "../../../shared/domain/plugin/plugin-distribution.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { isSemver } from "../../../shared/domain/semver.js";
+import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
+import { InvalidPluginNameError, InvalidPluginVersionError } from "../domain/installation.error.js";
 import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../ports/plugin/plugin-distribution-reader.js";
 

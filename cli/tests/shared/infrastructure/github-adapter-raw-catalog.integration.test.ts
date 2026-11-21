@@ -1,9 +1,11 @@
 import { describe, expect, it, type Mock, vi } from "vitest";
-import { AuthenticationError } from "../../../src/shared/domain/errors/authentication-error.js";
-import { CatalogFetchAuthError } from "../../../src/shared/domain/errors/catalog-fetch-auth-error.js";
-import { CatalogFetchError } from "../../../src/shared/domain/errors/catalog-fetch-error.js";
-import { CatalogFetchNotFoundError } from "../../../src/shared/domain/errors/catalog-fetch-not-found-error.js";
-import { HttpNotFoundError } from "../../../src/shared/domain/errors/http-not-found-error.js";
+import {
+  AuthenticationError,
+  CatalogFetchAuthError,
+  CatalogFetchError,
+  CatalogFetchNotFoundError,
+  HttpNotFoundError,
+} from "../../../src/shared/domain/shared.error.js";
 import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
 
 const CATALOG_PATH = ".claude-plugin/marketplace.json";

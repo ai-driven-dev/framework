@@ -4,8 +4,8 @@
  * the adapter's own `resolveLocalPaths` lifts it to an absolute path.
  */
 
-import { InvalidPluginManifestError } from "../../../../shared/domain/errors/invalid-plugin-manifest-error.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { InvalidPluginManifestError } from "../../../../shared/domain/shared.error.js";
 import type { PluginCatalog, PluginCatalogEntry } from "../../contract/catalog.js";
 
 const COPILOT_SOURCE = "copilot-catalog";

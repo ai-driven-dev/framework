@@ -1,4 +1,3 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors/capability-config-error.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   FlatLayout,
@@ -19,6 +18,7 @@ import {
 import type { FlatPlacement, LayoutSection, NativeLayout } from "../sections/layout-section.js";
 import type { ManifestSection } from "../sections/manifest-section.js";
 import { DEFAULT_PLUGIN_MCP_PATH, type McpSection } from "../sections/mcp-section.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 

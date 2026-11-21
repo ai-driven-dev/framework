@@ -23,6 +23,7 @@
     "exemptDefaultExport": "no declaration file needs a default export",
     "exemptProfileImport": "the folder stops importing a whole profile",
     "exemptProfileList": "the folder stops listing profiles",
+    "controllerBuildsError": "the decision moves to the scenario and the translator renders it: A26 for SyncFailedError, A24 for the rest",
     "profile": "the reader names the sections of the tool it reads in its own ports, never the whole profile"
   },
   "classification": [
@@ -31,6 +32,14 @@
     "src/presentation/output.ts"
   ],
   "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
+  "controllerBuildsError": [
+    "src/presentation/commands/auth.ts :: new InputRequiredError",
+    "src/presentation/commands/doctor.ts :: new UserScopeFilterUnsupportedError",
+    "src/presentation/commands/plugin.ts :: new UnknownAiToolIdError",
+    "src/presentation/commands/sync.ts :: new SyncFailedError",
+    "src/presentation/commands/sync.ts :: new UserScopeFilterUnsupportedError",
+    "src/presentation/commands/telemetry.ts :: new IdentityOffWithIdentifierError"
+  ],
   "mirror": [
     "src/contexts/installation/application/install/content/install-content-section.ts",
     "src/contexts/installation/application/install/install-config.ts",

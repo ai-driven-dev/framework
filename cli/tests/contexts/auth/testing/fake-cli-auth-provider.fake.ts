@@ -1,5 +1,5 @@
 import type { CliAuthProvider } from "../../../../src/contexts/auth/ports/cli-auth-provider.js";
-import { AuthenticationError } from "../../../../src/shared/domain/errors/authentication-error.js";
+import { AuthenticationError } from "../../../../src/shared/domain/shared.error.js";
 
 interface Script {
   /** What `read` answers; absent, the provider has no token. */

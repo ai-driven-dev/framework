@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { ModeAMarketplaceTranslator } from "../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { NativePluginCliError } from "../../../src/shared/domain/errors/native-plugin-cli-error.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../src/shared/domain/source.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";

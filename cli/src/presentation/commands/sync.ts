@@ -1,7 +1,5 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { SyncFailedError } from "../../shared/domain/errors/sync-failed-error.js";
-import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors/user-scope-filter-unsupported-error.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,
@@ -11,6 +9,7 @@ import {
 } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import type { CLIOutput } from "../output.js";
+import { SyncFailedError, UserScopeFilterUnsupportedError } from "../presentation.error.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */

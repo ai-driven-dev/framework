@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { CategoryMismatchError } from "../../../src/orchestration/orchestration.error.js";
 import {
   agentModelsRequest,
   isInteractiveRun,
   selectTools,
 } from "../../../src/orchestration/setup/setup-request.js";
-import { CategoryMismatchError } from "../../../src/shared/domain/errors/category-mismatch-error.js";
 import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 
 describe("agentModelsRequest", () => {

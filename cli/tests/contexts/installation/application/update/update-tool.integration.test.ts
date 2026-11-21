@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { UpdateToolCommand } from "../../../../../src/contexts/installation/application/update/update-tool.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/errors/input-required-error.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 import {
   buildInstallationDeps,
   buildUpdateTool,

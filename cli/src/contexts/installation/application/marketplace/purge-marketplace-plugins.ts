@@ -1,6 +1,6 @@
-import { ActiveMachineDependentsError } from "../../../../shared/domain/errors/active-machine-dependents-error.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import { ActiveMachineDependentsError } from "../../domain/installation.error.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   MarketplaceRemovalPlanner,

@@ -186,7 +186,7 @@ export const KINDS: readonly Kind[] = [
       "src/presentation/hooks/**/*",
     ],
     except: [],
-    imports: ["use-case", "presenter", "model", "controller"],
+    imports: ["use-case", "presenter", "model", "controller", "error"],
     externals: "any",
     tests: ["unit"],
   },
@@ -282,6 +282,7 @@ export type Rule =
   | "translate"
   | "scope"
   | "profile"
+  | "controllerBuildsError"
   | "size";
 
 export interface Violation {
@@ -626,6 +627,7 @@ const RULES: readonly Rule[] = [
   "translate",
   "scope",
   "profile",
+  "controllerBuildsError",
   "size",
 ];
 
@@ -645,6 +647,7 @@ export const noDebt = (): Debt => ({
   translate: [],
   scope: [],
   profile: [],
+  controllerBuildsError: [],
   size: [],
   limits: [],
   exemptProcessExit: [],

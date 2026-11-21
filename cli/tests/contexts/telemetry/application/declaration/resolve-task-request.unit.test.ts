@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { ResolveTaskRequest } from "../../../../../src/contexts/telemetry/application/declaration/resolve-task-request.js";
-import { TaskDeclaredNoneWithNameError } from "../../../../../src/shared/domain/errors/task-declared-none-with-name-error.js";
-import { TaskNameMissingError } from "../../../../../src/shared/domain/errors/task-name-missing-error.js";
+import {
+  TaskDeclaredNoneWithNameError,
+  TaskNameMissingError,
+} from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
 const resolve = new ResolveTaskRequest();
 

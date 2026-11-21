@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RegistrationRun } from "../../../../../src/contexts/host-registration/application/register/catalog-source-guard.js";
 import { reclaimOrReport } from "../../../../../src/contexts/host-registration/application/register/reclaim-dead-registration.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
+import { NativePluginCliError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { NativePluginCliError } from "../../../../../src/shared/domain/errors/native-plugin-cli-error.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,

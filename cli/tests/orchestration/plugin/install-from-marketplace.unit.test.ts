@@ -5,7 +5,7 @@ import {
   InstallFromMarketplace,
   type PluginInstallFromMarketplaceOptions,
 } from "../../../src/orchestration/plugin/install-from-marketplace.js";
-import { VersionMismatchError } from "../../../src/shared/domain/errors/version-mismatch-error.js";
+import { VersionMismatchError } from "../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";

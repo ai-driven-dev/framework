@@ -228,7 +228,7 @@ describe("a file imports only the kinds its kind allows", () => {
     ).toEqual([]);
   });
 
-  it("passes a model, a profile and a presenter that read an error, and flags a controller", () => {
+  it("passes a model, a profile and a presenter that read an error, and a controller that imports one", () => {
     const error = { "src/shared/domain/shared.error.ts": "export class E {}" };
     const importing = (file: string, up: string) => ({
       ...error,
@@ -241,9 +241,9 @@ describe("a file imports only the kinds its kind allows", () => {
     expect(importsOf(importing("src/presentation/presenters/x.presenter.ts", "../../"))).toEqual(
       []
     );
-    expect(importsOf(importing("src/presentation/controllers/x.controller.ts", "../../"))).toEqual([
-      "src/presentation/controllers/x.controller.ts -> src/shared/domain/shared.error.ts",
-    ]);
+    expect(importsOf(importing("src/presentation/controllers/x.controller.ts", "../../"))).toEqual(
+      []
+    );
   });
 
   it("flags a node builtin a model may not use, and passes node:path", () => {

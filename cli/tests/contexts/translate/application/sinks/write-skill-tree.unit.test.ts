@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { writeSkillTree } from "../../../../../src/contexts/translate/application/sinks/write-skill-tree.js";
-import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors/framework-placeholder-in-plugin-error.js";
+import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.fake.js";
 import { CLAUDE_ROOT_TOKEN } from "../../testing/engine-kit.builder.js";

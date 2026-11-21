@@ -1,6 +1,6 @@
 import type { PluginSourceMatch } from "../../contexts/distribution/contract/plugin-source-match.js";
-import { AmbiguousPluginMatchError } from "../../shared/domain/errors/ambiguous-plugin-match-error.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
+import { AmbiguousPluginMatchError } from "../orchestration.error.js";
 
 export interface WhichMatchQuestion {
   readonly pluginName: string;

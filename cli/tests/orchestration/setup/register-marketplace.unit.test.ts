@@ -10,8 +10,8 @@ import type { RepositoryVisibility } from "../../../src/contexts/distribution/po
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
-import { CatalogFetchAuthError } from "../../../src/shared/domain/errors/catalog-fetch-auth-error.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
+import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";

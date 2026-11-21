@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CANONICAL_PROFILES, REGISTERED_PROFILES } from "../../../../src/composition/tools.js";
 import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
-import { DuplicateToolIdError } from "../../../../src/shared/domain/errors/duplicate-tool-id-error.js";
-import { ToolListMismatchError } from "../../../../src/shared/domain/errors/tool-list-mismatch-error.js";
-import { UnregisteredToolError } from "../../../../src/shared/domain/errors/unregistered-tool-error.js";
+import {
+  DuplicateToolIdError,
+  ToolListMismatchError,
+} from "../../../../src/contexts/tools/domain/tools.error.js";
+import { UnregisteredToolError } from "../../../../src/shared/domain/shared.error.js";
 import { catalogOf } from "../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 

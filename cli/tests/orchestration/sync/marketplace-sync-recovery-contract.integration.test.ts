@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
@@ -8,7 +9,6 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { NativePluginCliError } from "../../../src/shared/domain/errors/native-plugin-cli-error.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import {

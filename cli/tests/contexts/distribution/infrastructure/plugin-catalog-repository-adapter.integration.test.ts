@@ -2,9 +2,9 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { MalformedMarketplaceCatalogError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { InvalidPluginManifestError } from "../../../../src/shared/domain/errors/invalid-plugin-manifest-error.js";
-import { MalformedMarketplaceCatalogError } from "../../../../src/shared/domain/errors/malformed-marketplace-catalog-error.js";
+import { InvalidPluginManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");

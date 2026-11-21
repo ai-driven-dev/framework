@@ -4,8 +4,10 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createFrameworkBuildUseCase } from "../../../../../src/composition/translate.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/contract/build-targets.js";
-import { FlatMergeTargetNotJsonError } from "../../../../../src/shared/domain/errors/flat-merge-target-not-json-error.js";
-import { FlatTargetExistsError } from "../../../../../src/shared/domain/errors/flat-target-exists-error.js";
+import {
+  FlatMergeTargetNotJsonError,
+  FlatTargetExistsError,
+} from "../../../../../src/contexts/translate/domain/translate.error.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../presentation/testing/fixture-setup.builder.js";

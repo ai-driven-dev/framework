@@ -2,10 +2,12 @@ import {
   INSTALL_COMMANDS,
   packageManagerOf,
 } from "../../../../src/contexts/update/domain/package-manager.js";
+import {
+  ElevatedPermissionUpdateError,
+  PackageManagerDetectionError,
+  UpdateError,
+} from "../../../../src/contexts/update/domain/update.error.js";
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
-import { ElevatedPermissionUpdateError } from "../../../../src/shared/domain/errors/elevated-permission-update-error.js";
-import { PackageManagerDetectionError } from "../../../../src/shared/domain/errors/package-manager-detection-error.js";
-import { UpdateError } from "../../../../src/shared/domain/errors/update-error.js";
 
 /** What one scenario asks of an installer: the machine it runs on. */
 export type InstallScenario =

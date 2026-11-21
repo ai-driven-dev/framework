@@ -1,4 +1,4 @@
-import { InputRequiredError } from "../../shared/domain/errors/input-required-error.js";
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { BulkConflictState } from "../domain/bulk-conflict-state.js";
 

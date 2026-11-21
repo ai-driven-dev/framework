@@ -1,5 +1,5 @@
-import { AuthenticationError } from "../../../shared/domain/errors/authentication-error.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { AuthenticationError } from "../../../shared/domain/shared.error.js";
 import type { AuthLevel, AuthMethod, Credential } from "../contract/credential.js";
 
 /** The document one level keeps: what `auth.json` holds, once read and accepted. */

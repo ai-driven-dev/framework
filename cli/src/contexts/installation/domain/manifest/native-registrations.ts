@@ -1,5 +1,5 @@
-import { InvalidManifestDataError } from "../../../../shared/domain/errors/invalid-manifest-data-error.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { InvalidManifestDataError } from "../installation.error.js";
 
 export interface NativePluginClaim {
   readonly ref: string;

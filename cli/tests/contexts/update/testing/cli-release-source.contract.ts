@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { FrameworkResolutionError } from "../../../../src/contexts/update/domain/update.error.js";
 import type { CliReleaseSource } from "../../../../src/contexts/update/ports/cli-release-source.js";
-import { FrameworkResolutionError } from "../../../../src/shared/domain/errors/framework-resolution-error.js";
 
 /** What one scenario asks of a subject: where the latest release is announced. */
 export type ReleaseScenario =

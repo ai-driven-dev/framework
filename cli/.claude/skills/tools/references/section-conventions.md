@@ -8,7 +8,7 @@ A section is one part a profile declares; the keys are `ProfileSections` in `dom
 - The constructor takes one params object, never positional arguments.
 - State is private (`#params`) and read through methods.
 - A method is a path builder, a resolver or a predicate: short, with no side effect.
-- An invalid params combination throws `CapabilityConfigError` (`shared/domain/errors/capability-config-error.ts`), as `SkillsSection` does.
+- An invalid params combination throws `CapabilityConfigError` (`contexts/tools/domain/tools.error.ts`), as `SkillsSection` does.
 
 ```typescript
 export class WidgetsSection {

@@ -14,7 +14,6 @@ import {
 } from "../../contexts/telemetry/contract/task-declaration.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/contract/usage-record.js";
 import { REPORT_AXES, type ReportAxis } from "../../contexts/telemetry/contract/usage-report.js";
-import { IdentityOffWithIdentifierError } from "../../shared/domain/errors/identity-off-with-identifier-error.js";
 import type { Deps, DepsSliceFactory, TelemetryRequests } from "../deps.js";
 import {
   printForgetResult,
@@ -31,6 +30,7 @@ import {
 } from "../display/telemetry-display.js";
 import { failCommand } from "../errors/error-translator.js";
 import { exitWith } from "../exit.js";
+import { IdentityOffWithIdentifierError } from "../presentation.error.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */

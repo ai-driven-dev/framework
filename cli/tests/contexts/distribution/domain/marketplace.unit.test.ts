@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { InvalidMarketplaceScopeError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import {
   MARKETPLACE_NAME_REGEX,
   Marketplace,
   type MarketplaceData,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { InvalidMarketplaceNameError } from "../../../../src/shared/domain/errors/invalid-marketplace-name-error.js";
-import { InvalidMarketplaceScopeError } from "../../../../src/shared/domain/errors/invalid-marketplace-scope-error.js";
-import { InvalidPluginSourceError } from "../../../../src/shared/domain/errors/invalid-plugin-source-error.js";
+import {
+  InvalidMarketplaceNameError,
+  InvalidPluginSourceError,
+} from "../../../../src/shared/domain/shared.error.js";
 
 const makeData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome-plugins",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { FrameworkResolutionError } from "../../../../src/contexts/update/domain/update.error.js";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
-import { FrameworkResolutionError } from "../../../../src/shared/domain/errors/framework-resolution-error.js";
 import type { HttpGet, HttpGetOptions } from "../../../../src/shared/ports/http-get.js";
 import type { ReleaseLister } from "../../../../src/shared/ports/release-lister.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";

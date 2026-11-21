@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import {
   createToolEntry,
   parseToolEntry,
@@ -8,7 +9,6 @@ import {
   updatePluginInEntry,
 } from "../../../../../src/contexts/installation/domain/manifest/tool-entry.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/shared/domain/errors/plugin-not-found-error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";

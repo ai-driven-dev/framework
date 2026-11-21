@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+  InvalidPluginModeConfigError,
+  InvalidSetupToolIdError,
+  UserScopeIdeToolsError,
+  UserScopeNoToolsError,
+  UserScopePluginModeError,
+  UserScopeUnsupportedAiToolsError,
+} from "../../../src/orchestration/orchestration.error.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
-import { InvalidPluginModeConfigError } from "../../../src/shared/domain/errors/invalid-plugin-mode-config-error.js";
-import { InvalidSetupToolIdError } from "../../../src/shared/domain/errors/invalid-setup-tool-id-error.js";
-import { UserScopeIdeToolsError } from "../../../src/shared/domain/errors/user-scope-ide-tools-error.js";
-import { UserScopeNoToolsError } from "../../../src/shared/domain/errors/user-scope-no-tools-error.js";
-import { UserScopePluginModeError } from "../../../src/shared/domain/errors/user-scope-plugin-mode-error.js";
-import { UserScopeUnsupportedAiToolsError } from "../../../src/shared/domain/errors/user-scope-unsupported-ai-tools-error.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";

@@ -1,9 +1,9 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { UnreadableMarketplaceRegistryError } from "../../../shared/domain/errors/unreadable-marketplace-registry-error.js";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { Scope } from "../../../shared/domain/scope.js";
+import { UnreadableMarketplaceRegistryError } from "../domain/distribution.error.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
 import type { MarketplaceKey, MarketplaceRegistry } from "../ports/marketplace-registry.js";
 

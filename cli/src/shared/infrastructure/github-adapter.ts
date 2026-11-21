@@ -1,9 +1,11 @@
-import { AuthenticationError } from "../domain/errors/authentication-error.js";
-import { CatalogFetchAuthError } from "../domain/errors/catalog-fetch-auth-error.js";
-import { CatalogFetchError } from "../domain/errors/catalog-fetch-error.js";
-import { CatalogFetchNotFoundError } from "../domain/errors/catalog-fetch-not-found-error.js";
-import { HttpNotFoundError } from "../domain/errors/http-not-found-error.js";
 import { asPlainObject } from "../domain/reading/plain-object.js";
+import {
+  AuthenticationError,
+  CatalogFetchAuthError,
+  CatalogFetchError,
+  CatalogFetchNotFoundError,
+  HttpNotFoundError,
+} from "../domain/shared.error.js";
 import type { PluginSourceGitHub } from "../domain/source.js";
 import type { HttpGet } from "../ports/http-get.js";
 

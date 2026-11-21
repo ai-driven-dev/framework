@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ManifestValidationError } from "./errors/manifest-validation-error.js";
+import { ManifestValidationError } from "./shared.error.js";
 
 const MD5_PATTERN = /^[0-9a-f]{32}$/;
 

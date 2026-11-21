@@ -3,7 +3,7 @@ import {
   assertToolSupportsScope,
   getToolSupportedScope,
 } from "../../../../src/contexts/installation/domain/install-scope.js";
-import { InvalidPluginScopeError } from "../../../../src/shared/domain/errors/invalid-plugin-scope-error.js";
+import { InvalidPluginScopeError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("install-scope tool support", () => {

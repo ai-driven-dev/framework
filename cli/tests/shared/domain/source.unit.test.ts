@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InvalidPluginSourceError } from "../../../src/shared/domain/errors/invalid-plugin-source-error.js";
+import { InvalidPluginSourceError } from "../../../src/shared/domain/shared.error.js";
 import {
   describePluginSource,
   parsePluginSource,

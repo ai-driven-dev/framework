@@ -6,7 +6,7 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../../contexts/distribution/contract/framework-source.js";
-import { InputRequiredError } from "../../shared/domain/errors/input-required-error.js";
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
 /** Sentinel select value for "install from main branch tip": maps to no ref. */

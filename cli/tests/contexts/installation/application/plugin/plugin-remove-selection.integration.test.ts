@@ -1,12 +1,12 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   InstalledPlugin,
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/shared/domain/errors/plugin-not-found-error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";

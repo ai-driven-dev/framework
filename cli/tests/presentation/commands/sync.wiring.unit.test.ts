@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
-import { ManifestUnavailableError } from "../../../src/shared/domain/errors/manifest-unavailable-error.js";
-import { UnregisteredToolError } from "../../../src/shared/domain/errors/unregistered-tool-error.js";
+import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
+import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";

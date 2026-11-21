@@ -1,7 +1,7 @@
-import { InvalidMcpServerConfigError } from "../../../../shared/domain/errors/invalid-mcp-server-config-error.js";
-import { McpConfigError } from "../../../../shared/domain/errors/mcp-config-error.js";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { stripJsonComments } from "../../../../shared/domain/reading/jsonc.js";
+import { McpConfigError } from "../../../../shared/domain/shared.error.js";
+import { InvalidMcpServerConfigError } from "../tools.error.js";
 
 type RawServer =
   | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }

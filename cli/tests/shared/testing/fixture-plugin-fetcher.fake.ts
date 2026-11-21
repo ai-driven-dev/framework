@@ -1,8 +1,8 @@
+import { PluginFetchError } from "../../../src/contexts/distribution/domain/distribution.error.js";
 import type {
   PluginFetcher,
   PluginFetchOptions,
 } from "../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { PluginFetchError } from "../../../src/shared/domain/errors/plugin-fetch-error.js";
 import type { PluginSource } from "../../../src/shared/domain/source.js";
 import { serializePluginSource } from "../../../src/shared/domain/source.js";
 

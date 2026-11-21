@@ -6,7 +6,7 @@ import {
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
-import { InputRequiredError } from "../../../src/shared/domain/errors/input-required-error.js";
+import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";

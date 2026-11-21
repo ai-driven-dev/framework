@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { INSTALL_COMMANDS } from "../../../../src/contexts/update/domain/package-manager.js";
+import {
+  ElevatedPermissionUpdateError,
+  PackageManagerDetectionError,
+  UpdateError,
+} from "../../../../src/contexts/update/domain/update.error.js";
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
-import { ElevatedPermissionUpdateError } from "../../../../src/shared/domain/errors/elevated-permission-update-error.js";
-import { PackageManagerDetectionError } from "../../../../src/shared/domain/errors/package-manager-detection-error.js";
-import { UpdateError } from "../../../../src/shared/domain/errors/update-error.js";
 import type { InstallScenario } from "./fake-cli-installer.fake.js";
 
 export interface InstallerSubject {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.js";
-import { TrustDeniedError } from "../../../src/shared/domain/errors/trust-denied-error.js";
+import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 
 const PROJECT_ROOT = "/project";

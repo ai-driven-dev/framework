@@ -1,6 +1,5 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
-import { CapabilityConfigError } from "../../../../../shared/domain/errors/capability-config-error.js";
 import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,
@@ -30,6 +29,7 @@ import {
   type PluginFileDelivery,
   type ProjectMergeDelivery,
 } from "../../sections/hooks-section.js";
+import { CapabilityConfigError } from "../../tools.error.js";
 import {
   type FlatHooksRoute,
   type HooksFileMerge,
