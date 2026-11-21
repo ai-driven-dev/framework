@@ -90,7 +90,10 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    await deletePluginFilesForTool(plugin.files, plugin.scope, tool, projectRoot, this.fs);
+    await deletePluginFilesForTool(
+      { files: plugin.files, scope: plugin.scope, tool, projectRoot },
+      this.fs
+    );
   }
 
   async detachClaims(

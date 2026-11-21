@@ -65,10 +65,12 @@ export class RemoveToolFiles {
     if (!this.tools.isAiTool(toolId)) return;
     for (const plugin of manifest.getPlugins(toolId)) {
       await deletePluginFilesForTool(
-        plugin.files,
-        plugin.scope,
-        this.tools.aiProfile(toolId),
-        projectRoot,
+        {
+          files: plugin.files,
+          scope: plugin.scope,
+          tool: this.tools.aiProfile(toolId),
+          projectRoot,
+        },
         this.fs
       );
     }

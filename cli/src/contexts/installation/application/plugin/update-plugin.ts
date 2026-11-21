@@ -25,6 +25,13 @@ export interface UpdatePluginCommand {
   rebuild?: boolean;
 }
 
+interface ProjectUpdateScope {
+  projectRoot: string;
+  cacheDir: string;
+  manifest: Manifest;
+  rebuild: boolean;
+}
+
 export class UpdatePlugin {
   constructor(
     private readonly manifestRepo: ManifestRepository,
@@ -40,16 +47,18 @@ export class UpdatePlugin {
     const { pluginNames, toolIds, projectRoot } = options;
     const manifest = await requireManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
-    const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    const scope: ProjectUpdateScope = {
+      projectRoot,
+      cacheDir: join(projectRoot, PLUGIN_CACHE_SUBDIR),
+      manifest,
+      rebuild: options.rebuild === true,
+    };
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(
         this.tools.aiProfile(toolId),
         pluginNames,
-        projectRoot,
-        cacheDir,
-        manifest,
-        options.rebuild === true
+        scope
       );
       updated.push(...names);
     }
@@ -60,25 +69,15 @@ export class UpdatePlugin {
   private async updatePluginsForTool(
     tool: RuntimeConfigSection,
     pluginNames: string[] | undefined,
-    projectRoot: string,
-    cacheDir: string,
-    manifest: Manifest,
-    rebuild: boolean
+    scope: ProjectUpdateScope
   ): Promise<string[]> {
-    const plugins = manifest.getPlugins(tool.toolId);
+    const plugins = scope.manifest.getPlugins(tool.toolId);
     const targets = pluginNames
       ? plugins.filter((p) => pluginNames.includes(p.name))
       : plugins.filter((plugin) => plugin.scope !== "user");
     const updated: string[] = [];
     for (const plugin of targets) {
-      const didUpdate = await this.updateOnePlugin(
-        plugin,
-        tool,
-        projectRoot,
-        cacheDir,
-        manifest,
-        rebuild
-      );
+      const didUpdate = await this.updateOnePlugin(plugin, tool, scope);
       if (didUpdate) updated.push(plugin.name);
     }
     return updated;
@@ -87,11 +86,9 @@ export class UpdatePlugin {
   private async updateOnePlugin(
     plugin: InstalledPlugin,
     tool: RuntimeConfigSection,
-    projectRoot: string,
-    cacheDir: string,
-    manifest: Manifest,
-    rebuild: boolean
+    scope: ProjectUpdateScope
   ): Promise<boolean> {
+    const { projectRoot, cacheDir, manifest, rebuild } = scope;
     const toolId = tool.toolId;
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {

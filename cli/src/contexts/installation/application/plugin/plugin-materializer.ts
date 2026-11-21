@@ -193,7 +193,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
         mode: tool.frameworkBuildMode(),
       });
       if (tool.plugins()?.globalFiles() != null) {
-        const files = await readGlobalPluginFiles(this.fs, builtDir, tool, dist);
+        const files = await readGlobalPluginFiles(this.fs, { builtDir, tool, dist });
         return { files, componentPaths: new Map() };
       }
       const built = await readBuiltUserPluginFiles(

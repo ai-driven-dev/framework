@@ -162,10 +162,7 @@ export class RemoveProjectFiles {
     let count = 0;
     for (const plugin of manifest.getPlugins(tool.toolId)) {
       const deleted = await deletePluginFilesForTool(
-        plugin.files,
-        plugin.scope,
-        tool,
-        projectRoot,
+        { files: plugin.files, scope: plugin.scope, tool, projectRoot },
         this.fs
       );
       count += deleted.length;

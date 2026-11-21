@@ -29,6 +29,9 @@ export class UserScopePluginFiles implements UserScopePluginFileRemoval {
     tool: PluginPlacement,
     projectRoot: string
   ): Promise<void> {
-    await deletePluginFilesForTool(files, "user", tool, projectRoot, this.fs, "user");
+    await deletePluginFilesForTool(
+      { files, scope: "user", tool, projectRoot, ownerScope: "user" },
+      this.fs
+    );
   }
 }

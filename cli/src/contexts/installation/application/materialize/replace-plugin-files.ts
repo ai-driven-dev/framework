@@ -47,7 +47,7 @@ export class ReplacePluginFiles {
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const translator = this.resolveTranslator(tool);
     if (translator !== null && plugin.marketplace !== undefined) {
-      await materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest);
+      await materializeViaTranslator(translator, { dist, tool, plugin, projectRoot, manifest });
       return;
     }
     const translated = this.builtDeps.translate.execute({ distribution: dist, tool });

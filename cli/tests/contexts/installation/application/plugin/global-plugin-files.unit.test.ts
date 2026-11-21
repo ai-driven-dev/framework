@@ -38,12 +38,15 @@ const tree = new InMemoryFileAdapter({
 
 describe("readGlobalPluginFiles", () => {
   it("reads the plugin's skills and the agents its source ships, keyed under the user directory", async () => {
-    const files = await readGlobalPluginFiles(
-      tree,
-      BUILT,
-      registeredTools().aiProfile(TOOL.opencode),
-      distribution("aidd-dev", ["agents/reviewer.md", "agents/nested/ignored.md", "skills/x.md"])
-    );
+    const files = await readGlobalPluginFiles(tree, {
+      builtDir: BUILT,
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      dist: distribution("aidd-dev", [
+        "agents/reviewer.md",
+        "agents/nested/ignored.md",
+        "skills/x.md",
+      ]),
+    });
 
     expect(files.map((file) => [file.relativePath, file.content])).toEqual([
       ["agents/aidd-dev-reviewer.md", "reviewer"],
@@ -52,12 +55,11 @@ describe("readGlobalPluginFiles", () => {
   });
 
   it("reads nothing for a plugin whose source ships no agent and no skill in the tree", async () => {
-    const files = await readGlobalPluginFiles(
-      tree,
-      BUILT,
-      registeredTools().aiProfile(TOOL.opencode),
-      distribution("aidd-qa", [])
-    );
+    const files = await readGlobalPluginFiles(tree, {
+      builtDir: BUILT,
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      dist: distribution("aidd-qa", []),
+    });
 
     expect(files).toEqual([]);
   });
@@ -77,12 +79,11 @@ describe("readGlobalPluginFiles", () => {
   });
 
   it("reads nothing for a tool that copies no global file", async () => {
-    const files = await readGlobalPluginFiles(
-      tree,
-      BUILT,
-      registeredTools().aiProfile(TOOL.claude),
-      distribution("aidd-dev", ["agents/reviewer.md"])
-    );
+    const files = await readGlobalPluginFiles(tree, {
+      builtDir: BUILT,
+      tool: registeredTools().aiProfile(TOOL.claude),
+      dist: distribution("aidd-dev", ["agents/reviewer.md"]),
+    });
 
     expect(files).toEqual([]);
   });

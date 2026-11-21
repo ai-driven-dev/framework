@@ -85,7 +85,6 @@
   "limits": [
     "cognitive complexity :: src/contexts/installation/application/agents/main-session-models.ts",
     "cognitive complexity :: src/contexts/installation/application/install/install-user-plugins.ts",
-    "cognitive complexity :: src/contexts/installation/application/plugin/add-plugin.ts",
     "cognitive complexity :: src/contexts/installation/application/shared/detect-plugin-drift.ts",
     "cognitive complexity :: src/contexts/installation/application/shared/remove-project-hooks.ts",
     "cognitive complexity :: src/contexts/installation/application/sync/record-activation.ts",
@@ -128,10 +127,6 @@
     "function parameters :: src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     "function parameters :: src/contexts/installation/application/materialize/plugin-translator.ts",
     "function parameters :: src/contexts/installation/application/materialize/project-hooks-materializer.ts",
-    "function parameters :: src/contexts/installation/application/plugin/add-plugin.ts",
-    "function parameters :: src/contexts/installation/application/plugin/global-plugin-files.ts",
-    "function parameters :: src/contexts/installation/application/plugin/plugin-helpers.ts",
-    "function parameters :: src/contexts/installation/application/plugin/update-plugin.ts",
     "function parameters :: src/contexts/installation/application/report-status.ts",
     "function parameters :: src/contexts/installation/application/resolve-sync-conflict.ts",
     "function parameters :: src/contexts/installation/application/shared/remove-project-hooks.ts",

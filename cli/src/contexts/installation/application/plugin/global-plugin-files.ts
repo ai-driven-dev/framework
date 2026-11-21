@@ -14,10 +14,9 @@ import type { PluginPlacement } from "../../ports/tool-sections.js";
  */
 export async function readGlobalPluginFiles(
   fs: FileReader,
-  builtDir: string,
-  tool: PluginPlacement,
-  dist: PluginDistribution
+  built: { builtDir: string; tool: PluginPlacement; dist: PluginDistribution }
 ): Promise<InstallationFile[]> {
+  const { builtDir, tool, dist } = built;
   const machine = tool.plugins()?.globalFiles() ?? null;
   if (machine === null) return [];
   const plugin = {

@@ -35,6 +35,14 @@ export async function deleteOldFiles(
   }
 }
 
+export interface PluginFilesRemoval {
+  readonly files: ReadonlyMap<string, string>;
+  readonly scope: Scope;
+  readonly tool: PluginPlacement;
+  readonly projectRoot: string;
+  readonly ownerScope?: Scope;
+}
+
 /**
  * Deletes a plugin's tracked files from the base directory its manifest entry actually recorded -
  * `projectRoot` for a project-scope entry, the resolved user-scope plugins dir otherwise. Every
@@ -42,13 +50,10 @@ export async function deleteOldFiles(
  * never removed and a path under `projectRoot` that was never written is asked to delete nothing.
  */
 export async function deletePluginFilesForTool(
-  files: ReadonlyMap<string, string>,
-  scope: Scope,
-  tool: PluginPlacement,
-  projectRoot: string,
-  fs: FileWriter,
-  ownerScope: Scope = "project"
+  removal: PluginFilesRemoval,
+  fs: FileWriter
 ): Promise<string[]> {
+  const { files, scope, tool, projectRoot, ownerScope = "project" } = removal;
   if (scope === "user" && ownerScope !== "user") return [];
   const baseDir = scopeBaseOf(tool, {
     scope: scope,
@@ -77,6 +82,15 @@ export async function isPluginFileAtDesiredState(
   return driftOf(expectedHashValue, FileHash.of(content)) === "ok";
 }
 
+export interface PluginRematerialization {
+  readonly dist: PluginDistribution;
+  readonly tool: AiToolProfile;
+  readonly plugin: InstalledPlugin;
+  readonly projectRoot: string;
+  readonly manifest: Manifest;
+  readonly hooksGuard?: ProjectHooksGuard;
+}
+
 /**
  * Re-registers a marketplace-sourced plugin through its resolved translator: drops the existing
  * manifest entry and lets the translator re-add it, so update and restore both end with the same
@@ -88,13 +102,9 @@ export async function isPluginFileAtDesiredState(
  */
 export async function materializeViaTranslator(
   translator: PluginTranslator,
-  dist: PluginDistribution,
-  tool: AiToolProfile,
-  plugin: InstalledPlugin,
-  projectRoot: string,
-  manifest: Manifest,
-  hooksGuard: ProjectHooksGuard = {}
+  rematerialization: PluginRematerialization
 ): Promise<number> {
+  const { dist, tool, plugin, projectRoot, manifest, hooksGuard = {} } = rematerialization;
   manifest.removePlugin(tool.toolId, plugin.name);
   const { written } = await translator.addPlugin(
     dist,

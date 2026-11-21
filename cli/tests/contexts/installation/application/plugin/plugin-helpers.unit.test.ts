@@ -17,10 +17,12 @@ describe("deletePluginFilesForTool()", () => {
     ]);
 
     const deleted = await deletePluginFilesForTool(
-      files,
-      "project",
-      registeredTools().aiProfile(TOOL.claude),
-      PROJECT_ROOT,
+      {
+        files,
+        scope: "project",
+        tool: registeredTools().aiProfile(TOOL.claude),
+        projectRoot: PROJECT_ROOT,
+      },
       fs
     );
 
