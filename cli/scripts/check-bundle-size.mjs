@@ -79,12 +79,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
 // 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
 // 821 KB: 820.7 KB, the kind rollout giving services their ports, the presentation output port, one prompter adapter per file, named-object requests, and the error catalog split into one file per owner; 0.04% measured headroom.
-// 822 KB: 821.4 KB, the installation context giving clean and config tracking one execute each; 0.05% measured headroom.
-// 824 KB: 823.3 KB, the installation context giving use cases and domain factories named-object parameters; 0.1% measured headroom.
-// 822 KB: 821.6 KB, the installation translators, flat MCP materialization, cache build, orphan removal and main-session settings taking one request object each; 0.05% measured headroom.
-// 826 KB: 825.5 KB, the installation and controller lanes merged; 0.06% measured headroom.
-// 823 KB: 822.0 KB, the input checks and the sync failure moved from the controllers into their use cases and scenarios; 0.1% measured headroom.
-// 822 KB: 821.1 KB, the config parts answering the installation file they write; 0.1% measured headroom.
+// 826 KB: 825.9 KB, the kind rollout giving installation and the controllers one request object, one execute and their checks inside use cases, and the config parts answering the file they write; 0.01% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
