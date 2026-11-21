@@ -1,5 +1,3 @@
-import { homedir as nodeHomedir } from "node:os";
-import { join } from "node:path";
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
@@ -22,8 +20,10 @@ import type { PluginTranslator } from "../../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
-import { resolveScopeForInstall, scopeBaseOf } from "../plugin-target-resolution.js";
+import { resolveScopeForInstall } from "../plugin-target-resolution.js";
 import { writePluginFiles } from "../write-plugin-files.js";
+import { foreignUserScopeDir } from "./foreign-user-scope-dir.js";
+import { reportInstallNotices, reportSkipWarnings } from "./report-placement.js";
 
 /** A distribution to place for each tool, and what the project already holds of it. */
 export interface PlacePluginCommand {
@@ -73,7 +73,7 @@ export class PlacePlugin {
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
       await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
-      const foreignDir = await this.userScopeDirNotInstalledHere(command, tool);
+      const foreignDir = await foreignUserScopeDir(this.deps.fs, command, tool);
       if (foreignDir !== undefined) {
         this.deps.logger.warn(
           `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`
@@ -89,25 +89,8 @@ export class PlacePlugin {
       allSkipped.push(skipped);
       allNotices.push(notices);
     }
-    this.emitSkipWarnings(allSkipped.flat());
-    this.emitInstallNotices(allNotices.flat());
-  }
-
-  private async userScopeDirNotInstalledHere(
-    command: PlacePluginCommand,
-    tool: AiToolProfile
-  ): Promise<string | undefined> {
-    const { projectRoot, machine } = command;
-    const pluginName = command.dist.manifest.name;
-    const toolId = tool.toolId;
-    if (resolveScopeForInstall(tool) !== "user") return undefined;
-    if (machine.getPlugins(toolId).some((p) => p.name === pluginName)) return undefined;
-    const dir = join(
-      scopeBaseOf(tool, { scope: "user", projectRoot: projectRoot, homedir: nodeHomedir }),
-      pluginName
-    );
-    const present = await this.deps.fs.listFilesRecursive(dir);
-    return present.length > 0 ? dir : undefined;
+    reportSkipWarnings(this.deps.logger, allSkipped.flat());
+    reportInstallNotices(this.deps.logger, allNotices.flat());
   }
 
   private async placeForTool(placement: ToolPlacement): Promise<Placement> {
@@ -176,19 +159,5 @@ export class PlacePlugin {
       })
     );
     return { skipped, notices };
-  }
-
-  private emitSkipWarnings(skipped: ReadonlySkipList): void {
-    for (const entry of skipped) {
-      this.deps.logger.warn(
-        `Plugin "${entry.pluginName}": ${entry.component} skipped for ${entry.toolId} — ${entry.reason}`
-      );
-    }
-  }
-
-  private emitInstallNotices(notices: ReadonlyNoticeList): void {
-    for (const entry of notices) {
-      this.deps.logger.info(`Plugin "${entry.pluginName}" (${entry.toolId}): ${entry.message}`);
-    }
   }
 }
