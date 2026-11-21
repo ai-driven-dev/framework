@@ -6041,8 +6041,7 @@
         "!src/presentation/display/doctor-display.ts",
         "!src/presentation/display/tool-config-display.ts",
         "!src/shared/domain/layout/aidd-layout.ts",
-        "!src/shared/domain/materialization/flat-paths.ts",
-        "!src/shared/domain/merge.ts"
+        "!src/shared/domain/materialization/flat-paths.ts"
       ],
       "plugins": ["./biome-plugins/max-function-params.grit"]
     },

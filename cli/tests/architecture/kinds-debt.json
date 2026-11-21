@@ -237,7 +237,6 @@
     "function parameters :: src/presentation/display/tool-config-display.ts",
     "function parameters :: src/shared/domain/layout/aidd-layout.ts",
     "function parameters :: src/shared/domain/materialization/flat-paths.ts",
-    "function parameters :: src/shared/domain/merge.ts",
     "one class per file :: src/contexts/telemetry/application/directory-resolver.ts",
     "one class per file :: src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
     "one class per file :: src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.ts",

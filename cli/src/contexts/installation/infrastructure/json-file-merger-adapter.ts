@@ -53,6 +53,6 @@ export class JsonFileMergerAdapter implements FileReader, FileWriter, FileMerger
   }
 
   mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
-    return mergeIntoJsonFile(this.files, path, content, strategy);
+    return mergeIntoJsonFile(this.files, { path, content, strategy });
   }
 }
