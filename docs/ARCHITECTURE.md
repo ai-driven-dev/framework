@@ -15,6 +15,7 @@ Only the manifest and the skills are required.
 | Actions | `skills/<name>/actions/` |
 | Assets | `skills/<name>/assets/` |
 | References | `skills/<name>/references/` |
+| Contract | `skills/<name>/scripts/contract.json`, its rules for the files the skill writes |
 | Agents | `agents/` |
 | Commands | `commands/` |
 | Hooks | `hooks/hooks.json` and its scripts |
