@@ -1,10 +1,14 @@
 import type { FileHash } from "../../../shared/domain/file-hash.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
-import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
 import { ToolNotInManifestError } from "../../../shared/domain/shared.error.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
 import { InvalidManifestDataError } from "./installation.error.js";
+import {
+  assertSupportedManifestVersion,
+  DEFAULT_MANIFEST_CONTEXT,
+  type ManifestFileContext,
+} from "./manifest/assert-supported-version.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import { type Ownership, ownerOf } from "./manifest/ownership.js";
 import {
@@ -12,6 +16,7 @@ import {
   createToolEntry,
   removePluginFromEntry,
   type ToolEntry,
+  trackedPathsInDirectory,
   updatePluginInEntry,
 } from "./manifest/tool-entry.js";
 import { withUpdatedHash } from "./manifest/tracked-files.js";
@@ -22,28 +27,6 @@ import {
   serializeManifestTools,
 } from "./manifest-serialization.js";
 import type { InstalledPlugin } from "./plugins/installed-plugin.js";
-import { MANIFEST_FILENAME } from "./project-layout.js";
-
-// The project-scope default, named in the refusal below so a person can act on it without hunting
-// for the path. A caller reading the user-scope manifest passes its own `ManifestFileContext`, so
-// the refusal names the file actually on disk.
-const MANIFEST_PATH_HINT = `${AIDD_DIR}/${MANIFEST_FILENAME}`;
-const DEFAULT_CONTEXT: ManifestFileContext = {
-  path: MANIFEST_PATH_HINT,
-  location: "in this project",
-  reinstallCommand: "aidd setup",
-};
-
-/**
- * What a version-refusal message names: the file on disk, in words fitting the sentence it lands
- * in, and the command that reinstalls once it is gone. `UserManifestRepositoryAdapter` passes its
- * own before reaching the guard, so a `--scope user` refusal never names the project's path.
- */
-export interface ManifestFileContext {
-  readonly path: string;
-  readonly location: string;
-  readonly reinstallCommand: string;
-}
 
 export class Manifest {
   private readonly _tools: Map<string, ToolEntry>;
@@ -86,16 +69,7 @@ export class Manifest {
 
   /** Tracked files, merge files and plugin files alike, across every tool. */
   getTrackedPathsInDirectory(dir: string): Set<string> {
-    const tracked = new Set<string>();
-    for (const [, entry] of this._tools) {
-      const paths = [
-        ...entry.files.map((f) => f.relativePath),
-        ...entry.mergeFiles.map((m) => m.relativePath),
-        ...entry.plugins.flatMap((plugin) => [...plugin.files.keys()]),
-      ];
-      for (const path of paths) if (path.startsWith(dir)) tracked.add(path);
-    }
-    return tracked;
+    return trackedPathsInDirectory(this._tools.values(), dir);
   }
 
   recordFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
@@ -108,9 +82,7 @@ export class Manifest {
   }
 
   updateToolMergeFiles(toolId: ToolId, mergeFiles: MergeFileEntry[]): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, { ...entry, mergeFiles });
+    this.changeEntry(toolId, (entry) => ({ ...entry, mergeFiles }));
   }
 
   removeTool(toolId: ToolId): void {
@@ -129,21 +101,15 @@ export class Manifest {
   }
 
   addPlugin(toolId: ToolId, plugin: InstalledPlugin): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, addPluginToEntry(entry, plugin));
+    this.changeEntry(toolId, (entry) => addPluginToEntry(entry, plugin));
   }
 
   removePlugin(toolId: ToolId, name: string): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, removePluginFromEntry(entry, name));
+    this.changeEntry(toolId, (entry) => removePluginFromEntry(entry, name));
   }
 
   updatePlugin(toolId: ToolId, plugin: InstalledPlugin): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, updatePluginInEntry(entry, plugin));
+    this.changeEntry(toolId, (entry) => updatePluginInEntry(entry, plugin));
   }
 
   /** Records the plugin, replacing the one of the same name in place when there is one. */
@@ -163,9 +129,13 @@ export class Manifest {
   }
 
   setNativeRegistrations(toolId: ToolId, registrations: NativeRegistrations): void {
+    this.changeEntry(toolId, (entry) => ({ ...entry, nativeRegistrations: registrations }));
+  }
+
+  private changeEntry(toolId: ToolId, change: (entry: ToolEntry) => ToolEntry): void {
     const entry = this._tools.get(toolId);
     if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, { ...entry, nativeRegistrations: registrations });
+    this._tools.set(toolId, change(entry));
   }
 
   ownerOf(relativePath: string): Ownership {
@@ -197,51 +167,14 @@ export class Manifest {
   static fromJSON(
     data: unknown,
     resolveToolId: ToolIdResolver,
-    context: ManifestFileContext = DEFAULT_CONTEXT
+    context: ManifestFileContext = DEFAULT_MANIFEST_CONTEXT
   ): Manifest {
     if (data === null || typeof data !== "object") {
       throw new InvalidManifestDataError("expected an object.");
     }
     const raw = data as Record<string, unknown>;
-    Manifest.assertSupportedVersion(raw, context);
+    assertSupportedManifestVersion(raw, context);
     const tools = parseManifestTools(raw, resolveToolId);
     return new Manifest({ tools });
-  }
-
-  // This CLI reads exactly MANIFEST_VERSION and refuses every other one, naming a fix for each
-  // side. Too new means this CLI is behind, so `aidd update` is a real answer.
-  //
-  // Too old has none: no published CLI ever wrote v7's mandatory per-plugin `scope` or v8's
-  // host-name-beside-alias pair, and `load()` calls `fromJSON` before any command reaches a save,
-  // so every write path refuses an old document before it could overwrite it. Deleting the
-  // document is the only correction that does not pass back through this same guard.
-  private static assertSupportedVersion(
-    raw: Record<string, unknown>,
-    context: ManifestFileContext
-  ): void {
-    const version = raw.version;
-    if (version === MANIFEST_VERSION) return;
-    if (typeof version === "number" && version > MANIFEST_VERSION) {
-      throw new InvalidManifestDataError(
-        `manifest version ${version} was written by a newer CLI than this one. Run \`aidd update\` to update this CLI, then try again.`
-      );
-    }
-    // A v6 document is the one case admitting a remedy richer than deletion: 5.2.2's own manifest
-    // reader accepts exactly version 6: measured against that published version: so its
-    // `clean --force` can still run against this project before the manifest naming what it
-    // registered is gone. 5.2.2 refuses a v7 document too, so naming it there would be a false
-    // remedy. A v6 document is one the project repository ever produced, never the user-scope one.
-    const remedy =
-      version === 6
-        ? "5.2.2, a published CLI, wrote this version. Before deleting it, run " +
-          "`npx @ai-driven-dev/cli@5.2.2 clean --force` in this project so it unregisters " +
-          "what it registered and clears its own cache — once the manifest naming those " +
-          "is gone, nothing can drive that anymore. Then delete"
-        : "No published CLI can write this version: delete";
-    throw new InvalidManifestDataError(
-      `manifest version ${String(version)} predates version ${MANIFEST_VERSION}, the only one this CLI reads. ` +
-        `${remedy} ${context.path} ${context.location}, then run ` +
-        `\`${context.reinstallCommand}\` to reinstall the framework.`
-    );
   }
 }
