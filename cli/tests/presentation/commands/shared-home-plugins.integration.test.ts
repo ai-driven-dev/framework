@@ -2,8 +2,11 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { TOOL } from "../../shared/testing/catalog-of.builder.js";
 import { copyFixtureTree, createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
+import { resolveRegisteredToolId } from "../../shared/testing/registered-tools.builder.js";
 import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
 
 let first: string;
@@ -51,6 +54,23 @@ describe("two projects on one home that installed the same cursor plugins", () =
     expect(existsSync(contextDir)).toBe(false);
     expect(existsSync(devDir)).toBe(true);
     expect((await aidd(["clean", "--scope", "user", "--force"], first)).exitCode).toBe(0);
+  });
+
+  it("gives each project its hooks and records both as dependents of the machine-owned plugin", async () => {
+    for (const cwd of [first, second]) {
+      const setup = await aidd(setupFromFixture("cursor", names), cwd);
+      expect(setup.exitCode, setup.stderr).toBe(0);
+      expect(await readFile(join(cwd, ".cursor", "hooks.json"), "utf-8")).toContain(
+        "update_memory"
+      );
+    }
+
+    const machine = Manifest.fromJSON(
+      JSON.parse(await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")),
+      resolveRegisteredToolId
+    );
+    const owned = machine.getPlugins(TOOL.cursor).find((plugin) => plugin.name === "aidd-context");
+    expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
   });
 
   it("updates only the selected machine plugin and names dependent projects", async () => {

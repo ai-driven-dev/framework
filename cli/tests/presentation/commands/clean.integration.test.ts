@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
@@ -81,5 +82,40 @@ describe("cleaning the user scope after a plain project-scope setup", () => {
       (m) => m.name
     );
     expect(afterNames).not.toContain("aidd-framework");
+  });
+});
+
+describe("cleaning a project whose claude registration cannot be withdrawn", () => {
+  it("leaves the host's plugin cache in place when the claude CLI is not on PATH", async () => {
+    const marketplace = "aidd-clean-cache-marketplace";
+    await mkdir(join(project, ".aidd"), { recursive: true });
+    await writeFile(
+      join(project, ".aidd", "manifest.json"),
+      JSON.stringify({
+        version: 8,
+        tools: {
+          claude: {
+            toolId: "claude",
+            version: "1.0.0",
+            files: [],
+            nativeRegistrations: {
+              binary: "claude",
+              marketplaces: [{ alias: marketplace, hostName: marketplace }],
+              pluginRefs: [],
+            },
+          },
+        },
+      }),
+      "utf-8"
+    );
+    const cacheDir = join(home, ".claude", "plugins", "cache", marketplace, "plugin-a");
+    await mkdir(cacheDir, { recursive: true });
+    const cacheFile = join(cacheDir, "plugin.json");
+    await writeFile(cacheFile, "{}", "utf-8");
+
+    const { exitCode } = await aidd(["clean", "--force"]);
+
+    expect(exitCode).toBe(0);
+    expect(existsSync(cacheFile)).toBe(true);
   });
 });
