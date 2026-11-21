@@ -5,6 +5,7 @@ import {
 } from "../../../../../src/contexts/translate/application/sinks/plugin-runtime-writer.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { aDiskTarget, aStubBuildContract } from "../../testing/stub-build-contract.builder.js";
 
 const PLUGIN = { name: "plug", src: "/src/plugins/plug" };
@@ -44,16 +45,18 @@ describe("one plugin's hooks and MCP servers", () => {
   });
 
   it("writes no MCP file in the marketplace layout, which the engine builds", async () => {
-    const fs = new InMemoryFileAdapter({ [`${PLUGIN.src}/.mcp.json`]: "{}" });
+    const fs = new InMemoryFileAdapter();
     const target = aDiskTarget(aStubBuildContract());
-    await expect(writePluginMcp(depsOver(fs), target, PLUGIN)).resolves.toBe(0);
+    await expect(
+      writePluginMcp(depsOver(fs), target, aCanon("plug", { ".mcp.json": "{}" }))
+    ).resolves.toBe(0);
     expect(fs.getFile("/out/plugins/plug/.mcp.json")).toBeUndefined();
   });
 
   it("writes nothing when the plugin has no MCP file", async () => {
     const target = aDiskTarget(aStubBuildContract());
-    await expect(writePluginMcp(depsOver(new InMemoryFileAdapter()), target, PLUGIN)).resolves.toBe(
-      0
-    );
+    await expect(
+      writePluginMcp(depsOver(new InMemoryFileAdapter()), target, aCanon("plug", {}))
+    ).resolves.toBe(0);
   });
 });

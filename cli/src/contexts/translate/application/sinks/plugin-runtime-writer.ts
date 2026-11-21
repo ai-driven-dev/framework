@@ -1,5 +1,7 @@
 import { join } from "node:path";
-import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { flatMcpServers } from "../../domain/build-layout/flat-mcp.js";
+import { PLUGIN_HOOKS_RELATIVE } from "../../domain/canon-format.js";
 import type { DiskSinkDeps, PluginSource } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
 
@@ -37,19 +39,18 @@ export async function writePluginHooks(
 export async function writePluginMcp(
   deps: RuntimeDeps,
   t: DiskTarget,
-  plugin: PluginSource
+  canon: PluginDistribution
 ): Promise<number> {
   const artifact = t.contract.artifacts.mcp;
-  if (!artifact.supported) return 0;
-  const mcpSrc = join(plugin.src, PLUGIN_MCP_RELATIVE);
-  if (!(await deps.fs.fileExists(mcpSrc))) return 0;
-  if (t.mode === "marketplace") return 0;
+  if (!artifact.supported || t.mode === "marketplace") return 0;
   const { merge, mergeDest } = artifact;
   if (!merge || !mergeDest) return 0;
+  const servers = flatMcpServers(canon);
+  if (servers === null) return 0;
   return deps.flat.writeMcp({
     target: t,
     mcp: { merge, mergeDest },
-    pluginName: plugin.name,
-    mcpSrc,
+    pluginName: canon.manifest.name,
+    servers,
   });
 }

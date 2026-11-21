@@ -27,7 +27,8 @@ export interface FlatMcpStep {
   readonly target: FlatTarget;
   readonly mcp: FlatMcpTarget;
   readonly pluginName: string;
-  readonly mcpSrc: string;
+  /** The plugin's servers, keys already prefixed. */
+  readonly servers: Readonly<Record<string, unknown>>;
 }
 
 /** Writes a built plugin into one flat tool directory, merging into the files other plugins share. */

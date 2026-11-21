@@ -57,7 +57,7 @@ export class DiskSink implements PluginTreeSink {
       manifest +
       built.length +
       (await writePluginHooks(this.deps, t, plugin)) +
-      (await writePluginMcp(this.deps, t, plugin))
+      (await writePluginMcp(this.deps, t, canon))
     );
   }
 
