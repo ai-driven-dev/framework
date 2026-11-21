@@ -1,11 +1,7 @@
 import path from "node:path";
 import { InputRequiredError } from "../../../shared/domain/shared.error.js";
-import {
-  headingAnchors,
-  normalizedAnchor,
-  type RecipeFinding,
-  type RecipeLink,
-} from "../domain/markdown-scan.js";
+import { headingAnchors, normalizedAnchor } from "../domain/heading-anchors.js";
+import type { RecipeFinding, RecipeLink } from "../domain/markdown-scan.js";
 import { inspectRecipe, type RecipeInspection } from "../domain/recipe-rules.js";
 import type { RecipeDirectory, RecipeFiles } from "../ports/recipe-files.js";
 
@@ -83,9 +79,7 @@ export class ValidateRecipes {
       rule,
       fix,
     });
-    const hashIndex = link.target.indexOf("#");
-    const rawPath = hashIndex === -1 ? link.target : link.target.slice(0, hashIndex);
-    const rawAnchor = hashIndex === -1 ? "" : link.target.slice(hashIndex + 1);
+    const { rawPath, rawAnchor } = splitLinkTarget(link.target);
     const targetFile = localTargetFile(file, rawPath);
     if (targetFile === undefined) {
       return fail("link-encoding", `Encode the link target correctly: ${rawPath}`);
@@ -97,14 +91,8 @@ export class ValidateRecipes {
         `Point the local target to a readable file: ${rawPath} (${target.error}).`
       );
     }
-    if (!rawAnchor) return undefined;
-    if (target.anchors === null) {
-      return fail("link-anchor", `Remove the anchor or target a Markdown heading: #${rawAnchor}`);
-    }
-    if (!target.anchors.has(normalizedAnchor(rawAnchor))) {
-      return fail("link-anchor", `Point the link to an existing heading: #${rawAnchor}`);
-    }
-    return undefined;
+    const fix = anchorFix(target.anchors, rawAnchor);
+    return fix === undefined ? undefined : fail("link-anchor", fix);
   }
 
   private targetOf(targetFile: string, cache: Map<string, LinkTarget>): LinkTarget {
@@ -129,4 +117,20 @@ function localTargetFile(file: string, rawPath: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function splitLinkTarget(target: string): { rawPath: string; rawAnchor: string } {
+  const hashIndex = target.indexOf("#");
+  if (hashIndex === -1) return { rawPath: target, rawAnchor: "" };
+  return { rawPath: target.slice(0, hashIndex), rawAnchor: target.slice(hashIndex + 1) };
+}
+
+/** What to tell the author when the anchor a link names is absent, undefined when it resolves or none is named. */
+function anchorFix(anchors: Set<string> | null, rawAnchor: string): string | undefined {
+  if (!rawAnchor) return undefined;
+  if (anchors === null) return `Remove the anchor or target a Markdown heading: #${rawAnchor}`;
+  if (!anchors.has(normalizedAnchor(rawAnchor))) {
+    return `Point the link to an existing heading: #${rawAnchor}`;
+  }
+  return undefined;
 }
