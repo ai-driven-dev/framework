@@ -216,4 +216,4 @@ const entries: {
 };
 
 /** What each catalogued error says, by its code. */
-export const MESSAGES: Readonly<Record<string, Words["say"] | undefined>> = entries;
+export const MESSAGES: Readonly<Record<string, Words["say"]>> = entries;

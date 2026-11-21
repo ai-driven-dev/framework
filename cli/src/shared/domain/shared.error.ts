@@ -1,8 +1,9 @@
-/** A catalogue error carries a stable kebab-case `code`, the key a presentation table maps to words. */
+/** A catalogue error carries a stable kebab-case `code`, the key a presentation table maps to words.
+ * It carries data and a cause, never text: the words live in the presentation table. */
 export abstract class AiddError extends Error {
   abstract readonly code: string;
-  constructor(message?: string, options?: ErrorOptions) {
-    super(message, options);
+  constructor(options?: ErrorOptions) {
+    super("", options);
     this.name = new.target.name;
   }
 }

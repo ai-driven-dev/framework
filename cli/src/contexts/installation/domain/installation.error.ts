@@ -89,7 +89,7 @@ export class ManifestUnavailableError extends AiddError {
     readonly code: ManifestUnavailableCode,
     options?: ErrorOptions
   ) {
-    super(undefined, options);
+    super(options);
   }
 }
 

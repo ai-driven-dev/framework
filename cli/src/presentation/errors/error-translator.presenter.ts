@@ -4,7 +4,7 @@ import { MESSAGES } from "./error-messages.presenter.js";
 
 /** The words a failure shows: a catalogued error through its table entry, anything else as it came. */
 export function render(error: unknown): string {
-  if (error instanceof AiddError) return MESSAGES[error.code]?.(error, render) ?? error.message;
+  if (error instanceof AiddError) return MESSAGES[error.code](error, render);
   return error instanceof Error ? error.message : String(error);
 }
 

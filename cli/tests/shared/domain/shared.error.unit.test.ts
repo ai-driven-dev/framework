@@ -42,7 +42,7 @@ describe("AiddError", () => {
   it("keeps the cause it was raised from", () => {
     const cause = new Error("root");
 
-    expect(new ProbeError(undefined, { cause }).cause).toBe(cause);
+    expect(new ProbeError({ cause }).cause).toBe(cause);
   });
 });
 
