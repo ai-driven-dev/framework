@@ -173,23 +173,23 @@ describe("UpdatePlugin — built-tree materialization", () => {
         translate: translateDistribution,
       }
     );
-    const plan = await updater.planUpdate(
-      machine.getPlugins(cursor)[0],
-      registeredTools().aiProfile(cursor),
-      PROJECT_ROOT,
-      deps.logger,
-      false,
-      insideUserScope
-    );
+    const plan = await updater.planUpdate({
+      plugin: machine.getPlugins(cursor)[0],
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: PROJECT_ROOT,
+      logger: deps.logger,
+      rebuild: false,
+      isWithinUserScope: insideUserScope,
+    });
     if (plan === null) throw new Error("fixture did not plan a newer build");
     const foreign = "/foreign/obsolete";
     deps.fs.setSymlink(join(USER_PLUGINS_DIR, "sample-plugin/skills/obsolete"), foreign);
     deps.fs.setFile(join(foreign, "SKILL.md"), "outside user bytes");
     const writeSpy = vi.spyOn(deps.fs, "writeFile");
 
-    await expect(updater.applyUpdate(plan, deps.logger, outsideUserScope)).rejects.toThrow(
-      /unsafe recorded files/
-    );
+    await expect(
+      updater.applyUpdate(plan, { logger: deps.logger, isWithinUserScope: outsideUserScope })
+    ).rejects.toThrow(/unsafe recorded files/);
 
     expect(writeSpy).not.toHaveBeenCalled();
     expect(deps.fs.getFile(join(foreign, "SKILL.md"))).toBe("outside user bytes");

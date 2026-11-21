@@ -1,7 +1,9 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { HostWithdrawal } from "../../ports/native-host.js";
+import type {
+  PluginHostReach,
+  ProjectPluginWithdrawalSteps,
+} from "../../ports/project-plugin-withdrawal.js";
 import type { NativeHostTool, PluginEnablementReach } from "../../ports/tool-sections.js";
 import type { RemovalClaims } from "./remove-project-plugin.js";
 
@@ -27,20 +29,15 @@ export interface PluginRemovalClaims extends RemovalClaims {
 
 /** What a project removal asks the host and the machine claims: whether the host lets the plugin
  * go, whether its ref may then leave the record, and the claims the removal lets go of. */
-export class ProjectPluginWithdrawal<Proof> {
+export class ProjectPluginWithdrawal<Proof> implements ProjectPluginWithdrawalSteps {
   constructor(
     private readonly withdrawFromHost: HostWithdrawal<Proof>,
     private readonly claims: PluginRemovalClaims
   ) {}
 
   /** Refuses, before anything is deleted, a plugin the host cannot let go. */
-  async assertSource(
-    toolId: AiToolId,
-    tool: NativeHostTool,
-    plugin: InstalledPlugin,
-    projectRoot: string,
-    registrations: NativeRegistrations | undefined
-  ): Promise<void> {
+  async assertSource(source: PluginHostReach & { readonly toolId: AiToolId }): Promise<void> {
+    const { toolId, tool, plugin, projectRoot, registrations } = source;
     if (plugin.marketplace === undefined) return;
     await this.withdrawFromHost.assertProjectSource({
       tool,
@@ -52,12 +49,8 @@ export class ProjectPluginWithdrawal<Proof> {
   }
 
   /** `undefined` when the plugin carries no marketplace, else whether the host confirmed. */
-  async withdraw(
-    tool: NativeHostTool,
-    plugin: InstalledPlugin,
-    projectRoot: string,
-    registrations: NativeRegistrations | undefined
-  ): Promise<boolean | undefined> {
+  async withdraw(reach: PluginHostReach): Promise<boolean | undefined> {
+    const { tool, plugin, projectRoot, registrations } = reach;
     if (plugin.marketplace === undefined) return undefined;
     return this.withdrawFromHost.execute({
       tool,
@@ -69,12 +62,13 @@ export class ProjectPluginWithdrawal<Proof> {
   }
 
   /** The host confirmed the withdrawal, or it enables plugins machine-wide and nobody else holds `ref`. */
-  async canDetachRef(
-    toolId: AiToolId,
-    tool: NativeHostTool,
-    confirmed: boolean | undefined,
-    ref: string
-  ): Promise<boolean> {
+  async canDetachRef(request: {
+    readonly toolId: AiToolId;
+    readonly tool: NativeHostTool;
+    readonly confirmed: boolean | undefined;
+    readonly ref: string;
+  }): Promise<boolean> {
+    const { toolId, tool, confirmed, ref } = request;
     return (
       confirmed === true ||
       (tool.pluginEnablementIsMachineGlobal() && (await this.claims.isMachineOwned(toolId, ref)))

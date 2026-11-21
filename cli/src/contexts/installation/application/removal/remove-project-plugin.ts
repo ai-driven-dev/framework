@@ -5,6 +5,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { RemovedPlugin } from "../../contract/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
 import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
@@ -52,7 +53,7 @@ export interface RemovalClaims {
   readonly detachUserPlugin: (toolId: AiToolId, name: string, projectRoot: string) => Promise<void>;
 }
 
-export class RemoveProjectPlugin {
+export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly claims?: RemovalClaims

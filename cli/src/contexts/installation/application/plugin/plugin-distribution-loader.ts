@@ -1,17 +1,12 @@
-import { join } from "node:path";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { PluginFetcher, PluginFetchOptions } from "../../ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
 
 export class PluginDistributionLoader {
   constructor(
     private readonly fetcher: PluginFetcher,
-    private readonly reader: PluginDistributionReader,
-    /** A global install's fetches: it writes nothing in the project. */
-    private readonly globalCacheDir?: () => string
+    private readonly reader: PluginDistributionReader
   ) {}
 
   async load(
@@ -21,10 +16,5 @@ export class PluginDistributionLoader {
   ): Promise<PluginDistribution> {
     const localPath = await this.fetcher.fetch(source, cacheDir, options);
     return this.reader.read(localPath);
-  }
-
-  loadLatest(plugin: InstalledPlugin, projectRoot: string): Promise<PluginDistribution> {
-    const cacheDir = this.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    return this.load(plugin.source, cacheDir, { forceRefresh: true });
   }
 }

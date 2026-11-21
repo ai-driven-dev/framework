@@ -5,13 +5,8 @@ import { isErrnoException } from "../../../../shared/domain/reading/json-file.js
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ContainmentCheck } from "../../ports/plugin/user-plugin-materialization.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
-
-/**
- * Whether a resolved path sits strictly inside a resolved boundary. Composition supplies the
- * machine-claims rule, so installation never reaches into that context.
- */
-export type ContainmentCheck = (resolvedCandidate: string, resolvedBoundary: string) => boolean;
 
 /**
  * A plugin's machine-scope files, read from the tool's built tree and keyed by their path under
@@ -51,15 +46,16 @@ export async function readGlobalPluginFiles(
  * file already there that this plugin does not own is never overwritten. Creates the user
  * directory itself when the host has not yet.
  */
-export async function assertGlobalFilesWritable(
-  fs: FileReader & FileWriter,
-  tool: PluginPlacement,
-  plugin: Pick<InstalledPlugin, "name" | "files"> | undefined,
-  pluginName: string,
-  files: readonly InstallationFile[],
-  homedir: string,
-  isWithinUserScope: ContainmentCheck
-): Promise<string> {
+export async function assertGlobalFilesWritable(write: {
+  readonly fs: FileReader & FileWriter;
+  readonly tool: PluginPlacement;
+  readonly plugin: Pick<InstalledPlugin, "name" | "files"> | undefined;
+  readonly pluginName: string;
+  readonly files: readonly InstallationFile[];
+  readonly homedir: string;
+  readonly isWithinUserScope: ContainmentCheck;
+}): Promise<string> {
+  const { fs, tool, plugin, pluginName, files, homedir, isWithinUserScope } = write;
   const { toolId } = tool;
   const machine = tool.plugins()?.globalFiles() ?? null;
   if (machine === null) throw new Error(`${toolId}: no machine-scope directory is declared.`);
@@ -67,26 +63,9 @@ export async function assertGlobalFilesWritable(
   await fs.createDirectory(boundary);
   const resolvedBoundary = await fs.realpath(boundary);
   for (const file of files) {
-    const rel = file.relativePath;
-    if (posix.isAbsolute(rel) || rel.includes("\\") || posix.normalize(rel) !== rel) {
-      throw new Error(`${toolId}: '${pluginName}' path '${rel}' escapes ${boundary}.`);
-    }
-    let parent = dirname(join(boundary, rel));
-    while (parent !== boundary) {
-      const resolved = await tryRealpath(fs, parent);
-      if (resolved !== null) {
-        if (!isWithinUserScope(resolved, resolvedBoundary)) {
-          throw new Error(`${toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);
-        }
-        break;
-      }
-      parent = dirname(parent);
-    }
-    if (plugin?.files.has(rel) === true) continue;
-    const target = join(boundary, rel);
-    if (!(await fs.fileExists(target))) continue;
-    throw new Error(
-      `${toolId}: '${target}' already exists and was not installed by aidd; move or delete it, then rerun.`
+    await assertFileWritable(
+      { fs, tool, plugin, pluginName, file, boundary, resolvedBoundary },
+      isWithinUserScope
     );
   }
   return boundary;
@@ -99,4 +78,41 @@ async function tryRealpath(fs: FileReader, path: string): Promise<string | null>
     if (isErrnoException(err) && err.code === "ENOENT") return null;
     throw err;
   }
+}
+
+async function assertFileWritable(
+  write: {
+    readonly fs: FileReader & FileWriter;
+    readonly tool: PluginPlacement;
+    readonly plugin: Pick<InstalledPlugin, "name" | "files"> | undefined;
+    readonly pluginName: string;
+    readonly file: InstallationFile;
+    readonly boundary: string;
+    readonly resolvedBoundary: string;
+  },
+  isWithinUserScope: ContainmentCheck
+): Promise<void> {
+  const { fs, tool, plugin, pluginName, file, boundary, resolvedBoundary } = write;
+  const { toolId } = tool;
+  const rel = file.relativePath;
+  if (posix.isAbsolute(rel) || rel.includes("\\") || posix.normalize(rel) !== rel) {
+    throw new Error(`${toolId}: '${pluginName}' path '${rel}' escapes ${boundary}.`);
+  }
+  let parent = dirname(join(boundary, rel));
+  while (parent !== boundary) {
+    const resolved = await tryRealpath(fs, parent);
+    if (resolved !== null) {
+      if (!isWithinUserScope(resolved, resolvedBoundary)) {
+        throw new Error(`${toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);
+      }
+      break;
+    }
+    parent = dirname(parent);
+  }
+  if (plugin?.files.has(rel) === true) return;
+  const target = join(boundary, rel);
+  if (!(await fs.fileExists(target))) return;
+  throw new Error(
+    `${toolId}: '${target}' already exists and was not installed by aidd; move or delete it, then rerun.`
+  );
 }

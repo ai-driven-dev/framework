@@ -1,36 +1,25 @@
 import { ActiveMachineDependentsError } from "../../../shared/domain/errors.js";
-import type { ToolId } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";
+import type { MachineStatePurge } from "../ports/machine-state-purge.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { UserRegistrationWithdrawal } from "../ports/native-host.js";
-import type { PurgeMachineState } from "./removal/purge-machine-state.js";
-import type { UserScopePluginFiles } from "./removal/user-scope-plugin-files.js";
-
-/** What the user manifest and the cache say before anything is removed. */
-export interface UserScopeInspection {
-  manifestFound: boolean;
-  toolIds: readonly ToolId[];
-  activePluginDependents: readonly string[];
-  /** Every version directory found under `userConfigDir()/cache/built/` read structurally,
-   * never trusted from any one tool's own manifest entry. */
-  builtVersions: readonly string[];
-  referencingProjects: readonly string[];
-}
+import type { UserScopePluginFileRemoval } from "../ports/user-scope-plugin-files.js";
+import type { UserScopeInspection, UserScopePurge } from "../ports/user-scope-purge.js";
 
 /**
  * The machine-scope half of `aidd clean --scope user`: reads what is registered, proves each
  * tracked user-scope file safe to delete, then purges the user plugin files and the whitelisted
  * machine state. Undoing the host's own registration sits between those and is the caller's.
  */
-export class PurgeUserScopeFiles {
+export class PurgeUserScopeFiles implements UserScopePurge {
   constructor(
     private readonly userManifestRepo: ManifestRepository & Lock,
-    private readonly purgeMachineState: PurgeMachineState,
+    private readonly purgeMachineState: MachineStatePurge,
     /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
     private readonly homeDir: () => string,
-    private readonly userScopePluginFiles: UserScopePluginFiles,
+    private readonly userScopePluginFiles: UserScopePluginFileRemoval,
     private readonly tools: ToolCatalog
   ) {}
 

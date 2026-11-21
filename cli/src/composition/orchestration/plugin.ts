@@ -12,11 +12,7 @@ import { ResolveAddedPluginSource } from "../../contexts/installation/applicatio
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
-import {
-  type BoundPluginMaterializer,
-  PluginMaterializer,
-  type UserScopeFileGuard,
-} from "../../contexts/installation/application/plugin/plugin-materializer.js";
+import { PluginMaterializer } from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
 import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.js";
 import { ProjectPluginWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
@@ -27,6 +23,11 @@ import {
 } from "../../contexts/installation/application/removal/remove-user-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { HostWithdrawal } from "../../contexts/installation/ports/native-host.js";
+import type {
+  BoundPluginMaterializer,
+  UserPluginMaterialization,
+  UserScopeFileGuard,
+} from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import {
@@ -53,12 +54,17 @@ export function pluginCacheDir(): string {
 
 /** The materializer with the machine-scope containment rule bound, and no rebuild unless asked. */
 export function withinUserScope(
-  materializer: Pick<PluginMaterializer, "planUpdate" | "applyUpdate">
+  materializer: Pick<UserPluginMaterialization, "planUpdate" | "applyUpdate">
 ): BoundPluginMaterializer {
   return {
-    planUpdate: (plugin, tool, projectRoot, log, rebuild = false) =>
-      materializer.planUpdate(plugin, tool, projectRoot, log, rebuild, isStrictlyWithinUserScope),
-    applyUpdate: (plan, log) => materializer.applyUpdate(plan, log, isStrictlyWithinUserScope),
+    planUpdate: ({ rebuild = false, ...request }) =>
+      materializer.planUpdate({
+        ...request,
+        rebuild,
+        isWithinUserScope: isStrictlyWithinUserScope,
+      }),
+    applyUpdate: (plan, logger) =>
+      materializer.applyUpdate(plan, { logger, isWithinUserScope: isStrictlyWithinUserScope }),
   };
 }
 
@@ -205,9 +211,10 @@ export function wirePlugin(base: Base, inst: Installation) {
   );
   const pluginMaterializer = new PluginMaterializer(
     fs,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, pluginCacheDir),
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
     userScopeFileGuard,
-    builtMaterializationDeps
+    builtMaterializationDeps,
+    pluginCacheDir
   );
   const userPluginFileUpdater = withinUserScope(pluginMaterializer);
   const pluginUpdateUseCase = new UpdatePlugin(

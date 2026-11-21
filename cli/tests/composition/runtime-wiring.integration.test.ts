@@ -174,44 +174,41 @@ describe("pluginCacheDir", () => {
 });
 
 describe("withinUserScope", () => {
-  const plugin = {} as Parameters<ReturnType<typeof withinUserScope>["planUpdate"]>[0];
-  const tool = {} as Parameters<ReturnType<typeof withinUserScope>["planUpdate"]>[1];
-  const log = new CapturingLogger();
+  type Bound = ReturnType<typeof withinUserScope>;
+  const plugin = {} as Parameters<Bound["planUpdate"]>[0]["plugin"];
+  const tool = {} as Parameters<Bound["planUpdate"]>[0]["tool"];
+  const logger = new CapturingLogger();
 
   it("plans an update with the containment rule bound, and without a rebuild unless asked", async () => {
     const planUpdate = vi.fn().mockResolvedValue(null);
     const bound = withinUserScope({ planUpdate, applyUpdate: vi.fn() });
+    const request = { plugin, tool, projectRoot: "/project", logger };
 
-    await bound.planUpdate(plugin, tool, "/project", log);
-    await bound.planUpdate(plugin, tool, "/project", log, true);
+    await bound.planUpdate(request);
+    await bound.planUpdate({ ...request, rebuild: true });
 
-    expect(planUpdate).toHaveBeenNthCalledWith(
-      1,
-      plugin,
-      tool,
-      "/project",
-      log,
-      false,
-      isStrictlyWithinUserScope
-    );
-    expect(planUpdate).toHaveBeenNthCalledWith(
-      2,
-      plugin,
-      tool,
-      "/project",
-      log,
-      true,
-      isStrictlyWithinUserScope
-    );
+    expect(planUpdate).toHaveBeenNthCalledWith(1, {
+      ...request,
+      rebuild: false,
+      isWithinUserScope: isStrictlyWithinUserScope,
+    });
+    expect(planUpdate).toHaveBeenNthCalledWith(2, {
+      ...request,
+      rebuild: true,
+      isWithinUserScope: isStrictlyWithinUserScope,
+    });
   });
 
   it("applies an update with the containment rule bound", async () => {
     const applyUpdate = vi.fn().mockResolvedValue(plugin);
-    const plan = {} as Parameters<ReturnType<typeof withinUserScope>["applyUpdate"]>[0];
+    const plan = {} as Parameters<Bound["applyUpdate"]>[0];
 
-    await withinUserScope({ planUpdate: vi.fn(), applyUpdate }).applyUpdate(plan, log);
+    await withinUserScope({ planUpdate: vi.fn(), applyUpdate }).applyUpdate(plan, logger);
 
-    expect(applyUpdate).toHaveBeenCalledWith(plan, log, isStrictlyWithinUserScope);
+    expect(applyUpdate).toHaveBeenCalledWith(plan, {
+      logger,
+      isWithinUserScope: isStrictlyWithinUserScope,
+    });
   });
 });
 

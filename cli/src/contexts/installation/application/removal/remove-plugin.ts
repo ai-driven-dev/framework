@@ -10,12 +10,12 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../../ports/native-host.js";
+import type { ProjectPluginWithdrawalSteps } from "../../ports/project-plugin-withdrawal.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
-import type { ProjectPluginWithdrawal } from "./project-plugin-withdrawal.js";
 import { assertProjectMcpEntriesRemovable } from "./remove-project-plugin.js";
 
 export interface PluginRemoveOptions {
@@ -24,11 +24,11 @@ export interface PluginRemoveOptions {
   projectRoot: string;
 }
 
-export class RemovePlugin<Proof> {
+export class RemovePlugin {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly projectRepo: ManifestRepository,
-    private readonly withdrawal: ProjectPluginWithdrawal<Proof>,
+    private readonly withdrawal: ProjectPluginWithdrawalSteps,
     private readonly records: RegistrationRecordRules,
     private readonly tools: ToolCatalog
   ) {}
@@ -45,13 +45,13 @@ export class RemovePlugin<Proof> {
       const tool = this.tools.aiProfile(toolId);
       await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, projectRoot);
       await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
-      await this.withdrawal.assertSource(
+      await this.withdrawal.assertSource({
         toolId,
         tool,
         plugin,
         projectRoot,
-        manifest.getNativeRegistrations(toolId)
-      );
+        registrations: manifest.getNativeRegistrations(toolId),
+      });
     }
     const userTools = resolvedToolIds.filter((toolId) =>
       manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
@@ -62,7 +62,11 @@ export class RemovePlugin<Proof> {
       const ref = this.records.refOf(registrations, pluginName, plugin.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
-    const removed = await this.removeFromTools(pluginName, resolvedToolIds, projectRoot, manifest);
+    const removed = await this.removeFromTools(manifest, {
+      pluginName,
+      toolIds: resolvedToolIds,
+      projectRoot,
+    });
     if (!removed) throw new PluginNotFoundError(pluginName);
     await this.projectRepo.save(manifest);
     await this.withdrawal.detachNativeRefs(projectRoot, nativeRefs);
@@ -72,11 +76,10 @@ export class RemovePlugin<Proof> {
   }
 
   private async removeFromTools(
-    pluginName: string,
-    toolIds: AiToolId[],
-    projectRoot: string,
-    manifest: Manifest
+    manifest: Manifest,
+    removal: { pluginName: string; toolIds: AiToolId[]; projectRoot: string }
   ): Promise<boolean> {
+    const { pluginName, toolIds, projectRoot } = removal;
     let removed = false;
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
@@ -89,7 +92,12 @@ export class RemovePlugin<Proof> {
         projectRoot: projectRoot,
         homedir: nodeHomedir,
       });
-      const confirmed = await this.withdrawal.withdraw(tool, plugin, projectRoot, registrations);
+      const confirmed = await this.withdrawal.withdraw({
+        tool,
+        plugin,
+        projectRoot,
+        registrations,
+      });
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
@@ -97,7 +105,7 @@ export class RemovePlugin<Proof> {
       if (
         ref !== undefined &&
         registrations !== undefined &&
-        (await this.withdrawal.canDetachRef(toolId, tool, confirmed, ref))
+        (await this.withdrawal.canDetachRef({ toolId, tool, confirmed, ref }))
       ) {
         manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
       }
