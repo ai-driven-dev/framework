@@ -6,7 +6,9 @@ How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../..
 
 | Project | Selects | Setup |
 | --- | --- | --- |
-| `unit`, `contract`, `integration`, `e2e`, `golden` | `tests/**/*.<name>.test.ts` | e2e and golden build the binary once, under `.e2e-build/` |
+| `unit`, `contract`, `integration`, `e2e` | `tests/**/*.<name>.test.ts` | e2e builds the binary once, under `.e2e-build/` |
+| `golden` | `tests/golden/**/*.golden.test.ts` | builds the binary once, under `.e2e-build/` |
+| `display` | `tests/presentation/**/*.golden.test.ts`, the presenters' and errors' goldens | none: they render in process |
 | `architecture` | `tests/architecture/**/*.arch.test.ts` only | none |
 
 ## Commands
@@ -14,7 +16,7 @@ How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../..
 | Command | Runs |
 | --- | --- |
 | `pnpm test` | every project; e2e and golden build into `.e2e-build/`, never `dist/` |
-| `pnpm test:unit`, `test:contract`, `test:integration`, `test:e2e`, `test:golden`, `test:arch` | one project |
+| `pnpm test:unit`, `test:contract`, `test:integration`, `test:e2e`, `test:golden`, `test:display`, `test:arch` | one project |
 | `pnpm golden:update [name]` | rewrites the stored goldens, or those under `tests/golden/<name>*`; refused in CI |
 | `pnpm smoke` | the built binary over `scripts/smoke-tools.sh`, hermetic |
 | `pnpm smoke:full`, `smoke:collision` | the remote fetch; a person's own install left as seeded |

@@ -49,6 +49,7 @@
     "test:tooling": "vitest run --project=tooling",
     "test:e2e": "vitest run --project=e2e",
     "test:golden": "vitest run --project=golden",
+    "test:display": "vitest run --project=display",
     "golden:update": "node scripts/golden-update.mjs",
     "test:foreign-clock": "node scripts/test-foreign-clock.mjs",
     "smoke:kilo": "pnpm build && bash scripts/smoke-kilo.sh",
