@@ -6,7 +6,6 @@ export function markdownSectionInstalling(
 ): MarkdownSectionAnswers {
   return {
     buildInstallPath: installAt,
-    acceptsFileName: () => true,
     convertFrontmatter: (frontmatter) => frontmatter,
     serialize: (_frontmatter, body) => body,
   };

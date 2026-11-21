@@ -41,8 +41,7 @@ src/
 │   │   │   ├── agents/
 │   │   │   ├── doctor/
 │   │   │   ├── install/
-│   │   │   │   ├── config/
-│   │   │   │   └── content/
+│   │   │   │   └── config/
 │   │   │   ├── marketplace/
 │   │   │   ├── materialize/
 │   │   │   ├── ownership/

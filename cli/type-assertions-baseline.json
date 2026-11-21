@@ -63,7 +63,6 @@
   "tests/contexts/installation/application/restore/restore.integration.test.ts": 3,
   "tests/contexts/installation/application/shared/require-manifest.unit.test.ts": 1,
   "tests/contexts/installation/application/uninstall-tools.unit.test.ts": 1,
-  "tests/contexts/installation/domain/canon.unit.test.ts": 1,
   "tests/contexts/installation/domain/plugins/installed-plugin.unit.test.ts": 2,
   "tests/contexts/telemetry/domain/report/attribution-fixture.integration.test.ts": 2,
   "tests/contexts/telemetry/telemetry-bindings-fixture.integration.test.ts": 2,

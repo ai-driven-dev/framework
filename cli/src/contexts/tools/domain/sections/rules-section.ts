@@ -1,5 +1,4 @@
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 type RulesSectionParams = {
   toolSuffix: string;
@@ -44,13 +43,6 @@ export class RulesSection {
 
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
     return this.#params.convertFrontmatter(fm);
-  }
-
-  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
-    return ForeignSuffixFilter.keeping(
-      this.#params.inputSuffix ?? this.#params.toolSuffix,
-      registered
-    ).accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

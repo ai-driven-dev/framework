@@ -1,5 +1,4 @@
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 import { CapabilityConfigError } from "../tools.error.js";
 
 type SkillsSectionParams = {
@@ -28,10 +27,6 @@ export class SkillsSection {
 
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
     return this.#params.convertFrontmatter(fm);
-  }
-
-  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
-    return ForeignSuffixFilter.keeping(this.#params.toolSuffix, registered).accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
