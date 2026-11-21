@@ -1,0 +1,16 @@
+language js
+
+// Only the auth context reads the token variable: a second reader bypasses the order of sources it resolves.
+// A sentence that mentions the name for the user to read is a longer string, and stays.
+or {
+  `process.env.AIDD_TOKEN`,
+  JsStringLiteralExpression() as $name where {
+    $name <: or {
+      `"AIDD_TOKEN"`,
+      `'AIDD_TOKEN'`
+    }
+  },
+  JsIdentifierExpression() as $name where { $name <: `TOKEN_VARIABLE` }
+} as $read where {
+  register_diagnostic(span=$read, message="The token variable belongs to the auth context: read the token through the auth use cases instead of the environment", severity="error")
+}

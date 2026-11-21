@@ -4788,6 +4788,10 @@
       "plugins": ["./biome-plugins/one-github-api-url.grit"]
     },
     {
+      "includes": ["src/**", "!src/contexts/auth/**"],
+      "plugins": ["./biome-plugins/token-owner.grit"]
+    },
+    {
       "includes": ["tests/**/*.unit.test.ts", "!tests/contexts/**"],
       "linter": {
         "rules": {

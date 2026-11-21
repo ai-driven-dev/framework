@@ -2,6 +2,8 @@
  * The files `biome-guards-bite.arch.test.ts` plants in a throwaway tree: one row per file, naming
  * the rule that must fire on it and how many times. `times` 0 is a file the rule must spare.
  */
+import { TOKEN_PLANTS } from "./biome-token-plants.js";
+
 const IMPORT = "lint/style/noRestrictedImports";
 const GLOBAL = "lint/style/noRestrictedGlobals";
 const FILE_NAME = "lint/style/useFilenamingConvention";
@@ -153,6 +155,8 @@ export const PLANTS: readonly Plant[] = [
   ["tests/shared/domain/good-name.unit.test.ts", "export const one = 1;\n", FILE_NAME, 0],
   // A GitHub API URL is written by the GitHub adapter only.
   ["src/contexts/update/infrastructure/builds-github-url.ts", githubUrl, "plugin", 1],
+  // Only the auth context reads the token variable; a sentence naming it stays.
+  ...TOKEN_PLANTS,
   [
     "src/shared/infrastructure/github-adapter.ts",
     `// biome-ignore lint/plugin: the one place the GitHub API base is written\n${githubUrl}`,
