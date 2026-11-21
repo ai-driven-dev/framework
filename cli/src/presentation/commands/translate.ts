@@ -26,31 +26,53 @@ interface TranslateExecutionParams {
   force: boolean;
 }
 
+/** No build exists for this target in this layout, which ends the run. */
+function refuseCombination(output: Output, target: string, mode: string): never {
+  output.error(`Unsupported target/mode combination: ${target} (${mode}).`);
+  return output.exit(1);
+}
+
 /** The build+report core, once `--to`/`--as`/`--out` flags are validated and resolved. */
-async function runTranslateCore(params: TranslateExecutionParams): Promise<void> {
-  const { createDeps } = params;
-  const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
-  const useCase = deps.frameworkBuild({
-    target: params.target,
-    mode: params.mode,
-    outDir: params.outDir,
-    force: params.force,
-  });
-  if (useCase === undefined) {
-    params.output.error(`Unsupported target/mode combination: ${params.target} (${params.mode}).`);
-    params.output.exit(1);
-  }
-  const result = await useCase.execute({
-    sourceDir: params.sourceDir,
-    outDir: params.outDir,
-    target: params.target,
-    mode: params.mode,
-  });
-  printTranslateResult(params.output, params.mode, {
+async function runTranslateCore({
+  createDeps,
+  projectRoot,
+  verbose,
+  output,
+  sourceDir,
+  outDir,
+  target,
+  mode,
+  force,
+}: TranslateExecutionParams): Promise<void> {
+  const deps = await createDeps(projectRoot, { verbose }, output);
+  const useCase =
+    deps.frameworkBuild({ target, mode, outDir, force }) ?? refuseCombination(output, target, mode);
+  const result = await useCase.execute({ sourceDir, outDir, target, mode });
+  printTranslateResult(output, mode, {
     pluginCount: result.plugins.length,
     totalFiles: result.totalFiles,
     outDir: result.outDir,
   });
+}
+
+/** The build target the person named, or the supported ones when it is none of them. */
+function buildTargetOf(raw: string, tools: ToolCatalog, output: Output): FrameworkBuildTarget {
+  const targets = supportedBuildTargets(tools);
+  const target = targets.find((candidate) => candidate === raw);
+  if (target === undefined) {
+    output.error(`Unsupported target '${raw}'. Supported targets: ${targets.join(", ")}.`);
+    return output.exit(1);
+  }
+  return target;
+}
+
+/** The output layout the person named; absent means a marketplace. */
+function buildModeOf(raw: string | undefined, output: Output): FrameworkBuildMode {
+  if (raw !== undefined && raw !== "marketplace" && raw !== "flat") {
+    output.error(`Invalid --as '${raw}'. Expected 'marketplace' or 'flat'.`);
+    output.exit(1);
+  }
+  return raw === "flat" ? "flat" : "marketplace";
 }
 
 interface TranslateCmdOptions {
@@ -78,24 +100,6 @@ export function registerTranslateCommand(
     .action(async (source: string, cmdOptions: TranslateCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
-      const targets = supportedBuildTargets(tools);
-      const target = targets.find((candidate) => candidate === cmdOptions.to);
-      if (target === undefined) {
-        output.error(
-          `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`
-        );
-        return output.exit(1);
-      }
-      if (
-        cmdOptions.as !== undefined &&
-        cmdOptions.as !== "marketplace" &&
-        cmdOptions.as !== "flat"
-      ) {
-        output.error(`Invalid --as '${cmdOptions.as}'. Expected 'marketplace' or 'flat'.`);
-        output.exit(1);
-      }
-      const mode: FrameworkBuildMode = cmdOptions.as === "flat" ? "flat" : "marketplace";
-
       await runTranslateCore({
         createDeps,
         projectRoot,
@@ -103,8 +107,8 @@ export function registerTranslateCommand(
         output,
         sourceDir: resolve(projectRoot, source),
         outDir: resolve(projectRoot, cmdOptions.out),
-        target,
-        mode,
+        target: buildTargetOf(cmdOptions.to, tools, output),
+        mode: buildModeOf(cmdOptions.as, output),
         force: cmdOptions.force ?? false,
       });
     });

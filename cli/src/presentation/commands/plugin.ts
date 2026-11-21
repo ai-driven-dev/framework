@@ -13,6 +13,8 @@ import {
 } from "./plugin-change.js";
 import { type InstallKeys, type InstallOptions, installPluginFrom } from "./plugin-install.js";
 
+const TOOL_FLAG_HELP = "Target AI tool (default: all installed)";
+
 /** What this command reads of the graph. */
 type PluginKeys = InstallKeys | ChangeKeys | "prompter" | "pluginListUseCase" | "searchPlugins";
 
@@ -38,7 +40,7 @@ function registerRemove(
   plugin
     .command("remove <name>")
     .description("Remove a plugin from one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
     .option("--scope <user|project>", "Removal scope (default: project)")
     .action(async (name: string, options: ChangeOptions) =>
       removePluginFrom({ program, catalog, createDeps }, name, options)
@@ -54,7 +56,7 @@ function registerInstall(
     .command("install [plugin]")
     .description("Install a plugin (marketplace name, local path, or interactive pick)")
     .option("--from <market>", "Marketplace name (when multiple match)")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
     .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
     .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
@@ -71,7 +73,7 @@ function registerUpdate(
   plugin
     .command("update [name]")
     .description("Update one or all plugins for one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
     .option("--scope <user|project>", "Update scope (default: project)")
     .action(async (name: string | undefined, options: ChangeOptions) =>
       updatePluginsFrom({ program, catalog, createDeps }, name, options)
@@ -86,7 +88,7 @@ function registerList(
   plugin
     .command("list")
     .description("List installed plugins for one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
     .action(async (cmdOptions: { tool?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
