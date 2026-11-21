@@ -8,7 +8,7 @@ import { copilot } from "../contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { kilo } from "../contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { opencode } from "../contexts/tools/domain/profiles/opencode/opencode.profile.js";
-import { vscode } from "../contexts/tools/domain/profiles/vscode/profile.js";
+import { vscode } from "../contexts/tools/domain/profiles/vscode/vscode.profile.js";
 import { SmolTomlCodec } from "../contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const codex = codexProfile(new SmolTomlCodec());

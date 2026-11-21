@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { vscode } from "../../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
+import { vscode } from "../../../../../../src/contexts/tools/domain/profiles/vscode/vscode.profile.js";
 
 describe("vscode profile", () => {
   const declared = vscode.section("config");

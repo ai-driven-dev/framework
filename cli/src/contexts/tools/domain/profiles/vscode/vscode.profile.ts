@@ -7,18 +7,27 @@ import vscodeKeybindings from "../../../../../../assets/configs/vscode/keybindin
 import vscodeSettings from "../../../../../../assets/configs/vscode/settings.json" with {
   type: "json",
 };
+import { CONFIG_PREFIX, type ConfigRef } from "../../../contract/config-refs.js";
 import { defineIdeTool } from "../../profile/define-tool.js";
 import { ConfigSection } from "../../sections/config-section.js";
-import {
-  VSCODE_EXTENSIONS_REF,
-  VSCODE_KEYBINDINGS_REF,
-  VSCODE_SETTINGS_REF,
-} from "./config-refs.js";
 
 const DIRECTORY = ".vscode/";
 const EXTENSIONS_PATH = ".vscode/extensions.json";
 const KEYBINDINGS_PATH = ".vscode/keybindings.json";
 const SETTINGS_PATH = ".vscode/settings.json";
+
+const VSCODE_EXTENSIONS_REF: ConfigRef = {
+  name: "vscodeExtensions",
+  path: `${CONFIG_PREFIX}vscode/extensions.json`,
+};
+const VSCODE_KEYBINDINGS_REF: ConfigRef = {
+  name: "vscodeKeybindings",
+  path: `${CONFIG_PREFIX}vscode/keybindings.json`,
+};
+const VSCODE_SETTINGS_REF: ConfigRef = {
+  name: "vscodeSettings",
+  path: `${CONFIG_PREFIX}vscode/settings.json`,
+};
 
 export const vscode = defineIdeTool({
   toolId: "vscode",
