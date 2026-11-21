@@ -11,7 +11,6 @@ import {
   printSearchHits,
 } from "../display/plugin-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -66,21 +65,15 @@ function registerRemove(
     .option("--scope <user|project>", "Removal scope (default: project)")
     .action(async (name: string, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-        const scope = parseScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const removal = { pluginName: name, toolIds, projectRoot };
-        await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(
-          removal
-        );
-        if (scope === "project") {
-          reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
-        }
-        printPluginRemoved(output, name);
-      } catch (error) {
-        failCommand(output, error);
+      const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
+      const scope = parseScope(cmdOptions.scope) ?? "project";
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const removal = { pluginName: name, toolIds, projectRoot };
+      await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(removal);
+      if (scope === "project") {
+        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
       }
+      printPluginRemoved(output, name);
     });
 }
 
@@ -109,30 +102,26 @@ function registerInstall(
         }
       ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        try {
-          const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-          const scope = parseScope(cmdOptions.scope);
-          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
-          const result = await deps.pluginInstallUseCase.execute({
-            pluginArg,
-            toolIds,
+        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
+        const scope = parseScope(cmdOptions.scope);
+        const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
+        const result = await deps.pluginInstallUseCase.execute({
+          pluginArg,
+          toolIds,
+          projectRoot,
+          interactive: process.stdout.isTTY,
+          fromMarketplace: cmdOptions.from,
+          yes: cmdOptions.yes,
+          scope,
+        });
+        reportNativeActivation(
+          output,
+          await deps.syncNativeActivation.execute({
             projectRoot,
-            interactive: process.stdout.isTTY,
-            fromMarketplace: cmdOptions.from,
-            yes: cmdOptions.yes,
-            scope,
-          });
-          reportNativeActivation(
-            output,
-            await deps.syncNativeActivation.execute({
-              projectRoot,
-              marketplaceNames: cmdOptions.from !== undefined ? [cmdOptions.from] : undefined,
-            })
-          );
-          printPluginInstallOutcome(output, result);
-        } catch (error) {
-          failCommand(output, error);
-        }
+            marketplaceNames: cmdOptions.from !== undefined ? [cmdOptions.from] : undefined,
+          })
+        );
+        printPluginInstallOutcome(output, result);
       }
     );
 }
@@ -149,26 +138,22 @@ function registerUpdate(
     .option("--scope <user|project>", "Update scope (default: project)")
     .action(async (name: string | undefined, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-        const scope = parseScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const updated = await (scope === "user"
-          ? deps.userPluginUpdateUseCase
-          : deps.pluginUpdateUseCase
-        ).execute({
-          pluginNames: name !== undefined ? [name] : undefined,
-          toolIds,
-          projectRoot,
-          scope,
-        });
-        if (scope === "project") {
-          reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
-        }
-        printPluginsUpdated(output, updated);
-      } catch (error) {
-        failCommand(output, error);
+      const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
+      const scope = parseScope(cmdOptions.scope) ?? "project";
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const updated = await (scope === "user"
+        ? deps.userPluginUpdateUseCase
+        : deps.pluginUpdateUseCase
+      ).execute({
+        pluginNames: name !== undefined ? [name] : undefined,
+        toolIds,
+        projectRoot,
+        scope,
+      });
+      if (scope === "project") {
+        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
       }
+      printPluginsUpdated(output, updated);
     });
 }
 
@@ -183,16 +168,12 @@ function registerList(
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
     .action(async (cmdOptions: { tool?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.pluginListUseCase.execute({
-          toolIds,
-        });
-        printInstalledPlugins(output, result);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const result = await deps.pluginListUseCase.execute({
+        toolIds,
+      });
+      printInstalledPlugins(output, result);
     });
 }
 
@@ -208,18 +189,14 @@ function registerSearch(
     .option("--marketplace <name>", "Limit to a single marketplace")
     .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { hits } = await deps.searchPlugins.execute({
-          query,
-          recommendedOnly: cmdOptions.recommended ?? false,
-          marketplace: cmdOptions.marketplace,
-          projectRoot,
-        });
-        printSearchHits(output, hits);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const { hits } = await deps.searchPlugins.execute({
+        query,
+        recommendedOnly: cmdOptions.recommended ?? false,
+        marketplace: cmdOptions.marketplace,
+        projectRoot,
+      });
+      printSearchHits(output, hits);
     });
 }
 

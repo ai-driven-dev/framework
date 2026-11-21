@@ -154,8 +154,14 @@ export async function runInProcess(
       createOutput: (verbose) => new OutputAdapter(verbose, (code) => process.exit(code)),
     });
 
+    const { outputOf } = await import("../../../src/presentation/commands/global-options.js");
+    const { failCommand } = await import("../../../src/presentation/errors/error-translator.js");
+
     try {
-      await program.parseAsync(["node", "aidd", ...args]);
+      await program.parseAsync(["node", "aidd", ...args]).catch((error: unknown) => {
+        if (error instanceof ExitSignal) throw error;
+        return failCommand(outputOf(program), error);
+      });
       exitCode = typeof process.exitCode === "number" ? process.exitCode : 0;
     } catch (error) {
       if (error instanceof ExitSignal) {

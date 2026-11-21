@@ -2,8 +2,10 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 
@@ -43,7 +45,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerUpdateCommand(program, createDeps);
-  await program.parseAsync(["node", "aidd", ...args]);
+  await parseToExit(program, ["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -114,11 +116,11 @@ describe("aidd update — what it asks the self-updater", () => {
 
   it("names the failure on stderr and fails the process", async () => {
     selfUpdate.mockRejectedValue(new Error("registry unreachable"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("update")).rejects.toThrow("exited");
+    await expect(run("update")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: registry unreachable\n");
     expect(exit).toHaveBeenCalledWith(1);

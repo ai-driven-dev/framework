@@ -8,6 +8,7 @@ import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/repor
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import surface from "../../golden/snapshots/help/surface.json" with { type: "json" };
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const ingest = vi.fn();
@@ -85,7 +86,7 @@ async function run(...args: string[]): Promise<number | null> {
   program.option("--verbose");
   registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
   try {
-    await program.parseAsync(["node", "aidd", "telemetry", ...args]);
+    await parseToExit(program, ["node", "aidd", "telemetry", ...args]);
     return null;
   } catch (error) {
     if (error instanceof Exit) return error.code ?? 0;

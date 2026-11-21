@@ -2,7 +2,9 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { parsePluginSourceShorthand } from "../../../src/shared/domain/source.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const marketplaceAdd = vi.fn();
@@ -85,7 +87,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerMarketplaceCommand(program, createDeps, spawn);
-  await program.parseAsync(["node", "aidd", "marketplace", ...args]);
+  await parseToExit(program, ["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -171,10 +173,10 @@ describe("aidd marketplace add", () => {
 
   it("refuses to guess a name or a source off a terminal", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
-    await expect(run("add", "market-b")).rejects.toThrow("exited");
+    await expect(run("add", "market-b")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: name and source are required in non-interactive mode.\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -183,11 +185,11 @@ describe("aidd marketplace add", () => {
 
   it("refuses a scope that is neither project nor user", async () => {
     vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
     await expect(run("add", "market-b", "/some/source", "--scope", "machine")).rejects.toThrow(
-      "exited"
+      ExitRequested
     );
 
     expect(errors[0]).toBe("Error: Invalid --scope 'machine'. Expected 'project' or 'user'.\n");
@@ -208,10 +210,10 @@ it("hands no token when none was given", async () => {
 it("names a failed registration on stderr and fails the process", async () => {
   marketplaceAdd.mockRejectedValue(new Error("source is untrusted"));
   const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-    throw new Error("exited");
+    throw new ExitRequested(1);
   });
 
-  await expect(run("add", "market-b", "/some/source")).rejects.toThrow("exited");
+  await expect(run("add", "market-b", "/some/source")).rejects.toThrow(ExitRequested);
 
   expect(errors.join("")).toBe("Error: source is untrusted\n");
   expect(exit).toHaveBeenCalledWith(1);
@@ -244,10 +246,10 @@ describe("aidd marketplace — a failed read or removal", () => {
   it("names a failed listing on stderr and fails the process", async () => {
     marketplaceList.mockRejectedValue(new Error("registry is unreadable"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
-    await expect(run("list")).rejects.toThrow("exited");
+    await expect(run("list")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: registry is unreadable\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -256,10 +258,10 @@ describe("aidd marketplace — a failed read or removal", () => {
   it("names a failed removal on stderr and fails the process", async () => {
     marketplaceRemove.mockRejectedValue(new Error("marketplace is unknown"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
-    await expect(run("remove", "market-b")).rejects.toThrow("exited");
+    await expect(run("remove", "market-b")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: marketplace is unknown\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -283,9 +285,9 @@ describe("aidd marketplace remove", () => {
 
   it("refuses an invalid removal scope before wiring or mutation", async () => {
     vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
-    await expect(run("remove", "market-b", "--scope", "machine")).rejects.toThrow("exited");
+    await expect(run("remove", "market-b", "--scope", "machine")).rejects.toThrow(ExitRequested);
     expect(errors.join("")).toBe("Error: Invalid scope 'machine'. Expected 'project' or 'user'.\n");
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
     expect(marketplaceRemove).not.toHaveBeenCalled();
@@ -341,10 +343,10 @@ describe("aidd marketplace refresh", () => {
       failedCount: 1,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
-    await expect(run("refresh")).rejects.toThrow("exited");
+    await expect(run("refresh")).rejects.toThrow(ExitRequested);
 
     expect(written.join("")).toBe("market-b: failed (404)\n");
     expect(exit).toHaveBeenCalledWith(1);
@@ -378,10 +380,10 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
   it("names a failed check on stderr and fails the process", async () => {
     marketplaceCheck.mockRejectedValue(new Error("catalog unreachable"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+      throw new ExitRequested(1);
     });
 
-    await expect(run("check")).rejects.toThrow("exited");
+    await expect(run("check")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: catalog unreachable\n");
     expect(exit).toHaveBeenCalledWith(1);

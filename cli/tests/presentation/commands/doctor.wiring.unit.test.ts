@@ -4,8 +4,10 @@ import { wireTools } from "../../../src/composition/tools.js";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
 import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { registeredAiConfig } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -90,7 +92,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerDoctorCommand(program, CATALOG, createDeps);
-  await program.parseAsync(["node", "aidd", "doctor", ...args]);
+  await parseToExit(program, ["node", "aidd", "doctor", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -168,11 +170,11 @@ describe("aidd doctor — every tool at once", () => {
       pluginIssues: [],
       healthy: false,
     });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run()).rejects.toThrow("exited");
+    await expect(run()).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error:   claude is not registered\n    Fix: aidd sync\n");
     expect(written.join("")).not.toContain("healthy");
@@ -213,11 +215,11 @@ describe("aidd doctor — every tool at once", () => {
       ],
       healthy: true,
     });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--plugin", "aidd-dev")).rejects.toThrow("exited");
+    await expect(run("--plugin", "aidd-dev")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe(
       "Error:   Plugin aidd-dev (claude): drifted — .claude/a.md\n    Fix: Run `aidd sync`\n"
@@ -339,11 +341,11 @@ describe("aidd doctor --tool", () => {
       pluginIssues: [],
       healthy: false,
     });
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude")).rejects.toThrow("exited");
+    await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error:   claude is not registered\n    Fix: aidd sync\n");
   });
@@ -355,11 +357,11 @@ describe("aidd doctor --tool", () => {
       pluginIssues: [],
       healthy: false,
     });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude")).rejects.toThrow("exited");
+    await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
 
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -389,11 +391,11 @@ describe("aidd doctor --tool with a plugin named", () => {
       ],
       healthy: true,
     });
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude", "--plugin", "aidd-dev")).rejects.toThrow("exited");
+    await expect(run("--tool", "claude", "--plugin", "aidd-dev")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe(
       "Error:   claude: plugins not installed on this machine, run `aidd sync`\n"
@@ -426,11 +428,11 @@ describe("aidd doctor --scope user", () => {
   });
 
   it("refuses a tool no profile declares, naming it unregistered", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--scope", "user", "--tool", "nope")).rejects.toThrow("exited");
+    await expect(run("--scope", "user", "--tool", "nope")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: Tool 'nope' is not registered.\n");
   });
@@ -445,11 +447,11 @@ describe("aidd doctor --scope user", () => {
   });
 
   it("refuses a plugin filter user scope tracks nothing to narrow", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--scope", "user", "--plugin", "aidd-dev")).rejects.toThrow("exited");
+    await expect(run("--scope", "user", "--plugin", "aidd-dev")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Error: --scope user tracks nothing --plugin can narrow — it names every requested tool, " +
@@ -462,22 +464,22 @@ describe("aidd doctor --scope user", () => {
     doctorRegistration.mockResolvedValue([
       { severity: "error", message: "claude is not registered", fix: "aidd sync" },
     ]);
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--scope", "user")).rejects.toThrow("exited");
+    await expect(run("--scope", "user")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error:   claude is not registered\n    Fix: aidd sync\n");
     expect(exit).toHaveBeenCalledWith(1);
   });
 
   it("refuses a scope it does not know before building anything", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--scope", "machine")).rejects.toThrow("exited");
+    await expect(run("--scope", "machine")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe('Error: Invalid --scope "machine" — expected "project" or "user".\n');
     expect(doctorAll).not.toHaveBeenCalled();
@@ -525,11 +527,11 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 
   it("names a failed read on stderr and fails the process", async () => {
     doctorAll.mockRejectedValue(new Error("manifest unreadable"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run()).rejects.toThrow("exited");
+    await expect(run()).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: manifest unreadable\n");
     expect(exit).toHaveBeenCalledWith(1);

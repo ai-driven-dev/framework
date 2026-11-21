@@ -12,7 +12,6 @@ import {
   printRegisteredMarketplaces,
 } from "../display/marketplace-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -87,30 +86,26 @@ function registerAdd(
           output.exit(1);
         }
         const scope = parseRegistrationScope(cmdOptions.scope, output);
-        try {
-          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
-          const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
-          const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
-          const source = parsePluginSourceShorthand(rawSource);
-          const result = await deps.addMarketplace.execute({
-            source,
-            name,
-            scope,
+        const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
+        const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
+        const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
+        const source = parsePluginSourceShorthand(rawSource);
+        const result = await deps.addMarketplace.execute({
+          source,
+          name,
+          scope,
+          projectRoot,
+          autoTrust: cmdOptions.yes ?? false,
+          overwrite: cmdOptions.overwrite ?? false,
+        });
+        reportNativeActivation(
+          output,
+          await deps.syncNativeActivation.execute({
             projectRoot,
-            autoTrust: cmdOptions.yes ?? false,
-            overwrite: cmdOptions.overwrite ?? false,
-          });
-          reportNativeActivation(
-            output,
-            await deps.syncNativeActivation.execute({
-              projectRoot,
-              marketplaceNames: [result.marketplace.name],
-            })
-          );
-          printMarketplaceRegistered(output, result.marketplace.name);
-        } catch (error) {
-          failCommand(output, error);
-        }
+            marketplaceNames: [result.marketplace.name],
+          })
+        );
+        printMarketplaceRegistered(output, result.marketplace.name);
       }
     );
 }
@@ -126,16 +121,12 @@ function registerList(
     .option("--plugins", "Also fetch and print all plugins from each marketplace catalog")
     .action(async (cmdOptions: { plugins?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { marketplaces, catalogs } = await deps.listMarketplaces.execute({
-          projectRoot,
-          withCatalogs: cmdOptions.plugins ?? false,
-        });
-        printRegisteredMarketplaces(output, marketplaces, catalogs);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const { marketplaces, catalogs } = await deps.listMarketplaces.execute({
+        projectRoot,
+        withCatalogs: cmdOptions.plugins ?? false,
+      });
+      printRegisteredMarketplaces(output, marketplaces, catalogs);
     });
 }
 
@@ -151,25 +142,21 @@ function registerRemove(
     .option("--scope <project|user>", "Remove from project or user scope", "project")
     .action(async (name: string, cmdOptions: { yes?: boolean; scope: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const scope = parseScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await (scope === "user"
-          ? deps.userMarketplaceRemoveUseCase
-          : deps.marketplaceRemoveUseCase
-        ).execute({
-          name,
-          projectRoot,
-          autoConfirm: cmdOptions.yes ?? false,
-          scope,
-        });
-        if (scope !== "user") {
-          reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
-        }
-        printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
-      } catch (error) {
-        failCommand(output, error);
+      const scope = parseScope(cmdOptions.scope) ?? "project";
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const result = await (scope === "user"
+        ? deps.userMarketplaceRemoveUseCase
+        : deps.marketplaceRemoveUseCase
+      ).execute({
+        name,
+        projectRoot,
+        autoConfirm: cmdOptions.yes ?? false,
+        scope,
+      });
+      if (scope !== "user") {
+        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
       }
+      printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
     });
 }
 
@@ -186,19 +173,15 @@ function registerRefresh(
     .option("--force", "Clear cache before re-fetching")
     .action(async (name: string | undefined, cmdOptions: { force?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { results, failedCount } = await deps.refreshMarketplace.execute({
-          projectRoot,
-          name,
-          force: cmdOptions.force,
-        });
-        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
-        printRefreshResults(output, results);
-        if (failedCount > 0) output.exit(1);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const { results, failedCount } = await deps.refreshMarketplace.execute({
+        projectRoot,
+        name,
+        force: cmdOptions.force,
+      });
+      reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
+      printRefreshResults(output, results);
+      if (failedCount > 0) output.exit(1);
     });
 }
 
@@ -212,13 +195,9 @@ function registerCheck(
     .description("Report stale marketplaces and upstream-removed plugins")
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
-        printMarketplaceCheck(output, result);
-      } catch (error) {
-        failCommand(output, error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
+      printMarketplaceCheck(output, result);
     });
 }
 

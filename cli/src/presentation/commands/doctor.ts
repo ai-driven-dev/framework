@@ -13,7 +13,6 @@ import {
   printToolDrift,
   printUserScopeTools,
 } from "../display/doctor-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -204,25 +203,21 @@ export function registerDoctorCommand(
     .option("--global", GLOBAL_FLAG_HELP)
     .action(async (cmdOptions: DoctorCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
-        if (scope === "user") {
-          await runUserScopeDoctor({ tools, deps, output, projectRoot, cmdOptions });
-        } else if (cmdOptions.tool !== undefined) {
-          await runScopedDoctor({
-            deps,
-            output,
-            projectRoot,
-            toolId: cmdOptions.tool,
-            tools,
-            pluginName: cmdOptions.plugin,
-          });
-        } else {
-          await runFullDoctor({ deps, output, projectRoot, pluginName: cmdOptions.plugin });
-        }
-      } catch (error) {
-        failCommand(output, error);
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
+      if (scope === "user") {
+        await runUserScopeDoctor({ tools, deps, output, projectRoot, cmdOptions });
+      } else if (cmdOptions.tool !== undefined) {
+        await runScopedDoctor({
+          deps,
+          output,
+          projectRoot,
+          toolId: cmdOptions.tool,
+          tools,
+          pluginName: cmdOptions.plugin,
+        });
+      } else {
+        await runFullDoctor({ deps, output, projectRoot, pluginName: cmdOptions.plugin });
       }
     });
 }

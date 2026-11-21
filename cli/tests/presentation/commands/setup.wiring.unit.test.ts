@@ -11,8 +11,10 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -110,7 +112,7 @@ async function run(...args: string[]): Promise<string[]> {
   program.exitOverride();
   program.option("--verbose");
   registerSetupCommand(program, CATALOG, createDeps);
-  await program.parseAsync(["node", "aidd", "setup", ...args]);
+  await parseToExit(program, ["node", "aidd", "setup", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
 
@@ -205,11 +207,11 @@ describe("aidd setup — the agents' provider", () => {
 
   it("changes nothing of the provider when the install fails", async () => {
     resolveSourceIfNeeded.mockRejectedValueOnce(new Error("network down"));
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ide", "opencode", "--provider", "mistral")).rejects.toThrow("exited");
+    await expect(run("--ide", "opencode", "--provider", "mistral")).rejects.toThrow(ExitRequested);
 
     expect(setAgentModel).not.toHaveBeenCalled();
   });
@@ -274,11 +276,11 @@ describe("aidd setup — the agents' provider", () => {
     [["--global", "--ide", "claude,vscode", "--provider", "anthropic"], "vscode"],
     [["--ide", "vscode", "--provider", "bogus"], 'Unknown provider "bogus"'],
   ])("refuses %j before building or writing anything", async (args, message) => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run(...args)).rejects.toThrow("exited");
+    await expect(run(...args)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toContain(message);
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -386,11 +388,11 @@ describe("aidd setup — what it refuses and what it reports", () => {
       remedy: "Drop it from --ide",
     },
   ])("renders global validation for $cause before building dependencies", async (test) => {
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--global", ...test.args)).rejects.toThrow("exited");
+    await expect(run("--global", ...test.args)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toContain(test.cause);
     expect(errors.join("")).toContain(test.remedy);
@@ -401,33 +403,33 @@ describe("aidd setup — what it refuses and what it reports", () => {
   });
 
   it("refuses a local source with nowhere to read it from", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--source", "local")).rejects.toThrow("exited");
+    await expect(run("--source", "local")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: --source local requires --path <dir>\n");
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
   });
 
   it("refuses a scope it does not know", async () => {
-    vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--scope", "machine")).rejects.toThrow("exited");
+    await expect(run("--scope", "machine")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe('Error: Invalid --scope "machine" — expected "project" or "user".\n');
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
   });
 
   it("refuses an IDE id offered as an AI tool, before building anything", async () => {
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ai", "vscode")).rejects.toThrow("exited");
+    await expect(run("--ai", "vscode")).rejects.toThrow(ExitRequested);
 
     expect(exit).toHaveBeenCalledWith(1);
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -439,11 +441,11 @@ describe("aidd setup — what it refuses and what it reports", () => {
       failed: true,
       errors: [{ scope: "claude", message: "claude CLI refused" }],
     });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ai", "claude")).rejects.toThrow("exited");
+    await expect(run("--ai", "claude")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Warning: [claude] claude CLI refused\nError: Sync failed for: claude. See the warnings above.\n"
@@ -453,11 +455,11 @@ describe("aidd setup — what it refuses and what it reports", () => {
 
   it("names a failed install on stderr and fails the process", async () => {
     setupTools.mockRejectedValue(new Error("assets are missing"));
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ai", "claude")).rejects.toThrow("exited");
+    await expect(run("--ai", "claude")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: assets are missing\n");
     expect(exit).toHaveBeenCalledWith(1);

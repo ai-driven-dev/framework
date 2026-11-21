@@ -6,7 +6,6 @@ import {
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
 } from "../display/sync-display.js";
-import { failCommand } from "../errors/error-translator.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -32,34 +31,30 @@ async function runSyncAction({
   cmdOptions: SyncCmdOptions;
 }): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  try {
-    const deps = await createDeps(projectRoot, { verbose }, output);
-    const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
-    const { tool, plugin, force } = cmdOptions;
+  const deps = await createDeps(projectRoot, { verbose }, output);
+  const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
+  const { tool, plugin, force } = cmdOptions;
 
-    if (scope === "user") {
-      await deps.runUserScopeSync.execute(
-        { projectRoot, tool, plugin, files: fileArgs },
-        {
-          activated: (activation) => printActivationOutcome(output, activation),
-          synced: ({ activated, refreshed }) =>
-            printUserScopeSyncOutcome(output, activated, refreshed),
-        }
-      );
-      return;
-    }
-
-    await deps.runSync.execute(
-      { projectRoot, force, interactive: process.stdout.isTTY, tool, plugin, files: fileArgs },
+  if (scope === "user") {
+    await deps.runUserScopeSync.execute(
+      { projectRoot, tool, plugin, files: fileArgs },
       {
-        restored: (result) => printRestoreOutcome(output, result),
-        toolRestored: (result) => printToolRestoreOutcome(output, result),
         activated: (activation) => printActivationOutcome(output, activation),
+        synced: ({ activated, refreshed }) =>
+          printUserScopeSyncOutcome(output, activated, refreshed),
       }
     );
-  } catch (error) {
-    failCommand(output, error);
+    return;
   }
+
+  await deps.runSync.execute(
+    { projectRoot, force, interactive: process.stdout.isTTY, tool, plugin, files: fileArgs },
+    {
+      restored: (result) => printRestoreOutcome(output, result),
+      toolRestored: (result) => printToolRestoreOutcome(output, result),
+      activated: (activation) => printActivationOutcome(output, activation),
+    }
+  );
 }
 
 export function registerSyncCommand(
