@@ -10,11 +10,9 @@ type RulesSectionParams = {
 
 export class RulesSection {
   readonly #params: RulesSectionParams;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: RulesSectionParams) {
     this.#params = params;
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
   }
 
   /** A name no rule of a reader's own will ever carry, asked of `buildInstallPath` only so its
@@ -48,8 +46,11 @@ export class RulesSection {
     return this.#params.convertFrontmatter(fm);
   }
 
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
+  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
+    return ForeignSuffixFilter.keeping(
+      this.#params.inputSuffix ?? this.#params.toolSuffix,
+      registered
+    ).accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

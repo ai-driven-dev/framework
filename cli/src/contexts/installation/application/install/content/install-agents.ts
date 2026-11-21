@@ -17,9 +17,11 @@ interface InstallAgentsCommand {
 }
 
 export class InstallAgents {
-  private readonly inner: InstallContentSection<MarkdownSectionAnswers> = new InstallContentSection(
-    agentsDescriptor
-  );
+  private readonly inner: InstallContentSection<MarkdownSectionAnswers>;
+
+  constructor(registeredSuffixes: readonly string[]) {
+    this.inner = new InstallContentSection(agentsDescriptor, registeredSuffixes);
+  }
 
   execute(options: InstallAgentsCommand): InstallationFile[] {
     return this.inner.execute(options);

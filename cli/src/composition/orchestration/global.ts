@@ -89,7 +89,7 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
   const restoreToolFiles = new RestoreToolFiles(
     new GenerateToolDistribution(
       new InstallConfig(fs),
-      contentSectionInstallers(),
+      contentSectionInstallers(tools),
       platform,
       installation.assetProvider
     ),

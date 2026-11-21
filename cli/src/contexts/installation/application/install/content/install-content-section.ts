@@ -12,7 +12,7 @@ import type { ContentSections } from "../../../ports/tool-sections.js";
  */
 export interface ContentSectionCapability {
   buildInstallPath(fileName: string): string | null;
-  acceptsFileName(fileName: string): boolean;
+  acceptsFileName(fileName: string, registered: readonly string[]): boolean;
   serialize(frontmatter: Record<string, unknown>, body: string): string;
 }
 
@@ -45,7 +45,10 @@ interface ContentEntry {
 }
 
 export class InstallContentSection<Cap extends ContentSectionCapability> {
-  constructor(private readonly descriptor: ContentSectionDescriptor<Cap>) {}
+  constructor(
+    private readonly descriptor: ContentSectionDescriptor<Cap>,
+    private readonly registeredSuffixes: readonly string[]
+  ) {}
 
   execute(options: InstallContentSectionCommand): InstallationFile[] {
     const { toolConfig, section, contentFiles } = options;
@@ -64,7 +67,7 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
     const { section, cap } = context;
     if (!filePath.startsWith(`${section.directory}/`)) return null;
     const relativeFileName = filePath.slice(`${section.directory}/`.length);
-    if (!cap.acceptsFileName(relativeFileName)) return null;
+    if (!cap.acceptsFileName(relativeFileName, this.registeredSuffixes)) return null;
     if (section.entryFile !== null) {
       const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;
       if (basename !== section.entryFile) return null;

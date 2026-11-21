@@ -108,7 +108,7 @@ export interface MarkdownSectionAnswers {
   /** Where a built file lands, or null when the tool takes none by that name. */
   buildInstallPath(fileName: string): string | null;
   /** Whether the tool takes a framework file of this name, a file for another tool's suffix refused. */
-  acceptsFileName(fileName: string): boolean;
+  acceptsFileName(fileName: string, registered: readonly string[]): boolean;
   convertFrontmatter(fm: Record<string, unknown>, fileName: string): Record<string, unknown>;
   serialize(fm: Record<string, unknown>, body: string): string;
 }
@@ -271,6 +271,8 @@ export interface AgentModelAnswers {
 export interface AiToolProfile {
   readonly kind: "ai";
   readonly toolId: AiToolId;
+  /** The `.<tool>.md` ending that marks a source file as written for this tool. */
+  readonly toolSuffix: string;
   /** Where a built file lands, relative to the project root, ending in a slash. */
   readonly directory: string;
   /** Where its plugin manifest or marketplace catalog may sit inside a distribution it produced,

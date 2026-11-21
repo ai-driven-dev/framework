@@ -9,6 +9,7 @@ import type { ContentSections } from "../../../../../../src/contexts/installatio
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { GITKEEP_FILE } from "../../../../../../src/shared/domain/redundant-gitkeeps.js";
 
+const registered = [".zed.md"];
 const section: ContentSection = { name: "rules", directory: "rules", entryFile: null };
 
 function capability(overrides: Partial<ContentSectionCapability> = {}): ContentSectionCapability {
@@ -33,7 +34,7 @@ function build(cap: ContentSectionCapability | null) {
       return { ...frontmatter, converted: true };
     },
   };
-  return { useCase: new InstallContentSection(descriptor), converted };
+  return { useCase: new InstallContentSection(descriptor, registered), converted };
 }
 
 describe("InstallContentSection", () => {

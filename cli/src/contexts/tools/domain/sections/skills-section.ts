@@ -12,7 +12,6 @@ type SkillsSectionParams = {
 
 export class SkillsSection {
   readonly #params: SkillsSectionParams;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: SkillsSectionParams) {
     this.#params = params;
@@ -21,7 +20,6 @@ export class SkillsSection {
         "SkillsSection requires either agentsSkillsDirectory or directory"
       );
     }
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(fileName: string): string | null {
@@ -32,8 +30,8 @@ export class SkillsSection {
     return this.#params.convertFrontmatter(fm);
   }
 
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
+  acceptsFileName(fileName: string, registered: readonly string[]): boolean {
+    return ForeignSuffixFilter.keeping(this.#params.toolSuffix, registered).accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

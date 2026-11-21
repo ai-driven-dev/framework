@@ -9,6 +9,12 @@ export function registeredTools(): ToolCatalog {
   return wireTools();
 }
 
+/** The suffix each registered AI tool marks its files with. */
+export function registeredSuffixes(): readonly string[] {
+  const tools = registeredTools();
+  return tools.idsInCanonicalOrder("ai").map((id) => tools.aiProfile(id).toolSuffix);
+}
+
 /** What the code under test asks to turn a written id into a registered one. */
 export const resolveRegisteredToolId: ToolIdResolver = (raw) => registeredTools().toolId(raw);
 

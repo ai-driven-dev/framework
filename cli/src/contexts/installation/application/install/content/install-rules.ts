@@ -17,9 +17,11 @@ interface InstallRulesCommand {
 }
 
 export class InstallRules {
-  private readonly inner: InstallContentSection<MarkdownSectionAnswers> = new InstallContentSection(
-    rulesDescriptor
-  );
+  private readonly inner: InstallContentSection<MarkdownSectionAnswers>;
+
+  constructor(registeredSuffixes: readonly string[]) {
+    this.inner = new InstallContentSection(rulesDescriptor, registeredSuffixes);
+  }
 
   execute(options: InstallRulesCommand): InstallationFile[] {
     return this.inner.execute(options);
