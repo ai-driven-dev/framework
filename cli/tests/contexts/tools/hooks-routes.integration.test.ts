@@ -1,7 +1,7 @@
-import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
@@ -16,6 +16,10 @@ import { render } from "../../../src/presentation/errors/error-translator.presen
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
+import {
+  type PluginMarketplaceSource,
+  pluginMarketplaceSource,
+} from "../../shared/testing/plugin-marketplace-source.builder.js";
 import { present } from "../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
@@ -64,6 +68,13 @@ interface Workspace {
 }
 
 const created: string[] = [];
+let marketplaceSource: PluginMarketplaceSource;
+
+beforeAll(async () => {
+  marketplaceSource = await pluginMarketplaceSource(PLUGINS);
+});
+
+afterAll(() => marketplaceSource.remove());
 
 afterEach(async () => {
   vi.unstubAllEnvs();
@@ -88,22 +99,7 @@ async function workspace(): Promise<Workspace> {
 }
 
 async function writeSource(source: string): Promise<void> {
-  await mkdir(join(source, ".claude-plugin"), { recursive: true });
-  for (const plugin of PLUGINS) {
-    await cp(join(REPOSITORY_ROOT, "plugins", plugin), join(source, "plugins", plugin), {
-      recursive: true,
-    });
-  }
-  await writeFile(
-    join(source, ".claude-plugin", "marketplace.json"),
-    JSON.stringify({
-      name: "aidd-framework",
-      version: "0.1.0",
-      description: "Hook routes",
-      owner: { name: "Test" },
-      plugins: PLUGINS.map((name) => ({ name, source: `./plugins/${name}`, strict: true })),
-    })
-  );
+  await marketplaceSource.linkAt(source);
 }
 
 type Deps = Awaited<ReturnType<typeof deps>>;
