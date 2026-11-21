@@ -2,74 +2,63 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
-import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
-import { aManifest } from "../../testing/manifest.builder.js";
 import { pluginRemover, userPluginRemover } from "../../testing/plugin-remover.builder.js";
 
-const { claude, cursor, codex } = TOOL;
+import {
+  aMachineWithClaudeAndCursor,
+  anInstalledPlugin,
+  SELECTED_PLUGIN,
+  SELECTION_OTHER_ROOT,
+  SELECTION_ROOT,
+} from "../../testing/plugin-selection-scenario.builder.js";
 
-const ROOT = "/test-project";
-const OTHER = "/another-project";
-const NAME = "wanted-plugin";
-
-function plugin(overrides: Partial<PluginEntryData> = {}): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
-    name: NAME,
-    source: { kind: "local", path: "/plugin-source" },
-    version: "1.0.0",
-    strict: false,
-    files: {},
-    scope: "user",
-    ...overrides,
-  });
-}
-
-function manifest(): Manifest {
-  const result = aManifest().withTool(cursor, []).withTool(claude, []).build();
-  return result;
-}
+const { claude, cursor } = TOOL;
 
 describe("plugin removal selects the recorded owner, name and tool", () => {
   it("detaches only the selected user plugin's project claim while preserving global files", async () => {
-    const project = manifest();
-    const machine = manifest();
+    const project = aMachineWithClaudeAndCursor();
+    const machine = aMachineWithClaudeAndCursor();
     for (const toolId of [cursor, claude]) {
-      for (const name of ["other-plugin", NAME]) {
-        project.addPlugin(toolId, plugin({ name, files: { [`${name}/keep.md`]: "digest" } }));
-        machine.addPlugin(toolId, plugin({ name, dependents: [ROOT, OTHER] }));
+      for (const name of ["other-plugin", SELECTED_PLUGIN]) {
+        project.addPlugin(
+          toolId,
+          anInstalledPlugin({ name, files: { [`${name}/keep.md`]: "digest" } })
+        );
+        machine.addPlugin(
+          toolId,
+          anInstalledPlugin({ name, dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] })
+        );
       }
     }
-    const fs = new InMemoryFileAdapter({}, [ROOT, OTHER]);
-    const witness = join(homedir(), ".cursor", "plugins", "local", NAME, "keep.md");
+    const fs = new InMemoryFileAdapter({}, [SELECTION_ROOT, SELECTION_OTHER_ROOT]);
+    const witness = join(homedir(), ".cursor", "plugins", "local", SELECTED_PLUGIN, "keep.md");
     fs.setFile(witness, "machine bytes");
-    const projectRepo = new InMemoryManifestRepository(project, ROOT);
+    const projectRepo = new InMemoryManifestRepository(project, SELECTION_ROOT);
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = pluginRemover({ fs, manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
-      pluginName: NAME,
+      pluginName: SELECTED_PLUGIN,
       toolIds: [cursor],
-      projectRoot: ROOT,
+      projectRoot: SELECTION_ROOT,
     });
 
     expect(project.getPlugins(cursor).map((entry) => entry.name)).toEqual(["other-plugin"]);
-    expect(project.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin", NAME]);
+    expect(project.getPlugins(claude).map((entry) => entry.name)).toEqual([
+      "other-plugin",
+      SELECTED_PLUGIN,
+    ]);
     expect(machine.getPlugins(cursor).map((entry) => [entry.name, entry.dependents])).toEqual([
-      ["other-plugin", [ROOT, OTHER]],
-      [NAME, [OTHER]],
+      ["other-plugin", [SELECTION_ROOT, SELECTION_OTHER_ROOT]],
+      [SELECTED_PLUGIN, [SELECTION_OTHER_ROOT]],
     ]);
     expect(machine.getPlugins(claude).map((entry) => entry.dependents)).toEqual([
-      [ROOT, OTHER],
-      [ROOT, OTHER],
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT],
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT],
     ]);
     expect(fs.getFile(witness)).toBe("machine bytes");
     expect(projectRepo.saveCount).toBe(1);
@@ -77,54 +66,72 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   });
 
   it("removing a project entry does not detach the same name's machine claim", async () => {
-    const project = manifest();
-    const machine = manifest();
-    project.addPlugin(cursor, plugin({ scope: "project", files: { "owned.md": "digest" } }));
-    project.addPlugin(cursor, plugin({ name: "other-plugin", scope: "user" }));
-    machine.addPlugin(cursor, plugin({ dependents: [ROOT, OTHER] }));
-    machine.addPlugin(cursor, plugin({ name: "other-plugin", dependents: [ROOT, OTHER] }));
+    const project = aMachineWithClaudeAndCursor();
+    const machine = aMachineWithClaudeAndCursor();
+    project.addPlugin(
+      cursor,
+      anInstalledPlugin({ scope: "project", files: { "owned.md": "digest" } })
+    );
+    project.addPlugin(cursor, anInstalledPlugin({ name: "other-plugin", scope: "user" }));
+    machine.addPlugin(
+      cursor,
+      anInstalledPlugin({ dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] })
+    );
+    machine.addPlugin(
+      cursor,
+      anInstalledPlugin({
+        name: "other-plugin",
+        dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT],
+      })
+    );
     const before = machine.toJSON();
     const fs = new InMemoryFileAdapter(
       {
-        [join(ROOT, "owned.md")]: "owned",
-        [join(ROOT, "foreign.md")]: "foreign",
+        [join(SELECTION_ROOT, "owned.md")]: "owned",
+        [join(SELECTION_ROOT, "foreign.md")]: "foreign",
       },
-      [ROOT, OTHER]
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT]
     );
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = pluginRemover({
       fs,
-      manifestRepo: new InMemoryManifestRepository(project, ROOT),
+      manifestRepo: new InMemoryManifestRepository(project, SELECTION_ROOT),
       userManifestRepo: userRepo,
     });
 
     await remove.execute({
-      pluginName: NAME,
+      pluginName: SELECTED_PLUGIN,
       toolIds: [cursor],
-      projectRoot: ROOT,
+      projectRoot: SELECTION_ROOT,
     });
 
-    expect(await fs.fileExists(join(ROOT, "owned.md"))).toBe(false);
-    expect(fs.getFile(join(ROOT, "foreign.md"))).toBe("foreign");
+    expect(await fs.fileExists(join(SELECTION_ROOT, "owned.md"))).toBe(false);
+    expect(fs.getFile(join(SELECTION_ROOT, "foreign.md"))).toBe("foreign");
     expect(machine.toJSON()).toEqual(before);
     expect(userRepo.saveCount).toBe(0);
     expect(project.getPlugins(cursor).map((entry) => entry.name)).toEqual(["other-plugin"]);
   });
 
   it("user removal skips a project-scoped copy and other names with active dependents", async () => {
-    const machine = manifest();
-    machine.addPlugin(cursor, plugin({ name: "other-plugin", dependents: [OTHER] }));
-    machine.addPlugin(cursor, plugin());
-    machine.addPlugin(claude, plugin({ scope: "project", dependents: [OTHER] }));
+    const machine = aMachineWithClaudeAndCursor();
+    machine.addPlugin(
+      cursor,
+      anInstalledPlugin({ name: "other-plugin", dependents: [SELECTION_OTHER_ROOT] })
+    );
+    machine.addPlugin(cursor, anInstalledPlugin());
+    machine.addPlugin(
+      claude,
+      anInstalledPlugin({ scope: "project", dependents: [SELECTION_OTHER_ROOT] })
+    );
     const otherBefore = machine.getPlugins(cursor)[0].toJSON();
     const claudeBefore = machine.getPlugins(claude)[0].toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = userPluginRemover({ userManifestRepo: userRepo });
 
     await remove.execute({
-      pluginName: NAME,
+      pluginName: SELECTED_PLUGIN,
       toolIds: "all",
-      projectRoot: ROOT,
+      projectRoot: SELECTION_ROOT,
     });
 
     expect(machine.getPlugins(cursor).map((entry) => entry.toJSON())).toEqual([otherBefore]);
@@ -133,17 +140,17 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   });
 
   it("user removal reports a project-only match as absent without saving either manifest", async () => {
-    const machine = manifest();
-    machine.addPlugin(cursor, plugin({ scope: "project" }));
+    const machine = aMachineWithClaudeAndCursor();
+    machine.addPlugin(cursor, anInstalledPlugin({ scope: "project" }));
     const before = machine.toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = userPluginRemover({ userManifestRepo: userRepo });
 
     await expect(
       remove.execute({
-        pluginName: NAME,
+        pluginName: SELECTED_PLUGIN,
         toolIds: [cursor],
-        projectRoot: ROOT,
+        projectRoot: SELECTION_ROOT,
       })
     ).rejects.toThrow(PluginNotFoundError);
 
@@ -152,13 +159,16 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   });
 
   it("explicit user removal deletes the proven global file without touching the project copy", async () => {
-    const relative = `${NAME}/commands/owned.md`;
+    const relative = `${SELECTED_PLUGIN}/commands/owned.md`;
     const content = "installed machine bytes";
-    const machine = manifest();
-    machine.addPlugin(cursor, plugin({ files: { [relative]: FileHash.of(content).value } }));
-    const fs = new InMemoryFileAdapter({}, [ROOT, OTHER]);
+    const machine = aMachineWithClaudeAndCursor();
+    machine.addPlugin(
+      cursor,
+      anInstalledPlugin({ files: { [relative]: FileHash.of(content).value } })
+    );
+    const fs = new InMemoryFileAdapter({}, [SELECTION_ROOT, SELECTION_OTHER_ROOT]);
     const userPath = join(homedir(), ".cursor", "plugins", "local", relative);
-    const projectPath = join(ROOT, relative);
+    const projectPath = join(SELECTION_ROOT, relative);
     fs.setFile(userPath, content);
     fs.setFile(projectPath, "project bytes");
     const userRepo = new InMemoryManifestRepository(machine);
@@ -168,9 +178,9 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     });
 
     await remove.execute({
-      pluginName: NAME,
+      pluginName: SELECTED_PLUGIN,
       toolIds: [cursor],
-      projectRoot: ROOT,
+      projectRoot: SELECTION_ROOT,
     });
 
     expect(await fs.fileExists(userPath)).toBe(false);
@@ -182,9 +192,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   it("refuses a partial user removal before deleting safe files when another tracked path escapes", async () => {
     const content = "installed bytes";
     const hash = FileHash.of(content).value;
-    const relative = `${NAME}/owned.md`;
-    const machine = manifest();
-    machine.addPlugin(cursor, plugin({ files: { [relative]: hash, "../outside.md": hash } }));
+    const relative = `${SELECTED_PLUGIN}/owned.md`;
+    const machine = aMachineWithClaudeAndCursor();
+    machine.addPlugin(
+      cursor,
+      anInstalledPlugin({ files: { [relative]: hash, "../outside.md": hash } })
+    );
     const before = machine.toJSON();
     const base = join(homedir(), ".cursor", "plugins", "local");
     const fs = new InMemoryFileAdapter(
@@ -192,7 +205,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
         [join(base, relative)]: content,
         [join(base, "../outside.md")]: content,
       },
-      [ROOT, OTHER]
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT]
     );
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = userPluginRemover({
@@ -202,12 +215,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        pluginName: NAME,
+        pluginName: SELECTED_PLUGIN,
         toolIds: [cursor],
-        projectRoot: ROOT,
+        projectRoot: SELECTION_ROOT,
       })
     ).rejects.toThrow(
-      `Refusing partial removal of user-scope plugin '${NAME}': a tracked file escaped its boundary.`
+      `Refusing partial removal of user-scope plugin '${SELECTED_PLUGIN}': a tracked file escaped its boundary.`
     );
 
     expect(fs.getFile(join(base, relative))).toBe(content);
@@ -217,26 +230,29 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   });
 
   it("refuses unproven project hooks before deleting any tracked plugin file", async () => {
-    const project = manifest();
-    project.addPlugin(cursor, plugin({ scope: "project", files: { "owned.md": "digest" } }));
+    const project = aMachineWithClaudeAndCursor();
+    project.addPlugin(
+      cursor,
+      anInstalledPlugin({ scope: "project", files: { "owned.md": "digest" } })
+    );
     const before = project.toJSON();
-    const script = join(ROOT, ".cursor", "hooks", NAME, "edited.sh");
-    const file = join(ROOT, "owned.md");
+    const script = join(SELECTION_ROOT, ".cursor", "hooks", SELECTED_PLUGIN, "edited.sh");
+    const file = join(SELECTION_ROOT, "owned.md");
     const fs = new InMemoryFileAdapter(
       {
         [script]: "unproven hook bytes",
         [file]: "installed plugin bytes",
       },
-      [ROOT, OTHER]
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT]
     );
-    const repo = new InMemoryManifestRepository(project, ROOT);
+    const repo = new InMemoryManifestRepository(project, SELECTION_ROOT);
     const remove = pluginRemover({ fs, manifestRepo: repo });
 
     await expect(
       remove.execute({
-        pluginName: NAME,
+        pluginName: SELECTED_PLUGIN,
         toolIds: [cursor],
-        projectRoot: ROOT,
+        projectRoot: SELECTION_ROOT,
       })
     ).rejects.toThrow(/unproven legacy install digest/);
 
@@ -247,30 +263,30 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   });
 
   it("preserves a scope-aware host ref when no activator confirmed its removal", async () => {
-    const project = manifest();
-    project.addPlugin(claude, plugin({ scope: "project", marketplace: "local-alias" }));
-    const ref = `${NAME}@host-catalogue`;
+    const project = aMachineWithClaudeAndCursor();
+    project.addPlugin(claude, anInstalledPlugin({ scope: "project", marketplace: "local-alias" }));
+    const ref = `${SELECTED_PLUGIN}@host-catalogue`;
     const registrations = {
       binary: "claude",
       marketplaces: [{ alias: "local-alias", hostName: "host-catalogue" }],
       pluginRefs: [ref, "other-plugin@host-catalogue"],
-      pluginClaims: [{ ref, dependents: [ROOT, OTHER] }],
+      pluginClaims: [{ ref, dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] }],
     };
     project.setNativeRegistrations(claude, registrations);
-    const machine = manifest();
+    const machine = aMachineWithClaudeAndCursor();
     machine.setNativeRegistrations(claude, registrations);
-    const repo = new InMemoryManifestRepository(project, ROOT);
+    const repo = new InMemoryManifestRepository(project, SELECTION_ROOT);
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = pluginRemover({
-      fs: new InMemoryFileAdapter({}, [ROOT, OTHER]),
+      fs: new InMemoryFileAdapter({}, [SELECTION_ROOT, SELECTION_OTHER_ROOT]),
       manifestRepo: repo,
       userManifestRepo: userRepo,
     });
 
     await remove.execute({
-      pluginName: NAME,
+      pluginName: SELECTED_PLUGIN,
       toolIds: [claude],
-      projectRoot: ROOT,
+      projectRoot: SELECTION_ROOT,
     });
 
     expect(project.getNativeRegistrations(claude)?.pluginRefs).toEqual([
@@ -282,257 +298,10 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       "other-plugin@host-catalogue",
     ]);
     expect(machine.getNativeRegistrations(claude)?.pluginClaims).toEqual([
-      { ref, dependents: [OTHER] },
+      { ref, dependents: [SELECTION_OTHER_ROOT] },
     ]);
     expect(project.getPlugins(claude)).toEqual([]);
     expect(userRepo.saveCount).toBe(1);
     expect(repo.saveCount).toBe(1);
-  });
-});
-
-describe("native removal preserves unconfirmed refs and addresses the recorded catalogue", () => {
-  const ALIAS = "local-alias";
-  const HOST = "host-catalogue";
-  const REF = `${NAME}@${HOST}`;
-  const FOREIGN = `other-plugin@${HOST}`;
-  const provenance = { kind: "registry" as const, source: "/plugin-source" };
-
-  function fixture(
-    options: {
-      available?: boolean;
-      fail?: boolean;
-      enabled?: boolean;
-      registrations?: boolean;
-    } = {}
-  ) {
-    const record = manifest();
-    record.addPlugin(
-      claude,
-      plugin({ scope: "project", marketplace: ALIAS, files: { "owned.md": "digest" } })
-    );
-    record.addPlugin(
-      claude,
-      plugin({ name: "other-plugin", scope: "project", marketplace: "other-alias" })
-    );
-    if (options.registrations !== false)
-      record.setNativeRegistrations(claude, {
-        binary: "claude",
-        marketplaces: [
-          { alias: "other-alias", hostName: "other-host", provenance },
-          { alias: ALIAS, hostName: HOST, provenance },
-        ],
-        pluginRefs: options.enabled === false ? [FOREIGN] : [FOREIGN, REF],
-      });
-    const fs = new InMemoryFileAdapter({ [join(ROOT, "owned.md")]: "owned" });
-    const cache = join(
-      homedir(),
-      ".claude",
-      "plugins",
-      "cache",
-      HOST,
-      NAME,
-      "1.0.0",
-      "plugin.json"
-    );
-    const foreignCache = join(
-      homedir(),
-      ".claude",
-      "plugins",
-      "cache",
-      HOST,
-      "other-plugin",
-      "1.0.0",
-      "plugin.json"
-    );
-    fs.setFile(cache, "target cache");
-    fs.setFile(foreignCache, "foreign cache");
-    const activator = new FakeHostActions({
-      available: options.available ?? true,
-      failOnUninstall: options.fail ? [REF] : [],
-    });
-    const logger = new CapturingLogger();
-    const repo = new InMemoryManifestRepository(record, ROOT);
-    const remove = pluginRemover({
-      fs,
-      manifestRepo: repo,
-      logger,
-      activators: new Map([[claude, activator]]),
-      hostPluginRegistries: new Map([
-        [
-          claude,
-          new FakeHostPluginRegistry({
-            location: "/host/registry",
-            refs: new Map([[REF, { enabled: true, scope: "project" }]]),
-          }),
-        ],
-      ]),
-      nativeMarketplaceSources: new Map([
-        [
-          claude,
-          {
-            read: async () => ({
-              location: "/host/catalogues",
-              entries: new Map([[HOST, provenance]]),
-            }),
-          },
-        ],
-      ]),
-    });
-    return { record, fs, cache, foreignCache, activator, logger, repo, remove };
-  }
-
-  it("removes the exact confirmed ref and cache while preserving sibling registrations", async () => {
-    const f = fixture();
-    const marketplaces = f.record.getNativeRegistrations(claude)?.marketplaces;
-
-    await f.remove.execute({
-      pluginName: NAME,
-      toolIds: [claude],
-      projectRoot: ROOT,
-    });
-
-    expect(f.activator.uninstalledPlugins).toEqual([REF]);
-    expect(f.activator.uninstalledPluginScopes).toEqual(["project"]);
-    expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN]);
-    expect(f.record.getNativeRegistrations(claude)?.marketplaces).toEqual(marketplaces);
-    expect(f.record.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin"]);
-    expect(await f.fs.fileExists(f.cache)).toBe(false);
-    expect(f.fs.getFile(f.foreignCache)).toBe("foreign cache");
-    expect(await f.fs.fileExists(join(ROOT, "owned.md"))).toBe(false);
-    expect(f.logger.infoMessages).toEqual([
-      `claude: cache for '${NAME}' purged: ${join(homedir(), ".claude", "plugins", "cache", HOST, NAME)}`,
-    ]);
-    expect(f.logger.warnMessages).toEqual([]);
-    expect(f.repo.saveCount).toBe(1);
-  });
-
-  it.each([{ available: false }, { fail: true }])(
-    "retains host refs and cache when native removal is unconfirmed: %j",
-    async (options) => {
-      const f = fixture(options);
-
-      await f.remove.execute({
-        pluginName: NAME,
-        toolIds: [claude],
-        projectRoot: ROOT,
-      });
-
-      expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN, REF]);
-      expect(f.fs.getFile(f.cache)).toBe("target cache");
-      expect(f.fs.getFile(f.foreignCache)).toBe("foreign cache");
-      expect(f.activator.uninstalledPlugins).toEqual([]);
-      expect(f.logger.warnMessages).toContain(
-        `claude: cache for '${NAME}' left in place, its own removal was not confirmed: ${join(homedir(), ".claude", "plugins", "cache", HOST, NAME)}`
-      );
-      expect(f.logger.infoMessages).toEqual([]);
-      expect(f.record.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin"]);
-    }
-  );
-
-  it("leaves an unclaimed enabled plugin on the host while removing only local files", async () => {
-    const f = fixture({ enabled: false });
-
-    await f.remove.execute({
-      pluginName: NAME,
-      toolIds: [claude],
-      projectRoot: ROOT,
-    });
-
-    expect(f.activator.uninstalledPlugins).toEqual([]);
-    expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN]);
-    expect(f.fs.getFile(f.cache)).toBe("target cache");
-    expect(f.logger.warnMessages).toEqual([
-      `claude: '${REF}' is not a ref this project enabled — left enabled.`,
-    ]);
-    expect(f.logger.infoMessages).toEqual([]);
-    expect(await f.fs.fileExists(join(ROOT, "owned.md"))).toBe(false);
-  });
-
-  it("names the local alias when an unavailable host has no recorded catalogue", async () => {
-    const f = fixture({ available: false, registrations: false });
-
-    await f.remove.execute({
-      pluginName: NAME,
-      toolIds: [claude],
-      projectRoot: ROOT,
-    });
-
-    expect(f.activator.uninstalledPlugins).toEqual([]);
-    expect(f.record.getNativeRegistrations(claude)).toBeUndefined();
-    expect(f.fs.getFile(f.cache)).toBe("target cache");
-    expect(f.logger.warnMessages).toEqual([
-      `claude CLI not found on PATH — '${NAME}@${ALIAS}' was not uninstalled from the host; its ref may remain enabled after local removal.`,
-    ]);
-    expect(f.repo.saveCount).toBe(1);
-  });
-
-  it("detaches only this project's exact machine-owned native claim without disabling the shared ref", async () => {
-    const project = aManifest()
-      .withTool(codex, [])
-      .withTool(cursor, [])
-      .withPlugin(codex, plugin({ scope: "project", marketplace: ALIAS }))
-      .build();
-    const provenance = {
-      kind: "effective-list" as const,
-      root: "/host/root",
-      sourceType: "local",
-      source: "/plugin-source",
-    };
-    const registrations = {
-      binary: "codex",
-      marketplaces: [{ alias: ALIAS, hostName: HOST, provenance }],
-      pluginRefs: [FOREIGN, REF],
-      pluginClaims: [
-        { ref: FOREIGN, dependents: [ROOT, OTHER] },
-        { ref: REF, dependents: [ROOT, OTHER] },
-      ],
-    };
-    project.setNativeRegistrations(codex, registrations);
-    const machine = Manifest.create();
-    machine.addTool(codex, "1.0.0", []);
-    machine.setNativeRegistrations(codex, registrations);
-    const userRepo = new InMemoryManifestRepository(machine);
-    const projectRepo = new InMemoryManifestRepository(project, ROOT);
-    const activator = new FakeHostActions({ available: true });
-    const logger = new CapturingLogger();
-    const remove = pluginRemover({
-      fs: new InMemoryFileAdapter({}, [ROOT, OTHER]),
-      manifestRepo: projectRepo,
-      logger,
-      activators: new Map([[codex, activator]]),
-      userManifestRepo: userRepo,
-      nativeMarketplaceSources: new Map([
-        [
-          codex,
-          {
-            read: async () => ({
-              location: "/host/catalogues",
-              entries: new Map([[HOST, provenance]]),
-            }),
-          },
-        ],
-      ]),
-    });
-
-    await remove.execute({
-      pluginName: NAME,
-      toolIds: "all",
-      projectRoot: ROOT,
-    });
-
-    expect(activator.uninstalledPlugins).toEqual([]);
-    expect(machine.getNativeRegistrations(codex)?.pluginRefs).toEqual([FOREIGN, REF]);
-    expect(machine.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: FOREIGN, dependents: [ROOT, OTHER] },
-      { ref: REF, dependents: [OTHER] },
-    ]);
-    expect(project.getNativeRegistrations(codex)?.pluginRefs).toEqual([FOREIGN]);
-    expect(project.getPlugins(codex)).toEqual([]);
-    expect(project.getPlugins(cursor)).toEqual([]);
-    expect(userRepo.saveCount).toBe(1);
-    expect(projectRepo.saveCount).toBe(1);
-    expect(logger.warnMessages).toEqual([
-      `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; this project's claim detaches after local removal.`,
-    ]);
   });
 });
