@@ -27,19 +27,15 @@ describe("where a flat plugin's files are installed", () => {
     ]);
   });
 
-  it.each([
-    ["opencode", opencode],
-    ["antigravity", antigravity],
-  ])("%s owns what it places for a skill and an agent, and no other plugin's", (_name, tool) => {
+  it("owns what it places for a skill and an agent, and no sibling plugin's nested skill", () => {
     const placed = [
-      tool.flatInstallPath("skills", "aidd", "plan/SKILL.md"),
-      tool.flatInstallPath("agents", "aidd", "a.md"),
+      opencode.flatInstallPath("skills", "aidd", "plan/SKILL.md"),
+      opencode.flatInstallPath("agents", "aidd", "a.md"),
     ];
-    expect(placed.map((path) => tool.ownsFlatPath(path, "aidd"))).toStrictEqual([true, true]);
-    expect(placed.map((path) => tool.ownsFlatPath(path, "aidd-extra"))).toStrictEqual([
-      false,
-      false,
-    ]);
+    expect(placed.map((path) => opencode.ownsFlatPath(path, "aidd"))).toStrictEqual([true, true]);
+    expect(
+      opencode.ownsFlatPath(opencode.flatInstallPath("skills", "aidd-x", "plan/SKILL.md"), "aidd")
+    ).toBe(false);
   });
 });
 

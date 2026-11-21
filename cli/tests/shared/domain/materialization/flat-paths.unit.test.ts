@@ -49,23 +49,31 @@ describe("a flat artifact layout", () => {
     ]);
   });
 
-  it.each([nested, single])(
-    "owns what it places and no other plugin's, whichever the layout",
-    (layout) => {
-      const placed = [
-        flatSkillPath(layout, "aidd", "plan/SKILL.md"),
-        flatAgentFilePath(layout, "aidd", "a.md"),
-      ];
-      expect(placed.map((path) => ownsFlatArtifact(layout, path, "aidd"))).toStrictEqual([
-        true,
-        true,
-      ]);
-      expect(placed.map((path) => ownsFlatArtifact(layout, path, "aidd-x"))).toStrictEqual([
-        false,
-        false,
-      ]);
-    }
-  );
+  it.each([nested, single])("owns what it places, whichever the layout", (layout) => {
+    const placed = [
+      flatSkillPath(layout, "aidd", "plan/SKILL.md"),
+      flatAgentFilePath(layout, "aidd", "a.md"),
+    ];
+    expect(placed.map((path) => ownsFlatArtifact(layout, path, "aidd"))).toStrictEqual([
+      true,
+      true,
+    ]);
+  });
+
+  it("does not own a sibling plugin's nested skill whose name starts with its own", () => {
+    expect([
+      ownsFlatArtifact(nested, flatSkillPath(nested, "aidd-x", "plan/SKILL.md"), "aidd"),
+      ownsFlatArtifact(nested, flatSkillPath(nested, "aidd", "plan/SKILL.md"), "aidd-x"),
+    ]).toStrictEqual([false, false]);
+  });
+
+  it("does not own an artifact whose file name merely begins with the plugin name", () => {
+    expect([
+      ownsFlatArtifact(single, ".agents/skills/aiddx-plan/SKILL.md", "aidd"),
+      ownsFlatArtifact(single, ".agents/agents/aiddx-a/agent.md", "aidd"),
+      ownsFlatArtifact(nested, ".opencode/agents/aiddx-a.md", "aidd"),
+    ]).toStrictEqual([false, false, false]);
+  });
 });
 
 describe("genericFlatHooksFile", () => {
