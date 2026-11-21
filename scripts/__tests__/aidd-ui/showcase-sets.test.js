@@ -772,7 +772,7 @@ describe("aidd-ui showcase sets", () => {
           const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict }));
           return element({ variant: name }, { below: { ".vote": votes, ".comment": [field] }, field, votes });
         });
-        const set = element({ set: "layout", title: "Layout", fingerprint: "f1" }, { below: { "li.pvariant": rows, ".done": [element({ label: "chosen" })], ".picked": [element({ axes: "2", label: "picked" })] } });
+        const set = element({ set: "layout", title: "Layout", fingerprint: "f1" }, { closest: () => ({ dataset: { step: "components" } }), below: { "li.pvariant": rows, ".done": [element({ label: "chosen" })], ".picked": [element({ axes: "2", label: "picked" })] } });
         const columns = ["a", "b"].map((name) => {
           const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict, variant: name }));
           const field = element();

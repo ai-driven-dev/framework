@@ -25,7 +25,7 @@ const rootsOf = (css) => [...css.matchAll(/:root\s*\{[^}]*\}/g)].map((match) => 
 const darkOf = (css) => css.slice(css.indexOf(SCHEME));
 const declared = (block) => new Set([...block.matchAll(/(--[\w-]+)\s*:/g)].map((match) => match[1]));
 
-const COLOURS = ["--bg", "--surface", "--sunken", "--stage", "--stage-dot", "--line", "--line-strong", "--control", "--text", "--text-2", "--muted", "--faint", "--accent", "--accent-hover", "--on-accent", "--accent-soft", "--ok", "--ok-soft", "--revise", "--revise-soft", "--on-status", "--focus", "--scrim", "--shadow-1", "--shadow-2", "--shadow-frame"];
+const COLOURS = ["--bg", "--surface", "--sunken", "--stage", "--stage-dot", "--line", "--line-strong", "--control", "--text", "--text-2", "--muted", "--faint", "--accent", "--accent-hover", "--on-accent", "--accent-soft", "--ok", "--ok-soft", "--revise", "--revise-soft", "--focus", "--scrim", "--shadow-1", "--shadow-2", "--shadow-frame"];
 
 describe("aidd-ui showcase look", () => {
   it("defines every colour role in the light scheme and again in the dark one", () => {

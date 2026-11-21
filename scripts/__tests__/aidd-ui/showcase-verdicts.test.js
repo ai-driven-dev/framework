@@ -133,6 +133,29 @@ describe("the verdicts beside the state tabs", () => {
     for (const id of order) assert.ok(known.includes(id), `${id} is a reviewable record`);
   });
 
+  it("lists each id once in the order, even when a journey and a wireframe share it", () => {
+    const render = '<html><head></head><body><main data-state="default">x</main></body></html>';
+    put(tmp, `${UI}/wireframes/shared.md`, record(["id: shared", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# shared"));
+    put(tmp, `${UI}/wireframes/shared.html`, render);
+    put(tmp, `${UI}/journeys/shared.md`, record(["id: shared", "kind: journey", "status: proposed", "version: 1"], "# shared", "## Steps\n\n| Screen | Action |\n| --- | --- |\n| shared | opens |"));
+    const order = JSON.parse(pagesOf()["home.html"].match(/id="review-order">([^<]*)</)[1]);
+    assert.deepEqual(order.filter((id) => id === "shared"), ["shared"], `${order}`);
+  });
+
+  it("opens the screens step on the first screen of the review order, the journeys' order, not the id order", () => {
+    const render = '<html><head></head><body><main data-state="default">x</main></body></html>';
+    for (const id of ["aaa-screen", "zzz-screen"]) {
+      put(tmp, `${UI}/screens/${id}.md`, record([`id: ${id}`, "kind: screen", "status: proposed", "version: 1", "states: [default]"], `# ${id}`));
+      put(tmp, `${UI}/screens/${id}.html`, render);
+    }
+    put(tmp, `${UI}/journeys/aaa-flow.md`, record(["id: aaa-flow", "kind: journey", "status: proposed", "version: 1"], "# flow", "## Steps\n\n| Screen | Action |\n| --- | --- |\n| zzz-screen | opens |\n| aaa-screen | leaves |"));
+    const html = pagesOf()["index.html"];
+    const order = JSON.parse(html.match(/id="review-order">([^<]*)</)[1]);
+    const firstScreen = order.find((id) => id === "aaa-screen" || id === "zzz-screen" || id === "home");
+    assert.equal(firstScreen, "zzz-screen");
+    assert.equal(html.match(/<li data-step="screens" data-state="todo"><a href="([^"]*)">/)[1], "zzz-screen.html");
+  });
+
   it("leaves out of the order a wireframe whose screen has nothing left to review, as it leaves the count", () => {
     const orderOf = (html) => JSON.parse(html.match(/<script type="application\/json" id="review-order">([^<]*)<\/script>/)[1]);
     const render = '<html><head></head><body><main data-state="default">x</main></body></html>';
@@ -200,7 +223,7 @@ describe("the verdicts beside the state tabs", () => {
       own.closest = () => ({ dataset: { step: "screens" } });
       return own;
     };
-    const open = (memory = {}, { drawerHoldsIt = true, beside = [], known, decisions = false, steps = false, order } = {}) => {
+    const open = (memory = {}, { drawerHoldsIt = true, beside = [], known, decisions = false, steps = false, order, extra = () => undefined } = {}) => {
       const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
@@ -224,7 +247,7 @@ describe("the verdicts beside the state tabs", () => {
       const stepCancel = element({}, { hidden: true });
       const by = { scrim: element(), review: element({}, { hidden: true, below: { ".nothing": [nothing], "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": steps ? [stepOk] : [], ".step-cancel": steps ? [stepCancel] : [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element(), ...(decisions ? { decisions: decided } : {}), ...(order ? { "review-order": element({}, { textContent: JSON.stringify(order) }) } : {}), ...(known ? { "review-records": element({}, { textContent: JSON.stringify(known) }) } : {}) };
       const keys = {};
-      const document = { activeElement: null, createElement: () => element(), body: { dataset: {} }, addEventListener(type, listener) { keys[type] = listener; }, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : []), querySelector: () => null };
+      const document = { activeElement: null, createElement: () => element(), body: { dataset: {} }, addEventListener(type, listener) { keys[type] = listener; }, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : extra(selector) ?? []), querySelector: () => null };
       const written = [];
       const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
       const navigator = { clipboard: { writeText: async (content) => { written.push(content); } } };
@@ -249,6 +272,33 @@ describe("the verdicts beside the state tabs", () => {
       assert.equal(page.tally.textContent, "3 to review", "home, screen and bare count, the wireframe the screen dresses does not");
       const settledScreen = open({}, { beside: [["wire", "screen"], ["bare"]] });
       assert.equal(settledScreen.tally.textContent, "2 to review", "with no awaiting screen beside it the wireframe has left the review");
+    });
+
+    it("keeps the rework mark of a record once every state has a verdict, and hides only its to-review mark", () => {
+      const progress = element({ base: "0", total: "1" });
+      const marks = [element({}, { classes: ["mark", "todo"] }), element({}, { classes: ["mark", "rework"] })];
+      const extra = (selector) => {
+        const match = selector.match(/^\.mark((?:\.\w+)*)\[data-record="home"\]$/);
+        if (match) return marks.filter((mark) => match[1].split(".").filter(Boolean).every((name) => mark.classes.includes(name)));
+        return selector === '.progress[data-record="home"]' ? [progress] : undefined;
+      };
+      const page = open({}, { extra });
+      page.rowVotes[1].listeners.click();
+      assert.deepEqual(marks.map((mark) => mark.hidden), [true, false]);
+    });
+
+    it("gives the stepper, the sidebar, the overview and the drawer the one count of the review button, as verdicts are given", () => {
+      const spots = { stepper: element(), sidebar: element(), overview: element(), drawer: element() };
+      const extra = (selector) => ({
+        '.stepper li[data-step="screens"] .state': [spots.stepper],
+        '.steps > li[data-step="screens"] .step-mark': [spots.sidebar],
+        '.ov-step[data-step="screens"] h3 span': [spots.overview],
+        '.step-group[data-step="screens"] .step-count': [spots.drawer],
+      })[selector];
+      const page = open({}, { beside: [["screen"], ["bare"]], extra });
+      page.rowVotes[0].listeners.click();
+      assert.equal(page.tally.textContent, "2 to review");
+      assert.deepEqual([spots.stepper.textContent, spots.sidebar.textContent, spots.overview.textContent, spots.drawer.textContent], ["2 to review", "2", "2", "(2)"]);
     });
 
     it("gives the verdict of the shown state under the key and the values the drawer keeps", () => {

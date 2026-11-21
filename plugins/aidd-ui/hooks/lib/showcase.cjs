@@ -301,7 +301,7 @@ const SHELL = `
   --bg: #f7f7f5; --surface: #ffffff; --sunken: #f0f0ed; --stage: #e9e9e5; --stage-dot: #d3d3cd; --line: #e5e5e0; --line-strong: #d3d3cd; --control: #8a8a83;
   --text: #1b1b19; --text-2: #3a3a36; --muted: #55554e; --faint: #6b6b64;
   --accent: #1b1b19; --accent-hover: #33332f; --on-accent: #ffffff; --accent-soft: #ecece8;
-  --ok: #166534; --ok-soft: #e7f3ec; --revise: #92400e; --revise-soft: #fbf0e1; --on-status: #ffffff;
+  --ok: #166534; --ok-soft: #e7f3ec; --revise: #92400e; --revise-soft: #fbf0e1;
   --focus: #1b1b19; --focus-halo: var(--bg); --scrim: rgba(20, 20, 18, 0.4); --paper: #ffffff; --mask: #000000;
   --shadow-1: 0 1px 2px rgba(20, 20, 18, 0.06);
   --shadow-2: 0 1px 2px rgba(20, 20, 18, 0.06), 0 8px 24px rgba(20, 20, 18, 0.1);
@@ -321,7 +321,7 @@ const SHELL = `
     --bg: #151514; --surface: #1d1d1b; --sunken: #262623; --stage: #2b2b28; --stage-dot: #3a3a36; --line: #2e2e2b; --line-strong: #3d3d39; --control: #6f6f68;
     --text: #ededea; --text-2: #cfcfca; --muted: #a8a8a0; --faint: #8f8f87;
     --accent: #ededea; --accent-hover: #d4d4ce; --on-accent: #151514; --accent-soft: #2a2a27;
-    --ok: #6cc48b; --ok-soft: #16271c; --revise: #e3a75f; --revise-soft: #2c2114; --on-status: #151514;
+    --ok: #6cc48b; --ok-soft: #16271c; --revise: #e3a75f; --revise-soft: #2c2114;
     --focus: #ededea; --scrim: rgba(0, 0, 0, 0.6);
     --shadow-1: 0 0 0 1px var(--line);
     --shadow-2: 0 0 0 1px var(--line-strong), 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -957,6 +957,8 @@ function paintDecisions(list) {
 const blocked = () => blockedOf(entries());
 function paint() {
   let left = 0;
+  const stepOf = (node) => node.closest("details.step-group").dataset.step;
+  const leftBy = Object.fromEntries([...items, ...sets].map((node) => [stepOf(node), 0]));
   const unsettled = [];
   for (const item of items) {
     const rows = rowsOf(item);
@@ -977,7 +979,7 @@ function paint() {
       const settledNow = Number(each.dataset.base) + own;
       each.textContent = settledNow + "/" + each.dataset.total;
       each.dataset.complete = String(settledNow === Number(each.dataset.total));
-      document.querySelectorAll('.mark[data-record="' + item.dataset.record + '"]').forEach((mark) => { mark.hidden = settledNow === Number(each.dataset.total); });
+      document.querySelectorAll('.mark.todo[data-record="' + item.dataset.record + '"]').forEach((mark) => { mark.hidden = settledNow === Number(each.dataset.total); });
     });
     if (own < rows.length) unsettled.push(item);
   }
@@ -990,7 +992,7 @@ function paint() {
     sum.textContent = done + "/" + total;
     group.querySelector(".bar i").style.inlineSize = Math.round((100 * done) / total) + "%";
   });
-  left += unsettled.filter((item) => !item.dataset.dressedBy).length;
+  for (const item of unsettled) if (!item.dataset.dressedBy) { left += 1; leftBy[stepOf(item)] += 1; }
   for (const set of sets) {
     let decided = 0;
     for (const row of variantsOf(set)) {
@@ -1002,7 +1004,7 @@ function paint() {
       field.hidden = verdict !== "revise";
       if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
     }
-    if (!decided) left += 1;
+    if (!decided) { left += 1; leftBy[stepOf(set)] += 1; }
     const total = set.querySelector(".done");
     total.textContent = decided + "/" + variantsOf(set).length + " " + total.dataset.label;
     const count = set.querySelector(".picked");
@@ -1021,6 +1023,14 @@ function paint() {
     }
     const own = picksOf(holder);
     holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
+  }
+  const template = document.querySelectorAll(".tally[data-template]")[0]?.dataset.template ?? "{count}";
+  for (const [step, count] of Object.entries(leftBy)) {
+    const write = (selector, text) => document.querySelectorAll(selector).forEach((each) => { each.textContent = text; });
+    write('.stepper li[data-step="' + step + '"] .state', template.replace("{count}", String(count)));
+    write('.steps > li[data-step="' + step + '"] .step-mark', String(count));
+    write('.ov-step[data-step="' + step + '"] h3 span', String(count));
+    write('.step-group[data-step="' + step + '"] .step-count', "(" + count + ")");
   }
   paintBars();
   const list = decisionsOf(model(), choices);
@@ -1345,12 +1355,12 @@ function screenGroupsOf(records, journeys) {
 /** The ids of the records to review, in the order the sidebar lists them: step by step, a step's records as it lists them,
  * the screens by journey. Only what a step counts is in it: a wireframe a screen dresses is reviewed through that screen. */
 function reviewOrderOf(held, journeys) {
-  const counted = new Set(held.flatMap((each) => each.counted).map((record) => fm(record).id));
+  const counted = new Set(held.flatMap((each) => each.counted));
   const ordered = ({ step, records: own }) => {
     if (step === "screens") return screenGroupsOf(own, journeys).flatMap((group) => group.records.filter((record) => !group.sketches.has(fm(record).id)));
     return [...own].sort(step === "components" ? byCategory : byRecordId);
   };
-  return held.flatMap(ordered).map((record) => fm(record).id).filter((id) => counted.has(id));
+  return held.flatMap(ordered).filter((record) => counted.has(record)).map((record) => fm(record).id);
 }
 
 /** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
@@ -1742,21 +1752,21 @@ function paletteOf(project, system, tokens) {
   return (palette.length ? palette : roles).map((entry) => values.get(entry.name)).filter(Boolean).slice(0, PALETTE_SHOWN);
 }
 
-/** The first thing to open of a step: the first record the step counts, else the first still proposed, else its first record, else its first set. */
-const firstOf = (each) => each.counted[0] ?? each.proposed[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
-const hrefOf = (each) => {
-  const record = firstOf(each);
+/** The first thing to open of a step: the first record the step counts in the review order, else the first still proposed, else its first record, else its first set. */
+const firstOf = (each, order) => each.counted.filter((record) => order.includes(fm(record).id)).sort((a, b) => order.indexOf(fm(a).id) - order.indexOf(fm(b).id))[0] ?? each.counted[0] ?? each.proposed[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
+const hrefOf = (each, order) => {
+  const record = firstOf(each, order);
   if (record) return `${fm(record).id}.html`;
   return each.sets.length ? variants.setFileOf(each.sets[0].id) : null;
 };
 
 /** The five steps as a stepper in order, each a link to the first thing to open, with its state in words. */
-function stepperOf(held, labels) {
+function stepperOf(held, labels, order) {
   const item = (each, at) => {
     const left = each.count;
     const state = left ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
     const word = left ? leftWordOf(labels, each) : state === "done" ? labels.stepDone : labels.stepEmpty;
-    const href = hrefOf(each);
+    const href = hrefOf(each, order);
     const inner = `<span class="no">${at + 1}</span><span class="name">${labels.stepNames[each.step]}</span><span class="state">${escaped(word)}</span>`;
     return `<li data-step="${each.step}" data-state="${state}">${href ? `<a href="${escaped(href)}">${inner}</a>` : `<span class="cell">${inner}</span>`}</li>`;
   };
@@ -1764,7 +1774,7 @@ function stepperOf(held, labels) {
 }
 
 /** The line that says what awaits review, with the way in: a primary link to the first step that has work. */
-function reviewLineOf(held, labels) {
+function reviewLineOf(held, labels, order) {
   const waiting = held.filter((each) => each.todo);
   const proposed = held.filter((each) => each.proposed.length);
   const agreeing = (template) => filled(template, { count: proposed.reduce((sum, each) => sum + each.proposed.length, 0), steps: proposed.map((each) => labels.stepNames[each.step]).join(", ") });
@@ -1773,7 +1783,7 @@ function reviewLineOf(held, labels) {
   const review = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
   const text = proposed.length ? `${review} ${agreeing(labels.overviewAgree)}` : review;
   const first = held.find((each) => each.count);
-  return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first))}">${labels.start}</a></p>`;
+  return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first, order))}">${labels.start}</a></p>`;
 }
 
 /** A static thumbnail of a record's shown state, sketched for a wireframe: no script runs in it, it loads when scrolled near,
@@ -1787,7 +1797,7 @@ function thumbOf(project, record, tokens, labels, size) {
 /** The overview: under the stepper, a section per step that holds something, in step order. Journeys are cards with a strip of
  * their screens, the identity and the charter one card each, the elements small cards by category, the screens a grid of
  * thumbnails. Every number is the drawer's: `counted` marks what the step counts, `orderedStates` the progress. */
-function overviewOf({ project, held, records, rows, labels, tokens, palette }) {
+function overviewOf({ project, held, records, rows, labels, tokens, palette, order }) {
   const recordOf = (id) => records.find((record) => fm(record).id === id);
   const dresserOf = (id) => records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe === id).sort(byRecordId)[0];
   const dressed = new Set(records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => fm(record).wireframe));
@@ -1838,7 +1848,7 @@ function overviewOf({ project, held, records, rows, labels, tokens, palette }) {
     return grids.join("") + apart + (each.open.length ? `<ul class="ovcards screens">${each.open.map(setTile).join("")}</ul>` : "");
   };
   const section = (each) => `<section class="ov-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}${each.count ? `<span>${each.count}</span>` : ""}</h3>${body(each)}</section>`;
-  return [stepperOf(held, labels), `<div class="overview">${held.filter((each) => each.records.length || each.open.length).map(section).join("")}</div>`].join("\n");
+  return [stepperOf(held, labels, order), `<div class="overview">${held.filter((each) => each.records.length || each.open.length).map(section).join("")}</div>`].join("\n");
 }
 
 /** The script of the navigation sheet a narrow page opens from its top bar: Escape closes it and gives the focus back to the button. */
@@ -1896,7 +1906,7 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   const order = reviewOrderOf(held, journeys);
   const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, order });
   const palette = paletteOf(project, system, tokens);
-  const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels, tokens, palette })].join("\n");
+  const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels, order)}</header>`, overviewOf({ project, held, records, rows, labels, tokens, palette, order })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;
