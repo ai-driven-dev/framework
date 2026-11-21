@@ -141,7 +141,7 @@ describe("the mutation scripts", () => {
     ).toEqual(["telemetry"]);
     expect(
       scopesToRun(
-        ["cli/tests/presentation/presenters/telemetry/telemetry-report.presenter.golden.test.ts"],
+        ["cli/tests/presentation/presenters/telemetry/telemetry-report.presenter.unit.test.ts"],
         scopes
       )
     ).toEqual(["telemetry"]);

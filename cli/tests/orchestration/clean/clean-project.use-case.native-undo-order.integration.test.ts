@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
@@ -25,8 +26,6 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
-
-const homedir = (): string => "/home/dev";
 
 describe("clean: native registration undo order", () => {
   describe("undoing a host's own native registration", () => {

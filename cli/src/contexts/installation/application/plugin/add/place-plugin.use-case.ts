@@ -71,7 +71,7 @@ export class PlacePlugin {
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
       await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
-      const foreignDir = await foreignUserScopeDir(this.deps.fs, command, tool);
+      const foreignDir = await foreignUserScopeDir({ fs: this.deps.fs, command, tool });
       if (foreignDir !== undefined) {
         this.deps.logger.warn(
           `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`

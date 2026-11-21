@@ -7,19 +7,18 @@ import { resolveScopeForInstall, scopeBaseOf } from "../plugin-target-resolution
 import type { PlacePluginRequest } from "./place-plugin.use-case.js";
 
 /** The user-scope directory of the plugin when it holds files this project did not install. */
-export async function foreignUserScopeDir(
-  fs: FileReader,
-  command: PlacePluginRequest,
-  tool: AiToolProfile
-): Promise<string | undefined> {
+export async function foreignUserScopeDir(lookup: {
+  readonly fs: FileReader;
+  readonly command: PlacePluginRequest;
+  readonly tool: AiToolProfile;
+  readonly homedir?: () => string;
+}): Promise<string | undefined> {
+  const { fs, command, tool, homedir = nodeHomedir } = lookup;
   const { projectRoot, machine } = command;
   const pluginName = command.dist.manifest.name;
   if (resolveScopeForInstall(tool) !== "user") return undefined;
   if (machine.getPlugins(tool.toolId).some((p) => p.name === pluginName)) return undefined;
-  const dir = join(
-    scopeBaseOf(tool, { scope: "user", projectRoot, homedir: nodeHomedir }),
-    pluginName
-  );
+  const dir = join(scopeBaseOf(tool, { scope: "user", projectRoot, homedir }), pluginName);
   const present = await fs.listFilesRecursive(dir);
   return present.length > 0 ? dir : undefined;
 }

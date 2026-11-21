@@ -1,3 +1,4 @@
+import { homedir as nodeHomedir } from "node:os";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
@@ -10,7 +11,8 @@ import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 export class UserScopePluginFiles implements UserScopePluginFileRemoval {
   constructor(
     private readonly fs: FileWriter,
-    private readonly prove: UserPluginFileProof
+    private readonly prove: UserPluginFileProof,
+    private readonly homedir: () => string = nodeHomedir
   ) {}
 
   /** The plugin's tracked files proven to sit inside the user scope and to be unedited since
@@ -30,7 +32,7 @@ export class UserScopePluginFiles implements UserScopePluginFileRemoval {
     projectRoot: string
   ): Promise<void> {
     await deletePluginFilesForTool(
-      { files, scope: "user", tool, projectRoot, ownerScope: "user" },
+      { files, scope: "user", tool, projectRoot, ownerScope: "user", homedir: this.homedir },
       this.fs
     );
   }

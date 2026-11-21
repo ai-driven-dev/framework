@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.use-case.js";
@@ -20,8 +21,6 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "../testing/build-check-registration.builder.js";
-
-const homedir = (): string => "/home/dev";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";

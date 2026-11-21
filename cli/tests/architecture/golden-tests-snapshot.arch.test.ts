@@ -1,5 +1,5 @@
 /**
- * A `.golden.test.ts` file compares an output to a versioned snapshot through `expectGolden`;
+ * A golden test file compares an output to a versioned snapshot through `expectGolden`;
  * the suffix names the level and must not lie. A test that asserts inline is a unit test and
  * carries that suffix. No file is excepted.
  */

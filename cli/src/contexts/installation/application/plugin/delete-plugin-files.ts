@@ -23,6 +23,7 @@ export interface PluginFilesRemoval {
   readonly tool: PluginPlacement;
   readonly projectRoot: string;
   readonly ownerScope?: Scope;
+  readonly homedir?: () => string;
 }
 
 /**
@@ -35,12 +36,19 @@ export async function deletePluginFilesForTool(
   removal: PluginFilesRemoval,
   fs: FileWriter
 ): Promise<string[]> {
-  const { files, scope, tool, projectRoot, ownerScope = "project" } = removal;
+  const {
+    files,
+    scope,
+    tool,
+    projectRoot,
+    ownerScope = "project",
+    homedir = nodeHomedir,
+  } = removal;
   if (scope === "user" && ownerScope !== "user") return [];
   const baseDir = scopeBaseOf(tool, {
     scope: scope,
     projectRoot: projectRoot,
-    homedir: nodeHomedir,
+    homedir,
   });
   const deleted: string[] = [];
   for (const relativePath of files.keys()) {

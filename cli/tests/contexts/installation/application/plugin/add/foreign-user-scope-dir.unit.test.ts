@@ -46,7 +46,12 @@ describe("foreignUserScopeDir", () => {
     const tool = tools.aiProfile(TOOL.claude);
 
     expect(
-      await foreignUserScopeDir(new InMemoryFileAdapter(), command(Manifest.create()), tool)
+      await foreignUserScopeDir({
+        fs: new InMemoryFileAdapter(),
+        command: command(Manifest.create()),
+        tool,
+        homedir,
+      })
     ).toBeUndefined();
   });
 
@@ -57,7 +62,9 @@ describe("foreignUserScopeDir", () => {
       const dir = join(scopeBaseOf(tool, { scope: "user", projectRoot: ROOT, homedir }), "sample");
       const fs = new InMemoryFileAdapter({ [join(dir, "a.md")]: "x" });
 
-      expect(await foreignUserScopeDir(fs, command(Manifest.create()), tool)).toBe(dir);
+      expect(
+        await foreignUserScopeDir({ fs, command: command(Manifest.create()), tool, homedir })
+      ).toBe(dir);
     }
   );
 
@@ -80,7 +87,9 @@ describe("foreignUserScopeDir", () => {
       );
       const fs = new InMemoryFileAdapter({ [join(dir, "a.md")]: "x" });
 
-      expect(await foreignUserScopeDir(fs, command(machine), tool)).toBeUndefined();
+      expect(
+        await foreignUserScopeDir({ fs, command: command(machine), tool, homedir })
+      ).toBeUndefined();
     }
   );
 });

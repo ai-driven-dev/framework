@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
@@ -19,8 +20,6 @@ import {
   RecordingFileAdapter,
 } from "../testing/clean-user-scope.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
-
-const homedir = (): string => "/home/dev";
 
 describe("clean --scope user: native preflight", () => {
   it("preflights every native source before uninstalling any other catalogue", async () => {
