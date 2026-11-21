@@ -3,6 +3,7 @@ import codexConfigToml from "../../../../../../assets/configs/codex/config.toml"
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-codex.cjs";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import type { LinkSyntax } from "../../../contract/link-syntax.js";
 import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import type { ShippedConfig } from "../../../contract/tool-profile.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
@@ -27,18 +28,10 @@ const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 
-const SKILLS_TO_AGENTS_RE = /\.codex\/skills\//g;
-
-function remapSkillPaths(content: string): string {
-  return content.replace(SKILLS_TO_AGENTS_RE, ".agents/skills/aidd-");
-}
-
-export function rewriteCodexContent(content: string): string {
-  return remapSkillPaths(content).replace(
-    /(@?)\.codex\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-    "$1.codex/commands/aidd/$2/$3"
-  );
-}
+const LINK_SYNTAX: LinkSyntax = [
+  { from: /\.codex\/skills\//g, to: ".agents/skills/aidd-" },
+  { from: /(@?)\.codex\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.codex/commands/aidd/$2/$3" },
+];
 
 function skillNameFromPath(fileName: string): string {
   const parts = fileName.split("/");
@@ -189,5 +182,5 @@ export const codexProfile = (toml: TomlCodec) =>
 
     capabilities: codexCapabilities(toml),
 
-    rewriteContent: rewriteCodexContent,
+    linkSyntax: LINK_SYNTAX,
   });

@@ -15,7 +15,7 @@ export const aiSpec = {
   displayName: "X",
   buildContracts: { flat: () => anEmptyContract() },
   capabilities: () => ({}),
-  rewriteContent: (content: string) => content,
+  linkSyntax: [],
 };
 
 export const ideSpec = {

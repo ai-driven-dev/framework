@@ -81,10 +81,7 @@ export const kilo = defineAiTool({
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content.replace(
-      /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-      "$1.kilo/commands/aidd/$2/$3"
-    );
-  },
+  linkSyntax: [
+    { from: /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.kilo/commands/aidd/$2/$3" },
+  ],
 });

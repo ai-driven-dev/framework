@@ -184,9 +184,12 @@ describe("rewriteRelativeLinks", () => {
 
 describe("rewriteLinks", () => {
   it("reads a link the way the tool does when the layout keeps the tool's form", () => {
-    expect(rewriteLinks("a @./x", { kind: "tool", rewrite: (text) => text.toUpperCase() })).toBe(
-      "A @./X"
-    );
+    expect(
+      rewriteLinks("a @./x", {
+        kind: "tool",
+        syntax: [{ from: /x/g, to: (text) => text.toUpperCase() }],
+      })
+    ).toBe("a @./X");
   });
 
   it("reads a link as a markdown link when the layout keeps the relative form", () => {

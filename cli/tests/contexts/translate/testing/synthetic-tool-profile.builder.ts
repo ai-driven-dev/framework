@@ -14,7 +14,7 @@ export function syntheticToolProfile(answers: ProfileAnswers = {}): AiToolProfil
     flatContract: anEmptyContract(),
     flatInstallPath: (section, pluginName, fileName) =>
       `${directory}${section}/${pluginName}/${fileName}`,
-    rewriteContent: (content) => content,
+    linkSyntax: [],
     ...answers,
     sections: { commands: null, agents: null, rules: null, skills: null, ...answers.sections },
   });

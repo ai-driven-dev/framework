@@ -2,17 +2,18 @@ import {
   escapeRegExp,
   SOURCE_PLUGIN_ROOT_TOKEN,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import {
+  applyLinkSyntax,
+  type LinkSyntax,
+  REFERENCE_CHARS,
+} from "../../../tools/contract/link-syntax.js";
 
-// The same character class `rewriteCopilotContent` uses, so both recognise the same
-// reference.
-const REFERENCE_CHAR_CLASS = "[^\\s`'\">,]+";
-
-const RELATIVE_CURRENT_RE = new RegExp(`@\\.\\/(${REFERENCE_CHAR_CLASS})`, "g");
-const RELATIVE_PARENT_RE = new RegExp(`@\\.\\.\\/(${REFERENCE_CHAR_CLASS})`, "g");
+const RELATIVE_CURRENT_RE = new RegExp(`@\\.\\/(${REFERENCE_CHARS})`, "g");
+const RELATIVE_PARENT_RE = new RegExp(`@\\.\\.\\/(${REFERENCE_CHARS})`, "g");
 
 // Only with a leading `@`: a bare ${CLAUDE_PLUGIN_ROOT} is left alone.
 const CLAUDE_ROOT_RE = new RegExp(
-  `@${escapeRegExp(SOURCE_PLUGIN_ROOT_TOKEN)}\\/(${REFERENCE_CHAR_CLASS})`,
+  `@${escapeRegExp(SOURCE_PLUGIN_ROOT_TOKEN)}\\/(${REFERENCE_CHARS})`,
   "g"
 );
 
@@ -26,13 +27,13 @@ export interface RewriteRelativeLinksOptions {
 /** How a layout reads the links of a document: the tool's own form, or markdown links relative to
  * where the file is written. `rewriteLinks` is the one place either runs. */
 export type LinkForm =
-  | { readonly kind: "tool"; readonly rewrite: (content: string) => string }
+  | { readonly kind: "tool"; readonly syntax: LinkSyntax }
   | { readonly kind: "chain"; readonly forms: readonly LinkForm[] }
   | ({ readonly kind: "relative" } & RewriteRelativeLinksOptions);
 
 /** The tool's own reading of a link, for the layouts that install into its directory. */
-export function toolLinks(tool: { rewriteContent(content: string): string }): LinkForm {
-  return { kind: "tool", rewrite: (content) => tool.rewriteContent(content) };
+export function toolLinks(tool: { readonly linkSyntax: LinkSyntax }): LinkForm {
+  return { kind: "tool", syntax: tool.linkSyntax };
 }
 
 /** The forms a document is read through, in order; none when it has none. */
@@ -42,7 +43,7 @@ export function chainLinks(...forms: readonly (LinkForm | undefined)[]): LinkFor
 }
 
 export function rewriteLinks(content: string, form: LinkForm): string {
-  if (form.kind === "tool") return form.rewrite(content);
+  if (form.kind === "tool") return applyLinkSyntax(content, form.syntax);
   if (form.kind === "chain") return form.forms.reduce(rewriteLinks, content);
   return rewriteRelativeLinks(content, form);
 }

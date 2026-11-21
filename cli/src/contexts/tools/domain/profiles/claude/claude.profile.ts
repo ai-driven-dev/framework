@@ -184,10 +184,10 @@ export const claude = defineAiTool({
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content.replace(
-      /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-      (_, at, phase) => `${at}${commandsDir(phase)}`
-    );
-  },
+  linkSyntax: [
+    {
+      from: /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
+      to: (_match, at, phase) => `${at}${commandsDir(phase)}`,
+    },
+  ],
 });

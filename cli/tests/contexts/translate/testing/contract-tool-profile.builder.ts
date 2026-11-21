@@ -1,4 +1,5 @@
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { LinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
 import type {
   AiToolProfile,
   FlatInstallSection,
@@ -28,7 +29,7 @@ export interface ProfileAnswers {
     pluginName: string,
     fileName: string
   ) => string;
-  readonly rewriteContent?: (content: string) => string;
+  readonly linkSyntax?: LinkSyntax;
 }
 
 /** `overrides` as own members of an object derived from another. */
@@ -60,7 +61,7 @@ export function contractToolProfile(
     flatInstallPath:
       answers.flatInstallPath ??
       ((section, pluginName, fileName) => base.flatInstallPath(section, pluginName, fileName)),
-    rewriteContent: answers.rewriteContent ?? ((content) => base.rewriteContent(content)),
+    linkSyntax: answers.linkSyntax ?? base.linkSyntax,
   } satisfies Pick<
     AiToolProfile,
     | "directory"
@@ -69,7 +70,7 @@ export function contractToolProfile(
     | "skillsSection"
     | "buildContract"
     | "flatInstallPath"
-    | "rewriteContent"
+    | "linkSyntax"
   >;
   return derived(base, overrides);
 }

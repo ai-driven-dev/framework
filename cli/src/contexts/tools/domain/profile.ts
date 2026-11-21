@@ -1,5 +1,6 @@
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
+import type { LinkSyntax } from "../contract/link-syntax.js";
 import type { RecommendationContext } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, PluginAnswers } from "../contract/tool-profile.js";
 import type { HooksBrand, HooksDescriptor } from "./formats/hooks/descriptor.js";
@@ -82,7 +83,7 @@ export interface AiTool<C extends ProfileSections = ProfileSections> extends AiT
     readonly manifest?: readonly string[];
     readonly marketplace?: readonly string[];
   };
-  rewriteContent(content: string): string;
+  readonly linkSyntax: LinkSyntax;
   /** The section declared under `key`, or `null` when the tool declares none. A key the tool's
    * own type declares answers without `null`. */
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;

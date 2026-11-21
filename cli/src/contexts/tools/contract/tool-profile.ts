@@ -4,6 +4,7 @@ import type { FlatHooksLoaderEntry } from "../../../shared/domain/materializatio
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
+import type { LinkSyntax } from "./link-syntax.js";
 import type {
   GlobalFiles,
   MarketplaceSettingsInput,
@@ -286,8 +287,8 @@ export interface AiToolProfile {
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
   /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree. */
   ownsFlatPath(relativePath: string, pluginName: string): boolean;
-  /** Rewrites source content to this tool's own conventions. */
-  rewriteContent(content: string): string;
+  /** How this tool writes the references of its documents. */
+  readonly linkSyntax: LinkSyntax;
   /** The tool's plugin delivery, or null when it declares none. */
   plugins(): PluginAnswers | null;
   /** Whether `--scope user` has anywhere to point this tool: false when it declares no plugins. */

@@ -134,10 +134,10 @@ export const opencode = defineAiTool({
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content.replace(
-      /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-      "$1.opencode/commands/aidd/$2/$3"
-    );
-  },
+  linkSyntax: [
+    {
+      from: /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+      to: "$1.opencode/commands/aidd/$2/$3",
+    },
+  ],
 });

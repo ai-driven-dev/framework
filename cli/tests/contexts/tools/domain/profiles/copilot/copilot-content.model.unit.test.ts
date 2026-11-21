@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { rewriteCopilotContent } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot-content.model.js";
+import { applyLinkSyntax } from "../../../../../../src/contexts/tools/contract/link-syntax.js";
+import { COPILOT_LINK_SYNTAX } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot-content.model.js";
 
 /** What a reference to another framework file becomes once installed for Copilot. No other gate
- * sees it: `translate` never calls `rewriteContent`, and the byte-frozen golden cell is claude,
+ * sees it: the engine reads it only through a tool whose layout installs, and the byte-frozen golden cell is claude,
  * whose rewrite is the identity. The whole rewritten string is asserted, never a fragment. */
 describe("a reference to another framework file, installed for Copilot", () => {
-  const rewrite = rewriteCopilotContent;
+  const rewrite = (text: string) => applyLinkSyntax(text, COPILOT_LINK_SYNTAX);
 
   describe("an @-reference, which becomes a link", () => {
     it("points an agent reference at the installed .agent.md file", () => {

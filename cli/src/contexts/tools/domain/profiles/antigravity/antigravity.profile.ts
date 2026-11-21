@@ -61,7 +61,5 @@ export const antigravity = defineAiTool({
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content;
-  },
+  linkSyntax: [],
 });

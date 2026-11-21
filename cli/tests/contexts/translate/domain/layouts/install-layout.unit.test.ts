@@ -81,7 +81,7 @@ describe("a plugin's hooks", () => {
 
 describe("a flat target that rewrites what it hosts", () => {
   const rewriting = contractToolProfile(opencode, {
-    rewriteContent: (content) => content.replace("SOURCE", "REWRITTEN"),
+    linkSyntax: [{ from: /SOURCE/g, to: "REWRITTEN" }],
   });
 
   it("rewrites a skill's prose and carries its asset as it is", () => {

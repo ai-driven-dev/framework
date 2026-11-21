@@ -1,5 +1,6 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
+import type { LinkSyntax } from "../../tools/contract/link-syntax.js";
 import type {
   FlatInstallSection,
   FrameworkBuildMode,
@@ -16,7 +17,7 @@ export interface TranslatedAiTool {
   readonly directory: string;
   buildContract(mode: FrameworkBuildMode, provider?: string): ToolBuildContract | null;
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
-  rewriteContent(content: string): string;
+  readonly linkSyntax: LinkSyntax;
   plugins(): PluginAnswers | null;
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
   skillsSection(): SkillsSectionAnswers | null;
