@@ -3,7 +3,6 @@ import opencodeJson from "../../../../../../assets/configs/opencode/opencode.jso
   type: "json",
 };
 import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
-import { OpencodeDualConfigError } from "../../../../../shared/domain/errors.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,
@@ -15,6 +14,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
+import { OpencodeDualConfigError } from "../../tools.error.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_CONFIG_REF } from "./config-refs.js";
 import { OPENCODE_HOOKS } from "./hooks.js";

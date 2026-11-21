@@ -25,13 +25,18 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
     fs.setSymlink("/var-home", "/private/var-home");
     const rawUserCacheRoot = "/var-home/.config/aidd";
     const resolvedUserCacheRoot = "/private/var-home/.config/aidd";
-    const requestedSource = userBuiltMarketplaceDir(resolvedUserCacheRoot, "1.0.0", NAME, "claude");
-    const registeredSource = userBuiltMarketplaceDir(
-      resolvedUserCacheRoot,
-      "2.0.0",
-      NAME,
-      "claude"
-    );
+    const requestedSource = userBuiltMarketplaceDir({
+      userConfigDir: resolvedUserCacheRoot,
+      cliVersion: "1.0.0",
+      marketplaceName: NAME,
+      target: "claude",
+    });
+    const registeredSource = userBuiltMarketplaceDir({
+      userConfigDir: resolvedUserCacheRoot,
+      cliVersion: "2.0.0",
+      marketplaceName: NAME,
+      target: "claude",
+    });
     const reader = new FakeHostMarketplaceRegistry({
       location: LOCATION,
       entries: new Map([[NAME, registeredSource]]),
@@ -62,8 +67,18 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
 
   it("still decides the drift when the registered source no longer resolves on disk", async () => {
     const userCacheRoot = "/home/.config/aidd";
-    const requestedSource = userBuiltMarketplaceDir(userCacheRoot, "1.0.0", NAME, "claude");
-    const registeredSource = userBuiltMarketplaceDir(userCacheRoot, "2.0.0", NAME, "claude");
+    const requestedSource = userBuiltMarketplaceDir({
+      userConfigDir: userCacheRoot,
+      cliVersion: "1.0.0",
+      marketplaceName: NAME,
+      target: "claude",
+    });
+    const registeredSource = userBuiltMarketplaceDir({
+      userConfigDir: userCacheRoot,
+      cliVersion: "2.0.0",
+      marketplaceName: NAME,
+      target: "claude",
+    });
     const fs = new FaultingFileAdapter();
     fs.failOn("realpath", registeredSource, errnoError("ENOENT"));
     const reader = new FakeHostMarketplaceRegistry({

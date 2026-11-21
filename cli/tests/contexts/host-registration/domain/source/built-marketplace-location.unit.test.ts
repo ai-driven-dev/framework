@@ -19,7 +19,12 @@ describe("parseUserBuiltMarketplaceDir()", () => {
   });
 
   it("reads back the version, marketplace name and target userBuiltMarketplaceDir encoded", () => {
-    const path = userBuiltMarketplaceDir("/user-cache", "5.0.0", "aidd-framework", "claude");
+    const path = userBuiltMarketplaceDir({
+      userConfigDir: "/user-cache",
+      cliVersion: "5.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
 
     expect(parseUserBuiltMarketplaceDir("/user-cache", path, process.platform)).toEqual({
       version: "5.0.0",
@@ -57,7 +62,12 @@ describe("parseUserBuiltMarketplaceDir()", () => {
   // A real filesystem tolerates a trailing separator on a directory, so `userConfigDir()`
   // returning one is not a corrupted path.
   it("tolerates a trailing separator on the user config dir", () => {
-    const path = userBuiltMarketplaceDir("/user-cache", "5.0.0", "aidd-framework", "claude");
+    const path = userBuiltMarketplaceDir({
+      userConfigDir: "/user-cache",
+      cliVersion: "5.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
 
     expect(parseUserBuiltMarketplaceDir("/user-cache/", path, process.platform)).toEqual({
       version: "5.0.0",

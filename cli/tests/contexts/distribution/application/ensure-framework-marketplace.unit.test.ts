@@ -6,7 +6,7 @@ import {
   remoteFrameworkSource,
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
-import { CatalogFetchAuthError } from "../../../../src/shared/domain/errors.js";
+import { CatalogFetchAuthError } from "../../../../src/shared/domain/shared.error.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 
 const PROJECT = "/project";

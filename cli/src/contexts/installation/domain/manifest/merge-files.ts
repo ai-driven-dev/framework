@@ -1,4 +1,4 @@
-import { FileHash } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 
 // A merge file is co-owned: framework and user each hold entries inside the same file (e.g.

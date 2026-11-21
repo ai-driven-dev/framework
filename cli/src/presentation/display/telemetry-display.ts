@@ -3,8 +3,8 @@ import type { DeclareTaskResult } from "../../contexts/telemetry/application/dec
 import type { ManageIdentityResult } from "../../contexts/telemetry/application/identity/manage-identity.js";
 import type { IngestUsageResult } from "../../contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatusResult } from "../../contexts/telemetry/application/read-telemetry-status.js";
+import { MAX_IDENTITY_LENGTH } from "../../contexts/telemetry/contract/identity-limit.js";
 import type { NotStoredReason } from "../../contexts/telemetry/contract/repository-resolution.js";
-import { IDENTITY_RULE } from "../../shared/domain/errors.js";
 import type { Output } from "../deps.js";
 
 /** What a shape the reader did not recognise came to: a call lacking a counter is stored with it
@@ -28,6 +28,9 @@ export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "no-cwd": "with no working directory",
   undated: "with no usable time",
 };
+
+/** What an identifier must be to name a person. */
+export const IDENTITY_RULE = `An identity is one non-empty line of at most ${MAX_IDENTITY_LENGTH} characters.`;
 
 /** Said on every run while `ledger/consents.jsonl` cannot be trusted. Recovery is `forget`, not
  * a hand edit: a line removed by hand can reopen a window that was closed. */

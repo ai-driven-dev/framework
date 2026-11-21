@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { SyncFailedError, UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
   printActivationOutcome,
@@ -9,6 +8,7 @@ import {
   printUserScopeSyncOutcome,
 } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
+import { SyncFailedError, UserScopeFilterUnsupportedError } from "../presentation.error.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */

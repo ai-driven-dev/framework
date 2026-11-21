@@ -2,7 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildInstallationDeps,

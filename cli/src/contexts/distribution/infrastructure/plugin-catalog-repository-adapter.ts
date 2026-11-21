@@ -1,10 +1,10 @@
 import { isAbsolute, join, resolve } from "node:path";
-import { MalformedMarketplaceCatalogError } from "../../../shared/domain/errors.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { PluginCatalog } from "../contract/catalog.js";
 import { parsePluginCatalog } from "../domain/catalog.js";
 import { parseCopilotMarketplaceCatalog } from "../domain/catalog-parsers/copilot-marketplace-catalog.js";
+import { MalformedMarketplaceCatalogError } from "../domain/distribution.error.js";
 import {
   MARKETPLACE_CACHE_SUBDIR,
   MARKETPLACE_CATALOG_RELATIVE,

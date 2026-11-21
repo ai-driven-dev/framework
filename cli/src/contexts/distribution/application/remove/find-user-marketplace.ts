@@ -1,9 +1,7 @@
-import {
-  InvalidMarketplaceNameError,
-  MarketplaceNotFoundError,
-} from "../../../../shared/domain/errors.js";
+import { InvalidMarketplaceNameError } from "../../../../shared/domain/shared.error.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
 import type { FoundUserMarketplace } from "../../contract/marketplace-removal.js";
+import { MarketplaceNotFoundError } from "../../domain/distribution.error.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 
 export interface FindUserMarketplaceCommand {

@@ -3,7 +3,7 @@ import { ResolveTaskRequest } from "../../../../../src/contexts/telemetry/applic
 import {
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
 const resolve = new ResolveTaskRequest();
 

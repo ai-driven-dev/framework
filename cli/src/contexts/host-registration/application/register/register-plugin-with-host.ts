@@ -1,13 +1,13 @@
-import {
-  NativePluginCliError,
-  UnreadableBuiltCatalogError,
-} from "../../../../shared/domain/errors.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { BuiltCatalogs } from "../../contract/built-catalogs.js";
 import type { ClaimsView } from "../../contract/claims-view.js";
+import {
+  NativePluginCliError,
+  UnreadableBuiltCatalogError,
+} from "../../domain/host-registration.error.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import type {
   NativeMarketplaceRegistration,

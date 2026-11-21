@@ -409,7 +409,14 @@ describe("CheckRegistration — user-scope marketplace source drift", () => {
   const CURRENT_VERSION = "2.0.0";
 
   function sharedPath(version: string): string {
-    return resolve(userBuiltMarketplaceDir(USER_CACHE_ROOT, version, NAME, "claude"));
+    return resolve(
+      userBuiltMarketplaceDir({
+        userConfigDir: USER_CACHE_ROOT,
+        cliVersion: version,
+        marketplaceName: NAME,
+        target: "claude",
+      })
+    );
   }
 
   async function driftIssuesFor(hostReader: FakeHostMarketplaceRegistry) {

@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { FileHash } from "../../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { extractMergeEntries } from "../../../../../../src/shared/domain/merge.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";

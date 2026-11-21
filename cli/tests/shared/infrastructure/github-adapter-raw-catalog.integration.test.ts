@@ -5,7 +5,7 @@ import {
   CatalogFetchError,
   CatalogFetchNotFoundError,
   HttpNotFoundError,
-} from "../../../src/shared/domain/errors.js";
+} from "../../../src/shared/domain/shared.error.js";
 import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
 
 const CATALOG_PATH = ".claude-plugin/marketplace.json";

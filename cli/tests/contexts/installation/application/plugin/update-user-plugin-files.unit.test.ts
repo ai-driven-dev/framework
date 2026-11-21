@@ -5,8 +5,8 @@ import {
   UpdateUserPluginFiles,
   type UpdateUserPluginFilesCommand,
 } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";

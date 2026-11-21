@@ -37,17 +37,17 @@ describe("the catalog the deps wire", () => {
     const prompter = new ScriptedPrompter([]);
     vi.spyOn(prompter, "checkbox").mockResolvedValue([]);
     const wire = (catalog: typeof catalogA) => {
-      const base = { ...wireBase(ROOT, { verbose: false }, undefined, catalog), prompter };
+      const base = { ...wireBase({ projectRoot: ROOT, verbose: false, tools: catalog }), prompter };
       const inst = wireInstallation(base);
       const marketplace = wireMarketplace(base, inst);
       const plugin = wirePlugin(base, inst);
-      return wireSetup(
+      return wireSetup({
         base,
-        inst,
+        installation: inst,
         plugin,
         marketplace,
-        wireGlobal(base, inst, marketplace, plugin)
-      );
+        global: wireGlobal({ base, installation: inst, marketplace, plugin }),
+      });
     };
     const setupA = wire(catalogA);
     wire(catalogB);

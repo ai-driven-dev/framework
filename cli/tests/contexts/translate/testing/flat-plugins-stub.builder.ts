@@ -31,12 +31,12 @@ export function flatPluginsStub(stub: FlatPluginsStub = {}): FlatPluginAnswers {
     hooksInstallPath: (pluginName, hooksRelativePath) =>
       layout.hooksDir === null
         ? null
-        : flatHooksPathWithLoaderEntry(
-            layout.hooksDir,
-            layout.hooksLoaderEntry,
-            pluginName,
-            hooksRelativePath
-          ),
+        : flatHooksPathWithLoaderEntry({
+            perPluginHooksDir: layout.hooksDir,
+            loaderEntry: layout.hooksLoaderEntry,
+            plugin: pluginName,
+            hooksRelativePath,
+          }),
     hookScript: (_pluginPath, content) => content,
   };
 }

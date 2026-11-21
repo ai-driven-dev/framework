@@ -13,6 +13,7 @@ import {
   compositionViolations,
   constructionViolations,
   contractReaderViolations,
+  controllerBuildsErrorViolations,
   drivingPortViolations,
   errorViolations,
   instructionViolations,
@@ -56,6 +57,27 @@ let sources: Record<string, string> | undefined;
 const src = (): Record<string, string> =>
   (sources ??= textsOf(tsFilesUnder("src").filter((path) => !path.endsWith(".d.ts"))));
 
+/** The codes every `*.error.ts` declares, and the ones carried twice or not in kebab-case. */
+function errorCodeViolations(files: Record<string, string>): {
+  codes: string[];
+  duplicated: string[];
+  malformed: string[];
+} {
+  const codes = Object.entries(files)
+    .filter(([path]) => path.endsWith(".error.ts"))
+    .flatMap(([, text]) => [
+      ...[...text.matchAll(/readonly code = "([^"]+)"/g)].map((match) => match[1] ?? ""),
+      ...[...(/type \w+Code = ([^;]+);/.exec(text)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
+        (match) => match[1] ?? ""
+      ),
+    ]);
+  return {
+    codes,
+    duplicated: [...new Set(codes.filter((code, index) => codes.indexOf(code) !== index))],
+    malformed: codes.filter((code) => !/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(code)),
+  };
+}
+
 describe("an error class is thrown", () => {
   const catalog = "src/shared/domain/errors.ts";
   const declared = [
@@ -80,13 +102,30 @@ describe("an error class is thrown", () => {
     ).toEqual([`${catalog} :: GhostError`]);
   });
 
+  it("flags a code carried twice or not in kebab-case, whichever file declares it", () => {
+    const planted = {
+      "src/contexts/a/domain/a.error.ts": 'class AError { readonly code = "same-code"; }',
+      "src/contexts/b/domain/b.error.ts":
+        'class BError { readonly code = "same-code"; }\nclass CError { readonly code = "Not_Kebab"; }',
+      "src/contexts/b/domain/b.ts": 'const x = { code: "ignored" };',
+    };
+    const { codes, duplicated, malformed } = errorCodeViolations(planted);
+    expect(codes).toEqual(["same-code", "same-code", "Not_Kebab"]);
+    expect(duplicated).toEqual(["same-code"]);
+    expect(malformed).toEqual(["Not_Kebab"]);
+  });
+
+  it("gives every error a kebab-case code no other error carries", () => {
+    const { codes, duplicated, malformed } = errorCodeViolations(src());
+    expect(codes.length).toBeGreaterThan(0);
+    expect(malformed).toEqual([]);
+    expect(duplicated).toEqual([]);
+  });
+
   it("holds the catalog of the tree", () => {
     const files = src();
-    const declaring = [
-      "src/shared/domain/errors.ts",
-      ...Object.keys(files).filter((path) => path.endsWith(".error.ts")),
-    ];
-    expect(files[declaring[0] ?? ""], "the catalog moved").toBeDefined();
+    const declaring = Object.keys(files).filter((path) => path.endsWith(".error.ts"));
+    expect(declaring.length, "the catalog moved").toBeGreaterThan(0);
     expectUpToDebt(errorViolations(files, declaring), "thrown");
   });
 });
@@ -601,5 +640,34 @@ describe("a reader names the sections of a tool it reads: the flow reading", () 
     const call = "handoff(tools.aiProfile('x'));";
     expect(flows(call, [LISTED_CALLEE])).toEqual([]);
     expect(flows(call)).toHaveLength(1);
+  });
+});
+
+describe("a controller builds no error", () => {
+  const error = 'import { GhostError, type Shape } from "../../shared/domain/shared.error.js";\n';
+  const found = (path: string, body: string) =>
+    entries(controllerBuildsErrorViolations({ [path]: error + body }));
+
+  it("flags a controller that builds an error it imports from an error file", () => {
+    expect(found("src/presentation/commands/a.ts", "throw new GhostError('x');")).toEqual([
+      "src/presentation/commands/a.ts :: new GhostError",
+    ]);
+    expect(found("src/presentation/hooks/a.ts", "const e = new GhostError();")).toEqual([
+      "src/presentation/hooks/a.ts :: new GhostError",
+    ]);
+  });
+
+  it("clears an error only tested, a class of another file, and a file that is no controller", () => {
+    expect(found("src/presentation/commands/a.ts", "if (e instanceof GhostError) return;")).toEqual(
+      []
+    );
+    expect(found("src/presentation/commands/a.ts", "new Other();")).toEqual([]);
+    expect(found("src/presentation/display/a.ts", "throw new GhostError();")).toEqual([]);
+  });
+
+  it("holds the tree", () => {
+    const files = textsOf(tsFilesUnder("src/presentation"));
+    expect(Object.keys(files).length).toBeGreaterThan(0);
+    expectUpToDebt(controllerBuildsErrorViolations(files), "controllerBuildsError");
   });
 });

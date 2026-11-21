@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
 import { parseScope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { CommandRunner, DepsSliceFactory } from "../deps.js";
@@ -13,6 +12,7 @@ import {
 } from "../display/plugin-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
+import { UnknownAiToolIdError } from "../presentation.error.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */

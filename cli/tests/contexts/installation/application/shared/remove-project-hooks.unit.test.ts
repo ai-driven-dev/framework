@@ -6,7 +6,7 @@ import {
   removeProjectHooks,
 } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import {
   errnoError,
   FaultingFileAdapter,

@@ -1,16 +1,18 @@
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import {
-  DuplicatePluginError,
-  MissingPluginMetadataError,
   ToolNotInManifestError,
   VersionMismatchError,
-} from "../../../../shared/domain/errors.js";
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+} from "../../../../shared/domain/shared.error.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import {
+  DuplicatePluginError,
+  MissingPluginMetadataError,
+} from "../../domain/installation.error.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,

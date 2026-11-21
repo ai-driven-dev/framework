@@ -1,5 +1,4 @@
 import { isAbsolute, join } from "node:path";
-import { InvalidToolProfileError } from "../../../../shared/domain/errors.js";
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type {
   ConfigWrite,
@@ -24,6 +23,7 @@ import { AgentsSection } from "../sections/agents-section.js";
 import { CommandsSection } from "../sections/commands-section.js";
 import { RulesSection } from "../sections/rules-section.js";
 import { SkillsSection } from "../sections/skills-section.js";
+import { InvalidToolProfileError } from "../tools.error.js";
 import { flatInstallPath, ownsFlatPath } from "./flat-install-paths.js";
 import { deliverySuits, pluginAnswers, projectPlacement } from "./plugin-answers.js";
 import { ToolSuffix } from "./tool-suffix.js";

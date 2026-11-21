@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { InvalidManifestDataError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import {
   type NativeRegistrations,
   parseNativeRegistrations,
   serializeNativeRegistrations,
 } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { InvalidManifestDataError } from "../../../../../src/shared/domain/errors.js";
 
 const claims = [{ ref: "plugin@declared", dependents: ["/project-a"] }];
 

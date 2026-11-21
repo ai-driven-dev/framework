@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hashOutputFiles } from "../../../../../src/contexts/installation/application/shared/hash-output-files.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 
 describe("hashOutputFiles", () => {
   it("tracks each translated file under the hash of its own content", () => {

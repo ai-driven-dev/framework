@@ -86,7 +86,7 @@ export const KINDS: readonly Kind[] = [
       "src/orchestration/domain/**/*",
     ],
     except: ["src/contexts/tools/domain/profiles/*/profile.ts"],
-    imports: ["model"],
+    imports: ["model", "error"],
     externals: PURE_BUILTINS,
     tests: ["unit"],
   },
@@ -133,7 +133,7 @@ export const KINDS: readonly Kind[] = [
     folders: ["src/contexts/tools/domain/profiles/**/*"],
     fallback: ["src/contexts/tools/domain/profiles/*/profile.ts"],
     except: [],
-    imports: ["model"],
+    imports: ["model", "error"],
     externals: PURE_BUILTINS,
     within: [
       "src/contexts/tools/domain/**/*",
@@ -172,7 +172,7 @@ export const KINDS: readonly Kind[] = [
       "src/presentation/menu/**/*",
     ],
     except: [],
-    imports: ["model", "use-case", "presenter"],
+    imports: ["model", "use-case", "presenter", "error"],
     externals: "any",
     tests: ["golden"],
   },
@@ -186,7 +186,7 @@ export const KINDS: readonly Kind[] = [
       "src/presentation/hooks/**/*",
     ],
     except: [],
-    imports: ["use-case", "presenter", "model", "controller"],
+    imports: ["use-case", "presenter", "model", "controller", "error"],
     externals: "any",
     tests: ["unit"],
   },
@@ -282,6 +282,7 @@ export type Rule =
   | "translate"
   | "scope"
   | "profile"
+  | "controllerBuildsError"
   | "size";
 
 export interface Violation {
@@ -626,6 +627,7 @@ const RULES: readonly Rule[] = [
   "translate",
   "scope",
   "profile",
+  "controllerBuildsError",
   "size",
 ];
 
@@ -645,6 +647,7 @@ export const noDebt = (): Debt => ({
   translate: [],
   scope: [],
   profile: [],
+  controllerBuildsError: [],
   size: [],
   limits: [],
   exemptProcessExit: [],

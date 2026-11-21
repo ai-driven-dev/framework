@@ -123,28 +123,10 @@ export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execu
   };
 }
 
-/** The plugin lifecycle: add, install, update and remove. */
-export function wirePlugin(base: Base, inst: Installation) {
-  const {
-    tools,
-    fs,
-    logger,
-    prompter,
-    manifestRepo,
-    userManifestRepo,
-    pluginDistributionReader,
-    nativePluginActivators,
-    hostPluginRegistries,
-    nativeSources,
-    userSourceReferences,
-    pluginFetcher,
-    marketplaceRegistry,
-    listMarketplaces,
-    marketplaceTrustStore,
-    resolveMarketplaceUseCase,
-    withdrawFromHost,
-  } = base;
-  const { installRuntimeConfigUseCase, builtMaterializationDeps, registrationRecordRules } = inst;
+/** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
+function wirePluginRemoval(base: Base, inst: Installation) {
+  const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
+  const { registrationRecordRules } = inst;
   const removalClaims = pluginRemovalClaims({
     repo: userManifestRepo,
     fs,
@@ -152,8 +134,8 @@ export function wirePlugin(base: Base, inst: Installation) {
     home: resolveHomeDir(),
     platform: process.platform,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences,
-    marketplaceRegistry,
+    userSourceReferences: base.userSourceReferences,
+    marketplaceRegistry: base.marketplaceRegistry,
     resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
   });
   const pluginRemoveUseCase = new RemovePlugin(
@@ -177,6 +159,56 @@ export function wirePlugin(base: Base, inst: Installation) {
       tools
     )
   );
+  return { pluginRemoveUseCase, userPluginRemove };
+}
+
+/** Updating a plugin in a project or on the machine. */
+function wirePluginUpdate(base: Base, inst: Installation) {
+  const { tools, fs, logger, manifestRepo, userManifestRepo, pluginDistributionReader } = base;
+  const { pluginFetcher } = base;
+  const { installRuntimeConfigUseCase, builtMaterializationDeps, registrationRecordRules } = inst;
+  const pluginMaterializer = new PluginMaterializer(
+    fs,
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    userScopeFileGuard,
+    builtMaterializationDeps,
+    pluginCacheDir
+  );
+  const pluginUpdateUseCase = new UpdatePlugin(
+    manifestRepo,
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
+    tools,
+    installRuntimeConfigUseCase
+  );
+  const userPluginUpdateUseCase = new UpdateUserPlugin(
+    new UpdateUserPluginFiles(
+      userManifestRepo,
+      pluginMaterializer,
+      logger,
+      registrationRecordRules,
+      tools
+    ),
+    new RefreshHostPlugin(
+      base.nativePluginActivators,
+      base.hostPluginRegistries,
+      base.nativeSources
+    ),
+    isStrictlyWithinUserScope
+  );
+  return {
+    pluginUpdateUseCase,
+    userPluginUpdateUseCase,
+    userPluginFileUpdater: withinUserScope(pluginMaterializer),
+  };
+}
+
+/** The plugin lifecycle: add, install, update and remove. */
+export function wirePlugin(base: Base, inst: Installation) {
+  const { tools, fs, logger, prompter, manifestRepo, userManifestRepo } = base;
+  const { pluginDistributionReader, pluginFetcher, marketplaceRegistry } = base;
+  const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
+  const { installRuntimeConfigUseCase, builtMaterializationDeps } = inst;
   const pluginAddUseCase = new AddPlugin(
     fs,
     { project: manifestRepo, user: userManifestRepo },
@@ -195,7 +227,6 @@ export function wirePlugin(base: Base, inst: Installation) {
     prompter,
     logger
   );
-  const searchPlugins = new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase);
   const pickPlugins = new PickPlugins(
     listMarketplaces,
     resolveMarketplaceUseCase,
@@ -209,42 +240,13 @@ export function wirePlugin(base: Base, inst: Installation) {
     pluginInstallFromMarketplaceUseCase,
     new ConfirmPluginSourceTrust(new TrustPluginSource(marketplaceTrustStore), prompter)
   );
-  const pluginMaterializer = new PluginMaterializer(
-    fs,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    userScopeFileGuard,
-    builtMaterializationDeps,
-    pluginCacheDir
-  );
-  const userPluginFileUpdater = withinUserScope(pluginMaterializer);
-  const pluginUpdateUseCase = new UpdatePlugin(
-    manifestRepo,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
-    tools,
-    installRuntimeConfigUseCase
-  );
-  const userPluginUpdateUseCase = new UpdateUserPlugin(
-    new UpdateUserPluginFiles(
-      userManifestRepo,
-      pluginMaterializer,
-      logger,
-      registrationRecordRules,
-      tools
-    ),
-    new RefreshHostPlugin(nativePluginActivators, hostPluginRegistries, nativeSources),
-    isStrictlyWithinUserScope
-  );
   return {
-    pluginRemoveUseCase,
-    userPluginRemove,
-    pluginUpdateUseCase,
-    userPluginUpdateUseCase,
+    ...wirePluginRemoval(base, inst),
+    ...wirePluginUpdate(base, inst),
     pluginInstallUseCase,
-    searchPlugins,
+    searchPlugins: new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase),
     pluginInstallFromMarketplaceUseCase,
     pickPlugins,
-    userPluginFileUpdater,
   };
 }
 

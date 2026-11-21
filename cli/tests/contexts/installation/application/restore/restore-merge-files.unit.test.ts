@@ -1,9 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { restoreMergeFiles } from "../../../../../src/contexts/installation/application/restore/restore-merge-files.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 import { buildInstallationDeps } from "../../../../shared/testing/installation-deps.builder.js";
 import {
   KeepPrompter,

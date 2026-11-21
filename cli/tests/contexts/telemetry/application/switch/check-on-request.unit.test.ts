@@ -3,9 +3,9 @@ import { CheckIdentity } from "../../../../../src/contexts/telemetry/application
 import { CheckOnRequest } from "../../../../../src/contexts/telemetry/application/switch/check-on-request.js";
 import {
   ConflictingIdentityFlagsError,
-  InputRequiredError,
   InvalidIdentityError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 
 const check = new CheckOnRequest(new CheckIdentity());
 const GIVEN = { yes: true, anonymous: false, interactive: true };

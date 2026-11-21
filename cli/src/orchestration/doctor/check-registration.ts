@@ -59,7 +59,12 @@ export class CheckRegistration {
             registered.tools.map((t) => t.toolId),
             registeredNames
           )),
-      ...(await this.hostRegistrations(command, registered.tools, built, userCacheRoot)),
+      ...(await this.hostRegistrations({
+        command,
+        registered: registered.tools,
+        built,
+        userCacheRoot,
+      })),
     ];
   }
 
@@ -86,12 +91,17 @@ export class CheckRegistration {
    * at a source other than the one this project would register: the doctor-side half of the
    * sync-time guard, so a conflict is visible between two `sync` runs.
    */
-  private async hostRegistrations(
-    command: CheckRegistrationCommand,
-    registered: readonly RegisteredPluginsOfTool[],
-    built: MarketplaceBuilds["built"],
-    userCacheRoot: string
-  ): Promise<DoctorIssue[]> {
+  private async hostRegistrations({
+    command,
+    registered,
+    built,
+    userCacheRoot,
+  }: {
+    command: CheckRegistrationCommand;
+    registered: readonly RegisteredPluginsOfTool[];
+    built: MarketplaceBuilds["built"];
+    userCacheRoot: string;
+  }): Promise<DoctorIssue[]> {
     const hosts: InspectedHost[] = [];
     for (const { toolId, expectedPlugins } of registered) {
       if (!this.tools.isAiTool(toolId)) continue;

@@ -57,6 +57,28 @@ export function wireCleanClaims(parts: {
   };
 }
 
+/** The machine-scope half of a clean: the user-scope files, the machine state and the host. */
+function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: CleanClaims) {
+  const { fs, logger, prompter, userManifestRepo, marketplaceRegistry, withdrawFromHost, tools } =
+    base;
+  const guards: MachineStateGuards = {
+    userConfigDir,
+    resolveCacheCandidate: (cacheRoot, segments, label) =>
+      purgeCache.resolveCandidate(cacheRoot, segments, label),
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+  };
+  const purgeUserScopeFiles = new PurgeUserScopeFiles(
+    userManifestRepo,
+    new PurgeMachineState(fs, logger, marketplaceRegistry, guards),
+    homedir,
+    new UserScopePluginFiles(fs, (plugin, tool, home) =>
+      userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+    ),
+    tools
+  );
+  return new CleanUserScope(purgeUserScopeFiles, withdrawFromHost, claims, logger, prompter);
+}
+
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {
   const {
@@ -86,28 +108,7 @@ export function wireClean(base: Base, inst: Installation) {
     userSourceReferences,
     purgeCache,
   });
-  const guards: MachineStateGuards = {
-    userConfigDir,
-    resolveCacheCandidate: (cacheRoot, segments, label) =>
-      purgeCache.resolveCandidate(cacheRoot, segments, label),
-    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-  };
-  const purgeUserScopeFiles = new PurgeUserScopeFiles(
-    userManifestRepo,
-    new PurgeMachineState(fs, logger, marketplaceRegistry, guards),
-    homedir,
-    new UserScopePluginFiles(fs, (plugin, tool, home) =>
-      userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-    ),
-    tools
-  );
-  const cleanUserScopeUseCase = new CleanUserScope(
-    purgeUserScopeFiles,
-    withdrawFromHost,
-    claims,
-    logger,
-    prompter
-  );
+  const cleanUserScopeUseCase = wireCleanUserScope(base, purgeCache, claims);
   const cleanProjectFiles = new CleanProjectFiles(
     fs,
     manifestRepo,

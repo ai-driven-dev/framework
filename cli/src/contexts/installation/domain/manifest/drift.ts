@@ -1,4 +1,4 @@
-import type { FileHash } from "../../../../shared/domain/file.js";
+import type { FileHash } from "../../../../shared/domain/file-hash.js";
 
 export type DriftVerdict = "ok" | "missing" | "modified";
 

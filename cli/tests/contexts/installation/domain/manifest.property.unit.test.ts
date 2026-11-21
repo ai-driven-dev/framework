@@ -1,7 +1,8 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import {
   registeredTools,

@@ -7,12 +7,12 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.js";
 import {
   InteractiveOnlyError,
-  InvalidPluginManifestError,
   NoMarketplacesRegisteredError,
-} from "../../../src/shared/domain/errors.js";
+} from "../../../src/orchestration/orchestration.error.js";
+import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.js";
+import { InvalidPluginManifestError } from "../../../src/shared/domain/shared.error.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";

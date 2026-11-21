@@ -4,8 +4,8 @@ import type {
   PrepareMarketplaceResult,
 } from "../../contexts/distribution/application/add/prepare-marketplace.js";
 import type { RecordMarketplace } from "../../contexts/distribution/application/add/record-marketplace.js";
-import { TrustDeniedError } from "../../shared/domain/errors.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
+import { TrustDeniedError } from "../orchestration.error.js";
 import type { RemoveRegisteredMarketplace } from "./remove-registered-marketplace.js";
 
 export interface AddMarketplaceCommand extends Omit<PrepareMarketplaceCommand, "replace"> {

@@ -17,7 +17,8 @@ import type {
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
-import { DuplicateToolIdError, UnregisteredToolError } from "../shared/domain/errors.js";
+import { DuplicateToolIdError } from "../contexts/tools/domain/tools.error.js";
+import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
 import { REGISTERED_PROFILES } from "./tools.js";

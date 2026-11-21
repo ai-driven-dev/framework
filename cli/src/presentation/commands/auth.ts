@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
-import { InputRequiredError } from "../../shared/domain/errors.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { failCommand } from "../errors/error-translator.js";

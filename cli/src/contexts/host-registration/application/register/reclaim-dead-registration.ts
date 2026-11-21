@@ -1,5 +1,5 @@
-import type { NativePluginCliError } from "../../../../shared/domain/errors.js";
 import { samePathSegment } from "../../../../shared/domain/paths.js";
+import type { NativePluginCliError } from "../../domain/host-registration.error.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import {
   parseBuiltMarketplaceDir,

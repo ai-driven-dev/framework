@@ -123,7 +123,7 @@ describe("EnsureBuiltMarketplace over its cache", () => {
   beforeEach(() => {
     fs = new InMemoryFileAdapter();
     builds = 0;
-    buildFor = (_target, _mode, outDir) =>
+    buildFor = ({ outDir }) =>
       ({
         execute: async () => {
           builds += 1;
@@ -150,9 +150,9 @@ describe("EnsureBuiltMarketplace over its cache", () => {
     const variants: (string | undefined)[] = [];
     const uc = buildEnsurer(fs, fakeResolve("/src/framework", "1.0.0"), {
       variant: async (target) => (target === TOOL.codex ? "openai" : undefined),
-      buildFor: (target, mode, outDir, variant) => {
-        variants.push(variant);
-        return buildFor(target, mode, outDir);
+      buildFor: (request) => {
+        variants.push(request.variant);
+        return buildFor(request);
       },
     });
     const r = await uc.execute({
@@ -389,7 +389,7 @@ describe("EnsureBuiltMarketplace — when a published source's sentinel can be b
   beforeEach(() => {
     fs = new InMemoryFileAdapter();
     builds = 0;
-    buildFor = (_target, _mode, outDir) =>
+    buildFor = ({ outDir }) =>
       ({
         execute: async () => {
           builds += 1;
@@ -441,7 +441,7 @@ describe("force behavior at the cache-rebuild path", () => {
     const agentPath = `${builtDir}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
     memFs.setFile(agentPath, "stale cache content from a previous build");
 
-    const realBuildFor: BuildFor = (_target, _mode) => {
+    const realBuildFor: BuildFor = () => {
       const build = createFrameworkBuildUseCase(
         registeredTools(),
         { fs: memFs, assetProvider: stubAssetProvider(), logger: new CapturingLogger() },
@@ -472,7 +472,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
   it("only ever builds into the aidd build cache or the OS temp dir, never a user directory", async () => {
     const memFs = new InMemoryFileAdapter();
     const capturedOutDirs: string[] = [];
-    const capturingBuildFor: BuildFor = (_target, _mode, outDir) => {
+    const capturingBuildFor: BuildFor = ({ outDir }) => {
       capturedOutDirs.push(outDir);
       return {
         execute: async () => {
@@ -524,7 +524,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
   it("builds a user-scope marketplace outside the project", async () => {
     const memFs = new InMemoryFileAdapter();
     const built: string[] = [];
-    const capturing: BuildFor = (_t, _m, outDir) =>
+    const capturing: BuildFor = ({ outDir }) =>
       ({
         execute: async () => {
           built.push(outDir);
@@ -552,7 +552,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
   // user-scope marketplace must land in disjoint trees, so a purge cannot take the other's.
   it("builds two different CLI versions of a user-scope marketplace into disjoint directories", async () => {
     const memFs = new InMemoryFileAdapter();
-    const capturing: BuildFor = (_t, _m, outDir) =>
+    const capturing: BuildFor = ({ outDir }) =>
       ({
         execute: async () => {
           await memFs.writeFile(join(outDir, ".claude-plugin/marketplace.json"), "{}");

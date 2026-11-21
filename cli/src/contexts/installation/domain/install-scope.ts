@@ -1,6 +1,6 @@
-import { InvalidPluginScopeError } from "../../../shared/domain/errors.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { InvalidPluginScopeError } from "./installation.error.js";
 
 export function getToolSupportedScope(requiresUserScope: boolean): Scope {
   return requiresUserScope ? "user" : "project";

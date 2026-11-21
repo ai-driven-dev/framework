@@ -136,7 +136,7 @@ describe("the user marketplace removal the composition binds", () => {
       })
     );
     const base = {
-      ...wireBase("/project", { verbose: false }, output, registeredTools()),
+      ...wireBase({ projectRoot: "/project", verbose: false, output, tools: registeredTools() }),
       nativePluginActivators: new Map(),
       hostPluginRegistries: new Map(),
       nativeSources: new Map(),
@@ -235,7 +235,7 @@ describe("cacheBuildFor", () => {
       fs,
       assetProvider: new BundledAssetProviderAdapter(wireTools()),
       logger: new CapturingLogger(),
-    })(TOOL.copilot, "flat", outDir);
+    })({ target: TOOL.copilot, mode: "flat", outDir });
 
     await build?.execute({ sourceDir: FIXTURE_DIR, outDir, target: TOOL.copilot });
 

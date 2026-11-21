@@ -1,8 +1,4 @@
 import { basename, join, relative } from "node:path";
-import {
-  MarketplaceOutDirNotEmptyError,
-  OutDirNotDirectoryError,
-} from "../../../../shared/domain/errors.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -16,6 +12,10 @@ import {
   PLUGIN_MCP_RELATIVE,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
 } from "../../domain/canon-format.js";
+import {
+  MarketplaceOutDirNotEmptyError,
+  OutDirNotDirectoryError,
+} from "../../domain/translate.error.js";
 import type { FlatPluginWriter, SupportedArtifact } from "../../ports/flat-plugin-writer.js";
 import type { JsonSchemaValidator } from "../../ports/json-schema-validator.js";
 import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";

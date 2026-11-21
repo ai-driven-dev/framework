@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { InvalidMarketplaceScopeError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import {
   MARKETPLACE_NAME_REGEX,
   Marketplace,
@@ -7,9 +8,8 @@ import {
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   InvalidMarketplaceNameError,
-  InvalidMarketplaceScopeError,
   InvalidPluginSourceError,
-} from "../../../../src/shared/domain/errors.js";
+} from "../../../../src/shared/domain/shared.error.js";
 
 const makeData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome-plugins",

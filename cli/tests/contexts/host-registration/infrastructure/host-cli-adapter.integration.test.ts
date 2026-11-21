@@ -3,12 +3,12 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { windowsCommandLine } from "../../../../src/contexts/host-registration/infrastructure/executable-on-path.js";
 import {
   HostCliAdapter,
   type HostCliShape,
 } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),

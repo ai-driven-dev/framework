@@ -1,4 +1,4 @@
-import type { ConfigAsset, SchemaName } from "../../../src/shared/domain/file.js";
+import type { ConfigAsset, SchemaName } from "../../../src/shared/domain/config-asset.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 

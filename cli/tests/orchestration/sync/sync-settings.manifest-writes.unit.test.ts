@@ -6,7 +6,8 @@ import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";

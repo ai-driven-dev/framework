@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RegistrationRun } from "../../../../../src/contexts/host-registration/application/register/catalog-source-guard.js";
 import { reclaimOrReport } from "../../../../../src/contexts/host-registration/application/register/reclaim-dead-registration.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
+import { NativePluginCliError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { NativePluginCliError } from "../../../../../src/shared/domain/errors.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
@@ -150,7 +150,15 @@ describe("reclaimOrReport", () => {
 
   it.each([
     ["this project's own build", PROJECT_BUILT],
-    ["the shared user build", userBuiltMarketplaceDir(USER_ROOT, "1.0.0", "aidd", "claude")],
+    [
+      "the shared user build",
+      userBuiltMarketplaceDir({
+        userConfigDir: USER_ROOT,
+        cliVersion: "1.0.0",
+        marketplaceName: "aidd",
+        target: "claude",
+      }),
+    ],
   ])("re-registers a dead registration of %s, forced out first", async (_case, registered) => {
     const parts = setup({
       claims: KNOWN,

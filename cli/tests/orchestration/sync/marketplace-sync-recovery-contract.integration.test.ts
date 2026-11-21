@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
@@ -8,8 +9,8 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
@@ -251,7 +252,12 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
   it("recognizes an owned vanished user cache using the unresolved user root", async () => {
     const userRoot = "/users/alice/aidd";
-    const source = userBuiltMarketplaceDir(userRoot, "1.0.0", ALIAS, "claude");
+    const source = userBuiltMarketplaceDir({
+      userConfigDir: userRoot,
+      cliVersion: "1.0.0",
+      marketplaceName: ALIAS,
+      target: "claude",
+    });
     const { activator, result } = await recovery({
       source,
       userRoot,
@@ -280,7 +286,12 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     "/foreign/cache",
     builtMarketplaceDir(ROOT, "different-marketplace", "claude"),
     builtMarketplaceDir(ROOT, ALIAS, "codex"),
-    userBuiltMarketplaceDir("/users/alice/aidd", "1.0.0", ALIAS, "claude"),
+    userBuiltMarketplaceDir({
+      userConfigDir: "/users/alice/aidd",
+      cliVersion: "1.0.0",
+      marketplaceName: ALIAS,
+      target: "claude",
+    }),
   ])(
     "refuses force removal for a source outside this catalogue's recognized cache: %s",
     async (source) => {

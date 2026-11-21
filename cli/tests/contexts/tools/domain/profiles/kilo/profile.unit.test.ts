@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { FileHash } from "../../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
 import { flatOf } from "../../../testing/plugin-mode.builder.js";
@@ -72,20 +72,20 @@ describe("kilo", () => {
       ".kilo/plugin/aidd-context-hooks.js"
     );
     expect(
-      flatHooksPathWithLoaderEntry(
-        plugins.flatLayout().hooksDir ?? "",
-        plugins.flatLayout().hooksLoaderEntry,
-        "aidd-context",
-        "hooks/kilo-plugin.js"
-      )
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",
+        loaderEntry: plugins.flatLayout().hooksLoaderEntry,
+        plugin: "aidd-context",
+        hooksRelativePath: "hooks/kilo-plugin.js",
+      })
     ).toBe(".kilo/plugin/aidd-context.js");
     expect(
-      flatHooksPathWithLoaderEntry(
-        plugins.flatLayout().hooksDir ?? "",
-        plugins.flatLayout().hooksLoaderEntry,
-        "aidd-context",
-        "hooks/capture.cjs"
-      )
+      flatHooksPathWithLoaderEntry({
+        perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",
+        loaderEntry: plugins.flatLayout().hooksLoaderEntry,
+        plugin: "aidd-context",
+        hooksRelativePath: "hooks/capture.cjs",
+      })
     ).toBe(".kilo/hooks/aidd-context/capture.cjs");
   });
 });

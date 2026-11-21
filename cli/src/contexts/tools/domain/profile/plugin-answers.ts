@@ -1,4 +1,3 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   FlatLayout,
@@ -19,6 +18,7 @@ import {
 import type { FlatPlacement, LayoutSection, NativeLayout } from "../sections/layout-section.js";
 import type { ManifestSection } from "../sections/manifest-section.js";
 import { DEFAULT_PLUGIN_MCP_PATH, type McpSection } from "../sections/mcp-section.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 
@@ -128,12 +128,12 @@ function flatAnswers(layout: FlatPlacement, hooks: HooksSection): FlatPluginAnsw
     hooksInstallPath: (pluginName, hooksRelativePath) =>
       flatLayout.hooksDir === null
         ? null
-        : flatHooksPathWithLoaderEntry(
-            flatLayout.hooksDir,
-            flatLayout.hooksLoaderEntry,
-            pluginName,
-            hooksRelativePath
-          ),
+        : flatHooksPathWithLoaderEntry({
+            perPluginHooksDir: flatLayout.hooksDir,
+            loaderEntry: flatLayout.hooksLoaderEntry,
+            plugin: pluginName,
+            hooksRelativePath,
+          }),
     hookScript: hookScriptOf(hooks.delivery),
   };
 }

@@ -2,7 +2,7 @@ import type { ResolvePluginSource } from "../../contexts/distribution/applicatio
 import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
 import type { RequestedVersionPolicy } from "../../contexts/distribution/contract/requested-version-policy.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
-import { VersionMismatchError } from "../../shared/domain/errors.js";
+import { VersionMismatchError } from "../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Prompter } from "../../shared/ports/prompter.js";

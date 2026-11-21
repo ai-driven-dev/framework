@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { InstallRuntimeConfig } from "../../../../../../src/contexts/installation/application/install/config/install-runtime-config.js";
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { FileHash, InstallationFile } from "../../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../../src/shared/domain/installation-file.js";
 import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
 import {
   buildInstallationDeps,

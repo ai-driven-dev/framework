@@ -1,4 +1,3 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type {
   MarketplaceSettings,
@@ -8,6 +7,7 @@ import type { FlatSkillLayout } from "../../contract/tool-profile.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
 import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
 import { NativeActivation } from "../native-registration/native-activation.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 /**
  * The global-file mapping of a flat tool whose user configuration directory takes the same

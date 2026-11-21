@@ -1,16 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { MarketplaceNotFoundError } from "../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
-import {
-  InvalidMarketplaceNameError,
-  MarketplaceNotFoundError,
-} from "../../../src/shared/domain/errors.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { InvalidMarketplaceNameError } from "../../../src/shared/domain/shared.error.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

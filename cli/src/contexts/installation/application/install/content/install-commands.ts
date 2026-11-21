@@ -1,4 +1,4 @@
-import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { MarkdownSectionAnswers } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../domain/canon.js";
 import type { ContentSections } from "../../../ports/tool-sections.js";

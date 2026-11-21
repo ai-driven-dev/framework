@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
 import { RemoveUserPlugin } from "../../../../../src/contexts/installation/application/removal/remove-user-plugin.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";

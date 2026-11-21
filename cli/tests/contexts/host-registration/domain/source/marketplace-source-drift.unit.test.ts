@@ -15,12 +15,12 @@ const DRIFT_CONTEXT = {
 };
 
 function sharedPath(version: string): string {
-  return userBuiltMarketplaceDir(
-    DRIFT_CONTEXT.userCacheRoot,
-    version,
-    DRIFT_CONTEXT.marketplaceName,
-    DRIFT_CONTEXT.target
-  );
+  return userBuiltMarketplaceDir({
+    userConfigDir: DRIFT_CONTEXT.userCacheRoot,
+    cliVersion: version,
+    marketplaceName: DRIFT_CONTEXT.marketplaceName,
+    target: DRIFT_CONTEXT.target,
+  });
 }
 
 describe("marketplaceSourceDrift — deciding purely from the path's own segments, never a catalog read", () => {
@@ -101,23 +101,23 @@ describe("marketplaceSourceDrift — deciding purely from the path's own segment
   });
 
   it("is undefined when the requested path names another marketplace than this run's", () => {
-    const requested = userBuiltMarketplaceDir(
-      DRIFT_CONTEXT.userCacheRoot,
-      "1.0.0",
-      "other-mkt",
-      "claude"
-    );
+    const requested = userBuiltMarketplaceDir({
+      userConfigDir: DRIFT_CONTEXT.userCacheRoot,
+      cliVersion: "1.0.0",
+      marketplaceName: "other-mkt",
+      target: "claude",
+    });
 
     expect(marketplaceSourceDrift(sharedPath("2.0.0"), requested, DRIFT_CONTEXT)).toBeUndefined();
   });
 
   it("is undefined when the requested path names another tool than this run's", () => {
-    const requested = userBuiltMarketplaceDir(
-      DRIFT_CONTEXT.userCacheRoot,
-      "1.0.0",
-      "aidd-framework",
-      "codex"
-    );
+    const requested = userBuiltMarketplaceDir({
+      userConfigDir: DRIFT_CONTEXT.userCacheRoot,
+      cliVersion: "1.0.0",
+      marketplaceName: "aidd-framework",
+      target: "codex",
+    });
 
     expect(marketplaceSourceDrift(sharedPath("2.0.0"), requested, DRIFT_CONTEXT)).toBeUndefined();
   });
@@ -129,12 +129,12 @@ describe("marketplaceSourceDrift — deciding purely from the path's own segment
   });
 
   it("is undefined when the registered path names a different marketplace or tool under the shared cache root", () => {
-    const registered = userBuiltMarketplaceDir(
-      DRIFT_CONTEXT.userCacheRoot,
-      "9.0.0",
-      "other-mkt",
-      "claude"
-    );
+    const registered = userBuiltMarketplaceDir({
+      userConfigDir: DRIFT_CONTEXT.userCacheRoot,
+      cliVersion: "9.0.0",
+      marketplaceName: "other-mkt",
+      target: "claude",
+    });
 
     expect(marketplaceSourceDrift(registered, sharedPath("1.0.0"), DRIFT_CONTEXT)).toBeUndefined();
   });

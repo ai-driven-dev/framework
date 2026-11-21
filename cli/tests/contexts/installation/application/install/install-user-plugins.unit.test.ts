@@ -5,7 +5,8 @@ import type { Manifest } from "../../../../../src/contexts/installation/domain/m
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/installation/ports/plugin/user-plugin-materialization.js";
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";

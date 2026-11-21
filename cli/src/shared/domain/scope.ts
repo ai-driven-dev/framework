@@ -1,4 +1,4 @@
-import { InvalidInstallScopeError } from "./errors.js";
+import { InvalidInstallScopeError } from "./shared.error.js";
 
 /** Where a registration lives: bound to one project, or to the user across all of them.
  * Shared vocabulary because a tool's plugin CLI is driven with a scope and must name it

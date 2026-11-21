@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TrustPluginSource } from "../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.js";
+import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
 import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.js";
-import { TrustDeniedError } from "../../../src/shared/domain/errors.js";
 import { describePluginSource } from "../../../src/shared/domain/source.js";
 import { InMemoryMarketplaceTrustStore } from "../../shared/testing/in-memory-marketplace-trust-store.fake.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";

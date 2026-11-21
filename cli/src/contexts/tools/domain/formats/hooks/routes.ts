@@ -1,6 +1,5 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
-import { CapabilityConfigError } from "../../../../../shared/domain/errors.js";
 import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,
@@ -30,6 +29,7 @@ import {
   type PluginFileDelivery,
   type ProjectMergeDelivery,
 } from "../../sections/hooks-section.js";
+import { CapabilityConfigError } from "../../tools.error.js";
 import {
   type FlatHooksRoute,
   type HooksFileMerge,
@@ -154,7 +154,12 @@ function hooksBridge(
 
 function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): string {
   if (route.loaderEntry !== undefined) {
-    return flatHooksPathWithLoaderEntry(route.scriptsDir, route.loaderEntry, plugin, rel);
+    return flatHooksPathWithLoaderEntry({
+      perPluginHooksDir: route.scriptsDir,
+      loaderEntry: route.loaderEntry,
+      plugin,
+      hooksRelativePath: rel,
+    });
   }
   if (rel === `${PLUGIN_HOOKS_SOURCE.scriptDir}/${plugin}.hooks.json`) {
     return genericFlatHooksFile(route.scriptsDir, plugin);

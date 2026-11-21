@@ -4,12 +4,12 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
-import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import {
   FlatMergeTargetNotJsonError,
   FrameworkPlaceholderInPluginError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/translate/domain/translate.error.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

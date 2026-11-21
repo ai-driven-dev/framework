@@ -111,54 +111,86 @@ export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
   return platform === "darwin" || platform === "win32";
 }
 
-export function wireTelemetry(homedir: () => string, prompter: Prompter): TelemetryDeps {
-  const root = telemetryDir();
+/** What lives on disk: the ledger, the bindings, the consents and the person's identity. */
+function wireStores(root: string) {
   const ledgerDir = join(root, "ledger");
-  const storage = new PrivateStorageAdapter();
-  const gitEnv = environmentWithoutGitVariables(process.env);
   const bindingsDir = join(root, "bindings");
-  const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
+  const storage = new PrivateStorageAdapter();
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
-  const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases);
-  const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
-  const snapshotBindings = new SnapshotBindings(
-    branchSource,
-    snapshotStore,
-    bindingsLock,
-    () => new Date()
-  );
-  const ledger = new UsageLedgerAdapter(ledgerDir, storage);
+  return {
+    root,
+    ledger: new UsageLedgerAdapter(ledgerDir, storage),
+    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage),
+    consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
+    snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
+    bindingsLock: new BindingsLockAdapter(bindingsDir, storage),
+    sessions: new SessionBindingStoreAdapter(bindingsDir, storage),
+    identity: new PersonIdentityAdapter(root, storage),
+  };
+}
+
+type Stores = ReturnType<typeof wireStores>;
+
+/** What git answers: the repositories, their consents and the branch a task is declared on. */
+function wireGit(stores: Stores) {
+  const gitEnv = environmentWithoutGitVariables(process.env);
   const locator = new GitRepositoryLocatorAdapter(gitEnv);
   const consents = new GitConsentAdapter(gitEnv);
-  const resolutionStore = new ResolutionStoreAdapter(ledgerDir, storage);
-  const consentHistory = new ConsentHistoryAdapter(ledgerDir, storage);
-  const environment = {
-    caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
+  const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
+  return {
+    gitEnv,
+    locator,
+    consents,
+    branchSource,
+    branchStore: new GitBranchBindingStoreAdapter(gitEnv),
+    repositories: new ConsentedRepositories(locator, consents, stores.consentHistory),
+    snapshotBindings: new SnapshotBindings(
+      branchSource,
+      stores.snapshotStore,
+      stores.bindingsLock,
+      () => new Date()
+    ),
+  };
+}
+
+type Git = ReturnType<typeof wireGit>;
+
+const processEnvironment = new EnvironmentAdapter();
+
+const environment = {
+  caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
+  now: () => new Date(),
+};
+
+/** Declaring the task a person works on, and reading which one is declared. */
+function wireDeclaration(stores: Stores, git: Git) {
+  const declareOnBranch = new DeclareOnBranch(git.branchStore, git.snapshotBindings);
+  const readCurrentBranch = new ReadCurrentBranch(git.branchStore, git.branchSource);
+  const declaration = {
+    environment: processEnvironment,
+    sessionId: declaringSessionOf(process.env),
     now: () => new Date(),
   };
-  const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
-  const sessionId = declaringSessionOf(process.env);
-  const processEnvironment = new EnvironmentAdapter();
-  const repositories = new ConsentedRepositories(locator, consents, consentHistory);
-  const branchStore = new GitBranchBindingStoreAdapter(gitEnv);
-  const declareOnBranch = new DeclareOnBranch(branchStore, snapshotBindings);
-  const readCurrentBranch = new ReadCurrentBranch(branchStore, branchSource);
-  const declaration = { environment: processEnvironment, sessionId, now: () => new Date() };
-  const declareTask = new DeclareTask(
-    repositories,
-    sessions,
-    declareOnBranch,
-    bindingsLock,
-    declaration
-  );
-  const identity = new PersonIdentityAdapter(root, storage);
-  const readTelemetryStatus = new ReadTelemetryStatus(
-    repositories,
-    sessions,
-    readCurrentBranch,
-    declaration,
-    identity
-  );
+  return {
+    declareTask: new DeclareTask(
+      git.repositories,
+      stores.sessions,
+      declareOnBranch,
+      stores.bindingsLock,
+      declaration
+    ),
+    readTelemetryStatus: new ReadTelemetryStatus(
+      git.repositories,
+      stores.sessions,
+      readCurrentBranch,
+      declaration,
+      stores.identity
+    ),
+  };
+}
+
+/** Counting the tokens the measured tools consumed, and reporting them. */
+function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
   // The measured tools, registered once: a tool is one source here and nowhere else.
   const usageSources: readonly UsageSource[] = [
     new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
@@ -169,27 +201,37 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
   ];
   const ingestUsage = new IngestUsage(
     usageSources.map((source) => new ReadUsage(source)),
-    ledger,
-    new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
-    snapshotBindings,
+    stores.ledger,
+    new DirectoryResolver(
+      git.locator,
+      git.consents,
+      stores.resolutionStore,
+      stores.consentHistory,
+      environment
+    ),
+    git.snapshotBindings,
     { environment: processEnvironment }
   );
-  const manageIdentity = new ManageIdentity(identity);
-  const proposeIdentity = new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment);
-  const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
+  const requestReport = new RequestReport(
+    new ReportUsage(
+      ingestUsage,
+      stores.ledger,
+      new DeclaredBindings(stores.sessions, stores.snapshotStore, stores.identity),
+      git.locator,
+      processEnvironment
+    )
+  );
+  return { ingestUsage, requestReport };
+}
+
+/** Naming the person the measurement is attributed to. */
+function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
+  const manageIdentity = new ManageIdentity(stores.identity);
+  const proposeIdentity = new ProposeIdentity(
+    new GitUserSourceAdapter(git.gitEnv),
+    processEnvironment
+  );
   return {
-    declareTask,
-    readTelemetryStatus,
-    ingestUsage,
-    requestReport: new RequestReport(
-      new ReportUsage(
-        ingestUsage,
-        ledger,
-        new DeclaredBindings(sessions, snapshotStore, identity),
-        locator,
-        processEnvironment
-      )
-    ),
     manageIdentity,
     proposeIdentity,
     chooseIdentity: new ChooseIdentity(
@@ -198,8 +240,19 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
       new CheckIdentity(),
       prompter
     ),
+  };
+}
+
+/** Turning measurement on and off for a repository, and forgetting what was measured. */
+function wireConsent(stores: Stores, git: Git, homedir: () => string) {
+  const { locator, consents, gitEnv } = git;
+  const { ledger, resolutionStore, consentHistory } = stores;
+  return {
     readTranscriptRetention: new ReadTranscriptRetention(
-      new ClaudeSettingsAdapter(claudeDir, ".claude")
+      new ClaudeSettingsAdapter(
+        claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir()),
+        ".claude"
+      )
     ),
     enableTelemetry: new EnableTelemetry(
       locator,
@@ -209,7 +262,7 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
         at: environment.now(),
       })),
       new RememberOwnRoot(ledger, resolutionStore, environment),
-      identity
+      stores.identity
     ),
     disableTelemetry: new DisableTelemetry(
       locator,
@@ -218,17 +271,28 @@ export function wireTelemetry(homedir: () => string, prompter: Prompter): Teleme
     ),
     forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
-        root,
+        stores.root,
         legacyLocations({
           env: process.env,
           home: homedir(),
           platform: process.platform,
-          telemetryDir: root,
+          telemetryDir: stores.root,
         })
       ),
       new RepositoryDeclarationsAdapter(gitEnv),
-      new RememberedClones(resolutionStore, consentHistory, snapshotStore),
+      new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
       ledger
     ),
+  };
+}
+
+export function wireTelemetry(homedir: () => string, prompter: Prompter): TelemetryDeps {
+  const stores = wireStores(telemetryDir());
+  const git = wireGit(stores);
+  return {
+    ...wireDeclaration(stores, git),
+    ...wireMeasurement(stores, git, homedir),
+    ...wireIdentity(stores, git, prompter),
+    ...wireConsent(stores, git, homedir),
   };
 }

@@ -1,6 +1,6 @@
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import type { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { InstallationFile } from "../../../../src/shared/domain/file.js";
+import type { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 

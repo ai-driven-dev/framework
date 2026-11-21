@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { InvalidManifestDataError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  InvalidManifestDataError,
-  ToolNotInManifestError,
-} from "../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const makeHash = (hex: string): FileHash => new FileHash(hex.padEnd(32, "0"));

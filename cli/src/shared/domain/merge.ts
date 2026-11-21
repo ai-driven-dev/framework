@@ -1,8 +1,8 @@
-import { JsonParseError } from "./errors.js";
-import { FileHash } from "./file.js";
+import { FileHash } from "./file-hash.js";
 import { isErrnoException } from "./reading/json-file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
 import { asPlainObject } from "./reading/plain-object.js";
+import { JsonParseError } from "./shared.error.js";
 
 export type MergeStrategy = "none" | "framework-prime" | "user-prime";
 

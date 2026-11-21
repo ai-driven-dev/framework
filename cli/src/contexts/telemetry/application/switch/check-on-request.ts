@@ -1,8 +1,8 @@
+import { InputRequiredError } from "../../../../shared/domain/shared.error.js";
 import {
   ConflictingIdentityFlagsError,
-  InputRequiredError,
   InvalidIdentityError,
-} from "../../../../shared/domain/errors.js";
+} from "../../domain/telemetry.error.js";
 import type { CheckIdentity } from "../identity/check-identity.js";
 
 export interface CheckOnRequestCommand {

@@ -6,13 +6,13 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatTargetExistsError,
   FrameworkPlaceholderInPluginError,
   JsonSchemaValidationError,
   OutDirNotDirectoryError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/translate/domain/translate.error.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

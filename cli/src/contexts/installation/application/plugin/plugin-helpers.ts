@@ -1,6 +1,7 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import { FileHash, type InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { InstallCommands } from "../../../../../../src/contexts/installation/application/install/content/install-commands.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
-import { FileHash, GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
+import { GITKEEP_FILE } from "../../../../../../src/shared/domain/redundant-gitkeeps.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const antigravity = registeredTools().aiProfile(TOOL.antigravity);

@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {

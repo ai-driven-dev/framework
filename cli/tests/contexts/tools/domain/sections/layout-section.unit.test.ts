@@ -3,7 +3,7 @@ import {
   flatGlobalFilePath,
   nativeLayout,
 } from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
-import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 const MARKETPLACE_SETTINGS = {
   settingsPath: ".claude/settings.json",

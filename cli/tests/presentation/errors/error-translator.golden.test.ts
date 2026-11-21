@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { failCommand } from "../../../src/presentation/errors/error-translator.js";
-import { AuthenticationError, InputRequiredError } from "../../../src/shared/domain/errors.js";
+import {
+  AuthenticationError,
+  InputRequiredError,
+} from "../../../src/shared/domain/shared.error.js";
 import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 
 describe("failCommand", () => {

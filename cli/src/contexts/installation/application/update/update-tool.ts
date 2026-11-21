@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { InputRequiredError } from "../../../../shared/domain/errors.js";
-import type { FileHash } from "../../../../shared/domain/file.js";
+import type { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InputRequiredError } from "../../../../shared/domain/shared.error.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";

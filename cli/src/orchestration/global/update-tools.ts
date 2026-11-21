@@ -1,9 +1,9 @@
 import type { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import type { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
-import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
 import { BulkConflictState } from "../domain/bulk-conflict-state.js";
+import type { GlobalExecutionError } from "../domain/global-execution.model.js";
 import type { ResolveUpdateDecision } from "./resolve-update-decision.js";
 
 const CATEGORIES: readonly ToolCategory[] = ["ai", "ide"];

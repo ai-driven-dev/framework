@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
+import { UnregisteredToolError } from "../../../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { catalogDeclaring } from "./declared-tool-catalog.builder.js";

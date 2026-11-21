@@ -1,9 +1,4 @@
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { isScope, type Scope } from "../../../../shared/domain/scope.js";
 import { isSemver } from "../../../../shared/domain/semver.js";
@@ -12,6 +7,11 @@ import {
   parsePluginSource,
   serializePluginSource,
 } from "../../../../shared/domain/source.js";
+import {
+  InvalidPluginNameError,
+  InvalidPluginVersionError,
+  MalformedPluginScopeError,
+} from "../installation.error.js";
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 

@@ -1,9 +1,9 @@
+import type { DeclarationRequest } from "../../contract/task-declaration.js";
+import { requestOf } from "../../domain/declaration/task-declaration.js";
 import {
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
-} from "../../../../shared/domain/errors.js";
-import type { DeclarationRequest } from "../../contract/task-declaration.js";
-import { requestOf } from "../../domain/declaration/task-declaration.js";
+} from "../../domain/telemetry.error.js";
 
 export interface ResolveTaskRequestCommand {
   readonly name: string | undefined;

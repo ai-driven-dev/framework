@@ -1,9 +1,9 @@
 /** What every withdrawal step shares: the host call, the host's own names, and what survives a skip.
  * A step imports this and `withdrawal.ts`, never another step. */
 import { join } from "node:path";
-import { NativePluginCliError } from "../../../../shared/domain/errors.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
+import { NativePluginCliError } from "../../domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import { bestEffortNativeCall } from "../confirmation.js";

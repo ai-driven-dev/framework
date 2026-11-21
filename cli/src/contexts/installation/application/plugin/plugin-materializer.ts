@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";

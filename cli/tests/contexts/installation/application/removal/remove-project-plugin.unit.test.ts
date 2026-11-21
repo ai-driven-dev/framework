@@ -5,7 +5,7 @@ import {
   RemoveProjectPlugin,
 } from "../../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

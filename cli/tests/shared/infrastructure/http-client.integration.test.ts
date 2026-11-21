@@ -4,7 +4,7 @@ import {
   AuthenticationError,
   HttpError,
   HttpRedirectError,
-} from "../../../src/shared/domain/errors.js";
+} from "../../../src/shared/domain/shared.error.js";
 import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
 
 function startServer(handler: (req: IncomingMessage, res: ServerResponse) => void) {

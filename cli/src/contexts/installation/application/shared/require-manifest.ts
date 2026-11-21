@@ -1,4 +1,4 @@
-import { ManifestUnavailableError } from "../../../../shared/domain/errors.js";
+import { ManifestUnavailableError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 

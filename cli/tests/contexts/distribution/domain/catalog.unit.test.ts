@@ -6,7 +6,7 @@ import {
 import {
   InvalidPluginManifestError,
   InvalidPluginSourceError,
-} from "../../../../src/shared/domain/errors.js";
+} from "../../../../src/shared/domain/shared.error.js";
 
 const VALID_RAW = {
   plugins: [

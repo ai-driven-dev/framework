@@ -7,7 +7,7 @@ import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate
 import {
   FlatMergeTargetNotJsonError,
   FlatTargetExistsError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/translate/domain/translate.error.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../presentation/testing/fixture-setup.builder.js";

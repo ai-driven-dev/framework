@@ -1,4 +1,4 @@
-import { InvalidMarketplaceNameError } from "../../../shared/domain/errors.js";
+import { InvalidMarketplaceNameError } from "../../../shared/domain/shared.error.js";
 
 export const FRAMEWORK_MARKETPLACE_NAME = "aidd-framework";
 export const STALE_MAX_DAYS_DEFAULT = 7;

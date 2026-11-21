@@ -96,7 +96,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | The two whole-`src` scans of `ports-are-called.arch.test.ts` can be slow or flaky under load | each reads every `src` body with a regex per declared method | none, a written limit |
 | the `profile` rule of the kind gate does not read an element-access alias of a profile (`tools["aiProfile"](id)`) | no `src` file writes one | none, a written limit |
 | the per-context test overrides in `biome.json` cover `tests/contexts`, `tests/helpers` and `tests/shared` only | orchestration, presentation, composition, e2e and golden tests compose contexts and may import any kit (`kinds.ts`) | none, deliberate |
-| `shared/domain/errors.ts` holds more than one class | the target keeps one central error catalogue | none, deliberate |
 | `STORED_ANSWERS_ALLOWED` in `plugins-are-asked-not-read.arch.test.ts` lists the stored values a plugin variant still answers verbatim | each has a caller that needs the value itself, recorded beside its entry | a caller asks a plugin question instead of reading the stored value, or the variant stops answering it, and the entry leaves |
 | `limits` in `kinds-debt.json` lists the files each biome size ceiling excuses in its override of `biome.json` (function length, cognitive complexity, one class per file, file length, function parameters) | the violators predate the ceilings and biome cannot say a list only shrinks | each file comes under the ceiling and leaves the override; a new violator is fixed, never listed |
 | `BASELINE` in `test-file-size.arch.test.ts` lists test files over the line cap, each with the lines it carries | the files were over the cap when it was introduced | each file is split under the cap and a shorter one lowers its count |
@@ -114,7 +113,6 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | readers that hand the profile to `translate` take the whole profile: the plugin translation pipeline in `installation` and `presentation/commands/setup.ts` (each carries a `biome-ignore lint/plugin` above its import) | each declares its own profile input, as `translate` does in `ports/translate-profile.ts` |
 | `userConfigDirOf` stays in `shared/infrastructure/`, and the `Prompter` port in `shared/ports/prompter.ts`, where the target has `orchestration/ports` | a context other than `telemetry` imports `userConfigDirOf`, and the installation restore stops calling `Prompter` |
 | the `shape` list of `tests/architecture/kinds-debt.json`: application classes that answer several questions, implement no port or contract and have no `execute`, `consent-log.ts` and `directory-resolver.ts` kept as helpers by design | each entry becomes a command, or the code map reclassifies it |
-| `shared/domain/errors.ts` exceeds the file-length cap | the messages that name a command move to the presentation error table |
 
 ## 10. Checklist for a context's migration PR
 

@@ -117,6 +117,25 @@ export class SyncSettings {
       }))
     )
       await context.save();
+    await this.recordActivationOf({ options, scope, context, activation });
+    return {
+      activated: [...activation.outcomes.keys()],
+      binaryMissing: activation.binaryMissing,
+      warnings: activation.warnings,
+      errors: activation.errors,
+      failed: activation.errors.length > 0,
+    };
+  }
+
+  private async recordActivationOf(run: {
+    options: SyncSettingsOptions;
+    scope: Scope;
+    context: NonNullable<Awaited<ReturnType<LoadSyncContext["execute"]>>>;
+    activation: Awaited<ReturnType<ActivateNativeTools["execute"]>>;
+  }): Promise<void> {
+    const { options, scope, context, activation } = run;
+    const { projectRoot } = options;
+    const { manifest, marketplaces } = context;
     // A refused or unproven host registration cannot establish a new shared-source claim.
     // User-scope runs have no project manifest for a later `clean` to decrement it.
     if (scope !== "user") {
@@ -156,12 +175,5 @@ export class SyncSettings {
         activation,
       });
     }
-    return {
-      activated: [...activation.outcomes.keys()],
-      binaryMissing: activation.binaryMissing,
-      warnings: activation.warnings,
-      errors: activation.errors,
-      failed: activation.errors.length > 0,
-    };
   }
 }

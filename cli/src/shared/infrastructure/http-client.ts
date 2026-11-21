@@ -6,7 +6,7 @@ import {
   HttpError,
   HttpNotFoundError,
   HttpRedirectError,
-} from "../domain/errors.js";
+} from "../domain/shared.error.js";
 import type { HttpGet, HttpGetOptions, HttpResponse } from "../ports/http-get.js";
 
 function collectBuffer(response: IncomingMessage): Promise<Buffer> {

@@ -31,15 +31,47 @@ export function createOutput(verbose: boolean): Output {
   return new OutputAdapter(verbose, (code) => process.exit(code));
 }
 
+/** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
+export interface BaseOptions extends FactoryOptions {
+  projectRoot: string;
+  output?: Output;
+  tools: ToolCatalog;
+}
+
+/** Asks a person when a terminal is attached, and answers its defaults when none is. */
+function terminalPrompter() {
+  return process.stdout.isTTY ? new InquirerPrompterAdapter() : new SilentPrompterAdapter();
+}
+
+/** What each host registers a plugin through, read once and reused wherever a use case needs the
+ * scope a plugin is actually registered at: removal, clean, and doctor's own registration check. */
+function wireHost(parts: { tools: ToolCatalog; fs: JsonFileMergerAdapter; logger: Output }) {
+  const { tools, fs, logger } = parts;
+  const {
+    hostActions: nativePluginActivators,
+    marketplaceRegistries: hostMarketplaceRegistries,
+    marketplaceSources: nativeSources,
+    pluginRegistries: hostPluginRegistries,
+  } = wireHostRegistration(tools);
+  const withdrawFromHost = new WithdrawFromHost(fs, logger, {
+    activators: nativePluginActivators,
+    pluginRegistries: hostPluginRegistries,
+    marketplaceRegistries: hostMarketplaceRegistries,
+    sources: nativeSources,
+  });
+  return {
+    nativePluginActivators,
+    hostMarketplaceRegistries,
+    hostPluginRegistries,
+    nativeSources,
+    withdrawFromHost,
+  };
+}
+
 /** The adapters and context wirings every area reads: the file system, the manifests, auth, host
  * registration and distribution. Built once per graph. */
-export function wireBase(
-  projectRoot: string,
-  options: FactoryOptions,
-  output: Output | undefined,
-  tools: ToolCatalog
-) {
-  const logger = output ?? createOutput(options.verbose);
+export function wireBase({ projectRoot, verbose, token, output, tools }: BaseOptions) {
+  const logger = output ?? createOutput(verbose);
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
@@ -54,76 +86,44 @@ export function wireBase(
   );
   const http = new HttpClient();
   const environment = new EnvironmentAdapter();
-  const { tokenProvider, logIn, logOut, checkStatus } = wireAuth({
+  const auth = wireAuth({
     projectRoot,
     logger,
     http,
     environment,
-    explicitToken: options.token,
+    explicitToken: token,
   });
   const currentVersionProvider = new CurrentVersionAdapter();
   const platform = new PlatformAdapter();
-  const prompter = process.stdout.isTTY
-    ? new InquirerPrompterAdapter()
-    : new SilentPrompterAdapter();
-  // Read once, reused wherever a use case needs the scope a plugin is actually registered
-  // at: removal, clean, and doctor's own registration check.
-  const {
-    hostActions: nativePluginActivators,
-    marketplaceRegistries: hostMarketplaceRegistries,
-    marketplaceSources: nativeSources,
-    pluginRegistries: hostPluginRegistries,
-  } = wireHostRegistration(tools);
+  const prompter = terminalPrompter();
+  const host = wireHost({ tools, fs, logger });
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const { userSourceReferences } = wireMachineClaims(fs);
-  const {
-    pluginFetcher,
-    marketplaceRegistry,
-    marketplaceTrustStore,
-    releaseResolver,
-    resolveMarketplaceUseCase,
-    listMarketplaces,
-    refreshMarketplace,
-    registerFrameworkMarketplace,
-  } = wireDistribution({ fs, http, tokenProvider, logger, projectRoot });
-  const withdrawFromHost = new WithdrawFromHost(fs, logger, {
-    activators: nativePluginActivators,
-    pluginRegistries: hostPluginRegistries,
-    marketplaceRegistries: hostMarketplaceRegistries,
-    sources: nativeSources,
+  const distribution = wireDistribution({
+    fs,
+    http,
+    tokenProvider: auth.tokenProvider,
+    logger,
+    projectRoot,
   });
   return {
+    ...host,
+    ...auth,
+    ...distribution,
     tools,
     projectRoot,
     fs,
     logger,
     http,
     environment,
-    tokenProvider,
     currentVersionProvider,
     platform,
     prompter,
     manifestRepo,
     userManifestRepo,
     pluginDistributionReader,
-    nativePluginActivators,
-    hostMarketplaceRegistries,
-    hostPluginRegistries,
-    nativeSources,
     userSourceReferences,
-    pluginFetcher,
-    marketplaceRegistry,
-    marketplaceTrustStore,
-    releaseResolver,
-    resolveMarketplaceUseCase,
-    listMarketplaces,
-    refreshMarketplace,
-    registerFrameworkMarketplace,
-    withdrawFromHost,
-    logIn,
-    logOut,
-    checkStatus,
   };
 }
 

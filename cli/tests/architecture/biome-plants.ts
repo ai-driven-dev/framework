@@ -147,7 +147,12 @@ export const PLANTS: readonly Plant[] = [
   ["src/shared/domain/clean.ts", "export const one = 1;\n", "lint/style/noDefaultExport", 0],
   // A GitHub API URL is written by the GitHub adapter only.
   ["src/contexts/update/infrastructure/builds-github-url.ts", githubUrl, "plugin", 1],
-  ["src/shared/infrastructure/github-adapter.ts", githubUrl, "plugin", 0],
+  [
+    "src/shared/infrastructure/github-adapter.ts",
+    `// biome-ignore lint/plugin: the one place the GitHub API base is written\n${githubUrl}`,
+    "plugin",
+    0,
+  ],
   // The process global, in the layers that hold no I/O.
   ["src/contexts/installation/domain/env.ts", readsEnv, GLOBAL, 1],
   ["src/contexts/installation/application/env.ts", readsEnv, GLOBAL, 1],

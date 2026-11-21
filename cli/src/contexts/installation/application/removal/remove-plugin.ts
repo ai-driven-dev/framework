@@ -1,11 +1,11 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";

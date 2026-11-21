@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { PurgeUserScopeFiles } from "../../../../src/contexts/installation/application/purge-user-scope-files.js";
+import { ActiveMachineDependentsError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { UserScopeInspection } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
-import { ActiveMachineDependentsError } from "../../../../src/shared/domain/errors.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { FakeMachineStatePurge } from "../testing/fake-machine-state-purge.fake.js";

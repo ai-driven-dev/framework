@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { PrepareMarketplace } from "../../../../../src/contexts/distribution/application/add/prepare-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import { MarketplaceAlreadyRegisteredError } from "../../../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
-  MarketplaceAlreadyRegisteredError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/shared/domain/shared.error.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { InMemoryMarketplaceTrustStore } from "../../../../shared/testing/in-memory-marketplace-trust-store.fake.js";
 import { resolvingCatalogs } from "../../testing/catalog-resolver.builder.js";

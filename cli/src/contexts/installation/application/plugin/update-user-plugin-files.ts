@@ -1,8 +1,8 @@
-import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";

@@ -4,14 +4,14 @@ import {
   AddPlugin,
   type PluginAddOptions,
 } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
-  VersionMismatchError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";

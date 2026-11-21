@@ -197,7 +197,12 @@ describe("native activation: reclaim", () => {
         registrationState: "dead",
       });
       const userRoot = "/home/aidd";
-      const source = userBuiltMarketplaceDir(userRoot, "1.0.0", MARKETPLACE, "claude");
+      const source = userBuiltMarketplaceDir({
+        userConfigDir: userRoot,
+        cliVersion: "1.0.0",
+        marketplaceName: MARKETPLACE,
+        target: "claude",
+      });
       const { useCase, registry } = reclaimSync(activator, source, userRoot);
       await registry.save(PROJECT_ROOT, marketplace());
 

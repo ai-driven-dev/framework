@@ -4,7 +4,7 @@ import { PropagateAiSettingsToIde } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { SettingsFileAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {
   buildInstallationDeps,

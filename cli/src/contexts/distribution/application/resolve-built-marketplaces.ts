@@ -71,12 +71,12 @@ export class ResolveBuiltMarketplaces {
   ): Promise<string | undefined> {
     const raw =
       marketplace.scope === "user" || marketplace.name === FRAMEWORK_MARKETPLACE_NAME
-        ? userBuiltMarketplaceDir(
-            this.userCacheRoot(),
-            this.currentVersion.get(),
-            marketplace.name,
-            toolId
-          )
+        ? userBuiltMarketplaceDir({
+            userConfigDir: this.userCacheRoot(),
+            cliVersion: this.currentVersion.get(),
+            marketplaceName: marketplace.name,
+            target: toolId,
+          })
         : builtMarketplaceDir(projectRoot, marketplace.name, toolId);
     return this.fs.realpath(resolve(raw)).catch(() => undefined);
   }

@@ -7,10 +7,10 @@ import {
   warnRegistration,
 } from "../../../../../src/contexts/host-registration/application/register/catalog-source-guard.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
+import { MarketplaceSourceConflictError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { MarketplaceSourceConflictError } from "../../../../../src/shared/domain/errors.js";
 import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -210,8 +210,18 @@ describe("guardAgainstConflict", () => {
 
   it("skips, with a warning, a host already following a newer shared build", async () => {
     const root = "/home/.config/aidd";
-    const registered = userBuiltMarketplaceDir(root, "2.0.0", "aidd-framework", "claude");
-    const built = userBuiltMarketplaceDir(root, "1.0.0", "aidd-framework", "claude");
+    const registered = userBuiltMarketplaceDir({
+      userConfigDir: root,
+      cliVersion: "2.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
+    const built = userBuiltMarketplaceDir({
+      userConfigDir: root,
+      cliVersion: "1.0.0",
+      marketplaceName: "aidd-framework",
+      target: "claude",
+    });
     const { run, warnings } = setup({
       registry: { location: "r", entries: new Map([["aidd-framework", registered]]) },
       userCacheRoot: root,

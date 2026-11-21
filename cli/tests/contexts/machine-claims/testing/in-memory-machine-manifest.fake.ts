@@ -4,7 +4,7 @@ import type {
   MachineNativeRegistrations,
   MachineUserPlugin,
 } from "../../../../src/contexts/machine-claims/ports/machine-manifest.js";
-import { ToolNotInManifestError } from "../../../../src/shared/domain/errors.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../../src/shared/ports/lock.js";
 import {

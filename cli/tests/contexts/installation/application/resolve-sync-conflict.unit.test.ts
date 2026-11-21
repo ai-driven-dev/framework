@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ResolveSyncConflict } from "../../../../src/contexts/installation/application/resolve-sync-conflict.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const DISK_PATH = "/project/target.md";

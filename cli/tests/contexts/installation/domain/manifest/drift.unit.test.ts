@@ -3,7 +3,7 @@ import {
   driftOf,
   driftOfKeys,
 } from "../../../../../src/contexts/installation/domain/manifest/drift.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 
 const HASH_A = new FileHash("a".repeat(32));
 const HASH_B = new FileHash("b".repeat(32));

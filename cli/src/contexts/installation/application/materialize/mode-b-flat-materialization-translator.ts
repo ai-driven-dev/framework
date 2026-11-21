@@ -1,6 +1,5 @@
 import { join } from "node:path";
-import { ProjectScopeUnsupportedError } from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
@@ -10,6 +9,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { ProjectScopeUnsupportedError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,

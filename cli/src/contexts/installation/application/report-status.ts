@@ -1,10 +1,10 @@
 import { join } from "node:path";
-import { ToolNotInstalledError } from "../../../shared/domain/errors.js";
-import type { FileHash } from "../../../shared/domain/file.js";
+import type { FileHash } from "../../../shared/domain/file-hash.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import { ToolNotInstalledError } from "../domain/installation.error.js";
 import { driftOf } from "../domain/manifest/drift.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";

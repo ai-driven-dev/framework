@@ -4,7 +4,7 @@ import {
   CatalogFetchAuthError,
   CatalogFetchError,
   HttpNotFoundError,
-} from "../../../src/shared/domain/errors.js";
+} from "../../../src/shared/domain/shared.error.js";
 import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
 import type { HttpGet } from "../../../src/shared/ports/http-get.js";
 

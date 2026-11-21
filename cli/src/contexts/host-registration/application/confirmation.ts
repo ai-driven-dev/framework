@@ -1,4 +1,4 @@
-import { NativePluginCliError } from "../../../shared/domain/errors.js";
+import { NativePluginCliError } from "../domain/host-registration.error.js";
 
 /** Whether a host's own CLI confirmed a call, and when it did not, the warning that says why. */
 export type Confirmation =

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { AssetNotFoundError } from "../domain/errors.js";
-import type { ConfigAsset, SchemaName } from "../domain/file.js";
+import type { ConfigAsset, SchemaName } from "../domain/config-asset.js";
+import { AssetNotFoundError } from "../domain/shared.error.js";
 import type { AssetProvider } from "../ports/asset-provider.js";
 
 /** The one thing the loader asks of a tool catalog: a profile that can hand back a shipped config. */

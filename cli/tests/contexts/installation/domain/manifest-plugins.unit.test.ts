@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   DuplicatePluginError,
   PluginNotFoundError,
-  ToolNotInManifestError,
-} from "../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+} from "../../../../src/contexts/installation/domain/installation.error.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const CLAUDE = TOOL.claude;

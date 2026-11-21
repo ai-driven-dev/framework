@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { FileMerger } from "../../../../src/contexts/installation/ports/file-merger.js";
-import { JsonParseError } from "../../../../src/shared/domain/errors.js";
+import { JsonParseError } from "../../../../src/shared/domain/shared.error.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 

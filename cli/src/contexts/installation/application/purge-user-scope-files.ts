@@ -1,6 +1,6 @@
-import { ActiveMachineDependentsError } from "../../../shared/domain/errors.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import { ActiveMachineDependentsError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { MachineStatePurge } from "../ports/machine-state-purge.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";

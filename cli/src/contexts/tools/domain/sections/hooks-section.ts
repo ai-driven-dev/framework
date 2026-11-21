@@ -1,7 +1,7 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { FlatHooksBridge } from "../../contract/build-contract.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 export type HooksConfigParams = {
   outputPath: string;

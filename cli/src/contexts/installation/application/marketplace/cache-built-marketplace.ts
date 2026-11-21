@@ -32,12 +32,12 @@ export interface FrameworkBuilds {
    * on, or `undefined` when nothing. A changed variant makes a cached tree stale. */
   variant(target: AiToolId): Promise<string | undefined>;
   /** `undefined` when the target/mode pair has no build. */
-  buildFor(
-    target: AiToolId,
-    mode: FrameworkBuildMode,
-    outDir: string,
-    variant?: string
-  ): FrameworkBuild | undefined;
+  buildFor(request: {
+    target: AiToolId;
+    mode: FrameworkBuildMode;
+    outDir: string;
+    variant?: string;
+  }): FrameworkBuild | undefined;
 }
 
 const SENTINEL_FILE = ".build-version";
@@ -71,12 +71,12 @@ export class CacheBuiltMarketplace {
     // leaving the write target diverging from the path that gets checked. Both scopes need it.
     const builtDir = resolve(
       options.marketplace.scope === "user"
-        ? userBuiltMarketplaceDir(
-            this.userCacheRoot(),
-            this.version.get(),
-            options.marketplace.name,
-            options.target
-          )
+        ? userBuiltMarketplaceDir({
+            userConfigDir: this.userCacheRoot(),
+            cliVersion: this.version.get(),
+            marketplaceName: options.marketplace.name,
+            target: options.target,
+          })
         : builtMarketplaceDir(options.projectRoot, options.marketplace.name, options.target)
     );
     const variant = await this.builds.variant(options.target);
@@ -185,7 +185,7 @@ export class CacheBuiltMarketplace {
     variant: string | undefined
   ): Promise<void> {
     await this.fs.createDirectory(outDir);
-    const build = this.builds.buildFor(target, mode, outDir, variant);
+    const build = this.builds.buildFor({ target, mode, outDir, variant });
     if (build === undefined) {
       throw new Error(`No framework build for target '${target}' mode '${mode}'.`);
     }

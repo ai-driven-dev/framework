@@ -1,4 +1,4 @@
-import type { ConfigAsset } from "../../../shared/domain/file.js";
+import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
 import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
 import type { MergeStrategy } from "../../../shared/domain/merge.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";

@@ -5,7 +5,8 @@ import { InstallConfig } from "../../../../../src/contexts/installation/applicat
 import { GenerateToolDistribution } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

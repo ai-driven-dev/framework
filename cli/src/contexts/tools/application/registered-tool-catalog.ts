@@ -1,13 +1,10 @@
-import {
-  DuplicateToolIdError,
-  ToolListMismatchError,
-  UnregisteredToolError,
-} from "../../../shared/domain/errors.js";
+import { UnregisteredToolError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { RecommendationContext, ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
 import { agentProviders } from "../domain/models/agent-models.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
+import { DuplicateToolIdError, ToolListMismatchError } from "../domain/tools.error.js";
 
 /** The catalog of the profiles it is built from, which are held in the order they were given. The
  * canonical list is the same profiles in the order the messages name them: a list that adds or

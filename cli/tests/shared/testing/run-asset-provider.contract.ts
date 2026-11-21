@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ConfigAsset } from "../../../src/shared/domain/file.js";
+import type { ConfigAsset } from "../../../src/shared/domain/config-asset.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 
 /** One implementation of the asset port, with an asset it holds. */

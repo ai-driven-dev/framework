@@ -3,7 +3,7 @@ import {
   parseMergeFileEntries,
   toMergeFileEntryData,
 } from "../../../../../src/contexts/installation/domain/manifest/merge-files.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 
 const HASH = "abc123abc123abc123abc123abc123ab";
 

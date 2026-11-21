@@ -21,7 +21,12 @@ import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 
 function opencodeFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath(".opencode/agents/", plugin, rel.replace(/^agents\//, ""), ".md");
+  return genericFlatAgentPath({
+    agentsPrefix: ".opencode/agents/",
+    plugin,
+    agentBaseName: rel.replace(/^agents\//, ""),
+    outputExt: ".md",
+  });
 }
 
 function opencodeFlatSkillPath(plugin: string, rel: string): string {

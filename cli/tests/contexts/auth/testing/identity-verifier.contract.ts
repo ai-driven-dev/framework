@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { IdentityVerifier } from "../../../../src/contexts/auth/ports/identity-verifier.js";
-import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
+import { AuthenticationError } from "../../../../src/shared/domain/shared.error.js";
 
 /** What a contract run needs from one implementation of the identity check. */
 export interface VerifierSubject {

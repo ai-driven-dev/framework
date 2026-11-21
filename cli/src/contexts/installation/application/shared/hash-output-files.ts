@@ -1,4 +1,5 @@
-import { FileHash, InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { TranslatedFile } from "../../ports/plugin/plugin-translation.js";
 
 /** Translation yields content; what an install tracks is its hash, taken here. */

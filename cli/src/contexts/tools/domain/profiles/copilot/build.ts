@@ -93,12 +93,12 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
 }
 
 function copilotFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath(
-    FLAT_GITHUB_AGENTS_PREFIX,
+  return genericFlatAgentPath({
+    agentsPrefix: FLAT_GITHUB_AGENTS_PREFIX,
     plugin,
-    rel.replace(/^agents\//, ""),
-    FLAT_AGENT_OUTPUT_EXT
-  );
+    agentBaseName: rel.replace(/^agents\//, ""),
+    outputExt: FLAT_AGENT_OUTPUT_EXT,
+  });
 }
 
 function copilotFlatSkillPath(plugin: string, rel: string): string {

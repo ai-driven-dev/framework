@@ -1,4 +1,4 @@
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input

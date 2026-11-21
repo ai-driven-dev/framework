@@ -2,7 +2,7 @@ import type {
   ReportStatusResult,
   StatusQuery,
 } from "../../contexts/installation/application/report-status.js";
-import type { GlobalExecutionError } from "../../shared/domain/errors.js";
+import type { GlobalExecutionError } from "../domain/global-execution.model.js";
 export interface ReportAllStatusResult {
   aiTools: ReportStatusResult;
   ideTools: ReportStatusResult;

@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { InvalidManifestDataError } from "../../../shared/domain/errors.js";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
+import { InvalidManifestDataError } from "../domain/installation.error.js";
 import { Manifest, type ManifestFileContext } from "../domain/manifest.js";
 
 /**

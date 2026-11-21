@@ -6,9 +6,9 @@ import { ReportStatus } from "../../../src/contexts/installation/application/rep
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.js";
 import type { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
-import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";

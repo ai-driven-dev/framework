@@ -5,7 +5,7 @@ import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections
 import {
   KiloDualConfigError,
   OpencodeDualConfigError,
-} from "../../../../../src/shared/domain/errors.js";
+} from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 const withFiles =
   (...relPaths: string[]) =>

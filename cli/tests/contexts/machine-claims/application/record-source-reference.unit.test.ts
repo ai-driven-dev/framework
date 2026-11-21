@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { RecordSourceReference } from "../../../../src/contexts/machine-claims/application/record-source-reference.js";
 import type { UserSourceReferences } from "../../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/errors.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
+import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { RecordingSourceReferences } from "../testing/recording-source-references.fake.js";

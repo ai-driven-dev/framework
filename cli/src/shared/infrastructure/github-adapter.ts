@@ -1,14 +1,15 @@
+import { asPlainObject } from "../domain/reading/plain-object.js";
 import {
   AuthenticationError,
   CatalogFetchAuthError,
   CatalogFetchError,
   CatalogFetchNotFoundError,
   HttpNotFoundError,
-} from "../domain/errors.js";
-import { asPlainObject } from "../domain/reading/plain-object.js";
+} from "../domain/shared.error.js";
 import type { PluginSourceGitHub } from "../domain/source.js";
 import type { HttpGet } from "../ports/http-get.js";
 
+// biome-ignore lint/plugin: the one place the GitHub API base is written
 const DEFAULT_API_BASE = "https://api.github.com";
 const RAW_ACCEPT = "application/vnd.github.raw";
 

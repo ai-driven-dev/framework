@@ -1,6 +1,6 @@
 import { wireTools } from "../../../src/composition/tools.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
-import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
+import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import type { ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";
 
 /** The catalog of every registered tool, as the composition root wires it: wired on each call, so

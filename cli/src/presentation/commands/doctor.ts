@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
@@ -14,6 +13,7 @@ import {
   printUserScopeTools,
 } from "../display/doctor-display.js";
 import { failCommand } from "../errors/error-translator.js";
+import { UserScopeFilterUnsupportedError } from "../presentation.error.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */

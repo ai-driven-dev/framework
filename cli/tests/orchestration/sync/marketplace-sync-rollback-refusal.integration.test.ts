@@ -26,7 +26,12 @@ const USER_CACHE_ROOT = "/user-cache";
 const MARKETPLACE_NAME = "probe-mkt";
 
 function sharedPath(version: string, name: string = MARKETPLACE_NAME): string {
-  return userBuiltMarketplaceDir(USER_CACHE_ROOT, version, name, "claude");
+  return userBuiltMarketplaceDir({
+    userConfigDir: USER_CACHE_ROOT,
+    cliVersion: version,
+    marketplaceName: name,
+    target: "claude",
+  });
 }
 
 async function sync(options: {

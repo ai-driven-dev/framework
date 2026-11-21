@@ -1,14 +1,12 @@
-import {
-  InvalidMarketplaceNameError,
-  InvalidMarketplaceScopeError,
-} from "../../../shared/domain/errors.js";
 import { isScope, type Scope } from "../../../shared/domain/scope.js";
+import { InvalidMarketplaceNameError } from "../../../shared/domain/shared.error.js";
 import {
   type PluginSource,
   parsePluginSource,
   serializePluginSource,
 } from "../../../shared/domain/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
+import { InvalidMarketplaceScopeError } from "./distribution.error.js";
 
 export const MARKETPLACE_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;

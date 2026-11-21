@@ -17,7 +17,7 @@ import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
-import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
+import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";

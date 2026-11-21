@@ -4746,7 +4746,7 @@
       "plugins": ["./biome-plugins/no-process-exit.grit"]
     },
     {
-      "includes": ["src/**", "!src/shared/infrastructure/github-adapter.ts"],
+      "includes": ["src/**"],
       "plugins": ["./biome-plugins/one-github-api-url.grit"]
     },
     {
@@ -5845,17 +5845,8 @@
     {
       "includes": [
         "src/**",
-        "!src/composition/container.ts",
-        "!src/composition/installation.ts",
-        "!src/composition/orchestration/clean.ts",
-        "!src/composition/orchestration/global.ts",
-        "!src/composition/orchestration/marketplace.ts",
-        "!src/composition/orchestration/plugin.ts",
-        "!src/composition/shared.ts",
-        "!src/composition/telemetry.ts",
         "!src/contexts/installation/application/marketplace/purge-marketplace-plugins.ts",
-        "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
-        "!src/orchestration/sync/sync-settings.ts"
+        "!src/contexts/installation/application/materialize/built-tree-materialization-translator.ts"
       ],
       "linter": {
         "rules": {
@@ -5878,10 +5869,7 @@
         "!src/contexts/installation/application/install/install-user-plugins.ts",
         "!src/contexts/installation/application/shared/detect-plugin-drift.ts",
         "!src/contexts/installation/application/shared/remove-project-hooks.ts",
-        "!src/contexts/installation/domain/manifest.ts",
-        "!src/shared/domain/markdown.ts",
-        "!src/shared/domain/reading/jsonc.ts",
-        "!src/shared/domain/source.ts"
+        "!src/contexts/installation/domain/manifest.ts"
       ],
       "linter": {
         "rules": {
@@ -5897,7 +5885,7 @@
       }
     },
     {
-      "includes": ["src/**", "!src/shared/domain/errors.ts", "!src/shared/domain/file.ts"],
+      "includes": ["src/**", "!**/*.error.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -5912,7 +5900,7 @@
       }
     },
     {
-      "includes": ["src/**", "!src/shared/domain/errors.ts"],
+      "includes": ["src/**", "!**/*.error.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -5930,10 +5918,6 @@
     {
       "includes": [
         "src/**",
-        "!src/composition/installation.ts",
-        "!src/composition/orchestration/global.ts",
-        "!src/composition/orchestration/setup.ts",
-        "!src/composition/shared.ts",
         "!src/contexts/installation/application/install/config/install-runtime-config.ts",
         "!src/contexts/installation/application/install/content/install-content-section.ts",
         "!src/contexts/installation/application/install/install-ai-tool.ts",
@@ -5952,12 +5936,7 @@
         "!src/contexts/installation/domain/manifest.ts",
         "!src/contexts/installation/domain/plugins/installed-plugin.ts",
         "!src/contexts/installation/infrastructure/jsonc-main-session-settings.ts",
-        "!src/contexts/installation/ports/main-session-settings.ts",
-        "!src/orchestration/doctor/check-registration.ts",
-        "!src/orchestration/setup/run-setup.ts",
-        "!src/orchestration/setup/setup-flow.ts",
-        "!src/shared/domain/layout/aidd-layout.ts",
-        "!src/shared/domain/materialization/flat-paths.ts"
+        "!src/contexts/installation/ports/main-session-settings.ts"
       ],
       "plugins": ["./biome-plugins/max-function-params.grit"]
     },
@@ -5984,7 +5963,7 @@
       "plugins": ["./biome-plugins/no-laundered-test-interior.grit"]
     },
     {
-      "includes": ["src/**", "!src/composition/**"],
+      "includes": ["src/**"],
       "plugins": [
         "./biome-plugins/whole-profile-import.grit",
         "./biome-plugins/whole-profile-namespace-import.grit"

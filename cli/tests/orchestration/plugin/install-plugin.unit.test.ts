@@ -4,16 +4,16 @@ import { TrustPluginSource } from "../../../src/contexts/distribution/applicatio
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.js";
+import { InvalidPluginScopeError } from "../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import {
+  InteractiveOnlyError,
+  TrustDeniedError,
+} from "../../../src/orchestration/orchestration.error.js";
 import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.js";
-import {
-  InteractiveOnlyError,
-  InvalidPluginScopeError,
-  TrustDeniedError,
-} from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

@@ -56,12 +56,17 @@ export function setupQuestionsOf(
 
 /** The agents' provider and the main session's model, which `setup --provider` sets and
  * `clean --global` forgets. */
-export function wireAgentModels(
-  base: Base,
-  inst: Pick<Installation, "agentModelStore">,
-  p: Plugin,
-  m: Marketplace
-) {
+export function wireAgentModels({
+  base,
+  installation: inst,
+  plugin: p,
+  marketplace: m,
+}: {
+  base: Base;
+  installation: Pick<Installation, "agentModelStore">;
+  plugin: Plugin;
+  marketplace: Marketplace;
+}) {
   const { fs, manifestRepo, userManifestRepo, environment } = base;
   const { agentModelStore } = inst;
   const mainSessions = new MainSessionModels(
@@ -86,13 +91,19 @@ export function wireAgentModels(
 }
 
 /** `setup`: the questions it asks about plugins and tools, and the scenario that runs them. */
-export function wireSetup(
-  base: Base,
-  inst: Pick<Installation, "updateGitignore">,
-  p: Plugin,
-  m: Marketplace,
-  g: Global
-) {
+export function wireSetup({
+  base,
+  installation: inst,
+  plugin: p,
+  marketplace: m,
+  global: g,
+}: {
+  base: Base;
+  installation: Pick<Installation, "updateGitignore">;
+  plugin: Plugin;
+  marketplace: Marketplace;
+  global: Global;
+}) {
   const { fs, manifestRepo, prompter } = base;
   const { resolveMarketplaceUseCase } = base;
   const { pluginInstallFromMarketplaceUseCase, pickPlugins } = p;

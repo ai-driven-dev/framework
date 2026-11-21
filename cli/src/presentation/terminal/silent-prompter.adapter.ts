@@ -1,4 +1,4 @@
-import { InputRequiredError } from "../../shared/domain/errors.js";
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
 export class SilentPrompterAdapter implements Prompter {

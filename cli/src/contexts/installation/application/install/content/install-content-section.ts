@@ -1,5 +1,7 @@
-import { FileHash, GITKEEP_FILE, InstallationFile } from "../../../../../shared/domain/file.js";
+import { FileHash } from "../../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import { parseFrontmatter } from "../../../../../shared/domain/markdown.js";
+import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
 import type { ContentSection } from "../../../domain/canon.js";
 import type { ContentSections } from "../../../ports/tool-sections.js";
 

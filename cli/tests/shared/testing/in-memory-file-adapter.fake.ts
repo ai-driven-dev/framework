@@ -1,6 +1,6 @@
 import { join, posix, resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";

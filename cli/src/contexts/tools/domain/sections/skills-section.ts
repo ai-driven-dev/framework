@@ -1,6 +1,6 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 type SkillsSectionParams = {
   directory?: string;

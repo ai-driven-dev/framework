@@ -2,9 +2,9 @@ import type {
   TrustPluginSource,
   TrustPluginSourceCommand,
 } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
-import { TrustDeniedError } from "../../shared/domain/errors.js";
 import { describePluginSource } from "../../shared/domain/source.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
+import { TrustDeniedError } from "../orchestration.error.js";
 
 export type ConfirmPluginSourceTrustCommand = TrustPluginSourceCommand;
 
