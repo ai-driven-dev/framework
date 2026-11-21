@@ -6,8 +6,8 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { RestoredTool } from "../../ports/tool-sections.js";
@@ -19,7 +19,7 @@ export interface RestoreToolFilesCommand {
   /** Unvalidated text: the restore refuses one no profile declares. */
   toolId: string;
   manifest: Manifest;
-  descriptor: FrameworkDescriptor;
+  configRefs: readonly ConfigRef[];
   contentFiles: Map<string, string>;
   projectRoot: string;
   version: string;
@@ -82,10 +82,10 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     config: RestoredTool
   ): Promise<Map<string, InstallationFile>> {
-    const { descriptor, contentFiles, projectRoot } = options;
+    const { configRefs, contentFiles, projectRoot } = options;
     const distribution = await this.generateToolDistribution.execute({
       config,
-      descriptor,
+      configRefs,
       contentFiles,
       projectRoot,
     });

@@ -83,8 +83,6 @@ export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & F
 
 export type RestoredIdeTool = { readonly kind: "ide" } & ConfigWritesSection;
 
-export type RestoredAiTool = { readonly kind: "ai" } & ConfigWritesSection &
-  ConfigFilesSection &
-  ContentSections;
+export type RestoredAiTool = { readonly kind: "ai" } & ConfigWritesSection & ConfigFilesSection;
 
 export type RestoredTool = RestoredIdeTool | RestoredAiTool;

@@ -3,7 +3,6 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import { requireManifest } from "../shared/require-manifest.js";
@@ -41,7 +40,7 @@ interface RestoreCommand {
 
 interface RestoreCtx {
   manifest: Manifest;
-  descriptor: FrameworkDescriptor;
+  configRefs: readonly ConfigRef[];
   contentFiles: Map<string, string>;
   projectRoot: string;
   version: string;
@@ -87,7 +86,7 @@ export class Restore {
     const configRefs = configRefsOf(this.tools);
     return {
       manifest,
-      descriptor: this.buildStaticDescriptor(resolvedVersion, configRefs),
+      configRefs,
       contentFiles: options.frameworkPath
         ? await this.buildContentFiles(options.frameworkPath, configRefs)
         : new Map(),
@@ -160,18 +159,6 @@ export class Restore {
       unrestorable: toolResults.flatMap((t) => t.unrestorable),
       nativeOnlyToolIds: pluginResult.nativeOnlyToolIds,
     };
-  }
-
-  private buildStaticDescriptor(
-    version: string,
-    configRefs: readonly ConfigRef[]
-  ): FrameworkDescriptor {
-    return new FrameworkDescriptor({
-      version,
-      contentSections: [],
-      templateRefs: [],
-      configRefs: [...configRefs],
-    });
   }
 
   private async buildContentFiles(

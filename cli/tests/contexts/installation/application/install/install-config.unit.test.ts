@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import type { Platform } from "../../../../../src/contexts/installation/ports/platform.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
@@ -31,15 +30,6 @@ function buildUseCase() {
 const linuxPlatform: Platform = { current: () => "linux" };
 const win32Platform: Platform = { current: () => "win32" };
 
-function emptyDescriptor(): FrameworkDescriptor {
-  return new FrameworkDescriptor({
-    version: "test",
-    contentSections: [],
-    templateRefs: [],
-    configRefs: [],
-  });
-}
-
 describe("InstallConfig — staticContent", () => {
   it("an asset-backed capability does not need a matching configRef", async () => {
     const { useCase } = buildUseCase();
@@ -60,12 +50,11 @@ describe("InstallConfig — staticContent", () => {
 
   it("copilot staticContent contains all required Copilot keys", async () => {
     const { useCase } = buildUseCase();
-    const descriptor = emptyDescriptor();
     const assetProvider = new BundledAssetProviderAdapter(wireTools());
 
     const results = await useCase.execute({
       writes: registeredTools().aiProfile(TOOL.copilot).configWrites(),
-      configRefs: descriptor.configRefs,
+      configRefs: [],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,

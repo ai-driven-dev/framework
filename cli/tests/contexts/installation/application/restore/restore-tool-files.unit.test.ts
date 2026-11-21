@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { RestoreToolFilesCommand } from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -22,15 +21,10 @@ const GHOST = ".vscode/ghost.json";
 const KEYBINDINGS_CONTENT = '[{"key":"ctrl+k","command":"noop"}]';
 const EXTENSIONS_CONTENT = '{"recommendations":["a.ext"]}';
 
-const descriptor = new FrameworkDescriptor({
-  version: "test",
-  contentSections: [],
-  templateRefs: [],
-  configRefs: [
-    { name: "vscodeKeybindings", path: "config/vscode/keybindings.json" },
-    { name: "vscodeExtensions", path: "config/vscode/extensions.json" },
-  ],
-});
+const configRefs = [
+  { name: "vscodeKeybindings", path: "config/vscode/keybindings.json" },
+  { name: "vscodeExtensions", path: "config/vscode/extensions.json" },
+];
 
 function contentFiles(extensions = EXTENSIONS_CONTENT): Map<string, string> {
   return new Map([
@@ -86,7 +80,7 @@ function restore(
   }).execute({
     toolId: TOOL.vscode,
     manifest: installed.manifest,
-    descriptor,
+    configRefs,
     contentFiles: contentFiles(),
     projectRoot: PROJECT_ROOT,
     version: "test",

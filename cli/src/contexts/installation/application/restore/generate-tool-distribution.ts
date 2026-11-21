@@ -2,22 +2,14 @@ import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import { removeRedundantGitkeeps } from "../../../../shared/domain/redundant-gitkeeps.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
+import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { Platform } from "../../ports/platform.js";
 import type { RestoredAiTool, RestoredIdeTool, RestoredTool } from "../../ports/tool-sections.js";
-import type { InstallContentSectionCommand } from "../install/content/install-content-section.js";
 import type { InstallConfig } from "../install/install-config.js";
-
-export interface ContentSectionInstaller {
-  execute(command: InstallContentSectionCommand): InstallationFile[];
-}
-
-/** The installer of each content section, by section name. A section with none yields no files. */
-export type ContentSectionInstallers = ReadonlyMap<string, ContentSectionInstaller>;
 
 interface GenerateToolDistributionCommand {
   config: RestoredTool;
-  descriptor: FrameworkDescriptor;
+  configRefs: readonly ConfigRef[];
   contentFiles: Map<string, string>;
   projectRoot: string;
 }
@@ -25,7 +17,6 @@ interface GenerateToolDistributionCommand {
 export class GenerateToolDistribution {
   constructor(
     private readonly installConfig: Pick<InstallConfig, "execute">,
-    private readonly sectionInstallers: ContentSectionInstallers,
     private readonly platform: Platform,
     private readonly assetProvider?: AssetProvider
   ) {}
@@ -40,10 +31,10 @@ export class GenerateToolDistribution {
     config: RestoredIdeTool,
     options: GenerateToolDistributionCommand
   ): Promise<InstallationFile[]> {
-    const { descriptor, contentFiles, projectRoot } = options;
+    const { configRefs, contentFiles, projectRoot } = options;
     const configFiles = await this.installConfig.execute({
       writes: config.configWrites(),
-      configRefs: descriptor.configRefs,
+      configRefs,
       contentFiles,
       projectRoot,
       platform: this.platform,
@@ -55,11 +46,10 @@ export class GenerateToolDistribution {
     config: RestoredAiTool,
     options: GenerateToolDistributionCommand
   ): Promise<InstallationFile[]> {
-    const { descriptor, contentFiles, projectRoot } = options;
-    const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
+    const { configRefs, contentFiles, projectRoot } = options;
     const configFiles = await this.installConfig.execute({
       writes: config.configWrites(),
-      configRefs: descriptor.configRefs,
+      configRefs,
       contentFiles,
       projectRoot,
       platform: this.platform,
@@ -67,7 +57,7 @@ export class GenerateToolDistribution {
       toolId: config.toolId,
     });
     const outputPathFiles = this.buildConfigOutputPathFiles(config);
-    return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...outputPathFiles]);
+    return removeRedundantGitkeeps([...configFiles, ...outputPathFiles]);
   }
 
   private buildConfigOutputPathFiles(config: RestoredAiTool): InstallationFile[] {
@@ -86,26 +76,5 @@ export class GenerateToolDistribution {
       );
     }
     return files;
-  }
-
-  private generateCapabilitySectionFiles(
-    config: RestoredAiTool,
-    descriptor: FrameworkDescriptor,
-    contentFiles: Map<string, string>
-  ): InstallationFile[] {
-    const results: InstallationFile[] = [];
-    for (const section of descriptor.contentSections) {
-      results.push(...this.generateSectionFiles(config, section, contentFiles));
-    }
-    return results;
-  }
-
-  private generateSectionFiles(
-    config: RestoredAiTool,
-    section: ContentSection,
-    contentFiles: Map<string, string>
-  ): InstallationFile[] {
-    const options = { toolConfig: config, section, contentFiles };
-    return this.sectionInstallers.get(section.name)?.execute(options) ?? [];
   }
 }
