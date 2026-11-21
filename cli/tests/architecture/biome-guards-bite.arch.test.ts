@@ -496,6 +496,8 @@ type SizeGuard =
       readonly group: string;
       readonly rule: string;
       readonly options: Readonly<Record<string, unknown>>;
+      /** Excused for a whole kind of file, not one by one: the error catalogue. */
+      readonly sparesErrorFiles?: true;
     }
   | { readonly name: string; readonly kind: "plugin"; readonly file: string };
 
@@ -520,6 +522,7 @@ const GUARDS: readonly SizeGuard[] = [
     group: "style",
     rule: "noExcessiveClassesPerFile",
     options: { maxClasses: 1 },
+    sparesErrorFiles: true,
   },
   {
     name: "file length",
@@ -527,11 +530,15 @@ const GUARDS: readonly SizeGuard[] = [
     group: "style",
     rule: "noExcessiveLinesPerFile",
     options: { maxLines: 400, skipBlankLines: true },
+    sparesErrorFiles: true,
   },
   { name: "function parameters", kind: "plugin", file: "max-function-params.grit" },
 ];
 
 const overrides = (): readonly Override[] => biomeConfig().overrides ?? [];
+
+/** A file of the error catalogue holds many small classes: no guard counts them per file. */
+const ERROR_FILES = "!**/*.error.ts";
 
 const pluginPath = (file: string): string => `./biome-plugins/${file}`;
 
@@ -553,6 +560,7 @@ function carrierOf(guard: SizeGuard): Override {
 function baselineOf(guard: SizeGuard): string[] {
   return (carrierOf(guard).includes ?? [])
     .slice(1)
+    .filter((entry) => entry !== ERROR_FILES)
     .map((entry) => entry.slice(1))
     .sort();
 }
@@ -604,7 +612,8 @@ describe("biome carries the size guards", () => {
       it("applies to src/** and excludes exact, sorted, unique files only", () => {
         const includes = carrierOf(guard).includes ?? [];
         expect(includes[0]).toBe("src/**");
-        const excluded = includes.slice(1);
+        const excluded = includes.slice(1).filter((entry) => entry !== ERROR_FILES);
+        expect(includes.includes(ERROR_FILES), guard.name).toBe("sparesErrorFiles" in guard);
         for (const entry of excluded) {
           expect(entry, "an exclusion names one file, never a glob").toMatch(
             /^!src\/[^*?{}[\]]+\.ts$/
@@ -647,7 +656,8 @@ describe("the size baselines only shrink", () => {
       const id = findingId(guard);
       const files = biomeFindings(dir)
         .filter((finding) => finding.endsWith(`:${id}`))
-        .map((finding) => finding.slice(0, finding.lastIndexOf(":")));
+        .map((finding) => finding.slice(0, finding.lastIndexOf(":")))
+        .filter((file) => !("sparesErrorFiles" in guard) || !file.endsWith(".error.ts"));
       found.set(guard.name, [...new Set(files)].sort());
     }
     measured = found;
@@ -698,6 +708,9 @@ describe("the size guards bite", () => {
       "src/kernel/tangled.ts": tangled("tangle"),
       "src/kernel/two-classes.ts": twoClasses(""),
       "src/kernel/long-file.ts": constants(420, "v"),
+      "src/kernel/two-classes.error.ts": twoClasses("Errors"),
+      "src/kernel/long-file.error.ts": constants(420, "e"),
+      "src/kernel/tangled.error.ts": tangled("tangleErrors"),
       "src/kernel/four-params.ts": fourParams(""),
       "src/kernel/at-limit-function.ts": `${longFunction("fifty", 48)}export const one = (): number => 1;\nexport const two = (): number => 2;\n`,
       "src/kernel/at-limit-file.ts": constants(400, "w"),
@@ -768,6 +781,12 @@ describe("the size guards bite", () => {
 
   it("flags nothing at the limit", () => {
     expect(sizeFindings("src/kernel/at-limit")).toEqual([]);
+  });
+
+  it("spares an error file the class and line caps, and no other guard", () => {
+    expect(sizeFindings("src/kernel/two-classes.error.ts")).toEqual([]);
+    expect(sizeFindings("src/kernel/long-file.error.ts")).toEqual([]);
+    expect(sizeFindings("src/kernel/tangled.error.ts")).toHaveLength(1);
   });
 
   it("applies none of the six under tests/", () => {
