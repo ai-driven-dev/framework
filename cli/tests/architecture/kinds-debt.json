@@ -46,11 +46,8 @@
   "translate": [],
   "size": [],
   "limits": [],
-  "toolNames": [
-    "src/contexts/tools/domain/profile/foreign-suffix-filter.ts: 7",
-    "src/contexts/telemetry/contract/usage-record.ts: 1"
-  ],
-  "toolSites": ["src/composition/telemetry.ts: 2"],
+  "toolNames": ["src/contexts/tools/domain/profile/foreign-suffix-filter.ts: 7"],
+  "toolSites": [],
   "toolOwn": [],
   "toolIdentifiers": [],
   "exemptProcessExit": [],

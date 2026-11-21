@@ -28,7 +28,6 @@ afterEach(async () => {
 function source(blockBytes?: number) {
   return new CodexTranscriptSourceAdapter({
     roots: [sessions, archived],
-    tool: "codex",
     blockBytes: blockBytes,
   });
 }
@@ -216,7 +215,6 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     const { lines, read } = await readLines(
       new CodexTranscriptSourceAdapter({
         roots: [sessions, archived],
-        tool: "codex",
         decompress: passesThrough,
       }),
       path,
@@ -248,7 +246,6 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     const { read } = await readLines(
       new CodexTranscriptSourceAdapter({
         roots: [sessions, archived],
-        tool: "codex",
         decompress: dropsLastByte,
       }),
       path,
@@ -297,7 +294,6 @@ describe("a Node with no zstd", () => {
     await writeFile(path, "not read");
     const adapter = new CodexTranscriptSourceAdapter({
       roots: [sessions, archived],
-      tool: "codex",
       decompress: null,
     });
     const { lines, read } = await readLines(adapter, path, null);

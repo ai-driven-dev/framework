@@ -30,13 +30,12 @@ function toolIds(files: readonly string[]): string[] {
 }
 
 /**
- * Files whose job is to wire tools together, so they name them by design. Admitted from the
- * violation scan, but each still held to the number of tools it was written around: a third
- * tool wired into one of them is caught by the count, never exempted by the admission. The list
- * is `toolSites` in `kinds-debt.json`: the one list of measured tools, each source in a folder
- * named for its tool.
+ * `usage-record.ts` is the one permanent exemption: `USAGE_TOOLS` is the vocabulary of tools
+ * stored in a user's ledger, kept by telemetry apart from `tools` so that a reader of one tool
+ * needs no edit to the record. It names `codex` once and is held to that count; a new tool's
+ * reader adds a value to it, which is the stored data changing, not a branch on the name.
  */
-const REGISTRATION_SITES = counted(DEBT.toolSites);
+const STORED_VOCABULARY = { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 };
 
 /**
  * A measured tool is a few files of readers. A file listed here names its own tool and no other,
@@ -56,10 +55,15 @@ function namesOnlyItsOwnTool(file: string, named: readonly string[]): boolean {
   return own !== undefined && named.every((id) => id === own);
 }
 
-function isAllowed(file: string, ids: readonly string[]): boolean {
-  if (file === "src/composition/tools.ts") return true;
-  if (REGISTRATION_SITES.some((site) => site.path === file)) return true;
-  return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
+/** A telemetry source reads one tool's files, so its folder is named for that tool, as a profile's is. */
+function isAllowed(file: string, ids: readonly string[], named: readonly string[] = []): boolean {
+  if (file === "src/composition/tools.ts" || file === STORED_VOCABULARY.path) return true;
+  return ids.some(
+    (id) =>
+      file.startsWith(`src/contexts/tools/domain/profiles/${id}/`) ||
+      (file.startsWith(`src/contexts/telemetry/infrastructure/sources/${id}/`) &&
+        named.every((name) => name === id))
+  );
 }
 
 const BLOCK_COMMENT = /\/\*[\s\S]*?\*\//g;
@@ -68,6 +72,9 @@ const LINE_COMMENT = /\/\/[^\n]*/g;
 function code(source: string): string {
   return source.replace(BLOCK_COMMENT, "").replace(LINE_COMMENT, "");
 }
+
+/** Composition registers a measured tool once, by importing its adapter from its own folder. */
+const SOURCE_IMPORT_PATH = /(["'])[^"']*\/telemetry\/infrastructure\/sources\/[^"']*\1/g;
 
 /**
  * Six forms force an edit: a quoted literal, an object key, a profile's import path, a
@@ -78,7 +85,7 @@ function code(source: string): string {
 function toolsNamedIn(source: string, ids: readonly string[]): string[] {
   const alternation = ids.join("|");
   const named = new Set<string>();
-  const body = code(source);
+  const body = code(source).replace(SOURCE_IMPORT_PATH, '""');
   const forms = [
     new RegExp(`["'\`](${alternation})["'\`]`, "g"),
     new RegExp(`(?:^|[\\s{,(])(${alternation})\\s*:`, "gm"),
@@ -102,9 +109,7 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
  * shrink, and a listed file may not take on another tool. The rest is host wiring and words
  * shown to a user. `foreign-suffix-filter.ts` is the foreign-file suffix
  * vocabulary, held equal to the registered AI profiles by conformance, and vanishes when the
- * profiles hand each section its own filter. `usage-record.ts` carries the contract's tool
- * vocabulary: `codex` is admitted so a second tool's reader needs no change to the record, and is
- * not a list a new tool joins. The list is `toolNames` in `kinds-debt.json`.
+ * profiles hand each section its own filter. The list is `toolNames` in `kinds-debt.json`.
  */
 const NAMING_DEBT = counted(DEBT.toolNames);
 
@@ -152,12 +157,10 @@ describe("a tool identifier stays inside its own profile", () => {
       "no profile directory found — the scope of this rule is stale"
     ).toBeGreaterThan(1);
 
-    const violations = files
-      .filter((file) => !isAllowed(file, ids))
-      .filter((file) => {
-        const named = toolsNamedIn(read(file), ids);
-        return named.length > 0 && !namesOnlyItsOwnTool(file, named);
-      });
+    const violations = files.filter((file) => {
+      const named = toolsNamedIn(read(file), ids);
+      return named.length > 0 && !isAllowed(file, ids, named) && !namesOnlyItsOwnTool(file, named);
+    });
 
     const { added, fixed } = expectRatchet(
       violations,
@@ -177,7 +180,7 @@ describe("a tool identifier stays inside its own profile", () => {
 
   it("holds each admitted file to the number of tools its reason was written around", () => {
     const ids = toolIds(sourceFiles());
-    const held = [...NAMING_DEBT, ...REGISTRATION_SITES];
+    const held = [...NAMING_DEBT, STORED_VOCABULARY];
     const recorded = held.map(({ path, named }) => `${path}: ${named}`);
     const actual = held.map(({ path }) => `${path}: ${toolsNamedIn(read(path), ids).length}`);
 
@@ -221,6 +224,28 @@ describe("the guard itself", () => {
       toolsNamedIn('join(root, ".cursor", "hooks.json")', ["cursor"]),
       "a dotfile directory literal"
     ).toEqual(["cursor"]);
+  });
+
+  it("admits a telemetry source naming only its own tool, and no other file there", () => {
+    const ids = ["claude", "codex"];
+    const own = "src/contexts/telemetry/infrastructure/sources/codex/codex-session-roots.ts";
+
+    expect(isAllowed(own, ids, ["codex"]), "its own tool").toBe(true);
+    expect(isAllowed(own, ids, ["claude", "codex"]), "a neighbour's too").toBe(false);
+    expect(
+      isAllowed("src/contexts/telemetry/infrastructure/sources/transcript-files.ts", ids, [
+        "codex",
+      ]),
+      "outside any tool's folder"
+    ).toBe(false);
+  });
+
+  it("lets composition register a telemetry source by its import, and nothing else of the tool", () => {
+    const ids = ["claude", "codex"];
+    const path = "../contexts/telemetry/infrastructure/sources/codex/codex-session-roots.js";
+
+    expect(toolsNamedIn(`import { roots } from "${path}";`, ids), "the registration").toEqual([]);
+    expect(toolsNamedIn(`roots("codex");`, ids), "a literal beside it").toEqual(["codex"]);
   });
 
   it("flags a planted dotfile literal outside the baseline the way a real one would be", () => {

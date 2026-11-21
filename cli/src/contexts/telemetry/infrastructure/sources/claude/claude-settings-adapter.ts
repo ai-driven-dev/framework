@@ -7,7 +7,7 @@ export class ClaudeSettingsAdapter implements RetentionSettingsSource {
   constructor(
     private readonly claudeConfigDir: string,
     /** The directory a project keeps its Claude Code settings in. */
-    private readonly projectDir: string
+    private readonly projectDir = ".claude"
   ) {}
 
   async texts(root: string): Promise<readonly (string | null)[]> {

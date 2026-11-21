@@ -29,6 +29,8 @@ import {
 } from "../transcript-files.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
+/** The id the records carry. */
+const TOOL: UsageTool = "codex";
 const COMPRESSED = ".zst";
 /** What zlib names a stream it cannot decompress by: `Z_…` or `ZSTD_error_…`, never an I/O code. */
 const UNDECOMPRESSABLE = /^Z(STD)?_/;
@@ -43,21 +45,17 @@ function unread(since: TranscriptPosition | null, reason: string): LinesRead {
  * `.jsonl.zst`: that one is read whole, once, as a stream. */
 export class CodexTranscriptSourceAdapter implements UsageSource {
   private readonly roots: readonly string[];
-  private readonly tool: UsageTool;
   private readonly decompress: (() => Duplex) | null;
   private readonly blockBytes: number;
 
   constructor(options: {
     readonly roots: readonly string[];
-    /** The id the records carry. */
-    readonly tool: UsageTool;
     /** Absent from a Node whose zlib has no zstd. */
     readonly decompress?: (() => Duplex) | null;
     /** How much of a plain file is read at once. */
     readonly blockBytes?: number;
   }) {
     this.roots = options.roots;
-    this.tool = options.tool;
     this.decompress =
       options.decompress === undefined ? (zlib.createZstdDecompress ?? null) : options.decompress;
     this.blockBytes = options.blockBytes ?? 1 << 20;
@@ -130,6 +128,6 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
   }
 
   decode(line: string, context?: unknown): LineUsage {
-    return decodeCodexLine(line, context, this.tool);
+    return decodeCodexLine(line, context, TOOL);
   }
 }
