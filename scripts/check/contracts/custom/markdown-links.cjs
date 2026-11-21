@@ -1,6 +1,6 @@
 "use strict";
 // Every markdown link, `@import` and `src:` target of the repository's markdown resolves, anchors included. Anchor: README.md.
-// The logic of the former scripts/check-markdown-links.js, bound to a root so a fixture tree can be checked.
+// The logic of the former check-markdown-links script, bound to a root so a fixture tree can be checked.
 const fs = require("node:fs");
 const path = require("node:path");
 

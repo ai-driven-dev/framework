@@ -5,7 +5,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, before, after } = require("node:test");
 
-const SKILL = path.resolve(__dirname, "../../plugins/aidd-dev/skills/01-plan");
+const SKILL = path.resolve(__dirname, "../../../plugins/aidd-dev/skills/01-plan");
 
 /**
  * The templates are the contract the validator enforces, so a plan filled from them passes and each

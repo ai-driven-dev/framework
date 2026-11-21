@@ -1,16 +1,14 @@
 pre-commit:
   output: true
   commands:
-    json-validity:
-      glob: "**/*.json"
-      exclude:
-        - "cli/tests/fixtures/**"
+    framework-content:
+      # The one content check: contracts and generated docs. --fix regenerates. stage_fixed
+      # re-stages only the staged files, so the generated outputs are added by name.
+      # Given no staged file lefthook skips it; CI runs the full check itself.
       run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo '❌ node not available; cannot validate JSON'
-          exit 1
-        fi
-        node scripts/validate-json.mjs {files}
+        node scripts/check/run.cjs --fix {staged_files} || exit 1
+        git add -u -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md'
+      stage_fixed: true
     yaml-validity:
       glob: "**/*.{yml,yaml}"
       exclude:
@@ -22,7 +20,10 @@ pre-commit:
         fi
         node scripts/validate-yaml.mjs {files}
     scripts-tests:
-      glob: "{scripts,plugins,cli/src}/**"
+      glob:
+        - "scripts/**/*.{js,cjs,mjs}"
+        - "plugins/**/*.{js,cjs,mjs}"
+        - "cli/src/**/*.{js,cjs,mjs}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping scripts-tests'
@@ -39,21 +40,10 @@ pre-commit:
         # assertion and destroys an install nothing can restore — `.git` is in no history.
         node scripts/check-tests-leave-git-alone.js -- \
           node --test 'scripts/__tests__/**/*.test.js'
-    skill-frontmatter:
-      glob: "plugins/*/skills/*/SKILL.md"
-      run: |
-        for f in {files}; do
-          [ -f $f ] || continue
-          if ! head -10 $f | grep -q '^name:'; then
-            echo '❌ missing name: frontmatter:' $f
-            exit 1
-          fi
-          if ! head -10 $f | grep -q '^description:'; then
-            echo '❌ missing description: frontmatter:' $f
-            exit 1
-          fi
-        done
     recipe-validity:
+      glob:
+        - "aidd_docs/recipes/**"
+        - "plugins/aidd-context/skills/12-cook/assets/recipes/**"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo '❌ node not available; cannot validate recipes'
@@ -62,109 +52,24 @@ pre-commit:
         pnpm --dir cli build && \
         AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all \
           --bundled plugins/aidd-context/skills/12-cook/assets/recipes
-    check-skill-argument-hints:
-      glob: "plugins/*/skills/**"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping check-skill-argument-hints'
-          exit 0
-        fi
-        node scripts/check-skill-argument-hints.mjs
     architecture-rules:
-      glob: "plugins/*/{skills,agents}/**/*.md"
+      # Router coherence for a skill with no flowchart, until no SKILL-06 no-flowchart finding is baselined.
+      glob: "plugins/*/skills/*/SKILL.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping architecture-rules'
           exit 0
         fi
         node scripts/check-architecture-rules.js {files}
-    context-imports:
-      # Two patterns: "**/" needs a literal slash, so it never matches a repository-root file.
-      glob:
-        - "{CLAUDE,AGENTS,copilot-instructions}.md"
-        - "**/{CLAUDE,AGENTS,copilot-instructions}.md"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping context-imports'
-          exit 0
-        fi
-        node scripts/check-context-imports.js
-    context-reference-form:
-      # The whole repository, not the staged files: the hook rewrites every target at once,
-      # so a partial view could call one file clean while its sibling drifted.
-      glob:
-        - "{CLAUDE,AGENTS,copilot-instructions}.md"
-        - "**/{CLAUDE,AGENTS,copilot-instructions}.md"
-        - "plugins/aidd-context/hooks/memory.cjs"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping context-reference-form'
-          exit 0
-        fi
-        node scripts/check-context-reference-form.js
-    referenced-paths:
-      glob: "{*.md,docs/**,aidd_docs/memory/**}"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping referenced-paths'
-          exit 0
-        fi
-        node scripts/check-referenced-paths.js
-    hook-rule-copies:
-      glob: "{plugins/*/hooks/**/*.cjs,cli/assets/hooks-runtime/host-claude.cjs}"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping hook-rule-copies'
-          exit 0
-        fi
-        node scripts/check-hook-rule-copies.js
-
-    doc-duplication:
-      glob: "**/*.md"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping doc-duplication'
-          exit 0
-        fi
-        node scripts/check-doc-duplication.js
-
-    markdown-links:
-      glob: "**/*.md"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping markdown-links'
-          exit 0
-        fi
-        # Both ignored trees hold deliberately unresolvable targets — fixture paths and
-        # `@src/foo.ts` agent mentions — not links a reader is meant to follow.
-        node scripts/check-markdown-links.js --ignore cli/tests/fixtures --ignore cli/aidd_docs/tasks
-    no-local-paths:
-      # Every text file, task evidence included: a path from one machine leaks its owner and
-      # stays in history once pushed. CI runs this hook with --all-files, so every tracked file.
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping no-local-paths'
-          exit 0
-        fi
-        node scripts/check-no-local-paths.js {staged_files}
-    summarize-plugin-catalogs:
-      run: sh scripts/summarize-plugin-catalogs.sh
-    sync-readme-counts:
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo 'ℹ️  node not available; skipping sync-readme-counts'
-          exit 0
-        fi
-        node scripts/sync-readme-counts.mjs >/dev/null
-        git add README.md 2>/dev/null || true
     sync-generated-docs:
+      # Reads the CLI's tool-support record, so it stays outside run.cjs.
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping sync-generated-docs'
           exit 0
         fi
         node scripts/sync-generated-docs.mjs >/dev/null
-        git add README.md docs/ARCHITECTURE.md docs/COMPATIBILITY.md docs/assets/plugins 2>/dev/null || true
+        git add README.md docs/COMPATIBILITY.md 2>/dev/null || true
     cli-biome:
       glob: "cli/**"
       run: cd cli && pnpm lint

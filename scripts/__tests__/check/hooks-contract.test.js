@@ -31,14 +31,6 @@ function validate(config) {
 }
 
 describe("hooks contract", () => {
-  it("accepts every real hooks.json of the repository", () => {
-    for (const name of fs.readdirSync(path.join(ROOT, "plugins"))) {
-      const file = path.join(ROOT, "plugins", name, "hooks/hooks.json");
-      if (!fs.existsSync(file)) continue;
-      assert.deepEqual({ name, ...lint(file) }, { name, code: 0, out: "" });
-    }
-  });
-
   it("accepts a handler marked async", () => {
     assert.deepEqual(validate(entry({ async: true })), { code: 0, out: "" });
   });

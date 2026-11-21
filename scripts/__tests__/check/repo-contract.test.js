@@ -38,10 +38,6 @@ function ids(file, from, to) {
 }
 
 describe("repo contract", () => {
-  it("accepts the real repository", () => {
-    assert.deepEqual(findings(CONTRACT, path.join(ROOT, ".claude-plugin/marketplace.json")), []);
-  });
-
   it("flags a plugin missing from the build matrix", () => {
     assert.deepEqual(ids(".github/workflows/ci.yml", "            aidd-qa,\n", ""), ["REPO-02"]);
   });
