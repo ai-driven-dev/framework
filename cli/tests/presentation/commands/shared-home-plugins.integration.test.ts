@@ -32,11 +32,20 @@ const userPlugins = () => join(home, ".cursor", "plugins", "local");
 const names = "aidd-context,aidd-dev";
 
 describe("two projects on one home that installed the same cursor plugins", () => {
-  it("removes one machine-owned plugin only after both projects detach", async () => {
+  it("gives each project its hooks, records both as dependents, and removes the plugin only after both detach", async () => {
     for (const cwd of [first, second]) {
       const setup = await aidd(setupFromFixture("cursor", names), cwd);
       expect(setup.exitCode, setup.stderr).toBe(0);
+      expect(await readFile(join(cwd, ".cursor", "hooks.json"), "utf-8")).toContain(
+        "update_memory"
+      );
     }
+    const machine = Manifest.fromJSON(
+      JSON.parse(await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")),
+      resolveRegisteredToolId
+    );
+    const owned = machine.getPlugins(TOOL.cursor).find((plugin) => plugin.name === "aidd-context");
+    expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
     const contextDir = join(userPlugins(), "aidd-context");
     const devDir = join(userPlugins(), "aidd-dev");
     const remove = ["plugin", "remove", "aidd-context", "--tool", "cursor", "--scope", "user"];
@@ -54,23 +63,6 @@ describe("two projects on one home that installed the same cursor plugins", () =
     expect(existsSync(contextDir)).toBe(false);
     expect(existsSync(devDir)).toBe(true);
     expect((await aidd(["clean", "--scope", "user", "--force"], first)).exitCode).toBe(0);
-  });
-
-  it("gives each project its hooks and records both as dependents of the machine-owned plugin", async () => {
-    for (const cwd of [first, second]) {
-      const setup = await aidd(setupFromFixture("cursor", names), cwd);
-      expect(setup.exitCode, setup.stderr).toBe(0);
-      expect(await readFile(join(cwd, ".cursor", "hooks.json"), "utf-8")).toContain(
-        "update_memory"
-      );
-    }
-
-    const machine = Manifest.fromJSON(
-      JSON.parse(await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")),
-      resolveRegisteredToolId
-    );
-    const owned = machine.getPlugins(TOOL.cursor).find((plugin) => plugin.name === "aidd-context");
-    expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
   });
 
   it("updates only the selected machine plugin and names dependent projects", async () => {
