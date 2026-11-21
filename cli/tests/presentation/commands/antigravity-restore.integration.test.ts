@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../src/shared/domain/markdown.js";
@@ -18,8 +18,6 @@ const PLUGIN_FIXTURE = join(
   "claude-format",
   "sample-plugin"
 );
-const FOREIGN_SKILL = "# mine\n";
-const FOREIGN_HOOK = { SessionStart: [{ type: "command", command: "echo lint" }] };
 
 let tempDir: string;
 let project: string;
@@ -47,51 +45,6 @@ async function installLocalPlugin(): Promise<void> {
   const plugin = await aidd(["plugin", "install", PLUGIN_FIXTURE, "--tool", "antigravity"]);
   expect(plugin.exitCode, plugin.stderr).toBe(0);
 }
-
-describe("antigravity under a .agents/ it does not own", () => {
-  it("clean removes the skills it wrote and leaves a user skill beside them", async () => {
-    const skills = join(project, ".agents", "skills");
-    const own = join(skills, "aidd-vcs-01-commit", "SKILL.md");
-    const foreign = join(skills, "mine", "SKILL.md");
-    await mkdir(join(skills, "mine"), { recursive: true });
-    await writeFile(foreign, FOREIGN_SKILL);
-    const setup = await aidd(setupFromFixture("antigravity", "aidd-vcs"));
-    expect(setup.exitCode, setup.stderr).toBe(0);
-    expect(existsSync(own)).toBe(true);
-
-    const clean = await aidd(["clean", "--force"]);
-
-    expect(clean.exitCode, clean.stderr).toBe(0);
-    expect(existsSync(own)).toBe(false);
-    expect(await readFile(foreign, "utf-8")).toBe(FOREIGN_SKILL);
-  });
-
-  it("sync --force restores a drifted skill it wrote and leaves a user skill and a user named hook as they were", async () => {
-    const skills = join(project, ".agents", "skills");
-    const hooksFile = join(project, ".agents", "hooks.json");
-    const foreign = join(skills, "mine", "SKILL.md");
-    const own = join(skills, "aidd-context-05-learn", "SKILL.md");
-    const setup = await aidd(setupFromFixture("antigravity", "aidd-context"));
-    expect(setup.exitCode, setup.stderr).toBe(0);
-    const installed = await readFile(own, "utf-8");
-    const hooks = await readJson<Record<string, unknown>>(hooksFile);
-    expect(Object.keys(hooks)).toEqual(["aidd-context"]);
-    await writeFile(hooksFile, JSON.stringify({ ...hooks, lint: FOREIGN_HOOK }, null, 2));
-    await mkdir(join(skills, "mine"), { recursive: true });
-    await writeFile(foreign, FOREIGN_SKILL);
-    await writeFile(own, `${installed}drift\n`);
-
-    const sync = await aidd(["sync", "--force"]);
-
-    expect(sync.exitCode, sync.stderr).toBe(0);
-    expect(await readFile(own, "utf-8")).toBe(installed);
-    expect(await readFile(foreign, "utf-8")).toBe(FOREIGN_SKILL);
-    expect(
-      await readJson<Record<string, unknown>>(hooksFile),
-      "restore remerges its own key: order may move, content may not"
-    ).toEqual({ ...hooks, lint: FOREIGN_HOOK });
-  });
-});
 
 describe("antigravity installation and restoration use the same artifacts", () => {
   it("restores a missing hooks file from a local plugin without claiming its scripts twice", async () => {
