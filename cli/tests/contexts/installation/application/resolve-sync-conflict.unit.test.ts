@@ -4,137 +4,34 @@ import { FileHash } from "../../../../src/shared/domain/file.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const DISK_PATH = "/project/target.md";
-const CONTENT_A = "content A";
-const CONTENT_B = "content B";
+const RELATIVE_PATH = "target.md";
 
-function buildDeps() {
+async function conflictOver(disk: string | null, recorded: string | null): Promise<boolean> {
   const fs = new InMemoryFileAdapter({});
-  const resolver = new ResolveSyncConflict(fs);
-  return { fs, resolver };
+  if (disk !== null) await fs.writeFile(DISK_PATH, disk);
+  return new ResolveSyncConflict(fs).execute({
+    diskTargetPath: DISK_PATH,
+    targetRelativePath: RELATIVE_PATH,
+    targetManifestMap: new Map(
+      recorded === null ? [] : [[RELATIVE_PATH, { value: FileHash.of(recorded).value }]]
+    ),
+  });
 }
 
 describe("ResolveSyncConflict", () => {
-  describe("resolveWriteOutcome", () => {
-    it("returns skipped when target content is identical to transformed content", async () => {
-      const { fs, resolver } = buildDeps();
-      await fs.writeFile(DISK_PATH, CONTENT_A);
-      const targetManifestMap = new Map([["target.md", { value: "any-hash" }]]);
-
-      const result = await resolver.resolveWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        diskTargetExists: true,
-        targetRelativePath: "target.md",
-        targetManifestMap,
-        targetContent: CONTENT_A,
-        force: false,
-      });
-
-      expect(result).toEqual({ outcome: "skipped", conflict: false });
-    });
-
-    it("returns conflict when target differs from manifest hash and force is false", async () => {
-      const { fs, resolver } = buildDeps();
-      await fs.writeFile(DISK_PATH, CONTENT_B);
-      const manifestHash = FileHash.of(CONTENT_A).value;
-      const targetManifestMap = new Map([["target.md", { value: manifestHash }]]);
-
-      const result = await resolver.resolveWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        diskTargetExists: true,
-        targetRelativePath: "target.md",
-        targetManifestMap,
-        targetContent: CONTENT_A,
-        force: false,
-      });
-
-      expect(result).toEqual({ outcome: "conflict", conflict: true });
-    });
-
-    it("returns write with conflict=true when force overrides a detected conflict", async () => {
-      const { fs, resolver } = buildDeps();
-      await fs.writeFile(DISK_PATH, CONTENT_B);
-      const manifestHash = FileHash.of(CONTENT_A).value;
-      const targetManifestMap = new Map([["target.md", { value: manifestHash }]]);
-
-      const result = await resolver.resolveWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        diskTargetExists: true,
-        targetRelativePath: "target.md",
-        targetManifestMap,
-        targetContent: CONTENT_A,
-        force: true,
-      });
-
-      expect(result).toEqual({ outcome: "write", conflict: true });
-    });
-
-    it("returns write with conflict=false when target does not exist yet", async () => {
-      const { resolver } = buildDeps();
-      const targetManifestMap = new Map<string, { value: string }>();
-
-      const result = await resolver.resolveWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        diskTargetExists: false,
-        targetRelativePath: "target.md",
-        targetManifestMap,
-        targetContent: CONTENT_A,
-        force: false,
-      });
-
-      expect(result).toEqual({ outcome: "write", conflict: false });
-    });
+  it("finds a conflict when the file on disk changed since the manifest recorded it", async () => {
+    expect(await conflictOver("edited", "installed")).toBe(true);
   });
 
-  describe("resolvePluginWriteOutcome", () => {
-    it("returns skipped when disk content matches target content", async () => {
-      const { fs, resolver } = buildDeps();
-      await fs.writeFile(DISK_PATH, CONTENT_A);
+  it("finds no conflict when the file still matches what the manifest recorded", async () => {
+    expect(await conflictOver("installed", "installed")).toBe(false);
+  });
 
-      const outcome = await resolver.resolvePluginWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        targetContent: CONTENT_A,
-        force: false,
-      });
+  it("finds no conflict for a missing file", async () => {
+    expect(await conflictOver(null, "installed")).toBe(false);
+  });
 
-      expect(outcome).toBe("skipped");
-    });
-
-    it("returns conflict when file exists with different content and force is false", async () => {
-      const { fs, resolver } = buildDeps();
-      await fs.writeFile(DISK_PATH, CONTENT_A);
-
-      const outcome = await resolver.resolvePluginWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        targetContent: CONTENT_B,
-        force: false,
-      });
-
-      expect(outcome).toBe("conflict");
-    });
-
-    it("returns write when force is true even if file exists", async () => {
-      const { fs, resolver } = buildDeps();
-      await fs.writeFile(DISK_PATH, CONTENT_A);
-
-      const outcome = await resolver.resolvePluginWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        targetContent: CONTENT_B,
-        force: true,
-      });
-
-      expect(outcome).toBe("write");
-    });
-
-    it("returns write when file does not exist", async () => {
-      const { resolver } = buildDeps();
-
-      const outcome = await resolver.resolvePluginWriteOutcome({
-        diskTargetPath: DISK_PATH,
-        targetContent: CONTENT_A,
-        force: false,
-      });
-
-      expect(outcome).toBe("write");
-    });
+  it("finds no conflict for a file the manifest never recorded", async () => {
+    expect(await conflictOver("anything", null)).toBe(false);
   });
 });

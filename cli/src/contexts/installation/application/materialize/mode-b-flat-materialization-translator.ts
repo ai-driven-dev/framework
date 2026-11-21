@@ -63,13 +63,13 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       projectRoot,
       mcp.outputRelPath
     );
-    const hooks = await this.projectHooks.materializeWithProvenance(
+    const hooks = await this.projectHooks.execute({
       dist,
       tool,
       projectRoot,
-      previousProjectHooks,
-      hooksGuard
-    );
+      previous: previousProjectHooks,
+      guard: hooksGuard,
+    });
     const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
     if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
       return { skipped: allSkipped };

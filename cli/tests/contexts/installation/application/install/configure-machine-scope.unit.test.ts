@@ -9,28 +9,30 @@ function setup(seed: Manifest | null = null) {
   return { repo, useCase: new ConfigureMachineScope(repo, { get: () => "9.9.9" }) };
 }
 
+const held = async (created: boolean) => created;
+
 describe("ConfigureMachineScope", () => {
-  describe("initialize", () => {
-    it("creates the machine manifest when there is none, and says so", async () => {
+  describe("given no machine manifest", () => {
+    it("creates it and tells the body it did", async () => {
       const { repo, useCase } = setup();
 
-      expect(await useCase.initialize()).toBe(true);
+      expect(await useCase.execute({ toolIds: [], whileHeld: held })).toBe(true);
       expect(repo.getCurrent()).not.toBeNull();
-    });
-
-    it("leaves an existing manifest alone, and says so", async () => {
-      const { repo, useCase } = setup(Manifest.create());
-
-      expect(await useCase.initialize()).toBe(false);
-      expect(repo.saveCount).toBe(0);
     });
   });
 
-  describe("registerTools", () => {
+  describe("given a machine manifest", () => {
+    it("leaves it alone and tells the body it was there", async () => {
+      const { repo, useCase } = setup(Manifest.create());
+
+      expect(await useCase.execute({ toolIds: [], whileHeld: held })).toBe(false);
+      expect(repo.saveCount).toBe(0);
+    });
+
     it("adds each requested tool with no files, under the running version", async () => {
       const { repo, useCase } = setup(Manifest.create());
 
-      await useCase.registerTools([TOOL.claude, TOOL.opencode]);
+      await useCase.execute({ toolIds: [TOOL.claude, TOOL.opencode], whileHeld: held });
 
       const manifest = repo.getCurrent();
       expect(manifest?.getInstalledToolIds()).toEqual([TOOL.claude, TOOL.opencode]);
@@ -43,24 +45,21 @@ describe("ConfigureMachineScope", () => {
       seed.addTool(TOOL.claude, "1.0.0", []);
       const { repo, useCase } = setup(seed);
 
-      await useCase.registerTools([TOOL.claude]);
+      await useCase.execute({ toolIds: [TOOL.claude], whileHeld: held });
 
       expect(repo.getCurrent()?.getToolVersion(TOOL.claude)).toBe("1.0.0");
       expect(repo.saveCount).toBe(0);
     });
-
-    it("records nothing when there is no manifest to record into", async () => {
-      const { repo, useCase } = setup();
-
-      await useCase.registerTools([TOOL.claude]);
-
-      expect(repo.getCurrent()).toBeNull();
-    });
   });
 
-  it("runs an action holding the machine lock and returns its result", async () => {
-    const { useCase } = setup();
+  it("runs the body holding the machine lock and returns its result", async () => {
+    const { repo, useCase } = setup();
 
-    expect(await useCase.whileLocked(async () => "done")).toBe("done");
+    const result = await useCase.execute({
+      toolIds: [TOOL.claude],
+      whileHeld: async () => repo.getCurrent()?.getInstalledToolIds(),
+    });
+
+    expect(result).toEqual([TOOL.claude]);
   });
 });

@@ -26,10 +26,7 @@ export type SyncMachineScope = (options: {
  */
 export class SetupMachineScope {
   constructor(
-    private readonly configureMachineScope: Pick<
-      ConfigureMachineScope,
-      "whileLocked" | "initialize" | "registerTools"
-    >,
+    private readonly configureMachineScope: Pick<ConfigureMachineScope, "execute">,
     private readonly resolveSource: Pick<ResolveSetupSource, "execute">,
     private readonly register: RegisterFrameworkSource,
     private readonly syncMachineScope: SyncMachineScope,
@@ -38,16 +35,18 @@ export class SetupMachineScope {
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
     const source = await this.resolveSource.execute(flow);
-    return this.configureMachineScope.whileLocked(() => this.executeLocked(flow, source));
+    return this.configureMachineScope.execute({
+      toolIds: flow.aiTools,
+      whileHeld: (isNew) => this.executeLocked(flow, source, isNew),
+    });
   }
 
   private async executeLocked(
     flow: SetupFlow,
-    source: Awaited<ReturnType<ResolveSetupSource["execute"]>>
+    source: Awaited<ReturnType<ResolveSetupSource["execute"]>>,
+    isNew: boolean
   ): Promise<SetupResult> {
-    const isNew = await this.configureMachineScope.initialize();
     await this.register(flow, source);
-    await this.configureMachineScope.registerTools(flow.aiTools);
     const plugins = await this.installGlobalPlugins(flow);
     const activation = await this.syncMachineScope({
       projectRoot: flow.projectRoot,
