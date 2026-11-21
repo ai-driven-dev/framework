@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
+import { translateBuildLayout } from "../../domain/build-layout/index.js";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../domain/canon-format.js";
 import {
   MarketplaceOutDirNotEmptyError,
@@ -49,8 +50,12 @@ export class DiskSink implements PluginTreeSink {
     const plugin = { name: pluginName, src: pluginSrc };
     const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
     const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
+    const built = translateBuildLayout(canon, t.contract, t.mode);
+    for (const file of built)
+      await this.deps.fs.writeFile(join(t.outDir, file.relativePath), file.content);
     return (
       manifest +
+      built.length +
       (await writePluginAgents(this.deps, t, plugin)) +
       (await writePluginSkills(this.deps, t, plugin)) +
       (await writePluginHooks(this.deps, t, plugin)) +

@@ -14,7 +14,7 @@ export interface TranslatedAiTool {
   readonly kind: "ai";
   readonly toolId: AiToolId;
   readonly directory: string;
-  buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
+  buildContract(mode: FrameworkBuildMode, provider?: string): ToolBuildContract | null;
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
   rewriteContent(content: string): string;
   plugins(): PluginAnswers | null;

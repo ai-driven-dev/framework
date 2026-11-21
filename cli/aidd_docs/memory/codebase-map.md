@@ -132,6 +132,7 @@ src/
 │   │   │   └── sinks/
 │   │   ├── contract/
 │   │   ├── domain/
+│   │   │   └── build-layout/
 │   │   ├── infrastructure/
 │   │   └── ports/
 │   └── update/    # replacing the installed CLI, and the notice that one exists

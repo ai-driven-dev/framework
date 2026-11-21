@@ -4,7 +4,6 @@ import { assertNoToolsPlaceholder } from "../../domain/tools-placeholder.js";
 import type { DiskSinkDeps, PluginSource } from "../../ports/disk-sink-deps.js";
 import type { SupportedArtifact } from "../../ports/flat-plugin-writer.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
-import { writeSkillTree } from "./write-skill-tree.js";
 
 type ContentDeps = Pick<DiskSinkDeps, "fs" | "flat">;
 
@@ -67,7 +66,8 @@ async function writeMarketplaceAgent(
   return 1;
 }
 
-/** One plugin's skills, in the marketplace layout or the flat one. Returns the files written. */
+/** One plugin's skills in the flat layout; the marketplace one is built by the engine. Returns the
+ * files written. */
 export async function writePluginSkills(
   deps: ContentDeps,
   t: DiskTarget,
@@ -75,15 +75,7 @@ export async function writePluginSkills(
 ): Promise<number> {
   const artifact = t.contract.artifacts.skills;
   if (!artifact.supported) return 0;
-  if (t.mode === "marketplace") {
-    return writeSkillTree({
-      fs: deps.fs,
-      pluginName: plugin.name,
-      pluginSrc: plugin.src,
-      pluginOut: join(t.outDir, "plugins", plugin.name),
-      transform: artifact.transform,
-    });
-  }
+  if (t.mode === "marketplace") return 0;
   const skillsSrc = join(plugin.src, "skills");
   let count = 0;
   for (const absPath of await deps.fs.listFilesRecursive(skillsSrc)) {
