@@ -2,6 +2,7 @@ import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { RecommendationContext } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, PluginAnswers } from "../contract/tool-profile.js";
+import type { HooksBrand, HooksDescriptor } from "./formats/hooks/descriptor.js";
 import type { NativeActivation } from "./native-registration/native-activation.js";
 import type { AgentsSection } from "./sections/agents-section.js";
 import type { CommandsSection } from "./sections/commands-section.js";
@@ -71,6 +72,7 @@ export interface AiTool<C extends ProfileSections = ProfileSections> extends AiT
   readonly signalDir: string | null;
   /** The tool's framework-build contracts, one per supported build mode, so the build registry
    * is derived from the registered tools instead of a hand-kept list of tool/mode pairs. */
+  readonly hooks?: HooksDescriptor & HooksBrand;
   readonly buildContracts: {
     readonly marketplace?: () => ToolBuildContract;
     readonly flat?: () => ToolBuildContract;

@@ -13,7 +13,10 @@ const ROOT = path.resolve(__dirname, "../..");
  */
 
 function pluginCacheDirSegments(profileFile) {
-  const text = fs.readFileSync(path.join(ROOT, "cli/src/contexts/tools/domain/profiles", profileFile), "utf8");
+  const [toolId] = profileFile.split("/");
+  const dir = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId);
+  const migrated = path.join(dir, `${toolId}.profile.ts`);
+  const text = fs.readFileSync(fs.existsSync(migrated) ? migrated : path.join(dir, "profile.ts"), "utf8");
   const match = text.match(/pluginCacheDir:\s*\(h\)\s*=>\s*join\(h,\s*([^)]+)\)/u);
   assert.ok(
     match,

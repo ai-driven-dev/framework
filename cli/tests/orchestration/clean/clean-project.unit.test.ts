@@ -5,7 +5,7 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import type { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -14,6 +14,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
@@ -558,7 +559,7 @@ describe("clean", () => {
 
     it("counts the project hooks file a cursor plugin was unmerged from", async () => {
       const pluginName = "aidd-context";
-      const scriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const manifest = Manifest.create();
       manifest.addTool(TOOL.cursor, "1.0.0", []);

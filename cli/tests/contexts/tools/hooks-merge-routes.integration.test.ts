@@ -5,7 +5,7 @@ import type { ToolBuildContract } from "../../../src/contexts/tools/contract/bui
 import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
@@ -17,6 +17,7 @@ import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js"
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const TOML = new SmolTomlCodec();
@@ -162,7 +163,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("cursor: .cursor/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".cursor/hooks/";
-    const fs = await flatMerge(buildCursorFlatContract(), {
+    const fs = await flatMerge(present(cursor.buildContracts.flat)(), {
       [`${OUT}/.cursor/hooks.json`]: JSON.stringify({
         version: 1,
         hooks: {

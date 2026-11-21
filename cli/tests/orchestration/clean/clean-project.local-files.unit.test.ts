@@ -6,7 +6,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -16,6 +16,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
@@ -46,7 +47,7 @@ describe("clean: local files", () => {
 
     it("deletes .cursor/hooks.json entirely once unmerging leaves it empty, and its script directory", async () => {
       const pluginName = "aidd-context";
-      const scriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const scriptContent = "// hook script";
       const manifest = Manifest.create();
@@ -94,7 +95,7 @@ describe("clean: local files", () => {
     it("keeps .cursor/hooks.json when another plugin's entries remain in it", async () => {
       const pluginName = "aidd-context";
       const otherPluginName = "aidd-dev";
-      const scriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const manifest = Manifest.create();
       manifest.addTool(TOOL.cursor, "1.0.0", []);
@@ -115,7 +116,10 @@ describe("clean: local files", () => {
       );
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
-      const otherScriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, otherPluginName);
+      const otherScriptMarker = pluginScriptDir(
+        present(cursor.hooks?.project).scriptsDir,
+        otherPluginName
+      );
       await fs.writeFile(
         hooksPath,
         JSON.stringify({
@@ -149,7 +153,7 @@ describe("clean: local files", () => {
 
     it("rejects an edited Cursor hook on a confirmed clean without --force, before dropping a shared source reference or touching native state", async () => {
       const pluginName = "aidd-context";
-      const scriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const scriptPath = join(PROJECT_ROOT, scriptMarker, "run.js");
       const installedScript = "// installed hook";

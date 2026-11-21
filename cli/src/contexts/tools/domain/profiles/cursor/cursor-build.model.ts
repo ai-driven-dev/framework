@@ -12,18 +12,19 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
+import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,
   synthesizeSharedManifest,
 } from "../../marketplace-catalog.js";
-import { cursorAgentFrontmatter } from "./cursor-agent.js";
-import {
-  OUTPUT_CURSOR_MANIFEST_RELATIVE,
-  OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
-} from "./cursor-paths.js";
-import { CURSOR_HOOKS } from "./hooks.js";
+import { cursorAgentFrontmatter } from "./cursor-agent.model.js";
+
+// Distinct from their source-side equivalents even where the literals coincide: a change to
+// either side must not collapse them.
+const OUTPUT_CURSOR_MANIFEST_RELATIVE = ".cursor-plugin/plugin.json";
+const OUTPUT_CURSOR_MARKETPLACE_RELATIVE = ".cursor-plugin/marketplace.json";
 
 function transformCursorAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
@@ -38,16 +39,19 @@ function transformCursorAgent(content: string, plugin: string, outName: string):
   );
 }
 
-export function buildCursorContract(): ToolBuildContract {
+type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
+
+export function buildCursorContract(hooks: HooksRouting): ToolBuildContract {
   const manifestRelative = OUTPUT_CURSOR_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CURSOR_MARKETPLACE_RELATIVE;
+  const namesHooks = hooks.manifestNamesHooks === true;
   return {
-    pluginRootToken: CURSOR_HOOKS.rootToken,
+    pluginRootToken: hooks.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeSharedManifest(source, presence, {
         agentsField: true,
-        hooksField: CURSOR_HOOKS.manifestNamesHooks,
+        hooksField: namesHooks,
       }),
     manifestSchemaName: "plugin-manifest",
     artifacts: {
@@ -67,7 +71,7 @@ export function buildCursorContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(CURSOR_HOOKS),
+      hooks: pluginTreeHooksArtifact(hooks),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -118,7 +122,7 @@ function transformCursorFlatAgent(content: string, plugin: string, outName: stri
   );
 }
 
-export function buildCursorFlatContract(): ToolBuildContract {
+export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -145,7 +149,7 @@ export function buildCursorFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },
-      hooks: flatHooksArtifact(CURSOR_HOOKS, { tool: "cursor" }),
+      hooks: flatHooksArtifact(hooks, { tool: "cursor" }),
       rules: { supported: false },
       commands: { supported: false },
     },

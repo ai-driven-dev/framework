@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildCursorContract,
-  buildCursorFlatContract,
-} from "../../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
+import { buildCursorContract } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor-build.model.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
+
+const HOOKS = present(cursor.hooks);
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -22,9 +23,9 @@ const AGENT_SOURCE = [
   "",
 ].join("\n");
 
-describe("buildCursorContract()", () => {
+describe("buildCursorContract(HOOKS)", () => {
   it("gives same-named plugin roles distinct native identities", () => {
-    const transform = supported(buildCursorContract().artifacts.agents).transform;
+    const transform = supported(buildCursorContract(HOOKS).artifacts.agents).transform;
     const first = transform?.(AGENT_SOURCE, "first-plugin", "planner.md") ?? "";
     const second = transform?.(AGENT_SOURCE, "second-plugin", "planner.md") ?? "";
     expect(parseFrontmatter(first).frontmatter.name).toBe("first-plugin-planner");
@@ -32,14 +33,14 @@ describe("buildCursorContract()", () => {
   });
 
   it("drops only the file's final .md from a plugin agent's name", () => {
-    const transform = supported(buildCursorContract().artifacts.agents).transform;
+    const transform = supported(buildCursorContract(HOOKS).artifacts.agents).transform;
     const output = transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md") ?? "";
 
     expect(parseFrontmatter(output).frontmatter.name).toBe("aidd-dev-read.md-first");
   });
 
   it("declares Cursor's own plugin manifest path, schema and root token", () => {
-    const contract = buildCursorContract();
+    const contract = buildCursorContract(HOOKS);
 
     expect({
       pluginRootToken: contract.pluginRootToken,
@@ -53,7 +54,7 @@ describe("buildCursorContract()", () => {
   });
 
   it("synthesizes a manifest naming the agents, skills, hooks file and mcp servers a plugin ships", () => {
-    const manifest = buildCursorContract().synthesizeManifest?.(
+    const manifest = buildCursorContract(HOOKS).synthesizeManifest?.(
       { name: "aidd-dev", description: "Development loop", version: "1.2.3" },
       {
         hasAgents: true,
@@ -76,7 +77,7 @@ describe("buildCursorContract()", () => {
   });
 
   it("keeps an agent's supported frontmatter and links its plugin-root references from agents/", () => {
-    const transform = supported(buildCursorContract().artifacts.agents).transform;
+    const transform = supported(buildCursorContract(HOOKS).artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -94,9 +95,9 @@ describe("buildCursorContract()", () => {
   });
 });
 
-describe("buildCursorFlatContract()", () => {
+describe("present(cursor.buildContracts.flat)()", () => {
   it("lands a plugin's hooks declaration beside Cursor's hooks and its scripts under the plugin's own folder", () => {
-    const hooks = supported(buildCursorFlatContract().artifacts.hooks);
+    const hooks = supported(present(cursor.buildContracts.flat)().artifacts.hooks);
 
     expect({
       declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
@@ -110,7 +111,7 @@ describe("buildCursorFlatContract()", () => {
   });
 
   it("adds a plugin's mcp servers to the workspace .cursor/mcp.json under mcpServers", () => {
-    const mcp = supported(buildCursorFlatContract().artifacts.mcp);
+    const mcp = supported(present(cursor.buildContracts.flat)().artifacts.mcp);
 
     expect({
       path: mcp.path("aidd-dev", ".mcp.json"),
@@ -130,7 +131,7 @@ describe("buildCursorFlatContract()", () => {
   });
 
   it("drops only the file's own .md from a flat agent's name", () => {
-    const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
+    const transform = supported(present(cursor.buildContracts.flat)().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md")).toMatch(
       /^name: "aidd-dev-read\.md-first"$/mu
@@ -138,7 +139,7 @@ describe("buildCursorFlatContract()", () => {
   });
 
   it("renames a flat agent after its plugin and points its references at their flat destinations", () => {
-    const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
+    const transform = supported(present(cursor.buildContracts.flat)().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -156,7 +157,7 @@ describe("buildCursorFlatContract()", () => {
   });
 
   it("strips only the leading agents/ or skills/ segment from a flat destination", () => {
-    const { agents, skills } = buildCursorFlatContract().artifacts;
+    const { agents, skills } = present(cursor.buildContracts.flat)().artifacts;
 
     expect(supported(agents).path("aidd-dev", "deep/agents/x.md")).toBe(
       ".cursor/agents/aidd-dev-deep/agents/x.md"
@@ -167,11 +168,24 @@ describe("buildCursorFlatContract()", () => {
   });
 
   it("resolves a flat agent's references from the folder its nested file lands in", () => {
-    const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
+    const transform = supported(present(cursor.buildContracts.flat)().artifacts.agents).transform;
     const source = `---\nname: x\n---\nAsk @${ROOT}/agents/reviewer.md\n`;
 
     expect(transform?.(source, "aidd-dev", "team/lead.md")).toContain(
       "Ask [reviewer.md](../aidd-dev-reviewer.md)"
     );
+  });
+});
+
+describe("an event Cursor does not fire", () => {
+  const notify = JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "a" }] }] } });
+
+  it("is skipped and reported under Cursor's name by a flat build", () => {
+    const hooks = supported(present(cursor.buildContracts.flat)().artifacts.hooks);
+    if (hooks.hooksFile === undefined) throw new Error("no hooks file");
+
+    expect(
+      hooks.hooksFile.merge(null, { json: notify, plugin: "p", locate: (path) => path }).warnings
+    ).toStrictEqual(["cursor: unmapped event 'Notification' skipped"]);
   });
 });

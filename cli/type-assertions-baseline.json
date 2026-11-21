@@ -27,7 +27,7 @@
   "src/contexts/tools/domain/profiles/claude/build.ts": 1,
   "src/contexts/tools/domain/profiles/codex/build.ts": 6,
   "src/contexts/tools/domain/profiles/copilot/profile.ts": 2,
-  "src/contexts/tools/domain/profiles/cursor/build.ts": 1,
+  "src/contexts/tools/domain/profiles/cursor/cursor-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/kilo/build.ts": 1,
   "src/contexts/tools/domain/profiles/opencode/build.ts": 1,
   "src/contexts/tools/domain/sections/mcp-section.ts": 2,

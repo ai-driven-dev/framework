@@ -8,12 +8,13 @@ import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats
 import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
 import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
-import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
 import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
+import { present } from "../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 /**
@@ -199,7 +200,7 @@ const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
   claude: CLAUDE_HOOKS,
   codex: CODEX_HOOKS,
   copilot: COPILOT_HOOKS,
-  cursor: CURSOR_HOOKS,
+  cursor: present(cursor.hooks),
   opencode: OPENCODE_HOOKS,
   kilo: KILO_HOOKS,
 };

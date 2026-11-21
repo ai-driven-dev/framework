@@ -5,7 +5,7 @@ import { antigravity } from "../contexts/tools/domain/profiles/antigravity/profi
 import { claude } from "../contexts/tools/domain/profiles/claude/profile.js";
 import { codexProfile } from "../contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../contexts/tools/domain/profiles/copilot/profile.js";
-import { cursor } from "../contexts/tools/domain/profiles/cursor/profile.js";
+import { cursor } from "../contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { kilo } from "../contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../contexts/tools/domain/profiles/opencode/profile.js";
 import { vscode } from "../contexts/tools/domain/profiles/vscode/profile.js";

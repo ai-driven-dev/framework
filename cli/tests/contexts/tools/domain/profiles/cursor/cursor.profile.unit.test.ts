@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
-import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import {
   expectClaudeStyleCatalog,
   pluginTreeShapeOf,
@@ -62,5 +62,32 @@ describe("cursor build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(cursor.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("cursor's hooks", () => {
+  it("name the plugin root by Cursor's own variable", () => {
+    expect(cursor.hooks?.rootToken).toBe("$" + "{CURSOR_PLUGIN_ROOT}");
+  });
+
+  it("rewrite a plugin's root token for the project hooks file, leaving a plugin-relative path outside hooks/ where it was", () => {
+    const shipped = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            hooks: [
+              { type: "command", command: "node $" + "{CLAUDE_PLUGIN_ROOT}/scripts/run.cjs" },
+            ],
+          },
+        ],
+      },
+    });
+    const format = cursor.projectHooksDelivery()?.format;
+    if (format === undefined) throw new Error("no project hooks");
+
+    expect(JSON.parse(format.merge(null, shipped, "plugin-a").content)).toStrictEqual({
+      version: 1,
+      hooks: { postToolUse: [{ command: "node scripts/run.cjs" }] },
+    });
   });
 });

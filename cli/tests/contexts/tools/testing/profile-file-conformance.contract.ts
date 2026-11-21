@@ -9,8 +9,8 @@ import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance
 export interface FileConformanceSubject extends ConformanceSubject {
   /** The directory names under `profiles/`. */
   readonly profileFolders: readonly string[];
-  /** The exports of `profiles/<id>/hooks.ts`, or `null` when the file does not exist. */
-  readonly hooksModule: Readonly<Record<string, unknown>> | null;
+  /** The tool's hooks descriptor, or `undefined` when it declares none. */
+  readonly hooks: object | undefined;
   /** The file names under the repository's hook-payload fixtures. */
   readonly payloadFixtures: readonly string[];
 }
@@ -36,8 +36,7 @@ function routeOf(value: unknown): HookEventRoute | undefined {
 }
 
 function declaredHooks(subject: FileConformanceSubject): DeclaredHooks | undefined {
-  const name = `${subject.profile.toolId.toUpperCase()}_HOOKS`;
-  const descriptor: unknown = subject.hooksModule === null ? undefined : subject.hooksModule[name];
+  const descriptor = subject.hooks;
   if (!isRecord(descriptor)) return undefined;
   const events = new Map<string, HookEventRoute>();
   const declared: unknown = Reflect.get(descriptor, "events");
@@ -117,13 +116,8 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
   },
   {
     title: "has a hooks descriptor exactly when it runs hooks",
-    holds: (subject) => expect(subject.hooksModule !== null).toBe(acceptsHooks(subject)),
+    holds: (subject) => expect(subject.hooks !== undefined).toBe(acceptsHooks(subject)),
   },
-  aiFileCheck("exports its descriptor under the tool's name", (subject) => {
-    if (subject.hooksModule === null) return;
-    const name = `${subject.profile.toolId.toUpperCase()}_HOOKS`;
-    expect(subject.hooksModule[name], name).toBeDefined();
-  }),
   aiFileCheck("relays only events its descriptor declares", (subject) => {
     const declared = declaredHooks(subject);
     if (declared?.adapter === undefined) return;

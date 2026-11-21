@@ -103,7 +103,6 @@ describe("every file is exactly one kind", () => {
     ["src/contexts/auth/infrastructure/credential-file.adapter.ts", "adapter"],
     ["src/presentation/terminal/prompter.ts", "adapter"],
     ["src/contexts/tools/domain/profiles/claude/claude.profile.ts", "profile"],
-    ["src/contexts/tools/domain/profiles/claude/profile.ts", "profile"],
     ["src/contexts/auth/domain/auth.error.ts", "error"],
     ["src/presentation/presentation.error.ts", "error"],
     ["src/presentation/presenters/auth.presenter.ts", "presenter"],

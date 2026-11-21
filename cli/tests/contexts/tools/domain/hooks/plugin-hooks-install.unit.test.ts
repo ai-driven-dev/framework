@@ -3,7 +3,7 @@ import type { AiTool, WithSections } from "../../../../../src/contexts/tools/dom
 import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
