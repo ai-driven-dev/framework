@@ -78,6 +78,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // container; 0.1% measured headroom.
 // 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
 // 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
+// 814 KB: 813.1 KB, the output port that ends a run, injected by the composition in place of a presentation function; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
