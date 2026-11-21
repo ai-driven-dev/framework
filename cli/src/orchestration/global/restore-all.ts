@@ -3,9 +3,9 @@ import type {
   OpenRestore,
   RestoreGlobal,
 } from "../../contexts/installation/application/restore/project/restore-global.js";
-import type { GlobalExecutionError } from "../../shared/domain/errors/global-execution-error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
+import type { GlobalExecutionError } from "../domain/global-execution.model.js";
 
 export interface RestoreAllResult {
   totalRestored: number;
