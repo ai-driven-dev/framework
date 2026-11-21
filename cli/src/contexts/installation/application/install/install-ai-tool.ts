@@ -7,6 +7,7 @@ import type {
   InstallRuntimeConfig,
   InstallRuntimeConfigResult,
 } from "./config/install-runtime-config.js";
+import { pluginsOnOtherTools } from "./plugins-on-other-tools.js";
 
 /** What native activation did for a run, as the command that asked for it reports it. */
 export interface NativeActivationReport {
@@ -103,9 +104,7 @@ export class InstallAiTool {
     if (freshManifest === null) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
     }
-    const plugins = this.collectUniquePlugins(freshManifest.getInstalledToolIds(), toolId, (id) =>
-      freshManifest.getPlugins(id)
-    );
+    const plugins = pluginsOnOtherTools(freshManifest, toolId);
     const propagated: string[] = [];
     const warnings: PropagationWarning[] = [];
     for (const plugin of plugins) {
@@ -123,25 +122,6 @@ export class InstallAiTool {
       propagationWarnings: warnings,
       activation,
     };
-  }
-
-  private collectUniquePlugins(
-    allToolIds: ToolId[],
-    excludeToolId: AiToolId,
-    getPlugins: (id: ToolId) => readonly InstalledPlugin[]
-  ): InstalledPlugin[] {
-    const seen = new Set<string>();
-    const result: InstalledPlugin[] = [];
-    for (const id of allToolIds) {
-      if (id === excludeToolId) continue;
-      for (const plugin of getPlugins(id)) {
-        if (!seen.has(plugin.name)) {
-          seen.add(plugin.name);
-          result.push(plugin);
-        }
-      }
-    }
-    return result;
   }
 
   private async propagatePlugin(request: {
