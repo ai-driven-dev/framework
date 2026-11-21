@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   CapabilityConfigError,
+  DualConfigError,
   DuplicateToolIdError,
   InvalidAgentFrontmatterError,
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
-  KiloDualConfigError,
-  OpencodeDualConfigError,
   ToolListMismatchError,
 } from "../../../../src/contexts/tools/domain/tools.error.js";
 
@@ -99,31 +98,30 @@ describe("InvalidToolProfileError", () => {
   });
 });
 
-describe("KiloDualConfigError", () => {
-  it("says exactly what went wrong", () => {
-    const error = new KiloDualConfigError();
+describe("DualConfigError", () => {
+  const kilo = "Kilo JSON and JSONC config variants exist at the same location";
+  const opencode = "opencode.json and opencode.jsonc exist";
+
+  it("says exactly what went wrong for kilo", () => {
+    const error = new DualConfigError("kilo", kilo);
     expect({ name: error.name, message: error.message }).toStrictEqual({
-      name: "KiloDualConfigError",
+      name: "DualConfigError",
       message: "Both Kilo JSON and JSONC config variants exist at the same location. Remove one.",
     });
   });
 
-  it("carries its stable code", () => {
-    expect(new KiloDualConfigError().code).toBe("kilo-dual-config");
+  it("says exactly what went wrong for opencode", () => {
+    expect(new DualConfigError("opencode", opencode).message).toBe(
+      "Both opencode.json and opencode.jsonc exist. Remove one."
+    );
   });
-});
 
-describe("OpencodeDualConfigError", () => {
-  it("says exactly what went wrong", () => {
-    const error = new OpencodeDualConfigError();
-    expect({ name: error.name, message: error.message }).toStrictEqual({
-      name: "OpencodeDualConfigError",
-      message: "Both opencode.json and opencode.jsonc exist. Remove one.",
+  it("carries its tool and its stable code", () => {
+    const error = new DualConfigError("kilo", kilo);
+    expect({ toolId: error.toolId, code: error.code }).toStrictEqual({
+      toolId: "kilo",
+      code: "dual-config",
     });
-  });
-
-  it("carries its stable code", () => {
-    expect(new OpencodeDualConfigError().code).toBe("opencode-dual-config");
   });
 });
 

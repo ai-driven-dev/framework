@@ -75,19 +75,14 @@ export class InvalidToolProfileError extends AiddError {
   }
 }
 
-export class KiloDualConfigError extends AiddError {
-  readonly code = "kilo-dual-config";
-  constructor() {
-    super("Both Kilo JSON and JSONC config variants exist at the same location. Remove one.");
-    this.name = "KiloDualConfigError";
-  }
-}
-
-export class OpencodeDualConfigError extends AiddError {
-  readonly code = "opencode-dual-config";
-  constructor() {
-    super("Both opencode.json and opencode.jsonc exist. Remove one.");
-    this.name = "OpencodeDualConfigError";
+export class DualConfigError extends AiddError {
+  readonly code = "dual-config";
+  constructor(
+    readonly toolId: string,
+    detail: string
+  ) {
+    super(`Both ${detail}. Remove one.`);
+    this.name = "DualConfigError";
   }
 }
 
