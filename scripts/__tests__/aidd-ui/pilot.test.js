@@ -310,9 +310,9 @@ describe("aidd-ui pilot step files", () => {
     }
   });
 
-  it("lets only the review rewrite the records it publishes, never a journey or the brand", () => {
-    assert.deepEqual(stepBreaks("06-review", {}, after("reviews/x.md", "wireframes/a.md", "components/b.md", "screens/c.md", "assets/d.md")), []);
-    assert.deepEqual(stepBreaks("06-review", {}, after("reviews/x.md", "journeys/a.md", "brand.md")), ["06-review wrote aidd_docs/ui/brand.md", "06-review wrote aidd_docs/ui/journeys/a.md"]);
+  it("lets only the review rewrite the records it publishes, the brand, the system and a journey included", () => {
+    assert.deepEqual(stepBreaks("06-review", {}, after("reviews/x.md", "wireframes/a.md", "components/b.md", "screens/c.md", "assets/d.md", "brand.md", "system.md", "journeys/a.md")), []);
+    assert.deepEqual(stepBreaks("06-review", {}, after("reviews/x.md", "tokens.json")), ["06-review wrote aidd_docs/ui/tokens.json"]);
     assert.deepEqual(stepBreaks("05-screens", {}, after("screens/x.md", "wireframes/a.md")), ["05-screens wrote aidd_docs/ui/wireframes/a.md"]);
     assert.deepEqual(stepBreaks("01-journeys", {}, after("journeys/x.md", "screens/a.md")), ["01-journeys wrote aidd_docs/ui/screens/a.md"]);
   });
@@ -320,11 +320,11 @@ describe("aidd-ui pilot step files", () => {
   it("lets each skill's step drive only these engine files", () => {
     assert.deepEqual(ENGINE_FILES, {
       "01-journeys": ["history.md", "showcase/"],
-      "02-brand": ["drafts/.gitignore", "showcase/"],
+      "02-brand": ["history.md", "drafts/.gitignore", "showcase/"],
       "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
       "04-components": ["history.md", "tokens.css", "tokens.resolver.json", "showcase/"],
       "05-screens": ["history.md", "drafts/.gitignore", "showcase/"],
-      "06-review": ["history.md", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
+      "06-review": ["history.md", "brand.md", "system.md", "journeys/", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
     });
   });
 
