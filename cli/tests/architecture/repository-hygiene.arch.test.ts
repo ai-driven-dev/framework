@@ -31,7 +31,7 @@ import {
   read,
   resolveImportTarget,
   sourceFiles,
-} from "./helpers.js";
+} from "./source-graph.js";
 
 describe("git hooks are installed from the repository root only", () => {
   it("no script of this package calls lefthook: a hook in a worktree runs it with GIT_DIR set, and it takes cli/ for the root", () => {

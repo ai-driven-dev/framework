@@ -14,11 +14,6 @@ import { present } from "../shared/testing/present.builder.js";
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
 
-/** The one folder the composition layout rule pins by exact contents; the folder-size rule
- * leaves it out because a count says nothing that set does not. Deleting the layout rule leaves
- * this folder unbounded: review owns that. */
-export const COMPOSITION_DIR = "src/composition";
-
 export const REPO_ROOT = resolve(CLI_ROOT, "..");
 
 // The package's own node launcher: `.bin/biome` is a shell shim, a `.cmd` on Windows.
@@ -62,14 +57,6 @@ export function canonicalPath(path: string): string {
 
 export function sourceFiles(): string[] {
   return srcFiles();
-}
-
-/** Every `*.test.ts` under `tests/`, as a `tests/...` path, sorted. */
-export function testFiles(): string[] {
-  return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
-    .map((entry) => canonicalPath(join("tests", entry)))
-    .filter((path) => path.endsWith(".test.ts"))
-    .sort();
 }
 
 /** Every `.ts` file under a `cli/`-relative directory, kits and helpers included, as a `cli/`-relative path, sorted. */
@@ -187,74 +174,6 @@ export const BELOW_NOTHING = new Set(["presentation", "composition", "orchestrat
 
 export function isContext(name: string): boolean {
   return !BELOW_NOTHING.has(name) && !["shared", "outside"].includes(name);
-}
-
-interface Crossing {
-  readonly file: string;
-  /** The module the import resolves to. */
-  readonly target: string;
-  readonly from: string;
-  readonly to: string;
-}
-
-/** Whether an import from one layer to another is an edge worth naming. Presentation may
- * reach down, so only the reverse is one. */
-export function isCrossing(from: string, to: string): boolean {
-  if (from === to || to === "shared") return false;
-  if (from === "outside" || to === "outside") return false;
-  return !BELOW_NOTHING.has(from);
-}
-
-/** The one walk every edge-shaped rule in this directory builds on. */
-function crossings(files: readonly string[]): Crossing[] {
-  const out: Crossing[] = [];
-  for (const file of files) {
-    const from = contextOf(file);
-    const source = read(file);
-    for (const match of source.matchAll(INTERNAL_IMPORT)) {
-      const target = resolveImportTarget(file, present(match[1]));
-      const to = contextOf(target);
-      if (!isCrossing(from, to)) continue;
-      out.push({ file, target, from, to });
-    }
-  }
-  return out;
-}
-
-/**
- * Every `importer -> target` pair of a crossing from one context into another, in the shape a
- * rule below compares: a context never imports through shared, presentation or the composition
- * here, so only the two context-to-context walks are kept.
- */
-export function contextImportPairs(
-  files: readonly string[]
-): { readonly edge: string; readonly importer: string; readonly target: string }[] {
-  return crossings(files)
-    .filter((crossing) => isContext(crossing.from) && isContext(crossing.to))
-    .map(({ file, target, from, to }) => ({ edge: `${from}->${to}`, importer: file, target }));
-}
-
-export function weighedEdges(
-  files: readonly string[]
-): Map<string, { imports: number; files: number }> {
-  const found = new Map<string, { imports: number; files: Set<string> }>();
-  for (const crossing of crossings(files)) {
-    const edge = `${crossing.from}->${crossing.to}`;
-    const weight = found.get(edge) ?? { imports: 0, files: new Set<string>() };
-    weight.imports += 1;
-    weight.files.add(crossing.file);
-    found.set(edge, weight);
-  }
-  return new Map(
-    [...found].map(([edge, weight]) => [
-      edge,
-      { imports: weight.imports, files: weight.files.size },
-    ])
-  );
-}
-
-export function edgesBetweenContexts(files: readonly string[]): string[] {
-  return [...weighedEdges(files).keys()].sort();
 }
 
 /**

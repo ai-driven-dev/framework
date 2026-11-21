@@ -19,7 +19,6 @@ import {
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
-import { CLI_ROOT, canonicalPath, matchesGlob } from "./helpers.js";
 import {
   classificationViolations,
   debtVerdict,
@@ -37,6 +36,7 @@ import {
   strayViolations,
   type Violation,
 } from "./kinds.js";
+import { CLI_ROOT, canonicalPath, matchesGlob } from "./source-graph.js";
 import { walk, withVirtualProject } from "./ts-project.js";
 import { useCaseShapeBreaks } from "./use-case-shape.js";
 
@@ -159,7 +159,7 @@ describe("every file is exactly one kind", () => {
       "src/cli.ts",
       "src/contexts/x/infrastructure/text-assets.d.ts",
       "tests/fixtures/framework/x.ts",
-      "tests/architecture/helpers.ts",
+      "tests/architecture/source-graph.ts",
     ]) {
       expect(isInCatalog(path), path).toBe(false);
     }

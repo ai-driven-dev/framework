@@ -19,7 +19,7 @@ import {
   readFromRepoRoot,
   sourceFiles,
   unresolvedCommandMentions,
-} from "./helpers.js";
+} from "./source-graph.js";
 
 /** Documents that present the CLI's surface to a reader — the memory bank included, since an
  * agent reads it first in every session. */

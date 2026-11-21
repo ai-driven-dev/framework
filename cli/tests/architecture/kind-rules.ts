@@ -26,9 +26,9 @@ import {
   SyntaxKind,
 } from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.builder.js";
-import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./helpers.js";
 import { kindsOf, type Rule, type Violation } from "./kinds.js";
 import { PROFILE_MODULE_FILE, profileReaders, wholeProfileFlows } from "./profile-flow.js";
+import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./source-graph.js";
 import { walk, withVirtualProject } from "./ts-project.js";
 
 const violation = (
@@ -389,7 +389,7 @@ export function answerViolations(files: Readonly<Record<string, string>>): Viola
 const CLIMB = /["'`]((?:\.\.\/)+)[^"'`]*["'`]/g;
 const CWD_PARENT = /process\.cwd\(\)\s*,\s*["']\.\.["']/g;
 const PACKAGE_PARENT = /\b(?:resolve|join)\(\s*CLI_ROOT\s*,\s*["']\.\.["']/g;
-const REPOSITORY_HELPER = "tests/shared/testing/repository-root.builder.ts";
+const REPOSITORY_ROOT_BUILDER = "tests/shared/testing/repository-root.builder.ts";
 /** The gate's own tests read the checkout as text and plant climbing literals on purpose; test
  * data is never copied. */
 const NEVER_COPIED = /^tests\/(?:architecture|fixtures|golden\/snapshots)\//;
@@ -400,7 +400,7 @@ const NEVER_COPIED = /^tests\/(?:architecture|fixtures|golden\/snapshots)\//;
 export function repositoryViolations(files: Readonly<Record<string, string>>): Violation[] {
   const out: Violation[] = [];
   for (const [file, text] of Object.entries(files)) {
-    if (!file.startsWith("tests/") || file === REPOSITORY_HELPER || NEVER_COPIED.test(file))
+    if (!file.startsWith("tests/") || file === REPOSITORY_ROOT_BUILDER || NEVER_COPIED.test(file))
       continue;
     const depth = file.split("/").length - 1;
     const climbs = [

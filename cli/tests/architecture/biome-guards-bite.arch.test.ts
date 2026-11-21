@@ -30,6 +30,15 @@ import { isRecord, parseJsonRecord } from "../shared/testing/json-value.builder.
 import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED, HELD_BY_BIOME } from "./allowed-edges.js";
 import { PLANTS } from "./biome-plants.js";
+import { loadDebt } from "./kinds.js";
+import {
+  branches,
+  constants,
+  fourParams,
+  longFunction,
+  tangled,
+  twoClasses,
+} from "./size-plants.js";
 import {
   biomeFindings,
   CLI_ROOT,
@@ -40,16 +49,7 @@ import {
   SRC,
   sourceFiles,
   tsFilesUnder,
-} from "./helpers.js";
-import { loadDebt } from "./kinds.js";
-import {
-  branches,
-  constants,
-  fourParams,
-  longFunction,
-  tangled,
-  twoClasses,
-} from "./size-plants.js";
+} from "./source-graph.js";
 
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 const GITHUB_PLUGIN = "biome-plugins/one-github-api-url.grit";

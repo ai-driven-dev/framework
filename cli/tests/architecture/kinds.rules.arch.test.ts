@@ -7,7 +7,6 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, contextNames, declaredCommands, tsFilesUnder } from "./helpers.js";
 import {
   answerViolations,
   compositionViolations,
@@ -34,6 +33,7 @@ import {
   profileReaders,
   wholeProfileFlowsInSources,
 } from "./profile-flow.js";
+import { CLI_ROOT, contextNames, declaredCommands, tsFilesUnder } from "./source-graph.js";
 
 const entries = (found: readonly Violation[]): string[] => found.map((v) => v.entry);
 
@@ -79,7 +79,7 @@ function errorCodeViolations(files: Record<string, string>): {
 }
 
 describe("an error class is thrown", () => {
-  const catalog = "src/shared/domain/errors.ts";
+  const catalog = "src/shared/domain/shared.error.ts";
   const declared = [
     "export class GhostError extends AiddError {}",
     "export class LiveError extends AiddError {}",
