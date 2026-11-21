@@ -7,6 +7,8 @@ import type {
   ReportUsageResult,
 } from "./report-usage.use-case.js";
 
+export type RequestReportRequest = ReportUsageRequest;
+
 /** A report, and for a reported one what each filter given selects, as a row of its axis. */
 export type RequestReportResult =
   | Exclude<ReportUsageResult, { status: "reported" }>
@@ -18,7 +20,7 @@ export type RequestReportResult =
 export class RequestReport {
   constructor(private readonly report: Pick<ReportUsage, "execute">) {}
 
-  async execute(request: ReportUsageRequest): Promise<RequestReportResult> {
+  async execute(request: RequestReportRequest): Promise<RequestReportResult> {
     const result = await this.report.execute(request);
     return result.status === "reported"
       ? { ...result, selected: selectorsOf(result.filters) }

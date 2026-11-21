@@ -4,7 +4,7 @@ import { join } from "node:path";
 import * as zlib from "node:zlib";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import {
   IngestUsage,
   type IngestUsageResult,

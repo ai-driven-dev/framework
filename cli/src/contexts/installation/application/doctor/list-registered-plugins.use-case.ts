@@ -1,10 +1,10 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
 import type { RegistrationRecordRules } from "../../ports/native-host.js";
-import type { CheckInstallationRequest } from "./check-installation-request.js";
+import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
-export type ListRegisteredPluginsRequest = Pick<CheckInstallationRequest, "allowedIds">;
+export type ListRegisteredPluginsRequest = Pick<InstallationScope, "allowedIds">;
 
 /**
  * The plugins each installed tool's host is expected to carry: the native registrations the

@@ -45,7 +45,7 @@ flowchart LR
 | Question | Under `src/contexts/telemetry/` |
 | --- | --- |
 | Why a call is counted once | `domain/usage-fold.ts` |
-| Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
+| Where a call's repository comes from | `application/directory-resolver.use-case.ts`, `domain/repository-identity.ts` |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
 | Whether a branch is declared, mirrored by `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` |
 | What counts as consent, and when a clone consented | `domain/telemetry-consent.ts`, `domain/consent/consent-history.ts`, `infrastructure/git/git-consent-adapter.ts` |

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";

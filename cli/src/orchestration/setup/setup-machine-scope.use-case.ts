@@ -1,4 +1,4 @@
-import type { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
+import type { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.use-case.js";
 import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.use-case.js";
 import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.use-case.js";
 import type { InstallGlobalPlugins } from "./install-global-plugins.use-case.js";

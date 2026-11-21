@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { cloneOf, grantedBy, tokenOf } from "../testing/clone.builder.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";

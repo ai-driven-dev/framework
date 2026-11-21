@@ -5,7 +5,7 @@ import {
 } from "../../domain/telemetry.error.js";
 import type { CheckIdentity } from "../identity/check-identity.use-case.js";
 
-export interface CheckOnRequestRequest {
+export interface CheckTelemetryOnRequest {
   readonly yes: boolean;
   readonly as?: string;
   readonly anonymous: boolean;
@@ -16,10 +16,10 @@ export interface CheckOnRequestRequest {
 /** What a request to turn measurement on can be told before anything is wired: it names the
  * person and nobody at once, names them with an identifier that cannot, or asks where nobody
  * can answer. Each is refused. */
-export class CheckOnRequest {
+export class CheckTelemetryOn {
   constructor(private readonly checkIdentity: Pick<CheckIdentity, "execute">) {}
 
-  execute({ yes, as, anonymous, interactive }: CheckOnRequestRequest): void {
+  execute({ yes, as, anonymous, interactive }: CheckTelemetryOnRequest): void {
     if (as !== undefined && anonymous) throw new ConflictingIdentityFlagsError();
     if (as !== undefined && this.checkIdentity.execute({ typed: as }).status === "refused") {
       throw new InvalidIdentityError();

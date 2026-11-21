@@ -5,7 +5,7 @@ import { filtersOf } from "../../domain/report/report-filter.js";
 import { InvalidReportPeriodError } from "../../domain/telemetry.error.js";
 import type { ReportUsageRequest } from "./report-usage.use-case.js";
 
-export interface ResolveReportRequestRequest {
+export interface ParseReportFlagsRequest {
   readonly axis: ReportAxis;
   readonly from?: string;
   readonly to?: string;
@@ -15,16 +15,16 @@ export interface ResolveReportRequestRequest {
   readonly cwd: string;
 }
 
-export interface ResolveReportRequestResult {
+export interface ParseReportFlagsResult {
   readonly request: ReportUsageRequest;
 }
 
 /** What a person typed to ask for a report, as the report to ask for: the days it covers, and
  * the filters it keeps. A period that cannot be answered is refused. */
-export class ResolveReportRequest {
+export class ParseReportFlags {
   constructor(private readonly now: () => Date) {}
 
-  execute(command: ResolveReportRequestRequest): ResolveReportRequestResult {
+  execute(command: ParseReportFlagsRequest): ParseReportFlagsResult {
     const period = periodOf(command, this.now());
     if (!period.ok) throw new InvalidReportPeriodError(period.message);
     const given = filtersOf(command.filters);

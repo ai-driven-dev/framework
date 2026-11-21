@@ -5,20 +5,20 @@ import {
   TaskNameMissingError,
 } from "../../domain/telemetry.error.js";
 
-export interface ResolveTaskRequestRequest {
+export interface ParseTaskFlagsRequest {
   readonly name: string | undefined;
   readonly ticket: string | undefined;
   readonly none: boolean;
 }
 
-export interface ResolveTaskRequestResult {
+export interface ParseTaskFlagsResult {
   readonly request: DeclarationRequest;
 }
 
 /** What a person typed to declare a task, as the request to declare: a name and a ticket, or
  * that the work has no task. A name given with `--none`, or no name at all, is refused. */
-export class ResolveTaskRequest {
-  execute({ name, ticket, none }: ResolveTaskRequestRequest): ResolveTaskRequestResult {
+export class ParseTaskFlags {
+  execute({ name, ticket, none }: ParseTaskFlagsRequest): ParseTaskFlagsResult {
     const request = none ? { kind: "none" as const } : requestOf(name, ticket);
     if (none && (name !== undefined || ticket !== undefined)) {
       throw new TaskDeclaredNoneWithNameError();

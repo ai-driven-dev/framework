@@ -10,7 +10,7 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import { assertRequestedVersion } from "./add/existing-plugin.js";
 import { loadAddManifests } from "./add/load-add-manifests.js";
 import type { PlacePlugin } from "./add/place-plugin.use-case.js";
-import type { PluginAdd, PluginAddRequest } from "./add/plugin-add.js";
+import type { AddPluginRequest, PluginAdd } from "./add/plugin-add.js";
 import { registerNativeGithubPlugins } from "./add/register-native-github-plugins.js";
 import type {
   GithubAddedPluginSource,
@@ -47,12 +47,12 @@ export class AddPlugin implements PluginAdd {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(options: PluginAddRequest): Promise<void> {
+  async execute(options: AddPluginRequest): Promise<void> {
     const { manifests } = this.deps;
     return manifests.user.withExclusiveAccess(() => this.executeLocked(options));
   }
 
-  private async executeLocked(options: PluginAddRequest): Promise<void> {
+  private async executeLocked(options: AddPluginRequest): Promise<void> {
     const { manifests, source } = this.deps;
     const { toolIds, projectRoot, githubMarketplace } = options;
     const { manifest, machine } = await loadAddManifests(manifests, this.tools);
@@ -88,7 +88,7 @@ export class AddPlugin implements PluginAdd {
 
   /** Refuses or clears an existing entry before anything is fetched. */
   private async prepareGithubAdd(
-    options: PluginAddRequest,
+    options: AddPluginRequest,
     toolIds: AiToolId[],
     manifest: Manifest
   ): Promise<void> {
@@ -99,7 +99,7 @@ export class AddPlugin implements PluginAdd {
   }
 
   private async addGithubMarketplacePlugin(
-    options: PluginAddRequest,
+    options: AddPluginRequest,
     added: GithubAddedPluginSource,
     manifests: Pick<AddTargets, "manifest" | "machine">
   ): Promise<void> {
@@ -110,7 +110,7 @@ export class AddPlugin implements PluginAdd {
   }
 
   private async addLocalPlugin(
-    options: PluginAddRequest,
+    options: AddPluginRequest,
     read: PluginDistribution,
     targets: AddTargets
   ): Promise<void> {

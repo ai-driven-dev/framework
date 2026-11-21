@@ -9,7 +9,7 @@ import { FindUserMarketplace } from "../../contexts/distribution/application/rem
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
-import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.js";
+import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";

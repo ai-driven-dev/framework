@@ -50,7 +50,7 @@ export function configureTask(
     const { output, projectRoot, runChecked } = commandOf(program, createDeps);
     await runChecked(
       () =>
-        requests.resolveTaskRequest.execute({
+        requests.parseTaskFlags.execute({
           name,
           ticket: cmdOptions.ticket,
           none: cmdOptions.none,

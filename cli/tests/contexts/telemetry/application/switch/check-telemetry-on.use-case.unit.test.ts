@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { CheckIdentity } from "../../../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
-import { CheckOnRequest } from "../../../../../src/contexts/telemetry/application/switch/check-on-request.use-case.js";
+import { CheckTelemetryOn } from "../../../../../src/contexts/telemetry/application/switch/check-telemetry-on.use-case.js";
 import {
   ConflictingIdentityFlagsError,
   InvalidIdentityError,
 } from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 
-const check = new CheckOnRequest(new CheckIdentity());
+const check = new CheckTelemetryOn(new CheckIdentity());
 const GIVEN = { yes: true, anonymous: false, interactive: true };
 
-describe("CheckOnRequest", () => {
+describe("CheckTelemetryOn", () => {
   it("accepts a request that can be answered", () => {
     expect(() => check.execute({ ...GIVEN, as: "Ada Example" })).not.toThrow();
     expect(() => check.execute({ ...GIVEN, yes: false })).not.toThrow();

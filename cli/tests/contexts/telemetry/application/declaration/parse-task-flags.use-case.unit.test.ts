@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { ResolveTaskRequest } from "../../../../../src/contexts/telemetry/application/declaration/resolve-task-request.use-case.js";
+import { ParseTaskFlags } from "../../../../../src/contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
 import {
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
 } from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
-const resolve = new ResolveTaskRequest();
+const resolve = new ParseTaskFlags();
 
-describe("ResolveTaskRequest", () => {
+describe("ParseTaskFlags", () => {
   it("makes a task of a typed name and ticket", () => {
     expect(resolve.execute({ name: " Fix login ", ticket: "T-1", none: false }).request).toEqual({
       kind: "task",

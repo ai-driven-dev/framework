@@ -16,6 +16,8 @@ import type {
   ResolvedMarketplace,
 } from "../../contract/built-marketplace.js";
 
+export type CacheBuiltMarketplaceRequest = EnsureBuiltMarketplaceRequest;
+
 /** One framework build, as the cache runs it. Its result is not read. */
 export interface FrameworkBuild {
   execute(options: {
@@ -79,7 +81,7 @@ export class CacheBuiltMarketplace {
   constructor(private readonly deps: CacheBuiltMarketplaceDeps) {}
 
   async execute(
-    options: EnsureBuiltMarketplaceRequest,
+    options: CacheBuiltMarketplaceRequest,
     resolved: ResolvedMarketplace
   ): Promise<EnsureBuiltMarketplaceResult> {
     // `resolve()`, matching `sourceDir` below: on Windows a drive-less `projectRoot` yields a

@@ -1,6 +1,6 @@
 import { ListFrameworkPlugins } from "../../contexts/distribution/application/plugin-source/list-framework-plugins.use-case.js";
 import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.use-case.js";
-import { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
+import { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.use-case.js";
 import { InstallAiTool } from "../../contexts/installation/application/install/install-ai-tool.use-case.js";
 import { InstallConfig } from "../../contexts/installation/application/install/install-config.use-case.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.use-case.js";

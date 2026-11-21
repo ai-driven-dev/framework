@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { deleted, MAIN, setup, T1, T2, T3 } from "../../testing/telemetry-switch.builder.js";

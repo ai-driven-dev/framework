@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { RememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import {
   type RepositoryResolution,

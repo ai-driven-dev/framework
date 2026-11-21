@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { RegisterPluginWithHost } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
+import type { RegisterPluginWithHost } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import type { HostRegistrationOutcome } from "../../../src/contexts/host-registration/application/register/registration-outcome.js";
 import type { ClaimsView } from "../../../src/contexts/host-registration/contract/claims-view.js";
 import type { SyncContext } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ResolveReportRequest } from "../../../../../src/contexts/telemetry/application/report/resolve-report-request.use-case.js";
+import { ParseReportFlags } from "../../../../../src/contexts/telemetry/application/report/parse-report-flags.use-case.js";
 import { InvalidReportPeriodError } from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
-const resolve = new ResolveReportRequest(() => new Date("2026-10-09T12:00:00.000Z"));
+const resolve = new ParseReportFlags(() => new Date("2026-10-09T12:00:00.000Z"));
 const BASE = { axis: "day", filters: {}, cwd: "/work/a" } as const;
 
-describe("ResolveReportRequest", () => {
+describe("ParseReportFlags", () => {
   it("covers the last n days ending today", () => {
     expect(resolve.execute({ ...BASE, days: "3" }).request.period).toEqual({
       from: "2026-10-07",

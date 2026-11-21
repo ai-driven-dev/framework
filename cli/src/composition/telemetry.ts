@@ -4,26 +4,26 @@ import { join } from "node:path";
 import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
 import { DeclareOnBranch } from "../contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
 import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
+import { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
 import { ReadCurrentBranch } from "../contexts/telemetry/application/declaration/read-current-branch.use-case.js";
-import { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.use-case.js";
-import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
+import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.use-case.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
 import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
 import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.use-case.js";
 import { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.use-case.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.use-case.js";
+import { ParseIdentityFlags } from "../contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.use-case.js";
-import { ResolveIdentityRequest } from "../contexts/telemetry/application/identity/resolve-identity-request.use-case.js";
 import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.use-case.js";
 import { ReadUsage } from "../contexts/telemetry/application/read-usage.use-case.js";
 import { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.use-case.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
+import { ParseReportFlags } from "../contexts/telemetry/application/report/parse-report-flags.use-case.js";
 import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.use-case.js";
 import { RequestReport } from "../contexts/telemetry/application/report/request-report.use-case.js";
-import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.use-case.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.use-case.js";
-import { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.use-case.js";
+import { CheckTelemetryOn } from "../contexts/telemetry/application/switch/check-telemetry-on.use-case.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.use-case.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import { GrantConsent } from "../contexts/telemetry/application/switch/grant-consent.use-case.js";
@@ -65,11 +65,11 @@ import type { Prompter } from "../shared/ports/prompter.js";
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 export function wireTelemetryRequests(): TelemetryRequests {
   return {
-    resolveTaskRequest: new ResolveTaskRequest(),
-    resolveReportRequest: new ResolveReportRequest(() => new Date()),
-    checkOnRequest: new CheckOnRequest(new CheckIdentity()),
+    parseTaskFlags: new ParseTaskFlags(),
+    parseReportFlags: new ParseReportFlags(() => new Date()),
+    checkTelemetryOn: new CheckTelemetryOn(new CheckIdentity()),
     checkFilterValue: new CheckFilterValue(),
-    resolveIdentityRequest: new ResolveIdentityRequest(),
+    parseIdentityFlags: new ParseIdentityFlags(),
   };
 }
 

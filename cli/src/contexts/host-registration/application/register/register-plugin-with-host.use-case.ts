@@ -24,7 +24,7 @@ import {
 } from "./registration-run.js";
 import { type SettledMarketplaces, settleMarketplaces } from "./settle-marketplaces.js";
 
-export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
+export interface RegisterPluginWithHostRequest<M extends RegistrationSubject> {
   readonly toolId: ToolId;
   readonly projectRoot: string;
   readonly scope: Scope;
@@ -73,7 +73,7 @@ export class RegisterPluginWithHost {
    * for. Each step is independently best-effort: one failing plugin or marketplace warns and
    * lets the others through. Anything but a recoverable `NativePluginCliError` propagates. */
   async execute<M extends RegistrationSubject>(
-    command: RegisterPluginWithHostCommand<M>
+    command: RegisterPluginWithHostRequest<M>
   ): Promise<RegisterPluginWithHostResult> {
     const host = this.nativeHost(command.toolId);
     if (host === undefined) return { status: "unconfigured" };
@@ -99,7 +99,7 @@ export class RegisterPluginWithHost {
   }
 
   private runOf<M extends RegistrationSubject>(
-    command: RegisterPluginWithHostCommand<M>,
+    command: RegisterPluginWithHostRequest<M>,
     { profile, activator }: NativeHost
   ): RegistrationRun {
     const { toolId, projectRoot, claims, userCacheRoot, sink } = command;

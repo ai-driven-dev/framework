@@ -28,6 +28,9 @@ import type {
   PluginTreeSink,
 } from "../ports/plugin-tree-sink.js";
 
+export type BuildNativeTreeRequest = FrameworkBuildRequest;
+export type BuildNativeTreeResult = FrameworkBuildResult;
+
 /** What a build for a target and mode asks of its caller. */
 export interface FrameworkBuildContext {
   readonly target: string;
@@ -48,7 +51,7 @@ export interface BuildNativeTreeDeps {
 export class BuildNativeTree {
   constructor(private readonly deps: BuildNativeTreeDeps) {}
 
-  async execute(options: FrameworkBuildRequest): Promise<FrameworkBuildResult> {
+  async execute(options: BuildNativeTreeRequest): Promise<BuildNativeTreeResult> {
     const sourceDir = resolve(options.sourceDir);
     const outDir = resolve(options.outDir);
     this.guardPaths(sourceDir, outDir);

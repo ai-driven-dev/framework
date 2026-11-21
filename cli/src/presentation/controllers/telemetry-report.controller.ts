@@ -121,7 +121,7 @@ export function configureReport(
     const { output, projectRoot, runChecked } = commandOf(program, createDeps);
     await runChecked(
       () =>
-        requests.resolveReportRequest.execute({
+        requests.parseReportFlags.execute({
           axis: cmdOptions.axis,
           from: cmdOptions.from,
           to: cmdOptions.to,

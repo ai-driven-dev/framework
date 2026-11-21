@@ -3,7 +3,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
-} from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
+} from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import {
   LoadSyncContext,

@@ -15,18 +15,18 @@ import type { ReportStatus } from "../contexts/installation/application/report-s
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.use-case.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.use-case.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
-import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.use-case.js";
+import type { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
 import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
 import type { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.use-case.js";
 import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.use-case.js";
+import type { ParseIdentityFlags } from "../contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
 import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.use-case.js";
-import type { ResolveIdentityRequest } from "../contexts/telemetry/application/identity/resolve-identity-request.use-case.js";
 import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.use-case.js";
 import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.use-case.js";
 import type { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.use-case.js";
+import type { ParseReportFlags } from "../contexts/telemetry/application/report/parse-report-flags.use-case.js";
 import type { RequestReport } from "../contexts/telemetry/application/report/request-report.use-case.js";
-import type { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.use-case.js";
-import type { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.use-case.js";
+import type { CheckTelemetryOn } from "../contexts/telemetry/application/switch/check-telemetry-on.use-case.js";
 import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.use-case.js";
 import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.use-case.js";
@@ -87,11 +87,11 @@ export type CommandRunner = (command: string[]) => Promise<number>;
 /** What a telemetry command's request alone can answer, built with no I/O so a refusal comes
  * before the dependencies are wired. */
 export interface TelemetryRequests {
-  resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
-  resolveReportRequest: Pick<ResolveReportRequest, "execute">;
-  checkOnRequest: Pick<CheckOnRequest, "execute">;
+  parseTaskFlags: Pick<ParseTaskFlags, "execute">;
+  parseReportFlags: Pick<ParseReportFlags, "execute">;
+  checkTelemetryOn: Pick<CheckTelemetryOn, "execute">;
   checkFilterValue: Pick<CheckFilterValue, "execute">;
-  resolveIdentityRequest: Pick<ResolveIdentityRequest, "execute">;
+  parseIdentityFlags: Pick<ParseIdentityFlags, "execute">;
 }
 
 export interface Deps {

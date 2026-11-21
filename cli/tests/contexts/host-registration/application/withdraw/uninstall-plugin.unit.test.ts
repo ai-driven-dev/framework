@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { uninstallPlugin } from "../../../../../src/contexts/host-registration/application/withdraw/uninstall-plugin.js";
 import type {
   WithdrawalDeps,
-  WithdrawFromHostCommand,
+  WithdrawFromHostRequest,
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
@@ -56,13 +56,13 @@ function depsOf(
 }
 
 function commandOf(
-  claims: Partial<WithdrawFromHostCommand["claims"]> = {},
-  registrations: WithdrawFromHostCommand["registrations"] = {
+  claims: Partial<WithdrawFromHostRequest["claims"]> = {},
+  registrations: WithdrawFromHostRequest["registrations"] = {
     binary: "claude",
     marketplaces: [{ alias: HOST_NAME, hostName: HOST_NAME, provenance: SOURCE }],
     pluginRefs: [REF],
   }
-): WithdrawFromHostCommand {
+): WithdrawFromHostRequest {
   return {
     tool: registeredTools().aiProfile(TOOL.claude),
     plugin: { name: "plugin", marketplace: HOST_NAME, scope: "project" },

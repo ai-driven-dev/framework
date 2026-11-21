@@ -64,7 +64,7 @@ export function configureOn(
       const { output, projectRoot, runChecked } = commandOf(program, createDeps);
       await runChecked(
         () =>
-          requests.checkOnRequest.execute({
+          requests.checkTelemetryOn.execute({
             ...cmdOptions,
             interactive: process.stdout.isTTY === true,
           }),
@@ -109,7 +109,7 @@ export function configureIdentity(
     .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
       const { output, runChecked } = commandOf(program, createDeps);
       await runChecked(
-        () => requests.resolveIdentityRequest.execute({ off: cmdOptions.off, id }),
+        () => requests.parseIdentityFlags.execute({ off: cmdOptions.off, id }),
         async (deps, request) => {
           const result = await deps.telemetry.manageIdentity.execute(request);
           printIdentityResult(output, result);

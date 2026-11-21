@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RegisterPluginWithHost } from "../../../../../src/contexts/host-registration/application/register/register-plugin-with-host.js";
+import { RegisterPluginWithHost } from "../../../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";

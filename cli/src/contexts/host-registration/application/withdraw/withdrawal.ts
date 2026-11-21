@@ -20,7 +20,7 @@ export interface WithdrawnPlugin {
   readonly scope: Scope;
 }
 
-export interface WithdrawFromHostCommand {
+export interface WithdrawFromHostRequest {
   readonly tool: NativeHostTool;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
@@ -30,8 +30,8 @@ export interface WithdrawFromHostCommand {
   readonly pluginCacheRoot: string | undefined;
 }
 
-export type ProjectSourceCommand = Pick<
-  WithdrawFromHostCommand,
+export type ProjectSourceRequest = Pick<
+  WithdrawFromHostRequest,
   "tool" | "projectRoot" | "registrations"
 > & {
   readonly plugin: WithdrawnPlugin;
@@ -106,8 +106,8 @@ export interface ProjectCleanFacts {
 /** Every question a withdrawal answers, told apart by `kind`: the proofs refuse before any host
  * change, the withdrawals act. */
 export type WithdrawalRequest =
-  | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostCommand)
-  | ({ readonly kind: "prove-project-source" } & ProjectSourceCommand)
+  | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostRequest)
+  | ({ readonly kind: "prove-project-source" } & ProjectSourceRequest)
   | {
       readonly kind: "prove-claimed-ref";
       readonly registrationData: RegistrationRecordData;

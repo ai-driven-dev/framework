@@ -10,7 +10,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { DetectProjectContext } from "../../../src/contexts/installation/application/detect-project-context.use-case.js";
-import { ConfigureMachineScope } from "../../../src/contexts/installation/application/install/configure-machine-scope.js";
+import { ConfigureMachineScope } from "../../../src/contexts/installation/application/install/configure-machine-scope.use-case.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";

@@ -25,7 +25,7 @@ export type ReadTelemetryStatusResult =
       readonly personId: string | null;
     };
 
-export interface ReportStatusRequest {
+export interface ReadTelemetryStatusOptions {
   readonly environment: Environment;
   readonly sessionId: string | null;
   readonly now: () => Date;
@@ -35,7 +35,7 @@ interface ReadTelemetryStatusDeps {
   readonly repositories: ConsentedRepositories;
   readonly sessions: SessionBindingStore;
   readonly branches: ReadCurrentBranch;
-  readonly options: ReportStatusRequest;
+  readonly options: ReadTelemetryStatusOptions;
   readonly identities: PersonIdentityStore;
 }
 

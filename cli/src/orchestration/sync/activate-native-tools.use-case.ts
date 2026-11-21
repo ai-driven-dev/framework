@@ -1,7 +1,7 @@
 import type {
   RegisterPluginWithHost,
   RegisterPluginWithHostResult,
-} from "../../contexts/host-registration/application/register/register-plugin-with-host.js";
+} from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import type { HostRegistrationOutcome } from "../../contexts/host-registration/application/register/registration-outcome.js";
 import type { BuiltCatalogs } from "../../contexts/host-registration/contract/built-catalogs.js";
 import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";

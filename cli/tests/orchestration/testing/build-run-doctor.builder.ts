@@ -13,7 +13,7 @@ import { registeredHostInspector } from "../../shared/testing/registered-host-in
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "./build-check-registration.builder.js";
 
-export function buildDoctorUseCase(
+export function buildRunDoctor(
   deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   hostRegistries: InspectHostRegistrationDeps["pluginRegistries"] = new Map()
 ): RunDoctor {

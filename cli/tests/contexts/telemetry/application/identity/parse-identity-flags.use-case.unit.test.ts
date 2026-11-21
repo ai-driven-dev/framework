@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ResolveIdentityRequest } from "../../../../../src/contexts/telemetry/application/identity/resolve-identity-request.use-case.js";
+import { ParseIdentityFlags } from "../../../../../src/contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
 import { IdentityOffWithIdentifierError } from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
-const resolve = new ResolveIdentityRequest();
+const resolve = new ParseIdentityFlags();
 
-describe("ResolveIdentityRequest", () => {
+describe("ParseIdentityFlags", () => {
   it("shows the identity when nothing is typed", () => {
     expect(resolve.execute({ off: false, id: undefined })).toEqual({ action: "show" });
   });

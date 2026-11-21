@@ -3,7 +3,7 @@ import type { NotStoredReason } from "../contract/repository-resolution.js";
 import { MEASUREMENT_SWITCH, measurementRefused } from "../domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { UsageLedger } from "../ports/usage-ledger.js";
-import type { DirectoryResolver } from "./directory-resolver.js";
+import type { DirectoryResolver } from "./directory-resolver.use-case.js";
 import { storeCalls } from "./ledger-upkeep.js";
 import type { ReadUsage, ReadUsageResult } from "./read-usage.use-case.js";
 import type { ResolutionRun } from "./resolution-run.js";

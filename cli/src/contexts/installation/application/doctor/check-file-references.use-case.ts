@@ -8,9 +8,11 @@ import {
   extractMarkdownLinkTargets,
   isFileReference,
 } from "../../domain/markdown-references.js";
-import type { CheckInstallationRequest } from "./check-installation-request.js";
 import { collectTrackedFiles } from "./check-tracked-files.use-case.js";
+import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
+
+export type CheckFileReferencesRequest = InstallationScope;
 
 export class CheckFileReferences {
   constructor(
@@ -18,7 +20,7 @@ export class CheckFileReferences {
     private readonly fs: FileReader
   ) {}
 
-  async execute(command: CheckInstallationRequest): Promise<DoctorIssue[]> {
+  async execute(command: CheckFileReferencesRequest): Promise<DoctorIssue[]> {
     const { projectRoot, allowedIds } = command;
     const manifest = await this.loadManifest.execute();
     const trackedFiles = collectTrackedFiles(manifest, allowedIds);

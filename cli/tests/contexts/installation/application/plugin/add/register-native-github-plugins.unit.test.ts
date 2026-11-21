@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { PluginAddRequest } from "../../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
+import type { AddPluginRequest } from "../../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { registerNativeGithubPlugins } from "../../../../../../src/contexts/installation/application/plugin/add/register-native-github-plugins.js";
 import type { GithubAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
-const OPTIONS: PluginAddRequest = {
+const OPTIONS: AddPluginRequest = {
   source: { kind: "local", path: "/plugin" },
   toolIds: "all",
   projectRoot: "/test-project",

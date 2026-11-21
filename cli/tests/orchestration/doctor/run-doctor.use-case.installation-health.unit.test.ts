@@ -13,7 +13,7 @@ import {
 } from "../../shared/testing/installation-deps.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
-import { buildDoctorUseCase } from "../testing/build-doctor.builder.js";
+import { buildRunDoctor } from "../testing/build-run-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -90,7 +90,7 @@ describe("doctor", () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
-    const useCase = buildDoctorUseCase(deps);
+    const useCase = buildRunDoctor(deps);
     const report = await useCase.execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -109,7 +109,7 @@ describe("doctor", () => {
     corruptRepo.load = async () => {
       throw new Error("Manifest is corrupted");
     };
-    const useCase = buildDoctorUseCase({ ...deps, manifestRepo: corruptRepo });
+    const useCase = buildRunDoctor({ ...deps, manifestRepo: corruptRepo });
     await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
       saying("Manifest is corrupted")
     );
@@ -118,7 +118,7 @@ describe("doctor", () => {
   it("fails if project is not initialized", async () => {
     const deps = await buildInstallationDeps();
 
-    const useCase = buildDoctorUseCase(deps);
+    const useCase = buildRunDoctor(deps);
     await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
       saying("aidd setup")
     );
@@ -134,7 +134,7 @@ describe("doctor", () => {
       "---\nname: aidd:03:plan\ndescription: Plan feature\n---\nContent here.\n"
     );
 
-    const useCase = buildDoctorUseCase(deps);
+    const useCase = buildRunDoctor(deps);
     const report = await useCase.execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -155,7 +155,7 @@ describe("doctor", () => {
       "See @.claude/agents/ for all agents"
     );
 
-    const useCase = buildDoctorUseCase(deps);
+    const useCase = buildRunDoctor(deps);
     const report = await useCase.execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -174,7 +174,7 @@ describe("doctor", () => {
       "```text\n@path/to/example.md\n```"
     );
 
-    const useCase = buildDoctorUseCase(deps);
+    const useCase = buildRunDoctor(deps);
     const report = await useCase.execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -192,7 +192,7 @@ describe("doctor", () => {
         "name: CI\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
       );
 
-      const useCase = buildDoctorUseCase(deps);
+      const useCase = buildRunDoctor(deps);
       const report = await useCase.execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -213,7 +213,7 @@ describe("doctor", () => {
         "---\nname: aidd:01:plan\ndescription: Plan feature\n---\nContent here.\n"
       );
 
-      const useCase = buildDoctorUseCase(deps);
+      const useCase = buildRunDoctor(deps);
       const report = await useCase.execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -234,7 +234,7 @@ describe("doctor", () => {
         "---\nname: my-custom-prompt\ndescription: A custom prompt\n---\nContent here.\n"
       );
 
-      const useCase = buildDoctorUseCase(deps);
+      const useCase = buildRunDoctor(deps);
       const report = await useCase.execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -251,7 +251,7 @@ describe("doctor", () => {
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
-      const useCase = buildDoctorUseCase(deps);
+      const useCase = buildRunDoctor(deps);
       const report = await useCase.execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -284,7 +284,7 @@ describe("doctor", () => {
     it("reports one entry per installed tool with its file and merge-file counts", async () => {
       const { deps, manifest } = await installedBothCategories();
 
-      const report = await buildDoctorUseCase(deps).execute({
+      const report = await buildRunDoctor(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
 
@@ -297,7 +297,7 @@ describe("doctor", () => {
     it("narrows the entries to the requested category", async () => {
       const { deps, manifest } = await installedBothCategories();
 
-      const report = await buildDoctorUseCase(deps).execute({
+      const report = await buildRunDoctor(deps).execute({
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -315,7 +315,7 @@ describe("doctor", () => {
         "---\nname: aidd:03:plan\ndescription: Plan feature\n---\nContent here.\n"
       );
 
-      const report = await buildDoctorUseCase(deps).execute({
+      const report = await buildRunDoctor(deps).execute({
         projectRoot: PROJECT_ROOT,
         category: "ai",
       });

@@ -10,7 +10,7 @@ import {
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { buildDoctorUseCase } from "../testing/build-doctor.builder.js";
+import { buildRunDoctor } from "../testing/build-run-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = expect.any(ManifestUnavailableError);
@@ -48,7 +48,7 @@ function verdictOf(result: Awaited<ReturnType<typeof doctorAll>>) {
 }
 
 function doctorAllOver(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
-  const doctor = buildDoctorUseCase(deps);
+  const doctor = buildRunDoctor(deps);
   return {
     execute: (projectRoot: string, pluginName?: string) =>
       doctorAll(doctor, projectRoot, pluginName),
@@ -123,7 +123,7 @@ describe("doctorAll", () => {
     "is not healthy when the %s scope could not be checked, whatever the other found",
     async (unchecked) => {
       const { deps } = await depsWithBothCategories();
-      const real = buildDoctorUseCase(deps);
+      const real = buildRunDoctor(deps);
       const doctor = {
         execute: (options: Parameters<typeof real.execute>[0]) => {
           if (options.category === unchecked) throw new Error("could not be checked");

@@ -1,7 +1,7 @@
 import type { PluginSource } from "../../../../../shared/domain/source.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 
-export interface PluginAddRequest {
+export interface AddPluginRequest {
   source: PluginSource;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
@@ -16,5 +16,5 @@ export interface PluginAddRequest {
 }
 
 export interface PluginAdd {
-  execute(options: PluginAddRequest): Promise<void>;
+  execute(options: AddPluginRequest): Promise<void>;
 }

@@ -1,9 +1,9 @@
 import type { PluginIssueEntry } from "../../contract/doctor-issue.js";
 import type { DetectPluginDrift } from "../shared/detect-plugin-drift.use-case.js";
-import type { CheckInstallationRequest } from "./check-installation-request.js";
+import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
-export interface CheckPluginDriftRequest extends CheckInstallationRequest {
+export interface CheckPluginDriftRequest extends InstallationScope {
   pluginName?: string;
 }
 
