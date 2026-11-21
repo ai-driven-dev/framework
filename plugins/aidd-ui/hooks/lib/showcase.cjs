@@ -11,6 +11,7 @@ const { parseLink } = require("./code.cjs");
 const { text, UI_DIR } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, citations, resolvedValues } = require("./tokens.cjs");
+const { charteOf } = require("./charte.cjs");
 const { charteSectionsOf, identitySectionsOf, columnsNamed, sectionHtml, subNavigationOf, CHARTE_STYLE } = require("./charte-page.cjs");
 const variants = require("./variants.cjs");
 const { STEPS, CATEGORIES, stepOf, categoryOf, setStepOf, awaitingOf } = require("./steps.cjs");
@@ -96,10 +97,13 @@ const LABELS = {
     nothing: "Nothing to review.",
     overviewNext: "{count} to review, in {steps}.",
     overviewProposed: "Nothing to review here. {count} awaiting your agreement, in {steps}. Agree with the assistant in the conversation.",
-    overviewStillProposed: "Still proposed ({count})",
     start: "Start the review",
-    overviewTodo: "To review ({count})",
-    overviewRevise: "To rework ({count})",
+    toReviewMark: "To review",
+    toReworkMark: "To rework",
+    awaitingAgreement: "Awaiting your agreement",
+    variantsToChoose: "Variants to choose",
+    stepsCount: "{count} steps",
+    sketchesCount: "Wireframes ({count})",
     blocked: "Write what should change on each state to revise.",
     copyHint: "Give an opinion on at least one state.",
     theme: "Theme",
@@ -210,10 +214,13 @@ const LABELS = {
     nothing: "Rien à relire.",
     overviewNext: "{count} à relire, dans {steps}.",
     overviewProposed: "Rien à relire ici. {count} en attente de votre accord, dans {steps}. À valider avec l'assistant dans la conversation.",
-    overviewStillProposed: "Encore proposés ({count})",
     start: "Commencer la revue",
-    overviewTodo: "À relire ({count})",
-    overviewRevise: "À reprendre ({count})",
+    toReviewMark: "À relire",
+    toReworkMark: "À reprendre",
+    awaitingAgreement: "En attente de votre accord",
+    variantsToChoose: "Variantes à choisir",
+    stepsCount: "{count} étapes",
+    sketchesCount: "Maquettes ({count})",
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
     copyHint: "Donnez un avis sur au moins un état.",
     theme: "Thème",
@@ -451,15 +458,43 @@ textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--acc
 .asset-image { margin: 0; }
 .asset-image img { display: block; max-width: 100%; max-height: 70vh; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--sunken); }
 .capture.missing, .asset-image.missing { display: flex; align-items: center; justify-content: center; min-block-size: 160px; border: 1.5px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); padding: var(--s4); font-size: var(--t-sm); text-align: center; }
-.overview { display: flex; flex-direction: column; gap: var(--s3); }
-.overview h2 { display: flex; align-items: center; gap: var(--s2); }
-.overview h2 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
-.todo-step h3 { display: flex; align-items: center; gap: var(--s2); margin: var(--s3) 0 var(--s1); font-size: var(--t-md); }
-.todo-step h3 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
-.todo-step h4 { margin: var(--s3) 0 2px; font-size: var(--t-xs); font-weight: 500; color: var(--muted); }
-.overview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.overview li { display: flex; align-items: center; gap: var(--s2); padding: 4px 0; border-bottom: 1px solid var(--line); }
-.overview li a { flex: 1; }
+.overview { display: flex; flex-direction: column; gap: var(--s6); margin-top: var(--s5); }
+.ov-step h3 { display: flex; align-items: center; gap: var(--s2); margin: 0 0 var(--s3); font-size: var(--t-lg); }
+.ov-step h3 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
+.ov-step h4 { display: flex; align-items: center; gap: var(--s3); margin: var(--s4) 0 var(--s2); font-size: var(--t-md); font-weight: 600; }
+.ov-step h4 .sum { margin-left: auto; color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ov-step h4 .bar { flex: none; inline-size: 96px; block-size: 6px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+.ov-step h4 .bar i { display: block; block-size: 100%; background: var(--ok); }
+.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rows li { display: flex; align-items: center; gap: var(--s2); padding: 4px 0; border-bottom: 1px solid var(--line); }
+.rows li a { flex: 1; min-width: 0; }
+.ovcards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s4); }
+.ovcards > li { display: block; min-width: 0; }
+.ovcards.journeys { grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); }
+.ov-step, .overview { min-width: 0; }
+.ovcard { display: flex; flex-direction: column; gap: var(--s2); block-size: 100%; min-width: 0; padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r2); background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 120ms; }
+.ovcard:hover { border-color: var(--text); text-decoration: none; }
+.ovcard .title { font-weight: 600; }
+.ovcard .meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2); margin-top: auto; color: var(--muted); font-size: var(--t-sm); }
+.ovcard .progress { margin-left: auto; }
+.mark { padding: 0 8px; border-radius: 999px; font-size: var(--t-xs); font-weight: 600; line-height: 18px; }
+.mark.todo { background: var(--revise-soft); color: var(--revise); }
+.mark.rework { background: var(--sunken); color: var(--text); }
+.thumb { position: relative; display: block; flex: none; overflow: hidden; margin-inline: auto; border: 1px solid var(--line); border-radius: var(--r2); background: #fbfbfa; }
+.thumb.s { --k: 0.22; }
+.thumb.l { --k: 0.5; }
+.thumb { inline-size: calc(390px * var(--k)); block-size: calc(520px * var(--k)); }
+.thumb iframe { position: absolute; top: 0; left: 0; inline-size: 390px; block-size: 520px; border: 0; transform: scale(var(--k)); transform-origin: 0 0; pointer-events: none; }
+.thumb.blank { background: var(--sunken); border-style: dashed; }
+.thumb.sets { display: grid; place-content: center; background: var(--sunken); }
+.thumb.sets b { font-size: var(--t-2xl); color: var(--muted); }
+.strip { display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s2); }
+.strip .thumb { margin-inline: 0; }
+.sketches { margin-top: var(--s4); }
+.sketches summary { cursor: pointer; color: var(--muted); }
+.sketches .rows { margin-top: var(--s2); }
+.palette { display: flex; block-size: 56px; border-radius: var(--r2); overflow: hidden; border: 1px solid var(--line); }
+.palette i { flex: 1; }
 .stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
 .stepper li > a, .stepper li > .cell { display: flex; align-items: center; gap: var(--s3); min-block-size: 44px; padding: var(--s2) var(--s4); border: 1px solid var(--line); border-radius: var(--r2); background: var(--surface); color: var(--text); text-decoration: none; }
 .stepper li > a:hover { background: var(--sunken); }
@@ -887,9 +922,19 @@ function paint() {
       const settledNow = Number(each.dataset.base) + own;
       each.textContent = settledNow + "/" + each.dataset.total;
       each.dataset.complete = String(settledNow === Number(each.dataset.total));
+      document.querySelectorAll('.mark[data-record="' + item.dataset.record + '"]').forEach((mark) => { mark.hidden = settledNow === Number(each.dataset.total); });
     });
     if (own < rows.length) unsettled.push(item);
   }
+  document.querySelectorAll(".group[data-sum]").forEach((group) => {
+    let done = 0;
+    let total = 0;
+    group.querySelectorAll(".progress[data-record]").forEach((each) => { const parts = each.textContent.split("/"); done += Number(parts[0]); total += Number(parts[1]); });
+    const sum = group.querySelector(".sum");
+    if (!sum || !total) return;
+    sum.textContent = done + "/" + total;
+    group.querySelector(".bar i").style.inlineSize = Math.round((100 * done) / total) + "%";
+  });
   left += unsettled.filter((item) => !item.dataset.dressedBy).length;
   for (const set of sets) {
     let decided = 0;
@@ -1625,8 +1670,16 @@ function assetImageOf({ project, record, labels }) {
  * review button at the top right, then its description and a journey's persona. */
 const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels.stepNames[stepOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}</header>`;
 
-/** The home page: how many steps are done, what awaits review by step, then the records to rework. Links and
- * counts only, no card: what to open next is a list, not a gallery. */
+const PALETTE_SHOWN = 10;
+
+/** The colours of the charter's palette, as the stylesheet resolves them, for the card that stands for it. None without a system or a stylesheet. */
+function paletteOf(project, system, tokens) {
+  if (!system || tokens === null) return [];
+  const values = resolvedValues(project).get(BASE_CONTEXT) ?? new Map();
+  const { palette, roles } = charteOf(catalog(project), list(fm(system).primitives), citations(project));
+  return (palette.length ? palette : roles).map((entry) => values.get(entry.name)).filter(Boolean).slice(0, PALETTE_SHOWN);
+}
+
 /** The first thing to open of a step: the first record awaiting review, else the first still proposed, else its first record, else its first set. */
 const firstOf = (each) => each.awaiting[0] ?? each.proposed[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
 const hrefOf = (each) => {
@@ -1662,39 +1715,69 @@ function reviewLineOf(held, labels) {
   return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first))}">${labels.start}</a></p>`;
 }
 
-function overviewOf({ project, held, records, rows, labels }) {
+/** A static thumbnail of a record's shown state, sketched for a wireframe: no script runs in it, it loads when scrolled near,
+ * and assistive technology skips it. A record with no render is a plain blank box. `size` is `s` for a strip, `l` for a card. */
+function thumbOf(project, record, tokens, labels, size) {
+  if (!record || !hasRender(project, record)) return `<span class="thumb ${size} blank" aria-hidden="true"></span>`;
+  const doc = stateDocument(text(project, renderOf(record)), tokens, shownState(record), fm(record).kind === "wireframe");
+  return `<span class="thumb ${size}" aria-hidden="true"><iframe tabindex="-1" loading="lazy" sandbox title="${escaped(titleOf(project, record, labels))}" srcdoc="${escaped(doc)}"></iframe></span>`;
+}
+
+/** The overview: under the stepper, a section per step that holds something, in step order. Journeys are cards with a strip of
+ * their screens, the identity and the charter one card each, the elements a dense list by category, the screens a grid of
+ * thumbnails. Every number is the drawer's: `counted` marks what the step counts, `orderedStates` the progress. */
+function overviewOf({ project, held, records, rows, labels, tokens, palette }) {
+  const recordOf = (id) => records.find((record) => fm(record).id === id);
+  const dresserOf = (id) => records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe === id).sort(byRecordId)[0];
+  const dressed = new Set(records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => fm(record).wireframe));
+  const counted = new Set(held.flatMap((each) => each.counted).map((record) => fm(record).id));
   const progressOf = (record) => {
     const states = orderedStates(rows, record);
-    return `<span class="progress" data-record="${escaped(fm(record).id)}" data-base="${settledOf(states)}" data-total="${states.length}">${settledOf(states)}/${states.length}</span>`;
+    const done = settledOf(states);
+    return states.length ? `<span class="progress" data-record="${escaped(fm(record).id)}" data-base="${done}" data-total="${states.length}">${done}/${states.length}</span>` : "";
   };
-  const sketchOf = (record) => held.flatMap((each) => [...each.dressedBy]).find(([, screen]) => screen === fm(record).id)?.[0];
-  const sketched = (record) => (sketchOf(record) ? ` <a class="sketch" href="${escaped(sketchOf(record))}.html">${escaped(labels.wireframe)}</a>` : "");
-  const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${sketched(record)}${progressOf(record)}</li>`;
-  const link = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`;
-  const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.title)}</a><span class="progress" data-set="${escaped(set.id)}" data-label="${escaped(labels.decided)}" data-total="${variants.latestOf(set.variants).length}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></li>`;
-  const stepBlock = (each) => {
-    const body = each.step === "components"
-      ? CATEGORIES.flatMap((category) => {
-        const inCategory = each.counted.filter((record) => categoryOf(record) === category);
-        return inCategory.length ? [`<h4 data-category="${category}">${labels.categories[category]}</h4><ul>${inCategory.map(entry).join("")}</ul>`] : [];
-      }).join("")
-      : `<ul>${each.counted.map(entry).join("")}</ul>`;
-    const open = each.open.length ? `<ul>${each.open.map(setEntry).join("")}</ul>` : "";
-    const agreeing = each.todo ? "" : `<ul>${each.listed.map(link).join("")}</ul><p class="note">${labels.agreeInChat}</p>`;
-    return `<section class="todo-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}<span>${each.count}</span></h3>${each.counted.length ? body : ""}${open}${agreeing}</section>`;
+  const markOf = (record) => {
+    const id = fm(record).id;
+    const todo = counted.has(id) ? `<span class="mark todo" data-record="${escaped(id)}">${labels.toReviewMark}</span>` : "";
+    const rework = orderedStates(rows, record).some(({ verdict }) => verdict.current === "revise") ? `<span class="mark rework" data-record="${escaped(id)}">${labels.toReworkMark}</span>` : "";
+    return todo + rework;
   };
-  const todo = held.reduce((sum, each) => sum + each.todo, 0);
-  const proposedHere = held.flatMap((each) => each.proposed).sort(byRecordId);
-  const reworked = records.filter((record) => hasRender(project, record) && orderedStates(rows, record).some(({ verdict }) => verdict.current === "revise"));
-  return [
-    stepperOf(held, labels),
-    todo
-      ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewTodo, { count: todo }))}</h2>${held.filter((each) => each.count).map(stepBlock).join("")}</section>`
-      : proposedHere.length
-        ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewStillProposed, { count: proposedHere.length }))}</h2><ul>${proposedHere.map((record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`).join("")}</ul></section>`
-        : `<section class="overview" data-overview="todo"><p class="none">${labels.nothing}</p></section>`,
-    reworked.length ? `<section class="overview" data-overview="revise"><h2>${escaped(filled(labels.overviewRevise, { count: reworked.length }))}</h2><ul>${reworked.sort(byRecordId).map(entry).join("")}</ul></section>` : "",
-  ].filter(Boolean).join("\n");
+  const tile = (record, visual) => `<li data-id="${escaped(fm(record).id)}"><a class="ovcard" href="${escaped(fm(record).id)}.html">${visual}<span class="title">${escaped(titleOf(project, record, labels))}</span><span class="meta">${markOf(record)}${progressOf(record)}</span></a></li>`;
+  const journeyTile = (record) => {
+    const steps = table(record.sections[STEPS_SECTION]);
+    const faces = steps.map((row) => {
+      const target = recordOf(row.Screen);
+      return thumbOf(project, target && fm(target).kind === "wireframe" ? dresserOf(fm(target).id) ?? target : target, tokens, labels, "s");
+    });
+    const waiting = unvalidated(record);
+    const status = `<span class="chip" data-status="${escaped(fm(record).status ?? "")}">${escaped(waiting ? labels.awaitingAgreement : statusLabel(labels, fm(record).status))}</span>`;
+    return `<li data-id="${escaped(fm(record).id)}"><a class="ovcard" href="${escaped(fm(record).id)}.html"><span class="strip" aria-hidden="true">${faces.join("")}</span><span class="title">${escaped(titleOf(project, record, labels))}</span><span class="meta">${status}<span>${escaped(filled(labels.stepsCount, { count: steps.length }))}</span></span></a></li>`;
+  };
+  const charterTile = (record) => tile(record, palette.length ? `<span class="palette" aria-hidden="true">${palette.map((colour) => `<i style="background: ${escaped(colour)}"></i>`).join("")}</span>` : "");
+  const setProgress = (set) => `<span class="progress" data-set="${escaped(set.id)}" data-label="${escaped(labels.decided)}" data-total="${variants.latestOf(set.variants).length}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span>`;
+  const setTile = (set) => `<li data-set="${escaped(set.id)}"><a class="ovcard" href="${escaped(variants.setFileOf(set.id))}"><span class="thumb l sets" aria-hidden="true"><b>${variants.latestOf(set.variants).length}</b></span><span class="title">${escaped(set.title)}</span><span class="meta"><span class="mark todo">${labels.variantsToChoose}</span>${setProgress(set)}</span></a></li>`;
+  const setRow = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.title)}</a><span class="mark todo">${labels.variantsToChoose}</span>${setProgress(set)}</li>`;
+  const listRow = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${markOf(record)}${progressOf(record)}</li>`;
+  const group = (category, own) => {
+    const states = own.flatMap((record) => orderedStates(rows, record));
+    const done = settledOf(states);
+    const sum = states.length ? `<span class="sum">${done}/${states.length}</span><span class="bar" aria-hidden="true"><i style="inline-size: ${Math.round((100 * done) / states.length)}%"></i></span>` : "";
+    return `<div class="group" data-sum><h4 data-category="${category}"><span>${labels.categories[category]}</span>${sum}</h4><ul class="rows">${own.map(listRow).join("")}</ul></div>`;
+  };
+  const body = (each) => {
+    if (each.step === "journeys") return `<ul class="ovcards journeys">${[...each.records].sort(byRecordId).map(journeyTile).join("")}</ul>`;
+    if (each.step === "identity") return `<ul class="ovcards">${[...each.records].sort(byRecordId).map((record) => tile(record, "")).join("")}</ul>`;
+    if (each.step === "foundations") return `<ul class="ovcards">${[...each.records].sort(byRecordId).map(charterTile).join("")}</ul>`;
+    if (each.step === "components") return CATEGORIES.flatMap((category) => { const own = each.records.filter((record) => categoryOf(record) === category).sort(byRecordId); return own.length ? [group(category, own)] : []; }).join("") + (each.open.length ? `<ul class="rows">${each.open.map(setRow).join("")}</ul>` : "");
+    const groups = screenGroupsOf(each.records, records.filter((record) => fm(record).kind === "journey")).map((own) => ({ ...own, records: own.records.filter((record) => !own.sketches.has(fm(record).id) && !dressed.has(fm(record).id)) })).filter((own) => own.records.length);
+    const named = groups.some((own) => own.journey);
+    const grids = groups.map((own) => `${named ? `<h4 data-journey="${own.journey ? escaped(fm(own.journey).id) : ""}">${own.journey ? escaped(titleOf(project, own.journey)) : labels.outOfJourney}</h4>` : ""}<ul class="ovcards screens">${own.records.map((record) => tile(record, thumbOf(project, record, tokens, labels, "l"))).join("")}</ul>`);
+    const sketches = each.records.filter((record) => dressed.has(fm(record).id)).sort(byRecordId);
+    const apart = sketches.length ? `<details class="sketches"><summary>${escaped(filled(labels.sketchesCount, { count: sketches.length }))}</summary><ul class="rows">${sketches.map(listRow).join("")}</ul></details>` : "";
+    return grids.join("") + apart + (each.open.length ? `<ul class="ovcards screens">${each.open.map(setTile).join("")}</ul>` : "");
+  };
+  const section = (each) => `<section class="ov-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}${each.count ? `<span>${each.count}</span>` : ""}</h3>${body(each)}</section>`;
+  return [stepperOf(held, labels), `<div class="overview">${held.filter((each) => each.records.length || each.open.length).map(section).join("")}</div>`].join("\n");
 }
 
 /** The script of the navigation sheet a narrow page opens from its top bar: Escape closes it and gives the focus back to the button. */
@@ -1751,7 +1834,8 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
   const order = reviewOrderOf(project, held, journeys);
   const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, order });
-  const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
+  const palette = paletteOf(project, system, tokens);
+  const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels, tokens, palette })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;

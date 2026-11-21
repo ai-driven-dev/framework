@@ -45,9 +45,10 @@ const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0]
 const drawerOf = (html) => html.match(/<aside class="drawer" id="review"[\s\S]*?<\/aside>/)[0];
 const sidebarCount = (html, step) => Number(navOf(html).match(new RegExp(`<li data-step="${step}" data-todo="\\d+"><details[^>]*><summary>.*?class="step-mark"[^>]*>(\\d+)<`))?.[1]);
 const stepperCount = (html, step) => Number(html.match(new RegExp(`<li data-step="${step}" data-state="\\w+"><a href="[^"]*"><span class="no">\\d</span><span class="name">[^<]*</span><span class="state">(\\d+) `))?.[1]);
-const listCount = (html, step) => Number(html.match(new RegExp(`<section class="todo-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))?.[1]);
+const listCount = (html, step) => Number(html.match(new RegExp(`<section class="ov-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))?.[1]);
 const drawerCount = (html, step) => Number(drawerOf(html).match(new RegExp(`<details class="step-group" data-step="${step}"[^>]*><summary><span class="step-name">[^<]*</span><span class="step-count">\\((\\d+)\\)`))?.[1]);
-const blockOf = (html, step) => html.match(new RegExp(`<section class="todo-step" data-step="${step}">[\\s\\S]*?</section>`))?.[0] ?? "";
+const blockOf = (html, step) => html.match(new RegExp(`<section class="ov-step" data-step="${step}">[\\s\\S]*?</section>`))?.[0] ?? "";
+const tilesOf = (block) => [...block.matchAll(/<ul class="ovcards[^"]*">[\s\S]*?<\/ul>/g)].map((match) => match[0]).join("");
 const rowsIn = (block) => [...block.matchAll(/<li data-(?:id|set)="([^"]+)"/g)].map((match) => match[1]);
 
 describe("aidd-ui showcase trust", () => {
@@ -64,11 +65,11 @@ describe("aidd-ui showcase trust", () => {
       assert.equal(sidebarCount(index, "journeys"), 1, "the journey awaiting agreement");
     });
 
-    it("puts the journeys awaiting agreement in the overview list and in the drawer, to link and not to review", () => {
+    it("puts the journeys on the overview as cards and in the drawer, the one awaiting agreement to link and not to review", () => {
       crowd();
       const index = pagesOf()["index.html"];
-      assert.deepEqual(rowsIn(blockOf(index, "journeys")), ["second"]);
-      assert.match(blockOf(index, "journeys"), /<a href="second\.html">/);
+      assert.deepEqual(rowsIn(blockOf(index, "journeys")), ["onboarding", "second"]);
+      assert.match(blockOf(index, "journeys"), /<a class="ovcard" href="second\.html">/);
       const group = drawerOf(index).match(/<details class="step-group" data-step="journeys"[\s\S]*?<\/details>/)[0];
       assert.match(group, /<a href="second\.html">/);
       assert.doesNotMatch(group, /class="item"|class="step-ok"|class="verdict"/);
@@ -83,11 +84,12 @@ describe("aidd-ui showcase trust", () => {
   });
 
   describe("one row per screen", () => {
-    it("lists a screen and the wireframe it dresses once on the overview", () => {
+    it("shows a screen and the wireframe it dresses once on the overview, as one card, marked as many as the step counts", () => {
       crowd();
-      const rows = rowsIn(blockOf(pagesOf()["index.html"], "screens"));
+      const block = blockOf(pagesOf()["index.html"], "screens");
+      const rows = rowsIn(tilesOf(block));
       assert.deepEqual(rows.sort(), ["bare", "home", "other-screen", "start-screen"]);
-      assert.equal(rows.length, listCount(pagesOf()["index.html"], "screens"));
+      assert.equal((tilesOf(block).match(/class="mark todo"/g) ?? []).length, listCount(pagesOf()["index.html"], "screens"));
     });
   });
 
@@ -98,18 +100,18 @@ describe("aidd-ui showcase trust", () => {
         assert.match(navOf(pages[name]), /<li data-set="ecran-start"><a href="_set-ecran-start\.html"[^>]*>Start here<\/a>/, name);
         assert.match(drawerOf(pages[name]), /<details class="choice" data-set="ecran-start" data-title="Start here"/, name);
       }
-      assert.match(blockOf(pages["index.html"], "screens"), /<a href="_set-ecran-start\.html">Start here<\/a>/);
+      assert.match(blockOf(pages["index.html"], "screens"), /<a class="ovcard" href="_set-ecran-start\.html">[\s\S]*?<span class="title">Start here<\/span>/);
       assert.match(pages["_set-ecran-start.html"], /<h1>Start here<\/h1>/);
     });
 
     it("falls back on its id as words when no record of it is written", () => {
       const bare = SET({ variants: SET().variants.map((each) => ({ ...each, files: [file("screens/other.md", "# Other\n")] })) });
-      assert.match(pagesOf([bare])["index.html"], /<li data-set="ecran-start"><a href="_set-ecran-start\.html">Ecran start<\/a>/);
+      assert.match(pagesOf([bare])["index.html"], /<li data-set="ecran-start"><a class="ovcard" href="_set-ecran-start\.html">[\s\S]*?<span class="title">Ecran start<\/span>/);
     });
 
     it("shows a count on its overview row like a record, and counts in the drawer group of its step", () => {
       const index = pagesOf([SET()])["index.html"];
-      assert.match(blockOf(index, "screens"), /<li data-set="ecran-start"><a href="_set-ecran-start\.html">Start here<\/a><span class="progress" data-set="ecran-start" data-label="chosen" data-total="2">0\/2 chosen<\/span><\/li>/);
+      assert.match(blockOf(index, "screens"), /<li data-set="ecran-start"><a class="ovcard" href="_set-ecran-start\.html">[\s\S]*?<span class="progress" data-set="ecran-start" data-label="chosen" data-total="2">0\/2 chosen<\/span>/);
       const group = drawerOf(index).match(/<details class="step-group" data-step="screens"[\s\S]*?<\/details>\s*(?=<details class="step-group"|<\/div>)/)[0];
       assert.match(group, /<details class="choice" data-set="ecran-start"/);
     });

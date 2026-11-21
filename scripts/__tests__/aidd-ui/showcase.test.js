@@ -43,7 +43,8 @@ const statesIn = (html) => [...html.matchAll(/<article class="state" data-state=
 const articleOf = (html, state) => html.match(new RegExp(`<article class="state" data-state="${state}"[\\s\\S]*?</article>`))[0];
 const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0];
 const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark"[^>]*>([^<]*)</)[1] }));
-const todoOf = (html) => html.slice(html.indexOf('data-overview="todo"')).split('data-overview="revise"')[0];
+const todoOf = (html) => html.match(/<div class="overview">[\s\S]*?<\/div>\s*<\/main>/)[0];
+const markedOf = (html, kind = "todo") => [...todoOf(html).matchAll(new RegExp(`<span class="mark ${kind}" data-record="([^"]+)"`, "g"))].map((match) => match[1]);
 const stepOf = (html, step) => stepsOf(html).find((each) => each.step === step);
 const linksOf = (html, kind) => [...html.match(new RegExp(`<section class="links" data-links="${kind}">[\\s\\S]*?</section>`))[0].matchAll(/href="([^"]+)\.html"/g)].map((match) => match[1]);
 const capture = (name) => put(tmp, `${UI}/screens/${name}`, PNG);
@@ -141,11 +142,10 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(pagesOf()["home.html"], /class="journey"/);
     });
 
-    it("lists on the home page what awaits review as links, with no card and no miniature", () => {
+    it("marks on the home page what awaits review, and nothing that does not", () => {
       const index = pagesOf()["index.html"];
-      assert.doesNotMatch(index, /<a class="card"|<iframe/);
-      assert.deepEqual([...todoOf(index).matchAll(/<li data-id="([^"]+)">/g)].map((match) => match[1]).sort(), ["button", "dialog", "home", "old-button", "search-field"]);
-      assert.doesNotMatch(todoOf(index), /<li data-id="(brand|system|onboarding)">/);
+      assert.deepEqual(markedOf(index).sort(), ["button", "dialog", "home", "old-button", "search-field"]);
+      assert.doesNotMatch(todoOf(index), /<span class="mark todo" data-record="(brand|system|onboarding)"/);
     });
 
     it("orders the navigation by step, one li per step", () => {
@@ -842,17 +842,17 @@ describe("aidd-ui showcase", () => {
       verdicts(["button", "default", "1", "ok", ""], ["button", "hover", "1", "revise", "too pale"]);
       const index = pagesOf()["index.html"];
       assert.match(todoOf(index).match(/<li data-id="button">[\s\S]*?<\/li>/)[0], /<span class="progress" data-record="button" data-base="2" data-total="4">2\/4<\/span>/);
-      assert.match(todoOf(index).match(/<li data-id="home">[\s\S]*?<\/li>/)[0], /<a class="sketch" href="search-flow\.html">Wireframe<\/a>/);
+      assert.match(todoOf(index).match(/<details class="sketches">[\s\S]*?<\/details>/)[0], /<li data-id="search-flow"><a href="search-flow\.html">/);
       assert.doesNotMatch(index, /type="checkbox"|checked|class="batch"|copy-all/);
     });
 
     it("counts the records awaiting review per step on the overview, not their states", () => {
       const index = pagesOf()["index.html"];
-      const count = (step) => index.match(new RegExp(`<section class="todo-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
+      const count = (step) => index.match(new RegExp(`<section class="ov-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
       assert.equal(count("components"), "4");
       assert.equal(count("screens"), "1");
-      assert.match(index, /<h2>To review \(5\)<\/h2>/);
-      assert.doesNotMatch(index, /data-step="(journeys|identity|foundations)"><h3>/);
+      assert.equal(markedOf(index).length, 5);
+      assert.doesNotMatch(index, /data-step="(journeys|identity|foundations)"><h3>[^<]*<span>/);
     });
 
     it("counts a screen and the wireframe it dresses once on the overview, a wireframe no screen dresses still apart", () => {
@@ -864,9 +864,9 @@ describe("aidd-ui showcase", () => {
       put(tmp, `${UI}/wireframes/bare.md`, record(["id: bare", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Bare"));
       put(tmp, `${UI}/wireframes/bare.html`, render);
       const index = pagesOf()["index.html"];
-      const count = (step) => index.match(new RegExp(`<section class="todo-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
+      const count = (step) => index.match(new RegExp(`<section class="ov-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
       assert.equal(count("screens"), "3");
-      assert.match(index, /<h2>To review \(7\)<\/h2>/);
+      assert.equal(markedOf(index).length, 7, "one mark per record the steps count");
     });
 
     it("counts a screen and the wireframe it dresses once in the drawer too, and still lists both for a verdict", () => {
@@ -903,7 +903,7 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(drawer, /data-record="start"/);
       assert.match(drawer, /data-record="bare"/);
       assert.match(drawer, /data-step="screens"[^>]*>(?:(?!<\/summary>)[\s\S])*<span class="step-count">\(3\)<\/span>/);
-      assert.match(index, /<h2>To review \(7\)<\/h2>/);
+      assert.equal(markedOf(index).length, 7, "one mark per record the steps count");
       assert.match(pages["start.html"], /class="verdict"/, "its own page keeps the verdict buttons");
     });
 
@@ -922,7 +922,7 @@ describe("aidd-ui showcase", () => {
 
     it("splits the elements awaiting review by category on the overview", () => {
       const index = pagesOf()["index.html"];
-      const block = index.match(/<section class="todo-step" data-step="components">[\s\S]*?<\/section>/)[0];
+      const block = index.match(/<section class="ov-step" data-step="components">[\s\S]*?<\/section>/)[0];
       assert.deepEqual([...block.matchAll(/<h4 data-category="(\w+)">/g)].map((match) => match[1]).every((key) => ["input", "action", "display", "navigation", "group", "asset"].includes(key)), true);
       assert.ok(block.match(/<h4 /g).length >= 1);
     });
@@ -948,18 +948,17 @@ describe("aidd-ui showcase", () => {
         const start = index.match(/<a class="start" href="([^"]+)">([^<]*)<\/a>/);
         assert.equal(start[2], word, lang);
         assert.match(index.match(/<p class="lede">[\s\S]*?<\/p>/)[0], status, lang);
-        const links = [...todoOf(index).matchAll(/<li data-id="[^"]+"><a href="([^"]+)">/g)].map((match) => match[1]);
+        const links = [...todoOf(index).matchAll(/<li data-id="([^"]+)"><a (?:class="ovcard" )?href="([^"]+)">/g)].filter((match) => markedOf(index).includes(match[1])).map((match) => match[2]);
         assert.ok(links.length > 1, "more than one record awaits");
         assert.equal(start[1], links[0], lang);
       }
     });
 
 
-    it("lists a record with a state to rework under its own heading, hidden when there is none", () => {
-      const revise = (html) => html.match(/<section class="overview" data-overview="revise">[\s\S]*?<\/section>/)?.[0];
-      assert.match(revise(pagesOf()["index.html"]), /<h2>To rework \(\d+\)<\/h2>/);
-      assert.match(revise(pagesOf()["index.html"]), /<li data-id="home">/);
-      assert.equal(revise(pagesOf({ lang: "fr" })["index.html"]).match(/<h2>([^<]*)</)[1].startsWith("\u00c0 reprendre"), true);
+    it("marks a record with a state to rework as such, in the language, and none when there is none", () => {
+      assert.ok(markedOf(pagesOf()["index.html"], "rework").includes("home"));
+      assert.match(todoOf(pagesOf()["index.html"]), /data-record="home">To rework</);
+      assert.match(todoOf(pagesOf({ lang: "fr" })["index.html"]), /data-record="home">\u00c0 reprendre</);
     });
 
     it("offers marking the remaining states OK only as an explicit action of a step of the panel, never one for all", () => {
@@ -1265,9 +1264,9 @@ describe("aidd-ui showcase", () => {
       assert.match(pagesOf({ lang: "fr" })["index.html"], /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 en attente de votre accord<\/span>/);
     });
 
-    it("says what is still proposed on the overview when nothing awaits the drawer", () => {
+    it("says what is still proposed on the overview lede when nothing awaits the drawer", () => {
       for (const file of ["components/button", "components/search-field", "components/dialog", "components/old-button", "screens/home", "wireframes/search-flow"]) fs.rmSync(path.join(tmp, UI, `${file}.md`));
-      assert.match(pagesOf()["index.html"], /<p class="none">Nothing to review\.<\/p>/);
+      assert.deepEqual(markedOf(pagesOf()["index.html"]), []);
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
       const words = { en: "Nothing to review here\\. 1 awaiting your agreement, in Journeys\\. Agree with the assistant in the conversation\\.", fr: "Rien à relire ici\\. 1 en attente de votre accord, dans Parcours\\. À valider avec l'assistant dans la conversation\\." };
       for (const lang of ["en", "fr"]) {
@@ -1275,7 +1274,7 @@ describe("aidd-ui showcase", () => {
         assert.doesNotMatch(index, /<p class="none">/, lang);
         assert.match(index, new RegExp(`<p class="lede">${words[lang]}</p>`), lang);
         assert.doesNotMatch(index, /class="start"/, lang);
-        assert.match(index, /data-overview="todo"[\s\S]*?<a href="onboarding\.html">/, lang);
+        assert.match(todoOf(index), /<li data-id="onboarding"><a class="ovcard" href="onboarding\.html">/, lang);
       }
     });
 
@@ -1442,7 +1441,7 @@ describe("aidd-ui showcase", () => {
         [["brand", names[0]], ["system", names[1]]].forEach(([id, name]) => {
           assert.match(headerOf(pages[`${id}.html`]), new RegExp(`<h1>${name}</h1>`), `${lang} ${id} h1`);
           assert.match(pages[`${id}.html`], new RegExp(`<title>${name}</title>`), `${lang} ${id} title`);
-          assert.match(todoOf(pages["index.html"]), new RegExp(`<a href="${id}.html">${name}</a>`), `${lang} ${id} overview`);
+          assert.match(todoOf(pages["index.html"]), new RegExp(`<a class="ovcard" href="${id}.html">[\\s\\S]*?<span class="title">${name}</span>`), `${lang} ${id} overview`);
           assert.match(itemsOf(pages["index.html"]).find((item) => item.record === id).html, new RegExp(`<summary><span>${name}</span>`), `${lang} ${id} drawer`);
         });
       }
