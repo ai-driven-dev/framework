@@ -4803,7 +4803,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -4829,7 +4830,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -4935,7 +4937,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5044,7 +5047,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5153,7 +5157,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5262,7 +5267,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5371,7 +5377,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5477,7 +5484,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5586,7 +5594,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5692,7 +5701,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {
@@ -5801,7 +5811,8 @@
                   "node:fs": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:fs/promises": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
                   "node:child_process": "a unit test touches no filesystem and no process: use the in-memory fakes in tests/shared/testing, or rename the file .integration.test.ts",
-                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
+                  "node:os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts",
+                  "os": "a unit test reads no real home or temp directory: write a literal path, or rename the file .integration.test.ts"
                 },
                 "patterns": [
                   {

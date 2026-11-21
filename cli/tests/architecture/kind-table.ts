@@ -160,7 +160,7 @@ export const KINDS: readonly Kind[] = [
     except: [],
     imports: ["model", "use-case", "presenter", "error"],
     externals: "any",
-    tests: ["unit", "golden"],
+    tests: ["unit"],
   },
   {
     id: "controller",

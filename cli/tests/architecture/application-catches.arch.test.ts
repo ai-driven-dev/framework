@@ -1,9 +1,9 @@
 /**
  * A use case never catches its own errors: only a scenario collects a partial failure, and it
  * keeps the typed error. The context `application/` files that still catch are the entries of
- * the `application-catches` debt in `kinds-debt.json`, with how many each holds. A file may
- * not catch more, nor catch where it did not; one that catches less must lower its entry, so the
- * debt only ever shrinks. A `catch` in a comment or a string is no catch: the syntax tree is read.
+ * the `application-catches` debt in `kinds-debt.json`, with how many each holds. The count
+ * matches exactly: lowering is forced, a raise is caught in review. A `catch` in a comment or a
+ * string is no catch: the syntax tree is read.
  */
 import { readFileSync } from "node:fs";
 import {
@@ -26,7 +26,12 @@ function debtEntries(rule: string): Record<string, number> {
   if (!Array.isArray(debts)) throw new Error("kinds-debt.json is not a list");
   const debt = debts.find((item) => item?.rule === rule);
   if (typeof debt?.closesWhen !== "string") throw new Error(`no closesWhen for ${rule}`);
-  return Object.fromEntries(Object.entries(debt.entries));
+  const { entries } = debt;
+  if (!entries || typeof entries !== "object") throw new Error(`no entries for ${rule}`);
+  for (const [file, count] of Object.entries(entries)) {
+    if (typeof count !== "number") throw new Error(`${file}: the count is not a number`);
+  }
+  return entries;
 }
 
 function catchCount(root: SourceFile): number {
