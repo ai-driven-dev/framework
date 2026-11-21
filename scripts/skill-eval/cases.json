@@ -88,14 +88,13 @@
   {
     "skill": "02-challenge",
     "evalName": "xeval-challenge",
-    "name": "flags a plan violation as a deal breaker with low confidence",
+    "name": "flags a plan violation as a deal breaker",
     "prompt": "Use the {{SKILL}} skill. Agreed plan: the function must RETURN THE SUM of a and b. Work to review: function add(a, b) { return a - b }. Challenge the work against the plan and emit the report.",
     "expect": {
       "stdoutContains": [
-        "confidence",
         "Deal breakers"
       ],
-      "judge": "A confidence percentage below 75% is stated, and the subtraction (returning a - b instead of a + b) is listed as a deal breaker."
+      "judge": "The subtraction (returning a - b instead of a + b) is listed under Deal breakers, and no confidence percentage is stated."
     }
   },
   {

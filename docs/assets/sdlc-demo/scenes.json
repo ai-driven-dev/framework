@@ -474,22 +474,22 @@
           "icon": "file",
           "rows": [
             {
-              "text": "My confidence level of correctness: 95%",
+              "text": "Aim: serves the request",
               "at": 1.6,
               "k": "h"
             },
             {
-              "text": "# Correctness",
+              "text": "# Deal breakers",
               "at": 2.2,
               "k": "h"
             },
             {
-              "text": "Matches the request",
+              "text": "none",
               "at": 2.5,
               "k": "ok"
             },
             {
-              "text": "# Deal breakers",
+              "text": "# To decide",
               "at": 3.1,
               "k": "h"
             },
@@ -499,12 +499,12 @@
               "k": "ok"
             },
             {
-              "text": "# Suggestions",
+              "text": "# Holds",
               "at": 4.0,
               "k": "h"
             },
             {
-              "text": "none",
+              "text": "Matches the request",
               "at": 4.3,
               "k": "ok"
             }
