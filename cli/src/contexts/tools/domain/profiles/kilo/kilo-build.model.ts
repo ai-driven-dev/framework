@@ -9,7 +9,11 @@ import {
   genericFlatSkillTreePath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type {
+  ConfigArtifactFile,
+  ConfigArtifactInput,
+  ToolBuildContract,
+} from "../../../contract/build-contract.js";
 import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
@@ -72,6 +76,24 @@ function collectKiloMcp(
   return incoming;
 }
 
+function emitKiloConfig({
+  builtPlugins,
+  pluginMcp,
+  existing,
+  assets,
+}: ConfigArtifactInput): readonly ConfigArtifactFile[] {
+  const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
+  const incoming = collectKiloMcp(builtPlugins, pluginMcp);
+  const asset = assets.get("kilo.json");
+  const base = typeof asset === "string" ? asset : JSON.stringify(asset);
+  const config = buildTypedMcpFlatConfig({
+    baseConfig: base,
+    existing: existing.get(configPath) ?? null,
+    incoming,
+  });
+  return [{ path: configPath, content: config }];
+}
+
 export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
@@ -101,18 +123,7 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       reads: () => KILO_CONFIG_CANDIDATES,
       probes: () => [],
       assets: { tool: "kilo", names: ["kilo.json"] },
-      emit: ({ builtPlugins, pluginMcp, existing, assets }) => {
-        const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
-        const incoming = collectKiloMcp(builtPlugins, pluginMcp);
-        const asset = assets.get("kilo.json");
-        const base = typeof asset === "string" ? asset : JSON.stringify(asset);
-        const config = buildTypedMcpFlatConfig({
-          baseConfig: base,
-          existing: existing.get(configPath) ?? null,
-          incoming,
-        });
-        return [{ path: configPath, content: config }];
-      },
+      emit: emitKiloConfig,
     },
   };
 }

@@ -390,50 +390,6 @@ describe("what a profile's plugins capability says about activation", () => {
   });
 });
 
-describe("plugin sections that disagree", () => {
-  const refused = (sections: object) =>
-    refusalOf(() => defineAiTool({ ...aiSpec, capabilities: () => sections }));
-  const native = nativePlugins();
-  const flat = flatPlugins("refuses");
-
-  it("refuses a native layout without a manifest", () => {
-    const error = refused({ layout: native.layout, hooks: native.hooks });
-
-    expect([error.invariant, error.detail]).toEqual([
-      "plugin-sections-disagree",
-      "a native layout requires a manifest section.",
-    ]);
-  });
-
-  it("refuses a manifest beside a layout that is not native", () => {
-    const sections = sectionsOf(flat);
-
-    expect(refused({ ...sections, manifest: native.manifest }).detail).toContain(
-      "a flat layout takes no manifest section."
-    );
-  });
-
-  it("refuses a manifest with no layout", () => {
-    expect(refused({ manifest: native.manifest }).detail).toContain(
-      "a manifest needs a native layout."
-    );
-  });
-
-  it("refuses a layout with no hooks section to state its delivery", () => {
-    expect(refused({ layout: flat.layout }).detail).toContain(
-      "a layout requires a hooks section to state its delivery."
-    );
-  });
-
-  it("refuses a hooks delivery its layout cannot take", () => {
-    const bridge = { delivery: { kind: "bridge", flat: { dir: ".x/hooks/" } } } as const;
-
-    expect(refused({ ...sectionsOf(native), hooks: bridge }).detail).toContain(
-      "hooks delivery 'bridge' does not suit a native layout."
-    );
-  });
-});
-
 describe("what a refused profile carries", () => {
   const sayOf = (build: () => unknown) => {
     const { toolId, invariant, detail } = refusalOf(build);

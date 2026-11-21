@@ -15,12 +15,8 @@ import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
-import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
-import {
-  resolveDescription,
-  resolveVersion,
-  synthesizeSharedManifest,
-} from "../../marketplace-catalog.js";
+import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
+import { resolveDescription, resolveVersion } from "../../marketplace-catalog.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.model.js";
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
@@ -42,39 +38,13 @@ const FLAT_VSCODE_MCP_PATH = ".vscode/mcp.json";
 const FLAT_AGENT_OUTPUT_EXT = ".agent.md";
 
 export function buildCopilotMarketplaceContract(hooks: HooksRouting): ToolBuildContract {
-  const namesHooks = hooks.manifestNamesHooks === true;
-  const manifestRelative = OUTPUT_PLUGIN_MANIFEST_RELATIVE;
-  const marketplaceRelative = OUTPUT_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: hooks.rootToken,
-    manifestFileRelative: manifestRelative,
-    synthesizeManifest: (source, presence) =>
-      synthesizeSharedManifest(source, presence, {
-        agentsField: true,
-        hooksField: namesHooks,
-      }),
+    ...pluginTreeContract(hooks, {
+      manifestRelative: OUTPUT_PLUGIN_MANIFEST_RELATIVE,
+      marketplaceRelative: OUTPUT_MARKETPLACE_RELATIVE,
+      transformAgent: transformCopilotAgent,
+    }),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
-    artifacts: {
-      skills: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "skills" },
-        path: (_p, rel) => rel,
-      },
-      agents: {
-        supported: true,
-        source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (_p, rel) => rel,
-        transform: transformCopilotAgent,
-      },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        path: () => ".mcp.json",
-      },
-      hooks: pluginTreeHooksArtifact(hooks),
-      rules: { supported: false },
-      commands: { supported: false },
-    },
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
       catalog: {
         name: source.name,
@@ -87,10 +57,16 @@ export function buildCopilotMarketplaceContract(hooks: HooksRouting): ToolBuildC
         plugins: entries,
       },
       schemaName: "marketplace",
-      destRelPath: marketplaceRelative,
+      destRelPath: OUTPUT_MARKETPLACE_RELATIVE,
     }),
     buildMarketplaceEntry: async ({ name, outDir, srcEntry, fs }) => {
-      const source = { fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative };
+      const source = {
+        fs,
+        name,
+        srcEntry,
+        outDir,
+        outputManifestRelative: OUTPUT_PLUGIN_MANIFEST_RELATIVE,
+      };
       const version = await resolveVersion(source);
       const description = await resolveDescription(source);
       return { name, source: name, description, version };

@@ -97,6 +97,12 @@ const CLAUDE_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
   toEntryKey: sharedMarketplaceKey,
 };
 
+/** A command filed under a numbered phase folder lands in that phase's commands folder. */
+function phasedCommandPath(fileName: string): string | undefined {
+  const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
+  return phased ? `${commandsDir(phased[1])}${phased[2]}` : undefined;
+}
+
 function convertRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
   if ("paths" in fm) {
     const paths = fm.paths;
@@ -145,11 +151,8 @@ export const claude = defineAiTool({
       convertFrontmatter: (fm) => fm,
     }),
     commands: bound.commands({
-      buildInstallPath: (fileName) => {
-        const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
-        if (phased) return `${commandsDir(phased[1])}${phased[2]}`;
-        return bound.installUnder("commands/")(fileName);
-      },
+      buildInstallPath: (fileName) =>
+        phasedCommandPath(fileName) ?? bound.installUnder("commands/")(fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
     rules: bound.rules({

@@ -4,7 +4,6 @@ import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vsco
 };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-copilot.cjs";
-import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
@@ -26,174 +25,23 @@ import {
   buildCopilotFlatContract,
   buildCopilotMarketplaceContract,
 } from "./copilot-build.model.js";
+import {
+  agentsHandler,
+  commandsHandler,
+  DIRECTORY,
+  EXT_AGENT,
+  EXT_INSTRUCTIONS,
+  EXT_PROMPT,
+  rewriteCopilotContent,
+  rulesHandler,
+  skillsHandler,
+  TOOL_SUFFIX,
+} from "./copilot-content.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
-const DIRECTORY = ".github/";
-const TOOL_SUFFIX = ".copilot.md";
 const VSCODE_SETTINGS_ASSET = "vscode-settings.json";
 const VSCODE_SETTINGS_PATH = ".vscode/settings.json";
-
-// Canon's framework-doc reference placeholders. Copilot is the only tool that rewrites
-// content between the canonical form and its own workspace-relative paths, so these
-// tokens live here rather than in a shared location nothing else reads.
-const TOOLS_PLACEHOLDER = "{{TOOLS}}/";
-const DOCS_PLACEHOLDER = "{{DOCS}}/";
-const AT_TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
-const AT_DOCS_PLACEHOLDER = "@{{DOCS}}/";
-
-const DOCS_DIR = "aidd_docs" as const;
-const EXT_AGENT = ".agent.md";
-const EXT_PROMPT = ".prompt.md";
-const EXT_INSTRUCTIONS = ".instructions.md";
-
-function escapedRegex(literal: string): string {
-  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function basename(path: string): string {
-  return path.split("/").at(-1) ?? path;
-}
-
-function flattenFileName(
-  fileName: string,
-  targetExt: string,
-  options: { toolSuffix?: string; stripNumericPrefix?: boolean } = {}
-): string {
-  const parts = fileName.split("/");
-  let baseName = parts[parts.length - 1];
-
-  if (options.stripNumericPrefix) {
-    baseName = baseName.replace(/^\d+[_-]/, "");
-  }
-  if (options.toolSuffix && baseName.endsWith(options.toolSuffix)) {
-    baseName = `${baseName.slice(0, -options.toolSuffix.length)}.md`;
-  }
-  baseName = baseName.replaceAll("_", "-");
-
-  const withExt = addTargetExtension(baseName, targetExt);
-
-  if (parts.length === 1) {
-    return withExt;
-  }
-
-  const prefix = buildPrefix(parts.slice(0, -1).join("/"));
-  return `${prefix}-${withExt}`;
-}
-
-function buildPrefix(subPath: string): string {
-  return subPath
-    .split("/")
-    .map((p) => p.replace(/^(\d+)[_-].*/, "$1"))
-    .join("-");
-}
-
-function addTargetExtension(baseName: string, targetExt: string): string {
-  if (baseName.endsWith(targetExt)) return baseName;
-  const withoutMd = baseName.endsWith(".md") ? baseName.slice(0, -3) : baseName;
-  return `${withoutMd}${targetExt}`;
-}
-
-const agentsHandler = {
-  buildFilePath(fileName: string): string | null {
-    const base = basename(fileName);
-    if (base === GITKEEP_FILE) return null;
-    const name = base.endsWith(".md") ? `${base.slice(0, -3)}${EXT_AGENT}` : base;
-    return `${DIRECTORY}agents/${name}`;
-  },
-};
-
-const commandsHandler = {
-  buildFilePath(fileName: string): string | null {
-    const base = basename(fileName);
-    if (base === GITKEEP_FILE) return null;
-    const flat = flattenFileName(fileName, EXT_PROMPT);
-    return `${DIRECTORY}prompts/${flat}`;
-  },
-};
-
-const rulesHandler = {
-  buildFilePath(fileName: string): string | null {
-    const base = basename(fileName);
-    if (base === GITKEEP_FILE) return null;
-    const flat = flattenFileName(fileName, EXT_INSTRUCTIONS, {
-      toolSuffix: TOOL_SUFFIX,
-      stripNumericPrefix: true,
-    });
-    return `${DIRECTORY}instructions/${flat}`;
-  },
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    const { paths, globs } = fm;
-    const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
-    if (patterns !== null && patterns.length > 0) return { applyTo: patterns.join(",") };
-    if (fm.alwaysApply === false && fm.description !== undefined) {
-      return { description: fm.description };
-    }
-    return {};
-  },
-};
-
-const skillsHandler = {
-  buildFilePath(fileName: string): string | null {
-    const base = basename(fileName);
-    if (base === GITKEEP_FILE) return null;
-    return `${DIRECTORY}skills/${fileName}`;
-  },
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return fm;
-  },
-};
-
-function resolveInstalledPath(path: string): string {
-  if (path.startsWith("agents/")) {
-    const subPath = path.slice("agents/".length);
-    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}agents/${subPath}`;
-    return agentsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
-  }
-  if (path.startsWith("commands/")) {
-    const subPath = path.slice("commands/".length);
-    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}prompts/${subPath}`;
-    return commandsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
-  }
-  if (path.startsWith("rules/")) {
-    const subPath = path.slice("rules/".length);
-    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}instructions/${subPath}`;
-    return rulesHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
-  }
-  // Skills keep their structure, so they take this default with every unknown section: a predictable directory-prefixed default rather than a silently dropped
-  // reference when a new section is added to the framework.
-  return `${DIRECTORY}${path}`;
-}
-
-function rewriteCopilotContent(content: string): string {
-  return (
-    content
-      .replace(
-        new RegExp(`${escapedRegex(AT_TOOLS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
-        (_match, path: string) => {
-          const fullPath = resolveInstalledPath(path);
-          return `[${fullPath}](../../${fullPath})`;
-        }
-      )
-      .replace(
-        new RegExp(`${escapedRegex(AT_DOCS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
-        (_match, path: string) => {
-          return `[${DOCS_DIR}/${path}](../../${DOCS_DIR}/${path})`;
-        }
-      )
-      // {{TOOLS}}/ (without @) replaces directory prefix only: used for path references in frontmatter or prose.
-      // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath: used for @-include syntax.
-      .replaceAll("{{TOOLS}}/agents/", `${DIRECTORY}agents/`)
-      .replace(/\{\{TOOLS\}\}\/commands\/([^\s\n`'">,]+)/g, (_match, path: string) => {
-        const flat = flattenFileName(path, EXT_PROMPT);
-        return `${DIRECTORY}prompts/${flat}`;
-      })
-      .replaceAll("{{TOOLS}}/rules/", `${DIRECTORY}instructions/`)
-      .replaceAll("{{TOOLS}}/skills/", `${DIRECTORY}skills/`)
-      .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
-      .replaceAll(DOCS_PLACEHOLDER, `${DOCS_DIR}/`)
-  );
-}
 
 const hooks = declareHooks(
   { toolId: "copilot", directory: DIRECTORY, adapter },
@@ -274,6 +122,46 @@ function serversKeyed(content: string): string {
   return content;
 }
 
+function copilotLayout() {
+  return nativeLayout({
+    pluginsDir: ".github/plugins/",
+    nativeActivation: COPILOT_ACTIVATION,
+    marketplaceSettings: COPILOT_MARKETPLACE_SETTINGS,
+  });
+}
+
+function copilotMcp() {
+  return {
+    config: new McpConfigPart({
+      outputPath: ".vscode/mcp.json",
+      format: "json",
+      consumes: [MCP_CONFIG_REF],
+      transformContent: serversKeyed,
+    }),
+    plugin: PLUGIN_MCP,
+  };
+}
+
+function copilotVscodeConfig(): ConfigSection {
+  return new ConfigSection({
+    outputPath: VSCODE_SETTINGS_PATH,
+    mergeStrategy: "framework-prime",
+    staticContentAssetFile: VSCODE_SETTINGS_ASSET,
+    requiresTool: "vscode",
+  });
+}
+
+function copilotModels(): ModelsSection {
+  return new ModelsSection({
+    providers: ["openai", "anthropic"],
+    nativeModels: {
+      "claude-opus-5-5": "claude-opus-5.5",
+      "claude-sonnet-5-5": "claude-sonnet-5.5",
+      "claude-haiku-5-5": "claude-haiku-5.5",
+    },
+  });
+}
+
 export const copilot = defineAiTool({
   toolId: "copilot",
   distributionProbes: {
@@ -319,7 +207,7 @@ export const copilot = defineAiTool({
     commands: new CommandsSection({
       toolSuffix: EXT_PROMPT,
       buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: new RulesSection({
       toolSuffix: EXT_INSTRUCTIONS,
@@ -327,41 +215,15 @@ export const copilot = defineAiTool({
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
     }),
-    mcp: {
-      config: new McpConfigPart({
-        outputPath: ".vscode/mcp.json",
-        format: "json",
-        consumes: [MCP_CONFIG_REF],
-        transformContent: serversKeyed,
-      }),
-      plugin: PLUGIN_MCP,
-    },
-    config: [
-      new ConfigSection({
-        outputPath: VSCODE_SETTINGS_PATH,
-        mergeStrategy: "framework-prime",
-        staticContentAssetFile: VSCODE_SETTINGS_ASSET,
-        requiresTool: "vscode",
-      }),
-    ],
+    mcp: copilotMcp(),
+    config: [copilotVscodeConfig()],
     hooks: { delivery: hooksSupport.delivery },
-    layout: nativeLayout({
-      pluginsDir: ".github/plugins/",
-      nativeActivation: COPILOT_ACTIVATION,
-      marketplaceSettings: COPILOT_MARKETPLACE_SETTINGS,
-    }),
+    layout: copilotLayout(),
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",
       pluginRootToken: hooksSupport.rootToken,
     }),
-    models: new ModelsSection({
-      providers: ["openai", "anthropic"],
-      nativeModels: {
-        "claude-opus-5-5": "claude-opus-5.5",
-        "claude-sonnet-5-5": "claude-sonnet-5.5",
-        "claude-haiku-5-5": "claude-haiku-5.5",
-      },
-    }),
+    models: copilotModels(),
   }),
 
   rewriteContent: rewriteCopilotContent,

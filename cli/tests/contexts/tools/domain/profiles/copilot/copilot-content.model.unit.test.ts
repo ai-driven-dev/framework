@@ -1,12 +1,11 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { rewriteCopilotContent } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot-content.model.js";
 
 /** What a reference to another framework file becomes once installed for Copilot. No other gate
  * sees it: `translate` never calls `rewriteContent`, and the byte-frozen golden cell is claude,
  * whose rewrite is the identity. The whole rewritten string is asserted, never a fragment. */
 describe("a reference to another framework file, installed for Copilot", () => {
-  const rewrite = (content: string) => copilot.rewriteContent(content);
+  const rewrite = rewriteCopilotContent;
 
   describe("an @-reference, which becomes a link", () => {
     it("points an agent reference at the installed .agent.md file", () => {
@@ -139,15 +138,6 @@ describe("a reference to another framework file, installed for Copilot", () => {
     it("is returned unchanged", () => {
       const content = "# A heading\n\nProse with a [link](https://example.com) and `code`.\n";
       expect(rewrite(content)).toBe(content);
-    });
-  });
-
-  describe("capabilities.plugins", () => {
-    it("declares where copilot's own user-scope settings file lives, for --scope user", () => {
-      const activation = copilot.nativeActivation();
-      expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
-        join("/home/tester", ".copilot", "settings.json")
-      );
     });
   });
 });

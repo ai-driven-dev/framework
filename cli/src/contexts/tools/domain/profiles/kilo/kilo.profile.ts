@@ -7,6 +7,7 @@ import {
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks/flat-routes.js";
+import { descriptionOnlyRule } from "../../formats/rule-frontmatter.js";
 import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
@@ -50,15 +51,11 @@ export const kilo = defineAiTool({
     }),
     commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
-      convertFrontmatter: (fm, relativeFileName) =>
-        convertCommandFrontmatterNoHint(fm, relativeFileName),
+      convertFrontmatter: convertCommandFrontmatterNoHint,
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: (fm) =>
-        fm.alwaysApply === false && fm.description !== undefined
-          ? { description: fm.description }
-          : {},
+      convertFrontmatter: descriptionOnlyRule,
     }),
     mcp: {
       config: new McpConfigPart({

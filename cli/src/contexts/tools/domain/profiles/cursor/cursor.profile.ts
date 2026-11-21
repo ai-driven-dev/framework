@@ -8,6 +8,7 @@ import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { declareHooks } from "../../formats/hooks/declaration.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks/routes.js";
+import { rulePatterns } from "../../formats/rule-frontmatter.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
@@ -24,6 +25,23 @@ const MDC_EXT = ".mdc";
 
 function toMdc(fileName: string): string {
   return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
+}
+
+/** A scoped rule keeps its globs and never applies on its own; an unscoped one survives only as
+ * an on-request rule that has a description. */
+function cursorRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+  const patterns = rulePatterns(fm);
+  const described = fm.description === undefined ? {} : { description: fm.description };
+  if (patterns.length > 0) {
+    return {
+      ...described,
+      globs: JSON.stringify(patterns).replace(/,/g, ", "),
+      alwaysApply: false,
+    };
+  }
+  return fm.alwaysApply === false && fm.description !== undefined
+    ? { ...described, alwaysApply: false }
+    : {};
 }
 
 // Split literal to avoid biome's noTemplateCurlyInString warning.
@@ -107,27 +125,8 @@ export const cursor = defineAiTool({
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
     rules: bound.rules({
-      buildInstallPath: (fileName) => {
-        const stripped = bound.installUnder("rules/")(fileName);
-        return toMdc(stripped);
-      },
-      convertFrontmatter: (fm) => {
-        const { paths, globs, description } = fm;
-        const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
-        if (patterns === null || patterns.length === 0) {
-          if (fm.alwaysApply === false && description !== undefined) {
-            return { description, alwaysApply: false };
-          }
-          return {};
-        }
-        const result: Record<string, unknown> = {};
-        if (description !== undefined) result.description = description;
-        return {
-          ...result,
-          globs: JSON.stringify(patterns).replace(/,/g, ", "),
-          alwaysApply: false,
-        };
-      },
+      buildInstallPath: (fileName) => toMdc(bound.installUnder("rules/")(fileName)),
+      convertFrontmatter: cursorRuleFrontmatter,
     }),
     mcp: {
       config: new McpConfigPart({

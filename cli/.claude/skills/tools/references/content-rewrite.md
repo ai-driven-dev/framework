@@ -31,4 +31,4 @@
 
 - An identity rewrite looks the same as one that was forgotten, until a placeholder reaches a user's file verbatim.
 - Prove a rewrite with a fixture that contains the placeholder, and assert the whole rewritten string.
-- `tests/contexts/tools/domain/profiles/copilot/content.unit.test.ts` is the model.
+- `tests/contexts/tools/domain/profiles/copilot/copilot-content.model.unit.test.ts` is the model.

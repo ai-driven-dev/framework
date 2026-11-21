@@ -11,17 +11,15 @@ import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks/routes.
 import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import type { BoundTool } from "../../profile/tool-spec.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
-import {
-  buildCodexContract,
-  buildCodexFlatContract,
-  mergeCodexConfigToml,
-  stripCodexSkillFrontmatter,
-} from "./codex-build.model.js";
+import { buildCodexContract, buildCodexFlatContract } from "./codex-build.model.js";
+import { mergeCodexConfigToml } from "./codex-config.model.js";
 import { codexGlobalFilePath } from "./codex-paths.model.js";
+import { stripCodexSkillFrontmatter } from "./codex-skill.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
@@ -129,6 +127,46 @@ const CODEX_LAYOUT = nativeLayout({
   },
 });
 
+function codexCapabilities(toml: TomlCodec) {
+  return (bound: BoundTool) => ({
+    agents: bound.agents({
+      format: "toml",
+      frontmatter: tomlAgentFrontmatter,
+      serialize: tomlAgentToml(toml),
+    }),
+    skills: bound.skills({
+      agentsSkillsDirectory: true,
+      buildInstallPath: buildCodexSkillFilePath,
+      convertFrontmatter: stripCodexSkillFrontmatter,
+    }),
+    commands: bound.commands({
+      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+    }),
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
+      convertFrontmatter: (fm) => fm,
+    }),
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".codex/config.toml",
+        format: "toml",
+        toml,
+        mergeFn: mergeCodexConfigToml(toml),
+        consumes: [MCP_CONFIG_REF],
+      }),
+      plugin: PLUGIN_MCP,
+    },
+    hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
+    layout: CODEX_LAYOUT,
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      pluginRootToken: hooksSupport.rootToken,
+    }),
+    models: new ModelsSection({ providers: ["openai"] }),
+  });
+}
+
 /** The Codex profile, writing its TOML files through `toml`. */
 export const codexProfile = (toml: TomlCodec) =>
   defineAiTool({
@@ -149,46 +187,7 @@ export const codexProfile = (toml: TomlCodec) =>
       flat: () => buildCodexFlatContract(toml, hooks),
     },
 
-    capabilities: (bound) => ({
-      agents: bound.agents({
-        format: "toml",
-        frontmatter: tomlAgentFrontmatter,
-        serialize: tomlAgentToml(toml),
-      }),
-      skills: bound.skills({
-        agentsSkillsDirectory: true,
-        buildInstallPath: buildCodexSkillFilePath,
-        convertFrontmatter: stripCodexSkillFrontmatter,
-      }),
-      commands: bound.commands({
-        buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-        convertFrontmatter: (fm, relativeFileName) =>
-          convertCommandFrontmatter(fm, relativeFileName),
-      }),
-      rules: bound.rules({
-        buildInstallPath: bound.installUnder("rules/"),
-        convertFrontmatter: (fm) => fm,
-      }),
-      mcp: {
-        config: new McpConfigPart({
-          outputPath: ".codex/config.toml",
-          format: "toml",
-          toml,
-          mergeFn: mergeCodexConfigToml(toml),
-          consumes: [MCP_CONFIG_REF],
-        }),
-        plugin: PLUGIN_MCP,
-      },
-      hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
-      layout: CODEX_LAYOUT,
-      manifest: manifestSection({
-        manifestRelativePath: "plugin.json",
-        pluginRootToken: hooksSupport.rootToken,
-      }),
-      models: new ModelsSection({ providers: ["openai"] }),
-    }),
+    capabilities: codexCapabilities(toml),
 
-    rewriteContent(content: string): string {
-      return rewriteCodexContent(content);
-    },
+    rewriteContent: rewriteCodexContent,
   });

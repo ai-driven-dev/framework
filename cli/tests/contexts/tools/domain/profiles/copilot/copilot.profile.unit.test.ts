@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
@@ -122,5 +123,14 @@ describe("copilot build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(copilot.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("copilot capabilities.plugins", () => {
+  it("declares where copilot's own user-scope settings file lives, for --scope user", () => {
+    const activation = copilot.nativeActivation();
+    expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
+      join("/home/tester", ".copilot", "settings.json")
+    );
   });
 });

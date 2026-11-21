@@ -15,12 +15,7 @@ import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
-import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
-import {
-  buildSharedEntry,
-  buildSharedMarketplace,
-  synthesizeSharedManifest,
-} from "../../marketplace-catalog.js";
+import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.model.js";
 
 // Distinct from their source-side equivalents even where the literals coincide: a change to
@@ -44,50 +39,11 @@ function transformCursorAgent(content: string, plugin: string, outName: string):
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
 export function buildCursorContract(hooks: HooksRouting): ToolBuildContract {
-  const manifestRelative = OUTPUT_CURSOR_MANIFEST_RELATIVE;
-  const marketplaceRelative = OUTPUT_CURSOR_MARKETPLACE_RELATIVE;
-  const namesHooks = hooks.manifestNamesHooks === true;
-  return {
-    pluginRootToken: hooks.rootToken,
-    manifestFileRelative: manifestRelative,
-    synthesizeManifest: (source, presence) =>
-      synthesizeSharedManifest(source, presence, {
-        agentsField: true,
-        hooksField: namesHooks,
-      }),
-    manifestSchemaName: "plugin-manifest",
-    artifacts: {
-      skills: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "skills" },
-        path: (_p, rel) => rel,
-      },
-      agents: {
-        supported: true,
-        source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (_p, rel) => rel,
-        transform: transformCursorAgent,
-      },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        path: () => ".mcp.json",
-      },
-      hooks: pluginTreeHooksArtifact(hooks),
-      rules: { supported: false },
-      commands: { supported: false },
-    },
-    buildMarketplaceCatalog: async (source, entries, _fs) => ({
-      catalog: buildSharedMarketplace(
-        source as Parameters<typeof buildSharedMarketplace>[0],
-        entries
-      ),
-      schemaName: "claude-marketplace",
-      destRelPath: marketplaceRelative,
-    }),
-    buildMarketplaceEntry: async ({ name, outDir, srcEntry, fs }) =>
-      buildSharedEntry({ fs, name, srcEntry, outDir, outputManifestRelative: manifestRelative }),
-  };
+  return pluginTreeContract(hooks, {
+    manifestRelative: OUTPUT_CURSOR_MANIFEST_RELATIVE,
+    marketplaceRelative: OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
+    transformAgent: transformCursorAgent,
+  });
 }
 
 function cursorFlatAgentPath(plugin: string, rel: string): string {

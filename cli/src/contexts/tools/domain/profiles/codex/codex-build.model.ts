@@ -1,132 +1,60 @@
 /**
  * Codex's build contracts: marketplace (a native plugin tree) and flat (direct workspace
- * materialization). `mergeCodexConfigToml` and `stripCodexSkillFrontmatter` live here because
- * both contracts need them as much as the installed-content capabilities do; the profile
- * imports them back from here.
+ * materialization); what they merge, strip and list lives in the sibling models.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
   flatMcpKeyPrefix,
   genericFlatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
+import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
 import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
+import { mergeCodexConfigToml } from "./codex-config.model.js";
+import {
+  buildCodexManifest,
+  buildCodexMarketplace,
+  buildCodexMarketplaceEntry,
+} from "./codex-marketplace.model.js";
 import {
   OUTPUT_CODEX_AGENTS_DIR,
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.model.js";
+import { transformCodexSkill } from "./codex-skill.model.js";
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
-type TomlRecord = Record<string, unknown>;
-
-const MIN_PROJECT_DOC_MAX_BYTES = 262144;
-
-function parseSafe(toml: TomlCodec, content: string): TomlRecord {
-  if (!content.trim()) return {};
-  try {
-    return toml.parse(content);
-  } catch {
-    return {};
-  }
-}
-
-function mergeMcpServers(existing: TomlRecord, incoming: TomlRecord): void {
-  const incomingServers = incoming.mcp_servers as TomlRecord | undefined;
-  if (!incomingServers) return;
-  const existingServers = (existing.mcp_servers ?? {}) as TomlRecord;
-  for (const [name, value] of Object.entries(incomingServers)) {
-    if (!(name in existingServers)) {
-      existingServers[name] = value;
-    }
-  }
-  existing.mcp_servers = existingServers;
-}
-
-function ensureProjectDocMaxBytes(existing: TomlRecord, incoming: TomlRecord): void {
-  const existingVal =
-    typeof existing.project_doc_max_bytes === "number" ? existing.project_doc_max_bytes : 0;
-  const incomingVal =
-    typeof incoming.project_doc_max_bytes === "number"
-      ? incoming.project_doc_max_bytes
-      : MIN_PROJECT_DOC_MAX_BYTES;
-  if (existingVal >= MIN_PROJECT_DOC_MAX_BYTES) return;
-  existing.project_doc_max_bytes = Math.max(existingVal, incomingVal, MIN_PROJECT_DOC_MAX_BYTES);
-}
-
-function ensureCodexHooks(existing: TomlRecord): void {
-  const features = existing.features as TomlRecord | undefined;
-  if (features?.hooks !== undefined || features?.codex_hooks !== undefined) return;
-  existing.features = { ...(features ?? {}), hooks: true };
-}
-
-export function mergeCodexConfigToml(
-  toml: TomlCodec
-): (existing: string, aiddPayload: string) => string {
-  return (existing, aiddPayload) => {
-    const result = parseSafe(toml, existing);
-    const payload = parseSafe(toml, aiddPayload);
-    mergeMcpServers(result, payload);
-    ensureProjectDocMaxBytes(result, payload);
-    ensureCodexHooks(result);
-    return toml.stringify(result);
+function codexPluginArtifacts(
+  toml: TomlCodec,
+  hooks: HooksRouting
+): ToolBuildContract["artifacts"] {
+  return {
+    skills: {
+      supported: true,
+      source: { kind: "fullTree", srcDir: "skills" },
+      path: (_p, rel) => rel,
+      transform: transformCodexSkill,
+    },
+    agents: {
+      supported: true,
+      source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
+      path: (_p, rel) =>
+        `${OUTPUT_CODEX_AGENTS_DIR}/${rel.replace(/^agents\//, "").replace(/\.md$/, ".toml")}`,
+      transform: tomlAgentMarkdownToToml(toml),
+    },
+    mcp: {
+      supported: true,
+      source: { kind: "configFile", srcPath: ".mcp.json" },
+      path: () => ".mcp.json",
+    },
+    hooks: pluginTreeHooksArtifact(hooks),
+    rules: { supported: false },
+    commands: { supported: false },
   };
-}
-
-export function stripCodexSkillFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  if (fm.name !== undefined) result.name = fm.name;
-  if (fm.description !== undefined) result.description = fm.description;
-  if (fm.allowed_tools !== undefined) result.allowed_tools = fm.allowed_tools;
-  return result;
-}
-
-const CODEX_MANIFEST_STRING_KEYS = [
-  "name",
-  "description",
-  "version",
-  "homepage",
-  "repository",
-  "license",
-] as const;
-
-function copyCodexManifestStringFields(
-  source: Record<string, unknown>,
-  manifest: Record<string, unknown>
-): void {
-  for (const key of CODEX_MANIFEST_STRING_KEYS) {
-    if (typeof source[key] === "string") manifest[key] = source[key];
-  }
-  if (typeof source.author === "string" || typeof source.author === "object") {
-    manifest.author = source.author;
-  }
-  if (Array.isArray(source.keywords)) manifest.keywords = source.keywords;
-}
-
-function buildCodexManifest(
-  source: Record<string, unknown>,
-  presence: PluginPresence
-): Record<string, unknown> {
-  const manifest: Record<string, unknown> = {};
-  copyCodexManifestStringFields(source, manifest);
-  // The agents field is omitted: the Codex plugin schema has no such key. `skills` must be a
-  // STRING directory: the array form makes `codex plugin add` fail with "missing or invalid
-  // plugin.json".
-  if (presence.skillsList.length > 0) manifest.skills = "./skills";
-  if (presence.hasHooksJson) manifest.hooks = "./hooks/hooks.json";
-  if (presence.hasMcpJson) manifest.mcpServers = "./.mcp.json";
-  return manifest;
-}
-
-function transformCodexSkill(content: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  return serializeFrontmatter(stripCodexSkillFrontmatter(frontmatter), body);
 }
 
 export function buildCodexContract(toml: TomlCodec, hooks: HooksRouting): ToolBuildContract {
@@ -137,29 +65,7 @@ export function buildCodexContract(toml: TomlCodec, hooks: HooksRouting): ToolBu
     manifestFileRelative: manifestRelative,
     synthesizeManifest: buildCodexManifest,
     manifestSchemaName: "codex-plugin-manifest",
-    artifacts: {
-      skills: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "skills" },
-        path: (_p, rel) => rel,
-        transform: transformCodexSkill,
-      },
-      agents: {
-        supported: true,
-        source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (_p, rel) =>
-          `${OUTPUT_CODEX_AGENTS_DIR}/${rel.replace(/^agents\//, "").replace(/\.md$/, ".toml")}`,
-        transform: tomlAgentMarkdownToToml(toml),
-      },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        path: () => ".mcp.json",
-      },
-      hooks: pluginTreeHooksArtifact(hooks),
-      rules: { supported: false },
-      commands: { supported: false },
-    },
+    artifacts: codexPluginArtifacts(toml, hooks),
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
       catalog: buildCodexMarketplace(
         source as Parameters<typeof buildCodexMarketplace>[0],
@@ -211,29 +117,33 @@ function buildCodexConfigPayload(toml: TomlCodec, mcpServers: Record<string, unk
   return toml.stringify({ mcp_servers: mcpServers });
 }
 
+function codexFlatArtifacts(toml: TomlCodec, hooks: FlatHooks): ToolBuildContract["artifacts"] {
+  return {
+    skills: {
+      supported: true,
+      source: { kind: "fullTree", srcDir: "skills" },
+      path: codexFlatSkillPath,
+      rewriteSkillName: true,
+    },
+    agents: {
+      supported: true,
+      source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
+      path: codexFlatAgentPath,
+      transform: tomlAgentMarkdownToToml(toml),
+    },
+    mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
+    hooks: flatHooksArtifact(hooks, { tool: "codex" }),
+    rules: { supported: false },
+    commands: { supported: false },
+  };
+}
+
 export function buildCodexFlatContract(toml: TomlCodec, hooks: FlatHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
     manifestSchemaName: null,
-    artifacts: {
-      skills: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "skills" },
-        path: codexFlatSkillPath,
-        rewriteSkillName: true,
-      },
-      agents: {
-        supported: true,
-        source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: codexFlatAgentPath,
-        transform: tomlAgentMarkdownToToml(toml),
-      },
-      mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
-      hooks: flatHooksArtifact(hooks, { tool: "codex" }),
-      rules: { supported: false },
-      commands: { supported: false },
-    },
+    artifacts: codexFlatArtifacts(toml, hooks),
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
     configArtifact: {
@@ -250,45 +160,5 @@ export function buildCodexFlatContract(toml: TomlCodec, hooks: FlatHooks): ToolB
         return [{ path: CODEX_FLAT_CONFIG, content: merged }];
       },
     },
-  };
-}
-
-// Codex-native marketplace catalog, for `codex plugin marketplace add`. Shape verified against
-// OpenAI's own published plugins marketplace and its plugin-build documentation.
-
-/** Default category when the source marketplace entry does not specify one. */
-const CODEX_DEFAULT_CATEGORY = "Developer Tools";
-/** Default per-plugin auth policy. AIDD plugins bundle skills/agents/hooks with no external
- * OAuth, so auth is deferred to first use rather than forced at install. */
-const CODEX_DEFAULT_AUTHENTICATION = "ON_USE";
-const CODEX_INSTALLATION_AVAILABLE = "AVAILABLE";
-
-/** Build a Codex marketplace catalog. `displayName` falls back to the marketplace name when
- * the source omits it. */
-export function buildCodexMarketplace(
-  source: { name: string; displayName?: string },
-  pluginEntries: readonly Record<string, unknown>[]
-): Record<string, unknown> {
-  const displayName = typeof source.displayName === "string" ? source.displayName : source.name;
-  return { name: source.name, interface: { displayName }, plugins: pluginEntries };
-}
-
-/** Build a single Codex marketplace entry. `installation`, `authentication` and `category` are
- * required by the plugin-creator spec; the last two accept a source-entry override. */
-export function buildCodexMarketplaceEntry(
-  name: string,
-  srcEntry: Record<string, unknown> | undefined
-): Record<string, unknown> {
-  const authentication =
-    typeof srcEntry?.authentication === "string"
-      ? srcEntry.authentication
-      : CODEX_DEFAULT_AUTHENTICATION;
-  const category =
-    typeof srcEntry?.category === "string" ? srcEntry.category : CODEX_DEFAULT_CATEGORY;
-  return {
-    name,
-    source: { source: "local", path: `./plugins/${name}` },
-    policy: { installation: CODEX_INSTALLATION_AVAILABLE, authentication },
-    category,
   };
 }

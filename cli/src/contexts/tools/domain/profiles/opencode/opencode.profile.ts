@@ -10,6 +10,7 @@ import {
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks/flat-routes.js";
+import { descriptionOnlyRule } from "../../formats/rule-frontmatter.js";
 import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
@@ -22,6 +23,14 @@ import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
+
+const OUTPUT_PATH_CANDIDATES = {
+  tiers: [["opencode.json", "opencode.jsonc"]],
+  fallback: "opencode.json",
+  conflict: () => {
+    throw new DualConfigError("opencode", "opencode.json and opencode.jsonc exist");
+  },
+};
 
 const OPENCODE_CONFIG_REF: ConfigRef = {
   name: "opencode",
@@ -91,17 +100,11 @@ export const opencode = defineAiTool({
     }),
     commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-      convertFrontmatter: (fm, relativeFileName) =>
-        convertCommandFrontmatterNoHint(fm, relativeFileName),
+      convertFrontmatter: convertCommandFrontmatterNoHint,
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: (fm) => {
-        if (fm.alwaysApply === false && fm.description !== undefined) {
-          return { description: fm.description };
-        }
-        return {};
-      },
+      convertFrontmatter: descriptionOnlyRule,
     }),
     mcp: {
       config: new McpConfigPart({
@@ -110,13 +113,7 @@ export const opencode = defineAiTool({
         mergeStrategy: "framework-prime",
         transformContent: toTypedMcpSection,
         consumes: [MCP_CONFIG_REF, OPENCODE_CONFIG_REF],
-        outputPathCandidates: {
-          tiers: [["opencode.json", "opencode.jsonc"]],
-          fallback: "opencode.json",
-          conflict: () => {
-            throw new DualConfigError("opencode", "opencode.json and opencode.jsonc exist");
-          },
-        },
+        outputPathCandidates: OUTPUT_PATH_CANDIDATES,
       }),
     },
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
