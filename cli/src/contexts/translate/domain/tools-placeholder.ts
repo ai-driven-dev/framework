@@ -1,4 +1,4 @@
-import { FrameworkPlaceholderInPluginError } from "../domain/translate.error.js";
+import { FrameworkPlaceholderInPluginError } from "./translate.error.js";
 
 const TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
 

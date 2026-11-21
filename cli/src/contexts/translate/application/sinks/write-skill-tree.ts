@@ -3,7 +3,7 @@ import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import { PLUGIN_SKILL_ENTRY_FILE } from "../../domain/canon-format.js";
-import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
+import { assertNoToolsPlaceholder } from "../../domain/tools-placeholder.js";
 
 type SkillContentTransform = (content: string, plugin: string, basename: string) => string;
 
