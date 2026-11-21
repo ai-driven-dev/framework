@@ -5,10 +5,9 @@
 
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
 import { AjvSchemaValidatorAdapter } from "../../src/contexts/translate/infrastructure/schema-validator.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
@@ -16,11 +15,9 @@ import { buildTree } from "../contexts/translate/testing/build-tree.builder.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
-import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
 import { registeredTools } from "../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 import { expectGolden } from "./testing/expect-golden.builder.js";
-import { twoCaptures } from "./testing/two-captures.builder.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const FRAMEWORK_FIXTURE = join(ROOT, "tests/fixtures/framework-real");
@@ -42,14 +39,6 @@ const FROZEN_CELLS = new Set<string>([
   ...FLAT_TARGETS.map((target) => `${target}:flat`),
 ]);
 
-// A Windows checkout's core.autocrlf writes CRLF, which would diff against the LF-committed
-// baseline on line endings alone; content that is not UTF-8 is hashed raw instead.
-function normalizeLineEndings(content: Buffer): Buffer {
-  const text = content.toString("utf-8");
-  if (Buffer.byteLength(text, "utf-8") !== content.length) return content;
-  return Buffer.from(text.replace(/\r\n/g, "\n"), "utf-8");
-}
-
 function canonical(snapshot: TargetSnapshot): string {
   return JSON.stringify(
     Object.keys(snapshot)
@@ -70,61 +59,6 @@ function describeDrift(stored: TargetSnapshot, captured: TargetSnapshot): string
       return `~${k}`;
     });
   return moved.join(", ");
-}
-
-async function hashDirectory(dir: string): Promise<TargetSnapshot> {
-  const result: TargetSnapshot = {};
-  const entries = await readdir(dir, { recursive: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry);
-    // biome-ignore lint/plugin: hashing a tree skips directories and vanished entries
-    try {
-      const content = await readFile(fullPath);
-      const normalized = normalizeLineEndings(content);
-      result[entry.replace(/\\/g, "/")] = createHash("sha256").update(normalized).digest("hex");
-    } catch {
-      // skip directories
-    }
-  }
-  return Object.fromEntries(
-    Object.entries(result).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-  );
-}
-
-async function captureTarget(
-  target: string,
-  flat: boolean,
-  projectDir: string,
-  fakeHome: string,
-  tempDir: string
-): Promise<TargetSnapshot> {
-  const key = flat ? `${target}:flat` : target;
-  const outDir = join(tempDir, `dist-${key.replace(":", "-")}`);
-  await mkdir(outDir, { recursive: true });
-  const args = ["translate", FRAMEWORK_FIXTURE, "--to", target, "--out", outDir];
-  if (flat) args.push("--as", "flat");
-  const result = await runInProcess(args, { cwd: projectDir, home: fakeHome });
-  if (result.exitCode !== 0) {
-    throw new Error(`translate --to ${target}${flat ? " --as flat" : ""} failed: ${result.stderr}`);
-  }
-  const report = flat ? "Flat-installed" : "Built";
-  expect(result.stdout, `translate --to ${key} reports the build`).toContain(report);
-  return hashDirectory(outDir);
-}
-
-async function captureAllCells(
-  projectDir: string,
-  fakeHome: string,
-  tempDir: string
-): Promise<GoldenSnapshot> {
-  const captured: GoldenSnapshot = {};
-  for (const target of MARKETPLACE_TARGETS) {
-    captured[target] = await captureTarget(target, false, projectDir, fakeHome, tempDir);
-  }
-  for (const target of FLAT_TARGETS) {
-    captured[`${target}:flat`] = await captureTarget(target, true, projectDir, fakeHome, tempDir);
-  }
-  return captured;
 }
 
 const OUT = resolve("/aidd-golden-out").replaceAll("\\", "/");
@@ -166,13 +100,18 @@ async function captureInMemory(
   );
 }
 
-const captures = twoCaptures("fb-golden-det", (env) =>
-  captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
-);
+async function captureAllCells(seeded: InMemoryFileAdapter): Promise<GoldenSnapshot> {
+  const captured: GoldenSnapshot = {};
+  for (const target of MARKETPLACE_TARGETS) {
+    captured[target] = await captureInMemory(seeded, target, "marketplace");
+  }
+  for (const target of FLAT_TARGETS) {
+    captured[`${target}:flat`] = await captureInMemory(seeded, target, "flat");
+  }
+  return captured;
+}
 
 describe.concurrent(`Framework build golden - ${CELL_COUNT}-cell matrix`, () => {
-  afterAll(captures.cleanup);
-
   let seeded: InMemoryFileAdapter;
   beforeAll(async () => {
     seeded = new InMemoryFileAdapter();
@@ -188,22 +127,13 @@ describe.concurrent(`Framework build golden - ${CELL_COUNT}-cell matrix`, () => 
     expect(await captureInMemory(seeded, target, mode)).toStrictEqual(stored[key]);
   });
 
-  // Two full builds of every cell measured just past the 60s default on a Windows runner, not a
-  // hang. Raised per test so no other e2e file's budget moves.
   it("snapshot is deterministic (two captures of each target are byte-identical)", async () => {
-    const snap1 = await captures.first();
-    const snap2 = await captures.second();
-    for (const target of MARKETPLACE_TARGETS) {
-      expect(snap1[target], `target ${target}: capture 1 vs 2 differ`).toStrictEqual(snap2[target]);
-    }
-    for (const target of FLAT_TARGETS) {
-      const key = `${target}:flat`;
-      expect(snap1[key], `${target}:flat capture 1 vs 2 differ`).toStrictEqual(snap2[key]);
-    }
+    const [snap1, snap2] = [await captureAllCells(seeded), await captureAllCells(seeded)];
+    expect(snap1).toStrictEqual(snap2);
   }, 120_000);
 
   it(`every one of the ${CELL_COUNT} cells is byte-identical to its stored baseline`, async () => {
-    const captured = await captures.first();
+    const captured = await captureAllCells(seeded);
 
     await expectGolden(SNAPSHOT_FILE, captured, {
       compare: (stored) => {
