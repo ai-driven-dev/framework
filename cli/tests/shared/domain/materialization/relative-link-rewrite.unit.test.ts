@@ -134,7 +134,7 @@ describe("rewriteRelativeLinks", () => {
       expect(output).toBe("See [reviewer.md](./reviewer.md) here");
     });
 
-    it("override is applied per match — multiple references in same content", () => {
+    it("override is applied per match - multiple references in same content", () => {
       const opts = {
         currentFilePluginRelative: "agents/foo.md",
         resolveTargetPath: (rel: string) => `flat/${rel}`,

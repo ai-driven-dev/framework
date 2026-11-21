@@ -11,7 +11,7 @@ const neverRun = async (): Promise<never> => {
   throw new Error("describing the command runs no setup");
 };
 
-describe("aidd setup — the help surface", () => {
+describe("aidd setup - the help surface", () => {
   function setupCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

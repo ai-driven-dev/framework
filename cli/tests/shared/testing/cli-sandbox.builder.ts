@@ -129,7 +129,7 @@ function findGitDirWithoutAidd(): string | undefined {
 
 /**
  * Git looks a hook's shebang interpreter up by name on `PATH`, so the narrow sandbox `PATH`
- * must carry a shell — selected by what a directory holds, never from where `git.exe` lives.
+ * must carry a shell - selected by what a directory holds, never from where `git.exe` lives.
  */
 export function shellDirsWithoutAidd(
   pathDirs: readonly string[],
@@ -167,7 +167,7 @@ export function pathDirsWithoutAidd({
 }
 
 /**
- * Narrow by construction, then filtered of any directory holding a drivable tool binary —
+ * Narrow by construction, then filtered of any directory holding a drivable tool binary -
  * without the filter a tool shipped into `/usr/bin` stays reachable.
  */
 const REACHABLE_BINARIES = ["node", "git", "gh"] as const;

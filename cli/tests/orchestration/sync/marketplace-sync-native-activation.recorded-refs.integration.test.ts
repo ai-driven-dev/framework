@@ -61,7 +61,7 @@ describe("native activation: recorded refs", () => {
       // load kept across both doctor calls sees the sync that runs in between.
       const manifest = await manifestRepo.load();
       expect(manifest, "buildSync always seeds a manifest").not.toBeNull();
-      if (manifest === null) throw new Error("unreachable — asserted above");
+      if (manifest === null) throw new Error("unreachable - asserted above");
 
       const before = await doctorRegistration.execute({
         manifest,
@@ -146,7 +146,7 @@ describe("native activation: recorded refs", () => {
       });
       if (staleManifest) await manifestRepo.save(staleManifest);
 
-      // Unnarrowed — no `marketplaceNames`, the shape `sync` and `setup` both run.
+      // Unnarrowed - no `marketplaceNames`, the shape `sync` and `setup` both run.
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);

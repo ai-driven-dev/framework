@@ -29,7 +29,7 @@ function marketplace(name: string): Marketplace {
   });
 }
 
-/** Keyed by marketplace name rather than tool — the default fake keys by tool alone,
+/** Keyed by marketplace name rather than tool - the default fake keys by tool alone,
  * which would resolve two marketplaces to the same built tree and the same catalog. */
 function ensureBuiltPerMarketplace(): BuiltMarketplaceEnsurer {
   return {

@@ -154,7 +154,7 @@ describe("shared modules are earned", () => {
     const files = sourceFiles();
     expect(
       files.filter((file) => file.startsWith("src/shared/")).length,
-      "no shared file found — the scope of this rule is stale"
+      "no shared file found - the scope of this rule is stale"
     ).toBeGreaterThan(0);
 
     expect(
@@ -168,7 +168,7 @@ describe("shared modules are earned", () => {
     // A rule that selects nothing passes forever, and this one selects a single directory.
     expect(
       files.filter(underSharedDirectory).length,
-      "no shared module found — the scope of this rule is stale"
+      "no shared module found - the scope of this rule is stale"
     ).toBeGreaterThan(0);
     const violations = unearned(files, importersByFile());
 

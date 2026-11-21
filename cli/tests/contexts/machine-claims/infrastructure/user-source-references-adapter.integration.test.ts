@@ -86,7 +86,7 @@ describe("the shared source's own project references", () => {
     // above, recorded once and then abandoned.
     await refs.addReference("1.0.0", "/project-b");
 
-    // Another project's own `setup` runs later on this machine and adds its claim —
+    // Another project's own `setup` runs later on this machine and adds its claim -
     // the ordinary event that triggers the next write to this file.
     markExisting(fs, "/project-c");
     await refs.addReference("1.0.0", "/project-c");
@@ -164,7 +164,7 @@ describe("the shared source's own project references", () => {
       markExisting(fs, "/project-a");
       markExisting(fs, "/project-b");
       const refs = adapter(fs);
-      // Recorded while the CLI was at 1.0.0 — never re-synced since, the ordinary case
+      // Recorded while the CLI was at 1.0.0 - never re-synced since, the ordinary case
       // an `aidd update` in between produces.
       await refs.addReference("1.0.0", "/project-a");
       await refs.addReference("1.0.0", "/project-b");
@@ -208,7 +208,7 @@ describe("the shared source's own project references", () => {
       const refs = adapter(fs);
 
       await expect(refs.removeReference("/project-a")).resolves.toBeUndefined();
-      // Never found a claim to drop, so it never had a reason to write at all —
+      // Never found a claim to drop, so it never had a reason to write at all -
       // the file this project's own `setup` or `sync` never ran stays absent.
       expect(fs.getFile(REFERENCES_PATH)).toBeUndefined();
     });

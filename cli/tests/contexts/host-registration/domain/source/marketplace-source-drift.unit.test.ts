@@ -23,7 +23,7 @@ function sharedPath(version: string): string {
   });
 }
 
-describe("marketplaceSourceDrift — deciding purely from the path's own segments, never a catalog read", () => {
+describe("marketplaceSourceDrift - deciding purely from the path's own segments, never a catalog read", () => {
   it("is undefined when both sides are the exact same shared-source version", () => {
     const path = sharedPath("5.0.0");
 
@@ -56,7 +56,7 @@ describe("marketplaceSourceDrift — deciding purely from the path's own segment
     });
   });
 
-  it("is undefined — a legitimate update, not a drift — when the requested version is ahead of the registered one", () => {
+  it("is undefined - a legitimate update, not a drift - when the requested version is ahead of the registered one", () => {
     expect(
       marketplaceSourceDrift(sharedPath("1.0.0"), sharedPath("2.0.0"), DRIFT_CONTEXT)
     ).toBeUndefined();
@@ -140,7 +140,7 @@ describe("marketplaceSourceDrift — deciding purely from the path's own segment
   });
 });
 
-describe("marketplaceSourceDrift — a pre-migration cache of another catalog is no drift", () => {
+describe("marketplaceSourceDrift - a pre-migration cache of another catalog is no drift", () => {
   it.each([
     ["project", "/project/.aidd/cache/built"],
     ["other project", "/other-project/.aidd/cache/built"],

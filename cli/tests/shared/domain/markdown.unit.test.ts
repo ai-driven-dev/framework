@@ -78,7 +78,7 @@ describe("serializeFrontmatter()", () => {
   });
 });
 
-describe("parseFrontmatter() — block scalars", () => {
+describe("parseFrontmatter() - block scalars", () => {
   it("parses literal block scalar (|) preserving newlines", () => {
     const content = "---\ndescription: |\n  line one\n  line two\n---\nbody";
     const { frontmatter } = parseFrontmatter(content);

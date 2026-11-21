@@ -24,7 +24,7 @@ const NAME = "probe-mkt";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 
-/** The exact path `SyncSettings`'s own guard would compare against —
+/** The exact path `SyncSettings`'s own guard would compare against -
  * recomputed the same way `checkMarketplaceSources` does, never a value invented here. */
 function expectedBuiltDir(): string {
   return resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, "claude"));
@@ -127,7 +127,7 @@ async function issuesFor(
   return issues.filter((issue) => issue.message.includes("catalog"));
 }
 
-describe("CheckRegistration — marketplace source conflicts", () => {
+describe("CheckRegistration - marketplace source conflicts", () => {
   it("reports a conflict when a different catalog is registered under the same name", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
@@ -147,7 +147,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
     expect(issues[0]?.fix).toMatch(/claude plugin marketplace remove/);
   });
 
-  it("does not report a conflict when only the version differs under the same name and plugin set — an upgrade, not a conflict", async () => {
+  it("does not report a conflict when only the version differs under the same name and plugin set - an upgrade, not a conflict", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
@@ -161,7 +161,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
     expect(issues).toEqual([]);
   });
 
-  it("reports a conflict keyed by the catalog's own declared name even when this project's local alias would have missed it entirely — the alias never held the entry to begin with", async () => {
+  it("reports a conflict keyed by the catalog's own declared name even when this project's local alias would have missed it entirely - the alias never held the entry to begin with", async () => {
     const HOST_NAME = "upstream";
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
@@ -189,7 +189,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
     expect(await issuesFor(hostReader, { requested: { path: expectedBuiltDir() } })).toEqual([]);
   });
 
-  it("reports nothing when the same catalog is registered from a different, resolved path — two projects sharing one build", async () => {
+  it("reports nothing when the same catalog is registered from a different, resolved path - two projects sharing one build", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other-project/built/claude"]]),
@@ -207,13 +207,13 @@ describe("CheckRegistration — marketplace source conflicts", () => {
     expect(issues).toEqual([]);
   });
 
-  it("reports nothing when the registered source no longer resolves to a readable catalog — a dead entry a re-add repairs", async () => {
+  it("reports nothing when the registered source no longer resolves to a readable catalog - a dead entry a re-add repairs", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/gone"]]),
     });
 
-    // No `registered` catalog written for "/gone" — nothing is there to read.
+    // No `registered` catalog written for "/gone" - nothing is there to read.
     expect(await issuesFor(hostReader, { requested: { path: expectedBuiltDir() } })).toEqual([]);
   });
 
@@ -344,7 +344,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
     expect(issues).toStrictEqual([]);
   });
 
-  it("reads the host registry once per marketplace, the same cadence the sync-time guard uses — not once per tool, reused across every marketplace that tool has", async () => {
+  it("reads the host registry once per marketplace, the same cadence the sync-time guard uses - not once per tool, reused across every marketplace that tool has", async () => {
     const SECOND_NAME = "probe-mkt-2";
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,

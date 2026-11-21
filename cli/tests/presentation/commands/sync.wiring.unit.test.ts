@@ -96,7 +96,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd sync — the whole project", () => {
+describe("aidd sync - the whole project", () => {
   it("restores first, then re-drives every registered marketplace's activation", async () => {
     expect(await run()).toEqual(["Nothing to restore — all files are unmodified."]);
     expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, false);
@@ -232,7 +232,7 @@ describe("aidd sync --tool", () => {
   });
 });
 
-describe("aidd sync --tool — a refused activation", () => {
+describe("aidd sync --tool - a refused activation", () => {
   it("names the refusal and fails the process rather than calling one tool synced", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
@@ -377,7 +377,7 @@ describe("aidd sync --scope user", () => {
   });
 });
 
-describe("aidd sync — how it builds its graph", () => {
+describe("aidd sync - how it builds its graph", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("--verbose");
 

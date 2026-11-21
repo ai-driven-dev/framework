@@ -180,7 +180,7 @@ describe("parsePluginSource", () => {
 
   describe("a source recorded as a plain string", () => {
     // A manifest may record a source as a string rather than an object. Read wrong, the
-    // plugin is fetched from the wrong place — or a valid record is refused on load.
+    // plugin is fetched from the wrong place - or a valid record is refused on load.
     it("reads a bare owner/repo as a github source", () => {
       expect(parsePluginSource("ai-driven-dev/framework")).toEqual({
         kind: "github",

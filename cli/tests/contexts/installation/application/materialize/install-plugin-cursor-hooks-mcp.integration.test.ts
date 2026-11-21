@@ -1,5 +1,5 @@
 // Plugin-scope Cursor hooks were measured never to fire, so `hooksDestination: "project"` routes
-// hooks/hooks.json into the project's own .cursor/hooks.json — the destination that does fire.
+// hooks/hooks.json into the project's own .cursor/hooks.json - the destination that does fire.
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
@@ -160,7 +160,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
     const mcpPath = join(EXPECTED_BASE, PLUGIN_NAME, "mcp.json");
     expect(fs.has(mcpPath)).toBe(true);
-    // Cursor consumes Claude-format .mcp.json natively — content is passed through as-is
+    // Cursor consumes Claude-format .mcp.json natively - content is passed through as-is
     const written = JSON.parse(await fs.readFile(mcpPath)) as Record<string, unknown>;
     const source = JSON.parse(MCP_CONTENT) as Record<string, unknown>;
     expect(written).toEqual(source);

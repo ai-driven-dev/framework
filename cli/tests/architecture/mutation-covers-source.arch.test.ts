@@ -66,7 +66,7 @@ describe("mutation covers every source file", () => {
 
     expect(
       uncovered,
-      "neither mutated nor excluded — add it to a scope in mutation-scopes.json, or exclude it with the reason"
+      "neither mutated nor excluded - add it to a scope in mutation-scopes.json, or exclude it with the reason"
     ).toEqual([]);
   });
 
@@ -78,13 +78,13 @@ describe("mutation covers every source file", () => {
       expect(reason.length, `${glob} is excluded with no reason given`).toBeGreaterThan(40);
       expect(
         files.some((file) => matchesGlob(glob, file)),
-        `${glob} excludes nothing — the directory it names is gone`
+        `${glob} excludes nothing - the directory it names is gone`
       ).toBe(true);
     }
     for (const [name, { mutate }] of Object.entries(scopes)) {
       expect(
         [...files, ...fixtureFiles()].some((file) => scopeMatches(mutate, file)),
-        `scope "${name}" (${mutate}) matches no file — it would score an empty set`
+        `scope "${name}" (${mutate}) matches no file - it would score an empty set`
       ).toBe(true);
     }
   });

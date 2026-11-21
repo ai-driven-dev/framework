@@ -20,7 +20,7 @@ const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 
 interface RegisteredCatalog {
-  /** Where the host's registry resolves the name to — the directory a catalog would
+  /** Where the host's registry resolves the name to - the directory a catalog would
    * be read from, if anything was ever written there. */
   readonly path: string;
   readonly name?: string;
@@ -30,7 +30,7 @@ interface RegisteredCatalog {
 
 interface Setup {
   readonly toolId?: AiToolId;
-  /** `name` written into the built catalog's own marketplace.json — defaults to the
+  /** `name` written into the built catalog's own marketplace.json - defaults to the
    * aidd-side name so most scenarios agree by construction. */
   readonly catalogName?: string;
   readonly aiddName?: string;
@@ -243,7 +243,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     expect(render(result.errors[0]?.error)).toMatch(/-different-plugin/);
   });
 
-  it("does not refuse when only the version differs under the same name and plugin set — the host repointing to a newer build it already knows, not a different marketplace", async () => {
+  it("does not refuse when only the version differs under the same name and plugin set - the host repointing to a newer build it already knows, not a different marketplace", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/other/src"]]),
@@ -292,7 +292,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     expect(result.errors).toEqual([]);
   });
 
-  it("does not refuse when the same catalog is registered from a different, resolved path — two projects sharing one build", async () => {
+  it("does not refuse when the same catalog is registered from a different, resolved path - two projects sharing one build", async () => {
     // Two independent projects build the same framework fixture to their own cache and
     // register under the same name: same version, same plugins, only a different directory.
     const hostReader = new FakeHostMarketplaceRegistry({
@@ -322,7 +322,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       entries: new Map([["probe-mkt", "/gone"]]),
     });
 
-    // No `registeredCatalog` — nothing is ever written at "/gone", so reading its
+    // No `registeredCatalog` - nothing is ever written at "/gone", so reading its
     // catalog fails exactly as it would for a directory that no longer exists.
     const { result, activator } = await sync({ hostReader });
 
@@ -331,7 +331,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     expect(result.errors).toEqual([]);
   });
 
-  it("registers freely when this project's own local alias diverges from its built catalog's own name — a supported capability, not a fault", async () => {
+  it("registers freely when this project's own local alias diverges from its built catalog's own name - a supported capability, not a fault", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map(),
@@ -352,7 +352,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("never reads a host registry for a tool whose profile declares none, and still registers it", async () => {
-    // Codex's own profile declares no `marketplaceRegistry` — this reader would refuse
+    // Codex's own profile declares no `marketplaceRegistry` - this reader would refuse
     // every request if it were ever consulted, which is exactly what proves it is not.
     const hostReader = new FakeHostMarketplaceRegistry({
       location: "/wherever",
@@ -414,7 +414,7 @@ describe("when the catalog this project just built cannot be read back", () => {
     // join(), matching `marketplaceCatalogProbePath`: on win32 it produces a backslash-joined path,
     // which a forward-slash template literal would never find inside the thrown message.
     expect(render(result.errors[0]?.error)).toContain(join(builtDir, catalogRelative));
-    // Never written as `hostName` — a manifest that guessed the alias would go on
+    // Never written as `hostName` - a manifest that guessed the alias would go on
     // claiming a registration the host was never asked to hold.
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getNativeRegistrations(TOOL.claude)).toBeUndefined();

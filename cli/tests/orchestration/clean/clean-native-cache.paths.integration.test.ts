@@ -54,7 +54,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
 
     expect(await fs.fileExists(cacheEntry)).toBe(true);
     expect(reader.reads).toBe(0);
-    // Not just that the cache survives — the output says where, the same absolute path the
+    // Not just that the cache survives - the output says where, the same absolute path the
     // dry-run preview would have announced.
     expect(
       logger.warnMessages.some(
@@ -176,7 +176,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     await fs.writeFile(cacheEntry, "{}");
 
     const activator = new FakeHostActions({ available: true });
-    // The real adapter, resolved from the same sentinel the cache root is composed from — a
+    // The real adapter, resolved from the same sentinel the cache root is composed from - a
     // fake reader built independently of `homeDir` could never catch the two halves drifting.
     const reader = wireHostRegistration(registeredTools(), SENTINEL_HOME).marketplaceRegistries.get(
       TOOL.claude
@@ -208,7 +208,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const hostName = "../../../evil";
     const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     const witness = join(CLAUDE_CACHE_ROOT, hostName);
-    // Written exactly where an unresolved join lands — so the guard is proven against the
+    // Written exactly where an unresolved join lands - so the guard is proven against the
     // collapse `path.join` already performs, not a path this test invents.
     await fs.writeFile(join(witness, "keep-me.txt"), "still here");
 
@@ -368,7 +368,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
   });
 
   it("purges codex's empty cache shell once its own CLI has removed the marketplace", async () => {
-    // No reader registered for codex — its profile declares `pluginCacheDir` alone, no
+    // No reader registered for codex - its profile declares `pluginCacheDir` alone, no
     // `marketplaceRegistry`, so `purgeOneMarketplaceCache` proves emptiness instead.
     const fs = new RecordingFileAdapter({}, EXISTING_DIRECTORIES);
     await fs.createDirectory(join(CODEX_CACHE_ROOT, MARKETPLACE));
@@ -392,7 +392,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
   });
 
   it("leaves codex's cache in place, even empty, when marketplace removal was not confirmed", async () => {
-    // Nothing under the cache directory — the shape `purgeCacheIfEmpty` reads as safe — while
+    // Nothing under the cache directory - the shape `purgeCacheIfEmpty` reads as safe - while
     // `removeMarketplace` throws, so the host was never confirmed to have forgotten the name.
     const fs = new RecordingFileAdapter({}, [
       ...EXISTING_DIRECTORIES,

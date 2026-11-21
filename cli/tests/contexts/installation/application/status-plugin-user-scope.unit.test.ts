@@ -56,7 +56,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   };
 }
 
-describe("ReportStatus — cursor plugin drift (user-scope)", () => {
+describe("ReportStatus - cursor plugin drift (user-scope)", () => {
   describe("when cursor plugin file has drifted (base-relative key)", () => {
     it("resolves absolute path from homedir via userPluginsBaseDir before checking disk", async () => {
       const manifest = makeManifest(EXPECTED_HASH);

@@ -21,7 +21,7 @@ async function choicesAt(path: string[]): Promise<SelectCall> {
   return [call[0], call[1]];
 }
 
-describe("interactive menu — the rows each level offers", () => {
+describe("interactive menu - the rows each level offers", () => {
   it("offers six groups and an exit at the root, each named and described", async () => {
     expect(await choicesAt([])).toEqual([
       "What would you like to do?",

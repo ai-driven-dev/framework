@@ -32,8 +32,8 @@ function claudeAdapter(): HostCliAdapter {
   });
 }
 
-describe("ClaudeCliAdapter — plugin enable/uninstall carry the requested scope", () => {
-  it("enables a plugin at project scope by default — --scope local, never claude's own implicit default", () => {
+describe("ClaudeCliAdapter - plugin enable/uninstall carry the requested scope", () => {
+  it("enables a plugin at project scope by default - --scope local, never claude's own implicit default", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
     claudeAdapter().enablePlugin("aidd-context@aidd-framework");
@@ -82,7 +82,7 @@ describe("ClaudeCliAdapter — plugin enable/uninstall carry the requested scope
   });
 });
 
-describe("ClaudeCliAdapter — removing a user-scope marketplace deletes its registration", () => {
+describe("ClaudeCliAdapter - removing a user-scope marketplace deletes its registration", () => {
   const adapter = () =>
     new HostCliAdapter("claude", {
       scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },

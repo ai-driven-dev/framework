@@ -133,7 +133,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
   );
 }
 
-describe("RunSetup — auth guard for remote source", () => {
+describe("RunSetup - auth guard for remote source", () => {
   it("throws CatalogFetchAuthError when source is remote, no token, and repo is private", async () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), false);
 

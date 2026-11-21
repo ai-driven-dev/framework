@@ -81,7 +81,7 @@ describe("Claude Code's own known_marketplaces.json", () => {
   });
 
   it("says a registry path it cannot read for any other reason is unreadable, never absent", async () => {
-    // A directory where the registry file should be: ENOENT never fires, EISDIR does — the
+    // A directory where the registry file should be: ENOENT never fires, EISDIR does - the
     // shape ENOENT-only handling would wrongly report as absent.
     await mkdir(registryPath(), { recursive: true });
 

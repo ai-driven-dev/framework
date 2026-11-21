@@ -40,7 +40,7 @@ describe("codex plugins", () => {
         );
       });
 
-      it("follows CODEX_HOME when a real machine has it set — the real codex binary reads there, not ~/.codex", () => {
+      it("follows CODEX_HOME when a real machine has it set - the real codex binary reads there, not ~/.codex", () => {
         const activation = codex.nativeActivation();
         expect(
           activation?.userSettingsFile(

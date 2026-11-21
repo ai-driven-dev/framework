@@ -44,7 +44,7 @@ ${script}
 }
 
 describe.concurrent("persona journeys", () => {
-  it("Persona 1 — fresh user: aidd alone shows banner and setup prompt", async () => {
+  it("Persona 1 - fresh user: aidd alone shows banner and setup prompt", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("persona-fresh");
     try {
       const { stdout, exitCode } = await runInteractive(

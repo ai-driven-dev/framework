@@ -152,7 +152,7 @@ describe("the engine translate()", () => {
     });
   });
 
-  describe("cursor target (Mode B — user-scope flat materialization)", () => {
+  describe("cursor target (Mode B - user-scope flat materialization)", () => {
     it("emits rules with .mdc extension under plugin-name-prefixed path", () => {
       expect(pathsFor(cursor)).toContain("sample-plugin/rules/standards.mdc");
     });
@@ -181,7 +181,7 @@ describe("the engine translate()", () => {
       expect(pathsFor(cursor)).toContain("sample-plugin/commands/greet.md");
     });
 
-    it("file paths are base-relative (no .cursor/ prefix — base resolved at install time)", () => {
+    it("file paths are base-relative (no .cursor/ prefix - base resolved at install time)", () => {
       const paths = pathsFor(cursor);
       expect(paths.every((p) => !p.startsWith(".cursor/"))).toBe(true);
     });

@@ -77,7 +77,7 @@ async function loopUntilExit(): Promise<void> {
   ).rejects.toThrow(/^exit /);
 }
 
-describe("aidd with no argument — the menu loop", () => {
+describe("aidd with no argument - the menu loop", () => {
   it("greets with the banner, built off the project the process was started in", async () => {
     exiting();
 

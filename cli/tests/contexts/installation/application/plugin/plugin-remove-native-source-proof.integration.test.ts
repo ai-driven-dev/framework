@@ -131,7 +131,7 @@ describe("RemovePlugin proves the native source before undoing activation", () =
   });
 
   // The host call must address the host by `hostName`, read from this tool's own
-  // `nativeRegistrations` — never by `plugin.marketplace`, a local alias a host never learns.
+  // `nativeRegistrations` - never by `plugin.marketplace`, a local alias a host never learns.
   it("uses the host's own name for the marketplace, read from this tool's own native registrations", async () => {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
@@ -208,7 +208,7 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     });
     await manifestRepo.save(manifest);
     const stored = await manifestRepo.load();
-    if (stored === null) throw new Error("unreachable — just saved");
+    if (stored === null) throw new Error("unreachable - just saved");
     const spy = vi.spyOn(stored, "getNativeRegistrations");
 
     await expect(

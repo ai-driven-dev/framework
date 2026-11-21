@@ -57,7 +57,7 @@ describe("copilot plugins", () => {
         ).toBe("aidd-framework");
       });
 
-      it("keys a local marketplace by its name too — the source decides only whether there is a key", () => {
+      it("keys a local marketplace by its name too - the source decides only whether there is a key", () => {
         expect(
           ms?.entryKeyFor({ name: "my-marketplace", source: { kind: "local", path: "/dev/aidd" } })
         ).toBe("my-marketplace");

@@ -83,7 +83,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd plugin — the group with no subcommand", () => {
+describe("aidd plugin - the group with no subcommand", () => {
   it("offers the five things a person can do, then re-runs itself with the pick", async () => {
     pretendTerminal(true);
 
@@ -349,7 +349,7 @@ describe("aidd plugin update", () => {
   });
 });
 
-describe("aidd plugin — how every subcommand builds its graph", () => {
+describe("aidd plugin - how every subcommand builds its graph", () => {
   it.each([
     ["list"],
     ["remove", "aidd-dev"],
@@ -367,7 +367,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
   });
 });
 
-describe("aidd plugin — the help surface", () => {
+describe("aidd plugin - the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

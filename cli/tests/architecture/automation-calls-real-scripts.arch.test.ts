@@ -6,7 +6,7 @@
  * has them.
  *
  * Calls: Only calls that run against this package
- * count: a `cd cli && pnpm x` line, or a call in a `run:` block that `cd`s here first —
+ * count: a `cd cli && pnpm x` line, or a call in a `run:` block that `cd`s here first -
  * `cd` on one line still governs a `pnpm` call two lines later, in the same shell.
  */
 import { readdirSync, readFileSync } from "node:fs";
@@ -84,7 +84,7 @@ describe("this package's program stops at this package", () => {
   it("compiles nothing outside cli/, so a CI job needs no sibling's dependencies", () => {
     expect(
       foreignIncludes(readFileSync(join(CLI_ROOT, "tsconfig.json"), "utf8")),
-      "tsconfig reaches outside the package — every job running tsc must then install that sibling's dependencies, and dropping one breaks CI while every local check stays green"
+      "tsconfig reaches outside the package - every job running tsc must then install that sibling's dependencies, and dropping one breaks CI while every local check stays green"
     ).toEqual([]);
   });
 });

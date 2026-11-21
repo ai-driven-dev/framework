@@ -8,7 +8,7 @@ const globalFilePath = (built: string, plugin: typeof AIDD_DEV) =>
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };
 
-describe("opencode globalFiles.map — what a machine-scope install copies into OpenCode's config dir", () => {
+describe("opencode globalFiles.map - what a machine-scope install copies into OpenCode's config dir", () => {
   it.each([
     [".opencode/skills/aidd-dev/01-plan/SKILL.md", "skills/aidd-dev/01-plan/SKILL.md"],
     [

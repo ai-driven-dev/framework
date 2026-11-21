@@ -52,7 +52,7 @@ async function seedManifest(): Promise<Manifest> {
     manifest,
     marketplace: ALIAS,
   });
-  // hostName differs from this project's own local alias — the same divergence
+  // hostName differs from this project's own local alias - the same divergence
   // `clean`'s own marketplace cache purge already addresses by hostName, never alias.
   manifest.setNativeRegistrations(TOOL.claude, {
     binary: "claude",

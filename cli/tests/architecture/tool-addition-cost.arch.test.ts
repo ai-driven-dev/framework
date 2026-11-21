@@ -2,7 +2,7 @@
  * A tool identifier may only appear in that tool's own profile and the registration list.
  * Everywhere else behaviour is read from the profile rather than branched on the name, or a
  * sixth tool means editing N files again. Scope is `src/`: a test naming the tool it tests is
- * not coupling. Comments are stripped first — prose about a tool's layout is documentation.
+ * not coupling. Comments are stripped first - prose about a tool's layout is documentation.
  */
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
@@ -120,7 +120,7 @@ describe("a tool identifier stays inside its own profile", () => {
     const ids = toolIds(files);
     expect(
       ids.length,
-      "no profile directory found — the scope of this rule is stale"
+      "no profile directory found - the scope of this rule is stale"
     ).toBeGreaterThan(1);
 
     const violations = files.filter((file) => {
@@ -128,7 +128,7 @@ describe("a tool identifier stays inside its own profile", () => {
       return named.length > 0 && !isAllowed(file, ids, named);
     });
 
-    expect(violations, "tool named outside its profile — read it from the profile instead").toEqual(
+    expect(violations, "tool named outside its profile - read it from the profile instead").toEqual(
       []
     );
   });
@@ -139,7 +139,7 @@ describe("a tool identifier stays inside its own profile", () => {
 
     expect(
       toolsNamedIn(read(path), ids).length,
-      "the admitted file took on another tool — fix the count and its reason"
+      "the admitted file took on another tool - fix the count and its reason"
     ).toBe(named);
   });
 });
@@ -227,7 +227,7 @@ describe("a tool never names an identifier outside its profile, in the code ever
 
     expect(
       violations,
-      "tool-named identifier outside its profile — read it from the capability"
+      "tool-named identifier outside its profile - read it from the capability"
     ).toEqual([]);
   });
 
@@ -288,7 +288,7 @@ describe("a tool's hooks facts live in its descriptor", () => {
 
     expect(
       factsOutsideDescriptor(bodies),
-      "a hooks fact declared outside the profile's declareHooks call — declare it in the descriptor and read it from there"
+      "a hooks fact declared outside the profile's declareHooks call - declare it in the descriptor and read it from there"
     ).toEqual([]);
     expect(sourceFiles().filter((file) => PROFILE_FILE.test(file)).length).toBeGreaterThan(20);
     expect(

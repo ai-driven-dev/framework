@@ -32,7 +32,7 @@ describe("clean: shared source own reference", () => {
         return new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
       }
 
-      it("drops its own claim but leaves the shared marketplace registered — the other project still sees it", async () => {
+      it("drops its own claim but leaves the shared marketplace registered - the other project still sees it", async () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
@@ -68,8 +68,8 @@ describe("clean: shared source own reference", () => {
         // The host-side guard already in place: the shared marketplace is never
         // unregistered from claude/codex/copilot by a single project's own `clean`.
         expect(activator.removedMarketplaces).toEqual([]);
-        // Only this project's own claim is dropped, and the other project — reading the
-        // very same registry — still finds the marketplace registered.
+        // Only this project's own claim is dropped, and the other project - reading the
+        // very same registry - still finds the marketplace registered.
         expect(await userSourceReferences.listAllReferencingProjects()).toContain(
           OTHER_PROJECT_ROOT
         );
@@ -229,7 +229,7 @@ describe("clean: shared source own reference", () => {
           })
         );
         const userSourceReferences = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
-        // Both projects registered at an older CLI version — this use case has no way to
+        // Both projects registered at an older CLI version - this use case has no way to
         // know or care what version is "current" today.
         await userSourceReferences.addReference("0.9.0", PROJECT_ROOT);
         await userSourceReferences.addReference("0.9.0", OTHER_PROJECT_ROOT);
@@ -258,7 +258,7 @@ describe("clean: shared source own reference", () => {
         expect(message).toContain("Still referenced by 1 other project on this machine.");
       });
 
-      // `references.json` is a help, not an authority — a corrupted copy must never block
+      // `references.json` is a help, not an authority - a corrupted copy must never block
       // the destructive command that does not depend on it.
       it("warns and still previews a dry-run when references.json is corrupted", async () => {
         const manifest = seedManifestWithNativeRegistrations();

@@ -104,7 +104,7 @@ function builtSkillContent(deps: Awaited<ReturnType<typeof buildInstallationDeps
   return content;
 }
 
-describe("RestoreAllPlugins — built-tree materialization", () => {
+describe("RestoreAllPlugins - built-tree materialization", () => {
   it("does not re-materialize a shared user plugin during project restore", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);

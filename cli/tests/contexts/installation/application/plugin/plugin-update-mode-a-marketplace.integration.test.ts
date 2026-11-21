@@ -107,7 +107,7 @@ async function installStaleGithubPlugin(
   await deps.manifestRepo.save(manifest);
 }
 
-describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () => {
+describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () => {
   it("updates a github-sourced marketplace plugin on claude without materializing any files", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -154,7 +154,7 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
   });
 });
 
-describe("UpdatePlugin — flat-mode tools are unaffected (regression guard)", () => {
+describe("UpdatePlugin - flat-mode tools are unaffected (regression guard)", () => {
   it("still re-materializes opencode's flat files from the built tree on update", async () => {
     const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);

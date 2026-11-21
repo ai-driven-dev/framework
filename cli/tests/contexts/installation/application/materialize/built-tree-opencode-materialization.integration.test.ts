@@ -54,7 +54,7 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => {
+describe("BuiltTreeMaterializationTranslator - opencode (integration)", () => {
   it("copies only this plugin's flat files into the project, byte-for-byte", async () => {
     const fs = new InMemoryFileAdapter();
     const skill = "Load [assets/x.md](../assets/x.md)";
@@ -132,7 +132,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
   });
 });
 
-describe("BuiltTreeMaterializationTranslator — what the opencode flat tree never yields", () => {
+describe("BuiltTreeMaterializationTranslator - what the opencode flat tree never yields", () => {
   async function installFrom(
     fs: InMemoryFileAdapter,
     distribution: PluginDistribution
@@ -191,7 +191,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
   });
 });
 
-describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
+describe("BuiltTreeMaterializationTranslator - kilo (integration)", () => {
   it("copies Kilo's namespaced flat files and the generated bridge", async () => {
     const fs = new InMemoryFileAdapter();
     const configPath = `${PROJECT_ROOT}/.kilo/kilo.jsonc`;

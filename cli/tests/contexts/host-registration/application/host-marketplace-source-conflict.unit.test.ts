@@ -19,7 +19,7 @@ const LOCATION = "/home/.claude/plugins/known_marketplaces.json";
  * `userConfigDir()` can sit behind a symlink the OS resolves on its own (macOS's `/var` →
  * `/private/var`), so an unresolved `userCacheRoot` never matches the realpath'd sources.
  */
-describe("hostMarketplaceSourceConflict — resolving every path through the same realpath", () => {
+describe("hostMarketplaceSourceConflict - resolving every path through the same realpath", () => {
   it("still decides a version-behind drift when userCacheRoot is reached through a symlink", async () => {
     const fs = new InMemoryFileAdapter({}, ["/private/var-home/.config/aidd"]);
     fs.setSymlink("/var-home", "/private/var-home");
@@ -111,7 +111,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
   });
 });
 
-describe("hostMarketplaceSourceConflict — without a drift context", () => {
+describe("hostMarketplaceSourceConflict - without a drift context", () => {
   it("reports the different catalog the host's registry points at", async () => {
     const fs = new InMemoryFileAdapter({
       "/registered/.claude-plugin/marketplace.json": JSON.stringify({

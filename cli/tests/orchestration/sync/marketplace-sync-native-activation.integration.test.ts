@@ -243,7 +243,7 @@ describe("native activation", () => {
       expect(entry?.hash).toEqual(FileHash.of(onDisk));
     });
     // A tool whose CLI is not on the PATH wrote nothing, so a settings file differing from its
-    // tracked hash differs because a person changed it — re-hashing would bless that as ours.
+    // tracked hash differs because a person changed it - re-hashing would bless that as ours.
     it("leaves a hash alone for a tool whose own CLI never ran", async () => {
       const registry = new InMemoryMarketplaceRegistry();
       const fs = new InMemoryFileAdapter();

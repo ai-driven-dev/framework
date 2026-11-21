@@ -57,7 +57,7 @@ async function run(...args: string[]): Promise<string[]> {
   return written.join("").split("\n").slice(0, -1);
 }
 
-describe("aidd translate — what it hands the build", () => {
+describe("aidd translate - what it hands the build", () => {
   it("resolves both directories against the project and builds a marketplace tree", async () => {
     expect(await run("translate", "framework", "--to", "claude", "--out", "dist-plugins")).toEqual([
       `Built 2 plugins, 12 files written to ${OUT_DIR}`,
@@ -101,7 +101,7 @@ describe("aidd translate — what it hands the build", () => {
   });
 });
 
-describe("aidd translate — what it refuses", () => {
+describe("aidd translate - what it refuses", () => {
   it("refuses a target no profile declares, and lists the ones that do", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new ExitRequested(1);
@@ -162,7 +162,7 @@ describe("aidd translate — what it refuses", () => {
   });
 });
 
-describe("aidd translate — the help surface", () => {
+describe("aidd translate - the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());

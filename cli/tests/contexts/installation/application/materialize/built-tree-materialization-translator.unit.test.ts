@@ -31,7 +31,7 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator — cursor", () => {
+describe("BuiltTreeMaterializationTranslator - cursor", () => {
   it("counts changed files and skips byte-identical files on repeated materialization", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
@@ -163,7 +163,7 @@ describe("BuiltTreeMaterializationTranslator — cursor", () => {
   });
 });
 
-describe("BuiltTreeMaterializationTranslator — when no built tree applies", () => {
+describe("BuiltTreeMaterializationTranslator - when no built tree applies", () => {
   const COMMAND = "---\nname: aidd:01:hello\n---\n# Hello";
 
   function distWithCommand(): PluginDistribution {
