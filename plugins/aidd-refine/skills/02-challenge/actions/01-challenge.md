@@ -14,7 +14,7 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
 1. State the aim the work serves, in its strongest reading.
 2. Run the work when it can run, and keep each command with its output as evidence.
 3. Apply each selected technique of `techniques.md`, in its table order, to the work and to what it was asked to do.
-4. Classify each finding with the first question of the `techniques.md` decision that answers yes.
+4. Classify each finding with the first question of [decision.md](../references/decision.md) that answers yes.
 5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
 6. Fill [report-template.md](../assets/report-template.md).
 7. Write it to `challenge.md` under a `# Round <n>` heading, after any earlier round, in the first folder that exists:
@@ -29,6 +29,7 @@ The filled report, emitted and kept in `challenge.md`.
 
 ## Rules
 
-- Give every finding a concrete scenario and the evidence that makes it real.
+- Attack the work as an adversary would, never as its author.
+- Report only what changes a decision, and nothing found is a valid answer.
 - Keep the template's headings and order, and write `- None` in an empty section.
 - List under Holds only attacks the work survived, never a restated requirement.
