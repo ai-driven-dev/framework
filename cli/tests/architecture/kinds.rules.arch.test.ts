@@ -56,6 +56,27 @@ let sources: Record<string, string> | undefined;
 const src = (): Record<string, string> =>
   (sources ??= textsOf(tsFilesUnder("src").filter((path) => !path.endsWith(".d.ts"))));
 
+/** The codes every `*.error.ts` declares, and the ones carried twice or not in kebab-case. */
+function errorCodeViolations(files: Record<string, string>): {
+  codes: string[];
+  duplicated: string[];
+  malformed: string[];
+} {
+  const codes = Object.entries(files)
+    .filter(([path]) => path.endsWith(".error.ts") || path.startsWith("src/shared/domain/errors/"))
+    .flatMap(([, text]) => [
+      ...[...text.matchAll(/readonly code = "([^"]+)"/g)].map((match) => match[1] ?? ""),
+      ...[...(/type \w+Code = ([^;]+);/.exec(text)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
+        (match) => match[1] ?? ""
+      ),
+    ]);
+  return {
+    codes,
+    duplicated: [...new Set(codes.filter((code, index) => codes.indexOf(code) !== index))],
+    malformed: codes.filter((code) => !/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(code)),
+  };
+}
+
 describe("an error class is thrown", () => {
   const catalog = "src/shared/domain/errors.ts";
   const declared = [
@@ -80,18 +101,24 @@ describe("an error class is thrown", () => {
     ).toEqual([`${catalog} :: GhostError`]);
   });
 
+  it("flags a code carried twice or not in kebab-case, whichever file declares it", () => {
+    const planted = {
+      "src/contexts/a/domain/a.error.ts": 'class AError { readonly code = "same-code"; }',
+      "src/contexts/b/domain/b.error.ts":
+        'class BError { readonly code = "same-code"; }\nclass CError { readonly code = "Not_Kebab"; }',
+      "src/contexts/b/domain/b.ts": 'const x = { code: "ignored" };',
+    };
+    const { codes, duplicated, malformed } = errorCodeViolations(planted);
+    expect(codes).toEqual(["same-code", "same-code", "Not_Kebab"]);
+    expect(duplicated).toEqual(["same-code"]);
+    expect(malformed).toEqual(["Not_Kebab"]);
+  });
+
   it("gives every error a kebab-case code no other error carries", () => {
-    const codes = Object.entries(src())
-      .filter(([path]) => path.startsWith("src/shared/domain/errors/"))
-      .flatMap(([, text]) => [
-        ...[...text.matchAll(/readonly code = "([^"]+)"/g)].map((match) => match[1] ?? ""),
-        ...[...(/type \w+Code = ([^;]+);/.exec(text)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
-          (match) => match[1] ?? ""
-        ),
-      ]);
+    const { codes, duplicated, malformed } = errorCodeViolations(src());
     expect(codes.length).toBeGreaterThan(0);
-    expect(codes.filter((code) => !/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(code))).toEqual([]);
-    expect(codes.filter((code, index) => codes.indexOf(code) !== index)).toEqual([]);
+    expect(malformed).toEqual([]);
+    expect(duplicated).toEqual([]);
   });
 
   it("holds the catalog of the tree", () => {
