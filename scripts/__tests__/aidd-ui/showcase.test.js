@@ -144,7 +144,7 @@ describe("aidd-ui showcase", () => {
     it("lists on the home page what awaits review as links, with no card and no miniature", () => {
       const index = pagesOf()["index.html"];
       assert.doesNotMatch(index, /<a class="card"|<iframe/);
-      assert.deepEqual([...todoOf(index).matchAll(/<li data-id="([^"]+)">/g)].map((match) => match[1]).sort(), ["button", "dialog", "home", "old-button", "search-field", "search-flow"]);
+      assert.deepEqual([...todoOf(index).matchAll(/<li data-id="([^"]+)">/g)].map((match) => match[1]).sort(), ["button", "dialog", "home", "old-button", "search-field"]);
       assert.doesNotMatch(todoOf(index), /<li data-id="(brand|system|onboarding)">/);
     });
 
@@ -821,7 +821,7 @@ describe("aidd-ui showcase", () => {
       verdicts(["button", "default", "1", "ok", ""], ["button", "hover", "1", "revise", "too pale"]);
       const index = pagesOf()["index.html"];
       assert.match(todoOf(index).match(/<li data-id="button">[\s\S]*?<\/li>/)[0], /<span class="progress" data-record="button" data-base="2" data-total="4">2\/4<\/span>/);
-      assert.match(todoOf(index).match(/<li data-id="search-flow">[\s\S]*?<\/li>/)[0], /<span class="progress" data-record="search-flow" data-base="0" data-total="2">0\/2<\/span>/);
+      assert.match(todoOf(index).match(/<li data-id="home">[\s\S]*?<\/li>/)[0], /<a class="sketch" href="search-flow\.html">Wireframe<\/a>/);
       assert.doesNotMatch(index, /type="checkbox"|checked|class="batch"|copy-all/);
     });
 

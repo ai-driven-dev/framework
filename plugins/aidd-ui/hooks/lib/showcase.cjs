@@ -43,6 +43,7 @@ const LABELS = {
     toCopy: "{count} to copy",
     decisions: "My decisions",
     proposedCount: "{count} awaiting your agreement",
+    agreeInChat: "Agree with the assistant in the conversation.",
     stepDone: "complete",
     stepEmpty: "no content",
     decided: "chosen",
@@ -149,6 +150,7 @@ const LABELS = {
     toCopy: "{count} à copier",
     decisions: "Mes décisions",
     proposedCount: "{count} en attente de votre accord",
+    agreeInChat: "À valider avec l'assistant dans la conversation.",
     stepDone: "terminé",
     stepEmpty: "vide",
     decided: "choisies",
@@ -306,7 +308,7 @@ nav .steps { list-style: none; margin: var(--s3) 0 var(--s4); padding: 0; }
 nav .steps > li { display: block; }
 nav summary { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--s2); padding: 6px var(--s2) 6px var(--s5); background: var(--surface); cursor: pointer; font-size: var(--t-md); font-weight: 600; border-radius: var(--r2); list-style: none; }
 nav summary::-webkit-details-marker { display: none; }
-nav summary:hover { background: var(--sunken); }
+nav summary:hover { background: var(--bg); }
 nav .stepno { position: absolute; left: 0; inline-size: 20px; block-size: 20px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); text-align: center; line-height: 20px; }
 nav .step-name { flex: 1; }
 nav summary a.step-name { padding: 0; font-weight: 600; color: inherit; }
@@ -316,10 +318,10 @@ nav h3 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: 
 nav ul, .links ul, .appears ul, .drawer ol { list-style: none; margin: 0; padding: 0; }
 nav li, nav .home { display: flex; align-items: center; gap: var(--s2); border-radius: var(--r2); }
 nav li a, nav .home a { flex: 1; min-width: 0; padding: 5px var(--s2) 5px var(--s5); color: var(--muted); font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-nav li:hover, nav .home:hover { background: var(--sunken); }
+nav li > a:not([aria-current="page"]):hover, nav .home a:not([aria-current="page"]):hover { background: var(--bg); color: var(--text); }
 nav a:hover { text-decoration: none; }
-nav li:has(> a[aria-current="page"]), nav .home:has(> a[aria-current="page"]) { background: var(--sunken); box-shadow: inset 2px 0 0 var(--text); border-radius: 0 var(--r2) var(--r2) 0; }
-nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
+nav li:has(> a[aria-current="page"]), nav .home:has(> a[aria-current="page"]) { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 var(--r2) var(--r2) 0; }
+nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
 .head { display: flex; flex-direction: column; gap: var(--s2); }
 .head > .stamp { display: flex; align-items: center; gap: var(--s2); }
 .crumb { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--faint); }
@@ -481,6 +483,9 @@ body[data-drawer="open"] .scrim { display: block; position: fixed; inset: 0; z-i
 .step-group > summary::-webkit-details-marker { display: none; }
 .step-group .step-count { color: var(--faint); font-weight: 500; }
 .step-group .step-ok { margin-left: auto; height: 26px; }
+.agreeing { padding: var(--s3) var(--s5); border-bottom: 1px solid var(--line); font-size: var(--t-md); }
+.agreeing ul { margin: 0 0 var(--s2); padding-left: var(--s4); }
+.agreeing .note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .item { border-bottom: 1px solid var(--line); }
 .item summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: var(--t-md); font-weight: 600; list-style: none; }
 .item summary::-webkit-details-marker { display: none; }
@@ -672,8 +677,9 @@ function decisionsOf(model, choices) {
   }));
   const sets = (model.sets || []).flatMap((each) => {
     const own = choices[each.key] || {};
-    const voted = each.variants.filter((name) => own[name]).map((name) => ({ title: each.title, name, verdict: own[name].verdict, comment: own[name].comment || "" }));
-    const picked = Object.entries(own["@picks"] || {}).map(([axis, variant]) => ({ title: each.title, name: axis, verdict: "pick", comment: "", variant }));
+    const labelOf = (name) => (each.labels || {})[name] || name;
+    const voted = each.variants.filter((name) => own[name]).map((name) => ({ title: each.title, name: labelOf(name), verdict: own[name].verdict, comment: own[name].comment || "" }));
+    const picked = Object.entries(own["@picks"] || {}).map(([axis, variant]) => ({ title: each.title, name: axis, verdict: "pick", comment: "", variant: labelOf(variant) }));
     return voted.concat(picked);
   });
   return records.concat(sets);
@@ -785,7 +791,7 @@ function recordsOf() {
 }
 const model = () => ({
   records: recordsOf(),
-  sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, title: set.dataset.title, variants: variantsOf(set).map((row) => row.dataset.variant) })),
+  sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, title: set.dataset.title, variants: variantsOf(set).map((row) => row.dataset.variant), labels: Object.fromEntries(variantsOf(set).map((row) => [row.dataset.variant, row.dataset.label])) })),
 });
 const entries = () => entriesOf(model(), choices);
 const decided = document.getElementById("decisions");
@@ -1055,7 +1061,7 @@ const byCategory = (a, b) => CATEGORIES.indexOf(categoryOf(a)) - CATEGORIES.inde
 
 /** The step a page stands on: that of its record or set, on the overview the first step with work. */
 function hereOf(held, records, sets, current) {
-  if (current === null) return held.find((each) => each.todo)?.step;
+  if (current === null) return held.find((each) => each.count)?.step;
   if (current.startsWith(SET_CURRENT)) return setStepOf(sets.find((set) => `${SET_CURRENT}${set.id}` === current) ?? {});
   return stepOf(records.find((record) => fm(record).id === current) ?? {});
 }
@@ -1064,16 +1070,18 @@ function hereOf(held, records, sets, current) {
 const pendingOf = (labels, count) => `<span class="tally pending" data-template="${escaped(labels.toReview)}">${escaped(filled(labels.toReview, { count }))}</span>`;
 
 /** What a step still asks of the person: what the drawer reviews and the records it cannot review that are still proposed. A step with none is done. */
-const leftOf = (each) => each.todo + each.proposed.length;
+const leftOf = (each) => each.count;
 
 /** What a step still asks, in words: what the drawer reviews first, else the records it cannot review, which are proposed, not to review. */
-const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { count: each.todo }) : filled(labels.proposedCount, { count: each.proposed.length }));
+const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { count: each.count }) : filled(labels.proposedCount, { count: each.count }));
 
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
  * and open sets, never states, a wireframe awaiting beside the awaiting screen that dresses it once (`dressedBy` names
  * that screen, `counted` is what is left), and leaves the proposed ones out: the drawer cannot clear them. A wireframe
- * leaves the review once one screen that dresses it has nothing left awaiting. */
+ * leaves the review once one screen that dresses it has nothing left awaiting. `count` is the one number a step
+ * shows wherever it is shown: what the drawer reviews, else the records still proposed. `listed` is what that
+ * number counts, record by record: one row per screen, the proposed ones when nothing is left to review. */
 function stepsOf({ project, records, rows, sets }) {
   const settledWireframes = new Set(records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe && reviewable(project, record) && !awaitingOf(rows, record).length).map((record) => fm(record).wireframe));
   return STEPS.map((step) => {
@@ -1084,7 +1092,8 @@ function stepsOf({ project, records, rows, sets }) {
     const dressedBy = new Map(awaiting.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => [fm(record).wireframe, fm(record).id]));
     const counted = awaiting.filter((record) => !(fm(record).kind === "wireframe" && dressedBy.has(fm(record).id)));
     const proposed = own.filter((record) => !reviewable(project, record) && unvalidated(record));
-    return { step, records: own, sets: ownSets, awaiting, counted, dressedBy, open, proposed, todo: counted.length + open.length };
+    const todo = counted.length + open.length;
+    return { step, records: own, sets: ownSets, awaiting, counted, dressedBy, open, proposed, todo, count: todo || proposed.length, listed: todo ? counted : proposed };
   });
 }
 
@@ -1143,7 +1152,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
     const left = leftOf(each);
-    const mark = left ? each.todo || left : each.records.length || each.sets.length ? "\u2713" : "\u2014";
+    const mark = left ? each.count : each.records.length || each.sets.length ? "\u2713" : "\u2014";
     const markName = left ? leftWordOf(labels, each) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
     const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
     const name = alone
@@ -1371,7 +1380,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
  * with something left to review, each record awaiting review with only its states not settled, each state with a
  * link to its tab, its verdict pair and a comment field, then one copy of all that is decided. A group carries its
  * own "all OK". Opened by the button at the foot of the sidebar, which counts what awaits review. */
-function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
+function drawerOf({ project, held, here, rows, labels, current }) {
   const item = (record) => {
     const { id, version } = fm(record);
     const wanted = awaitingOf(rows, record);
@@ -1388,29 +1397,30 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
     const screen = held.map((each) => each.dressedBy.get(id)).find(Boolean);
     return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""}${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}${screen ? ` \u00b7 ${escaped(labels.wireframe)}` : ""}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
-  const shown = held.reduce((sum, each) => sum + each.awaiting.length, 0);
+  const shown = held.reduce((sum, each) => sum + each.awaiting.length + each.open.length, 0);
   const known = held.flatMap((each) => each.records).filter((record) => reviewable(project, record)).map((record) => ({
     record: fm(record).id,
     version: String(fm(record).version),
     title: titleOf(project, record, labels),
     states: orderedStates(rows, record).map(({ state, verdict }) => ({ state, name: Object.hasOwn(labels.kindNames, fm(record).kind) ? labels.whole : stateNameOf(labels, state), settled: !UNRESOLVED.includes(verdict.current) })),
   }));
-  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.counted.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
-    const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
+    const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}" data-label="${escaped(variants.titleOf(variant.name))}"><span class="pick">${escaped(variants.titleOf(variant.name))}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
     return `<details class="choice" data-set="${escaped(set.id)}" data-title="${escaped(set.title)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.title)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
   };
-  const open = sets.filter((set) => !set.problems.length);
-  const choices = open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${open.map(choice).join("")}</section>` : "";
-  const groups = held.filter((each) => each.awaiting.length).map(group).join("\n");
+  const choices = (each) => (each.open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${each.open.map(choice).join("")}</section>` : "");
+  const agreeing = (each) => (each.todo ? "" : `<section class="agreeing"><ul>${each.listed.map((record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`).join("")}</ul><p class="note">${labels.agreeInChat}</p></section>`);
+  const ok = (each) => (each.awaiting.length ? `<button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button>` : "");
+  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.count})</span>${ok(each)}</summary>${choices(each)}${each.awaiting.map(item).join("\n")}${agreeing(each)}</details>`;
+  const groups = held.filter((each) => each.count).map(group).join("\n");
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
     '<div class="scrim" id="scrim"></div>',
     `<script type="application/json" id="review-records">${JSON.stringify(known).replaceAll("<", "\\u003c")}</script>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
-    `<div class="drawer-body"><section class="decisions" id="decisions" hidden data-copy="${escaped(labels.toCopy)}" data-words="${escaped(JSON.stringify({ ok: labels.ok, revise: labels.revise, keep: labels.keep, discard: labels.discard, pick: labels.pickedFrom }))}"><h3>${labels.decisions}</h3><ul></ul></section>${choices}${groups || (choices ? "" : `<p class="nothing">${labels.nothing}</p>`)}</div>`,
+    `<div class="drawer-body"><section class="decisions" id="decisions" hidden data-copy="${escaped(labels.toCopy)}" data-words="${escaped(JSON.stringify({ ok: labels.ok, revise: labels.revise, keep: labels.keep, discard: labels.discard, pick: labels.pickedFrom }))}"><h3>${labels.decisions}</h3><ul></ul></section>${groups || `<p class="nothing">${labels.nothing}</p>`}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}" data-hint="${escaped(labels.copyHint)}">${labels.copy}</button></div>`,
     "</aside>",
   ].join("\n");
@@ -1521,7 +1531,8 @@ function reviewLineOf(held, labels) {
   }
   if (!waiting.length) return `<p class="lede">${labels.nothing}</p>`;
   const text = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
-  return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(waiting[0]))}">${labels.start}</a></p>`;
+  const first = held.find((each) => each.count);
+  return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first))}">${labels.start}</a></p>`;
 }
 
 function overviewOf({ project, held, records, rows, labels }) {
@@ -1529,17 +1540,21 @@ function overviewOf({ project, held, records, rows, labels }) {
     const states = orderedStates(rows, record);
     return `<span class="progress" data-record="${escaped(fm(record).id)}" data-base="${settledOf(states)}" data-total="${states.length}">${settledOf(states)}/${states.length}</span>`;
   };
-  const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${progressOf(record)}</li>`;
-  const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.title)}</a></li>`;
+  const sketchOf = (record) => held.flatMap((each) => [...each.dressedBy]).find(([, screen]) => screen === fm(record).id)?.[0];
+  const sketched = (record) => (sketchOf(record) ? ` <a class="sketch" href="${escaped(sketchOf(record))}.html">${escaped(labels.wireframe)}</a>` : "");
+  const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${sketched(record)}${progressOf(record)}</li>`;
+  const link = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`;
+  const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.title)}</a><span class="progress" data-set="${escaped(set.id)}" data-label="${escaped(labels.decided)}" data-total="${variants.latestOf(set.variants).length}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></li>`;
   const stepBlock = (each) => {
     const body = each.step === "components"
       ? CATEGORIES.flatMap((category) => {
-        const inCategory = each.awaiting.filter((record) => categoryOf(record) === category);
+        const inCategory = each.counted.filter((record) => categoryOf(record) === category);
         return inCategory.length ? [`<h4 data-category="${category}">${labels.categories[category]}</h4><ul>${inCategory.map(entry).join("")}</ul>`] : [];
       }).join("")
-      : `<ul>${each.awaiting.map(entry).join("")}</ul>`;
+      : `<ul>${each.counted.map(entry).join("")}</ul>`;
     const open = each.open.length ? `<ul>${each.open.map(setEntry).join("")}</ul>` : "";
-    return `<section class="todo-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}<span>${each.todo}</span></h3>${each.awaiting.length ? body : ""}${open}</section>`;
+    const agreeing = each.todo ? "" : `<ul>${each.listed.map(link).join("")}</ul><p class="note">${labels.agreeInChat}</p>`;
+    return `<section class="todo-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}<span>${each.count}</span></h3>${each.counted.length ? body : ""}${open}${agreeing}</section>`;
   };
   const todo = held.reduce((sum, each) => sum + each.todo, 0);
   const proposedHere = held.flatMap((each) => each.proposed).sort(byRecordId);
@@ -1547,7 +1562,7 @@ function overviewOf({ project, held, records, rows, labels }) {
   return [
     stepperOf(held, labels),
     todo
-      ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewTodo, { count: todo }))}</h2>${held.filter((each) => each.todo).map(stepBlock).join("")}</section>`
+      ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewTodo, { count: todo }))}</h2>${held.filter((each) => each.count).map(stepBlock).join("")}</section>`
       : proposedHere.length
         ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewStillProposed, { count: proposedHere.length }))}</h2><ul>${proposedHere.map((record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`).join("")}</ul></section>`
         : `<section class="overview" data-overview="todo"><p class="none">${labels.nothing}</p></section>`,
@@ -1595,7 +1610,7 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   const records = placed(project).filter((record) => fm(record).kind !== REVIEW_KIND && fm(record).id);
   const recordsById = new Map();
   for (const record of records) if (!recordsById.has(fm(record).id)) recordsById.set(fm(record).id, record);
-  const sets = found.map((set) => ({ ...set, title: recordsById.has(set.id) ? titleOf(project, recordsById.get(set.id), labels) : variants.titleOf(set.id) }));
+  const sets = found.map((set) => ({ ...set, title: recordsById.has(set.id) ? titleOf(project, recordsById.get(set.id), labels) : variants.setTitleOf(set) }));
   const rows = verdictRows(placed(project));
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const system = project.records.find((record) => fm(record).kind === "system");
@@ -1607,7 +1622,7 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
     return charteSectionsOf({ entries: tokens === null ? [] : catalog(project), values: resolvedValues(project).get(BASE_CONTEXT) ?? new Map(), citations: citations(project), primitives: list(fm(record).primitives), rows: breakpointRows(record), notes, tokens, labels, language });
   };
   const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
-  const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets });
+  const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current });
   const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {

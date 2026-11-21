@@ -19,9 +19,11 @@ const latestOf = (variants) => {
 /** The file a set's page is written to. */
 const setFileOf = (id) => `${SET_PREFIX}${id}.html`;
 
-/** A variant's slug as a title: its hyphens as spaces, its first letter capital. */
+const ELISION = /\b([dl]) (?=[aeiouyh\u00e0\u00e2\u00e9\u00e8\u00ea\u00ee\u00f4\u00fb])/gi;
+
+/** A slug as a title a person reads: its hyphens as spaces, a lone `d` or `l` before a vowel elided, its first letter capital. */
 const titleOf = (name) => {
-  const words = String(name).replaceAll("-", " ");
+  const words = String(name).replaceAll("-", " ").replace(ELISION, "$1'");
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
@@ -33,6 +35,13 @@ function fileTitleOf(variant, file) {
   const stem = file.path.replace(/\.[^./]+$/, "");
   const record = file.path.endsWith(".md") ? file : variant.files.find((each) => each.path === `${stem}.md`);
   return (record && HEADING.exec(record.text)?.[1]) || titleOf(stem.split("/").pop());
+}
+
+/** The title of a set: the heading of the record the first variant writes under the set's own name, else its id as words. */
+function setTitleOf(set) {
+  const stem = (file) => file.path.replace(/\.[^./]+$/, "").split("/").pop();
+  const written = set.variants?.[0]?.files.find((file) => MARKDOWN_FILE.test(file.path) && stem(file) === set.id);
+  return (written && HEADING.exec(written.text)?.[1]) || titleOf(set.id);
 }
 
 const filled = (label, values) => label.replace(/\{(\w+)\}/g, (_, key) => values[key]);
@@ -165,7 +174,7 @@ function dressedOf(html, { background, text, accent, font, sizes }) {
 }
 
 /** A frame of a document at a size, scaled by the script to the width of its column. A frame with no label has no caption. */
-const frameOf = ({ variant, title, doc, label, size: [size, width, height] }) => `<figure class="frame">${label ? `<figcaption>${escaped(label)}</figcaption>` : ""}<div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${title}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
+const frameOf = ({ variant, title, doc, label, size: [size, width, height] }) => `<figure class="frame">${label ? `<figcaption>${escaped(label)}</figcaption>` : ""}<div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${titleOf(variant.name)} ${title}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
 
 /** A render in one mobile frame, whole: the script of the bar above the columns picks its state and its size. It names the
  * states the render holds, and keeps a note, hidden until the chosen state is one it lacks. */
@@ -193,7 +202,7 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   const docs = look && wireframes.length ? wireframes.map((wireframe) => ({ path: wireframe.path, text: dressedOf(wireframe.text, look) })) : null;
   const screens = docs ? [screenOf({ variant, docs, tokens, labels })] : null;
   const before = new Map(parent?.axes ?? []);
-  const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: parent.name }))}"` : "");
+  const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: titleOf(parent.name) }))}"` : "");
   const same = (axis) => siblings.length > 1 && siblings.every((each) => valueOf(each.axes.find(([name]) => name === axis)?.[1]) === valueOf(variant.axes.find(([name]) => name === axis)?.[1]));
   const sampled = { done: false };
   const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value, { variant, labels, sampled })}</button></td></tr>`).join("");
@@ -436,4 +445,4 @@ if (pick) pick.addEventListener("change", () => {
 if (typeof ResizeObserver === "function") new ResizeObserver(fitFrames).observe(document.querySelector("main"));
 `;
 
-module.exports = { titleOf, stateNameOf, latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };
+module.exports = { titleOf, setTitleOf, stateNameOf, latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };

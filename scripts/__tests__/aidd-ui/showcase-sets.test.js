@@ -357,7 +357,7 @@ describe("aidd-ui showcase sets", () => {
       const html = pagesOf([set])["_set-layout.html"];
       assert.match(html, /<section class="variant" data-variant="affiche-de-quartier"><header class="column-head"><h2>Affiche de quartier<\/h2>/);
       assert.match(html, /data-variant="affiche-de-quartier" aria-pressed="false"/);
-      assert.match(html, /<li class="pvariant" data-variant="affiche-de-quartier"><span class="pick">affiche-de-quartier<\/span>/);
+      assert.match(html, /<li class="pvariant" data-variant="affiche-de-quartier" data-label="Affiche de quartier"><span class="pick">Affiche de quartier<\/span>/);
     });
   });
 
@@ -839,7 +839,7 @@ describe("aidd-ui showcase sets", () => {
         assert.ok(group, "a group in the drawer");
         assert.match(group, new RegExp(`<h3>${LABELS.en.choose}</h3>`));
         assert.match(group, /<details class="choice" data-set="layout" data-title="Layout" data-fingerprint="f1" open>/);
-        const rows = [...group.matchAll(/<li class="pvariant" data-variant="([^"]+)">([\s\S]*?)<\/li>/g)];
+        const rows = [...group.matchAll(/<li class="pvariant" data-variant="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)];
         assert.deepEqual(rows.map((row) => row[1]), ["a", "b"]);
         for (const [, , row] of rows) {
           assert.deepEqual([...row.matchAll(/class="vote" data-verdict="(\w+)"[^>]*>([^<]+)</g)].map((match) => [match[1], match[2]]), [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"]]);

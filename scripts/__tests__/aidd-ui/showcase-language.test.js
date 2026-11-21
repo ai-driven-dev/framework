@@ -55,6 +55,16 @@ describe("a French showcase", () => {
     }
   });
 
+  it("names a variant by a label a person reads, never by its id, on its set page and in the drawer", () => {
+    const set = { ...SET, variants: SET.variants.map((variant, at) => ({ ...variant, name: ["ami-d-abord", "envoi-direct"][at] })) };
+    const pages = showcaseOf({ project: load(tmp), problems: [], tokens: ":root { --accent: #123456; }\n", captures: new Set(), lang: "fr", sets: [set] });
+    for (const file of ["_set-layout.html", "index.html"]) {
+      const { all } = readOf(pages[file]);
+      assert.ok(all.some((text) => text.includes("Ami d'abord")), `${file} reads the label`);
+      assert.ok(!all.some((text) => /ami-d-abord|envoi-direct/.test(text)), `${file} reads no variant id`);
+    }
+  });
+
   it("shows no front matter of a variant's record on its set page", () => {
     const set = readOf(pagesOf("fr")["_set-layout.html"]).all;
     assert.ok(set.some((text) => text.includes("Home a")), "the variant's record is on the page");

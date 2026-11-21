@@ -196,7 +196,7 @@ describe("aidd-ui screens skill", () => {
     put(tmp, `${UI}/drafts/search/variants.md`, "| Variant | Intent | Density |\n| --- | --- | --- |\n| airy | calm | loose |\n| dense | fast | tight |\n");
     assert.equal(engine("showcase", "--root", tmp).status, 0);
     const page = fs.readFileSync(path.join(tmp, UI, "showcase/_set-search.html"), "utf8");
-    assert.ok(/<iframe title="airy /.test(page) && /<iframe title="dense /.test(page), "the page shows each variant's screen");
+    assert.ok(/<iframe title="Airy /.test(page) && /<iframe title="Dense /.test(page), "the page shows each variant's screen");
     assert.equal(page.includes("../tokens.css"), false, "the stylesheet is inlined");
     assert.deepEqual(JSON.parse(engine("keep", "search", "dense", "--root", tmp).stdout).written, [`${UI}/screens/search.html`, `${UI}/screens/search.md`]);
     assert.equal(engine("bump", "--task", TASK, "--created", "search", "--root", tmp).status, 0);
