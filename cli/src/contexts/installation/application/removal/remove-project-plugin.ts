@@ -8,7 +8,7 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
 import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
+import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */

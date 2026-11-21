@@ -22,8 +22,8 @@ import type { PluginTranslator } from "../../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
-import { writePluginFiles } from "../plugin-helpers.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin-target-resolution.js";
+import { writePluginFiles } from "../write-plugin-files.js";
 
 /** A distribution to place for each tool, and what the project already holds of it. */
 export interface PlacePluginCommand {

@@ -10,7 +10,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
+import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 
 /** One tool leaving a project, among the tools leaving with it. */
 export interface ToolRemoval {

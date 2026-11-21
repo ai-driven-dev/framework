@@ -18,7 +18,7 @@ import { aiddGitignoreEntries } from "../../domain/manifest-gitignore-entries.js
 import { AIDD_CONFIG_FILENAME, PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
+import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 import { type ProjectHooksGuard, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import type { UpdateGitignore } from "../update-gitignore.js";
 
