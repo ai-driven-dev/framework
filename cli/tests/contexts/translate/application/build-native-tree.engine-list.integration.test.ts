@@ -1,5 +1,5 @@
 import { readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
@@ -18,7 +18,7 @@ import {
   FRAMEWORK_SOURCE,
 } from "../testing/framework-real-distribution.builder.js";
 
-const OUT = "/engine-list-out";
+const OUT = resolve("/engine-list-out").replaceAll("\\", "/");
 const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
 const tools = registeredTools();
 const CELLS = [
