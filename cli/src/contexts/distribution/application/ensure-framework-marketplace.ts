@@ -15,8 +15,8 @@ export interface EnsureFrameworkMarketplaceCommand {
 export class EnsureFrameworkMarketplace {
   constructor(
     private readonly register: Pick<RegisterFrameworkMarketplace, "execute">,
-    private readonly tokenProvider?: TokenProvider,
-    private readonly releaseResolver?: RepositoryVisibility
+    private readonly tokenProvider: TokenProvider,
+    private readonly releaseResolver: RepositoryVisibility
   ) {}
 
   async execute(command: EnsureFrameworkMarketplaceCommand): Promise<EnsuredFrameworkMarketplace> {
@@ -33,15 +33,9 @@ export class EnsureFrameworkMarketplace {
   // without one, allow public repos through and gate only private/unreachable ones.
   private async guardRemoteAuth(source: FrameworkSource): Promise<void> {
     if (source.kind !== "github") return;
-    if (this.tokenProvider === undefined) return;
     const token = await this.tokenProvider.resolve();
     if (token !== null) return;
-    if (
-      this.releaseResolver !== undefined &&
-      (await this.releaseResolver.isRepoPublic(source.repo))
-    ) {
-      return;
-    }
+    if (await this.releaseResolver.isRepoPublic(source.repo)) return;
     throw new CatalogFetchAuthError(`https://github.com/${source.repo}`);
   }
 }

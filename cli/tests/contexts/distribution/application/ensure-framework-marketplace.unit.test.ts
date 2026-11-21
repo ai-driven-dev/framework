@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import { EnsureFrameworkMarketplace } from "../../../../src/contexts/distribution/application/ensure-framework-marketplace.js";
 import { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import {
@@ -6,6 +7,7 @@ import {
   remoteFrameworkSource,
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import { CatalogFetchAuthError } from "../../../../src/shared/domain/shared.error.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 
@@ -17,11 +19,14 @@ const privateRepos = { isRepoPublic: async () => false };
 
 function ensureOver(
   registry: InMemoryMarketplaceRegistry,
-  ...rest: ConstructorParameters<typeof EnsureFrameworkMarketplace> extends [unknown, ...infer R]
-    ? R
-    : never
+  tokenProvider: TokenProvider = withToken,
+  releaseResolver: RepositoryVisibility = privateRepos
 ): EnsureFrameworkMarketplace {
-  return new EnsureFrameworkMarketplace(new RegisterFrameworkMarketplace(registry), ...rest);
+  return new EnsureFrameworkMarketplace(
+    new RegisterFrameworkMarketplace(registry),
+    tokenProvider,
+    releaseResolver
+  );
 }
 
 describe("EnsureFrameworkMarketplace", () => {

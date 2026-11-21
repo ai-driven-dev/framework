@@ -11,6 +11,7 @@ import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fet
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceCache } from "../../../shared/testing/in-memory-marketplace-cache.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
@@ -23,7 +24,10 @@ async function buildUseCase() {
   const pluginFetcher = new FixturePluginFetcher({
     [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]: VALID_FIXTURE,
   });
-  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher });
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher,
+    rawCatalog: unusedRawCatalog(),
+  });
   const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)

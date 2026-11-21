@@ -6,6 +6,7 @@ import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/po
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
 import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const LOCAL_PATH = "/local/marketplace";
@@ -67,27 +68,14 @@ describe("FetchMarketplaceSource", () => {
   describe("local source", () => {
     it("delegates to pluginFetcher for local sources", async () => {
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSource({ pluginFetcher: fetcher });
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: unusedRawCatalog(),
+      });
 
       const result = await uc.execute({ marketplace: makeLocalMarketplace(), cacheDir: CACHE_DIR });
 
       expect(result).toBe(LOCAL_PATH);
-    });
-  });
-
-  describe("github source without rawCatalogFetcher", () => {
-    it("delegates to pluginFetcher when no rawCatalogFetcher provided", async () => {
-      const fetcher = new FixturePluginFetcher({
-        '{"kind":"github","repo":"owner/repo"}': "/cached/path",
-      });
-      const uc = new FetchMarketplaceSource({ pluginFetcher: fetcher });
-
-      const result = await uc.execute({
-        marketplace: makeGitHubMarketplace(),
-        cacheDir: CACHE_DIR,
-      });
-
-      expect(result).toBe("/cached/path");
     });
   });
 
@@ -267,7 +255,10 @@ describe("FetchMarketplaceSource", () => {
         calls.push({ forceRefresh: opts?.forceRefresh });
         return origFetch(source, cacheDir, opts);
       };
-      const uc = new FetchMarketplaceSource({ pluginFetcher: fetcher });
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: unusedRawCatalog(),
+      });
 
       await uc.execute({
         marketplace: makeLocalMarketplace(),
