@@ -117,6 +117,18 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation
 | `04-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
 | `05-review-conversation` | Review a finished conversation and attribute each cost to its owner | `01-read-conversation`, `02-recommend`, `03-target-edits` |
 
+<!--extras-aidd-refine:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-refine:end-->
+
 ## 🌿 aidd-vcs
 
 Version-control workflows: repo init, commit, pull/merge request, release tag, issue.

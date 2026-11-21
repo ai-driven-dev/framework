@@ -1,31 +1,35 @@
 # 01 - Challenge
 
-Rethink prior work and verify correctness against an agreed plan, then emit a structured findings report.
+Attack the work and report what breaks its aim, so the caller knows whether it holds.
 
 ## Input
 
-- The work to review: the last answer, specific files, a plan, or a commit range.
-- The agreed reference to judge it against: a plan, a spec, or stated requirements. Without one, judge against stated user intent.
-
-## Output
-
-The findings report following [report-template.md](../assets/report-template.md): a confidence percentage plus the Correctness, Deal breakers, and Suggestions sections.
+- The work: an answer, files, a plan, a doc, a decision or a commit range.
+- What it was asked to do: a plan, a spec or a request, else the user's stated intent.
+- Optional techniques from [techniques.md](../references/techniques.md), else those that apply to the work.
+- Optional task folder.
 
 ## Process
 
-1. **Align.** Read the work and line it up against the agreed reference.
-2. **Challenge.** Challenge own assumptions and the user's decisions.
-3. **Trust.** Answer internally:
-   - "Am I proud of the work delivered?"
-   - "Am I confident in every consequential choice that was made?"
-   - "Will the user be satisfied with the real end-to-end outcome?"
-4. **Scan.** Scan for edge cases, errors, gaps, duplications, and inconsistencies.
-5. **Classify.** Classify each finding as Correctness, Deal breaker, or Suggestion.
-6. **Score.** Score confidence per the rubric in [confidence-rubric.md](../references/confidence-rubric.md).
-7. **Emit.** Fill [report-template.md](../assets/report-template.md) verbatim and emit it.
+1. State the aim the work serves, in its strongest reading.
+2. Run the work when it can run, and keep each command with its output as evidence.
+3. Apply each selected technique of `techniques.md`, in its table order, to the work and to what it was asked to do.
+4. Classify each finding with the first question of [decision.md](../references/decision.md) that answers yes.
+5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
+6. Fill [report-template.md](../assets/report-template.md).
+7. Write it to `challenge.md` under a `# Round <n>` heading, after any earlier round, in the first folder that exists:
+   - the task folder named;
+   - the folder of the plan or spec the work follows;
+   - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
+8. Read `challenge.md` back, then emit the filled report and its path on one line, with nothing else.
 
-## Test
+## Output
 
-- The report has a confidence percentage and the Correctness, Deal breakers, and Suggestions sections.
-- The Deal breakers section is non-empty only when confidence is below 75%.
-- A negative or uncertain trust answer produces a deal breaker and confidence below 75%.
+The filled report, emitted and kept in `challenge.md`.
+
+## Rules
+
+- Attack the work as an adversary would, never as its author.
+- Report only what changes a decision, and nothing found is a valid answer.
+- Keep the template's headings and order, and write `- None` in an empty section.
+- List under Holds only attacks the work survived, never a restated requirement.

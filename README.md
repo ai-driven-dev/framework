@@ -167,7 +167,7 @@ Briefs, Epics, Stories, specs, Spikes, Defects
 <a href="plugins/aidd-refine/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🪞 aidd-refine</h3>
-5 skills<br />
+5 skills · 3 hooks<br />
 Brainstorm, challenge, fact-check
 </a>
 </td>
