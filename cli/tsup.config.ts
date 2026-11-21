@@ -1,7 +1,9 @@
-import { copyFileSync } from "node:fs";
+import { copyFileSync, readFileSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "tsup";
+import { defineConfig, type Options } from "tsup";
+
+type Plugin = NonNullable<Options["esbuildPlugins"]>[number];
 
 /**
  * Where the build lands. `dist` normally; each e2e run passes its own directory under
@@ -36,6 +38,24 @@ function resolveOutDir(): string {
 
 const outDir = resolveOutDir();
 
+/**
+ * The binary reads one field of this package's manifest: `version`, in
+ * `src/shared/infrastructure/current-version-adapter.ts`. Importing the manifest would otherwise
+ * ship all of it, scripts and dev dependencies included. Limit: a new reader of another field
+ * gets `undefined` from the binary while the tests, which load the real file, still pass.
+ */
+const MANIFEST_PATH = resolve(PACKAGE_ROOT, "package.json");
+const versionOnlyManifest: Plugin = {
+  name: "version-only-manifest",
+  setup(build) {
+    build.onLoad({ filter: /package\.json$/ }, ({ path }) => {
+      if (path !== MANIFEST_PATH) return undefined;
+      const { version } = JSON.parse(readFileSync(path, "utf8"));
+      return { contents: JSON.stringify({ version }), loader: "json" };
+    });
+  },
+};
+
 export default defineConfig({
   entry: { cli: "src/cli.ts" },
   format: ["esm"],
@@ -55,6 +75,7 @@ export default defineConfig({
   splitting: false,
   shims: false,
   skipNodeModulesBundle: true,
+  esbuildPlugins: [versionOnlyManifest],
   esbuildOptions(options) {
     options.loader = {
       ...options.loader,
