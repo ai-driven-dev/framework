@@ -19,7 +19,6 @@ import { BuildMarketplaceForTool } from "../../contexts/installation/application
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
 import { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.js";
-import { TrackedSettingsFile } from "../../contexts/installation/application/sync/tracked-settings-file.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
@@ -168,12 +167,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       registerFrameworkMarketplace,
       userManifestRepo
     ),
-    new SyncToolSettingsFiles(
-      new TrackedSettingsFile(fs, logger),
-      buildMarketplaceForTool,
-      registrationRecordRules,
-      tools
-    ),
+    new SyncToolSettingsFiles(fs, logger, buildMarketplaceForTool, registrationRecordRules, tools),
     new ActivateNativeTools(
       new RegisterPluginWithHost(
         fs,

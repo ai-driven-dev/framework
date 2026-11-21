@@ -46,15 +46,16 @@ describe("the machine record is saved once any tool of the run changed it", () =
       repo
     );
 
-    await record.recordMachinePluginClaims(
+    await record.execute({
+      kind: "machine-claims",
       project,
-      new Map([
+      outcomes: new Map([
         [claude, outcomeOf(CLAIMED_REF)],
         [codex, outcomeOf(HELD_REF)],
       ]),
-      [],
-      "user"
-    );
+      marketplaces: [],
+      scope: "user",
+    });
 
     expect(repo.saveCount).toBe(1);
     expect(repo.getCurrent()?.getNativeRegistrations(claude)?.pluginClaims).toEqual([
