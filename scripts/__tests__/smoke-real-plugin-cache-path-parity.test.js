@@ -33,12 +33,12 @@ function smokeRealScript() {
 }
 
 describe("smoke-real.sh names the same cache path each profile declares", () => {
-  it("claude's literal path matches claude/profile.ts's own pluginCacheDir", () => {
-    const expected = pluginCacheDirSegments("claude/profile.ts");
+  it("claude's literal path matches claude/claude.profile.ts's own pluginCacheDir", () => {
+    const expected = pluginCacheDirSegments("claude/claude.profile.ts");
     assert.equal(expected, ".claude/plugins/cache");
     assert.ok(
       smokeRealScript().includes(expected),
-      `smoke-real.sh does not contain the literal path segment '${expected}' claude/profile.ts declares`
+      `smoke-real.sh does not contain the literal path segment '${expected}' claude/claude.profile.ts declares`
     );
   });
 

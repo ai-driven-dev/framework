@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude-agent.js";
+import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude-agent.model.js";
 
 describe("claudeAgentFrontmatter", () => {
   it("keeps Claude's own keys, in its order, and drops any other", () => {

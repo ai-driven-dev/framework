@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { rewritePluginRootToken } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
-import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { buildCopilotMarketplaceContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
@@ -116,7 +115,7 @@ describe("a hook that was installed", () => {
 const BUILT_BY: ReadonlyArray<
   [AiTool<WithSections<"layout">>, () => { pluginRootToken?: string | null }]
 > = [
-  [claude, buildClaudeContract],
+  [claude, () => present(claude.buildContracts.marketplace)()],
   [cursor, () => present(cursor.buildContracts.marketplace)()],
   [copilot, buildCopilotMarketplaceContract],
   [codex, () => buildCodexContract(TOML)],

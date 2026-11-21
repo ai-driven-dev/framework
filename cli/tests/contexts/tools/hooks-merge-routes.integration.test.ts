@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
-import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/profiles/claude/build.js";
+import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
@@ -126,7 +126,7 @@ function nestedSeed(dir: string, extra: Record<string, unknown> = {}): string {
 describe("a flat build merging a plugin into a shared file it already wrote to", () => {
   it("claude: .claude/settings.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".claude/hooks/";
-    const fs = await flatMerge(buildClaudeFlatContract(), {
+    const fs = await flatMerge(present(claude.buildContracts.flat)(), {
       [`${OUT}/.claude/settings.json`]: nestedSeed(dir, { model: "opus" }),
     });
     const file = fs.getFile(`${OUT}/.claude/settings.json`);

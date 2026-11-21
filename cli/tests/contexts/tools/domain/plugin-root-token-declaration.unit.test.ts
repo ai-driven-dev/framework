@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { rewritePluginRootToken } from "../../../../src/contexts/tools/contract/plugin-root-token.js";
-import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
+import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { registeredAiConfig } from "../../../shared/testing/catalog-of.builder.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
+import { present } from "../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 /** A hook whose command names a variable the host does not expand installs cleanly, runs on
@@ -12,10 +13,10 @@ import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 describe("the route that builds a marketplace bundle", () => {
   it("leaves a command alone for the tool whose variable is the one authors write", () => {
-    const claude = nativeOf(registeredAiConfig(TOOL.claude).plugins());
-    const authored = `node ${claude.rootToken()}/hooks/journal.cjs`;
+    const native = nativeOf(registeredAiConfig(TOOL.claude).plugins());
+    const authored = `node ${native.rootToken()}/hooks/journal.cjs`;
 
-    const token = buildClaudeContract().pluginRootToken;
+    const token = present(claude.buildContracts.marketplace)().pluginRootToken;
 
     expect(rewritePluginRootToken(authored, token ?? "")).toBe(authored);
   });

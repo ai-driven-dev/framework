@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import {
   expectClaudeStyleCatalog,
   pluginTreeShapeOf,

@@ -24,7 +24,7 @@
   "src/contexts/tools/domain/marketplace-catalog.ts": 3,
   "src/contexts/tools/domain/profile/define-tool.ts": 4,
   "src/contexts/tools/domain/profiles/antigravity/profile.ts": 1,
-  "src/contexts/tools/domain/profiles/claude/build.ts": 1,
+  "src/contexts/tools/domain/profiles/claude/claude-build.model.ts": 1,
   "src/contexts/tools/domain/profiles/codex/build.ts": 6,
   "src/contexts/tools/domain/profiles/copilot/profile.ts": 2,
   "src/contexts/tools/domain/profiles/cursor/cursor-build.model.ts": 1,

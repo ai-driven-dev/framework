@@ -2,8 +2,12 @@ import { join } from "node:path";
 import claudeSettings from "../../../../../../assets/configs/claude/settings.json" with {
   type: "json",
 };
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-claude.cjs";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
+import { declareHooks, ownNameEvents } from "../../formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../formats/hooks/routes.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -11,21 +15,36 @@ import { type NativeLayoutParams, nativeLayout } from "../../sections/layout-sec
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
-import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
-import { claudeAgentFrontmatter } from "./claude-agent.js";
-import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
-import { CLAUDE_HOOKS } from "./hooks.js";
+import { claudeAgentFrontmatter } from "./claude-agent.model.js";
+import { buildClaudeContract, buildClaudeFlatContract } from "./claude-build.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
-const DIRECTORY = CLAUDE_DIRECTORY;
+const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
 
 function commandsDir(phase: string): string {
   return `${DIRECTORY}commands/aidd/${phase}/`;
 }
 
-const hooksSupport = nativeHooksSupport(CLAUDE_HOOKS);
+const hooks = declareHooks(
+  { toolId: "claude", directory: DIRECTORY, adapter },
+  {
+    // Claude subscribes every event under its own name, SubagentStop included.
+    events: ownNameEvents(),
+    rootToken: SOURCE_PLUGIN_ROOT_TOKEN,
+    // Claude Code loads ./hooks/hooks.json by its own convention and rejects the plugin outright
+    // when a manifest names it too: "Duplicate hooks file detected". The hooks fired anyway, so
+    // the plugin read as failed while working.
+    manifestNamesHooks: false,
+    // `.claude/settings.json` holds every other setting beside `hooks`; Claude runs prompt,
+    // agent and http hooks too, so every group and item is kept as shipped.
+    file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } },
+    flat: { scriptsDir: ".claude/hooks/", sharedFile: ".claude/settings.json" },
+  }
+);
+
+const hooksSupport = nativeHooksSupport(hooks);
 
 // Claude registers its own marketplaces and enables its own plugins, both driven here.
 // At project scope the command rewrites `.claude/settings.json` after this CLI hashed
@@ -110,7 +129,11 @@ export const claude = defineAiTool({
       delivery: "install",
     },
   ],
-  buildContracts: { marketplace: buildClaudeContract, flat: buildClaudeFlatContract },
+  hooks,
+  buildContracts: {
+    marketplace: () => buildClaudeContract(hooks),
+    flat: () => buildClaudeFlatContract(hooks),
+  },
 
   capabilities: (bound) => ({
     agents: bound.agents({

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
-import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
+import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
 import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
@@ -197,7 +197,7 @@ async function sourceHookScripts(): Promise<Map<string, string>> {
 const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 
 const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
-  claude: CLAUDE_HOOKS,
+  claude: present(claude.hooks),
   codex: CODEX_HOOKS,
   copilot: COPILOT_HOOKS,
   cursor: present(cursor.hooks),

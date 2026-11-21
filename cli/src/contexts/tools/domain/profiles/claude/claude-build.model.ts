@@ -12,29 +12,33 @@ import {
 import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
+import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,
   synthesizeSharedManifest,
 } from "../../marketplace-catalog.js";
-import { claudeAgentFrontmatter } from "./claude-agent.js";
-import {
-  OUTPUT_CLAUDE_MANIFEST_RELATIVE,
-  OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
-} from "./claude-build-paths.js";
-import { CLAUDE_HOOKS } from "./hooks.js";
+import { claudeAgentFrontmatter } from "./claude-agent.model.js";
 
-export function buildClaudeContract(): ToolBuildContract {
+/** Build output paths, deliberately distinct from the source-side constants even where the
+ * literal values coincide: a change to either side must not collapse them. */
+const OUTPUT_CLAUDE_MANIFEST_RELATIVE = ".claude-plugin/plugin.json";
+const OUTPUT_CLAUDE_MARKETPLACE_RELATIVE = ".claude-plugin/marketplace.json";
+
+type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
+
+export function buildClaudeContract(hooks: HooksRouting): ToolBuildContract {
+  const namesHooks = hooks.manifestNamesHooks === true;
   const manifestRelative = OUTPUT_CLAUDE_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CLAUDE_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: CLAUDE_HOOKS.rootToken,
+    pluginRootToken: hooks.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeSharedManifest(source, presence, {
         agentsField: true,
-        hooksField: CLAUDE_HOOKS.manifestNamesHooks,
+        hooksField: namesHooks,
       }),
     manifestSchemaName: "plugin-manifest",
     artifacts: {
@@ -54,7 +58,7 @@ export function buildClaudeContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(CLAUDE_HOOKS),
+      hooks: pluginTreeHooksArtifact(hooks),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -109,7 +113,7 @@ function transformClaudeFlatAgent(content: string, plugin: string, outName: stri
   return serializeFrontmatter(claudeAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
 }
 
-export function buildClaudeFlatContract(): ToolBuildContract {
+export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -136,7 +140,7 @@ export function buildClaudeFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.mcp.json`,
       },
-      hooks: flatHooksArtifact(CLAUDE_HOOKS, { tool: "claude" }),
+      hooks: flatHooksArtifact(hooks, { tool: "claude" }),
       rules: { supported: false },
       commands: { supported: false },
     },
