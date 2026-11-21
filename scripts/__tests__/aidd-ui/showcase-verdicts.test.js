@@ -170,7 +170,7 @@ describe("the verdicts beside the state tabs", () => {
     assert.ok(!order.includes("start-screen"), `a settled screen: ${order}`);
   });
 
-  it("escapes the order as it escapes the records, so no id can close the script", () => {
+  it("escapes the order as it escapes the records, so no id can close the script", { skip: process.platform === "win32" && "no file name holds < on Windows" }, () => {
     const render = '<html><head></head><body><main data-state="default">x</main></body></html>';
     put(tmp, `${UI}/screens/odd.md`, record(["id: a<b", "kind: screen", "status: proposed", "version: 1", "states: [default]"], "# odd"));
     put(tmp, `${UI}/screens/a<b.html`, render);
