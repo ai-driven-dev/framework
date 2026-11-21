@@ -11,7 +11,7 @@ import { marketplaceMcp } from "./mcp.js";
 import { marketplaceSkills } from "./skills.js";
 
 /** The files one plugin builds into for a tool, each named from the output directory. The flat
- * layout is built here for agents, hooks and skills so far. */
+ * layout is built here for agents, hooks and skills; its MCP servers and hooks file are merged by the sink. */
 export function translateBuildLayout(
   canon: PluginDistribution,
   contract: ToolBuildContract,
