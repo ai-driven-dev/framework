@@ -73,13 +73,12 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 807 KB: 806.1 KB, the update, auth and translate commands and the update notice read slices of a
 // container; expected to shrink once createDeps is removed; 0.1% measured headroom.
 // 809 KB: 808.4 KB, setup, plugin, marketplace and sync read slices of a container; expected to
+// 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
 // shrink once createDeps is removed; 0.1% measured headroom.
 // 808 KB: 807.2 KB, createDeps and its module cache removed, every command wired from the
 // container; 0.1% measured headroom.
 // 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
-// 810 KB: 809.4 KB, the kind rollout splits the telemetry resolver from its run; 0.1% measured headroom.
-// 811 KB: 810.5 KB, the kind rollout splits telemetry reads by responsibility; 0.1% measured headroom.
-// 812 KB: 811.8 KB, the kind rollout merge of the small lane; 0.0% measured headroom.
+// 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

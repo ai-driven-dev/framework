@@ -116,7 +116,8 @@ function harness(given: Case = {}) {
   };
   const subject = new MainSessionModels(files, store, settings, locator);
   return {
-    subject,
+    apply: (hosts: readonly string[], chosen: ReadonlyMap<string, string>, dryRun = false) =>
+      subject.execute({ hosts, chosen, dryRun }),
     events,
     installs,
     removals,
@@ -132,7 +133,7 @@ describe("MainSessionModels", () => {
     it("plans the install from the file the host reads, the provider's values and the schema, then writes and records it", async () => {
       const h = harness({ files: { [A]: "current" } });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.installs).toStrictEqual([
         {
@@ -151,7 +152,7 @@ describe("MainSessionModels", () => {
     it("plans from no content when the settings file does not exist yet", async () => {
       const h = harness({ files: {} });
 
-      await h.subject.apply(["h"], new Map([["h", "p"]]));
+      await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.installs[0]?.current).toBeNull();
     });
@@ -160,7 +161,7 @@ describe("MainSessionModels", () => {
       const kept = record(A, "kept");
       const h = harness({ stored: { h: kept } });
 
-      await h.subject.apply(["h"], new Map([["h", "p"]]));
+      await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.installs[0]?.previous).toStrictEqual(kept);
       expect(h.removals).toStrictEqual([]);
@@ -169,7 +170,7 @@ describe("MainSessionModels", () => {
     it("leaves a host alone whose main session aidd does not point (no settings file)", async () => {
       const h = harness({ located: { h: { models: models(), path: undefined } } });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.checked).toStrictEqual([]);
       expect(outcome).toStrictEqual({ changed: [], skipped: [] });
@@ -178,7 +179,7 @@ describe("MainSessionModels", () => {
     it("leaves a host alone that answers no models", async () => {
       const h = harness({ located: { h: { models: null, path: A } } });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.checked).toStrictEqual([]);
       expect(outcome).toStrictEqual({ changed: [], skipped: [] });
@@ -191,7 +192,7 @@ describe("MainSessionModels", () => {
         install: new Error("no JSON object"),
       });
 
-      const outcome = await h.subject.apply(
+      const outcome = await h.apply(
         ["one", "two"],
         new Map([
           ["one", "p"],
@@ -216,7 +217,7 @@ describe("MainSessionModels", () => {
         located: { h: { models: null, path: undefined } },
       });
 
-      const outcome = await h.subject.apply(["h"], new Map());
+      const outcome = await h.apply(["h"], new Map());
 
       expect(outcome.changed).toStrictEqual([{ host: "h", path: A }]);
     });
@@ -224,7 +225,7 @@ describe("MainSessionModels", () => {
     it("deletes a file aidd created and nothing else holds", async () => {
       const h = harness({ stored: { h: record(A) }, files: { [A]: "x" }, removal: null });
 
-      const outcome = await h.subject.apply(["h"], new Map());
+      const outcome = await h.apply(["h"], new Map());
 
       expect(h.events).toContain(`delete ${A}`);
       expect(h.has(A)).toBe(false);
@@ -234,7 +235,7 @@ describe("MainSessionModels", () => {
     it("reports no change when the restore leaves the file as it is, and still forgets the record", async () => {
       const h = harness({ stored: { h: record(A) }, files: { [A]: "same" }, removal: "same" });
 
-      const outcome = await h.subject.apply(["h"], new Map());
+      const outcome = await h.apply(["h"], new Map());
 
       expect(outcome.changed).toStrictEqual([]);
       expect(h.events).not.toContain(`write ${A}`);
@@ -244,7 +245,7 @@ describe("MainSessionModels", () => {
     it("plans a removal from no content when the recorded file is gone", async () => {
       const h = harness({ stored: { h: record(A) }, files: {}, removal: null });
 
-      await h.subject.apply(["h"], new Map());
+      await h.apply(["h"], new Map());
 
       expect(h.removals[0]?.current).toBeNull();
     });
@@ -253,7 +254,7 @@ describe("MainSessionModels", () => {
       const kept = record(B);
       const h = harness({ stored: { h: kept }, files: { [B]: "x" }, removal: new Error("bad") });
 
-      const outcome = await h.subject.apply(["h"], new Map());
+      const outcome = await h.apply(["h"], new Map());
 
       expect(outcome.skipped).toStrictEqual([{ host: "h", path: B, reason: "bad" }]);
       expect(h.saved()).toStrictEqual({ h: kept });
@@ -269,7 +270,7 @@ describe("MainSessionModels", () => {
         removal: "old-restored",
       });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.removals).toStrictEqual([{ current: "old-file", recorded: old }]);
       expect(h.installs[0]?.current).toBe("new-file");
@@ -290,7 +291,7 @@ describe("MainSessionModels", () => {
         install: new Error("bad"),
       });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(outcome.skipped).toStrictEqual([{ host: "h", path: A, reason: "bad" }]);
       expect(outcome.changed).toStrictEqual([{ host: "h", path: B }]);
@@ -304,7 +305,7 @@ describe("MainSessionModels", () => {
         removal: new Error("bad"),
       });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]));
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(outcome.changed).toStrictEqual([]);
       expect(h.installs).toStrictEqual([]);
@@ -315,7 +316,7 @@ describe("MainSessionModels", () => {
     it("saves the record before it touches any settings file", async () => {
       const h = harness();
 
-      await h.subject.apply(["h"], new Map([["h", "p"]]));
+      await h.apply(["h"], new Map([["h", "p"]]));
 
       expect(h.events).toStrictEqual(["save", `write ${A}`]);
     });
@@ -326,36 +327,12 @@ describe("MainSessionModels", () => {
         files: { [A]: "new-file", [B]: "old-file" },
       });
 
-      const outcome = await h.subject.apply(["h"], new Map([["h", "p"]]), true);
+      const outcome = await h.apply(["h"], new Map([["h", "p"]]), true);
 
       expect(outcome.changed).toStrictEqual([
         { host: "h", path: B },
         { host: "h", path: A },
       ]);
-      expect(h.events).toStrictEqual([]);
-    });
-
-    it("restores every recorded host on restoreAll", async () => {
-      const h = harness({
-        stored: { one: record(A), two: record(B) },
-        files: { [A]: "one-file", [B]: "two-file" },
-        located: { one: { models: models(), path: A }, two: { models: models(), path: B } },
-      });
-
-      const outcome = await h.subject.restoreAll(false);
-
-      expect(outcome.changed).toStrictEqual([
-        { host: "one", path: A },
-        { host: "two", path: B },
-      ]);
-      expect(h.saved()).toStrictEqual({});
-    });
-
-    it("forwards a dry run through restoreAll", async () => {
-      const h = harness({ stored: { h: record(A) } });
-
-      await h.subject.restoreAll(true);
-
       expect(h.events).toStrictEqual([]);
     });
   });

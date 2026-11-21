@@ -20,6 +20,13 @@ export interface MainSessionOutcome {
   readonly skipped: readonly MainSessionSkip[];
 }
 
+export interface MainSessionModelsRequest {
+  readonly hosts: readonly string[];
+  readonly chosen: ReadonlyMap<string, string>;
+  /** Says what it would change and changes nothing. */
+  readonly dryRun?: boolean;
+}
+
 interface FileChange extends MainSessionChange {
   readonly content: string | null;
 }
@@ -40,11 +47,11 @@ export class MainSessionModels {
   /** Points each host's main session at its chosen provider, or restores what it replaced once
    * none is chosen. A settings file it cannot safely rewrite is skipped, never half-written.
    * `dryRun` says what it would change and changes nothing. */
-  async apply(
-    hosts: readonly string[],
-    chosen: ReadonlyMap<string, string>,
-    dryRun = false
-  ): Promise<MainSessionOutcome> {
+  async execute({
+    hosts,
+    chosen,
+    dryRun = false,
+  }: MainSessionModelsRequest): Promise<MainSessionOutcome> {
     const mainModels = await this.store.loadMainModels();
     const changes: FileChange[] = [];
     const skipped: MainSessionSkip[] = [];
@@ -89,12 +96,6 @@ export class MainSessionModels {
       else await this.fs.writeFile(path, content);
     }
     return outcome;
-  }
-
-  /** Restores what every main session held before its model was set. */
-  async restoreAll(dryRun: boolean): Promise<MainSessionOutcome> {
-    const hosts = Object.keys(await this.store.loadMainModels());
-    return this.apply(hosts, new Map(), dryRun);
   }
 
   private async readIfAny(path: string): Promise<string | null> {
