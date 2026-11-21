@@ -90,7 +90,6 @@
   "tests/contexts/translate/infrastructure/claude-marketplace-manifest.integration.test.ts": 1,
   "tests/contexts/translate/infrastructure/codex-plugin-manifest.integration.test.ts": 1,
   "tests/e2e/agent-models.e2e.test.ts": 1,
-  "tests/e2e/clean-shared-ref-codex.e2e.test.ts": 1,
   "tests/e2e/sync-force.e2e.test.ts": 1,
   "tests/e2e/telemetry-journey.e2e.test.ts": 5,
   "tests/e2e/telemetry-report-figures.e2e.test.ts": 1,
