@@ -61,6 +61,7 @@ export const codex = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Codex",
+  recommendedFor: (project) => project?.stack === "python" && !project.isMonorepo,
   signalDir: `${DIRECTORY}commands`,
   configAssets: [
     {

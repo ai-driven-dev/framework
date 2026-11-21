@@ -95,6 +95,7 @@ export interface IdeToolSpec<C extends ProfileSections> {
   readonly configAssets?: readonly ShippedConfig[];
   readonly directory: string;
   readonly signalDir: string | null;
+  readonly recommendedFor?: IdeToolConfig["recommendedFor"];
   readonly capabilities: () => C;
 }
 

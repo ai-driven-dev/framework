@@ -100,6 +100,7 @@ export const claude = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Claude Code",
+  recommendedFor: () => true,
   signalDir: ".claude/commands",
   configAssets: [
     {

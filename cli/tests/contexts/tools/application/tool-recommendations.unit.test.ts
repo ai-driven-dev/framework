@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ProjectContext } from "../../../src/contexts/installation/contract/project-context.js";
-import {
-  recommendAiTools,
-  recommendIdeTools,
-} from "../../../src/orchestration/setup/tool-recommendations.js";
+import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
+import { catalogOf } from "../../../shared/testing/catalog-of.builder.js";
+
+const recommendAiTools = (project?: ProjectContext) => catalogOf().recommended("ai", project);
+const recommendIdeTools = (project?: ProjectContext) => catalogOf().recommended("ide", project);
 
 function ctx(over: Partial<ConstructorParameters<typeof ProjectContext>[0]> = {}) {
   return new ProjectContext({
@@ -33,6 +33,13 @@ describe("tool recommendations", () => {
 
     it("recommends claude + copilot for monorepo", () => {
       expect(recommendAiTools(ctx({ isMonorepo: true }))).toEqual(["claude", "copilot"]);
+    });
+
+    it("recommends claude + copilot, not codex, for a python monorepo", () => {
+      expect(recommendAiTools(ctx({ stack: "python", isMonorepo: true }))).toEqual([
+        "claude",
+        "copilot",
+      ]);
     });
 
     it("recommends claude + codex for python", () => {

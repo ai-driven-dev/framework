@@ -188,7 +188,6 @@
     "one class per file :: src/shared/domain/file.ts"
   ],
   "toolNames": [
-    "src/orchestration/setup/tool-recommendations.ts: 4",
     "src/contexts/tools/domain/profile/foreign-suffix-filter.ts: 7",
     "src/contexts/telemetry/contract/usage-record.ts: 1"
   ],

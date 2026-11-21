@@ -263,6 +263,8 @@ export const copilot = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "GitHub Copilot",
+  recommendedFor: (project) =>
+    project !== undefined && (project.isMonorepo || project.stack === "typescript"),
   signalDir: ".github/prompts",
   configAssets: [
     {

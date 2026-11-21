@@ -2,7 +2,6 @@ import type { ProjectContext } from "../../../contexts/installation/contract/pro
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { Prompter } from "../../../shared/ports/prompter.js";
-import { recommendAiTools, recommendIdeTools } from "../tool-recommendations.js";
 
 export interface ChooseToolsCommand {
   interactive: boolean;
@@ -30,8 +29,8 @@ export class ChooseTools {
   }
 
   private async promptTools(context?: ProjectContext): Promise<ChooseToolsResult> {
-    const aiRecs = recommendAiTools(context);
-    const ideRecs = recommendIdeTools(context);
+    const aiRecs = this.tools.recommended("ai", context);
+    const ideRecs = this.tools.recommended("ide", context);
     const aiTools = await this.prompter.checkbox<AiToolId>("Select AI tools to install:", [
       ...this.tools.idsInCanonicalOrder("ai").map((id) => ({
         name: aiRecs.includes(id) ? `${id} (recommended)` : id,
