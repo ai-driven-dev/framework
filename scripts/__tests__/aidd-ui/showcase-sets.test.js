@@ -85,8 +85,8 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual(columns.map((column) => column.name), ["a", "b"]);
       assert.match(columns[0].html, /<h2>A<\/h2>/);
       assert.match(columns[0].html, /Intent of a/);
-      assert.match(columns[1].html, /<th>Tone<\/th><td><button[^>]*>bold<\/button><\/td>/);
-      assert.match(columns[1].html, /<th>Density <small class="same-tag">same<\/small><\/th><td><button[^>]*>roomy<\/button><\/td>/);
+      assert.match(columns[1].html, /<th>Tone<\/th><td><button[^>]*>bold<span class="take-cta">Take<\/span><\/button><\/td>/);
+      assert.match(columns[1].html, /<th>Density <small class="same-tag">same<\/small><\/th><td><span class="value">roomy<\/span><\/td>/);
     });
 
     it("shows each html of a variant in one mobile frame of 390, with the tokens inline", () => {
@@ -591,6 +591,36 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual([LABELS.en.identical, LABELS.fr.identical], ["same", "identique"]);
     });
 
+    it("offers no take button on a row identical in every variant, only its value", () => {
+      const html = pagesOf([two(["calm", "roomy"], ["bold", " Roomy "])])["_set-layout.html"];
+      for (const column of columnsOf(html)) {
+        const [tone, density] = [...column.html.matchAll(/<tr[^>]*>[\s\S]*?<\/tr>/g)].map((match) => match[0]);
+        assert.match(tone, /class="take"/);
+        assert.doesNotMatch(density, /<button/);
+        assert.match(density, /<span class="value">/);
+      }
+    });
+
+    it("says on each take button, in the language, what a click does", () => {
+      for (const lang of ["en", "fr"]) {
+        const [column] = columnsOf(pagesOf([two(["calm", "roomy"], ["bold", "tight"])], { lang })["_set-layout.html"]);
+        const takes = [...column.html.matchAll(/<button type="button" class="take"[^>]*>[\s\S]*?<\/button>/g)].map((match) => match[0]);
+        assert.equal(takes.length, 2);
+        for (const take of takes) assert.match(take, new RegExp(`<span class="take-cta">${LABELS[lang].take}</span></button>$`));
+      }
+      assert.deepEqual([LABELS.en.take, LABELS.fr.take], ["Take", "Prendre"]);
+    });
+
+    it("shows no caption over a frame, and no file title that only repeats the title of the page", () => {
+      const set = SET();
+      for (const each of set.variants) each.files = [file("layout.html", "<html><head></head><body>L</body></html>"), file("preview.html", "<html><head></head><body>P</body></html>")];
+      const html = pagesOf([set])["_set-layout.html"];
+      assert.doesNotMatch(html, /<figcaption/);
+      const [column] = columnsOf(html);
+      assert.doesNotMatch(column.html, /<h3>Layout<\/h3>/);
+      assert.match(column.html, /<h3>Preview<\/h3>/);
+    });
+
     it("compares within the round of the column, not across rounds", () => {
       const set = two(["calm", "roomy"], ["bold", "tight"]);
       set.variants.push({ ...variant("c", "calm", []), round: 2, axes: [["Tone", "calm"], ["Density", "roomy"]] }, { ...variant("d", "calm", []), round: 2, axes: [["Tone", "calm"], ["Density", "wide"]] });
@@ -637,7 +667,7 @@ describe("aidd-ui showcase sets", () => {
     });
 
     it("leaves a cell without colour as escaped text", () => {
-      assert.deepEqual(cellsOf([["Tone", "<b>calm</b> #12345"]]), ["&lt;b&gt;calm&lt;/b&gt; #12345"]);
+      assert.deepEqual(cellsOf([["Tone", "<b>calm</b> #12345"]]), ["&lt;b&gt;calm&lt;/b&gt; #12345<span class=\"take-cta\">Take</span>"]);
     });
   });
 
@@ -665,7 +695,7 @@ describe("aidd-ui showcase sets", () => {
     it("shows a type cell at the browser sizes when there is no size cell, and a cell of text as text", () => {
       const [type, text] = rowsOf([["Lettres", "sans-serif"], ["Ton", "calme"]]);
       assert.match(type, /<span class="specimen" style="font-family: system-ui, sans-serif"><b>Heading<\/b><span>/);
-      assert.match(text, />calme<\/button>$/);
+      assert.match(text, />calme<span class="take-cta">Take<\/span><\/button>$/);
       assert.doesNotMatch(text, /specimen/);
     });
 
@@ -967,7 +997,7 @@ describe("aidd-ui showcase sets", () => {
       const html = pagesOf([SET()])["_set-layout.html"];
       assert.match(html, /<div class="variants"[^>]* data-set="layout" data-fingerprint="f1"/);
       const [a] = columnsOf(html);
-      assert.match(a.html, /<th>Tone<\/th><td><button type="button" class="take" data-axis="Tone" data-variant="a" aria-pressed="false">calm<\/button><\/td>/);
+      assert.match(a.html, /<th>Tone<\/th><td><button type="button" class="take" data-axis="Tone" data-variant="a" aria-pressed="false">calm<span class="take-cta">Take<\/span><\/button><\/td>/);
     });
 
     it("names the counts of a set in the drawer, and shows the picks only once one is made", () => {

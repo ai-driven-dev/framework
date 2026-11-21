@@ -19,6 +19,7 @@ const latestOf = (variants) => {
 /** The file a set's page is written to. */
 const setFileOf = (id) => `${SET_PREFIX}${id}.html`;
 
+// Limit: only a lone `d` or `l` before a vowel is elided; slugs carry no apostrophe, so no other contraction is recovered.
 const ELISION = /\b([dl]) (?=[aeiouyh\u00e0\u00e2\u00e9\u00e8\u00ea\u00ee\u00f4\u00fb])/gi;
 
 /** A slug as a title a person reads: its hyphens as spaces, a lone `d` or `l` before a vowel elided, its first letter capital. */
@@ -173,16 +174,16 @@ function dressedOf(html, { background, text, accent, font, sizes }) {
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
 
-/** A frame of a document at a size, scaled by the script to the width of its column. A frame with no label has no caption. */
-const frameOf = ({ variant, title, doc, label, size: [size, width, height] }) => `<figure class="frame">${label ? `<figcaption>${escaped(label)}</figcaption>` : ""}<div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${titleOf(variant.name)} ${title}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
+/** A frame of a document at a size, scaled by the script to the width of its column. */
+const frameOf = ({ variant, title, doc, size: [size, width, height] }) => `<figure class="frame"><div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${titleOf(variant.name)} ${title}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
 
 /** A render in one mobile frame, whole: the script of the bar above the columns picks its state and its size. It names the
  * states the render holds, and keeps a note, hidden until the chosen state is one it lacks. */
-function framesOf({ variant, file, tokens, labels }) {
+function framesOf({ variant, file, tokens, labels, page }) {
   const doc = inlined(file.text, tokens);
   const named = statesOf(file.text);
   const own = named.length ? ` data-states="${escaped(named.join(" "))}"` : "";
-  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}><h3>${escaped(fileTitleOf(variant, file))}</h3>${frameOf({ variant, title: fileTitleOf(variant, file), doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
+  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}>${fileTitleOf(variant, file) === page ? "" : `<h3>${escaped(fileTitleOf(variant, file))}</h3>`}${frameOf({ variant, title: fileTitleOf(variant, file), doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
 }
 
 const DESKTOP = SIZES.find(([size]) => size === "desktop");
@@ -193,11 +194,11 @@ const MOBILE = SIZES.find(([size]) => size === "mobile");
 function screenOf({ variant, docs, tokens, labels }) {
   const [first] = docs;
   const kept = docs.map((each) => `<template class="screen-doc" data-path="${escaped(each.path)}" data-doc="${escaped(inlined(each.text, tokens))}"></template>`).join("");
-  return `<div class="file screen" data-path="${escaped(first.path)}">${frameOf({ variant, title: fileTitleOf(variant, first), doc: inlined(first.text, tokens), label: labels.mobile, size: MOBILE })}${kept}</div>`;
+  return `<div class="file screen" data-path="${escaped(first.path)}">${frameOf({ variant, title: fileTitleOf(variant, first), doc: inlined(first.text, tokens), size: MOBILE })}${kept}</div>`;
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */
-function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, siblings, voting }) {
+function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, siblings, voting, page }) {
   const look = lookOf(variant);
   const docs = look && wireframes.length ? wireframes.map((wireframe) => ({ path: wireframe.path, text: dressedOf(wireframe.text, look) })) : null;
   const screens = docs ? [screenOf({ variant, docs, tokens, labels })] : null;
@@ -205,8 +206,8 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: titleOf(parent.name) }))}"` : "");
   const same = (axis) => siblings.length > 1 && siblings.every((each) => valueOf(each.axes.find(([name]) => name === axis)?.[1]) === valueOf(variant.axes.find(([name]) => name === axis)?.[1]));
   const sampled = { done: false };
-  const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value, { variant, labels, sampled })}</button></td></tr>`).join("");
-  const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels }));
+  const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}>${same(axis) ? `<span class="value">${cellOf(value, { variant, labels, sampled })}</span>` : `<button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value, { variant, labels, sampled })}<span class="take-cta">${escaped(labels.take)}</span></button>`}</td></tr>`).join("");
+  const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels, page }));
   const documents = variant.files.filter((file) => MARKDOWN_FILE.test(file.path)).flatMap((file) => {
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3>${escaped(fileTitleOf(variant, file))}</h3>${documentOf(text)}</div>`] : [];
@@ -252,7 +253,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
     const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}">${escaped(fileTitleOf(own.find((variant) => variant.files.some((file) => file.path === path)), { path }))} ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
-    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, voting: round === rounds.at(-1), parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
+    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, voting: round === rounds.at(-1), page: set.title ?? titleOf(set.id), parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
     const body = [same.join("\n"), compareOf({ variants: own.filter(shown), labels }), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
@@ -275,9 +276,12 @@ main.wide { padding-bottom: 72px; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
 .round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
 .axes td[data-changed] { box-shadow: inset 3px 0 0 var(--revise); }
-.take { display: block; inline-size: 100%; height: auto; line-height: 1.4; padding: 2px var(--s2); border: 1px solid transparent; border-radius: var(--r1); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.take:hover { border-color: var(--line-strong); }
-.take[aria-pressed="true"] { border-color: var(--ok); background: var(--surface); }
+.take { display: block; inline-size: 100%; height: auto; line-height: 1.4; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r1); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.take:hover { border-color: var(--accent); }
+.take-cta { display: block; margin-top: 2px; font-size: var(--t-xs); font-weight: 600; text-align: right; color: var(--accent-text); }
+.take[aria-pressed="true"] { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
+.take[aria-pressed="true"] .take-cta::before { content: "\\2713 "; color: var(--ok); }
+.axes .value { display: block; padding: var(--s1) var(--s2); color: var(--muted); }
 .choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .choice { border-bottom: 1px solid var(--line); }
 .choice summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: 13px; font-weight: 600; }
@@ -318,7 +322,6 @@ main.wide { padding-bottom: 72px; }
 .compare .tab[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
 .no-state { margin: 0; padding: var(--s5) var(--s3); border: 1px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); font-size: var(--t-sm); text-align: center; }
 .frame { margin: 0; display: flex; flex-direction: column; gap: var(--s1); }
-.frame figcaption { font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); }
 .fit { position: relative; overflow: hidden; margin-inline: auto; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
 .fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
 @media (max-width: 900px) { .variants { grid-template-columns: minmax(0, 1fr); } }

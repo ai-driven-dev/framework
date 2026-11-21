@@ -4,7 +4,7 @@
 // handed back as one copy.
 const path = require("node:path");
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, BREAKPOINTS_SECTION, breakpointRows, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, reviewStatesOf, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
+const { placed, fm, BREAKPOINTS_SECTION, breakpointRows, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, reviewStatesOf, REVIEW_KIND, SYSTEM_ID, isElement } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -60,6 +60,7 @@ const LABELS = {
     specimenHeading: "Heading",
     specimenBody: "A line of text to judge the letters.",
     identical: "same",
+    take: "Take",
     size: "Size",
     noState: "This render has no such state.",
     large: "View large",
@@ -96,6 +97,7 @@ const LABELS = {
     close: "Close",
     nothing: "Nothing to review.",
     overviewNext: "{count} to review, in {steps}.",
+    overviewAgree: "{count} awaiting your agreement, in {steps}.",
     overviewProposed: "Nothing to review here. {count} awaiting your agreement, in {steps}. Agree with the assistant in the conversation.",
     start: "Start the review",
     toReviewMark: "To review",
@@ -177,6 +179,7 @@ const LABELS = {
     specimenHeading: "Titre",
     specimenBody: "Une ligne de texte pour juger les lettres.",
     identical: "identique",
+    take: "Prendre",
     size: "Taille",
     noState: "Ce rendu n'a pas cet état.",
     large: "Voir en grand",
@@ -213,6 +216,7 @@ const LABELS = {
     close: "Fermer",
     nothing: "Rien à relire.",
     overviewNext: "{count} à relire, dans {steps}.",
+    overviewAgree: "{count} en attente de votre accord, dans {steps}.",
     overviewProposed: "Rien à relire ici. {count} en attente de votre accord, dans {steps}. À valider avec l'assistant dans la conversation.",
     start: "Commencer la revue",
     toReviewMark: "À relire",
@@ -334,6 +338,7 @@ nav .stepno { position: absolute; left: 0; inline-size: 20px; block-size: 20px; 
 nav .step-name { flex: 1; }
 nav summary a.step-name { padding: 0; font-weight: 600; color: inherit; }
 nav .step-mark { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+nav .step-mark.agree { color: var(--faint); font-size: 0.6rem; }
 nav h2 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s5) 0 var(--s1); padding-left: var(--s5); }
 nav h3 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s3) 0 var(--s1); padding-left: var(--s5); }
 nav ul, .links ul, .appears ul, .drawer ol { list-style: none; margin: 0; padding: 0; }
@@ -470,6 +475,7 @@ textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--acc
 .rows li a { flex: 1; min-width: 0; }
 .ovcards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s4); }
 .ovcards > li { display: block; min-width: 0; }
+.ovcards.comps { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: var(--s3); }
 .ovcards.journeys { grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); }
 .ov-step, .overview { min-width: 0; }
 .ovcard { display: flex; flex-direction: column; gap: var(--s2); block-size: 100%; min-width: 0; padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r2); background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 120ms; }
@@ -482,6 +488,7 @@ textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--acc
 .mark.rework { background: var(--sunken); color: var(--text); }
 .thumb { position: relative; display: block; flex: none; overflow: hidden; margin-inline: auto; border: 1px solid var(--line); border-radius: var(--r2); background: #fbfbfa; }
 .thumb.s { --k: 0.22; }
+.thumb.m { --k: 0.3; }
 .thumb.l { --k: 0.5; }
 .thumb { inline-size: calc(390px * var(--k)); block-size: calc(520px * var(--k)); }
 .thumb iframe { position: absolute; top: 0; left: 0; inline-size: 390px; block-size: 520px; border: 0; transform: scale(var(--k)); transform-origin: 0 0; pointer-events: none; }
@@ -549,6 +556,8 @@ body[data-drawer="open"] .scrim { display: block; position: fixed; inset: 0; z-i
 .agreeing ul { margin: 0 0 var(--s2); padding-left: var(--s4); }
 .agreeing .note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .item { border-bottom: 1px solid var(--line); }
+.entry .item + .item { margin-inline-start: var(--s4); border-top: 1px solid var(--line); }
+.entry .item + .item summary { font-weight: 500; color: var(--muted); }
 .item summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: var(--t-md); font-weight: 600; list-style: none; }
 .item summary::-webkit-details-marker { display: none; }
 .item summary::before { content: ""; flex: none; inline-size: 6px; block-size: 6px; border: solid var(--faint); border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); transition: transform 120ms; }
@@ -572,6 +581,7 @@ textarea.out { width: 100%; min-height: 8rem; font: var(--t-sm) var(--mono); bor
 @container (max-width: 527px) { .board .card { grid-template-columns: minmax(0, 1fr); } .board .mini, .board .screen, .board .action { grid-column: 1; grid-row: auto; } .board .card:not(:first-child)::before { left: 12px; } }
 ${rowBoards()}
 @media (max-width: 768px) {
+  .tabs { padding-right: var(--s6); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
   .shell { display: block; }
   .shell > nav { position: fixed; inset: 0 0 auto 0; z-index: 40; block-size: 56px; flex-direction: row; align-items: center; gap: var(--s3); padding: 0 var(--s4); border-right: 0; border-bottom: 1px solid var(--line); }
   .nav-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex: 1; min-width: 0; }
@@ -1115,7 +1125,9 @@ function unconfirm() {
   stepButtons.forEach((button, at) => {
     delete button.dataset.asking;
     button.textContent = button.dataset.label;
-    if (stepCancels[at]) stepCancels[at].hidden = true;
+    if (!stepCancels[at]) return;
+    if (document.activeElement === stepCancels[at]) button.focus();
+    stepCancels[at].hidden = true;
   });
   return asked.length > 0;
 }
@@ -1228,10 +1240,10 @@ function hereOf(held, records, sets, current) {
 /** The count of what awaits review, as the button and the drawer write it: the page script rewrites it as verdicts are given. */
 const pendingOf = (labels, count) => `<span class="tally pending" data-template="${escaped(labels.toReview)}">${escaped(filled(labels.toReview, { count }))}</span>`;
 
-/** What a step still asks of the person: what the drawer reviews and the records it cannot review that are still proposed. A step with none is done. */
-const leftOf = (each) => each.count;
+/** A record as a line: its title linking its page, then whatever follows it on the line. */
+const recordLine = (id, title, after = "") => `<li data-id="${escaped(id)}"><a href="${escaped(id)}.html">${escaped(title)}</a>${after}</li>`;
 
-/** What a step still asks, in words: what the drawer reviews first, else the records it cannot review, which are proposed, not to review. */
+/** What a step still asks, in words: the records to review, else the records awaiting agreement. */
 const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { count: each.count }) : filled(labels.proposedCount, { count: each.count }));
 
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
@@ -1286,14 +1298,14 @@ function screenGroupsOf(records, journeys) {
 }
 
 /** The ids of the records to review, in the order the sidebar lists them: step by step, a step's records as it lists them,
- * the screens by journey. A wireframe a screen dresses is left out: it is reviewed through that screen. */
-function reviewOrderOf(project, held, journeys) {
+ * the screens by journey. Only what a step counts is in it: a wireframe a screen dresses is reviewed through that screen. */
+function reviewOrderOf(held, journeys) {
+  const counted = new Set(held.flatMap((each) => each.counted).map((record) => fm(record).id));
   const ordered = ({ step, records: own }) => {
     if (step === "screens") return screenGroupsOf(own, journeys).flatMap((group) => group.records.filter((record) => !group.sketches.has(fm(record).id)));
     return [...own].sort(step === "components" ? byCategory : byRecordId);
   };
-  const dressed = new Set(held.flatMap((each) => [...each.dressedBy.keys()]));
-  return held.flatMap(ordered).filter((record) => reviewable(project, record) && !dressed.has(fm(record).id)).map((record) => fm(record).id);
+  return held.flatMap(ordered).map((record) => fm(record).id).filter((id) => counted.has(id));
 }
 
 /** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
@@ -1321,15 +1333,16 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   const here = hereOf(held, records, sets, current);
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
-    const left = leftOf(each);
-    const mark = left ? each.count : each.records.length || each.sets.length ? "\u2713" : "\u2014";
+    const left = each.count;
+    const agree = left && !each.todo;
+    const mark = agree ? "\u25CF" : left ? each.count : each.records.length || each.sets.length ? "\u2713" : "\u2014";
     const markName = left ? leftWordOf(labels, each) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
     const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
     const name = alone
       ? `<a class="step-name" href="${escaped(fm(alone).id)}.html"${fm(alone).id === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
       : `<span class="step-name">${labels.stepNames[each.step]}</span>`;
     const body = alone ? subNavigationOf(fm(alone).id, anchors.get(fm(alone).id) ?? []) : bodyOf(each) + setsOf(each.sets);
-    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${body}</details></li>`;
+    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark${agree ? " agree" : ""}" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${body}</details></li>`;
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false"><span class="label">${labels.myReview}</span>${pendingOf(labels, total)}</button></div>`;
   const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
@@ -1439,7 +1452,7 @@ const GREY_BOX = `
 :root { color-scheme: light; background: #fbfbfa; }
 body { margin: 0; padding: 24px 28px 28px; font: 14px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #45453f; background: #fbfbfa; }
 [data-zone] { position: relative; box-sizing: border-box; min-height: 48px; margin: 0 0 12px; padding: 24px 16px 14px; border: 1px solid #e7e7e2; border-radius: 10px; background: #ffffff; }
-[data-zone]::before { content: attr(data-zone); position: absolute; top: 6px; left: 12px; font: 500 10px/1 system-ui, sans-serif; letter-spacing: 0.02em; color: #b4b4ad; }
+[data-zone]::before { content: attr(data-zone-label); position: absolute; top: 6px; left: 12px; font: 500 10px/1 system-ui, sans-serif; letter-spacing: 0.02em; color: #b4b4ad; }
 [data-zone]:empty { background: repeating-linear-gradient(-45deg, #ffffff 0 7px, #f3f3f0 7px 8px); }
 h1, h2, h3, h4 { margin: 0 0 8px; color: #2b2b28; line-height: 1.25; font-weight: 650; }
 h1 { font-size: 22px; } h2 { font-size: 16px; } h3, h4 { font-size: 14px; }
@@ -1467,11 +1480,14 @@ hr { border: 0; border-top: 1px solid #e7e7e2; margin: 12px 0; }
 small { color: #8a8a83; }
 code { font: 12px ui-monospace, Menlo, monospace; background: #f0f0ec; border-radius: 4px; padding: 1px 4px; }`;
 
+/** Each zone of a sketch carries the name it shows: the label its element declares, else its slug as words. */
+const labelled = (doc, sketch) => (sketch ? doc.replace(/<[a-z][^<>]*? data-zone="([^"]*)"[^<>]*>/gi, (tag, zone) => tag.replace(/>$/, ` data-zone-label="${tag.match(/ data-label="([^"]*)"/)?.[1] ?? escaped(variants.titleOf(zone))}">`)) : doc);
+
 /** The document of one state of a render: the tokens inline, every other state hidden with the caption standing right before it. A render without `</head>` keeps every state visible in each frame: a known limit. */
 function stateDocument(render, tokens, state, sketch) {
   const other = `[data-state]:not([data-state=${JSON.stringify(state)}])`;
   const hide = `<style>${other} { display: none !important; }:not([data-state]):not(:has([data-state])):has(+ ${other}) { display: none !important; }${sketch ? GREY_BOX : ""}</style>`;
-  const doc = inlined(render, tokens);
+  const doc = labelled(inlined(render, tokens), sketch);
   return doc.replace(/<\/head>/i, () => `${hide}</head>`);
 }
 
@@ -1538,7 +1554,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
   return [
     `<section class="review" data-record="${escaped(fm(record).id)}" data-version="${escaped(String(fm(record).version))}">`,
     `<div class="bar-top"><h2>${labels.states}</h2></div>`,
-    toolbarOf(system, labels),
+    fm(record).kind === "wireframe" ? "" : toolbarOf(system, labels), // a wireframe holds no style for a theme to change
     widthOf(system, labels),
     tabsOf(ordered, labels),
     ...ordered.map(({ state, verdict }, at) => stateOf({ record, title: titleOf(project, record, labels), state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
@@ -1581,14 +1597,15 @@ function drawerOf({ project, held, here, rows, labels, current, order }) {
     return `<details class="choice" data-set="${escaped(set.id)}" data-title="${escaped(set.title)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.title)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
   };
   const choices = (each) => (each.open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${each.open.map(choice).join("")}</section>` : "");
-  const agreeing = (each) => (each.todo ? "" : `<section class="agreeing"><ul>${each.listed.map((record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`).join("")}</ul><p class="note">${labels.agreeInChat}</p></section>`);
+  const agreeing = (each) => (each.todo ? "" : `<section class="agreeing"><ul>${each.listed.map((record) => recordLine(fm(record).id, titleOf(project, record, labels))).join("")}</ul><p class="note">${labels.agreeInChat}</p></section>`);
   const ok = (each) => (each.awaiting.length ? `<button type="button" class="step-ok" data-step="${each.step}" data-label="${escaped(labels.allOk)}" data-confirm="${escaped(labels.confirmAll)}" data-confirm-one="${escaped(labels.confirmAllOne)}">${labels.allOk}</button><button type="button" class="step-cancel" data-step="${each.step}" hidden>${labels.cancel}</button>` : "");
-  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.count})</span>${ok(each)}</summary>${choices(each)}${each.awaiting.map(item).join("\n")}${agreeing(each)}</details>`;
+  const entry = (each, record) => `<div class="entry">${[record, ...each.awaiting.filter((other) => each.dressedBy.get(fm(other).id) === fm(record).id)].map(item).join("")}</div>`;
+  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.count})</span>${ok(each)}</summary>${choices(each)}${each.counted.map((record) => entry(each, record)).join("\n")}${agreeing(each)}</details>`;
   const groups = held.filter((each) => each.count).map(group).join("\n");
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
     '<div class="scrim" id="scrim"></div>',
-    `<script type="application/json" id="review-order">${JSON.stringify(order)}</script>`,
+    `<script type="application/json" id="review-order">${JSON.stringify(order).replaceAll("<", "\\u003c")}</script>`,
     `<script type="application/json" id="review-records">${JSON.stringify(known).replaceAll("<", "\\u003c")}</script>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
@@ -1680,8 +1697,8 @@ function paletteOf(project, system, tokens) {
   return (palette.length ? palette : roles).map((entry) => values.get(entry.name)).filter(Boolean).slice(0, PALETTE_SHOWN);
 }
 
-/** The first thing to open of a step: the first record awaiting review, else the first still proposed, else its first record, else its first set. */
-const firstOf = (each) => each.awaiting[0] ?? each.proposed[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
+/** The first thing to open of a step: the first record the step counts, else the first still proposed, else its first record, else its first set. */
+const firstOf = (each) => each.counted[0] ?? each.proposed[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
 const hrefOf = (each) => {
   const record = firstOf(each);
   if (record) return `${fm(record).id}.html`;
@@ -1691,7 +1708,7 @@ const hrefOf = (each) => {
 /** The five steps as a stepper in order, each a link to the first thing to open, with its state in words. */
 function stepperOf(held, labels) {
   const item = (each, at) => {
-    const left = leftOf(each);
+    const left = each.count;
     const state = left ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
     const word = left ? leftWordOf(labels, each) : state === "done" ? labels.stepDone : labels.stepEmpty;
     const href = hrefOf(each);
@@ -1705,12 +1722,11 @@ function stepperOf(held, labels) {
 function reviewLineOf(held, labels) {
   const waiting = held.filter((each) => each.todo);
   const proposed = held.filter((each) => each.proposed.length);
-  if (!waiting.length && proposed.length) {
-    const text = filled(labels.overviewProposed, { count: proposed.reduce((sum, each) => sum + each.proposed.length, 0), steps: proposed.map((each) => labels.stepNames[each.step]).join(", ") });
-    return `<p class="lede">${escaped(text)}</p>`;
-  }
+  const agreeing = (template) => filled(template, { count: proposed.reduce((sum, each) => sum + each.proposed.length, 0), steps: proposed.map((each) => labels.stepNames[each.step]).join(", ") });
+  if (!waiting.length && proposed.length) return `<p class="lede">${escaped(agreeing(labels.overviewProposed))}</p>`;
   if (!waiting.length) return `<p class="lede">${labels.nothing}</p>`;
-  const text = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
+  const review = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
+  const text = proposed.length ? `${review} ${agreeing(labels.overviewAgree)}` : review;
   const first = held.find((each) => each.count);
   return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(first))}">${labels.start}</a></p>`;
 }
@@ -1724,7 +1740,7 @@ function thumbOf(project, record, tokens, labels, size) {
 }
 
 /** The overview: under the stepper, a section per step that holds something, in step order. Journeys are cards with a strip of
- * their screens, the identity and the charter one card each, the elements a dense list by category, the screens a grid of
+ * their screens, the identity and the charter one card each, the elements small cards by category, the screens a grid of
  * thumbnails. Every number is the drawer's: `counted` marks what the step counts, `orderedStates` the progress. */
 function overviewOf({ project, held, records, rows, labels, tokens, palette }) {
   const recordOf = (id) => records.find((record) => fm(record).id === id);
@@ -1757,12 +1773,12 @@ function overviewOf({ project, held, records, rows, labels, tokens, palette }) {
   const setProgress = (set) => `<span class="progress" data-set="${escaped(set.id)}" data-label="${escaped(labels.decided)}" data-total="${variants.latestOf(set.variants).length}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span>`;
   const setTile = (set) => `<li data-set="${escaped(set.id)}"><a class="ovcard" href="${escaped(variants.setFileOf(set.id))}"><span class="thumb l sets" aria-hidden="true"><b>${variants.latestOf(set.variants).length}</b></span><span class="title">${escaped(set.title)}</span><span class="meta"><span class="mark todo">${labels.variantsToChoose}</span>${setProgress(set)}</span></a></li>`;
   const setRow = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.title)}</a><span class="mark todo">${labels.variantsToChoose}</span>${setProgress(set)}</li>`;
-  const listRow = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${markOf(record)}${progressOf(record)}</li>`;
+  const listRow = (record) => recordLine(fm(record).id, titleOf(project, record, labels), markOf(record) + progressOf(record));
   const group = (category, own) => {
     const states = own.flatMap((record) => orderedStates(rows, record));
     const done = settledOf(states);
     const sum = states.length ? `<span class="sum">${done}/${states.length}</span><span class="bar" aria-hidden="true"><i style="inline-size: ${Math.round((100 * done) / states.length)}%"></i></span>` : "";
-    return `<div class="group" data-sum><h4 data-category="${category}"><span>${labels.categories[category]}</span>${sum}</h4><ul class="rows">${own.map(listRow).join("")}</ul></div>`;
+    return `<div class="group" data-sum><h4 data-category="${category}"><span>${labels.categories[category]}</span>${sum}</h4><ul class="ovcards comps">${own.map((record) => tile(record, thumbOf(project, record, tokens, labels, "m"))).join("")}</ul></div>`;
   };
   const body = (each) => {
     if (each.step === "journeys") return `<ul class="ovcards journeys">${[...each.records].sort(byRecordId).map(journeyTile).join("")}</ul>`;
@@ -1832,7 +1848,7 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
     return charteSectionsOf({ entries: tokens === null ? [] : catalog(project), values: resolvedValues(project).get(BASE_CONTEXT) ?? new Map(), citations: citations(project), primitives: list(fm(record).primitives), rows: breakpointRows(record), notes, tokens, labels, language });
   };
   const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
-  const order = reviewOrderOf(project, held, journeys);
+  const order = reviewOrderOf(held, journeys);
   const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, order });
   const palette = paletteOf(project, system, tokens);
   const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels, tokens, palette })].join("\n");
@@ -1840,7 +1856,8 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   for (const record of records) {
     const id = fm(record).id;
     const uses = [...new Set(cited(record))].filter((each) => each !== id && recordsById.has(each)).sort(byCode);
-    const usedBy = records.filter((other) => fm(other).id !== id && cited(other).includes(id)).map((other) => fm(other).id).sort(byCode);
+    const element = isElement(record) && fm(record).kind !== "screen"; // a component's page names only what builds on it, not what replaces it or what a journey cites
+    const usedBy = [...new Set(records.filter((other) => fm(other).id !== id && (element ? list(fm(other).uses) : cited(other)).includes(id)).map((other) => fm(other).id))].filter((each, _, all) => !(element && fm(recordsById.get(each)).kind === "wireframe" && all.some((other) => fm(recordsById.get(other)).wireframe === each))).sort(byCode);
     const reviewed = hasRender(project, record);
     const title = titleOf(project, record, labels);
     const journey = fm(record).kind === "journey";

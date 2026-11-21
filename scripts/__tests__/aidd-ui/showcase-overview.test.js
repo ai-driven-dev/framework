@@ -6,7 +6,7 @@ const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The overview is a map by step: journeys as a filmstrip of their screens, identity and charter as one card,
-// elements as a dense list by category, screens as a grid of thumbnails. One card per record, each card one
+// elements as small cards by category, screens as a grid of thumbnails. One card per record, each card one
 // link, the numbers those of the drawer, the thumbnails static and lazy.
 
 let tmp;
@@ -45,12 +45,12 @@ const idsIn = (block) => [...block.matchAll(/<li data-(?:id|set)="([^"]+)"/g)].m
 const drawerOf = (html) => html.match(/<aside class="drawer" id="review"[\s\S]*?<\/aside>/)[0];
 
 describe("aidd-ui showcase overview", () => {
-  it("lists the steps that hold something as sections in step order, journeys first, under the stepper", () => {
+  it("lists the steps that hold something as sections in step order, journeys last, under the stepper", () => {
     crowd();
     const index = pagesOf([SET])["index.html"];
     assert.ok(index.indexOf('<ol class="stepper">') < index.indexOf('<div class="overview">'));
     const steps = [...overviewOf(index).matchAll(/<section class="ov-step" data-step="(\w+)">/g)].map((match) => match[1]);
-    assert.deepEqual(steps, ["journeys", "identity", "foundations", "components", "screens"]);
+    assert.deepEqual(steps, ["identity", "foundations", "components", "screens", "journeys"]);
   });
 
   it("draws one card per journey: its title, its status and a strip of its screens, the screen that dresses a wireframe before it", () => {
@@ -108,20 +108,33 @@ describe("aidd-ui showcase overview", () => {
     for (const anchor of overviewOf(index).matchAll(/<a [^>]*>[\s\S]*?<\/a>/g)) assert.doesNotMatch(anchor[0].slice(3), /<a |<button|<input|<select|<textarea/);
   });
 
-  it("lists the elements as a dense list by category, each with the states reviewed, and no thumbnail", () => {
+  it("draws the elements as small cards by category, each with a thumbnail of its first state, the states reviewed and its mark", () => {
     const block = sectionOf(pagesOf()["index.html"], "components");
-    const groups = [...block.matchAll(/<div class="group" data-sum>([\s\S]*?)<\/div>/g)];
+    const groups = [...block.matchAll(/<div class="group" data-sum>([\s\S]*?)<\/ul><\/div>/g)];
     assert.ok(groups.length >= 1);
     const counted = groups.filter(([, group]) => group.includes('class="sum"'));
     assert.ok(counted.length >= 1, "a category with states shows its sum");
     for (const [, group] of counted) {
-      assert.match(group, /<h4 data-category="\w+"><span>[^<]+<\/span><span class="sum">\d+\/\d+<\/span><span class="bar" aria-hidden="true"><i style="inline-size: \d+%"><\/i><\/span><\/h4>/);
+      assert.match(group, /<h4 data-category="\w+"><span>[^<]+<\/span><span class="sum">\d+\/\d+<\/span><span class="bar" aria-hidden="true"><i style="inline-size: \d+%"><\/i><\/span><\/h4><ul class="ovcards comps">/);
       const done = [...group.matchAll(/class="progress" data-record="[^"]+" data-base="(\d+)" data-total="(\d+)"/g)];
       const sum = group.match(/class="sum">(\d+)\/(\d+)</);
       assert.deepEqual([Number(sum[1]), Number(sum[2])], [done.reduce((n, m) => n + Number(m[1]), 0), done.reduce((n, m) => n + Number(m[2]), 0)]);
     }
-    assert.match(block, /<li data-id="button"><a href="button\.html">Button<\/a>/);
-    assert.doesNotMatch(block, /<iframe/);
+    const button = block.match(/<li data-id="button">([\s\S]*?)<\/li>/)[1];
+    assert.equal(button.match(/<a /g).length, 1);
+    assert.match(button, /^<a class="ovcard" href="button\.html"><span class="thumb m" aria-hidden="true"><iframe tabindex="-1" loading="lazy" sandbox title="Button" srcdoc="/);
+    assert.match(button, /<span class="title">Button<\/span><span class="meta">[\s\S]*class="progress" data-record="button" data-base="\d+" data-total="\d+"/);
+    assert.doesNotMatch(block, /<ul class="rows"><li data-id="button"/);
+  });
+
+  it("gives an element with nothing to draw a blank card, not a frame, and keeps the small card in a column that never overflows", () => {
+    const index = pagesOf()["index.html"];
+    const block = sectionOf(index, "components");
+    const icon = block.match(/<li data-id="icon-search">([\s\S]*?)<\/li>/)[1];
+    assert.doesNotMatch(icon, /<iframe/);
+    assert.match(icon, /<span class="thumb m blank" aria-hidden="true"><\/span>/);
+    assert.match(index, /\n\.ovcards\.comps \{ grid-template-columns: repeat\(auto-fill, minmax\(min\(100%, 150px\), 1fr\)\); gap: var\(--s3\); \}/);
+    assert.match(index, /\n\.thumb\.m \{ --k: 0\.3; \}/);
   });
 
   it("gives the charter a card of its colours and the identity a compact card, no empty thumbnail", () => {
@@ -142,6 +155,44 @@ describe("aidd-ui showcase overview", () => {
     assert.match(sectionOf(index, "journeys"), /En attente de votre accord/);
     assert.match(sectionOf(index, "journeys"), /\d+ étapes/);
     for (const key of ["toReviewMark", "toReworkMark", "awaitingAgreement", "variantsToChoose", "stepsCount"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);
+  });
+
+  it("sends a step's card to a record the step counts, never to a wireframe a screen dresses", () => {
+    put(tmp, `${UI}/wireframes/aaa.md`, WIREFRAME("aaa"));
+    put(tmp, `${UI}/wireframes/aaa.html`, RENDER);
+    put(tmp, `${UI}/screens/zzz.md`, SCREEN("zzz", "aaa"));
+    put(tmp, `${UI}/screens/zzz.html`, RENDER);
+    const index = pagesOf()["index.html"];
+    const href = index.match(/<li data-step="screens" data-state="\w+"><a href="([^"]*)"/)[1];
+    assert.notEqual(href, "aaa.html");
+  });
+
+  it("shows the steps in one order, identity to journeys, numbered by that order, in the stepper, sidebar and sections", () => {
+    crowd();
+    const order = ["identity", "foundations", "components", "screens", "journeys"];
+    const index = pagesOf()["index.html"];
+    const stepper = [...index.matchAll(/<li data-step="(\w+)" data-state="\w+"><a href="[^"]*"><span class="no">(\d)<\/span>/g)].map((match) => [match[1], match[2]]);
+    assert.deepEqual(stepper, order.map((step, at) => [step, String(at + 1)]));
+    const nav = [...index.matchAll(/<li data-step="(\w+)" data-todo="\d+"><details[^>]*><summary><span class="stepno">(\d)<\/span>/g)].map((match) => [match[1], match[2]]);
+    assert.deepEqual(nav, order.map((step, at) => [step, String(at + 1)]));
+    const sections = [...overviewOf(index).matchAll(/<section class="ov-step" data-step="(\w+)">/g)].map((match) => match[1]);
+    assert.deepEqual(sections, order);
+  });
+
+  it("names the steps awaiting agreement in the lede after the others, in step order", () => {
+    crowd();
+    const lede = pagesOf([], "fr")["index.html"].match(/<p class="lede">([^<]*)<\/p>/)[1];
+    const names = LABELS.fr.stepNames;
+    const at = (step) => lede.indexOf(names[step]);
+    assert.ok(at("components") < at("screens") && at("screens") < lede.indexOf("Parcours"), lede);
+  });
+
+  it("names in the lede the steps whose records await agreement, beside what awaits review, in both languages", () => {
+    crowd();
+    const ledeOf = (html) => html.match(/<p class="lede">([^<]*)<\/p>/)[1];
+    assert.match(ledeOf(pagesOf()["index.html"]), /to review, in [^.]*\. 1 awaiting your agreement, in Journeys\./);
+    assert.match(ledeOf(pagesOf([], "fr")["index.html"]), /à relire, dans [^.]*\. 1 en attente de votre accord, dans Parcours\./);
+    assert.ok(LABELS.en.overviewAgree && LABELS.fr.overviewAgree);
   });
 
   it("is the same twice on the same records", () => {

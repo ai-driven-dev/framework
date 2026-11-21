@@ -4,7 +4,8 @@
 const { list } = require("./markdown.cjs");
 const { fm, stateVerdict, reviewStatesOf } = require("./model.cjs");
 
-const STEPS = ["journeys", "identity", "foundations", "components", "screens"];
+// Display order: what a journey strings together comes last.
+const STEPS = ["identity", "foundations", "components", "screens", "journeys"];
 const CATEGORIES = ["input", "action", "display", "navigation", "group", "asset"];
 const FALLBACK_STEP = "identity";
 const FALLBACK_CATEGORY = "group";

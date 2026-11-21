@@ -11,7 +11,7 @@ const set = (...paths) => ({ id: "s", variants: [{ name: "a", files: paths.map((
 
 describe("aidd-ui steps", () => {
   it("holds the five steps in the order of the method, and the categories in the order of the sidebar", () => {
-    assert.deepEqual(STEPS, ["journeys", "identity", "foundations", "components", "screens"]);
+    assert.deepEqual(STEPS, ["identity", "foundations", "components", "screens", "journeys"]);
     assert.deepEqual(CATEGORIES, ["input", "action", "display", "navigation", "group", "asset"]);
   });
 

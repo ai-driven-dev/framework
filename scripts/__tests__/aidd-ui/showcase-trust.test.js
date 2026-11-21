@@ -57,12 +57,15 @@ describe("aidd-ui showcase trust", () => {
       crowd();
       const index = pagesOf([SET()])["index.html"];
       for (const step of ["journeys", "components", "screens"]) {
-        const counts = [sidebarCount(index, step), stepperCount(index, step), listCount(index, step), drawerCount(index, step)];
+        const counts = [step === "journeys" ? 1 : sidebarCount(index, step), stepperCount(index, step), listCount(index, step), drawerCount(index, step)];
         assert.ok(counts.every((count) => count > 0), `${step} ${counts}`);
         assert.equal(new Set(counts).size, 1, `${step}: sidebar, card, list, drawer = ${counts}`);
       }
       assert.equal(sidebarCount(index, "screens"), 5, "home, two screens, the bare wireframe, the set");
-      assert.equal(sidebarCount(index, "journeys"), 1, "the journey awaiting agreement");
+      const mark = navOf(index).match(/<li data-step="journeys"[^>]*><details[^>]*><summary>.*?(<span class="step-mark[^"]*"[^>]*>[^<]*<\/span>)/)[1];
+      assert.match(mark, /class="step-mark agree"/, "what awaits agreement is not drawn as a count of states to review");
+      assert.match(mark, /aria-label="1 awaiting your agreement"/);
+      assert.doesNotMatch(mark, />\d+</);
     });
 
     it("puts the journeys on the overview as cards and in the drawer, the one awaiting agreement to link and not to review", () => {
@@ -90,6 +93,21 @@ describe("aidd-ui showcase trust", () => {
       const rows = rowsIn(tilesOf(block));
       assert.deepEqual(rows.sort(), ["bare", "home", "other-screen", "start-screen"]);
       assert.equal((tilesOf(block).match(/class="mark todo"/g) ?? []).length, listCount(pagesOf()["index.html"], "screens"));
+    });
+  });
+
+  describe("one entry per counted record in the drawer", () => {
+    it("lists as many entries as the group counts, a dressed wireframe nested under its screen, its verdict keys unchanged", () => {
+      crowd();
+      const index = pagesOf()["index.html"];
+      const group = drawerOf(index).split('<details class="step-group" data-step="screens"')[1].split('<details class="step-group"')[0];
+      const entries = group.split('<div class="entry">').slice(1);
+      assert.equal(entries.length, drawerCount(index, "screens"), "group count = number of entries");
+      const heads = entries.map((entry) => entry.match(/<details class="item" data-record="([^"]+)" data-version="1"(?![^>]*data-dressed-by)/)?.[1]);
+      assert.ok(heads.every(Boolean), "an entry opens with a record the step counts");
+      const nested = entries.find((entry) => entry.includes('data-record="start-screen"'));
+      assert.match(nested, /data-record="start" data-version="1" data-dressed-by="start-screen"/);
+      assert.equal((group.match(/data-dressed-by/g) ?? []).length, 3, "start, other and search-flow stay items with their own key");
     });
   });
 
@@ -142,9 +160,10 @@ describe("aidd-ui showcase trust", () => {
   describe("the way in to the review", () => {
     const startOf = (html) => html.match(/<a class="start" href="([^"]+)">/)?.[1];
 
-    it("opens on the journeys when some await agreement, the first step with work", () => {
+    it("opens on the first step with work in display order, a journey awaiting agreement coming last", () => {
       crowd();
-      assert.equal(startOf(pagesOf()["index.html"]), "second.html");
+      assert.notEqual(startOf(pagesOf()["index.html"]), "second.html");
+      assert.equal(startOf(pagesOf()["index.html"]), "search-field.html");
     });
 
     it("opens on the first record awaiting when no journey does", () => {

@@ -42,7 +42,7 @@ const verdicts = (...all) => {
 const statesIn = (html) => [...html.matchAll(/<article class="state" data-state="([^"]+)"/g)].map((match) => match[1]);
 const articleOf = (html, state) => html.match(new RegExp(`<article class="state" data-state="${state}"[\\s\\S]*?</article>`))[0];
 const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0];
-const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark"[^>]*>([^<]*)</)[1] }));
+const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark(?: agree)?"[^>]*>([^<]*)</)[1] }));
 const todoOf = (html) => html.match(/<div class="overview">[\s\S]*?<\/div>\s*<\/main>/)[0];
 const markedOf = (html, kind = "todo") => [...todoOf(html).matchAll(new RegExp(`<span class="mark ${kind}" data-record="([^"]+)"`, "g"))].map((match) => match[1]);
 const stepOf = (html, step) => stepsOf(html).find((each) => each.step === step);
@@ -82,16 +82,43 @@ describe("aidd-ui showcase", () => {
 
     it("names the five steps in the language, in both languages", () => {
       const names = (lang) => stepsOf(pagesOf({ lang })["index.html"]).map((each) => each.html.match(/<(?:span|a) class="step-name"[^>]*>([^<]*)</)[1]);
-      assert.deepEqual(names("en"), ["Journeys", "Identity", "Foundations", "Elements", "Screens"]);
-      assert.deepEqual(names("fr"), ["Parcours", "Identité", "Charte", "Éléments", "Écrans"]);
+      assert.deepEqual(names("en"), ["Identity", "Foundations", "Elements", "Screens", "Journeys"]);
+      assert.deepEqual(names("fr"), ["Identité", "Charte", "Éléments", "Écrans", "Parcours"]);
     });
 
     it("draws a wireframe state as labelled grey boxes, and no other record's", () => {
       const pages = pagesOf();
       const frameOf = (html) => html.match(/<iframe [^>]*srcdoc="([^"]*)"/)[1];
-      assert.match(frameOf(pages["search-flow.html"]), /\[data-zone\]::before \{ content: attr\(data-zone\)/);
+      assert.match(frameOf(pages["search-flow.html"]), /\[data-zone\]::before \{ content: attr\(data-zone-label\)/);
       assert.doesNotMatch(frameOf(pages["home.html"]), /data-zone/);
       assert.doesNotMatch(fs.readFileSync(path.join(tmp, `${UI}/wireframes/search-flow.html`), "utf8"), /<style/);
+    });
+
+    it("lists a wireframe on a component page only when no screen dressing it is listed too", () => {
+      edit(tmp, `${UI}/screens/home.md`, "uses: [search-field, dialog]", "uses: [search-field, dialog, button]");
+      edit(tmp, `${UI}/wireframes/search-flow.md`, "uses: [search-field]", "uses: [search-field, button]");
+      assert.deepEqual(appearsOf(pagesOf()["button.html"]).map(([id]) => id), ["dialog", "home", "search-field"]);
+    });
+
+    it("names a wireframe zone by the label its element declares, else by its slug as words, never the slug", () => {
+      put(tmp, `${UI}/wireframes/search-flow.html`, "<!doctype html><html><head></head><body><section data-state=\"default\"><div data-zone=\"duel-en-attente\">A</div><div data-zone=\"en-tete\" data-label=\"Haut de page\">B</div></section></body></html>");
+      const doc = unescaped(pagesOf()["search-flow.html"].match(/<iframe [^>]*srcdoc="([^"]*)"/)[1]);
+      assert.match(doc, /data-zone="duel-en-attente" data-zone-label="Duel en attente"/);
+      assert.match(doc, /data-zone="en-tete" data-label="Haut de page" data-zone-label="Haut de page"/);
+    });
+
+    it("offers the theme, side by side and combination controls on a styled record, never on a wireframe", () => {
+      const pages = pagesOf();
+      for (const id of ["home", "button"]) assert.match(pages[`${id}.html`], /class="toolbar"[\s\S]*id="sides"/, id);
+      assert.doesNotMatch(pages["search-flow.html"], /<div class="toolbar"|id="sides"|<fieldset data-combo/);
+      assert.match(pages["search-flow.html"], /role="tablist"/);
+    });
+
+    it("keeps the state tabs on one row that scrolls sideways on a phone, fading at the right edge", () => {
+      const html = pagesOf()["button.html"];
+      assert.match(html, /\n\.tabs \{[^}]*overflow-x: auto/);
+      const phone = html.match(/@media \(max-width: 768px\) \{[\s\S]*?\n\}/)[0];
+      assert.match(phone, /\.tabs \{[^}]*mask-image: linear-gradient\(to right, #000 calc\(100% - [^)]*\), transparent\)/);
     });
 
     it("draws a journey as a storyboard: a card per step, linking its page, its action numbered under it, the last one too", () => {
@@ -151,16 +178,22 @@ describe("aidd-ui showcase", () => {
     it("orders the navigation by step, one li per step", () => {
       const index = pagesOf()["index.html"];
       assert.match(navOf(index), /<ol class="steps">/);
-      assert.deepEqual(stepsOf(index).map((each) => each.step), ["journeys", "identity", "foundations", "components", "screens"]);
+      assert.deepEqual(stepsOf(index).map((each) => each.step), ["identity", "foundations", "components", "screens", "journeys"]);
     });
 
     it("lists what a record uses at the top, and where it appears at the bottom, from every field that cites an id", () => {
       const pages = pagesOf();
       assert.deepEqual(linksOf(pages["home.html"], "uses"), ["dialog", "search-field"]);
       assert.deepEqual(appearsOf(pages["home.html"]), [["onboarding", "Onboarding", "validated"]]);
-      assert.deepEqual(appearsOf(pages["search-field.html"]).map(([id]) => id), ["home", "search-flow"]);
+      assert.deepEqual(appearsOf(pages["search-field.html"]).map(([id]) => id), ["home"]); // search-flow is the wireframe home dresses
       assert.ok(!pages["home.html"].includes('href="first-pass.html"'));
       assert.doesNotMatch(pages["home.html"], /data-links="used-by"/);
+    });
+
+    it("lists on a component page only the records that use it through their uses, each once", () => {
+      assert.deepEqual(appearsOf(pagesOf()["button.html"]).map(([id]) => id), ["dialog", "search-field"]);
+      put(tmp, `${UI}/components/dialog-copy.md`, fs.readFileSync(path.join(tmp, UI, "components/dialog.md"), "utf8"));
+      assert.deepEqual(appearsOf(pagesOf()["button.html"]).map(([id]) => id), ["dialog", "search-field"]);
     });
 
     it("puts the journeys a wireframe appears in at the very bottom of its page, as small cards with a title and a status", () => {
@@ -932,7 +965,7 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(index, /<meter/);
       const stepper = index.match(/<ol class="stepper">[\s\S]*?<\/ol>/)[0];
       const items = [...stepper.matchAll(/<li data-step="(\w+)" data-state="(\w+)">([\s\S]*?)<\/li>/g)];
-      assert.deepEqual(items.map((match) => match[1]), ["journeys", "identity", "foundations", "components", "screens"]);
+      assert.deepEqual(items.map((match) => match[1]), ["identity", "foundations", "components", "screens", "journeys"]);
       const steps = stepsOf(index);
       for (const [, step, state, html] of items) {
         const held = steps.find((each) => each.step === step);
@@ -1039,9 +1072,8 @@ describe("aidd-ui showcase", () => {
       assert.match(html, /<div class="scrim" id="scrim"><\/div>/);
     });
 
-    it("closes on Escape and on the scrim, and gives the focus back to the review button", () => {
+    it("closes on the scrim and marks the drawer on the body", () => {
       const script = scriptOf(css());
-      assert.match(script, /document\.addEventListener\("keydown", \(event\) => \{\n  if \(event\.key !== "Escape" \|\| drawer\.hidden \|\| unconfirm\(\)\) return;\n  show\(false\);\n  opener\.focus\(\);\n\}\);/);
       assert.match(script, /getElementById\("scrim"\)\.addEventListener\("click"/);
       assert.match(script, /document\.body\.dataset\.drawer = on \? "open" : "closed"/);
     });
@@ -1100,7 +1132,7 @@ describe("aidd-ui showcase", () => {
         assert.equal(marks.length, 5);
         const names = marks.map((match) => attributeOf(match[1], "aria-label"));
         assert.ok(names.every(Boolean), "every mark has a name");
-        assert.deepEqual(names, ["journeys", "identity", "foundations", "components", "screens"].map((step) => {
+        assert.deepEqual(names, ["identity", "foundations", "components", "screens", "journeys"].map((step) => {
           const own = stepOf(pagesOf({ lang })["index.html"], step);
           return own.todo !== "0" ? labels.toReview.replace("{count}", own.todo) : own.mark === "\u2713" ? labels.stepDone : labels.stepEmpty;
         }));
@@ -1209,7 +1241,7 @@ describe("aidd-ui showcase", () => {
 
     it("counts the records awaiting review on each step, and marks a step with nothing awaiting done, or empty", () => {
       const index = pagesOf()["index.html"];
-      assert.deepEqual(stepsOf(index).map((each) => [each.step, each.todo, each.mark]), [["journeys", "0", "\u2713"], ["identity", "0", "\u2713"], ["foundations", "0", "\u2713"], ["components", "4", "4"], ["screens", "1", "1"]]);
+      assert.deepEqual(stepsOf(index).map((each) => [each.step, each.todo, each.mark]), [["identity", "0", "\u2713"], ["foundations", "0", "\u2713"], ["components", "4", "4"], ["screens", "1", "1"], ["journeys", "0", "\u2713"]]);
       fs.rmSync(path.join(tmp, UI, "journeys/onboarding.md"));
       assert.equal(stepOf(pagesOf()["index.html"], "journeys").mark, "\u2014");
     });
@@ -1240,7 +1272,7 @@ describe("aidd-ui showcase", () => {
       assert.equal(stepOf(pagesOf()["index.html"], "components").mark, "\u2713");
       edit(tmp, `${UI}/assets/icon-search.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
-      assert.equal(stepOf(index, "components").mark, "1");
+      assert.equal(stepOf(index, "components").mark, "\u25CF", "awaiting agreement is a dot, not a count of states to review");
       assert.match(index, /<li data-step="components" data-state="todo">/);
       assert.match(index, /<span class="state">1 awaiting your agreement<\/span>/);
       assert.match(stepOf(index, "components").html, /aria-label="1 awaiting your agreement"/);
@@ -1257,7 +1289,7 @@ describe("aidd-ui showcase", () => {
     it("does not mark a step done while a journey in it is still proposed, and leaves the drawer count alone", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
-      assert.deepEqual([stepOf(index, "journeys").todo, stepOf(index, "journeys").mark], ["0", "1"]);
+      assert.deepEqual([stepOf(index, "journeys").todo, stepOf(index, "journeys").mark], ["0", "\u25CF"]);
       assert.match(index, /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 awaiting your agreement<\/span>/);
       assert.match(index, /<li data-step="components" data-state="todo">[\s\S]*?<span class="state">\d+ to review<\/span>/);
       assert.ok(!itemsOf(index).some((item) => item.record === "onboarding"));
