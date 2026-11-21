@@ -3,7 +3,7 @@
  * Copies between two tool profiles, checked before push. The CI-wide `pnpm jscpd` reads all of
  * src/ against one percentage, so a copy between two profiles hides in the average.
  *
- * Measured on the profiles: their `build.ts` and `profile.ts` declare a tool's contract as
+ * Measured on the profiles: their `<tool>-build.model.ts` and `<tool>.profile.ts` declare a tool's contract as
  * object literals, and every one looks like every other (52 clones at 30 tokens, none of them
  * logic). No block size separates them from the real copies, merge and bridge code of 47 to 60
  * tokens, so those two files are left out and the rest is read with identifiers and literals
@@ -36,7 +36,7 @@ export const JSCPD_ARGS = [
   "--ignore-identifiers",
   "--ignore-literals",
   "--ignore",
-  "**/build.ts,**/profile.ts",
+  "**/*-build.model.ts,**/*.profile.ts",
   "--ignore-pattern",
   IMPORT_DECLARATION,
 ];

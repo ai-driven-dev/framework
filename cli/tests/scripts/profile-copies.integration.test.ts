@@ -74,8 +74,8 @@ describe("the guard itself", () => {
     for (const tool of ["alpha", "beta"]) {
       writeFileSync(join(planted, `${tool}/hooks.ts`), declaration(tool));
     }
-    writeFileSync(join(planted, "alpha/build.ts"), MERGE_LOOP("buildAlpha"));
-    writeFileSync(join(planted, "beta/profile.ts"), MERGE_LOOP("profileBeta"));
+    writeFileSync(join(planted, "alpha/alpha-build.model.ts"), MERGE_LOOP("buildAlpha"));
+    writeFileSync(join(planted, "beta/beta.profile.ts"), MERGE_LOOP("profileBeta"));
   });
 
   afterAll(() => {
