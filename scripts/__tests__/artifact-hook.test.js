@@ -341,19 +341,23 @@ test("a shell turn reads each in-scope file once, however deep, though two contr
   s.shell();
   const { atStop } = require(path.join(hookFor("aidd-dev", "claude"), "artifacts.cjs"));
   const statSync = fs.statSync;
-  const before = process.env.TMPDIR;
+  // os.tmpdir() reads TMPDIR on POSIX, TEMP/TMP on Windows
+  const TEMP_VARS = ["TMPDIR", "TEMP", "TMP"];
+  const before = TEMP_VARS.map((name) => process.env[name]);
   let stats = 0;
   fs.statSync = (...args) => {
     stats += 1;
     return statSync(...args);
   };
-  process.env.TMPDIR = s.tmp;
+  for (const name of TEMP_VARS) process.env[name] = s.tmp;
   try {
     assert.equal(atStop({ sessionId: stopPayload("claude", s.root).session_id, cwd: s.root, stopActive: false }), "");
   } finally {
     fs.statSync = statSync;
-    if (before === undefined) delete process.env.TMPDIR;
-    else process.env.TMPDIR = before;
+    TEMP_VARS.forEach((name, i) => {
+      if (before[i] === undefined) delete process.env[name];
+      else process.env[name] = before[i];
+    });
   }
   assert.ok(stats >= files, `the scan ran: ${stats} stats`);
   assert.ok(stats < files + 50, `${stats} stats for ${files} files`);
