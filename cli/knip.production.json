@@ -1,0 +1,13 @@
+{
+  "entry": ["tests/**/*.test.ts", "vitest.mutation.config.ts"],
+  "ignore": ["tests/fixtures/**", "scripts/**/*.d.mts"],
+  "ignoreBinaries": ["icacls"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/contexts/translate/domain/engine.ts": ["exports"],
+    "src/contexts/tools/domain/profile.ts": ["types"]
+  },
+  "lefthook": {
+    "config": ["../lefthook.yml"]
+  }
+}
