@@ -179,6 +179,8 @@ export interface SettingsFileAnswers {
   appliesWith(installed: (toolId: string) => boolean): boolean;
   /** Whether this file applies only because `toolId` is installed. */
   requires(toolId: string): boolean;
+  /** Whether this file is the one at `destination`. */
+  writes(destination: string): boolean;
   outputPath(): string;
   /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
   fileOf(content: string, place?: ConfigFilePlace): InstallationFile;

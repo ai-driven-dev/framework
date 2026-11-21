@@ -95,6 +95,7 @@ describe("PropagateAiSettingsToIde", () => {
     const forOtherIde: SettingsFileAnswers = {
       consumes: () => false,
       consumedRefs: () => [],
+      writes: () => false,
       appliesWith: (installed) => installed("other-ide"),
       requires: (toolId) => toolId === "other-ide",
       outputPath: () => ".other-ide/settings.json",

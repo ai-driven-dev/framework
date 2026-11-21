@@ -21,9 +21,11 @@ import {
   portViolations,
   profileViolations,
   repositoryViolations,
+  STORED_ANSWERS,
   scopeViolations,
   sectionViolations,
   sizeViolations,
+  storedValueViolations,
   translateViolations,
 } from "./kind-rules.js";
 import { debtVerdict, loadDebt, type Rule, type Violation } from "./kinds.js";
@@ -310,6 +312,22 @@ describe("a plugin answer is asked, never read", () => {
         "export class X {\n  #path = 1;\n  path(root: string) { return join(root, this.#path); }\n}"
       )
     ).toEqual([]);
+  });
+
+  it("clears a stored value the list keeps for a caller that needs it as it is", () => {
+    const [kept] = STORED_ANSWERS;
+    const source = `export class ${kept.member.split(".")[0]} {\n  ${kept.member.split(".")[1]}() { return this.#v; }\n}`;
+    expect(storedValueViolations({ [kept.file]: source })).toHaveLength(1);
+    expect(answerViolations({ [kept.file]: source })).toEqual([]);
+  });
+
+  it("keeps in the list only a stored value the tree still hands out, with its caller and reason", () => {
+    const flagged = new Set(storedValueViolations(src()).map((v) => v.entry));
+    for (const entry of STORED_ANSWERS) {
+      expect(flagged.has(`${entry.file} :: ${entry.member}`)).toBe(true);
+      expect(entry.caller).not.toBe("");
+      expect(entry.reason).not.toBe("");
+    }
   });
 
   it("holds the plugin answers of the tree", () => {
