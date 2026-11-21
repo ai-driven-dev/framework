@@ -3,6 +3,7 @@ import type { ToolBuildContract } from "../../../tools/contract/build-contract.j
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { OutputFile } from "../output-file.js";
 import { marketplaceAgents } from "./agents.js";
+import { marketplaceHooks } from "./hooks.js";
 import { marketplaceSkills } from "./skills.js";
 
 /** The files one plugin builds into for a tool, each named from the output directory. Only the
@@ -13,9 +14,10 @@ export function translateBuildLayout(
   mode: FrameworkBuildMode
 ): OutputFile[] {
   if (mode !== "marketplace") return [];
-  const { agents, skills } = contract.artifacts;
+  const { agents, hooks, skills } = contract.artifacts;
   return [
     ...(agents.supported ? marketplaceAgents(canon, agents) : []),
+    ...(hooks.supported ? marketplaceHooks(canon, hooks, contract.pluginRootToken) : []),
     ...(skills.supported ? marketplaceSkills(canon, skills) : []),
   ];
 }

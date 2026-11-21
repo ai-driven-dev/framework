@@ -21,14 +21,14 @@ function depsOver(fs: InMemoryFileAdapter, logger = new CapturingLogger()) {
 }
 
 describe("one plugin's hooks and MCP servers", () => {
-  it("copies each hook file under the plugin's output", async () => {
+  it("writes no hook in the marketplace layout, which the engine builds", async () => {
     const fs = new InMemoryFileAdapter({
       [`${PLUGIN.src}/hooks/hooks.json`]: "{}",
       [`${PLUGIN.src}/hooks/run.sh`]: "echo hi",
     });
     const target = aDiskTarget(aStubBuildContract());
-    await expect(writePluginHooks(depsOver(fs), target, PLUGIN)).resolves.toBe(2);
-    expect(fs.getFile("/out/plugins/plug/hooks/run.sh")).toBe("echo hi");
+    await expect(writePluginHooks(depsOver(fs), target, PLUGIN)).resolves.toBe(0);
+    expect(fs.getFile("/out/plugins/plug/hooks/run.sh")).toBeUndefined();
   });
 
   it("warns, and writes nothing, for flat hooks a tool does not support", async () => {

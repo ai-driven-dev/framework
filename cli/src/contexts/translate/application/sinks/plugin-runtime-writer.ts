@@ -1,13 +1,13 @@
-import { basename, join, relative } from "node:path";
+import { join } from "node:path";
 import { rewritePluginRootToken } from "../../../tools/contract/plugin-root-token.js";
 import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
 import type { DiskSinkDeps, PluginSource } from "../../ports/disk-sink-deps.js";
-import type { SupportedArtifact } from "../../ports/flat-plugin-writer.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
 
 type RuntimeDeps = Pick<DiskSinkDeps, "fs" | "flat" | "logger">;
 
-/** One plugin's hooks, in the marketplace layout or the flat one. Returns the files written. */
+/** One plugin's hooks in the flat layout; the marketplace one is built by the engine. Returns the
+ * files written. */
 export async function writePluginHooks(
   deps: RuntimeDeps,
   t: DiskTarget,
@@ -24,9 +24,7 @@ export async function writePluginHooks(
     return 0;
   }
   if (!(await deps.fs.fileExists(hooksSrc))) return 0;
-  if (t.mode === "marketplace") {
-    return writeMarketplaceHooks(deps, { t, artifact, pluginName: plugin.name, hooksSrc });
-  }
+  if (t.mode === "marketplace") return 0;
   return deps.flat.writeHooks({
     target: t,
     artifact,
@@ -34,33 +32,6 @@ export async function writePluginHooks(
     hooksSrc,
     pluginSrc: plugin.src,
   });
-}
-
-async function writeMarketplaceHooks(
-  deps: RuntimeDeps,
-  {
-    t,
-    artifact,
-    pluginName,
-    hooksSrc,
-  }: { t: DiskTarget; artifact: SupportedArtifact; pluginName: string; hooksSrc: string }
-): Promise<number> {
-  const pluginOut = join(t.outDir, "plugins", pluginName);
-  let count = 0;
-  for (const absPath of await deps.fs.listFilesRecursive(hooksSrc)) {
-    const relPath = relative(hooksSrc, absPath).replace(/\\/g, "/");
-    const content = await deps.fs.readFile(absPath);
-    const outContent = applyPluginRootToken(
-      t,
-      artifact.transform && absPath.endsWith(".json")
-        ? artifact.transform(content, pluginName, basename(absPath))
-        : content
-    );
-    const script = artifact.script?.(`hooks/${relPath}`, outContent) ?? outContent;
-    await deps.fs.writeFile(join(pluginOut, "hooks", relPath), script);
-    count++;
-  }
-  return count;
 }
 
 /** One plugin's MCP servers, in the marketplace layout or merged into the flat file. */
