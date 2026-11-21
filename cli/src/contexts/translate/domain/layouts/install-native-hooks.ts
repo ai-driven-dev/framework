@@ -10,6 +10,7 @@ import type { NativePluginAnswers } from "../../../tools/contract/tool-profile.j
 import { isProse, PLUGIN_HOOKS_DIR, parentDirOf, pathBelowHooks } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { HOOKS_MANIFEST } from "../rules/hook-scripts.js";
+import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 
 interface HooksTarget {
@@ -38,7 +39,7 @@ export function nativeHooksPlan(
     source,
     path: `${pluginRoot}${manifestDir}/${pathBelowHooks(source)}`,
     content,
-    links: isProse(source) ? (text) => tool.rewriteContent(text) : undefined,
+    links: isProse(source) ? toolLinks(tool) : undefined,
     script: (text) => plugins.hookScript(source, text),
   };
 }

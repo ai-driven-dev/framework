@@ -15,9 +15,12 @@ describe("applyPlan", () => {
       ...PLAN,
       content: "see @{{TOOLS}}/x",
       guard: { plugin: "p", name: "a/SKILL.md" },
-      links: (text: string) => {
-        seen.push(text);
-        return text;
+      links: {
+        kind: "tool" as const,
+        rewrite: (text: string) => {
+          seen.push(text);
+          return text;
+        },
       },
     };
     expect(() => applyPlan(plan)).toThrow(FrameworkPlaceholderInPluginError);
@@ -32,7 +35,7 @@ describe("applyPlan", () => {
     };
     const out = applyPlan({
       ...PLAN,
-      links: step("links"),
+      links: { kind: "tool", rewrite: step("links") },
       shape: step("shape"),
       script: step("script"),
     });

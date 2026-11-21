@@ -2,8 +2,8 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { ToolBuildContract } from "../../../tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import { PLUGIN_MCP_RELATIVE, PLUGIN_SKILL_ENTRY_FILE } from "../canon-format.js";
+import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
-import { rewriteRelativeLinks } from "../rules/links.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { agentFiles, baseOf, isEntry, type SupportedArtifact } from "./build-shared.js";
 
@@ -36,17 +36,14 @@ function marketplaceAgents(
   const plugin = canon.manifest.name;
   return agentFiles(canon).map(({ relativePath, content }) => {
     const base = baseOf(relativePath);
+    const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
     return {
       source: relativePath,
       path: `plugins/${plugin}/${artifact.path(plugin, `agents/${base}`)}`,
       content,
       guard: { plugin, name: relativePath.slice("agents/".length) },
-      shape: agentShape(artifact, {
-        plugin,
-        outName: base,
-        from: `agents/${base}`,
-        unshaped: "carry",
-      }),
+      links: agentLinks(artifact, place),
+      shape: agentShape(artifact, place),
     };
   });
 }
@@ -100,7 +97,7 @@ function marketplaceSkills(
       path,
       content,
       guard: { plugin, name: relativePath.slice("skills/".length) },
-      links: (text) => rewriteRelativeLinks(text, { currentFilePluginRelative: relativePath }),
+      links: { kind: "relative", currentFilePluginRelative: relativePath },
       shape:
         isEntry(relativePath) && artifact.transform
           ? (text) => artifact.transform?.(text, plugin, PLUGIN_SKILL_ENTRY_FILE) ?? text

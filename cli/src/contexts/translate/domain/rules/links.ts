@@ -15,6 +15,21 @@ export interface RewriteRelativeLinksOptions {
   readonly resolveTargetPath?: (pluginRelPath: string) => string;
 }
 
+/** How a layout reads the links of a document: the tool's own form, or markdown links relative to
+ * where the file is written. `rewriteLinks` is the one place either runs. */
+export type LinkForm =
+  | { readonly kind: "tool"; readonly rewrite: (content: string) => string }
+  | ({ readonly kind: "relative" } & RewriteRelativeLinksOptions);
+
+/** The tool's own reading of a link, for the layouts that install into its directory. */
+export function toolLinks(tool: { rewriteContent(content: string): string }): LinkForm {
+  return { kind: "tool", rewrite: (content) => tool.rewriteContent(content) };
+}
+
+export function rewriteLinks(content: string, form: LinkForm): string {
+  return form.kind === "tool" ? form.rewrite(content) : rewriteRelativeLinks(content, form);
+}
+
 /**
  * `@{{TOOLS}}/...` is left alone: a caller has to detect that pattern and halt on it.
  *

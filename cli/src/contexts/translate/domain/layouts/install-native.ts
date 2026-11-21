@@ -1,4 +1,3 @@
-import { parseFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -7,6 +6,8 @@ import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-
 import type { NativePluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
+import { reshapeFrontmatter } from "../rules/frontmatter.js";
+import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
 
@@ -51,7 +52,7 @@ function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan 
 // Prose is rewritten, an artefact is carried byte for byte: a tool's own rewrite leaving a script
 // intact is luck rather than a guarantee.
 function linksOf(source: string, tool: TranslatedAiTool): ComponentPlan["links"] {
-  return isProse(source) ? (text) => tool.rewriteContent(text) : undefined;
+  return isProse(source) ? toolLinks(tool) : undefined;
 }
 
 // The plugin-root variable is a path, not prose: a hook manifest and an mcp manifest both name
@@ -88,10 +89,11 @@ function markdownPlan(
     path: `${pluginRoot}${toPluginRelativePath(fullPath, tool.directory)}`,
     content,
     links: linksOf(source, tool),
-    shape: (text) => {
-      const { frontmatter, body } = parseFrontmatter(text);
-      return section.serialize(section.convertFrontmatter(frontmatter, fileName), body);
-    },
+    shape: (text) =>
+      reshapeFrontmatter(text, {
+        frontmatter: (fm) => section.convertFrontmatter(fm, fileName),
+        serialize: (fm, body) => section.serialize(fm, body),
+      }),
     rootToken: plugins.rootToken(),
   };
 }
@@ -110,10 +112,11 @@ function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | nul
     path,
     content,
     links: linksOf(source, tool),
-    shape: (text) => {
-      const { frontmatter, body } = parseFrontmatter(text);
-      return section.serialize(section.convertFrontmatter(frontmatter), body);
-    },
+    shape: (text) =>
+      reshapeFrontmatter(text, {
+        frontmatter: (fm) => section.convertFrontmatter(fm),
+        serialize: (fm, body) => section.serialize(fm, body),
+      }),
     rootToken: plugins.rootToken(),
   };
 }

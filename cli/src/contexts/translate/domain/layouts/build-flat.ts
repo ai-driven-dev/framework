@@ -1,10 +1,10 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ToolBuildContract } from "../../../tools/contract/build-contract.js";
 import { flatAgentPath, flatLinkTarget, flatPathOfPluginSuffix } from "../flat-layout.js";
+import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { HOOKS_MANIFEST } from "../rules/hook-scripts.js";
-import { rewriteRelativeLinks } from "../rules/links.js";
 import { agentFiles, baseOf, isEntry, type SupportedArtifact } from "./build-shared.js";
 
 /** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
@@ -30,18 +30,20 @@ function flatAgents(
   return agentFiles(canon).map(({ relativePath, content }) => {
     const base = baseOf(relativePath);
     const path = flatAgentPath(artifact, plugin, base);
+    const place = {
+      plugin,
+      outName: base,
+      from: path,
+      resolveTarget: (rel: string) => flatLinkTarget(contract, plugin, rel),
+      unshaped: "links",
+    } as const;
     return {
       source: relativePath,
       path,
       content,
       guard: { plugin, name: relativePath },
-      shape: agentShape(artifact, {
-        plugin,
-        outName: base,
-        from: path,
-        resolveTarget: (rel) => flatLinkTarget(contract, plugin, rel),
-        unshaped: "links",
-      }),
+      links: agentLinks(artifact, place),
+      shape: agentShape(artifact, place),
     };
   });
 }
@@ -71,11 +73,11 @@ function flatSkills(
       path,
       content,
       guard: { plugin, name: relativePath.slice("skills/".length) },
-      links: (text) =>
-        rewriteRelativeLinks(text, {
-          currentFilePluginRelative: path,
-          resolveTargetPath: (rel) => flatLinkTarget(contract, plugin, rel),
-        }),
+      links: {
+        kind: "relative",
+        currentFilePluginRelative: path,
+        resolveTargetPath: (rel) => flatLinkTarget(contract, plugin, rel),
+      },
       namedAfterFolder: artifact.rewriteSkillName && isEntry(relativePath) ? true : undefined,
     };
   });

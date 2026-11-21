@@ -1,4 +1,3 @@
-import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -11,7 +10,9 @@ import type { FlatPluginAnswers } from "../../../tools/contract/tool-profile.js"
 import { flatLinkTarget } from "../flat-layout.js";
 import { basename, isProse } from "../plugin-paths.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import { reshapeFrontmatter } from "../rules/frontmatter.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
+import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 
 type FlatSection = "agents" | "rules" | "skills";
@@ -65,7 +66,7 @@ function commandPlan(file: PluginComponentFile, at: FlatAt, prefix: string): Com
     source,
     path: tool.flatInstallPath("commands", pluginName, basename(source)),
     content,
-    links: (text) => tool.rewriteContent(text),
+    links: toolLinks(tool),
     shape: (text) => prefixCommandName(text, { source, prefix, pluginName }),
   };
 }
@@ -82,7 +83,7 @@ function sectionPlan(
   if (!declared && (section !== "agents" || !isProse(source))) return null;
   // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
   // flat file left a script intact only where a tool's own rewrite happened to spare it.
-  const links = isProse(source) ? (text: string) => tool.rewriteContent(text) : undefined;
+  const links = isProse(source) ? toolLinks(tool) : undefined;
   const agent = section === "agents" ? agentPlan(file, at) : null;
   if (agent !== null) return { ...agent, links };
   if (!declared) return null;
@@ -115,11 +116,13 @@ function prefixCommandName(
   content: string,
   at: { source: string; prefix: string; pluginName: string }
 ): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rawName = typeof frontmatter.name === "string" ? frontmatter.name : "";
-  const simpleName = stripCommandPrefix(rawName) || basename(at.source);
-  const name = `${at.prefix}${at.pluginName}:${simpleName}`;
-  return serializeFrontmatter({ ...frontmatter, name }, body);
+  return reshapeFrontmatter(content, {
+    frontmatter: (frontmatter) => {
+      const rawName = typeof frontmatter.name === "string" ? frontmatter.name : "";
+      const simpleName = stripCommandPrefix(rawName) || basename(at.source);
+      return { ...frontmatter, name: `${at.prefix}${at.pluginName}:${simpleName}` };
+    },
+  });
 }
 
 function stripCommandPrefix(name: string): string {

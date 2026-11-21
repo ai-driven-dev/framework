@@ -2,6 +2,7 @@ import type { ArtifactContract } from "../../../tools/contract/build-contract.js
 import type { OutputFile } from "../output-file.js";
 import { assertNoToolsPlaceholder } from "../tools-placeholder.js";
 import { type AgentPlace, agentContent } from "./agent-markdown.js";
+import { type LinkForm, rewriteLinks } from "./links.js";
 import { withRootToken } from "./root-token.js";
 import { namedAfterFolder } from "./skill-name.js";
 
@@ -18,7 +19,7 @@ export interface ComponentPlan {
   /** Refuses the framework's tools placeholder: the plugin and the name the error reports. */
   readonly guard?: { readonly plugin: string; readonly name: string };
   /** Reads the links of the content from where the layout puts the file. */
-  readonly links?: (content: string) => string;
+  readonly links?: LinkForm;
   /** Writes the content as the tool keeps this kind of file, frontmatter included. */
   readonly shape?: (content: string) => string;
   /** The folder the entry is named after: for a tool that finds a skill by that name. */
@@ -34,7 +35,7 @@ export interface ComponentPlan {
 export function applyPlan(plan: ComponentPlan): OutputFile {
   const { guard, path } = plan;
   if (guard) assertNoToolsPlaceholder(plan.content, guard.plugin, guard.name);
-  const linked = plan.links ? plan.links(plan.content) : plan.content;
+  const linked = plan.links ? rewriteLinks(plan.content, plan.links) : plan.content;
   const shaped = plan.shape ? plan.shape(linked) : linked;
   const named = plan.namedAfterFolder ? namedAfterFolder(shaped, path) : shaped;
   const rooted = withRootToken(named, plan.rootToken);

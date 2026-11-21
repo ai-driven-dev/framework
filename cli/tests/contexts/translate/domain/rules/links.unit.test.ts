@@ -1,6 +1,9 @@
 import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
-import { rewriteRelativeLinks } from "../../../../../src/contexts/translate/domain/rules/links.js";
+import {
+  rewriteLinks,
+  rewriteRelativeLinks,
+} from "../../../../../src/contexts/translate/domain/rules/links.js";
 
 // One options object serves them all: the third branch is not reached by @./ or @../.
 const STABLE_OPTS = { currentFilePluginRelative: "skills/foo/SKILL.md" };
@@ -169,5 +172,17 @@ describe("rewriteRelativeLinks", () => {
         })
       ).toBe(`[${posix.basename(target)}](${link})`);
     });
+  });
+});
+
+describe("rewriteLinks", () => {
+  it("reads a link the way the tool does when the layout keeps the tool's form", () => {
+    expect(rewriteLinks("a @./x", { kind: "tool", rewrite: (text) => text.toUpperCase() })).toBe(
+      "A @./X"
+    );
+  });
+
+  it("reads a link as a markdown link when the layout keeps the relative form", () => {
+    expect(rewriteLinks("a @./x", { kind: "relative", ...STABLE_OPTS })).toBe("a [x](./x)");
   });
 });
