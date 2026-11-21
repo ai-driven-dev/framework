@@ -13,6 +13,7 @@ import {
   contractReaderViolations,
   controllerBuildsErrorViolations,
   drivingPortViolations,
+  errorTextViolations,
   errorViolations,
   instructionViolations,
   isPortFile,
@@ -119,6 +120,29 @@ describe("an error class is thrown", () => {
     const declaring = Object.keys(files).filter((path) => path.endsWith(".error.ts"));
     expect(declaring.length, "the catalog moved").toBeGreaterThan(0);
     expectNone(errorViolations(files, declaring));
+  });
+});
+
+describe("an error carries no text", () => {
+  const found = (body: string) =>
+    entries(errorTextViolations({ "src/a/domain/a.error.ts": body, "src/a/b.ts": "super('x');" }));
+
+  it("flags a string, a template with and without substitution handed to super", () => {
+    expect(found('class A { constructor() { super("words"); } }')).toHaveLength(1);
+    expect(found("class A { constructor() { super(`words`); } }")).toHaveLength(1);
+    expect(found("class A { constructor(x: string) { super(`words $" + "{x}`); } }")).toHaveLength(
+      1
+    );
+  });
+
+  it("clears a cause only, and reads no file that is not an error", () => {
+    expect(found("class A { constructor(o?: ErrorOptions) { super(o); } }")).toEqual([]);
+    expect(found("class A { constructor() { super(); } }")).toEqual([]);
+    expect(found('class A { constructor(o?: ErrorOptions) { super("", o); } }')).toEqual([]);
+  });
+
+  it("holds the tree", () => {
+    expectNone(errorTextViolations(src()));
   });
 });
 

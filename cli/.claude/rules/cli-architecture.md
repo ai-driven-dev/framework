@@ -32,8 +32,8 @@ Allowed edges are the rows of `ALLOWED` in `tests/architecture/allowed-edges.ts`
 ## Commands, errors, size and names
 
 - A use case is one file with one class of the same name, a public `execute` and at most 5 constructor dependencies: the `shape` rule of `kinds.ts`.
-- An error is a class in the `<owner>.error.ts` of its context, of `orchestration/`, of `presentation/`, or of `shared/domain/` when two contexts need it; each class there is thrown: `errors-that-are-thrown.arch.test.ts`.
-- A message naming a command names a real one: `errors-that-instruct.arch.test.ts`.
+- An error is a class in the `<owner>.error.ts` of its context, of `orchestration/`, of `presentation/`, or of `shared/domain/` when two contexts need it; each class there is thrown and carries a code and its data, never text; the words live in `presentation/errors/error-messages.presenter.ts`: the `thrown` and `errorText` rules of `kinds.rules.arch.test.ts`.
+- A message naming a command names a real one: the `instructs` rule of `kinds.rules.arch.test.ts`.
 - An empty catch is a failure unless a `biome-ignore lint/plugin: <reason>` above its `try` says why (`biome-plugins/no-swallowed-catch.grit`).
 - A `*-all` flow over several scopes catches each scope into `errors[]` and returns them, so one failure never aborts the run.
 - `process.exit` stays in the composition root, which hands presentation an `Output` port ending the run: [`3-cli-process.md`](03-frameworks-and-libraries/3-cli-process.md).
