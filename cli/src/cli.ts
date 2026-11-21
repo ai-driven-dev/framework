@@ -59,7 +59,9 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop(menuOfProject, resolveProjectRoot(), createOutput(false));
+  runMenuLoop(menuOfProject, resolveProjectRoot(), createOutput(false)).catch((error: unknown) =>
+    failCommand(outputOf(program), error)
+  );
 } else {
   program.parseAsync(process.argv).catch((error: unknown) => failCommand(outputOf(program), error));
 }
