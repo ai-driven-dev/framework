@@ -21,7 +21,7 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-// Imports its one argument as a module in THIS process, under a non-empty `process.argv` —
+// Imports its one argument as a module in THIS process, under a non-empty `process.argv`:
 // the same shape a real host provides, inherited by what the import evaluates.
 const IMPORT_HARNESS =
   'import(process.argv[2]).then(() => { console.log("HOST ALIVE"); process.exit(0); })' +
@@ -212,7 +212,7 @@ describe("opencode's generated event bridge, against the real build", () => {
   });
 });
 
-describe("opencode flat build — nothing hostile lands where the loader imports it", () => {
+describe("opencode flat build: nothing hostile lands where the loader imports it", () => {
   it("relocates a hook script out of .opencode/plugin/; whatever remains survives import with a live argv", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("oc-hooks-guard");
     try {
@@ -239,8 +239,8 @@ describe("opencode flat build — nothing hostile lands where the loader imports
       expect(existsSync(join(outDir, ".opencode", "hooks", "aidd-test", "hostile.js"))).toBe(true);
       expect(existsSync(join(outDir, ".opencode", "plugin", "hostile.js"))).toBe(false);
 
-      // (b) exactly the renamed loader entry remains — not zero files, which would make the
-      // import loop below pass over nothing — and it survives import with a live argv.
+      // (b) exactly the renamed loader entry remains, not zero files, which would make the
+      // import loop below pass over nothing, and it survives import with a live argv.
       const pluginDir = join(outDir, ".opencode", "plugin");
       const remaining = existsSync(pluginDir) ? await readdir(pluginDir) : [];
       expect(remaining).toEqual(["aidd-test.js"]);

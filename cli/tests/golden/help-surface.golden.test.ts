@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
 import { expectGolden } from "./testing/expect-golden.builder.js";
 
@@ -75,4 +76,17 @@ describe("help surface", () => {
       await cleanup();
     }
   }, 120000);
+
+  // The build embeds only `version` from the manifest, and the tree above masks it.
+  it("prints the manifest version", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-version");
+    try {
+      const { version } = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+      const { stdout } = await runCli(["--version"], projectDir, fakeHome);
+
+      expect(stdout.split(" ")[0]).toBe(`aidd/${version}`);
+    } finally {
+      await cleanup();
+    }
+  });
 });
