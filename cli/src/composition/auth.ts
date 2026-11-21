@@ -5,8 +5,8 @@ import { LogOut } from "../contexts/auth/application/log-out.js";
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
 import { CredentialRecordFileAdapter } from "../contexts/auth/infrastructure/credential-record-file-adapter.js";
 import { GhCliAdapter } from "../contexts/auth/infrastructure/gh-cli-adapter.js";
-import { GitHubAdapter } from "../contexts/auth/infrastructure/github-adapter.js";
 import type { CliAuthProvider } from "../contexts/auth/ports/cli-auth-provider.js";
+import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
@@ -38,14 +38,19 @@ export function wireAuth(shared: AuthWiring): AuthDeps {
   const cliProviders = new Map<string, CliAuthProvider>([["gh", gh]]);
   const identity = new GitHubAdapter(shared.http);
   return {
-    tokenProvider: new CachedTokenProvider(
+    tokenProvider: new CachedTokenProvider({
       records,
-      { commandLine: shared.explicitToken, environment: shared.environment },
-      gh,
-      shared.logger
-    ),
+      supplied: { commandLine: shared.explicitToken, environment: shared.environment },
+      externalTokens: gh,
+      logger: shared.logger,
+    }),
     logIn: new LogIn(records, identity, cliProviders),
     logOut: new LogOut(records),
-    checkStatus: new CheckStatus(records, shared.environment, identity, cliProviders),
+    checkStatus: new CheckStatus({
+      records,
+      environment: shared.environment,
+      identity,
+      cliProviders,
+    }),
   };
 }

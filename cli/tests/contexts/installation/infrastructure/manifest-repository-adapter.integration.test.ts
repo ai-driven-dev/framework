@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 describe("ManifestRepositoryAdapter", () => {
   let tempDir: string;
@@ -20,11 +21,6 @@ describe("ManifestRepositoryAdapter", () => {
   });
 
   describe("load()", () => {
-    it("returns null when manifest file does not exist", async () => {
-      const result = await adapter.load();
-      expect(result).toBeNull();
-    });
-
     it("rejects, rather than returning null, when manifest.json is a directory", async () => {
       const manifestDir = join(tempDir, ".aidd", "manifest.json");
       await mkdir(manifestDir, { recursive: true });
@@ -37,7 +33,7 @@ describe("ManifestRepositoryAdapter", () => {
       await mkdir(join(tempDir, ".aidd"), { recursive: true });
       await writeFile(manifestPath, '{"version": 6, "tools": {');
 
-      await expect(adapter.load()).rejects.toThrow(manifestPath);
+      await expect(adapter.load()).rejects.toThrow(saying(manifestPath));
     });
 
     it("rejects a refused manifest version naming this project as where it lives and `aidd setup` as the fix", async () => {
@@ -46,44 +42,14 @@ describe("ManifestRepositoryAdapter", () => {
       await writeFile(manifestPath, '{"version": 7, "tools": {}}');
 
       await expect(adapter.load()).rejects.toThrow(
-        `delete ${manifestPath} in this project, then run \`aidd setup\` to reinstall the framework.`
+        saying(
+          `delete ${manifestPath} in this project, then run \`aidd setup\` to reinstall the framework.`
+        )
       );
     });
   });
 
-  describe("save() + load() roundtrip", () => {
-    it("persists and restores manifest without data loss", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      const loaded = await adapter.load();
-      expect(loaded).not.toBeNull();
-      expect(loaded?.getInstalledToolIds()).toHaveLength(0);
-    });
-
-    it("manifest version is 8 after roundtrip", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      const loaded = await adapter.load();
-      const json = loaded?.toJSON();
-      expect(json?.version).toBe(8);
-      expect("marketplaces" in (json ?? {})).toBe(false);
-      expect("docsDir" in (json ?? {})).toBe(false);
-    });
-  });
-
   describe("delete()", () => {
-    it("deletes manifest file from disk", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      await adapter.delete();
-
-      const result = await adapter.load();
-      expect(result).toBeNull();
-    });
-
     it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);

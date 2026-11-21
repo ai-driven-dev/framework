@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),
@@ -150,7 +150,7 @@ describe("CopilotCliAdapter", () => {
         upgradeVerb: "update",
         enableVerb: "install",
       }).enablePlugin("ghost@m1")
-    ).toThrow("Marketplace");
+    ).toThrow(expect.objectContaining({ detail: expect.stringContaining("Marketplace") }));
   });
 
   it("uninstalls a plugin via `copilot plugin uninstall <ref>`", () => {

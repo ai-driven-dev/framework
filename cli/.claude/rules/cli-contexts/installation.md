@@ -9,24 +9,27 @@ paths:
 
 ## Reason to change
 
-- What the project records as installed, and how a tool's files are written, restored, updated or reported against that record.
-- Its language is `src/contexts/installation/glossary.md`; a name in the code means what that page says.
-- Its shape is the strict reference: `reference-context.md`, beside this page.
+- What the project records as installed, and how a tool's files are written, restored, updated or reported against it. Its language is `src/contexts/installation/glossary.md`; its shape is `reference-context.md`.
 
 ## Ports
 
-- `ManifestRepository`, `FileMerger`, `Platform`, `PluginDistributionReader`: held here, implemented by this context's adapters. Composition hands each to the commands.
-- No contract kit yet for these four. The reservations are in `aidd_docs/memory/internal/installation.md`.
+- `ManifestRepository`, `FileMerger`, `Platform`, `PluginDistributionReader`: held here, implemented by its adapters, no contract kit yet.
 
 ## Suppliers
 
-- `tools`: the `ToolCatalog`, each profile's capabilities and the config artifacts it consumes.
-- `translate`: the canonical content and its translators. Transitional, M-S1 in `reference-context.md`.
-- `distribution`, `host-registration`: transitional, M-I1 in `reference-context.md`, with the exact imports.
-- `shared/`: errors, `Logger`, paths, the source value and the file ports.
+- `tools`: `tools/contract/` only; the `ToolCatalog`, and readers name the profile sections they read in `ports/tool-sections.ts`, except the readers that hand the profile to `translate`, listed in the migration state of the reference.
+- `translate`, `host-registration`, `distribution`: none; each is handed in as a value satisfying this context's own `ports/` (`plugin/plugin-translation.ts`, `native-host.ts`, `marketplace-sources.ts`).
+- `shared/`: errors, `Logger`, paths, the source value, file ports.
+
+## Rules
+
+- The manifest root delegates to `domain/manifest/`; a new tracked concept is a module there, never a field of the root. `isFileTracked` reads `files`, `mergeFiles` and each plugin's files; uninstall and clean delete merge files too.
+- The manifest reads exactly `MANIFEST_VERSION`, and refuses any other version with the fix named.
+- An untracked config file that exists is the user's: `TrackedConfigFiles.isUserOwned` skips the write and warns.
+- A flow that installs files ends with `RunPostInstallPipeline` (manifest save, then gitignore); one that only changes the manifest saves it directly.
 
 ## Never
 
-- Import `framework/`, `telemetry/` or `presentation/`: framework asks installation for a flow, installation never asks back.
-- Name a tool: a profile declares what it consumes, and restore reads the artifacts it names. A tool id in `application/` is a defect, and `tool-addition-cost.arch.test.ts` fails on it.
-- Change what a command prints or writes: the use-case tests, the e2e suite and the goldens freeze the behaviour.
+- Import `orchestration/`, `telemetry/` or `presentation/`: they ask installation for a flow, never the reverse.
+- Name a tool in `application/`: a profile declares what it consumes, held by `tool-addition-cost.arch.test.ts`.
+- Change what a command prints or writes: use-case tests, e2e and goldens freeze it.

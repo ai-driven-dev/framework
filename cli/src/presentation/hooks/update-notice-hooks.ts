@@ -1,6 +1,7 @@
 import type { Command } from "commander";
-import type { DepsSliceFactory } from "../deps.js";
-import { CLIOutput } from "../output.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
+import { outputOf } from "../commands/global-options.js";
+import { render } from "../errors/error-translator.presenter.js";
 
 /** What this command reads of the graph. */
 type UpdateNoticeKeys = "printUpdateNotice" | "logger" | "refreshUpdateCheck";
@@ -15,6 +16,25 @@ const ONLINE_COMMAND_PATHS = new Set([
   "sync",
 ]);
 
+/** The graph a hook reads, or nothing when it cannot be built: a hook never fails the command. */
+function graphOf(program: Command, createDeps: DepsSliceFactory<UpdateNoticeKeys>) {
+  const { verbose } = program.opts<{ verbose?: boolean }>();
+  return createDeps(process.cwd(), { verbose: verbose ?? false }, outputOf(program)).catch(
+    () => null
+  );
+}
+
+/** The lines that tell a person a newer release exists and what to run. */
+export function describeUpdateNotice({
+  current,
+  latest,
+}: {
+  current: string;
+  latest: string;
+}): string[] {
+  return [`CLI update available: v${current} → v${latest}`, "Run `aidd update`."];
+}
+
 export function registerUpdateNoticeHooks(
   program: Command,
   createDeps: DepsSliceFactory<UpdateNoticeKeys>
@@ -23,24 +43,19 @@ export function registerUpdateNoticeHooks(
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
     if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
-    const opts = program.opts<{ verbose?: boolean }>();
-    const output = new CLIOutput(opts.verbose ?? false);
-    const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-      () => null
-    );
+    const deps = await graphOf(program, createDeps);
     if (!deps) return;
     // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
     // `update` resolves the latest version on its own, so the generic check is redundant.
     if (actionCommand.name() === "update") return;
     await deps.printUpdateNotice
       .execute()
-      .then(({ lines }) => {
-        for (const line of lines) deps.logger.warn(line);
+      .then(({ notice }) => {
+        if (notice === null) return;
+        for (const line of describeUpdateNotice(notice)) deps.logger.warn(line);
       })
       .catch((err: unknown) => {
-        deps.logger.debug(
-          `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
-        );
+        deps.logger.debug(`CLI update check failed: ${render(err)}`);
       });
   });
 
@@ -51,16 +66,10 @@ export function registerUpdateNoticeHooks(
     // its expectations. Same switch shape as AIDD_SKIP_MARKETPLACE_REFRESH, same reason.
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
-    const opts = program.opts<{ verbose?: boolean }>();
-    const output = new CLIOutput(opts.verbose ?? false);
-    const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-      () => null
-    );
+    const deps = await graphOf(program, createDeps);
     if (!deps) return;
     await deps.refreshUpdateCheck.execute().catch((err: unknown) => {
-      deps.logger.debug(
-        `CLI update refresh failed: ${err instanceof Error ? err.message : String(err)}`
-      );
+      deps.logger.debug(`CLI update refresh failed: ${render(err)}`);
     });
   });
 }

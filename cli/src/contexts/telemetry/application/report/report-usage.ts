@@ -9,16 +9,16 @@ import {
 import type { ReportAxis, UsageReport } from "../../contract/usage-report.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, windowOf } from "../../domain/report/period.js";
-import { conflictsOf, matchesFilter, resolveId } from "../../domain/report/report-filter.js";
+import { conflictsOf, matchesFilter } from "../../domain/report/report-filter.js";
 import { buildReport } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
-import type { StoredUsage } from "../../domain/stored-usage.js";
-import { measurementRefused } from "../../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestUsage, IngestUsageResult } from "../ingest-usage.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
+import { type AmbiguousStart, resolvedFilters } from "./resolved-filters.js";
 
 /** The filters as typed: a session or repository may be the start of an id. A repository is
  * either typed, or `--repository .`, the directory `here` whose repository is asked for; never
@@ -33,9 +33,6 @@ export interface ReportUsageCommand {
   /** None given: every call of the period. */
   readonly filters?: RequestedFilters;
 }
-
-/** The flags typed as the start of an id. */
-type PrefixFlag = "session" | "repository";
 
 /** What the figures rest on, so a reader can tell a small number from a missing one. Like the
  * figures, a function of what is stored and asked alone. */
@@ -70,12 +67,7 @@ export type ReportUsageResult =
   /** `.` was asked for in a directory that names no repository. */
   | { readonly status: "not-a-repository" }
   /** A start two ids or more of the period share, all of them, sorted. */
-  | {
-      readonly status: "ambiguous";
-      readonly flag: PrefixFlag;
-      readonly typed: string;
-      readonly ids: readonly string[];
-    }
+  | AmbiguousStart
   | {
       readonly status: "reported";
       readonly period: Period;
@@ -85,6 +77,15 @@ export type ReportUsageResult =
       readonly coverage: ReportCoverage;
       readonly run: ReportRun;
     };
+
+interface ReportUsageDeps {
+  /** Only its run is used: whatever it found is the report's `run`, never a figure. */
+  readonly ingest: Pick<IngestUsage, "execute">;
+  readonly ledger: UsageLedger;
+  readonly declared: DeclaredBindings;
+  readonly locator: RepositoryLocator;
+  readonly environment: Environment;
+}
 
 /** Reads what is new, then answers what the stored calls consumed in a period, split along one
  * axis. The ledger holds facts only: what a call belongs to is worked out here, every time, from
@@ -99,14 +100,7 @@ export type ReportUsageResult =
  * on one axis are refused first, then the environment's refusal, then `.` is located, before
  * anything is read: refusal means no git is run either. */
 export class ReportUsage {
-  constructor(
-    /** Only its run is used: whatever it found is the report's `run`, never a figure. */
-    private readonly ingest: Pick<IngestUsage, "execute">,
-    private readonly ledger: UsageLedger,
-    private readonly declared: DeclaredBindings,
-    private readonly locator: RepositoryLocator,
-    private readonly environment: Environment
-  ) {}
+  constructor(private readonly deps: ReportUsageDeps) {}
 
   async execute(request: ReportUsageCommand): Promise<ReportUsageResult> {
     const { here, ...asked }: RequestedFilters = request.filters ?? NO_FILTERS;
@@ -114,63 +108,56 @@ export class ReportUsage {
     if (conflict !== undefined) {
       return { status: "conflicting", flags: conflict, absent: asked.absent };
     }
-    if (measurementRefused(this.environment)) return { status: "refused" };
+    if (measurementRefused(this.deps.environment.get(MEASUREMENT_SWITCH))) {
+      return { status: "refused" };
+    }
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
-    const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =
-      await this.ingest.execute();
-    const [held, leftOut] = await this.ledger.exclusively(async () => [
-      await settleLedger(this.ledger, windowOf(request.period)),
-      await this.ledger.leftOut.counts(),
-    ]);
+    const ingested = await this.deps.ingest.execute();
+    const { held, leftOut } = await this.settled(request.period);
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
-    const session = resolvedIn(records, "session", asked.session);
-    if ("status" in session) return session;
-    // `.` names one repository in full: it is never the start of another.
-    const repository =
-      located === undefined ? resolvedIn(records, "repository", asked.repository) : { id: located };
-    if ("status" in repository) return repository;
-    const filters: ReportFilters = { ...asked, session: session.id, repository: repository.id };
-    const { facts, person } = await this.declared.read();
+    const filters = resolvedFilters(records, asked, located);
+    if ("status" in filters) return filters;
+    const { facts, person } = await this.deps.declared.read();
     const selected = records.filter((record) =>
-      matchesFilter(filters, record, attribute(record, facts), person)
+      matchesFilter({ filters, record, attribution: attribute(record, facts), person })
     );
     return {
       status: "reported",
       period: request.period,
       filters,
-      report: buildReport(selected, facts, person, request.axis),
+      report: buildReport({ records: selected, facts, person, axis: request.axis }),
       coverage: { records: records.length, leftOut },
-      run: {
-        filesRead,
-        unrecognised,
-        notStored,
-        consentLogDamaged,
-        oldestTranscriptAt,
-        skippedLedgerLines: held.skippedLines,
-      },
+      run: { ...runOf(ingested), skippedLedgerLines: held.skippedLines },
     };
+  }
+
+  private async settled(period: Period) {
+    const { ledger } = this.deps;
+    const [held, leftOut] = await ledger.exclusively(async () => [
+      await settleLedger(ledger, windowOf(period)),
+      await ledger.leftOut.counts(),
+    ]);
+    return { held, leftOut };
   }
 
   /** The repository a directory is in, named as ingest names it; `null` when it names none. */
   private async repositoryIn(dir: string): Promise<string | null> {
-    const located = await this.locator.locate(dir);
+    const located = await this.deps.locator.locate(dir);
     return located.status === "repository" ? repositoryIdOf(located) : null;
   }
 }
 
-/** A session or repository typed in full or by its start, among the ids of the period's calls.
- * A start that names none is kept as typed, and keeps no call. */
-function resolvedIn(
-  records: readonly StoredUsage[],
-  flag: PrefixFlag,
-  typed: string | null
-): { readonly id: string | null } | Extract<ReportUsageResult, { status: "ambiguous" }> {
-  if (typed === null) return { id: null };
-  const found = resolveId(
-    typed,
-    records.map((record) => (flag === "session" ? record.session_id : record.repository_id))
-  );
-  if (found.kind === "ambiguous") return { status: "ambiguous", flag, typed, ids: found.ids };
-  return { id: found.kind === "found" ? found.id : typed };
-}
+const runOf = ({
+  filesRead,
+  unrecognised,
+  notStored,
+  consentLogDamaged,
+  oldestTranscriptAt,
+}: IngestUsageResult) => ({
+  filesRead,
+  unrecognised,
+  notStored,
+  consentLogDamaged,
+  oldestTranscriptAt,
+});

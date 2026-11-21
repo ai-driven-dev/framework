@@ -20,9 +20,10 @@ import {
 } from "../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import {
   consentOf,
+  MEASUREMENT_SWITCH,
   measurementRefused,
 } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 /** The contract between the CLI and the plugin hooks: the hook tests read these same files. */
 const FIXTURE = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "telemetry-bindings");
@@ -115,7 +116,7 @@ describe("the shared fixture of task bindings", () => {
   it("has an answer for every case and a case for every answer", () => {
     for (const section of Object.keys(expected)) {
       expect(Object.keys(expected[section] ?? {}).sort(), section).toEqual(
-        Object.keys((cases as Record<string, object>)[section] ?? {}).sort()
+        Object.keys(Object.fromEntries(Object.entries(cases))[section] ?? {}).sort()
       );
     }
     expect(Object.keys(expected).sort()).toEqual(Object.keys(cases).sort());
@@ -228,7 +229,7 @@ describe("the shared fixture of task bindings", () => {
   });
 
   it.each(Object.entries(cases.environmentRefusal))("refuses on %s", (name, env) => {
-    expect(measurementRefused({ get: (k) => env[k] })).toBe(expected.environmentRefusal?.[name]);
+    expect(measurementRefused(env[MEASUREMENT_SWITCH])).toBe(expected.environmentRefusal?.[name]);
   });
 
   it.each(Object.entries(cases.telemetryDir))("finds the telemetry dir for %s", (name, input) => {

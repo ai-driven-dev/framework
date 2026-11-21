@@ -1,31 +1,29 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
+  withoutMissingFiles,
 } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { MachinePlugin } from "../testing/machine-plugin.fake.js";
 
 const HOME = "/home/u";
 const BOUNDARY = join(HOME, ".cursor", "plugins", "local");
+const PLUGIN_DIR = join(BOUNDARY, "aidd-test");
 const CONTENT = "owned bytes";
-const HASH = createHash("md5").update(CONTENT).digest("hex");
+const HASH = FileHash.of(CONTENT).value;
 
-function plugin(files: Record<string, string>): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
-    name: "aidd-test",
-    source: { kind: "local", path: "/some/path" },
-    version: "1.0.0",
-    strict: false,
-    files,
-    scope: "user",
-  });
+function plugin(files: Record<string, string>): MachinePlugin {
+  return new MachinePlugin({ name: "aidd-test", files });
 }
 
 describe("userScopeFilesSafeToDelete", () => {
@@ -33,11 +31,9 @@ describe("userScopeFilesSafeToDelete", () => {
     const logger = new CapturingLogger();
 
     const safe = await userScopeFilesSafeToDelete(
-      new InMemoryFileAdapter(),
-      logger,
+      { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), logger, home: HOME },
       plugin({ "aidd-test/a.md": HASH }),
-      registeredAiProfile(TOOL.claude),
-      HOME
+      registeredTools().aiProfile(TOOL.claude)
     );
 
     expect([...safe]).toStrictEqual([]);
@@ -48,11 +44,9 @@ describe("userScopeFilesSafeToDelete", () => {
     const logger = new CapturingLogger();
 
     const safe = await userScopeFilesSafeToDelete(
-      new InMemoryFileAdapter(),
-      logger,
+      { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), logger, home: HOME },
       plugin({ "../escape.md": HASH }),
-      registeredAiProfile(TOOL.cursor),
-      HOME
+      registeredTools().aiProfile(TOOL.cursor)
     );
 
     expect([...safe]).toStrictEqual([]);
@@ -62,16 +56,14 @@ describe("userScopeFilesSafeToDelete", () => {
   });
 
   it("answers nothing, silently, when the user-scope directory itself does not exist", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
     fs.failOn("realpath", BOUNDARY, errnoError("ENOENT"));
     const logger = new CapturingLogger();
 
     const safe = await userScopeFilesSafeToDelete(
-      fs,
-      logger,
+      { fs, logger, home: HOME },
       plugin({ "aidd-test/a.md": HASH }),
-      registeredAiProfile(TOOL.cursor),
-      HOME
+      registeredTools().aiProfile(TOOL.cursor)
     );
 
     expect([...safe]).toStrictEqual([]);
@@ -79,17 +71,15 @@ describe("userScopeFilesSafeToDelete", () => {
   });
 
   it("names and leaves in place a file that no longer exists", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
     fs.failOn("realpath", join(BOUNDARY, "aidd-test", "gone.md"), errnoError("ENOENT"));
     const logger = new CapturingLogger();
     fs.setFile(join(BOUNDARY, "aidd-test", "a.md"), CONTENT);
 
     const safe = await userScopeFilesSafeToDelete(
-      fs,
-      logger,
+      { fs, logger, home: HOME },
       plugin({ "aidd-test/gone.md": HASH, "aidd-test/a.md": HASH }),
-      registeredAiProfile(TOOL.cursor),
-      HOME
+      registeredTools().aiProfile(TOOL.cursor)
     );
 
     expect([...safe]).toStrictEqual([["aidd-test/a.md", HASH]]);
@@ -99,16 +89,14 @@ describe("userScopeFilesSafeToDelete", () => {
   });
 
   it("propagates a resolution failure other than absence", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
     fs.failOn("realpath", join(BOUNDARY, "aidd-test", "a.md"), errnoError("EACCES"));
 
     await expect(
       userScopeFilesSafeToDelete(
-        fs,
-        new CapturingLogger(),
+        { fs, logger: new CapturingLogger(), home: HOME },
         plugin({ "aidd-test/a.md": HASH }),
-        registeredAiProfile(TOOL.cursor),
-        HOME
+        registeredTools().aiProfile(TOOL.cursor)
       )
     ).rejects.toThrow("EACCES: planted by the test");
   });
@@ -118,11 +106,9 @@ describe("userScopeFilesSafeToDelete", () => {
     const fs = new InMemoryFileAdapter({ [path]: "user-edited bytes" });
     await expect(
       userScopeFilesSafeToDelete(
-        fs,
-        new CapturingLogger(),
+        { fs, logger: new CapturingLogger(), home: HOME },
         plugin({ "aidd-test/plugin.json": HASH }),
-        registeredAiProfile(TOOL.cursor),
-        HOME
+        registeredTools().aiProfile(TOOL.cursor)
       )
     ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
     expect(fs.getFile(path)).toBe("user-edited bytes");
@@ -130,27 +116,54 @@ describe("userScopeFilesSafeToDelete", () => {
 
   it("refuses an unproven legacy digest and a failed content read", async () => {
     const path = join(BOUNDARY, "aidd-test", "script.js");
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
     fs.setFile(path, CONTENT);
     await expect(
       userScopeFilesSafeToDelete(
-        fs,
-        new CapturingLogger(),
+        { fs, logger: new CapturingLogger(), home: HOME },
         plugin({ "aidd-test/script.js": "" }),
-        registeredAiProfile(TOOL.cursor),
-        HOME
+        registeredTools().aiProfile(TOOL.cursor)
       )
     ).rejects.toThrow(/unproven.*script.js|script.js.*unproven/);
     fs.failOn("readFile", path, errnoError("EACCES"));
     await expect(
       userScopeFilesSafeToDelete(
-        fs,
-        new CapturingLogger(),
+        { fs, logger: new CapturingLogger(), home: HOME },
         plugin({ "aidd-test/script.js": HASH }),
-        registeredAiProfile(TOOL.cursor),
-        HOME
+        registeredTools().aiProfile(TOOL.cursor)
       )
     ).rejects.toThrow(/EACCES/);
+  });
+});
+
+describe("withoutMissingFiles", () => {
+  it("hands back the same plugin when the tool has no user-scope plugin directory", async () => {
+    const recorded = plugin({ "aidd-test/a.md": HASH });
+
+    const kept = await withoutMissingFiles(
+      { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), home: HOME },
+      recorded,
+      registeredTools().aiProfile(TOOL.claude)
+    );
+
+    expect(kept).toBe(recorded);
+  });
+});
+
+describe("a recorded install digest", () => {
+  it.each([
+    ["a prefix", `x${HASH}`],
+    ["a suffix", `${HASH}x`],
+  ])("is refused when it carries %s beyond the 32 hex digits", async (_label, digest) => {
+    const fs = new InMemoryFileAdapter({}, [PLUGIN_DIR]);
+    fs.setFile(join(BOUNDARY, "aidd-test", "script.js"), CONTENT);
+    await expect(
+      userScopeFilesSafeToDelete(
+        { fs, logger: new CapturingLogger(), home: HOME },
+        plugin({ "aidd-test/script.js": digest }),
+        registeredTools().aiProfile(TOOL.cursor)
+      )
+    ).rejects.toThrow(/unproven/);
   });
 });
 
@@ -165,11 +178,9 @@ describe("assertUserScopeWriteBoundary", () => {
   it("refuses a tool without a declared user plugins directory", async () => {
     await expect(
       assertUserScopeWriteBoundary(
-        new InMemoryFileAdapter(),
-        registeredAiProfile(TOOL.claude),
-        "aidd-test",
-        [file("aidd-test/a.md")],
-        HOME
+        { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), home: HOME },
+        registeredTools().aiProfile(TOOL.claude),
+        { pluginName: "aidd-test", files: [file("aidd-test/a.md")] }
       )
     ).rejects.toThrow(/no user plugins directory/);
   });
@@ -177,40 +188,34 @@ describe("assertUserScopeWriteBoundary", () => {
   it.each([BOUNDARY, join(BOUNDARY, "aidd-test")])(
     "propagates an unreadable write boundary at %s",
     async (path) => {
-      const fs = new FaultingFileAdapter();
+      const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
       const error = errnoError("EACCES");
       fs.failOn("realpath", path, error);
 
       await expect(
-        assertUserScopeWriteBoundary(
-          fs,
-          registeredAiProfile(TOOL.cursor),
-          "aidd-test",
-          [file("aidd-test/a.md")],
-          HOME
-        )
+        assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+          pluginName: "aidd-test",
+          files: [file("aidd-test/a.md")],
+        })
       ).rejects.toBe(error);
     }
   );
 
   it("allows missing nested parents only after resolving an existing safe ancestor", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
     fs.failOn("realpath", join(BOUNDARY, "aidd-test/skills/new"), errnoError("ENOENT"));
     fs.failOn("realpath", join(BOUNDARY, "aidd-test/skills"), errnoError("ENOENT"));
 
     await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/new/SKILL.md")],
-        HOME
-      )
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [file("aidd-test/skills/new/SKILL.md")],
+      })
     ).resolves.toBeUndefined();
   });
 
   it("refuses a plugin directory that disappears after the initial boundary check", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PLUGIN_DIR]);
     const pluginDir = join(BOUNDARY, "aidd-test");
     let pluginReads = 0;
     vi.spyOn(fs, "realpath").mockImplementation(async (path) => {
@@ -220,26 +225,20 @@ describe("assertUserScopeWriteBoundary", () => {
     });
 
     await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/new/SKILL.md")],
-        HOME
-      )
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [file("aidd-test/skills/new/SKILL.md")],
+      })
     ).rejects.toThrow(/directory disappeared during update/);
   });
 
   it("allows a new file only within the owned plugin directory", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PLUGIN_DIR]);
     await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/demo/SKILL.md")],
-        HOME
-      )
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [file("aidd-test/skills/demo/SKILL.md")],
+      })
     ).resolves.toBeUndefined();
   });
 
@@ -252,126 +251,108 @@ describe("assertUserScopeWriteBoundary", () => {
   ])("refuses the untrusted machine update path %s", async (relativePath) => {
     await expect(
       assertUserScopeWriteBoundary(
-        new InMemoryFileAdapter(),
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file(relativePath)],
-        HOME
+        { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), home: HOME },
+        registeredTools().aiProfile(TOOL.cursor),
+        { pluginName: "aidd-test", files: [file(relativePath)] }
       )
     ).rejects.toThrow(/escapes its plugin directory/);
   });
 
   it("refuses a plugin directory symlink that resolves outside its user-scope base", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PLUGIN_DIR]);
     fs.setSymlink(join(BOUNDARY, "aidd-test"), "/foreign/aidd-test");
     await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/demo/SKILL.md")],
-        HOME
-      )
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [file("aidd-test/skills/demo/SKILL.md")],
+      })
     ).rejects.toThrow(/directory is not safely inside/);
   });
 
   it("refuses a nested parent symlink before writing new bytes", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PLUGIN_DIR, "/foreign/skills"]);
     fs.setSymlink(join(BOUNDARY, "aidd-test/skills"), "/foreign/skills");
     await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/demo/SKILL.md")],
-        HOME
-      )
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [file("aidd-test/skills/demo/SKILL.md")],
+      })
     ).rejects.toThrow(/update parent.*escapes/);
   });
 
   it("refuses an absent plugin directory rather than inventing a safe write base", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
     fs.failOn("realpath", join(BOUNDARY, "aidd-test"), errnoError("ENOENT"));
     await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/demo/SKILL.md")],
-        HOME
-      )
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [file("aidd-test/skills/demo/SKILL.md")],
+      })
     ).rejects.toThrow(/directory is not safely inside/);
   });
 });
 
-describe("user-scope boundaries on a filesystem that rejects a missing path", () => {
-  const file = (relativePath: string) =>
-    new InstallationFile({
-      relativePath,
-      content: "new bytes",
-      hash: new FileHash("a".repeat(32)),
-    });
-  const strict = (seed: Record<string, string> = {}) =>
-    new InMemoryFileAdapter(seed).rejectMissingRealpath();
+describe("a profile that declares no plugins at all", () => {
+  const noPlugins = { ...registeredTools().aiProfile(TOOL.cursor), plugins: () => null };
+  const file = new InstallationFile({
+    relativePath: "aidd-test/a.md",
+    content: "new bytes",
+    hash: new FileHash("a".repeat(32)),
+  });
 
-  it("deletes nothing, silently, when the user-scope directory does not exist", async () => {
-    const logger = new CapturingLogger();
-
+  it("answers nothing safe to delete", async () => {
     const safe = await userScopeFilesSafeToDelete(
-      strict(),
-      logger,
+      {
+        fs: new InMemoryFileAdapter({ [join(BOUNDARY, "aidd-test/a.md")]: CONTENT }),
+        logger: new CapturingLogger(),
+        home: HOME,
+      },
       plugin({ "aidd-test/a.md": HASH }),
-      registeredAiProfile(TOOL.cursor),
-      HOME
+      noPlugins
     );
 
     expect([...safe]).toStrictEqual([]);
-    expect(logger.warnMessages).toStrictEqual([]);
   });
 
-  it("names and leaves in place a recorded file that no longer exists", async () => {
-    const logger = new CapturingLogger();
-    const fs = strict({ [join(BOUNDARY, "aidd-test", "a.md")]: CONTENT });
+  it("hands back the same plugin", async () => {
+    const recorded = plugin({ "aidd-test/a.md": HASH });
 
-    const safe = await userScopeFilesSafeToDelete(
-      fs,
-      logger,
-      plugin({ "aidd-test/gone.md": HASH, "aidd-test/a.md": HASH }),
-      registeredAiProfile(TOOL.cursor),
-      HOME
-    );
-
-    expect([...safe]).toStrictEqual([["aidd-test/a.md", HASH]]);
-    expect(logger.warnMessages).toStrictEqual([
-      `cursor: 'aidd-test' file 'aidd-test/gone.md' does not resolve inside ${BOUNDARY}; left in place.`,
-    ]);
+    expect(
+      await withoutMissingFiles(
+        { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), home: HOME },
+        recorded,
+        noPlugins
+      )
+    ).toBe(recorded);
   });
 
-  it("refuses an update when the plugin directory does not exist", async () => {
-    const fs = strict({ [join(BOUNDARY, "other", "f")]: "x" });
-
+  it("refuses to write", async () => {
     await expect(
       assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/a.md")],
-        HOME
+        { fs: new InMemoryFileAdapter({}, [PLUGIN_DIR]), home: HOME },
+        noPlugins,
+        { pluginName: "aidd-test", files: [file] }
       )
+    ).rejects.toThrow(/no user plugins directory/);
+  });
+});
+
+describe("a write boundary that vanished while its plugin directory resolves", () => {
+  it("is refused as unsafe, not dereferenced", async () => {
+    const fs = new FaultingFileAdapter({}, [PLUGIN_DIR]);
+    fs.failOn("realpath", BOUNDARY, errnoError("ENOENT"));
+
+    await expect(
+      assertUserScopeWriteBoundary({ fs, home: HOME }, registeredTools().aiProfile(TOOL.cursor), {
+        pluginName: "aidd-test",
+        files: [
+          new InstallationFile({
+            relativePath: "aidd-test/a.md",
+            content: "new bytes",
+            hash: new FileHash("a".repeat(32)),
+          }),
+        ],
+      })
     ).rejects.toThrow(/directory is not safely inside/);
-  });
-
-  it("allows missing nested parents once the plugin directory resolves", async () => {
-    const fs = strict({ [join(BOUNDARY, "aidd-test", "keep")]: "x" });
-
-    await expect(
-      assertUserScopeWriteBoundary(
-        fs,
-        registeredAiProfile(TOOL.cursor),
-        "aidd-test",
-        [file("aidd-test/skills/new/a.md")],
-        HOME
-      )
-    ).resolves.toBeUndefined();
   });
 });

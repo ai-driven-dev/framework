@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 
 describe("copilot mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps mcp to .vscode/mcp.json", () => {
-      expect(copilot.section("mcp").config?.outputPath()).toBe(".vscode/mcp.json");
+      expect(copilot.section("mcp").config?.accepts(".vscode/mcp.json")).toBe(true);
     });
   });
 

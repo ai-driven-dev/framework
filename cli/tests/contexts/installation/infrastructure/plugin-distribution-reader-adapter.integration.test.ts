@@ -2,30 +2,24 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
+import { InvalidPluginNameError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
-} from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import {
-  InvalidPluginManifestError,
-  InvalidPluginNameError,
-} from "../../../../src/shared/domain/errors.js";
+} from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InvalidPluginManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { MANIFEST_PROBES } from "../testing/manifest-probes.builder.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 
 function makeAdapter(): PluginDistributionReaderAdapter {
-  return new PluginDistributionReaderAdapter(
-    new FileAdapter(new HasherAdapter()),
-    registeredManifestProbes()
-  );
+  return new PluginDistributionReaderAdapter(new FileAdapter(), MANIFEST_PROBES);
 }
 
 function readInMemory(
@@ -38,10 +32,9 @@ function readInMemory(
   for (const [relativePath, content] of Object.entries(files)) {
     seed[`${IN_MEMORY_ROOT}/${relativePath}`] = content;
   }
-  return new PluginDistributionReaderAdapter(
-    new InMemoryFileAdapter(seed),
-    registeredManifestProbes()
-  ).read(IN_MEMORY_ROOT);
+  return new PluginDistributionReaderAdapter(new InMemoryFileAdapter(seed), MANIFEST_PROBES).read(
+    IN_MEMORY_ROOT
+  );
 }
 
 function byPath(a: PluginComponentFile, b: PluginComponentFile): number {
@@ -162,9 +155,9 @@ describe("PluginDistributionReaderAdapter", () => {
   });
 
   describe("a directory two tools could claim", () => {
-    // copilot accepts a bare root `plugin.json` and is declared before codex, so the probes
-    // are ordered deepest-path-first: read in declaration order, codex would read as copilot.
-    it("resolves to the tool whose location is the more specific one", async () => {
+    // the reader takes the first probe that resolves: with both manifests present, the one
+    // listed first names the format.
+    it("resolves to the format of the first probe that finds a manifest", async () => {
       const root = await mkdtemp(join(tmpdir(), "aidd-ambiguous-"));
       try {
         const manifest = JSON.stringify({ name: "sample-plugin", version: "1.0.0" });
@@ -209,7 +202,7 @@ describe("PluginDistributionReaderAdapter", () => {
     it("names the directory it searched", async () => {
       const reader = new PluginDistributionReaderAdapter(
         new InMemoryFileAdapter(),
-        registeredManifestProbes()
+        MANIFEST_PROBES
       );
 
       await expect(reader.read("/plugins/none")).rejects.toThrow(

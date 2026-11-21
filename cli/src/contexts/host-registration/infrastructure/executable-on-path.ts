@@ -34,7 +34,7 @@ export function resolveExecutableOnPath(
   lookup: ExecutableLookup
 ): string | undefined {
   // The platform described by the lookup decides how PATH splits and paths join, never
-  // the one this process happens to run on — that is what lets a test describe Windows.
+  // the one this process happens to run on: that is what lets a test describe Windows.
   const impl = lookup.platform === "win32" ? win32 : posix;
   const dirs = (lookup.pathEnv ?? "").split(impl.delimiter).filter((dir) => dir !== "");
   const names = candidateExecutableNames(binary, lookup.platform, lookup.pathExt);

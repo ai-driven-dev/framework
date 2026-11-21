@@ -69,10 +69,10 @@
 | `tests/presentation/logger-adapter.integration.test.ts` | `tests/presentation/terminal/logger-adapter.integration.test.ts` | move | CLIOutput as Logger lives in presentation/terminal (03) |
 | `tests/presentation/verbose.unit.test.ts` | `tests/presentation/terminal/verbose.unit.test.ts` | move | tests CLIOutput verbosity, terminal side |
 | `tests/presentation/prompts/interactive-menu-use-case.unit.test.ts` | `tests/orchestration/menu/interactive-menu.unit.test.ts` | move | menu tree and argv production move to orchestration/menu (03 section 4.4) |
-| `tests/presentation/prompts/plugin-pick-use-case.unit.test.ts` | `tests/contexts/distribution/application/propose-plugins.unit.test.ts`; `tests/orchestration/setup/pick-plugins.unit.test.ts` | split | proposal: decisions go to the catalogue owner, questions to the setup scenario (03 section 4.4) |
-| `tests/presentation/prompts/setup-plugins-prompt-use-case.unit.test.ts` | `tests/orchestration/setup/setup-plugins-step.unit.test.ts` | move | proposal: becomes a step of the setup scenario |
-| `tests/presentation/prompts/setup-tools-prompt-use-case.unit.test.ts` | `tests/orchestration/setup/setup-tools-step.unit.test.ts` | move | proposal: becomes a step of the setup scenario |
-| `tests/presentation/prompts/setup-tools-prompt-recommendations.unit.test.ts` | `tests/contexts/installation/domain/tool-recommendations.unit.test.ts` | move | proposal: tests a domain function of project detection, not a prompt; owner not stated in the documents |
+| `tests/presentation/prompts/plugin-pick-use-case.unit.test.ts` | `tests/contexts/distribution/application/plugin-source/plugin-choices.unit.test.ts`; `tests/orchestration/plugin/pick-plugins.unit.test.ts` | split | proposal: decisions go to the catalogue owner, questions to the plugin scenario (03 section 4.4) |
+| `tests/presentation/prompts/setup-plugins-prompt-use-case.unit.test.ts` | `tests/orchestration/setup/steps/choose-plugins.unit.test.ts` | move | proposal: becomes a step of the setup scenario |
+| `tests/presentation/prompts/setup-tools-prompt-use-case.unit.test.ts` | `tests/orchestration/setup/steps/choose-tools.unit.test.ts` | move | proposal: becomes a step of the setup scenario |
+| `tests/presentation/prompts/setup-tools-prompt-recommendations.unit.test.ts` | `tests/orchestration/setup/tool-recommendations.unit.test.ts` | move | proposal: tests a domain function of project detection, not a prompt |
 | `tests/presentation/prompts/sync-conflict-resolver-use-case.unit.test.ts` | `tests/contexts/installation/domain/drift.unit.test.ts` | move | proposal: pure hash comparison goes to the single drift function of installation (03 section 4.4) |
 | `tests/e2e/helpers.ts` | `tests/e2e/testing/test-env.ts`; `tests/e2e/testing/run-cli.ts`; `tests/e2e/testing/path-without-aidd.ts` | split | proposal: no import of createDeps or any production wiring; initProject runs the built binary instead (07 section 2.1) |
 | `tests/e2e/helpers.unit.test.ts` | `tests/e2e/testing/path-without-aidd.unit.test.ts` | rename | follows the extracted path helper |
@@ -144,9 +144,9 @@
 | `tests/architecture/*` | `tests/architecture/*` | keep | deterministic rules with a written rule (catches, errors, no-re-export, ports-are-called, codebase-map, one repository helper, throwaway profile wiring, no-shared-binary, automation-calls-real-scripts); several read application/ instead of the use-case suffix in the renaming PR |
 | - | `tests/architecture/contract-has-importer.arch.test.ts` | add | a contract file needs an importer from another context, else it returns to domain (00 section 5, 08) |
 | - | `tests/architecture/command-shape.arch.test.ts` | add | one file, one class of the same name, public execute, no UseCase suffix (08) |
-| - | `tests/architecture/old-layout-counter.arch.test.ts` | add | files left in runtime, kernel, framework only go down; deleted at the end of the migration (08 section 2.3) |
-| - | `tests/architecture/baseline-only-shrinks.arch.test.ts` | add | proposal: BASELINE entries compared with the committed value, never added (00 section 11) |
-| - | `tests/architecture/test-file-size.arch.test.ts` | add | 400 lines warning, 800 failure (07 section 1); 08 open item on the warning level |
+| - | `tests/architecture/old-layout-count.arch.test.ts` | add | no `src/` or `tests/` area recreated under the name of a folder already gone (08 section 2.3) |
+| - | `tests/architecture/debt-only-shrinks.arch.test.ts` | add | every debt entry compared with the debt at the merge-base with `next`, never new (00 section 11) |
+| - | `tests/architecture/test-file-size.arch.test.ts` | add | 800 lines failure; 400 lines is a review grid point, deliberately unchecked (07 section 1) |
 | - | `tests/architecture/kit-isolation.arch.test.ts` | add | a test never imports another context's kit (07 section 2.1) |
 | - | `tests/architecture/test-mirror-path.arch.test.ts` | add | every domain or application module has its mirror test or a written exception (07 section 7) |
 | `tests/golden/framework-build-golden.e2e.test.ts` | `tests/golden/framework-build.golden.test.ts` | rename | suffix by level; reduced to the file tree, then in memory once the pure engine lands (07 section 4.3) |

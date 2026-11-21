@@ -1,5 +1,5 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 interface ProjectCleanResult {
   readonly manifestFound: boolean;
@@ -29,7 +29,7 @@ interface UserScopeCleanResult {
   };
 }
 
-function printProjectPreview(output: CLIOutput, preview: ProjectCleanResult["preview"]): void {
+function printProjectPreview(output: Output, preview: ProjectCleanResult["preview"]): void {
   output.print("The following will be removed:");
   for (const tool of preview.tools) {
     output.print(`  ${tool.toolId}: ${tool.fileCount} files`);
@@ -51,7 +51,7 @@ function printProjectPreview(output: CLIOutput, preview: ProjectCleanResult["pre
 }
 
 export function printProjectCleanOutcome(
-  output: CLIOutput,
+  output: Output,
   result: ProjectCleanResult,
   interactive: boolean
 ): void {
@@ -59,26 +59,24 @@ export function printProjectCleanOutcome(
     output.success("Nothing to clean");
     return;
   }
-
-  if (result.dryRun) {
-    printProjectPreview(output, result.preview);
-    const toolCount = result.preview.tools.length;
-    if (interactive) {
-      output.print("No files removed.");
-    } else {
-      output.success(
-        `Would remove ${result.preview.totalFileCount} ${result.preview.totalFileCount === 1 ? "file" : "files"} across ${toolCount} ${toolCount === 1 ? "tool" : "tools"}. Use --force to confirm.`
-      );
-    }
+  if (!result.dryRun) {
+    output.success(`Cleaned all AIDD files (${result.fileCount} files removed)`);
     return;
   }
+  printProjectPreview(output, result.preview);
+  if (interactive) output.print("No files removed.");
+  else output.success(wouldRemove(result.preview));
+}
 
-  output.success(`Cleaned all AIDD files (${result.fileCount} files removed)`);
+/** What a dry run says it would remove when nobody is there to confirm it. */
+function wouldRemove({ totalFileCount, tools }: ProjectCleanResult["preview"]): string {
+  const files = totalFileCount === 1 ? "file" : "files";
+  return `Would remove ${totalFileCount} ${files} across ${tools.length} ${tools.length === 1 ? "tool" : "tools"}. Use --force to confirm.`;
 }
 
 /** Names what `--scope user` is about to purge before anything is removed: the shared
  * source's versions and the projects `references.json` names, existing paths only. */
-function printUserScopePreview(output: CLIOutput, result: UserScopeCleanResult): void {
+function printUserScopePreview(output: Output, result: UserScopeCleanResult): void {
   const { preview } = result;
   output.print("The following will be removed for this machine:");
   for (const toolId of preview.toolIds) {
@@ -95,7 +93,7 @@ function printUserScopePreview(output: CLIOutput, result: UserScopeCleanResult):
 }
 
 export function printUserScopeCleanOutcome(
-  output: CLIOutput,
+  output: Output,
   result: UserScopeCleanResult,
   interactive: boolean
 ): void {

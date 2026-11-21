@@ -3,22 +3,24 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import { loadPluginManifest } from "./plugin-helpers.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface ListPluginsCommand {
   toolIds: AiToolId[] | "all";
-  tools: ToolCatalog;
 }
 
 export type ListPluginsResult = Map<AiToolId, readonly InstalledPlugin[]>;
 
 export class ListPlugins {
-  constructor(private readonly manifestRepo: ManifestRepository) {}
+  constructor(
+    private readonly manifestRepo: ManifestRepository,
+    private readonly tools: ToolCatalog
+  ) {}
 
   async execute(options: ListPluginsCommand): Promise<ListPluginsResult> {
-    const manifest = await loadPluginManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
+    const manifest = await requireManifest(this.manifestRepo);
+    const resolvedToolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     return this.buildResult(resolvedToolIds, manifest);
   }
 

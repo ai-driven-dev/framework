@@ -6,9 +6,9 @@ import {
   type SuppliedTokens,
   sourcesInOrder,
 } from "../../../../src/contexts/auth/domain/credential-sources.js";
-import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
-import { anExternalRecord, aStoredRecord } from "../testing/credential-records.js";
-import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.js";
+import { InMemoryEnvironment } from "../../../shared/testing/in-memory-environment.fake.js";
+import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
+import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
 function supplied(commandLine?: string, environmentToken?: string): SuppliedTokens {
   const environment = new InMemoryEnvironment(

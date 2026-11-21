@@ -1,16 +1,13 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
+import { createPluginTranslation } from "../../../../../src/composition/translate.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
 
@@ -20,7 +17,6 @@ const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
  */
 
 const PLUGIN_NAME = "aidd-telemetry";
-const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 
 function skillFile(relativePath: string, content = "// stub"): PluginComponentFile {
   return { relativePath: `skills/${relativePath}`, content };
@@ -42,20 +38,22 @@ function makeTelemetryLikeDist(): PluginDistribution {
 }
 
 function modeBSkillPaths(dist: PluginDistribution): string[] {
-  return new PluginContentTranslator(stubHasher)
-    .translate(dist, opencode)
-    .map((f) => f.relativePath)
+  return createPluginTranslation(registeredTools())
+    .execute({ distribution: dist, tool: registeredTools().aiProfile(TOOL.opencode) })
+    .files.map((f) => f.relativePath)
     .filter((p) => p.startsWith(".opencode/skills/"))
     .sort();
 }
 
 function builtTreeSkillPaths(dist: PluginDistribution): string[] {
-  const skillsArtifact = buildOpencodeFlatContract().artifacts.skills;
+  const contract = registeredTools().aiProfile(TOOL.opencode).buildContract("flat");
+  if (contract === null) throw new Error("opencode declares no flat build contract");
+  const skillsArtifact = contract.artifacts.skills;
   if (!skillsArtifact.supported) throw new Error("opencode flat skills artifact unsupported");
   return dist.components.skills.map((f) => skillsArtifact.path(PLUGIN_NAME, f.relativePath)).sort();
 }
 
-describe("opencode flat skills — built-tree route agrees with mode-B install route", () => {
+describe("opencode flat skills - built-tree route agrees with mode-B install route", () => {
   it("produce the identical set of relative output paths for a plugin with non-skill children", () => {
     const dist = makeTelemetryLikeDist();
 
@@ -72,21 +70,30 @@ describe("opencode flat skills — built-tree route agrees with mode-B install r
   });
 });
 
+function skillLeavesOf(plugin: string): string[] {
+  const skillsDir = join(PLUGINS_DIR, plugin, "skills");
+  if (!existsSync(skillsDir)) return [];
+  return readdirSync(skillsDir, { withFileTypes: true })
+    .filter((skill) => skill.isDirectory() && existsSync(join(skillsDir, skill.name, "SKILL.md")))
+    .map((skill) => skill.name);
+}
+
+function pluginsByLeafSkillName(): Map<string, string[]> {
+  const byLeaf = new Map<string, string[]>();
+  const plugins = readdirSync(PLUGINS_DIR, { withFileTypes: true }).filter((p) => p.isDirectory());
+  for (const plugin of plugins) {
+    for (const leaf of skillLeavesOf(plugin.name)) {
+      byLeaf.set(leaf, [...(byLeaf.get(leaf) ?? []), plugin.name]);
+    }
+  }
+  return byLeaf;
+}
+
 // Nesting a skill under its plugin's own directory shortens its `name` to the leaf, so
 // nothing stops two plugins shipping the same leaf any more. This does.
 describe("skill names across plugins, now that the plugin prefix is a directory", () => {
   it("no two plugins ship a skill with the same leaf name", () => {
-    const byLeaf = new Map<string, string[]>();
-    for (const plugin of readdirSync(PLUGINS_DIR, { withFileTypes: true })) {
-      if (!plugin.isDirectory()) continue;
-      const skillsDir = join(PLUGINS_DIR, plugin.name, "skills");
-      if (!existsSync(skillsDir)) continue;
-      for (const skill of readdirSync(skillsDir, { withFileTypes: true })) {
-        if (!skill.isDirectory()) continue;
-        if (!existsSync(join(skillsDir, skill.name, "SKILL.md"))) continue;
-        byLeaf.set(skill.name, [...(byLeaf.get(skill.name) ?? []), plugin.name]);
-      }
-    }
+    const byLeaf = pluginsByLeafSkillName();
 
     const shared = [...byLeaf.entries()].filter(([, plugins]) => plugins.length > 1);
     expect(byLeaf.size).toBeGreaterThan(10);

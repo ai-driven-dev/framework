@@ -1,307 +1,142 @@
-import { join, resolve } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
-import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/shared/domain/paths.js";
-import { serializePluginSource } from "../../../../src/shared/domain/source.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceCache } from "../../../helpers/ports/in-memory-marketplace-cache.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryMarketplaceCache } from "../../../shared/testing/in-memory-marketplace-cache.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { resolvingCatalogs } from "../testing/catalog-resolver.builder.js";
 
-const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
-const VERSIONED_FIXTURE = join(process.cwd(), "tests/fixtures/framework-real");
-const PROJECT_ROOT = "/test-project";
+const PROJECT = "/project";
 
-async function buildUseCase() {
-  const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileAdapter({}, hasher);
-  await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
-  await seedFromDirectory(fs, VERSIONED_FIXTURE, { useAbsolutePaths: true });
-  const registry = new InMemoryMarketplaceRegistry();
-  const fetchers: Record<string, string> = {
-    [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]: VALID_FIXTURE,
-    [JSON.stringify(serializePluginSource({ kind: "local", path: VERSIONED_FIXTURE }))]:
-      VERSIONED_FIXTURE,
-  };
-  const pluginFetcher = new FixturePluginFetcher(fetchers);
-  const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
-  const resolveMarketplace = new ResolveMarketplace(
-    fetchMarketplaceSource,
-    new PluginCatalogRepositoryAdapter(fs)
-  );
-  const cache = new InMemoryMarketplaceCache();
-  const useCase = new RefreshMarketplace(registry, resolveMarketplace, cache);
-  return { useCase, registry, cache };
+function marketplaceAt(name: string): Marketplace {
+  return Marketplace.create({
+    name,
+    source: { kind: "local", path: `/mkt/${name}` },
+    scope: "project",
+    addedAt: "2026-01-01T00:00:00.000Z",
+  });
 }
 
-describe("RefreshMarketplace: force", () => {
-  async function withRegistered(name: string) {
-    const built = await buildUseCase();
-    await built.registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name,
-        source: { kind: "local", path: VALID_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
-    return built;
-  }
+async function refreshOver(catalogs: Parameters<typeof resolvingCatalogs>[0], ...names: string[]) {
+  const registry = new InMemoryMarketplaceRegistry();
+  for (const name of names) await registry.save(PROJECT, marketplaceAt(name));
+  const cache = new InMemoryMarketplaceCache();
+  const resolver = resolvingCatalogs(catalogs);
+  return {
+    registry,
+    cache,
+    resolver,
+    refresh: new RefreshMarketplace({ registry, resolveMarketplace: resolver, cache }),
+  };
+}
 
-  it("clears the named marketplace's cache before re-fetching", async () => {
-    const { useCase, cache } = await withRegistered("awesome");
-
-    await useCase.execute({ projectRoot: PROJECT_ROOT, name: "awesome", force: true });
-
-    expect(cache.clearCalls).toEqual(["awesome"]);
-  });
-
-  it("clears every cached marketplace when no name is given", async () => {
-    const { useCase, cache } = await withRegistered("awesome");
-
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
-
-    expect(cache.clearCalls).toEqual([undefined]);
-  });
-
-  it("leaves the cache untouched without the flag", async () => {
-    const { useCase, cache } = await withRegistered("awesome");
-
-    await useCase.execute({ projectRoot: PROJECT_ROOT, name: "awesome" });
-
-    expect(cache.clearCalls).toEqual([]);
-  });
-});
+const EMPTY: PluginCatalog = { plugins: [] };
 
 describe("RefreshMarketplace", () => {
-  it("refreshes a registered marketplace and updates lastFetched", async () => {
-    const { useCase, registry } = await buildUseCase();
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "awesome",
-        source: { kind: "local", path: VALID_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
+  it("stamps each marketplace it fetched", async () => {
+    const { refresh, registry } = await refreshOver({ "/mkt/a": EMPTY }, "a");
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await refresh.execute({ projectRoot: PROJECT });
 
-    expect(result.failedCount).toBe(0);
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0]?.status).toBe("ok");
-    const list = await registry.list(PROJECT_ROOT);
-    expect(list[0]?.lastFetched).toBeDefined();
+    expect(result).toEqual({ results: [{ name: "a", status: "ok" }], failedCount: 0 });
+    expect((await registry.list(PROJECT))[0]?.lastFetched).toBeDefined();
   });
 
-  it("reports per-entry status and continues on failure", async () => {
-    const { useCase, registry } = await buildUseCase();
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "good",
-        source: { kind: "local", path: VALID_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "bad",
-        source: { kind: "github", repo: "nonexistent/repo-12345" },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
+  it("records the version its catalog declares", async () => {
+    const { refresh, registry } = await refreshOver(
+      { "/mkt/a": { plugins: [], version: "2.0.0" } },
+      "a"
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await refresh.execute({ projectRoot: PROJECT });
 
-    expect(result.results).toHaveLength(2);
+    expect((await registry.list(PROJECT))[0]?.version).toBe("2.0.0");
+  });
+
+  it("reports a failed fetch and still refreshes the others", async () => {
+    const { refresh, registry } = await refreshOver(
+      { "/mkt/a": new Error("offline"), "/mkt/b": EMPTY },
+      "a",
+      "b"
+    );
+
+    const result = await refresh.execute({ projectRoot: PROJECT });
+
+    expect(result.results).toEqual([
+      { name: "a", status: "failed", error: new Error("offline") },
+      { name: "b", status: "ok" },
+    ]);
     expect(result.failedCount).toBe(1);
-    const good = result.results.find((r) => r.name === "good");
-    const bad = result.results.find((r) => r.name === "bad");
-    expect(good?.status).toBe("ok");
-    expect(bad?.status).toBe("failed");
-    expect(bad?.error).toBeDefined();
+    const [a, b] = await registry.list(PROJECT);
+    expect([a?.lastFetched, b?.lastFetched === undefined]).toEqual([undefined, false]);
   });
 
-  it("refreshes nothing and raises nothing when no marketplace is registered", async () => {
-    const { useCase, cache } = await buildUseCase();
+  it("refreshes only the marketplace named", async () => {
+    const { refresh } = await refreshOver({ "/mkt/a": EMPTY, "/mkt/b": EMPTY }, "a", "b");
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await refresh.execute({ projectRoot: PROJECT, name: "b" });
 
-    expect(result).toEqual({ results: [], failedCount: 0 });
+    expect(result.results.map((r) => r.name)).toEqual(["b"]);
+  });
+
+  it("clears the cache of the marketplace named before fetching, and only on force", async () => {
+    const { refresh, cache } = await refreshOver({ "/mkt/a": EMPTY }, "a");
+
+    await refresh.execute({ projectRoot: PROJECT, name: "a" });
     expect(cache.clearCalls).toEqual([]);
+
+    await refresh.execute({ projectRoot: PROJECT, name: "a", force: true });
+    expect(cache.clearCalls).toEqual(["a"]);
   });
 
-  it("filters by name when provided", async () => {
-    const { useCase, registry } = await buildUseCase();
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "a",
-        source: { kind: "local", path: VALID_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "b",
-        source: { kind: "local", path: VALID_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
+  it("says a cache is stale when a plugin its catalog points at is gone", async () => {
+    const { registry, cache, resolver } = await refreshOver({ "/mkt/a": EMPTY }, "a");
+    const cacheDir = resolver.cacheDirOf(marketplaceAt("a"), PROJECT);
+    const fs = new InMemoryFileAdapter({
+      [`${cacheDir}/.claude-plugin/marketplace.json`]: JSON.stringify({
+        plugins: [{ name: "x", source: "./plugins/x" }],
+      }),
+    });
+    const logger = new CapturingLogger();
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, name: "a" });
-
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0]?.name).toBe("a");
-  });
-
-  it("persists catalog version when marketplace.json has a version field", async () => {
-    const { useCase, registry } = await buildUseCase();
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "aidd-framework",
-        source: { kind: "local", path: VERSIONED_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
-
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const list = await registry.list(PROJECT_ROOT);
-    expect(list[0]?.version).toBe("1.0.0");
-  });
-
-  it("does not update version when catalog has no version field", async () => {
-    const { useCase, registry } = await buildUseCase();
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: "awesome",
-        source: { kind: "local", path: VALID_FIXTURE },
-        scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
-      })
-    );
-
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-    const list = await registry.list(PROJECT_ROOT);
-    expect(list[0]?.version).toBeUndefined();
-  });
-
-  describe("stale cache detection", () => {
-    it("emits info line when cache has relative plugin sources but plugin dirs are missing", async () => {
-      const hasher = new DeterministicHasher();
-      const fs = new InMemoryFileAdapter({}, hasher);
-      await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
-      const registry = new InMemoryMarketplaceRegistry();
-      const pluginFetcher = new FixturePluginFetcher({
-        [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]:
-          VALID_FIXTURE,
-      });
-      const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
-      const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
-
-      const cacheDir = join(PROJECT_ROOT, MARKETPLACE_CACHE_SUBDIR, "stale-mkt");
-      const staleCatalogJson = JSON.stringify({
-        plugins: [{ name: "aidd-dev", source: "./plugins/aidd-dev" }],
-      });
-      await fs.writeFile(join(cacheDir, ".claude-plugin/marketplace.json"), staleCatalogJson);
-
-      const resolveMarketplace = new ResolveMarketplace(
-        fetchMarketplaceSource,
-        new PluginCatalogRepositoryAdapter(fs)
-      );
-      const useCase = new RefreshMarketplace(
-        registry,
-        resolveMarketplace,
-        new InMemoryMarketplaceCache(),
-        logger,
-        fs
-      );
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "stale-mkt",
-          source: { kind: "local", path: VALID_FIXTURE },
-          scope: "project",
-          addedAt: "2026-04-29T10:00:00.000Z",
-        })
-      );
-
-      await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining("Detected stale cache for 'stale-mkt'")
-      );
+    await new RefreshMarketplace({
+      registry,
+      resolveMarketplace: resolver,
+      cache,
+      logger,
+      fs,
+    }).execute({
+      projectRoot: PROJECT,
     });
 
-    it("does not emit stale notice when plugin dirs already exist on disk", async () => {
-      const hasher = new DeterministicHasher();
-      const fs = new InMemoryFileAdapter({}, hasher);
-      await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
-      const registry = new InMemoryMarketplaceRegistry();
-      const pluginFetcher = new FixturePluginFetcher({
-        [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]:
-          VALID_FIXTURE,
-      });
-      const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
-      const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
+    expect(logger.infoMessages).toContain("Detected stale cache for 'a' — re-fetching.");
+  });
 
-      const cacheDir = join(PROJECT_ROOT, MARKETPLACE_CACHE_SUBDIR, "fresh-mkt");
-      const freshCatalogJson = JSON.stringify({
-        plugins: [{ name: "aidd-dev", source: "./plugins/aidd-dev" }],
-      });
-      await fs.writeFile(join(cacheDir, ".claude-plugin/marketplace.json"), freshCatalogJson);
-      // `resolve()`, unlike `join()`, fills in the current drive letter on Windows for a
-      // rootless absolute path, so seeding through it is what makes the written key match.
-      await fs.writeFile(join(resolve(cacheDir, "plugins/aidd-dev"), "plugin.json"), "{}");
-
-      const resolveMarketplace = new ResolveMarketplace(
-        fetchMarketplaceSource,
-        new PluginCatalogRepositoryAdapter(fs)
-      );
-      const useCase = new RefreshMarketplace(
-        registry,
-        resolveMarketplace,
-        new InMemoryMarketplaceCache(),
-        logger,
-        fs
-      );
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "fresh-mkt",
-          source: { kind: "local", path: VALID_FIXTURE },
-          scope: "project",
-          addedAt: "2026-04-29T10:00:00.000Z",
-        })
-      );
-
-      await useCase.execute({ projectRoot: PROJECT_ROOT });
-
-      const infoCallsWithStale = (logger.info as ReturnType<typeof vi.fn>).mock.calls.filter(
-        (args: unknown[]) =>
-          typeof args[0] === "string" && (args[0] as string).includes("Detected stale")
-      );
-      expect(infoCallsWithStale).toHaveLength(0);
+  it("stays silent about a cache whose plugins are all present", async () => {
+    const { registry, cache, resolver } = await refreshOver({ "/mkt/a": EMPTY }, "a");
+    const cacheDir = resolver.cacheDirOf(marketplaceAt("a"), PROJECT);
+    const fs = new InMemoryFileAdapter({
+      [`${cacheDir}/.claude-plugin/marketplace.json`]: JSON.stringify({
+        plugins: [{ name: "x", source: "./plugins/x" }],
+      }),
+      // the product resolves a plugin path to an absolute one, drive included on Windows
+      [resolve(cacheDir, "plugins/x/plugin.json")]: "{}",
     });
+    const logger = new CapturingLogger();
+
+    await new RefreshMarketplace({
+      registry,
+      resolveMarketplace: resolver,
+      cache,
+      logger,
+      fs,
+    }).execute({
+      projectRoot: PROJECT,
+    });
+
+    expect(logger.infoMessages).toEqual(["Fetching marketplace 'a'..."]);
   });
 });

@@ -1,8 +1,10 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { homedir } from "node:os";
-import { NativePluginCliError } from "../../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
-import type { HostActions } from "../contract/host-actions.js";
+import type { Scope } from "../../../shared/domain/scope.js";
+import { NativePluginCliError } from "../domain/host-registration.error.js";
+import { isRefOnHost } from "../domain/record/host-ref.js";
+import type { HostActions } from "../ports/host-actions.js";
+import type { HostCliShape } from "../ports/host-cli-shape.js";
 import {
   hostExecutableLookup,
   resolveExecutableOnPath,
@@ -13,21 +15,17 @@ import {
 // `plugin add/install` may fetch and cache a marketplace snapshot from a git remote.
 const COMMAND_TIMEOUT_MS = 120000;
 
-/** Everything about a tool's plugin CLI that differs between tools, read off its profile. */
-export interface HostCliShape {
-  readonly scopeArgs?: Readonly<Record<MarketplaceScope, readonly string[]>>;
-  readonly userRemoveArgs?: readonly string[];
-  readonly forceRemoveArgs?: readonly string[];
-  readonly sourceCheckVerb?: string;
-  readonly upgradeVerb?: string;
-  readonly updateVerb?: string;
-  readonly enableVerb?: string;
-  /** How the tool spells removing a plugin it installed: `remove` for codex, `uninstall` for
-   * claude and copilot. Absent where this CLI enables plugins through a file it writes. */
-  readonly disableVerb?: string;
-  /** Arguments every `plugin <verb> <ref>` call carries, after the reference. Claude needs
-   * `--yes`: a headless stdin cannot answer its prune confirmation. */
-  readonly pluginArgs?: readonly string[];
+/** Whether a plugin list names a plugin of the marketplace installed beyond the user's scope. A
+ * list that does not parse counts as yes, like one that could not be read. */
+function listsOtherScopeUse(stdout: string, name: string): boolean {
+  try {
+    const plugins = JSON.parse(stdout) as { id?: string; scope?: string }[];
+    return plugins.some(
+      (plugin) => plugin.id !== undefined && isRefOnHost(plugin.id, name) && plugin.scope !== "user"
+    );
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -48,7 +46,7 @@ export class HostCliAdapter implements HostActions {
     return resolveExecutableOnPath(this.binary, hostExecutableLookup()) !== undefined;
   }
 
-  /** The binary as the OS will run it. A `.cmd`/`.bat` shim — what npm installs on Windows —
+  /** The binary as the OS will run it. A `.cmd`/`.bat` shim: what npm installs on Windows -
    * cannot be spawned directly, so it goes through the command interpreter with its arguments
    * quoted; anything else is spawned by its bare name. */
   private spawn(
@@ -69,14 +67,14 @@ export class HostCliAdapter implements HostActions {
     return spawnSync(this.binary, [...args], options);
   }
 
-  addMarketplace(source: string, scope: MarketplaceScope): void {
+  addMarketplace(source: string, scope: Scope): void {
     this.run(
       ["plugin", "marketplace", "add", source, ...this.scopeArgsFor(scope)],
       `marketplace add ${source}`
     );
   }
 
-  removeMarketplace(name: string, scope: MarketplaceScope, options?: { force?: boolean }): void {
+  removeMarketplace(name: string, scope: Scope, options?: { force?: boolean }): void {
     const force = options?.force === true ? this.forceRemoveArgs() : [];
     const userArgs = scope === "user" ? this.userRemoveArgs() : undefined;
     // Removing from every scope also uninstalls what a project installed from this marketplace,
@@ -105,12 +103,7 @@ export class HostCliAdapter implements HostActions {
       homedir()
     );
     if (result.error !== undefined || result.status !== 0) return true;
-    try {
-      const plugins = JSON.parse(result.stdout) as { id?: string; scope?: string }[];
-      return plugins.some((plugin) => plugin.id?.endsWith(`@${name}`) && plugin.scope !== "user");
-    } catch {
-      return true;
-    }
+    return listsOtherScopeUse(result.stdout, name);
   }
 
   enablesPlugins(): boolean {
@@ -132,7 +125,7 @@ export class HostCliAdapter implements HostActions {
     this.run(["plugin", "marketplace", verb, name], `marketplace ${verb} ${name}`);
   }
 
-  enablePlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {
+  enablePlugin(pluginRef: string, scope: Scope = "project"): void {
     const verb = this.shape.enableVerb;
     if (verb === undefined) return;
     this.run(
@@ -151,7 +144,7 @@ export class HostCliAdapter implements HostActions {
   /** Undoes what `enablePlugin` did. `scope` must match what `enablePlugin` was called with: a
    * tool that installed at one scope and uninstalls at its default would silently miss the
    * entry it wrote. */
-  uninstallPlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {
+  uninstallPlugin(pluginRef: string, scope: Scope = "project"): void {
     const verb = this.shape.disableVerb;
     if (verb === undefined) return;
     this.run(
@@ -160,7 +153,7 @@ export class HostCliAdapter implements HostActions {
     );
   }
 
-  private scopeArgsFor(scope: MarketplaceScope): readonly string[] {
+  private scopeArgsFor(scope: Scope): readonly string[] {
     return this.shape.scopeArgs?.[scope] ?? [];
   }
 

@@ -1,35 +1,31 @@
-import { type FileHash, InstallationFile } from "../../../../shared/domain/file.js";
+import type { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
-import type { Platform } from "../../ports/platform.js";
-import { GenerateToolDistribution } from "./generate-tool-distribution.js";
-import { RestoreMergeFiles } from "./restore-merge-files.js";
-import { RestoreRegularFiles } from "./restore-regular-files.js";
+import type { RestoredTool } from "../../ports/tool-sections.js";
+import type { GenerateToolDistribution } from "./generate-tool-distribution.js";
+import { restoreMergeFiles } from "./restore-merge-files.js";
+import { restoreRegularFiles } from "./restore-regular-files.js";
 
 export interface RestoreToolFilesCommand {
   /** Unvalidated text: the restore refuses one no profile declares. */
   toolId: string;
   manifest: Manifest;
-  descriptor: FrameworkDescriptor;
+  configRefs: readonly ConfigRef[];
   contentFiles: Map<string, string>;
   projectRoot: string;
   version: string;
   force: boolean;
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
-  /** The tool profiles the restore asks. */
-  tools: ToolCatalog;
 }
 
 interface SectionRestoreResult {
@@ -54,19 +50,23 @@ export interface RestoreToolFilesResult {
   unrestorable: string[];
 }
 
+/** What RestoreToolFiles is built from. */
+export interface RestoreToolFilesDeps {
+  readonly generateToolDistribution: GenerateToolDistribution;
+  readonly fs: FileReader & FileWriter & FileMerger;
+  readonly prompter: Prompter;
+  readonly logger: Logger;
+}
+
 export class RestoreToolFiles {
   constructor(
-    private readonly fs: FileReader & FileWriter & FileMerger,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly platform: Platform,
-    private readonly prompter: Prompter,
-    private readonly assetProvider?: AssetProvider
+    private readonly deps: RestoreToolFilesDeps,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreToolFilesCommand): Promise<RestoreToolFilesResult> {
-    this.logger.info(`Checking ${options.toolId} for files to restore...`);
-    const config = options.tools.profile(options.toolId);
+    this.deps.logger.info(`Checking ${options.toolId} for files to restore...`);
+    const config = this.tools.profile(options.toolId);
     const { toolId } = config;
     const distMap = await this.buildDistributionMap(options, config);
     const section = await this.restoreSection(options, distMap);
@@ -80,20 +80,20 @@ export class RestoreToolFiles {
         unrestorable: [],
       };
     }
-    return this.commitToolRestore(options, toolId, section, mergeSection);
+    return this.commitToolRestore(options, { toolId, section, mergeSection });
   }
 
   private async buildDistributionMap(
     options: RestoreToolFilesCommand,
-    config: ToolProfile
+    config: RestoredTool
   ): Promise<Map<string, InstallationFile>> {
-    const { descriptor, contentFiles, projectRoot } = options;
-    const distribution = await new GenerateToolDistribution(
-      this.fs,
-      this.hasher,
-      this.platform,
-      this.assetProvider
-    ).execute({ config, descriptor, contentFiles, projectRoot });
+    const { configRefs, contentFiles, projectRoot } = options;
+    const distribution = await this.deps.generateToolDistribution.execute({
+      config,
+      configRefs,
+      contentFiles,
+      projectRoot,
+    });
     return new Map(distribution.map((f) => [f.relativePath, f]));
   }
 
@@ -101,7 +101,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     distMap: Map<string, InstallationFile>
   ): Promise<SectionRestoreResult | null> {
-    return new RestoreRegularFiles(this.fs, this.prompter).execute({
+    return restoreRegularFiles(this.deps.fs, this.deps.prompter, {
       manifestFiles: options.manifest.getToolFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -115,7 +115,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     distMap: Map<string, InstallationFile>
   ): Promise<MergeSectionRestoreResult | null> {
-    return new RestoreMergeFiles(this.fs, this.hasher, this.prompter).execute({
+    return restoreMergeFiles(this.deps.fs, this.deps.prompter, {
       mergeFiles: options.manifest.getMergeFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -127,19 +127,27 @@ export class RestoreToolFiles {
 
   private commitToolRestore(
     options: RestoreToolFilesCommand,
-    toolId: ToolId,
-    section: SectionRestoreResult | null,
-    mergeSection: MergeSectionRestoreResult | null
+    sections: {
+      toolId: ToolId;
+      section: SectionRestoreResult | null;
+      mergeSection: MergeSectionRestoreResult | null;
+    }
   ): RestoreToolFilesResult {
     const { manifest, version } = options;
+    const { toolId, section, mergeSection } = sections;
     const files =
       section?.updatedFiles ?? this.existingFilesAsGenerated(manifest.getToolFiles(toolId));
     const mergeFiles = mergeSection?.updatedMergeFiles ?? [...manifest.getMergeFiles(toolId)];
-    manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, files, mergeFiles);
-    const restored = [...(section?.restored ?? []), ...(mergeSection?.restored ?? [])];
-    const kept = [...(section?.kept ?? []), ...(mergeSection?.kept ?? [])];
-    const unrestorable = [...(section?.unrestorable ?? []), ...(mergeSection?.unrestorable ?? [])];
-    return { toolId, nothingToRestore: false, restored, kept, unrestorable };
+    manifest.addTool(toolId, manifest.getToolVersion(toolId) ?? version, files);
+    manifest.updateToolMergeFiles(toolId, mergeFiles);
+    const sectionsDone = [section, mergeSection];
+    return {
+      toolId,
+      nothingToRestore: false,
+      restored: sectionsDone.flatMap((s) => s?.restored ?? []),
+      kept: sectionsDone.flatMap((s) => s?.kept ?? []),
+      unrestorable: sectionsDone.flatMap((s) => s?.unrestorable ?? []),
+    };
   }
 
   private existingFilesAsGenerated(

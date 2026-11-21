@@ -1,10 +1,7 @@
-import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/shared/domain/paths.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const source = { kind: "local" as const, path: "/source" };
 const dist = new PluginDistribution({
@@ -38,30 +35,5 @@ describe("PluginDistributionLoader", () => {
 
     await expect(loader.load(source, "/cache")).rejects.toThrow("cannot fetch");
     expect(read).not.toHaveBeenCalled();
-  });
-
-  it("refreshes an installed plugin in the existing project cache", async () => {
-    const fetch = vi.fn().mockResolvedValue("/cache/fetched");
-    const loader = new PluginDistributionLoader({ fetch }, { read: async () => dist });
-    const plugin = InstalledPlugin.fromMetadata("sample", "0.0.1", source, false, "user");
-
-    expect(await loader.loadLatest(plugin, "/project")).toBe(dist);
-    expect(fetch).toHaveBeenCalledWith(source, join("/project", PLUGIN_CACHE_SUBDIR), {
-      forceRefresh: true,
-    });
-  });
-
-  it("fetches a global install's plugin in the given cache, outside the project", async () => {
-    const fetch = vi.fn().mockResolvedValue("/cache/fetched");
-    const loader = new PluginDistributionLoader(
-      { fetch },
-      { read: async () => dist },
-      () => "/config/cache"
-    );
-    const plugin = InstalledPlugin.fromMetadata("sample", "0.0.1", source, false, "user");
-
-    await loader.loadLatest(plugin, "/project");
-
-    expect(fetch).toHaveBeenCalledWith(source, "/config/cache", { forceRefresh: true });
   });
 });

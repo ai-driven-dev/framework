@@ -32,15 +32,15 @@ import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/s
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
-import { FakeBindings } from "../../testing/fake-bindings.js";
-import { FakeConsents } from "../../testing/fake-consents.js";
-import { FakeLocator } from "../../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
-import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
-import { InMemorySessions } from "../../testing/in-memory-sessions.js";
-import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
+import { FakeBindings } from "../../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../../testing/fake-consents.fake.js";
+import { FakeLocator } from "../../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
 
 let root: string;
 let runs = 0;
@@ -137,38 +137,45 @@ const scenario = fc.record({
   filters,
 });
 
+type Copy = Call["copies"][number];
+
+/** One copy of a call, as an earlier ingest or an older CLI stored it. */
+function copyOf(index: number, { anchor, tool, keyed }: Call, copy: Copy): StoredUsage {
+  const { offset, output, session, model, agent, repository } = copy;
+  const at = new Date((ANCHORS[anchor] ?? 0) + offset).toISOString();
+  const requestless = tool === "claude-code" && keyed !== "request";
+  return {
+    tool,
+    tool_version: "1.0.0",
+    key: requestless
+      ? `msg_${index}:${session}${keyed === "timestamped" ? `:${at}` : ""}`
+      : `k${index}`,
+    session_id: session,
+    agent,
+    at,
+    model,
+    input: 1,
+    output,
+    cache_read: 0,
+    cache_write: 0,
+    cache_write_1h: null,
+    reasoning: null,
+    cwd: null,
+    git_branch: null,
+    repository_id: repository,
+  };
+}
+
 /** Every copy of every call, as the partition files that hold them. */
 function filesOf(calls: readonly Call[]): Map<string, string> {
   const files = new Map<string, string>();
-  const put = (name: string, record: StoredUsage) =>
-    files.set(name, `${files.get(name) ?? ""}${JSON.stringify(record)}\n`);
-  calls.forEach(({ anchor, tool, keyed, copies }, index) => {
-    for (const { offset, output, session, model, agent, repository } of copies) {
-      const at = new Date((ANCHORS[anchor] as number) + offset).toISOString();
-      const requestless = tool === "claude-code" && keyed !== "request";
-      const record: StoredUsage = {
-        tool,
-        tool_version: "1.0.0",
-        key: requestless
-          ? `msg_${index}:${session}${keyed === "timestamped" ? `:${at}` : ""}`
-          : `k${index}`,
-        session_id: session,
-        agent,
-        at,
-        model,
-        input: 1,
-        output,
-        cache_read: 0,
-        cache_write: 0,
-        cache_write_1h: null,
-        reasoning: null,
-        cwd: null,
-        git_branch: null,
-        repository_id: repository,
-      };
-      put(`${at.slice(0, 10)}.jsonl`, record);
+  for (const [index, call] of calls.entries()) {
+    for (const copy of call.copies) {
+      const record = copyOf(index, call, copy);
+      const name = `${record.at.slice(0, 10)}.jsonl`;
+      files.set(name, `${files.get(name) ?? ""}${JSON.stringify(record)}\n`);
     }
-  });
+  }
   return files;
 }
 
@@ -204,24 +211,84 @@ const NOTHING_NEW: IngestUsageResult = {
 /** An ingest that reads no tool, so it finds nothing new: `NOTHING_NEW`. */
 function ingestOf(ledger: UsageLedger): IngestUsage {
   const now = () => new Date("2026-10-09T00:00:00.000Z");
-  return new IngestUsage(
-    [],
+  return new IngestUsage({
+    readers: [],
     ledger,
-    new DirectoryResolver(
-      new FakeLocator(),
-      new FakeConsents(),
-      new InMemoryResolutions(),
-      new InMemoryConsentHistory(),
-      { caseInsensitiveFileSystem: false, now }
-    ),
-    new SnapshotBindings(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      now
-    ),
-    { environment: { get: () => undefined } }
+    directories: new DirectoryResolver({
+      locator: new FakeLocator(),
+      consentSource: new FakeConsents(),
+      store: new InMemoryResolutions(),
+      history: new InMemoryConsentHistory(),
+      environment: { caseInsensitiveFileSystem: false, now },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
+      now,
+    }),
+    options: { environment: { get: () => undefined } },
+  });
+}
+
+type Typed = { -readonly [K in keyof ReportFilters]: ReportFilters[K] };
+
+/** A session or repository typed by its start names a value among the period's calls. */
+function resolveFlags(filters: ReportFilters, kept: readonly StoredUsage[]) {
+  const resolved: Typed = { ...filters };
+  for (const flag of ["session", "repository"] as const) {
+    const typed = filters[flag];
+    if (typed === null) continue;
+    const found = resolveId(
+      typed,
+      kept.map((record) => (flag === "session" ? record.session_id : record.repository_id))
+    );
+    if (found.kind === "ambiguous") return { ambiguous: { flag, typed, ids: found.ids } };
+    if (found.kind === "found") resolved[flag] = found.id;
+  }
+  return { resolved };
+}
+
+/** What the report of the full ledger, filtered to the period and the flags, says. */
+async function referenceOf(input: {
+  full: Awaited<ReturnType<UsageLedgerAdapter["load"]>>;
+  kept: readonly StoredUsage[];
+  fullLedger: UsageLedgerAdapter;
+  declared: DeclaredBindings;
+  resolved: Typed;
+  period: Period;
+  axis: (typeof REPORT_AXES)[number];
+}) {
+  const { full, kept, fullLedger, declared, resolved, period, axis } = input;
+  const { facts, person } = await declared.read();
+  const selected = kept.filter((record) =>
+    matchesFilter({ filters: resolved, record, attribution: attribute(record, facts), person })
   );
+  return reportEnvelopeOf({
+    status: "reported",
+    period,
+    filters: resolved,
+    report: buildReport({ records: selected, facts, person, axis }),
+    coverage: { records: kept.length, leftOut: await fullLedger.leftOut.counts() },
+    run: {
+      filesRead: NOTHING_NEW.filesRead,
+      unrecognised: NOTHING_NEW.unrecognised,
+      notStored: NOTHING_NEW.notStored,
+      consentLogDamaged: NOTHING_NEW.consentLogDamaged,
+      oldestTranscriptAt: NOTHING_NEW.oldestTranscriptAt,
+      skippedLedgerLines: full.skippedLines,
+    },
+  });
+}
+
+/** The figures: `run` is what this read found, and a bounded read finds less. */
+const figuresOf = (envelope: object) => JSON.stringify({ ...envelope, run: undefined });
+
+/** Whatever the period: each thing kept once, by reason. */
+function distinctLeftOut(entries: readonly { reason: string; of: string }[]) {
+  const distinct = new Set(entries.map(({ reason, of }) => `${reason}\u0000${of}`));
+  const count = (reason: string) => [...distinct].filter((e) => e.startsWith(reason)).length;
+  return { undated: count("undated"), unrecognised: count("unrecognised"), requestless: 0 };
 }
 
 describe("a report on a bounded period", () => {
@@ -239,63 +306,35 @@ describe("a report on a bounded period", () => {
 
         const settled = await ledgerWith(files);
         await settled.leftOut.add(leftOut);
-        const bounded = await new ReportUsage(
-          ingestOf(settled),
-          settled,
+        const bounded = await new ReportUsage({
+          ingest: ingestOf(settled),
+          ledger: settled,
           declared,
-          new FakeLocator(),
-          { get: () => undefined }
-        ).execute({ axis, period, filters });
+          locator: new FakeLocator(),
+          environment: { get: () => undefined },
+        }).execute({ axis, period, filters });
 
         const fullLedger = await ledgerWith(files);
         await fullLedger.leftOut.add(leftOut);
         const full = await fullLedger.load();
         const kept = full.records.filter((record) => inPeriod(record.at, period));
-        // A session or repository typed by its start names a value among the period's calls.
-        const resolved: { -readonly [K in keyof ReportFilters]: ReportFilters[K] } = { ...filters };
-        for (const flag of ["session", "repository"] as const) {
-          const typed = filters[flag];
-          if (typed === null) continue;
-          const found = resolveId(
-            typed,
-            kept.map((record) => (flag === "session" ? record.session_id : record.repository_id))
-          );
-          if (found.kind === "ambiguous") {
-            expect(bounded).toEqual({ status: "ambiguous", flag, typed, ids: found.ids });
-            return;
-          }
-          if (found.kind === "found") resolved[flag] = found.id;
+        const resolution = resolveFlags(filters, kept);
+        if ("ambiguous" in resolution) {
+          expect(bounded).toEqual({ status: "ambiguous", ...resolution.ambiguous });
+          return;
         }
         if (bounded.status !== "reported") throw new Error(bounded.status);
-        const { facts, person } = await declared.read();
-        const selected = kept.filter((record) =>
-          matchesFilter(resolved, record, attribute(record, facts), person)
-        );
-        const reference = reportEnvelopeOf({
-          status: "reported",
+        const reference = await referenceOf({
+          full,
+          kept,
+          fullLedger,
+          declared,
+          resolved: resolution.resolved,
           period,
-          filters: resolved,
-          report: buildReport(selected, facts, person, axis),
-          coverage: { records: kept.length, leftOut: await fullLedger.leftOut.counts() },
-          run: {
-            filesRead: NOTHING_NEW.filesRead,
-            unrecognised: NOTHING_NEW.unrecognised,
-            notStored: NOTHING_NEW.notStored,
-            consentLogDamaged: NOTHING_NEW.consentLogDamaged,
-            oldestTranscriptAt: NOTHING_NEW.oldestTranscriptAt,
-            skippedLedgerLines: full.skippedLines,
-          },
+          axis,
         });
-        // The figures: `run` is what this read found, and a bounded read finds less.
-        const figures = (envelope: object) => JSON.stringify({ ...envelope, run: undefined });
-        expect(figures(reportEnvelopeOf(bounded))).toBe(figures(reference));
-        // Whatever the period: each thing kept once, by reason.
-        const distinct = new Set(leftOut.map(({ reason, of }) => `${reason}\u0000${of}`));
-        expect(bounded.coverage.leftOut).toEqual({
-          undated: [...distinct].filter((entry) => entry.startsWith("undated")).length,
-          unrecognised: [...distinct].filter((entry) => entry.startsWith("unrecognised")).length,
-          requestless: 0,
-        });
+        expect(figuresOf(reportEnvelopeOf(bounded))).toBe(figuresOf(reference));
+        expect(bounded.coverage.leftOut).toEqual(distinctLeftOut(leftOut));
         // What it settled lost no call, doubled none, and kept the snapshot a full read keeps.
         expect((await settled.load()).records).toEqual(full.records);
       }),
@@ -323,6 +362,50 @@ const storedCall = fc.record({
   ),
 });
 
+type Stored = typeof storedCall extends fc.Arbitrary<infer T> ? T : never;
+
+/** One copy of a call as an ingest stored it, or a CLI of an older kind wrote it. */
+function storedCopy(index: number, call: Stored, copy: Stored["copies"][number]): StoredUsage {
+  const { anchor, requestless } = call;
+  const { days, offset, output, timestamped } = copy;
+  const at = new Date(
+    (ANCHORS[anchor] ?? 0) + (requestless ? days * DAY_MS : 0) + offset
+  ).toISOString();
+  const key = requestless ? `msg_${index}:s-1` : `msg_${index}:req_${index}`;
+  return {
+    tool: "claude-code",
+    tool_version: "1.0.0",
+    key: requestless && timestamped ? `${key}:${at}` : key,
+    session_id: "s-1",
+    agent: "main",
+    at,
+    model: "m-1",
+    input: 1,
+    output,
+    cache_read: 0,
+    cache_write: 0,
+    cache_write_1h: null,
+    reasoning: null,
+    cwd: null,
+    git_branch: null,
+    repository_id: "repo-1",
+  };
+}
+
+/** What one ingest brings: calls with a request id are stored, the others appended as lines. */
+async function ingestCopies(ledger: UsageLedgerAdapter, dir: string, calls: Stored[], n: number) {
+  const batch = calls.flatMap((call, index) =>
+    call.copies
+      .filter((copy) => copy.ingest === n)
+      .map((copy) => ({ requestless: call.requestless, record: storedCopy(index, call, copy) }))
+  );
+  const now = batch.filter((c) => !c.requestless).map((c) => c.record);
+  if (now.length > 0) await storeCalls(ledger, now);
+  for (const { record } of batch.filter((c) => c.requestless)) {
+    await appendFile(join(dir, `${record.at.slice(0, 10)}.jsonl`), `${JSON.stringify(record)}\n`);
+  }
+}
+
 describe("calls stored by ingests, beside lines of calls with no request id any CLI wrote", () => {
   it("leave every bounded read equal to the full ledger filtered to its period", async () => {
     await fc.assert(
@@ -333,43 +416,7 @@ describe("calls stored by ingests, beside lines of calls with no request id any 
           const ledger = await ledgerWith(new Map());
           const dir = join(root, `ledger-${runs}`);
           for (let ingest = 0; ingest < 4; ingest += 1) {
-            const batch = calls.flatMap(({ anchor, requestless, copies }, index) =>
-              copies
-                .filter((c) => c.ingest === ingest)
-                .map(({ days, offset, output, timestamped }) => {
-                  const at = new Date(
-                    (ANCHORS[anchor] as number) + (requestless ? days * DAY_MS : 0) + offset
-                  ).toISOString();
-                  const key = requestless ? `msg_${index}:s-1` : `msg_${index}:req_${index}`;
-                  const record: StoredUsage = {
-                    tool: "claude-code",
-                    tool_version: "1.0.0",
-                    key: requestless && timestamped ? `${key}:${at}` : key,
-                    session_id: "s-1",
-                    agent: "main",
-                    at,
-                    model: "m-1",
-                    input: 1,
-                    output,
-                    cache_read: 0,
-                    cache_write: 0,
-                    cache_write_1h: null,
-                    reasoning: null,
-                    cwd: null,
-                    git_branch: null,
-                    repository_id: "repo-1",
-                  };
-                  return { requestless, record };
-                })
-            );
-            const now = batch.filter((c) => !c.requestless).map((c) => c.record);
-            if (now.length > 0) await storeCalls(ledger, now);
-            for (const { record } of batch.filter((c) => c.requestless)) {
-              await appendFile(
-                join(dir, `${record.at.slice(0, 10)}.jsonl`),
-                `${JSON.stringify(record)}\n`
-              );
-            }
+            await ingestCopies(ledger, dir, calls, ingest);
           }
           const bounded = (await ledger.load(windowOf(asked))).records;
           const full = (await ledger.load()).records;

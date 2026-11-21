@@ -1,161 +1,110 @@
 import type { Command } from "commander";
-import { parseInstallScope } from "../../contexts/installation/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
-import type { AiToolId } from "../../shared/domain/tool.js";
-import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
+import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
+import { aiToolSelectionOf } from "../../orchestration/domain/ai-tool-selection.model.js";
+import { printInstalledPlugins, printSearchHits } from "../display/plugin-display.js";
+import { parseGlobalOptions, TOKEN_FLAG_HELP } from "./global-options.js";
+import { type MenuChoice, offerGroupMenu } from "./group-menu.js";
 import {
-  printInstalledPlugins,
-  printPluginInstallOutcome,
-  printPluginRemoved,
-  printPluginsUpdated,
-  printSearchHits,
-} from "../display/plugin-display.js";
-import { ErrorHandler } from "../error-handler.js";
-import { parseGlobalOptions } from "./global-options.js";
-import { spawnCliCommand } from "./spawn-cli-command.js";
-import { syncNativeActivation } from "./sync-native-activation.js";
+  type ChangeKeys,
+  type ChangeOptions,
+  removePluginFrom,
+  updatePluginsFrom,
+} from "./plugin-change.js";
+import { type InstallKeys, type InstallOptions, installPluginFrom } from "./plugin-install.js";
+
+const TOOL_FLAG_HELP = "Target AI tool (default: all installed)";
 
 /** What this command reads of the graph. */
-type PluginKeys =
-  | "pluginRemoveUseCase"
-  | "pluginListUseCase"
-  | "pluginInstallUseCase"
-  | "searchPlugins"
-  | "userPluginUpdateUseCase"
-  | "pluginUpdateUseCase"
-  | "marketplaceSyncSettingsUseCase";
+type PluginKeys = InstallKeys | ChangeKeys | "prompter" | "pluginListUseCase" | "searchPlugins";
 
-/** `--tool` names one AI tool or, left out or set to `all`, every one. */
-export function parseToolOption(
-  tool: string | undefined,
-  catalog: ToolCatalog
-): AiToolId[] | "all" {
-  if (tool === undefined || tool === "all") return "all";
-  const id = catalog.aiToolId(tool);
-  if (id === null) throw new UnknownAiToolIdError(tool, catalog.idsInCanonicalOrder("ai"));
-  return [id];
+interface PluginWiring {
+  readonly catalog: ToolCatalog;
+  readonly createDeps: DepsSliceFactory<PluginKeys>;
+  readonly runCommand: CommandRunner;
 }
 
-export function registerPluginCommand(
+const MENU: readonly MenuChoice[] = [
+  { name: "Install plugin", value: "install" },
+  { name: "List installed plugins", value: "list" },
+  { name: "Search plugins", value: "search", description: "requires query arg" },
+  { name: "Update plugins", value: "update" },
+  { name: "Remove a plugin", value: "remove", description: "requires name arg" },
+];
+
+function registerRemove(
   program: Command,
-  catalog: ToolCatalog,
-  createDeps: DepsSliceFactory<PluginKeys>,
-  createMenuDeps: MenuDepsSliceFactory<"prompter">
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
 ): void {
-  const plugin = program.command("plugin").description("Manage plugins for AI tools");
-
-  plugin.action(async () => {
-    if (!process.stdout.isTTY) {
-      plugin.help();
-      return;
-    }
-    const { prompter } = createMenuDeps(process.cwd());
-    const choice = await prompter.select("plugin: what do you want to do?", [
-      { name: "Install plugin", value: "install" },
-      { name: "List installed plugins", value: "list" },
-      { name: "Search plugins", value: "search", description: "requires query arg" },
-      { name: "Update plugins", value: "update" },
-      { name: "Remove a plugin", value: "remove", description: "requires name arg" },
-    ]);
-    await spawnCliCommand(["plugin", choice]);
-  });
-
   plugin
     .command("remove <name>")
     .description("Remove a plugin from one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
     .option("--scope <user|project>", "Removal scope (default: project)")
-    .action(async (name: string, cmdOptions: { tool?: string; scope?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
-        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await deps.pluginRemoveUseCase.execute({
-          pluginName: name,
-          toolIds,
-          projectRoot,
-          scope,
-          tools: catalog,
-        });
-        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
-        printPluginRemoved(output, name);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
+    .action(async (name: string, options: ChangeOptions) =>
+      removePluginFrom({ program, catalog, createDeps }, name, options)
+    );
+}
 
-  plugin
-    .command("list")
-    .description("List installed plugins for one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .action(async (cmdOptions: { tool?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.pluginListUseCase.execute({
-          toolIds,
-          tools: catalog,
-        });
-        printInstalledPlugins(output, result);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
+function registerInstall(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
   plugin
     .command("install [plugin]")
     .description("Install a plugin (marketplace name, local path, or interactive pick)")
     .option("--from <market>", "Marketplace name (when multiple match)")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
+    .option("--token <value>", TOKEN_FLAG_HELP)
     .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
-    .action(
-      async (
-        pluginArg: string | undefined,
-        cmdOptions: {
-          from?: string;
-          tool?: string;
-          token?: string;
-          scope?: string;
-          yes?: boolean;
-        }
-      ) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
-        try {
-          const toolIds = parseToolOption(cmdOptions.tool, catalog);
-          const scope = parseInstallScope(cmdOptions.scope);
-          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
-          const result = await deps.pluginInstallUseCase.execute({
-            pluginArg,
-            toolIds,
-            tools: catalog,
-            projectRoot,
-            interactive: process.stdout.isTTY,
-            fromMarketplace: cmdOptions.from,
-            yes: cmdOptions.yes,
-            scope,
-          });
-          await syncNativeActivation(
-            deps,
-            output,
-            catalog,
-            projectRoot,
-            cmdOptions.from !== undefined ? [cmdOptions.from] : undefined
-          );
-          printPluginInstallOutcome(output, result);
-        } catch (error) {
-          errorHandler.handle(error);
-        }
-      }
+    .action(async (pluginArg: string | undefined, options: InstallOptions) =>
+      installPluginFrom({ program, catalog, createDeps }, pluginArg, options)
     );
+}
 
+function registerUpdate(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
+  plugin
+    .command("update [name]")
+    .description("Update one or all plugins for one or all AI tools")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
+    .option("--scope <user|project>", "Update scope (default: project)")
+    .action(async (name: string | undefined, options: ChangeOptions) =>
+      updatePluginsFrom({ program, catalog, createDeps }, name, options)
+    );
+}
+
+function registerList(
+  program: Command,
+  plugin: Command,
+  { catalog, createDeps }: PluginWiring
+): void {
+  plugin
+    .command("list")
+    .description("List installed plugins for one or all AI tools")
+    .option("--tool <toolId>", TOOL_FLAG_HELP)
+    .action(async (cmdOptions: { tool?: string }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const result = await deps.pluginListUseCase.execute({
+        toolIds,
+      });
+      printInstalledPlugins(output, result);
+    });
+}
+
+function registerSearch(
+  program: Command,
+  plugin: Command,
+  createDeps: DepsSliceFactory<PluginKeys>
+): void {
   plugin
     .command("search <query>")
     .description("Search registered marketplaces for plugins")
@@ -163,47 +112,29 @@ export function registerPluginCommand(
     .option("--marketplace <name>", "Limit to a single marketplace")
     .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { hits } = await deps.searchPlugins.execute({
-          query,
-          recommendedOnly: cmdOptions.recommended ?? false,
-          marketplace: cmdOptions.marketplace,
-          projectRoot,
-        });
-        printSearchHits(output, hits);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const { hits } = await deps.searchPlugins.execute({
+        query,
+        recommendedOnly: cmdOptions.recommended ?? false,
+        marketplace: cmdOptions.marketplace,
+        projectRoot,
+      });
+      printSearchHits(output, hits);
     });
+}
 
-  plugin
-    .command("update [name]")
-    .description("Update one or all plugins for one or all AI tools")
-    .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .option("--scope <user|project>", "Update scope (default: project)")
-    .action(async (name: string | undefined, cmdOptions: { tool?: string; scope?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const toolIds = parseToolOption(cmdOptions.tool, catalog);
-        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const updated = await (scope === "user"
-          ? deps.userPluginUpdateUseCase
-          : deps.pluginUpdateUseCase
-        ).execute({
-          pluginNames: name !== undefined ? [name] : undefined,
-          toolIds,
-          projectRoot,
-          scope,
-          tools: catalog,
-        });
-        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
-        printPluginsUpdated(output, updated);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
+export function registerPluginCommand(program: Command, wiring: PluginWiring): void {
+  const { createDeps, runCommand } = wiring;
+  const plugin = program.command("plugin").description("Manage plugins for AI tools");
+  offerGroupMenu(plugin, {
+    question: "plugin: what do you want to do?",
+    choices: MENU,
+    createDeps,
+    runCommand,
+  });
+  registerRemove(program, plugin, wiring);
+  registerList(program, plugin, wiring);
+  registerInstall(program, plugin, wiring);
+  registerSearch(program, plugin, createDeps);
+  registerUpdate(program, plugin, wiring);
 }

@@ -1,39 +1,27 @@
-import { resolveHomeDir } from "../contexts/framework/domain/reading/home-dir.js";
-import type { HostActions } from "../contexts/host-registration/contract/host-actions.js";
-import type { HostMarketplaceRegistry } from "../contexts/host-registration/contract/host-marketplace-registry.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSourceListContract,
-} from "../contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../contexts/host-registration/contract/host-plugin-registry.js";
+import { EnabledPluginsMapReader } from "../contexts/host-registration/infrastructure/enabled-plugins-map-reader.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
-import {
-  type MarketplaceListParser,
-  parseMarketplacesWithSource,
-  parseNameSourceRows,
-} from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
+import { HostRegistryMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
+import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
-import {
-  HostRegistryMarketplaceSourceReaderAdapter,
-  NativeMarketplaceSourceReaderAdapter,
-} from "../contexts/host-registration/infrastructure/marketplace-source-readers.js";
-import {
-  EnabledPluginsMapReader,
-  PluginEntriesByScopeReader,
-  TomlPluginTablesReader,
-} from "../contexts/host-registration/infrastructure/plugin-registry-readers.js";
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import { NativeMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/native-marketplace-source-reader-adapter.js";
+import { PluginEntriesByScopeReader } from "../contexts/host-registration/infrastructure/plugin-entries-by-scope-reader.js";
+import { TomlPluginTablesReader } from "../contexts/host-registration/infrastructure/toml-plugin-tables-reader.js";
+import type { HostActions } from "../contexts/host-registration/ports/host-actions.js";
+import type { HostMarketplaceRegistry } from "../contexts/host-registration/ports/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../contexts/host-registration/ports/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../contexts/host-registration/ports/host-plugin-registry.js";
 import type {
-  MarketplaceListLayout,
   MarketplaceRegistryLayout,
-  MarketplaceSourcesDeclaration,
-  NativeActivation,
   PluginRegistryLayout,
-} from "../contexts/tools/domain/native-registration/native-activation.js";
-import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
-import { UnregisteredToolError } from "../shared/domain/errors.js";
+} from "../contexts/tools/contract/native-registration-spec.js";
+import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
+import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
+import { DuplicateToolIdError } from "../contexts/tools/domain/tools.error.js";
+import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
-import { nativeRegistrationsOf } from "./native-registrations.js";
+import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
+import { REGISTERED_PROFILES } from "./tool-profiles.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {
@@ -46,24 +34,27 @@ const MARKETPLACE_READERS = {
   "install-locations-by-name": (file) => new InstallLocationsByNameReader(file),
 } satisfies Record<MarketplaceRegistryLayout, (file: string) => HostMarketplaceRegistry>;
 
-const LIST_PARSERS = {
-  "marketplaces-with-source": parseMarketplacesWithSource,
-  "name-source-rows": parseNameSourceRows,
-} satisfies Record<MarketplaceListLayout, MarketplaceListParser>;
+/** The native activation each given profile declares, by tool id. A profile that declares none
+ * has no entry, and a tool registered twice is refused rather than resolved to its first copy. */
+export function nativeRegistrationsOf(
+  profiles: readonly BuiltToolConfig[]
+): ReadonlyMap<ToolId, NativeActivation> {
+  const seen = new Set<ToolId>();
+  const registrations = new Map<ToolId, NativeActivation>();
+  for (const profile of profiles) {
+    if (seen.has(profile.toolId)) throw new DuplicateToolIdError(profile.toolId);
+    seen.add(profile.toolId);
+    const activation = profile.kind === "ai" ? profile.nativeActivation() : undefined;
+    if (activation !== undefined) registrations.set(profile.toolId, activation);
+  }
+  return registrations;
+}
 
-/** The list-command contract one host's declaration describes, its parser chosen by layout. */
-export function marketplaceListContract(
-  binary: string,
-  sources: Extract<MarketplaceSourcesDeclaration, { from: "list-command" }>
-): NativeMarketplaceSourceListContract {
-  const parse = LIST_PARSERS[sources.layout];
-  return {
-    binary,
-    args: sources.args,
-    parse: (output) => parse(sources.hostLabel, output),
-    unavailableMessage: sources.unavailableMessage,
-    unverifiedMessage: sources.unverifiedMessage,
-  };
+interface MutableWiring {
+  hostActions: Map<string, HostActions>;
+  pluginRegistries: Map<AiToolId, HostPluginRegistry>;
+  marketplaceRegistries: Map<AiToolId, HostMarketplaceRegistry>;
+  marketplaceSources: Map<AiToolId, HostMarketplaceSources>;
 }
 
 export interface HostRegistrationDeps {
@@ -81,33 +72,51 @@ export function wireHostRegistration(
   home: string = resolveHomeDir(),
   registrations: ReadonlyMap<ToolId, NativeActivation> = nativeRegistrationsOf(REGISTERED_PROFILES)
 ): HostRegistrationDeps {
-  const hostActions = new Map<string, HostActions>();
-  const pluginRegistries = new Map<AiToolId, HostPluginRegistry>();
-  const marketplaceRegistries = new Map<AiToolId, HostMarketplaceRegistry>();
-  const marketplaceSources = new Map<AiToolId, HostMarketplaceSources>();
+  const wiring: MutableWiring = {
+    hostActions: new Map(),
+    pluginRegistries: new Map(),
+    marketplaceRegistries: new Map(),
+    marketplaceSources: new Map(),
+  };
   for (const aiId of tools.inHelpOrder("ai")) {
     if (tools.aiProfile(aiId).nativeActivation() === undefined) continue;
     const activation = registrations.get(aiId);
     if (activation === undefined) throw new UnregisteredToolError(aiId);
-    const binary = activation.hostBinary();
-    hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
-    const pluginRegistry = activation.pluginRegistryAt(home);
-    const marketplaceRegistry = activation.marketplaceRegistryAt(home);
-    const sources = activation.marketplaceSourcesDeclaration();
-    if (pluginRegistry !== undefined)
-      pluginRegistries.set(aiId, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
-    if (marketplaceRegistry !== undefined) {
-      const registry = MARKETPLACE_READERS[marketplaceRegistry.layout](marketplaceRegistry.path);
-      marketplaceRegistries.set(aiId, registry);
-      if (sources?.from === "marketplace-registry")
-        marketplaceSources.set(aiId, new HostRegistryMarketplaceSourceReaderAdapter(registry));
-    }
-    if (sources?.from === "list-command") {
-      marketplaceSources.set(
-        aiId,
-        new NativeMarketplaceSourceReaderAdapter(marketplaceListContract(binary, sources))
-      );
-    }
+    wireHost({ aiId, activation, home }, wiring);
   }
-  return { hostActions, pluginRegistries, marketplaceRegistries, marketplaceSources };
+  return wiring;
+}
+
+interface HostToWire {
+  aiId: AiToolId;
+  activation: NativeActivation;
+  home: string;
+}
+
+function wireHost({ aiId, activation, home }: HostToWire, wiring: MutableWiring): void {
+  const binary = activation.hostBinary();
+  wiring.hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
+  const pluginRegistry = activation.pluginRegistryAt(home);
+  if (pluginRegistry !== undefined)
+    wiring.pluginRegistries.set(aiId, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
+  const registry = marketplaceRegistryOf({ aiId, activation, home }, wiring);
+  const sources = activation.marketplaceSourcesDeclaration();
+  if (sources?.from === "marketplace-registry" && registry !== undefined)
+    wiring.marketplaceSources.set(aiId, new HostRegistryMarketplaceSourceReaderAdapter(registry));
+  if (sources?.from === "list-command")
+    wiring.marketplaceSources.set(
+      aiId,
+      new NativeMarketplaceSourceReaderAdapter(marketplaceListContract(binary, sources))
+    );
+}
+
+function marketplaceRegistryOf(
+  { aiId, activation, home }: HostToWire,
+  wiring: MutableWiring
+): HostMarketplaceRegistry | undefined {
+  const declared = activation.marketplaceRegistryAt(home);
+  if (declared === undefined) return undefined;
+  const registry = MARKETPLACE_READERS[declared.layout](declared.path);
+  wiring.marketplaceRegistries.set(aiId, registry);
+  return registry;
 }

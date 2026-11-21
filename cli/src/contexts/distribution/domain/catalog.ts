@@ -1,13 +1,14 @@
 import { isAbsolute } from "node:path";
-import { InvalidPluginManifestError } from "../../../shared/domain/errors.js";
-import { parsePluginSource } from "../../../shared/domain/source.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.js";
+import { parsePluginSource } from "../../../shared/domain/source-parsing.js";
 import type { PluginCatalog, PluginCatalogEntry } from "../contract/catalog.js";
 
 function parseEntry(raw: unknown, index: number): PluginCatalogEntry {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+  const obj = asPlainObject(raw);
+  if (obj === null) {
     throw new InvalidPluginManifestError(`plugins[${index}] must be an object`);
   }
-  const obj = raw as Record<string, unknown>;
 
   if (typeof obj.name !== "string" || obj.name.length === 0) {
     throw new InvalidPluginManifestError(`plugins[${index}].name must be a non-empty string`);
@@ -33,8 +34,7 @@ function parseEntry(raw: unknown, index: number): PluginCatalogEntry {
 }
 
 function recommendedUnderMetadata(metadata: unknown): boolean {
-  if (metadata === null || typeof metadata !== "object") return false;
-  const { recommended } = metadata as Record<string, unknown>;
+  const recommended = asPlainObject(metadata)?.recommended;
   return typeof recommended === "boolean" ? recommended : false;
 }
 
@@ -45,10 +45,10 @@ export function hasRelativePluginSources(catalog: PluginCatalog): boolean {
 }
 
 export function parsePluginCatalog(raw: unknown): PluginCatalog {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+  const obj = asPlainObject(raw);
+  if (obj === null) {
     throw new InvalidPluginManifestError("marketplace.json must be a JSON object");
   }
-  const obj = raw as Record<string, unknown>;
 
   if (!Array.isArray(obj.plugins)) {
     throw new InvalidPluginManifestError('"plugins" must be an array');

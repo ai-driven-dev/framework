@@ -15,9 +15,9 @@ Transcripts, session reports, verified sources and measurements.
    - Classify the cause as established, hypothesis or unknown.
    - Distinguish observed failure from explanation, and a proposed check from one already run.
    - State material tradeoffs and omit fields that add no useful information.
-4. Prepare exact before/after text and a short execution prompt only for verified framework-text or delegation-brief edits.
+4. Prepare exact before/after text and a short execution prompt only for verified edits to a maintained file, including project-owned files when supported by evidence.
    - Verify the maintained relative path and the instruction actually read.
-   - Give host and project findings an operational remedy and validation without a patch.
+   - Report host or operational observations separately, without presenting them as file-change recommendations.
 5. Check every finding against its cited evidence and remove unsupported claims or edits.
    - If no supported improvement remains, state that result.
 6. Continue to [target edits](03-target-edits.md).

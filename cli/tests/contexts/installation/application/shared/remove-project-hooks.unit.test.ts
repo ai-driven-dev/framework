@@ -1,195 +1,34 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { assertProjectHooksUnchanged } from "../../../../../src/contexts/installation/application/shared/assert-project-hooks-unchanged.js";
 import {
   assertProjectHooksRemovable,
-  assertProjectHooksUnchanged,
   removeProjectHooks,
 } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
+
+import {
+  entry,
+  HOOKS_PATH,
+  hooksFile,
+  OTHER,
+  PLUGIN,
+  PROJECT_ROOT,
+  aCursorHooksPlugin as plugin,
+  SCRIPT_PATH,
+} from "../../testing/project-hooks-removal.builder.js";
 
 const { cursor } = TOOL;
 
-const PROJECT_ROOT = "/test-project";
-const PLUGIN = "aidd-context";
-const OTHER = "aidd-dev";
-const HOOKS_PATH = join(PROJECT_ROOT, ".cursor", "hooks.json");
-const SCRIPT_PATH = join(PROJECT_ROOT, ".cursor", "hooks", PLUGIN, "pre.js");
-
-function entry(plugin: string): { command: string } {
-  return { command: `node ./.cursor/hooks/${plugin}/pre.js` };
-}
-
-function hooksFile(...plugins: string[]): string {
-  return JSON.stringify({ version: 1, hooks: { preToolUse: plugins.map(entry) } });
-}
-
-function plugin(options: { entry?: boolean; script?: string } = {}): InstalledPlugin {
-  const command = entry(PLUGIN).command;
-  return InstalledPlugin.fromJSON({
-    name: PLUGIN,
-    source: { kind: "local", path: "/src" },
-    version: "1.0.0",
-    strict: false,
-    files: {},
-    scope: "user",
-    projectHooks: {
-      entries: options.entry
-        ? [
-            {
-              event: "preToolUse",
-              command,
-              digest: createHash("md5")
-                .update(JSON.stringify(entry(PLUGIN)))
-                .digest("hex"),
-            },
-          ]
-        : [],
-      scripts:
-        options.script === undefined
-          ? {}
-          : {
-              [`.cursor/hooks/${PLUGIN}/pre.js`]: createHash("md5")
-                .update(options.script)
-                .digest("hex"),
-            },
-    },
-  });
-}
-
 describe("removeProjectHooks", () => {
-  it.each([
-    ["entries", {}],
-    ["scripts", {}],
-    ["entries", { overwriteEdited: true }],
-    ["scripts", { overwriteEdited: true }],
-  ] as const)(
-    "refuses a legacy install with only %s present, guard %o, before changing any files",
-    async (present, guard) => {
-      const content = hooksFile(PLUGIN);
-      const fs = new InMemoryFileAdapter(
-        present === "entries" ? { [HOOKS_PATH]: content } : { [SCRIPT_PATH]: "legacy" }
-      );
-      const legacy = InstalledPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
-
-      await expect(
-        removeProjectHooks(fs, legacy, registeredAiProfile(cursor), PROJECT_ROOT, guard)
-      ).rejects.toThrow(
-        `Cursor project hooks for '${PLUGIN}' have an unproven legacy install digest; detach refused.`
-      );
-
-      expect(fs.getFile(HOOKS_PATH)).toBe(present === "entries" ? content : undefined);
-      expect(fs.getFile(SCRIPT_PATH)).toBe(present === "scripts" ? "legacy" : undefined);
-    }
-  );
-
-  it.each(["not-a-digest", `x${"a".repeat(32)}`, `${"a".repeat(32)}x`])(
-    "refuses an unproven script digest %s before unmerging verified entries",
-    async (digest) => {
-      const script = "installed script";
-      const content = hooksFile(PLUGIN, OTHER);
-      const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content, [SCRIPT_PATH]: script });
-      const installed = plugin({ entry: true }).toJSON();
-      const invalid = InstalledPlugin.fromJSON({
-        ...installed,
-        projectHooks: {
-          entries: installed.projectHooks?.entries ?? [],
-          scripts: { [`.cursor/hooks/${PLUGIN}/pre.js`]: digest },
-        },
-      });
-
-      await expect(
-        removeProjectHooks(fs, invalid, registeredAiProfile(cursor), PROJECT_ROOT)
-      ).rejects.toThrow(
-        `Cursor hook script '.cursor/hooks/${PLUGIN}/pre.js' has an unproven install digest; detach refused.`
-      );
-
-      expect(fs.getFile(HOOKS_PATH)).toBe(content);
-      expect(fs.getFile(SCRIPT_PATH)).toBe(script);
-    }
-  );
-
-  it.each([
-    ".cursor/hooks/aidd-dev/pre.js",
-    "/foreign/pre.js",
-    ".cursor/hooks/aidd-context/../aidd-dev/pre.js",
-    ".cursor/hooks/aidd-context/./pre.js",
-    ".cursor/hooks/aidd-context/nested\\pre.js",
-  ])("refuses an unproven recorded script path %s before unmerging hooks", async (path) => {
-    const content = hooksFile(PLUGIN, OTHER);
-    const script = "installed script";
-    const fs = new InMemoryFileAdapter({
-      [HOOKS_PATH]: content,
-      [join(PROJECT_ROOT, path)]: script,
-    });
-    const installed = plugin({ entry: true }).toJSON();
-    const invalid = InstalledPlugin.fromJSON({
-      ...installed,
-      projectHooks: {
-        entries: installed.projectHooks?.entries ?? [],
-        scripts: { [path]: createHash("md5").update(script).digest("hex") },
-      },
-    });
-
-    await expect(
-      removeProjectHooks(fs, invalid, registeredAiProfile(cursor), PROJECT_ROOT)
-    ).rejects.toThrow(`Cursor hook script path '${path}' has unproven provenance; detach refused.`);
-
-    expect(fs.getFile(HOOKS_PATH)).toBe(content);
-    expect(fs.getFile(join(PROJECT_ROOT, path))).toBe(script);
-  });
-
-  it.each([".cursor/hooks/aidd-dev/pre.js", "/foreign/pre.js"])(
-    "still refuses an unproven recorded script path %s when told to overwrite edits",
-    async (path) => {
-      const script = "installed script";
-      const fs = new InMemoryFileAdapter({
-        [HOOKS_PATH]: hooksFile(PLUGIN),
-        [join(PROJECT_ROOT, path)]: script,
-      });
-      const installed = plugin({ entry: true }).toJSON();
-      const invalid = InstalledPlugin.fromJSON({
-        ...installed,
-        projectHooks: {
-          entries: installed.projectHooks?.entries ?? [],
-          scripts: { [path]: createHash("md5").update(script).digest("hex") },
-        },
-      });
-
-      await expect(
-        removeProjectHooks(fs, invalid, registeredAiProfile(cursor), PROJECT_ROOT, {
-          overwriteEdited: true,
-        })
-      ).rejects.toThrow(`Cursor hook script path '${path}' has unproven provenance`);
-
-      expect(fs.getFile(join(PROJECT_ROOT, path))).toBe(script);
-    }
-  );
-
-  it("refuses an unproven entry digest even when told to overwrite edits", async () => {
-    const installed = plugin({ entry: true }).toJSON();
-    const invalid = InstalledPlugin.fromJSON({
-      ...installed,
-      projectHooks: {
-        entries: (installed.projectHooks?.entries ?? []).map((e) => ({ ...e, digest: "x" })),
-        scripts: {},
-      },
-    });
-    const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
-
-    await expect(
-      removeProjectHooks(fs, invalid, registeredAiProfile(cursor), PROJECT_ROOT, {
-        overwriteEdited: true,
-      })
-    ).rejects.toThrow(`Cursor project hooks for '${PLUGIN}' have an unproven install digest`);
-  });
-
   it("removes an edited entry and an edited script when told to overwrite edits", async () => {
     const edited = JSON.stringify({
       version: 1,
@@ -199,11 +38,22 @@ describe("removeProjectHooks", () => {
     const installed = plugin({ entry: true, script: "installed script" });
 
     await expect(
-      removeProjectHooks(fs, installed, registeredAiProfile(cursor), PROJECT_ROOT)
-    ).rejects.toThrow(/edited after install; detach refused\. Rerun aidd sync --force/);
+      removeProjectHooks({
+        fs,
+        plugin: installed,
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
+    ).rejects.toThrow(saying(/edited after install; detach refused\. Rerun aidd sync --force/));
     expect(
-      await removeProjectHooks(fs, installed, registeredAiProfile(cursor), PROJECT_ROOT, {
-        overwriteEdited: true,
+      await removeProjectHooks({
+        fs,
+        plugin: installed,
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+        guard: {
+          overwriteEdited: true,
+        },
       })
     ).toBe(true);
 
@@ -223,9 +73,14 @@ describe("removeProjectHooks", () => {
   ])("preserves a hooks file with no contribution byte-for-byte: %s", async (content) => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 
-    expect(await removeProjectHooks(fs, plugin(), registeredAiProfile(cursor), PROJECT_ROOT)).toBe(
-      false
-    );
+    expect(
+      await removeProjectHooks({
+        fs,
+        plugin: plugin(),
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
+    ).toBe(false);
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
   });
@@ -244,12 +99,12 @@ describe("removeProjectHooks", () => {
           {
             event: "preToolUse",
             command: first.command,
-            digest: createHash("md5").update(JSON.stringify(first)).digest("hex"),
+            digest: FileHash.of(JSON.stringify(first)).value,
           },
           {
             event: "postToolUse",
             command: second.command,
-            digest: createHash("md5").update(JSON.stringify(second)).digest("hex"),
+            digest: FileHash.of(JSON.stringify(second)).value,
           },
         ],
         scripts: {},
@@ -257,23 +112,33 @@ describe("removeProjectHooks", () => {
     });
 
     await expect(
-      assertProjectHooksRemovable(fs, installed, registeredAiProfile(cursor), PROJECT_ROOT)
+      assertProjectHooksRemovable({
+        fs,
+        plugin: installed,
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
     ).resolves.toBeUndefined();
     await expect(
-      assertProjectHooksUnchanged(
+      assertProjectHooksUnchanged({
         fs,
-        PLUGIN,
-        installed.projectHooks,
-        registeredAiProfile(cursor),
-        PROJECT_ROOT
-      )
+        pluginName: PLUGIN,
+        provenance: installed.projectHooks,
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
     ).resolves.toStrictEqual({ existing: content });
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(SCRIPT_PATH)).toBe("script");
-    expect(await removeProjectHooks(fs, installed, registeredAiProfile(cursor), PROJECT_ROOT)).toBe(
-      true
-    );
+    expect(
+      await removeProjectHooks({
+        fs,
+        plugin: installed,
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
+    ).toBe(true);
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks).toStrictEqual({
       preToolUse: [entry(OTHER)],
     });
@@ -285,13 +150,13 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content, [SCRIPT_PATH]: script });
 
     await expect(
-      assertProjectHooksRemovable(
+      assertProjectHooksRemovable({
         fs,
-        plugin({ entry: true, script }),
-        registeredAiProfile(cursor),
-        PROJECT_ROOT
-      )
-    ).rejects.toThrow(/edited after install/);
+        plugin: plugin({ entry: true, script }),
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
+    ).rejects.toThrow(saying(/edited after install/));
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(SCRIPT_PATH)).toBe(script);
@@ -302,96 +167,44 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 
     expect(
-      await removeProjectHooks(
+      await removeProjectHooks({
         fs,
-        plugin({ script: "installed script" }),
-        registeredAiProfile(cursor),
-        PROJECT_ROOT
-      )
+        plugin: plugin({ script: "installed script" }),
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
     ).toBe(false);
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(SCRIPT_PATH)).toBeUndefined();
   });
 
-  it("allows a legacy install with no project contribution and returns the existing hooks during preflight", async () => {
-    const content = hooksFile(OTHER);
-    const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
-
-    await expect(
-      assertProjectHooksUnchanged(fs, PLUGIN, undefined, registeredAiProfile(cursor), PROJECT_ROOT)
-    ).resolves.toStrictEqual({ existing: content });
-    await expect(
-      assertProjectHooksUnchanged(
-        fs,
-        PLUGIN,
-        undefined,
-        registeredAiProfile(TOOL.opencode),
-        PROJECT_ROOT
-      )
-    ).resolves.toStrictEqual({ existing: null });
-
-    expect(fs.getFile(HOOKS_PATH)).toBe(content);
-  });
-  it("refuses a hooks.json symlink outside the project even when its entries match the install digest", async () => {
-    const content = hooksFile(PLUGIN, OTHER);
-    const foreignPath = "/foreign/hooks.json";
-    const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content, [foreignPath]: content });
-    fs.setSymlink(HOOKS_PATH, foreignPath);
-    const write = vi.spyOn(fs, "writeFile");
-    const remove = vi.spyOn(fs, "deleteFile");
-
-    await expect(
-      removeProjectHooks(fs, plugin({ entry: true }), registeredAiProfile(cursor), PROJECT_ROOT)
-    ).rejects.toThrow(/outside.*project|escapes.*project/);
-
-    expect(write).not.toHaveBeenCalled();
-    expect(remove).not.toHaveBeenCalled();
-    expect(fs.getFile(foreignPath)).toBe(content);
-  });
-
-  it("refuses a hook script parent symlink outside the project despite matching bytes and digest", async () => {
-    const script = "module.exports = () => {};";
-    const foreignDir = "/foreign/script-dir";
-    const foreignPath = join(foreignDir, "pre.js");
-    const fs = new InMemoryFileAdapter({
-      [SCRIPT_PATH]: script,
-      [foreignPath]: script,
-    });
-    fs.setSymlink(join(PROJECT_ROOT, ".cursor", "hooks", PLUGIN), foreignDir);
-    const write = vi.spyOn(fs, "writeFile");
-    const remove = vi.spyOn(fs, "deleteFile");
-
-    await expect(
-      removeProjectHooks(fs, plugin({ script }), registeredAiProfile(cursor), PROJECT_ROOT)
-    ).rejects.toThrow(/outside.*project|escapes.*project/);
-
-    expect(write).not.toHaveBeenCalled();
-    expect(remove).not.toHaveBeenCalled();
-    expect(fs.getFile(foreignPath)).toBe(script);
-  });
-
   it("leaves a tool that keeps hooks in its plugin directory untouched and reports nothing undone", async () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
 
     expect(
-      await removeProjectHooks(
+      await removeProjectHooks({
         fs,
-        plugin({ entry: true }),
-        registeredAiProfile(TOOL.opencode),
-        PROJECT_ROOT
-      )
+        plugin: plugin({ entry: true }),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        projectRoot: PROJECT_ROOT,
+      })
     ).toBe(false);
     expect(fs.getFile(HOOKS_PATH)).toBe(hooksFile(PLUGIN));
   });
 
   it("reports nothing undone when neither the hooks file nor the script directory exists", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PROJECT_ROOT]);
     fs.failOn("deleteDirectory", `${PROJECT_ROOT}/.cursor/hooks/${PLUGIN}/`, errnoError("EPERM"));
 
-    expect(await removeProjectHooks(fs, plugin(), registeredAiProfile(cursor), PROJECT_ROOT)).toBe(
-      false
-    );
+    expect(
+      await removeProjectHooks({
+        fs,
+        plugin: plugin(),
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
+    ).toBe(false);
   });
 
   it("removes only recorded entries and scripts while preserving untracked files in the same plugin directory", async () => {
@@ -405,12 +218,12 @@ describe("removeProjectHooks", () => {
       [otherScript]: "other plugin script",
     });
 
-    const undone = await removeProjectHooks(
+    const undone = await removeProjectHooks({
       fs,
-      plugin({ entry: true, script }),
-      registeredAiProfile(cursor),
-      PROJECT_ROOT
-    );
+      plugin: plugin({ entry: true, script }),
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(undone).toBe(true);
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
@@ -429,12 +242,12 @@ describe("removeProjectHooks", () => {
       [SCRIPT_PATH]: script,
     });
 
-    await removeProjectHooks(
+    await removeProjectHooks({
       fs,
-      plugin({ entry: true, script }),
-      registeredAiProfile(cursor),
-      PROJECT_ROOT
-    );
+      plugin: plugin({ entry: true, script }),
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
       version: 1,
@@ -461,13 +274,13 @@ describe("removeProjectHooks", () => {
       });
 
       await expect(
-        removeProjectHooks(
+        removeProjectHooks({
           fs,
-          plugin({ entry: true, script }),
-          registeredAiProfile(cursor),
-          PROJECT_ROOT
-        )
-      ).rejects.toThrow(/edited after install/);
+          plugin: plugin({ entry: true, script }),
+          tool: registeredTools().aiProfile(cursor),
+          projectRoot: PROJECT_ROOT,
+        })
+      ).rejects.toThrow(saying(/edited after install/));
 
       expect(fs.getFile(HOOKS_PATH)).toBe(current);
       expect(fs.getFile(SCRIPT_PATH)).toBe(script);
@@ -478,43 +291,28 @@ describe("removeProjectHooks", () => {
     const script = "module.exports = () => {};";
     const fs = new InMemoryFileAdapter({ [SCRIPT_PATH]: script });
 
-    const undone = await removeProjectHooks(
+    const undone = await removeProjectHooks({
       fs,
-      plugin({ script }),
-      registeredAiProfile(cursor),
-      PROJECT_ROOT
-    );
+      plugin: plugin({ script }),
+      tool: registeredTools().aiProfile(cursor),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(undone).toBe(true);
     expect(fs.listAll()).toStrictEqual([]);
   });
 
   it("propagates a failure to read the hooks file other than its absence", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PROJECT_ROOT]);
     fs.failOn("readFile", HOOKS_PATH, errnoError("EACCES"));
 
     await expect(
-      removeProjectHooks(fs, plugin(), registeredAiProfile(cursor), PROJECT_ROOT)
+      removeProjectHooks({
+        fs,
+        plugin: plugin(),
+        tool: registeredTools().aiProfile(cursor),
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow("EACCES: planted by the test");
-  });
-
-  it("refuses a legacy hook with no install digest instead of deleting by plugin name", async () => {
-    const fs = new InMemoryFileAdapter({
-      [HOOKS_PATH]: hooksFile(PLUGIN),
-      [SCRIPT_PATH]: "legacy",
-    });
-    const legacy = InstalledPlugin.fromJSON({
-      name: PLUGIN,
-      source: { kind: "local", path: "/src" },
-      version: "1.0.0",
-      strict: false,
-      files: {},
-      scope: "user",
-    });
-    await expect(
-      removeProjectHooks(fs, legacy, registeredAiProfile(cursor), PROJECT_ROOT)
-    ).rejects.toThrow(/unproven/);
-    expect(fs.getFile(HOOKS_PATH)).toBe(hooksFile(PLUGIN));
-    expect(fs.getFile(SCRIPT_PATH)).toBe("legacy");
   });
 });

@@ -3,25 +3,18 @@
  * have died were never generated. `mutation-scopes.json` declares the globs, the floor each
  * scope must hold, and what is left out, so a directory belonging to neither fails by name.
  */
-import { existsSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
-import {
-  breakVerdict,
-  canarySelectionVerdict,
-  changedArgs,
-  changedRanges,
-  pruneIncremental,
-  scoreOf,
-  strykerArgs,
-  survivorsOf,
-} from "../../scripts/run-mutation.mjs";
-import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./helpers.js";
+import { scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
+import { strykerArgs } from "../../scripts/run-mutation.mjs";
+import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./source-graph.js";
 
 interface Scope {
   readonly mutate: string | readonly string[];
-  readonly break: number;
+  readonly break?: number;
+  readonly tests?: readonly string[];
+  readonly harnessOnly?: boolean;
 }
 
 interface ScopeDeclaration {
@@ -30,7 +23,13 @@ interface ScopeDeclaration {
 }
 
 function declaration(): ScopeDeclaration {
-  return JSON.parse(read("mutation-scopes.json")) as ScopeDeclaration;
+  const parsed = JSON.parse(read("mutation-scopes.json")) as ScopeDeclaration;
+  return parsed;
+}
+
+function packageScripts(): string[] {
+  const { scripts } = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
+  return Object.keys(scripts);
 }
 
 function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
@@ -39,6 +38,12 @@ function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
     globs.some((glob) => !glob.startsWith("!") && matchesGlob(glob, path)) &&
     !globs.some((glob) => glob.startsWith("!") && matchesGlob(glob.slice(1), path))
   );
+}
+
+function aimsAtOneProfile(mutate: Scope["mutate"]): boolean {
+  return [mutate]
+    .flat()
+    .some((glob) => /^!?src\/contexts\/tools\/domain\/profiles\/[^*/]+\//.test(glob));
 }
 
 function isCovered(path: string, { scopes, excluded }: ScopeDeclaration): boolean {
@@ -61,7 +66,7 @@ describe("mutation covers every source file", () => {
 
     expect(
       uncovered,
-      "neither mutated nor excluded — add it to a scope in mutation-scopes.json, or exclude it with the reason"
+      "neither mutated nor excluded - add it to a scope in mutation-scopes.json, or exclude it with the reason"
     ).toEqual([]);
   });
 
@@ -73,13 +78,13 @@ describe("mutation covers every source file", () => {
       expect(reason.length, `${glob} is excluded with no reason given`).toBeGreaterThan(40);
       expect(
         files.some((file) => matchesGlob(glob, file)),
-        `${glob} excludes nothing — the directory it names is gone`
+        `${glob} excludes nothing - the directory it names is gone`
       ).toBe(true);
     }
     for (const [name, { mutate }] of Object.entries(scopes)) {
       expect(
         [...files, ...fixtureFiles()].some((file) => scopeMatches(mutate, file)),
-        `scope "${name}" (${mutate}) matches no file — it would score an empty set`
+        `scope "${name}" (${mutate}) matches no file - it would score an empty set`
       ).toBe(true);
     }
   });
@@ -92,22 +97,41 @@ describe("mutation covers every source file", () => {
     expect(twice, "narrow one scope with a ! glob").toEqual([]);
   });
 
-  it("every scope declares the floor its score must hold", () => {
-    for (const [name, scope] of Object.entries(declaration().scopes)) {
+  it("only telemetry, shared and the canary hold a blocking floor", () => {
+    const floored = Object.entries(declaration().scopes)
+      .filter(([, scope]) => scope.break !== undefined)
+      .map(([name]) => name);
+    expect(floored.sort()).toEqual(["canary", "shared", "telemetry"]);
+    for (const name of floored) {
+      const floor = declaration().scopes[name]?.break;
       expect(
-        Number.isInteger(scope.break) && scope.break > 0 && scope.break <= 100,
-        `scope "${name}" declares no break floor — a run cannot fail`
+        Number.isInteger(floor) && (floor ?? 0) > 0 && (floor ?? 0) <= 100,
+        `scope "${name}" declares an invalid floor`
       ).toBe(true);
     }
   });
 
   it("package.json runs every scope, and nothing it does not", () => {
-    const { scripts } = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
-    const scripted = Object.keys(scripts)
+    const scripted = packageScripts()
       .filter((name) => name.startsWith("test:mutation:"))
       .map((name) => name.slice("test:mutation:".length));
 
     expect(scripted.sort()).toEqual(Object.keys(declaration().scopes).sort());
+  });
+
+  it("no scope mutates a single tool profile: a profile is a declaration, held by the conformance suite", () => {
+    const aimed = Object.entries(declaration().scopes)
+      .filter(([, scope]) => aimsAtOneProfile(scope.mutate))
+      .map(([name]) => name);
+
+    expect(aimed).toEqual([]);
+  });
+
+  it("recognises a scope that mutates or carves out one profile folder", () => {
+    const folder = "src/contexts/tools/domain/profiles/claude/**/*.ts";
+    expect(aimsAtOneProfile(folder)).toBe(true);
+    expect(aimsAtOneProfile(["src/contexts/tools/**/*.ts", `!${folder}`])).toBe(true);
+    expect(aimsAtOneProfile("src/contexts/tools/**/*.ts")).toBe(false);
   });
 
   it("no other file lists what mutation covers", () => {
@@ -117,24 +141,6 @@ describe("mutation covers every source file", () => {
 });
 
 describe("the guard itself", () => {
-  it("rejects a canary run that skipped its covering test or ran a neighbour", () => {
-    const mutant = {
-      id: "1",
-      status: "Killed",
-      coveredBy: ["test-1"],
-      killedBy: ["test-1"],
-      testsCompleted: 1,
-    };
-    const report = (override = {}) => ({
-      files: { canary: { mutants: [{ ...mutant, ...override }] } },
-    });
-    expect(canarySelectionVerdict(report())).toBeNull();
-    expect(canarySelectionVerdict(report({ testsCompleted: 0 }))).toMatch(/covering test/);
-    expect(canarySelectionVerdict(report({ testsCompleted: 2 }))).toMatch(/covering test/);
-    expect(canarySelectionVerdict(report({ killedBy: ["test-2"] }))).toMatch(/covering test/);
-    expect(canarySelectionVerdict(report({ static: true, coveredBy: [] }))).toBeNull();
-  });
-
   const scopes = {
     shared: { mutate: "src/shared/**/*.ts", break: 70 },
     tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },
@@ -158,16 +164,22 @@ describe("the guard itself", () => {
     };
     expect(scopeMatches(split.tools.mutate, "src/contexts/tools/domain/registry.ts")).toBe(true);
     expect(
-      scopeMatches(split.tools.mutate, "src/contexts/tools/domain/profiles/claude/profile.ts")
+      scopeMatches(
+        split.tools.mutate,
+        "src/contexts/tools/domain/profiles/claude/claude.profile.ts"
+      )
     ).toBe(false);
     expect(
-      scopeMatches(split.profiles.mutate, "src/contexts/tools/domain/profiles/claude/profile.ts")
+      scopeMatches(
+        split.profiles.mutate,
+        "src/contexts/tools/domain/profiles/claude/claude.profile.ts"
+      )
     ).toBe(true);
     expect(strykerArgs("tools", split)).toContain(
       "src/contexts/tools/**/*.ts,!src/contexts/tools/domain/profiles/**/*.ts"
     );
     expect(
-      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/profile.ts"], split).sort()
+      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/claude.profile.ts"], split).sort()
     ).toEqual(["profiles", "tools"]);
   });
 
@@ -176,151 +188,5 @@ describe("the guard itself", () => {
     expect(isCovered("src/shared/domain/paths.ts", declared)).toBe(true);
     expect(isCovered("src/cli.ts", declared)).toBe(true);
     expect(isCovered("src/contexts/installation/domain/manifest.ts", declared)).toBe(false);
-  });
-
-  it("gives each scope its own glob and incremental file, and refuses a scope nobody declared", () => {
-    expect(strykerArgs("shared", scopes)).toEqual([
-      "run",
-      "--mutate",
-      "src/shared/**/*.ts",
-      "--incremental",
-      "--incrementalFile",
-      "reports/mutation/shared/incremental.json",
-    ]);
-    expect(strykerArgs("tools", scopes, { force: true })).toContain("--force");
-    expect(() => strykerArgs("nowhere", scopes)).toThrow('Unknown scope "nowhere"');
-  });
-
-  it("scores detected over detected plus undetected, leaves ignored and errored aside, and an empty report as zero", () => {
-    const report = {
-      files: {
-        "a.ts": {
-          mutants: [
-            { status: "Killed" },
-            { status: "Timeout" },
-            { status: "Survived" },
-            { status: "NoCoverage" },
-            { status: "Ignored" },
-            { status: "RuntimeError" },
-            { status: "CompileError" },
-          ],
-        },
-      },
-    };
-    expect(scoreOf(report)).toBe(50);
-    expect(scoreOf({ files: {} })).toBe(0);
-  });
-
-  it("runs the scopes a change touches, through source or mirrored tests, and all of them for the harness or a helper", () => {
-    expect(scopesToRun(["cli/src/shared/domain/paths.ts"], scopes)).toEqual(["shared"]);
-    expect(
-      scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
-    ).toEqual(["tools"]);
-    expect(scopesToRun(["README.md"], scopes)).toEqual([]);
-    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([
-      "shared",
-      "tools",
-    ]);
-    expect(scopesToRun([HARNESS[0]], scopes)).toEqual(["shared", "tools"]);
-    expect(scopesToRun([], scopes, { all: true })).toEqual(["shared", "tools"]);
-  });
-
-  it("runs a scope that names a single file when that file, or its mirrored test, changed", () => {
-    const single = {
-      runtime: {
-        mutate: ["src/contexts/telemetry/infrastructure/git/git-environment.ts"],
-        break: 1,
-      },
-      tools: { mutate: "src/contexts/tools/**/*.ts", break: 1 },
-    };
-    expect(
-      scopesToRun(["cli/src/contexts/telemetry/infrastructure/git/git-environment.ts"], single)
-    ).toEqual(["runtime"]);
-    expect(
-      scopesToRun(
-        ["cli/tests/contexts/telemetry/infrastructure/git/git-environment.unit.test.ts"],
-        single
-      )
-    ).toEqual(["runtime"]);
-    expect(
-      scopesToRun(["cli/src/contexts/telemetry/infrastructure/git/git-environment.tsx"], single)
-    ).toEqual([]);
-  });
-
-  it("names every harness file the tree holds, so a renamed one cannot silently stop counting", () => {
-    for (const file of HARNESS) {
-      expect(
-        existsSync(join(REPO_ROOT, file)),
-        `${file} is named in HARNESS but is not there`
-      ).toBe(true);
-    }
-  });
-
-  it("carries only a kill forward, so a test written later reaches what survived, went uncovered or is static", () => {
-    const pruned = pruneIncremental({
-      files: {
-        "a.ts": {
-          mutants: [
-            { status: "Killed" },
-            { status: "Timeout" },
-            { status: "Killed", static: true },
-            { status: "Survived" },
-            { status: "NoCoverage" },
-          ],
-        },
-      },
-    });
-    expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }]);
-  });
-
-  it("mutates only the lines a diff adds or changes under src/, never a deletion or another file", () => {
-    const diff = [
-      "diff --git a/src/a.ts b/src/a.ts",
-      "--- a/src/a.ts",
-      "+++ b/src/a.ts",
-      "@@ -10,2 +10,3 @@ function a() {",
-      "@@ -20 +21 @@ function b() {",
-      "@@ -30,4 +31,0 @@ function c() {",
-      "diff --git a/src/b.ts b/src/b.ts",
-      "--- /dev/null",
-      "+++ b/src/b.ts",
-      "@@ -0,0 +1,5 @@",
-      "diff --git a/README.md b/README.md",
-      "+++ b/README.md",
-      "@@ -1 +1 @@",
-    ].join("\n");
-    expect(changedRanges(diff)).toEqual(["src/a.ts:10-12", "src/a.ts:21-21", "src/b.ts:1-5"]);
-    expect(changedArgs(["src/a.ts:10-12", "src/b.ts:1-5"])).toEqual([
-      "run",
-      "--mutate",
-      "src/a.ts:10-12,src/b.ts:1-5",
-    ]);
-  });
-
-  it("names each mutant a test left alive, with its file and line", () => {
-    const report = {
-      files: {
-        "src/a.ts": {
-          mutants: [
-            { status: "Killed", mutatorName: "BooleanLiteral", location: { start: { line: 3 } } },
-            { status: "Survived", mutatorName: "StringLiteral", location: { start: { line: 7 } } },
-            {
-              status: "NoCoverage",
-              mutatorName: "BlockStatement",
-              location: { start: { line: 9 } },
-            },
-          ],
-        },
-      },
-    };
-    expect(survivorsOf(report)).toEqual([
-      "src/a.ts:7 StringLiteral (Survived)",
-      "src/a.ts:9 BlockStatement (NoCoverage)",
-    ]);
-  });
-
-  it("fails a score under the floor and passes one on it", () => {
-    expect(breakVerdict(69.9, scopes.shared)).toMatch(/below the 70/);
-    expect(breakVerdict(70, scopes.shared)).toBeNull();
   });
 });

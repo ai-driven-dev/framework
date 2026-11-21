@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 
 describe("claude mcp", () => {
   describe("capabilities.mcp", () => {
     it("outputs to .mcp.json", () => {
-      expect(claude.section("mcp").config?.outputPath()).toBe(".mcp.json");
+      expect(claude.section("mcp").config?.accepts(".mcp.json")).toBe(true);
     });
 
     it("writes its servers as JSON under `mcpServers`", () => {
@@ -19,7 +19,7 @@ describe("claude mcp", () => {
     });
 
     it("mcp config preserves user customizations during update", () => {
-      expect(claude.section("mcp").config?.mergeStrategy()).toBe("user-prime");
+      expect(claude.section("mcp").config?.fileOf("{}").mergeStrategy).toBe("user-prime");
     });
   });
 });

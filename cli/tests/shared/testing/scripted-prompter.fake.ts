@@ -1,0 +1,214 @@
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
+
+type PromptAnswer =
+  | { type: "conflict"; value: "keep" | "overwrite" }
+  | { type: "conflict-bulk"; value: "keep" | "overwrite" | "overwrite-all" | "skip-all" }
+  | { type: "confirm"; value: boolean }
+  | { type: "input"; value: string }
+  | { type: "select"; value: string }
+  | { type: "checkbox"; value: string[] };
+
+type AnswerOf<K extends PromptAnswer["type"]> = Extract<PromptAnswer, { type: K }>;
+
+function isAnswerOf<K extends PromptAnswer["type"]>(
+  answer: PromptAnswer,
+  type: K
+): answer is AnswerOf<K> {
+  return answer.type === type;
+}
+
+/** Returns pre-defined answers in order, throwing once the queue is exhausted. */
+export class ScriptedPrompter implements Prompter {
+  readonly askedSelects: Array<{ message: string; names: string[] }> = [];
+  readonly askedInputs: Array<{ message: string; defaultValue: string | undefined }> = [];
+  private readonly queue: PromptAnswer[];
+  private index = 0;
+
+  constructor(answers: PromptAnswer[]) {
+    this.queue = [...answers];
+  }
+
+  async resolveConflict(
+    relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    const answer = this.next("conflict", relativePath);
+    return answer.value;
+  }
+
+  async resolveConflictBulk(
+    relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    const answer = this.next("conflict-bulk", relativePath);
+    return answer.value;
+  }
+
+  async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+    if (this.index >= this.queue.length) {
+      return defaultValue ?? false;
+    }
+    const answer = this.next("confirm", message);
+    return answer.value;
+  }
+
+  async input(message: string, defaultValue?: string): Promise<string> {
+    this.askedInputs.push({ message, defaultValue });
+    if (this.index >= this.queue.length) {
+      return defaultValue ?? "";
+    }
+    const answer = this.next("input", message);
+    return answer.value;
+  }
+
+  async select<T>(
+    message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean | string; description?: string }>
+  ): Promise<T> {
+    this.askedSelects.push({ message, names: choices.map((c) => c.name) });
+    const answer = this.next("select", message);
+    const stringValue = answer.value;
+    const match = choices.find((c) => !c.disabled && String(c.value) === stringValue);
+    if (match === undefined) {
+      throw new Error(
+        `ScriptedPrompter: no enabled choice with value "${stringValue}" for "${message}"`
+      );
+    }
+    return match.value;
+  }
+
+  async checkbox<T>(
+    message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    if (this.index >= this.queue.length) {
+      return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
+    }
+    const answer = this.next("checkbox", message);
+    const selectedValues = new Set(answer.value);
+    return choices
+      .filter((c) => !c.disabled && selectedValues.has(String(c.value)))
+      .map((c) => c.value);
+  }
+
+  private next<K extends PromptAnswer["type"]>(type: K, context: string): AnswerOf<K> {
+    if (this.index >= this.queue.length) {
+      throw new Error(
+        `ScriptedPrompter: unexpected prompt call (type="${type}", context="${context}") — queue exhausted`
+      );
+    }
+    const answer = this.queue[this.index++];
+    if (answer === undefined) {
+      throw new Error(`ScriptedPrompter: answer at index ${this.index - 1} is undefined`);
+    }
+    if (!isAnswerOf(answer, type)) {
+      throw new Error(
+        `ScriptedPrompter: expected a "${type}" answer for "${context}", the queue holds a "${answer.type}"`
+      );
+    }
+    return answer;
+  }
+
+  static answer = {
+    conflict(value: "keep" | "overwrite"): PromptAnswer {
+      return { type: "conflict", value };
+    },
+    conflictBulk(value: "keep" | "overwrite" | "overwrite-all" | "skip-all"): PromptAnswer {
+      return { type: "conflict-bulk", value };
+    },
+    confirm(value: boolean): PromptAnswer {
+      return { type: "confirm", value };
+    },
+    input(value: string): PromptAnswer {
+      return { type: "input", value };
+    },
+    select(value: string): PromptAnswer {
+      return { type: "select", value };
+    },
+    checkbox(value: string[]): PromptAnswer {
+      return { type: "checkbox", value };
+    },
+  };
+}
+
+/** Always-overwrite variant, for tests that do not care about conflicts. */
+export class OverwritePrompter implements Prompter {
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    return "overwrite";
+  }
+
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    return "overwrite";
+  }
+
+  async confirm(_message: string, _defaultValue?: boolean): Promise<boolean> {
+    return true;
+  }
+
+  async input(_message: string, defaultValue?: string): Promise<string> {
+    return defaultValue ?? "";
+  }
+
+  async select<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean | string }>
+  ): Promise<T> {
+    const first = choices.find((c) => !c.disabled);
+    if (first === undefined) throw new Error("OverwritePrompter: no enabled choices");
+    return first.value;
+  }
+
+  async checkbox<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
+  }
+}
+
+/** Always-keep variant, for tests that preserve user files. */
+export class KeepPrompter implements Prompter {
+  async resolveConflict(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite"> {
+    return "keep";
+  }
+
+  async resolveConflictBulk(
+    _relativePath: string,
+    _reason: "deleted" | "modified"
+  ): Promise<"keep" | "overwrite" | "overwrite-all" | "skip-all"> {
+    return "keep";
+  }
+
+  async confirm(_message: string, _defaultValue?: boolean): Promise<boolean> {
+    return true;
+  }
+
+  async input(_message: string, defaultValue?: string): Promise<string> {
+    return defaultValue ?? "";
+  }
+
+  async select<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; disabled?: boolean | string }>
+  ): Promise<T> {
+    const first = choices.find((c) => !c.disabled);
+    if (first === undefined) throw new Error("KeepPrompter: no enabled choices");
+    return first.value;
+  }
+
+  async checkbox<T>(
+    _message: string,
+    choices: Array<{ name: string; value: T; checked?: boolean; disabled?: boolean | string }>
+  ): Promise<T[]> {
+    return choices.filter((c) => c.checked === true && !c.disabled).map((c) => c.value);
+  }
+}

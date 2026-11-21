@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import {
-  KiloDualConfigError,
-  OpencodeDualConfigError,
-} from "../../../../../src/shared/domain/errors.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { DualConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 const withFiles =
   (...relPaths: string[]) =>
@@ -37,9 +33,7 @@ describe("the file a tool's MCP config goes in", () => {
     });
 
     it("refuses when both opencode.json and opencode.jsonc exist", async () => {
-      await expect(resolve("opencode.json", "opencode.jsonc")).rejects.toThrow(
-        OpencodeDualConfigError
-      );
+      await expect(resolve("opencode.json", "opencode.jsonc")).rejects.toThrow(DualConfigError);
     });
   });
 
@@ -64,10 +58,8 @@ describe("the file a tool's MCP config goes in", () => {
     });
 
     it("refuses when both files of the answering tier exist", async () => {
-      await expect(resolve("kilo.json", "kilo.jsonc")).rejects.toThrow(KiloDualConfigError);
-      await expect(resolve(".kilo/kilo.json", ".kilo/kilo.jsonc")).rejects.toThrow(
-        KiloDualConfigError
-      );
+      await expect(resolve("kilo.json", "kilo.jsonc")).rejects.toThrow(DualConfigError);
+      await expect(resolve(".kilo/kilo.json", ".kilo/kilo.jsonc")).rejects.toThrow(DualConfigError);
     });
   });
 });
@@ -79,11 +71,10 @@ function opencodeMcp(): McpConfigPart {
 }
 
 describe("the opencode file an McpConfigPart merges into", () => {
-  const hasher = new DeterministicHasher();
   const incoming = JSON.stringify({ mcp: { added: { type: "remote", url: "https://a" } } });
 
   it("contributes a plugin's servers and hands back what to remove them by", () => {
-    const merged = opencodeMcp().mergePluginServers(null, incoming, new Map(), hasher);
+    const merged = opencodeMcp().mergePluginServers(null, incoming, new Map());
 
     expect([...merged.contributedEntries.keys()]).toStrictEqual(["added"]);
     const removed = opencodeMcp().removePluginServers(

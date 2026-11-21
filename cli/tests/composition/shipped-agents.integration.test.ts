@@ -1,11 +1,14 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { parseToml } from "../../src/contexts/tools/domain/formats/toml.js";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { SmolTomlCodec } from "../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
-import { createTestEnv } from "../e2e/helpers.js";
-import { runInProcess } from "../helpers/in-process-cli.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { createTestEnv } from "../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
+import { singlePluginSource } from "./testing/single-plugin-source.builder.js";
+
+const TOML = new SmolTomlCodec();
 
 const PLUGIN = "aidd-orchestrator";
 const SOURCE_DIR = join(REPOSITORY_ROOT, "plugins", PLUGIN, "agents");
@@ -25,6 +28,17 @@ const HOSTS = [
   { host: "kilo", dir: ".kilo/agents", ext: ".md", extra: () => ({ mode: "subagent" }) },
 ] as const;
 
+let source: string;
+let removeSource: () => Promise<void>;
+
+beforeAll(async () => {
+  ({ source, remove: removeSource } = await singlePluginSource(PLUGIN));
+});
+
+afterAll(async () => {
+  await removeSource();
+});
+
 let project: string;
 let home: string;
 let cleanup: () => Promise<void>;
@@ -42,7 +56,7 @@ describe("the shipped agents, built flat for each host", () => {
     "$host loads every agent at its path, with its own frontmatter",
     async ({ host, dir, ext, extra }) => {
       const build = await runInProcess(
-        ["translate", REPOSITORY_ROOT, "--to", host, "--as", "flat", "--out", project],
+        ["translate", source, "--to", host, "--as", "flat", "--out", project],
         { cwd: project, home }
       );
       expect(build.exitCode, build.stderr).toBe(0);
@@ -62,7 +76,7 @@ describe("the shipped agents, built flat for each host", () => {
             ? (({ developer_instructions, ...rest }) => ({
                 ...rest,
                 body: developer_instructions,
-              }))(parseToml(content))
+              }))(TOML.parse(content))
             : { ...parseFrontmatter(content).frontmatter, body: parseFrontmatter(content).body };
         expect(frontmatter, `${host} ${file}`).toStrictEqual({
           description: source.frontmatter.description,

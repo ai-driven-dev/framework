@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+
+const TOML = new SmolTomlCodec();
 
 const sampleMcpJson = JSON.stringify({
   mcpServers: {
@@ -33,7 +36,7 @@ describe("McpConfigPart", () => {
     });
 
     it("converts JSON to TOML when format is toml", () => {
-      const cap = new McpConfigPart({ outputPath: "config.toml", format: "toml" });
+      const cap = new McpConfigPart({ outputPath: "config.toml", format: "toml", toml: TOML });
       const result = cap.transform(sampleMcpJson);
       expect(result).toContain("my-server");
       expect(result).not.toContain('"mcpServers"');
@@ -86,7 +89,7 @@ describe("McpConfigPart", () => {
 
     it("returns false when format differs", () => {
       const a = new McpConfigPart({ outputPath: "config.toml", format: "json" });
-      const b = new McpConfigPart({ outputPath: "config.toml", format: "toml" });
+      const b = new McpConfigPart({ outputPath: "config.toml", format: "toml", toml: TOML });
       expect(a.equals(b)).toBe(false);
     });
   });
@@ -118,6 +121,28 @@ describe("McpSection declarations", () => {
   });
 });
 
+describe("McpConfigPart fileOf", () => {
+  it("writes the servers at the path resolved, the person's file winning by default", () => {
+    const cap = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
+
+    expect(cap.fileOf("{}")).toMatchObject({
+      relativePath: ".mcp.json",
+      mergeStrategy: "user-prime",
+    });
+    expect(
+      cap.fileOf("{}", { relativePath: ".cursor/mcp.json", frameworkPath: "config/mcp.json" })
+    ).toMatchObject({ relativePath: ".cursor/mcp.json", frameworkPath: "config/mcp.json" });
+  });
+
+  it("answers whether the framework's half is written over the person's", () => {
+    const base = { outputPath: ".mcp.json", format: "json" as const };
+    expect(
+      new McpConfigPart({ ...base, mergeStrategy: "framework-prime" }).isFrameworkPrime()
+    ).toBe(true);
+    expect(new McpConfigPart(base).isFrameworkPrime()).toBe(false);
+  });
+});
+
 describe("McpSection isFrameworkPrimeJson", () => {
   const json = { outputPath: "opencode.json", format: "json" as const };
   const prime = { ...json, mergeStrategy: "framework-prime" as const };
@@ -138,7 +163,9 @@ describe("McpSection isFrameworkPrimeJson", () => {
 
   it("refuses a file that is not JSON", () => {
     expect(
-      new McpConfigPart({ ...prime, format: "toml" }).isFrameworkPrimeJson("opencode.json")
+      new McpConfigPart({ ...prime, format: "toml", toml: TOML }).isFrameworkPrimeJson(
+        "opencode.json"
+      )
     ).toBe(false);
   });
 });

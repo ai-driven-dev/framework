@@ -2,34 +2,27 @@
 
 ## Read in this order
 
-| Order | Source | Answers |
-| --- | --- | --- |
-| 1 | the manifests, the workspace file and a lockfile | the stack, the packages by name, the published name |
-| 2 | the root README, then any `docs/` | what it does, for whom, its domain words |
-| 3 | the top-level directories | the shape, who owns what |
-| 4 | the entry points the manifests declare | where execution starts |
-| 5 | every file under the VCS platform's own directory | how it ships, what runs on a schedule |
-| 6 | what runs before a commit or a push, and the task commands | the gate commands |
-| 7 | the commit message rules, the contribution guide, and the AI instructions and rules the project holds outside the memory and its synced block | the allowed commit types, which conventions a rule already covers |
-| 8 | the test configuration, one test file | the layers, the tools, the conventions |
-| 9 | the code, area by area | what the docs above got wrong |
+1. Manifests, workspace file, lockfile: stack, packages by name, published name.
+2. Root README, then any `docs/`: what it does, for whom, domain words.
+3. Top-level directories: the shape, who owns what.
+4. Entry points the manifests declare: where execution starts.
+5. Every file under the VCS platform's own directory: how it ships, what runs on a schedule.
+6. What runs before a commit or push, and the task commands: the gate commands.
+7. Commit rules, contribution guide, AI instructions and rules outside the memory and its synced block: commit types, conventions already covered.
+8. Test configuration, one test file: layers, tools, conventions.
+9. The code, area by area: what the docs above got wrong.
 
 ## Reading rules
 
-| Case | Do |
-| --- | --- |
-| A fact read | kept only if the reader rules of [memory-rules](memory-rules.md) keep it |
-| A command or a convention | take it from the file that defines it, as an `R` line; prose that names one is checked against that file |
-| The root README | read it whole, and the other docs a section needs |
-| The code | read it last: it corrects the others and is never summarised |
-| A monorepo | read every workspace, never the root manifest alone |
-| A directory whose name repeats across areas | read it once |
-| A dependency directory, a build output, or a path the VCS ignores | read nothing under it |
+- Take a command or convention from the file that defines it; check prose naming one against that file.
+- Read the root README whole, and the other docs a section needs.
+- In a monorepo, read every workspace, never the root manifest alone.
+- Read a directory name repeated across areas once.
+- Read nothing under a dependency directory, a build output, or a path the VCS ignores.
+- Keep a fact only if the reader rules of [memory-rules](memory-rules.md) keep it.
 
-## Filling the sheet
+## Keeping facts
 
-| Slot | Fill |
-| --- | --- |
-| One the bank answers | skip it |
-| Any other | every fact the sources state for it, one line each: each gate, decision, gotcha, rule and release step |
-| The brief's `Users`, `Main journey` and `Business rules` | only what the repository states, else a `Q` line, never invented; a setup collects them, a refresh never adds them |
+- Skip a fact the bank already holds.
+- Take the brief's `Users`, `Main journey` and `Business rules` only from the repository, else ask, never invent.
+- A setup collects them; a refresh never adds them.

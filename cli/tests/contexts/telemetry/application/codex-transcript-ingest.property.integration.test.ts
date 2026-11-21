@@ -15,14 +15,14 @@ import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetr
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { cloneOf, grantedBy } from "../testing/clone-builders.js";
-import { FakeBindings } from "../testing/fake-bindings.js";
-import { FakeConsents } from "../testing/fake-consents.js";
-import { FakeLocator } from "../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
-import { InMemoryResolutions } from "../testing/in-memory-resolutions.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
+import { cloneOf, grantedBy } from "../testing/clone.builder.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
 
 let root: string;
 let runs = 0;
@@ -63,26 +63,32 @@ function machine(sessions: string, projects?: string) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsage(
-    [
-      new ReadUsage(new CodexTranscriptSourceAdapter([sessions])),
+  const ingest = new IngestUsage({
+    readers: [
+      new ReadUsage(new CodexTranscriptSourceAdapter({ roots: [sessions] })),
       ...(projects === undefined
         ? []
         : [new ReadUsage(new ClaudeTranscriptSourceAdapter(projects))]),
     ],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
       now: () => NOW,
     }),
-    new SnapshotBindings(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      () => NOW
-    ),
-    { environment: { get: () => undefined } }
-  );
+    options: { environment: { get: () => undefined } },
+  });
   return { dir, ingest };
 }
 
@@ -105,7 +111,7 @@ function counts(results: readonly IngestUsageResult[]) {
       Object.keys(results[0]?.notStored ?? {}).map((reason) => [
         reason,
         results.reduce(
-          (all, r) => all + r.notStored[reason as keyof IngestUsageResult["notStored"]],
+          (all, r) => all + (Object.entries(r.notStored).find(([key]) => key === reason)?.[1] ?? 0),
           0
         ),
       ])

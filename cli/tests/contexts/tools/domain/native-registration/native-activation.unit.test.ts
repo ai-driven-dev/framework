@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  NativeActivation,
-  type NativeActivationSpec,
-} from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
+import type { NativeActivationSpec } from "../../../../../src/contexts/tools/contract/native-registration-spec.js";
+import { NativeActivation } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
 
 const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstall" } as const;
 
@@ -26,7 +24,9 @@ describe("NativeActivation", () => {
 
   it("refuses a declaration whose binary is empty", () => {
     expect(() => new NativeActivation({ ...driven, binary: "" })).toThrow(
-      "A native activation declares an empty binary"
+      expect.objectContaining({
+        detail: expect.stringContaining("A native activation declares an empty binary"),
+      })
     );
   });
 
@@ -35,7 +35,11 @@ describe("NativeActivation", () => {
       () =>
         new NativeActivation({ ...driven, marketplaceSources: { from: "marketplace-registry" } })
     ).toThrow(
-      "A native activation reads its marketplace sources from a registry it does not declare"
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "A native activation reads its marketplace sources from a registry it does not declare"
+        ),
+      })
     );
   });
 

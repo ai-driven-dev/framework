@@ -4,6 +4,9 @@ import {
   mcpJsonToToml,
   mergeJsonUserPrime,
 } from "../../../../../src/contexts/tools/domain/formats/mcp-format.js";
+import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+
+const TOML = new SmolTomlCodec();
 
 function mcpJson(servers: Record<string, unknown>): string {
   return JSON.stringify({ mcpServers: servers });
@@ -12,13 +15,14 @@ function mcpJson(servers: Record<string, unknown>): string {
 describe("mcpJsonToToml", () => {
   describe("a stdio server", () => {
     it("carries its command alone when nothing else is declared", () => {
-      expect(mcpJsonToToml(mcpJson({ fs: { command: "npx" } }))).toBe(
+      expect(mcpJsonToToml(TOML, mcpJson({ fs: { command: "npx" } }))).toBe(
         '[mcp_servers.fs]\ncommand = "npx"\n'
       );
     });
 
     it("carries args, cwd, every universal field, and env as its own table", () => {
       const toml = mcpJsonToToml(
+        TOML,
         mcpJson({
           fs: {
             command: "npx",
@@ -56,7 +60,7 @@ describe("mcpJsonToToml", () => {
     });
 
     it("drops a field the source spells but Codex does not read", () => {
-      expect(mcpJsonToToml(mcpJson({ fs: { command: "npx", type: "stdio" } }))).toBe(
+      expect(mcpJsonToToml(TOML, mcpJson({ fs: { command: "npx", type: "stdio" } }))).toBe(
         '[mcp_servers.fs]\ncommand = "npx"\n'
       );
     });
@@ -64,13 +68,14 @@ describe("mcpJsonToToml", () => {
 
   describe("an http server", () => {
     it("carries its url alone when nothing else is declared", () => {
-      expect(mcpJsonToToml(mcpJson({ web: { url: "https://h" } }))).toBe(
+      expect(mcpJsonToToml(TOML, mcpJson({ web: { url: "https://h" } }))).toBe(
         '[mcp_servers.web]\nurl = "https://h"\n'
       );
     });
 
     it("renames bearerTokenEnvVar to Codex's own spelling and keeps both header maps", () => {
       const toml = mcpJsonToToml(
+        TOML,
         mcpJson({
           web: {
             url: "https://h",
@@ -101,6 +106,7 @@ describe("mcpJsonToToml", () => {
 
     it("carries every universal field an http server declares", () => {
       const toml = mcpJsonToToml(
+        TOML,
         mcpJson({
           web: {
             url: "https://h",
@@ -129,12 +135,12 @@ describe("mcpJsonToToml", () => {
   });
 
   it("emits an empty table for a server that is neither stdio nor http", () => {
-    expect(mcpJsonToToml(mcpJson({ odd: { transport: "sse" } }))).toBe("[mcp_servers.odd]\n");
+    expect(mcpJsonToToml(TOML, mcpJson({ odd: { transport: "sse" } }))).toBe("[mcp_servers.odd]\n");
   });
 
   it("emits nothing when the source declares no server", () => {
-    expect(mcpJsonToToml(mcpJson({}))).toBe("");
-    expect(mcpJsonToToml("{}")).toBe("");
+    expect(mcpJsonToToml(TOML, mcpJson({}))).toBe("");
+    expect(mcpJsonToToml(TOML, "{}")).toBe("");
   });
 });
 

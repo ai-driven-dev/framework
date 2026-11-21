@@ -39,6 +39,19 @@ async function filesUnder(dir: string): Promise<number> {
   return count;
 }
 
+async function directoryEntry(kind: "bindings" | "ledger", path: string): Promise<ErasureEntry[]> {
+  return (await kindOf(path)) === "directory"
+    ? [{ kind, path, files: await filesUnder(path) }]
+    : [];
+}
+
+async function fileEntry(
+  kind: "identity" | "previous-day-file" | "previous-identity",
+  path: string
+): Promise<ErasureEntry[]> {
+  return (await isFile(path)) ? [{ kind, path, files: 1 }] : [];
+}
+
 /** Both versions' measurement, by the names each used and no other. The telemetry directory
  * itself is never removed: it may be one a person named, holding more than this. */
 export class MeasurementErasureAdapter implements MeasurementErasure {
@@ -50,25 +63,29 @@ export class MeasurementErasureAdapter implements MeasurementErasure {
   /** In the order they go: the ledger last, because its lock is inside it and holds until the
    * rest has gone. */
   async inventory(): Promise<readonly ErasureEntry[]> {
+    return [
+      ...(await directoryEntry("bindings", join(this.telemetryDir, "bindings"))),
+      ...(await fileEntry("identity", join(this.telemetryDir, "identity.json"))),
+      ...(await this.previousDayFiles()),
+      ...(await this.previousIdentities()),
+      ...(await directoryEntry("ledger", join(this.telemetryDir, "ledger"))),
+    ];
+  }
+
+  private async previousDayFiles(): Promise<ErasureEntry[]> {
     const found: ErasureEntry[] = [];
-    const bindings = join(this.telemetryDir, "bindings");
-    if ((await kindOf(bindings)) === "directory") {
-      found.push({ kind: "bindings", path: bindings, files: await filesUnder(bindings) });
-    }
-    const identity = join(this.telemetryDir, "identity.json");
-    if (await isFile(identity)) found.push({ kind: "identity", path: identity, files: 1 });
     for (const dir of this.previous.sinkDirs) {
       for (const name of (await entriesOf(dir)).filter((entry) => DAY_FILE.test(entry)).sort()) {
-        const path = join(dir, name);
-        if (await isFile(path)) found.push({ kind: "previous-day-file", path, files: 1 });
+        found.push(...(await fileEntry("previous-day-file", join(dir, name))));
       }
     }
+    return found;
+  }
+
+  private async previousIdentities(): Promise<ErasureEntry[]> {
+    const found: ErasureEntry[] = [];
     for (const path of this.previous.identityFiles) {
-      if (await isFile(path)) found.push({ kind: "previous-identity", path, files: 1 });
-    }
-    const ledger = join(this.telemetryDir, "ledger");
-    if ((await kindOf(ledger)) === "directory") {
-      found.push({ kind: "ledger", path: ledger, files: await filesUnder(ledger) });
+      found.push(...(await fileEntry("previous-identity", path)));
     }
     return found;
   }

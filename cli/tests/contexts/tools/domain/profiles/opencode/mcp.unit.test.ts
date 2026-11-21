@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { FileHash } from "../../../../../../src/shared/domain/file.js";
+import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
+import { saying } from "../../../../../shared/testing/saying.builder.js";
 
 function _makeFs(existingPaths: string[]): FileReader {
   return {
     fileExists: async (path: string) => existingPaths.some((p) => path.endsWith(p)),
     isExecutable: async () => false,
+    isDirectory: async () => false,
     realpath: async (path: string) => path,
     readFile: async () => "",
     readFileHash: async () => new FileHash("00000000000000000000000000000000"),
@@ -18,7 +20,7 @@ function _makeFs(existingPaths: string[]): FileReader {
 describe("opencode mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps both opencode and mcp config names to opencode.json", () => {
-      expect(opencode.section("mcp").config?.outputPath()).toBe("opencode.json");
+      expect(opencode.section("mcp").config?.accepts("opencode.json")).toBe(true);
       expect(opencode.section("mcp").config?.consumes("opencode")).toBe(true);
       expect(opencode.section("mcp").config?.consumes("mcp")).toBe(true);
     });
@@ -28,7 +30,7 @@ describe("opencode mcp", () => {
     });
 
     it("uses framework-prime merge strategy", () => {
-      expect(opencode.section("mcp").config?.mergeStrategy()).toBe("framework-prime");
+      expect(opencode.section("mcp").config?.isFrameworkPrime()).toBe(true);
     });
 
     it("writes its config as JSON", () => {
@@ -92,11 +94,11 @@ describe("opencode mcp", () => {
     });
 
     it("throws with context on malformed JSON", () => {
-      expect(() => transform("mcp", "not-json")).toThrow("Cannot parse MCP config:");
+      expect(() => transform("mcp", "not-json")).toThrow(saying("Cannot parse MCP config:"));
     });
 
     it("throws when root is not an object (array)", () => {
-      expect(() => transform("mcp", "[]")).toThrow("MCP config must be a JSON object");
+      expect(() => transform("mcp", "[]")).toThrow(saying("MCP config must be a JSON object"));
     });
 
     it("transforms url-based server to remote format", () => {
@@ -122,9 +124,7 @@ describe("opencode mcp", () => {
 
     it("throws when a server has neither command nor url", () => {
       const input = JSON.stringify({ mcpServers: { bad: { token: "abc" } } });
-      expect(() => transform("mcp", input)).toThrow(
-        'MCP server "bad" must have either a "command" or "url" field'
-      );
+      expect(() => transform("mcp", input)).toThrow(expect.objectContaining({ serverName: "bad" }));
     });
 
     it("returns non-mcp content unchanged", () => {

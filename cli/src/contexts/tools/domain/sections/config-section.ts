@@ -1,7 +1,10 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
-import type { ConfigAsset } from "../../../../shared/domain/file.js";
+import type { ConfigAsset } from "../../../../shared/domain/config-asset.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
+import type { ConfigFilePlace } from "../../contract/tool-profile.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 type ConfigSectionParams = {
   outputPath: string;
@@ -45,9 +48,16 @@ export class ConfigSection {
     return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
-  /** The tool that must be installed for this section's content to apply, or `null`. */
-  requiredTool(): string | null {
-    return this.#params.requiresTool ?? null;
+  /** Whether this section's content applies, `installed` telling which tools are there: a
+   * section that requires no tool always does. */
+  appliesWith(installed: (toolId: string) => boolean): boolean {
+    const required = this.#params.requiresTool;
+    return required === undefined || installed(required);
+  }
+
+  /** Whether this section's content applies only because `toolId` is installed. */
+  requires(toolId: string): boolean {
+    return this.#params.requiresTool === toolId;
   }
 
   /** The fixed content, inline or loaded through `loadAsset`; `null` when there is none, or when
@@ -60,22 +70,22 @@ export class ConfigSection {
     return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
   }
 
-  accepts(relativePath: string): boolean {
-    return relativePath === this.#params.outputPath;
+  fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
+    return new InstallationFile({
+      relativePath: place.relativePath ?? this.#params.outputPath,
+      content,
+      hash: FileHash.of(content),
+      mergeStrategy: this.#params.mergeStrategy,
+      frameworkPath: place.frameworkPath,
+    });
   }
 
-  mergeStrategy(): MergeStrategy {
-    return this.#params.mergeStrategy;
+  /** Whether this section writes the file at `destination`. */
+  writes(destination: string): boolean {
+    return this.#params.outputPath === destination;
   }
 
   outputPath(): string {
     return this.#params.outputPath;
-  }
-
-  equals(other: ConfigSection): boolean {
-    return (
-      this.#params.outputPath === other.#params.outputPath &&
-      this.#params.mergeStrategy === other.#params.mergeStrategy
-    );
   }
 }

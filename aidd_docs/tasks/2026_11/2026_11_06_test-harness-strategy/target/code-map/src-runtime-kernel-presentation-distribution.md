@@ -47,7 +47,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/runtime/self-update/self-updater.ts` | `src/contexts/update/ports/cli-release-source.ts; src/contexts/update/ports/cli-installer.ts` | split | one port per responsibility |
 | `src/runtime/self-update/self-updater-adapter.ts` | `src/contexts/update/infrastructure/npm-registry-release-adapter.ts; src/contexts/update/infrastructure/package-manager-installer-adapter.ts` | split | |
 | `src/runtime/self-update/current-version-adapter.ts` | `src/shared/infrastructure/current-version-adapter.ts` | move | `VersionReader` consumed by installation and update |
-| `src/runtime/self-update/latest-release-resolver.ts` | `src/shared/ports/release-lister.ts; src/shared/ports/repository-reader.ts` | split | `listRootReleases` and `isRepoPublic` go to forge ports; `resolveLatest` deleted |
+| `src/runtime/self-update/latest-release-resolver.ts` | `src/shared/ports/release-lister.ts; src/shared/ports/repository-reader.ts` | split | `listRootReleases`, now `listReleaseTags` and `isRepoPublic` go to forge ports; `resolveLatest` deleted |
 | `src/runtime/self-update/github-release-resolver-adapter.ts` | `src/shared/infrastructure/github-adapter.ts` | merge | the `ReleaseLister` part of the single GitHub adapter |
 | - | `src/shared/infrastructure/github-adapter.ts` | add | one adapter for `RepositoryReader`, `ReleaseLister`, `IdentityVerifier`; sole owner of the API URL |
 | - | `src/contexts/auth/ports/identity-verifier.ts` | add | done (auth pilot): token check; the shared GitHub adapter satisfies it by shape, wired in `composition` |
@@ -83,9 +83,9 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/presentation/commands/marketplace.ts` | `src/presentation/commands/marketplace.ts` | keep | thin |
 | `src/presentation/commands/menu.ts` | `src/presentation/commands/menu.ts; src/orchestration/menu/menu-loop.ts` | split | proposal: loop logic to orchestration, terminal part stays; error routed through the common translator |
 | `src/presentation/commands/plugin.ts` | `src/presentation/commands/plugin.ts` | keep | thin |
-| `src/presentation/commands/setup.ts` | `src/presentation/commands/setup.ts` | keep | no `new`, scenario received |
-| `src/presentation/commands/spawn-cli-command.ts` | `src/orchestration/menu/spawn-cli-command.ts` | move | |
-| `src/presentation/commands/sync-native-activation.ts` | `src/orchestration/sync/sync-native-activation.ts` | move | conflict: host-registration document keeps it; scenario logic per the presentation document |
+| `src/presentation/commands/setup.ts` | `src/presentation/commands/setup.ts` | keep | no `new`, scenario received; flag syntax stays here: `expandAllKeyword`, `parsePluginsFlag` and `requireAgentHosts` |
+| `src/presentation/commands/spawn-cli-command.ts` | `src/presentation/terminal/child-command.ts` | move | adapter of orchestration/menu CommandRunner port; orchestration runs no process |
+| `src/presentation/commands/sync-native-activation.ts` | `src/presentation/display/framework-display.ts` | move | it reports scoped sync failures beside `printScopedFailures` and throws `SyncFailedError`, so it is display, and orchestration may not import presentation |
 | `src/presentation/commands/sync.ts` | `src/presentation/commands/sync.ts` | keep | thin |
 | `src/presentation/commands/telemetry.ts` | `src/presentation/commands/telemetry.ts; src/contexts/telemetry/application/*` | split | proposal: parse and display stay, validation and identity choice move down |
 | `src/presentation/commands/translate.ts` | `src/presentation/commands/translate.ts` | keep | |
@@ -94,12 +94,14 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/presentation/error-handler.ts` | `src/presentation/errors/error-translator.ts` | merge | translator reads `error.code`, falls back on `error.message` |
 | `src/presentation/output.ts` | `src/presentation/terminal/output.ts` | move | `CLIOutput` as `Logger` |
 | `src/presentation/prompts/menu-use-case.ts` | `src/orchestration/menu/build-menu.ts` | rename | proposal: menu tree and argv production; rendering stays in presentation |
-| `src/presentation/prompts/plugin-pick-use-case.ts` | `src/orchestration/plugin/pick-plugins.ts` | move | proposal: questions as a scenario step, neutral decisions extracted to the owning context at move time |
-| `src/presentation/prompts/setup-plugins-prompt-use-case.ts` | `src/orchestration/setup/choose-plugins.ts` | rename | proposal: step name |
-| `src/presentation/prompts/setup-tools-prompt-use-case.ts` | `src/orchestration/setup/choose-tools.ts` | rename | proposal: step name |
+| `src/presentation/prompts/plugin-pick-use-case.ts` | `src/orchestration/plugin/pick-plugins.ts` | move | proposal: questions as a scenario step; the choice functions go to `src/contexts/distribution/application/plugin-source/plugin-choices.ts` |
+| `src/presentation/prompts/setup-plugins-prompt-use-case.ts` | `src/orchestration/setup/steps/choose-plugins.ts` | rename | proposal: step name |
+| `src/presentation/prompts/setup-tools-prompt-use-case.ts` | `src/orchestration/setup/steps/choose-tools.ts` | rename | proposal: step name |
 | `src/presentation/prompts/sync-conflict-resolver-use-case.ts` | `src/contexts/installation/application/resolve-sync-conflict.ts` | rename | proposal: file name; pure hash comparison, no question |
 | `src/contexts/distribution/application/fetch-marketplace-source-use-case.ts` | `src/contexts/distribution/application/fetch-marketplace-source.ts` | rename | command |
-| `src/contexts/distribution/application/marketplace-add-use-case.ts` | `src/contexts/distribution/application/add-marketplace.ts` | rename | no remover dependency; a failed fetch must not leave the previous marketplace removed |
+| `src/contexts/distribution/application/marketplace-add-use-case.ts` | `src/contexts/distribution/application/add/prepare-marketplace.ts`; `src/contexts/distribution/application/add/record-marketplace.ts`; `src/orchestration/marketplace/add-marketplace.ts` | split | the scenario holds the overwrite removal; a failed fetch must not leave the previous marketplace removed |
+| `-` | `src/contexts/distribution/application/plugin-source/trust-plugin-source.ts` | add | trusts a plugin source, or reports that a person must confirm it |
+| `-` | `src/orchestration/plugin/confirm-plugin-source-trust.ts` | add | asks the person when `TrustPluginSource` cannot tell |
 | `src/contexts/distribution/application/marketplace-list-use-case.ts` | `src/contexts/distribution/application/list-marketplaces.ts` | rename | |
 | `src/contexts/distribution/application/marketplace-refresh-use-case.ts` | `src/contexts/distribution/application/refresh-marketplace.ts` | rename | |
 | `src/contexts/distribution/application/marketplace-register-framework-use-case.ts` | `src/contexts/distribution/application/register-framework-marketplace.ts` | rename | |

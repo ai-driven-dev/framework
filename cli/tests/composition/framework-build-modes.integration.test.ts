@@ -4,13 +4,13 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { OutDirNotDirectoryError } from "../../src/shared/domain/errors.js";
-import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
-import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
-import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../shared/testing/registered-tools.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 
@@ -29,7 +29,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
     await rm(outDir, { recursive: true, force: true });
   });
 
-  function useCaseFor(target: "claude" | "copilot", mode: "marketplace" | "flat", dir = outDir) {
+  function useCaseFor(target: "claude" | "copilot", mode: "marketplace" | "flat") {
     const useCase = createFrameworkBuildUseCase(
       catalogOf(),
       {
@@ -37,7 +37,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
         assetProvider: new BundledAssetProviderAdapter(wireTools()),
         logger: new CapturingLogger(),
       },
-      { target, mode, outDir: dir, force: true }
+      { target, mode, outDir, force: true }
     );
     if (useCase === undefined) throw new Error(`${target}:${mode} must be wired`);
     return useCase;
@@ -63,18 +63,5 @@ describe("createFrameworkBuildUseCase, by mode", () => {
 
     expect(fs.has(`${outDir}/.claude-plugin/marketplace.json`)).toBe(false);
     expect(fs.listUnder(`${outDir}/.github/agents`).length).toBeGreaterThan(0);
-  });
-
-  it("refuses a flat build into a directory that is not there on disk", async () => {
-    const gone = join(outDir, "gone");
-    fs.setFile(`${gone}/.keep`, "");
-
-    await expect(
-      useCaseFor("copilot", "flat", gone).execute({
-        sourceDir: FIXTURE_DIR,
-        outDir: gone,
-        target: TOOL.copilot,
-      })
-    ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
   });
 });

@@ -2,18 +2,25 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
-import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { FlatBuildStrategy } from "../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
+import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
+import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
+import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
+import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../src/contexts/translate/domain/plugin-distribution.js";
+} from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "./testing/catalog-of.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { present } from "../../shared/testing/present.builder.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+
+const TOML = new SmolTomlCodec();
 
 /**
  * Every route that merges a plugin's hooks into a file the project already holds. The file
@@ -53,6 +60,7 @@ const unused: AssetProvider = {
 
 function sourceFs(seed: Record<string, string>): InMemoryFileAdapter {
   return new InMemoryFileAdapter({
+    [`${SRC}/.claude-plugin/plugin.json`]: "{}",
     [`${SRC}/hooks/hooks.json`]: PLUGIN_HOOKS,
     ...Object.fromEntries(Object.entries(SCRIPTS).map(([rel, body]) => [`${SRC}/${rel}`, body])),
     ...seed,
@@ -64,8 +72,19 @@ async function flatMerge(
   seed: Record<string, string>
 ): Promise<InMemoryFileAdapter> {
   const fs = sourceFs(seed);
-  const strategy = new FlatBuildStrategy(fs, unused, contract, true, OUT, async () => true);
-  await strategy.writeHooks(PLUGIN, SRC);
+  const logger = new CapturingLogger();
+  const sink = new DiskSink({
+    fs,
+    jsonSchemaValidator: { validate() {} },
+    assetProvider: unused,
+    logger,
+    flat: new FlatWriter(fs, unused, logger),
+  });
+  await sink.writePlugin(
+    { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },
+    PLUGIN,
+    SRC
+  );
   return fs;
 }
 
@@ -107,7 +126,7 @@ function nestedSeed(dir: string, extra: Record<string, unknown> = {}): string {
 describe("a flat build merging a plugin into a shared file it already wrote to", () => {
   it("claude: .claude/settings.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".claude/hooks/";
-    const fs = await flatMerge(buildClaudeFlatContract(), {
+    const fs = await flatMerge(present(claude.buildContracts.flat)(), {
       [`${OUT}/.claude/settings.json`]: nestedSeed(dir, { model: "opus" }),
     });
     const file = fs.getFile(`${OUT}/.claude/settings.json`);
@@ -126,7 +145,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("codex: .codex/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".codex/hooks/";
-    const fs = await flatMerge(buildCodexFlatContract(), {
+    const fs = await flatMerge(present(codexProfile(TOML).buildContracts.flat)(), {
       [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
     });
     const file = fs.getFile(`${OUT}/.codex/hooks.json`);
@@ -144,7 +163,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("cursor: .cursor/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".cursor/hooks/";
-    const fs = await flatMerge(buildCursorFlatContract(), {
+    const fs = await flatMerge(present(cursor.buildContracts.flat)(), {
       [`${OUT}/.cursor/hooks.json`]: JSON.stringify({
         version: 1,
         hooks: {
@@ -176,7 +195,7 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
   it("copilot: no shared file; a forced build rewrites the plugin's own file whole", async () => {
     const dir = ".github/hooks/";
     const own = `${OUT}/${dir}${PLUGIN}.hooks.json`;
-    const fs = await flatMerge(buildCopilotFlatContract(), {
+    const fs = await flatMerge(present(copilot.buildContracts.flat)(), {
       [own]: JSON.stringify({
         version: 1,
         hooks: {
@@ -223,18 +242,18 @@ describe("plugin install merging a plugin into the project's hooks file again", 
       }),
     });
     const materializer = new ProjectHooksMaterializer(fs);
-    const first = await materializer.materializeWithProvenance(
-      dist(),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT
-    );
+    const first = await materializer.execute({
+      dist: dist(),
+      tool: registeredAiProfile(TOOL.cursor),
+      projectRoot: PROJECT,
+    });
 
-    await materializer.materializeWithProvenance(
-      dist(),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT,
-      first.projectHooks
-    );
+    await materializer.execute({
+      dist: dist(),
+      tool: registeredAiProfile(TOOL.cursor),
+      projectRoot: PROJECT,
+      previous: first.projectHooks,
+    });
     const file = fs.getFile(HOOKS);
 
     expect(commands(file, "sessionStart")).toStrictEqual([

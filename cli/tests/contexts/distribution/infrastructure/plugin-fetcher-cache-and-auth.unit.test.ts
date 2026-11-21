@@ -17,10 +17,10 @@ const mockGitInstance = {
   checkout: mockCheckoutFn,
 };
 
-const mockSimpleGit = vi.fn(() => mockGitInstance);
+const mockSimpleGit = vi.fn((..._args: unknown[]) => mockGitInstance);
 
 vi.mock("simple-git", () => ({
-  simpleGit: (...args: unknown[]) => mockSimpleGit(...(args as [])),
+  simpleGit: (...args: unknown[]) => mockSimpleGit(...args),
 }));
 
 const mockExecFile = vi.fn().mockResolvedValue({ stdout: "", stderr: "" });
@@ -41,11 +41,10 @@ vi.mock("node:child_process", () => ({
 }));
 
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
+import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const CACHE = "/tmp/cache";
 
@@ -61,19 +60,19 @@ let lastFs: InMemoryFileAdapter;
 
 function adapter(token?: string, files: Record<string, string> = {}): PluginFetcherAdapter {
   reset();
-  lastFs = new InMemoryFileAdapter(files, new DeterministicHasher());
+  lastFs = new InMemoryFileAdapter(files);
   const provider: TokenProvider | undefined =
     token === undefined ? undefined : { resolve: async () => token };
   return new PluginFetcherAdapter(lastFs, provider);
 }
 
 function clonedInto(): string {
-  return mockCloneFn.mock.calls[0]?.[1] as string;
+  return mockCloneFn.mock.calls[0]?.[1];
 }
 
-/** The URL the clone was given — the one that may legitimately carry a token. */
+/** The URL the clone was given - the one that may legitimately carry a token. */
 function clonedFrom(): string {
-  return mockCloneFn.mock.calls[0]?.[0] as string;
+  return mockCloneFn.mock.calls[0]?.[0];
 }
 
 describe("where a fetched source lands in the cache", () => {
@@ -266,7 +265,9 @@ describe("an npm package as a source", () => {
 
     await expect(
       fetcher.fetch({ kind: "npm", package: "@acme/plugin", version: "9.9.9" }, CACHE)
-    ).rejects.toThrow(/@acme\/plugin@9\.9\.9/);
+    ).rejects.toThrow(
+      expect.objectContaining({ detail: expect.stringMatching(/@acme\/plugin@9\.9\.9/) })
+    );
   });
 });
 
@@ -279,7 +280,7 @@ describe("what the user is told when a clone fails", () => {
 
     await expect(fetcher.fetch({ kind: "url", url }, CACHE)).rejects.toThrow(
       expect.objectContaining({
-        message: expect.not.stringContaining("ghp_SECRET"),
+        detail: expect.not.stringContaining("ghp_SECRET"),
       })
     );
   });
@@ -291,7 +292,7 @@ describe("what the user is told when a clone fails", () => {
     );
 
     await expect(fetcher.fetch({ kind: "github", repo: "acme/widgets" }, CACHE)).rejects.toThrow(
-      expect.objectContaining({ message: expect.not.stringContaining("injected-token") })
+      expect.objectContaining({ detail: expect.not.stringContaining("injected-token") })
     );
   });
 
@@ -302,7 +303,9 @@ describe("what the user is told when a clone fails", () => {
     );
 
     await expect(fetcher.fetch({ kind: "github", repo: "acme/widgets" }, CACHE)).rejects.toThrow(
-      "fatal: could not clone https://github.com/a/b.git"
+      expect.objectContaining({
+        detail: expect.stringContaining("fatal: could not clone https://github.com/a/b.git"),
+      })
     );
   });
 
@@ -313,7 +316,7 @@ describe("what the user is told when a clone fails", () => {
 
       await expect(
         fetcher.fetch({ kind: "url", url: "https://example.com/private.git" }, CACHE)
-      ).rejects.toThrow(/aidd auth login/);
+      ).rejects.toThrow(expect.objectContaining({ advice: "token" }));
     });
 
     it("tells an ssh user to check their key instead", async () => {
@@ -322,7 +325,7 @@ describe("what the user is told when a clone fails", () => {
 
       await expect(
         fetcher.fetch({ kind: "url", url: "git@example.com:acme/private.git" }, CACHE)
-      ).rejects.toThrow(/SSH key/);
+      ).rejects.toThrow(expect.objectContaining({ advice: "ssh-key" }));
     });
   });
 
@@ -332,7 +335,9 @@ describe("what the user is told when a clone fails", () => {
 
     await expect(
       fetcher.fetch({ kind: "url", url: "https://example.com/repo.git" }, CACHE)
-    ).rejects.toThrow(/git clone failed/);
+    ).rejects.toThrow(
+      expect.objectContaining({ detail: expect.stringMatching(/git clone failed/) })
+    );
   });
 });
 
@@ -411,7 +416,9 @@ describe("a local path as a source", () => {
       PluginFetchError
     );
     await expect(fetcher.fetch({ kind: "local", path: "./missing" }, CACHE)).rejects.toThrow(
-      new RegExp(process.cwd().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      expect.objectContaining({
+        detail: expect.stringContaining(process.cwd()),
+      })
     );
   });
 });

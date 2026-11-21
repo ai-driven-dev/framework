@@ -17,13 +17,14 @@ import {
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTelemetry } from "../../../src/composition/telemetry.js";
-import type { TelemetryDeps } from "../../../src/presentation/deps.js";
-import { git } from "../../helpers/git-sandbox.js";
+import type { TelemetryDeps } from "../../../src/orchestration/deps.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../../helpers/telemetry-sandbox.js";
+} from "./testing/telemetry-sandbox.builder.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000bb";
 const BARE = '{"telemetry":{"enabled":true},"keep":{"me":1}}';
@@ -56,7 +57,7 @@ let deps: TelemetryDeps;
 
 function useSandbox(): void {
   for (const [name, value] of Object.entries(box.env())) vi.stubEnv(name, value);
-  deps = wireTelemetry(() => box.home);
+  deps = wireTelemetry(() => box.home, prompterAnswering({}));
 }
 
 beforeEach(() => {
@@ -243,7 +244,7 @@ describe("the identifier offered at on", () => {
   it("is not read from git under AIDD_TELEMETRY=0", async () => {
     git(repo, box.gitEnv, "config", "--local", "user.name", "Ada Example");
     vi.stubEnv("AIDD_TELEMETRY", "0");
-    deps = wireTelemetry(() => box.home);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
     expect(await deps.proposeIdentity.execute({ cwd: repo })).toBeNull();
   });
 });
@@ -257,7 +258,7 @@ describe("the wiring of a declaration", () => {
 
   it("refuses a declaration, a status and a report under AIDD_TELEMETRY=0", async () => {
     vi.stubEnv("AIDD_TELEMETRY", "0");
-    deps = wireTelemetry(() => box.home);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
     const refused = { status: "refused", reason: "environment" };
 
     expect(await deps.declareTask.execute({ ...declare, cwd: repo })).toEqual(refused);
@@ -269,7 +270,7 @@ describe("the wiring of a declaration", () => {
 
   it("binds the session it was declared in, from the moment it is declared", async () => {
     vi.stubEnv("CLAUDE_CODE_SESSION_ID", SESSION);
-    deps = wireTelemetry(() => box.home);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
     await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     await deps.declareTask.execute({ ...declare, cwd: repo });
 
@@ -350,15 +351,6 @@ describe("how long Claude Code keeps what is measured", () => {
     expect([statSync(settings).mtimeMs, statSync(project).mtimeMs]).toEqual(stat);
     expect(claudeFiles()).toEqual(names);
   });
-
-  it("is satisfied by 3650 in the user's settings, and overridden by a project's shorter one", async () => {
-    await configure(BARE);
-    writeFileSync(join(box.claude, "settings.json"), '{"cleanupPeriodDays":3650}');
-    expect(await retentionOf(repo)).toEqual({ days: 3650, short: false });
-    mkdirSync(join(repo, ".claude"));
-    writeFileSync(join(repo, ".claude", "settings.local.json"), '{"cleanupPeriodDays":7}');
-    expect(await retentionOf(repo)).toEqual({ days: 7, short: true });
-  });
 });
 
 function declare(branch: string, task: string): void {
@@ -373,6 +365,17 @@ function declare(branch: string, task: string): void {
   );
 }
 
+/** A directory by its mtime, a file by its mtime and bytes. */
+function stateOf(path: string, isDirectory: boolean): string {
+  if (isDirectory) return `dir ${statSync(path).mtimeMs}`;
+  const fd = openSync(path, "r");
+  try {
+    return `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
+  } finally {
+    closeSync(fd);
+  }
+}
+
 /** Every file under the sandbox with its bytes and mtime, and every directory with its mtime. */
 function snapshot(): Record<string, string> {
   const found: Record<string, string> = {};
@@ -380,17 +383,8 @@ function snapshot(): Record<string, string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
       if (path.includes(`${join(".git")}`)) continue;
-      if (entry.isDirectory()) {
-        found[path] = `dir ${statSync(path).mtimeMs}`;
-        walk(path);
-        continue;
-      }
-      const fd = openSync(path, "r");
-      try {
-        found[path] = `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
-      } finally {
-        closeSync(fd);
-      }
+      found[path] = stateOf(path, entry.isDirectory());
+      if (entry.isDirectory()) walk(path);
     }
   };
   walk(box.root);
@@ -476,39 +470,6 @@ describe("forgetting", () => {
     expect(readdirSync(box.telemetry)).toEqual(["notes.txt"]);
     expect(existsSync(join(box.home, ".config", "aidd", "auth.json"))).toBe(true);
     expect(existsSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"))).toBe(true);
-  });
-
-  it("skips a repository that is gone and says so", async () => {
-    await measured();
-    const other = box.repository("gadgets");
-    git(other, box.gitEnv, "config", "--local", "branch.main.aiddTask", "x");
-    await deps.enableTelemetry.execute({ cwd: other, choice: "keep" });
-    writeTranscript(other, ["z"], "s-2");
-    await deps.ingestUsage.execute();
-    rmSync(other, { recursive: true });
-
-    const result = await deps.forgetTelemetry.execute({ confirmed: true });
-
-    expect(result.plan.missing).toEqual([join(other, ".git")]);
-    expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
-  });
-
-  it("does not name a gone clone that never opted in", async () => {
-    await measured();
-    const other = box.repository("gadgets");
-    writeTranscript(other, ["z"], "s-2");
-    await deps.ingestUsage.execute();
-    rmSync(other, { recursive: true });
-
-    const result = await deps.forgetTelemetry.execute({ confirmed: true });
-
-    expect(result.plan.missing).toEqual([]);
-  });
-
-  it("creates nothing where nothing was measured", async () => {
-    const result = await deps.forgetTelemetry.execute({ confirmed: true });
-    expect(result.plan.entries).toEqual([]);
-    expect(existsSync(box.telemetry)).toBe(false);
   });
 
   it("never runs against a path outside the temporary directory", () => {

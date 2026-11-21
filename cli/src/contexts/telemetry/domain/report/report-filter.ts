@@ -1,5 +1,4 @@
 import {
-  type AbsentAxis,
   FILTER_AXES,
   FILTER_FLAGS,
   type FilterFlag,
@@ -39,8 +38,8 @@ export function selectorsOf(filters: ReportFilters): (readonly [ReportAxis, Sele
 /** The axes a flag selects on. Work with no task has neither task nor ticket, so
  * `--unattributed` selects on both. */
 function axesOf(filters: ReportFilters, flag: FilterFlag): readonly ReportAxis[] {
+  if (flag === "absent") return filters.absent === null ? [] : [filters.absent];
   if (filters[flag] === null) return [];
-  if (flag === "absent") return [filters[flag] as AbsentAxis];
   return flag === "unattributed" ? ["task", "ticket"] : [flag];
 }
 
@@ -71,14 +70,19 @@ function selects(selector: Selector, value: AxisValue): boolean {
 
 /** Whether every flag given keeps the call: its axis is, by the function that builds the rows,
  * exactly what the flag names. A filter and a row cannot then disagree on a call. */
-export function matchesFilter(
-  filters: ReportFilters,
-  record: StoredUsage,
-  attribution: Attribution,
-  person: string | null
-): boolean {
+export function matchesFilter({
+  filters,
+  record,
+  attribution,
+  person,
+}: {
+  readonly filters: ReportFilters;
+  readonly record: StoredUsage;
+  readonly attribution: Attribution;
+  readonly person: string | null;
+}): boolean {
   return selectorsOf(filters).every(([axis, selector]) =>
-    selects(selector, axisValueOf(axis, record, attribution, person))
+    selects(selector, axisValueOf({ axis, record, attribution, person }))
   );
 }
 
@@ -93,6 +97,7 @@ export function resolveId(typed: string, values: Iterable<string>): ResolvedId {
   const known = new Set(values);
   if (known.has(typed)) return { kind: "found", id: typed };
   const ids = [...known].filter((id) => id.startsWith(typed)).sort(compareText);
-  if (ids.length === 0) return { kind: "none" };
-  return ids.length === 1 ? { kind: "found", id: ids[0] as string } : { kind: "ambiguous", ids };
+  const [first] = ids;
+  if (first === undefined) return { kind: "none" };
+  return ids.length === 1 ? { kind: "found", id: first } : { kind: "ambiguous", ids };
 }

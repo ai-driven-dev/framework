@@ -1,6 +1,7 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import type { MarketplaceSettings } from "../../contract/native-registration-spec.js";
 import type { MarketplaceSettingsInput } from "../../contract/tool-vocabulary.js";
-import type { MarketplaceSettings } from "./marketplace-settings.js";
+import { CapabilityConfigError } from "../tools.error.js";
 import type { NativeActivation } from "./native-activation.js";
 
 /** Where and how a tool records the marketplaces it knows about, held only by a tool whose own
@@ -33,8 +34,7 @@ export class MarketplaceRegistration {
 
   /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
   declaredMarketplaceNames(parsed: unknown): Set<string> {
-    if (parsed === null || typeof parsed !== "object") return new Set();
-    const value = (parsed as Record<string, unknown>)[this.#settings.settingsKey];
+    const value = asPlainObject(parsed)?.[this.#settings.settingsKey];
     if (Array.isArray(value)) return new Set(value.map(String));
     if (value !== null && typeof value === "object") return new Set(Object.keys(value));
     return new Set();
@@ -49,10 +49,7 @@ export class MarketplaceRegistration {
     const key = this.#settings.enabledPluginsKey;
     if (key == null) return null;
     const raw = shared[key];
-    const existing =
-      raw !== null && typeof raw === "object" && !Array.isArray(raw)
-        ? (raw as Record<string, unknown>)
-        : {};
+    const existing = asPlainObject(raw) ?? {};
     const toAdd: Record<string, boolean> = {};
     for (const ref of refs) if (!(ref in existing)) toAdd[ref] = true;
     if (Object.keys(toAdd).length === 0) return null;

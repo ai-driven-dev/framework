@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import {
   createToolEntry,
-  isFileTrackedInEntry,
   parseToolEntry,
   removePluginFromEntry,
   serializeToolEntry,
   type ToolEntry,
+  trackedPathsInDirectory,
   updatePluginInEntry,
 } from "../../../../../src/contexts/installation/domain/manifest/tool-entry.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const makePlugin = (name: string, version = "1.0.0"): InstalledPlugin =>
   InstalledPlugin.fromJSON({
@@ -74,14 +75,6 @@ describe("a tool's manifest entry", () => {
     });
   });
 
-  describe("tracking a file", () => {
-    it("does not count a path as tracked because some merge file exists", () => {
-      const entry = makeEntry([]);
-
-      expect(isFileTrackedInEntry(entry, ".claude/settings.json")).toBe(false);
-    });
-  });
-
   describe("serialized", () => {
     it("carries what the tool's own CLI was asked to register through a round trip", () => {
       const entry: ToolEntry = {
@@ -104,5 +97,20 @@ describe("a tool's manifest entry", () => {
         entry.nativeRegistrations
       );
     });
+  });
+});
+
+describe("trackedPathsInDirectory", () => {
+  it("collects the files, merge files and plugin files under the directory across entries", () => {
+    const entry = makeEntry([makePlugin("aidd-dev")]);
+
+    expect([...trackedPathsInDirectory([entry], ".claude/")].sort()).toEqual([
+      ".claude/CLAUDE.md",
+      ".claude/plugins/aidd-dev/README.md",
+    ]);
+  });
+
+  it("leaves out a path outside the directory", () => {
+    expect([...trackedPathsInDirectory([makeEntry([])], ".cursor/")]).toEqual([]);
   });
 });

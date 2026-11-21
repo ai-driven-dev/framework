@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
 
 function pathWithExecutable(name: string): { dir: string; restore: () => void } {
   const dir = mkdtempSync(join(tmpdir(), "aidd-bin-"));
@@ -144,7 +144,9 @@ describe("HostCliAdapter (codex)", () => {
         upgradeVerb: "upgrade",
         enableVerb: "add",
       }).enablePlugin("ghost@m1")
-    ).toThrow("plugin `ghost` was not found");
+    ).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("plugin `ghost` was not found") })
+    );
   });
 
   it("uninstalls a plugin via `codex plugin remove <ref>`", () => {

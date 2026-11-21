@@ -61,6 +61,26 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // among them (+23.6 KB over the 732.4 KB above); 2.1% measured headroom.
 // 773 KB: 772.2 KB, per-call tool profiles threaded through the framework project checks;
 // expected to shrink when the registry free functions are deleted; 0.1% measured headroom.
+// 803 KB: 787.0 KB, next integrated during the split, the provider-models feature among it
+// (+14.2 KB on next alone); expected to shrink in the final size pass; 2.0% measured headroom.
+// 805 KB: 803.5 KB, host withdrawal and plugin add split into one command per use case; expected to shrink
+// in the final size pass; 0.2% measured headroom.
+// 805 KB: 804.4 KB, the translate sinks split, the presentation and composition moves, the trust
+// split, the installation commands, the withdrawal steps and the claims built by orchestration; expected to shrink in the final size
+// pass; 0.1% measured headroom.
+// 806 KB: 805.4 KB, the container that wires the commands with lazy getters; expected to shrink once
+// createDeps is removed; 0.1% measured headroom.
+// 807 KB: 806.1 KB, the update, auth and translate commands and the update notice read slices of a
+// container; expected to shrink once createDeps is removed; 0.1% measured headroom.
+// 809 KB: 808.4 KB, setup, plugin, marketplace and sync read slices of a container; expected to
+// shrink once createDeps is removed; 0.1% measured headroom.
+// 808 KB: 807.2 KB, createDeps and its module cache removed, every command wired from the
+// container; 0.1% measured headroom.
+// 809 KB: 808.4 KB, the plain-object and error guards that replace type assertions; 0.1% measured headroom.
+// 813 KB: 812.6 KB, the kind rollout splitting classes into one use case per file and long parameter lists into named objects; 0.1% measured headroom.
+// 821 KB: 820.7 KB, the kind rollout giving services their ports, the presentation output port, one prompter adapter per file, named-object requests, and the error catalog split into one file per owner; 0.04% measured headroom.
+// 826 KB: 825.9 KB, the kind rollout giving installation and the controllers one request object, one execute and their checks inside use cases, and the config parts answering the file they write; 0.01% measured headroom.
+// 825 KB: 824.5 KB, the kind rollout reading foreign suffixes and the tool list from the registered catalog, and one dual-config error; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

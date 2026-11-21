@@ -2,24 +2,26 @@
  * hooks.json is not tracked in Plugin.files: hooksDestination:"project" merges its entries
  * into the project's own .cursor/hooks.json, which baseDir-relative deletion cannot find.
  */
+
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import { createOutput } from "../../../../../src/composition/shared.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { CLIOutput } from "../../../../../src/presentation/output.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";
 const OTHER_PLUGIN_NAME = "aidd-context-two";
-const RESOLVED_BASE = join(STUB_HOME, ".cursor", "plugins", "local");
+const _RESOLVED_BASE = join(STUB_HOME, ".cursor", "plugins", "local");
 const HOOKS_PATH = join(PROJECT_ROOT, ".cursor", "hooks.json");
 const SCRIPT_PATH = join(PROJECT_ROOT, ".cursor", "hooks", PLUGIN_NAME, "pre.js");
 const OTHER_SCRIPT_PATH = join(PROJECT_ROOT, ".cursor", "hooks", OTHER_PLUGIN_NAME, "pre.js");
@@ -90,53 +92,25 @@ async function installPlugin(
 ) {
   const adapter = new ModeBFlatMaterializationTranslator(
     fs,
-    new DeterministicHasher(),
-    () => STUB_HOME
+    () => STUB_HOME,
+    translateDistribution
   );
-  await adapter.addPlugin(
-    buildDist(name),
-    registeredAiProfile(TOOL.cursor),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
+  await adapter.addPlugin({
+    dist: buildDist(name),
+    tool: registeredTools().aiProfile(TOOL.cursor),
+    source: { kind: "local", path: "/plugin-source" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    undefined,
-    new Map(),
-    false,
-    previous
-  );
-}
-
-describe("Cursor plugin.files tracking enables uninstall of mcp.json; hooks.json is out-of-band (Phase 6)", () => {
-  it("Plugin.files keys join to the exact written absolute paths (uninstall can find the files)", async () => {
-    const fs = new InMemoryFileAdapter();
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "test", []);
-
-    await installPlugin(fs, manifest, PLUGIN_NAME);
-
-    const plugins = manifest.getPlugins(TOOL.cursor);
-    const installed = plugins.find((p) => p.name === PLUGIN_NAME);
-    expect(installed).toBeDefined();
-    const keys = [...(installed?.files.keys() ?? [])];
-    expect(keys.some((k) => k.endsWith("hooks.json"))).toBe(false);
-    expect(keys.some((k) => k.endsWith("mcp.json"))).toBe(true);
-    // Every tracked key, when joined with resolvedBase, must match a written file
-    for (const key of keys) {
-      const absPath = join(RESOLVED_BASE, key);
-      expect(fs.has(absPath)).toBe(true);
-    }
-    // hooks.json was still written - just not tracked in Plugin.files, and not here
-    expect(fs.has(HOOKS_PATH)).toBe(true);
-    expect(installed?.projectHooks?.entries).toHaveLength(1);
-    expect([...(installed?.projectHooks?.scripts ?? new Map()).keys()]).toEqual([
-      `.cursor/hooks/${PLUGIN_NAME}/pre.js`,
-    ]);
+    marketplace: undefined,
+    previousMcpEntries: new Map(),
+    userScopeDirTaken: false,
+    previousProjectHooks: previous,
   });
-});
+}
 
 describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => {
   it("removes what an install merged and copied, leaving every other plugin's entries untouched", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -146,14 +120,8 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     expect(fs.has(SCRIPT_PATH)).toBe(true);
     expect(fs.has(OTHER_SCRIPT_PATH)).toBe(true);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
     await removeUseCase.execute({
-      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -172,7 +140,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   it("installing the same plugin twice leaves one copy in .cursor/hooks.json", async () => {
     // Mirrors `aidd plugin install --replace`: the manifest entry is dropped before re-adding,
     // but the .cursor/hooks.json this plugin already merged into is untouched by that drop.
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -187,19 +155,21 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("refuses reinstall if the previous hook script was edited", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
     const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
     fs.setFile(SCRIPT_PATH, "edited by user");
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
-    await expect(installPlugin(fs, manifest, PLUGIN_NAME, previous)).rejects.toThrow(/edited/);
+    await expect(installPlugin(fs, manifest, PLUGIN_NAME, previous)).rejects.toThrow(
+      saying(/edited/)
+    );
     expect(fs.getFile(SCRIPT_PATH)).toBe("edited by user");
   });
 
   it("removes verified prior project hooks when a replacement no longer carries hooks", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -207,41 +177,40 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
-      new DeterministicHasher(),
-      () => STUB_HOME
+      () => STUB_HOME,
+      translateDistribution
     );
-    await translator.addPlugin(
-      buildWithoutHooks(PLUGIN_NAME),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: buildWithoutHooks(PLUGIN_NAME),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined,
-      new Map(),
-      false,
-      previous
-    );
+      marketplace: undefined,
+      previousMcpEntries: new Map(),
+      userScopeDirTaken: false,
+      previousProjectHooks: previous,
+    });
     expect(fs.has(HOOKS_PATH)).toBe(false);
     expect(fs.has(SCRIPT_PATH)).toBe(false);
     expect(manifest.getPlugins(TOOL.cursor)[0].projectHooks).toBeUndefined();
   });
 
   it("refuses to remove an edited project hook script without detaching the plugin record", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
     fs.setFile(SCRIPT_PATH, "user-edited script");
     const repo = new InMemoryManifestRepository(manifest);
-    const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
+    const remove = pluginRemover({ fs, manifestRepo: repo, logger: createOutput(false) });
     await expect(
       remove.execute({
-        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/edited.*pre.js|pre.js.*edited/);
+    ).rejects.toThrow(saying(/edited.*pre.js|pre.js.*edited/));
     expect(fs.getFile(SCRIPT_PATH)).toBe("user-edited script");
     expect(
       repo
@@ -252,7 +221,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
   });
 
   it("refuses to strip an edited hook command entry and preserves other plugins", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
@@ -263,31 +232,29 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     hooks.hooks.preToolUse[0].command += " --user-flag";
     fs.setFile(HOOKS_PATH, JSON.stringify(hooks));
     const repo = new InMemoryManifestRepository(manifest);
-    const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
+    const remove = pluginRemover({ fs, manifestRepo: repo, logger: createOutput(false) });
     await expect(
       remove.execute({
-        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/edited.*hooks|hooks.*edited/);
+    ).rejects.toThrow(saying(/edited.*hooks|hooks.*edited/));
     expect(fs.getFile(HOOKS_PATH)).toContain("--user-flag");
     expect(fs.has(OTHER_SCRIPT_PATH)).toBe(true);
     expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(2);
   });
 
   it("does not delete an untracked user script just because it shares a plugin directory", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
     const userScript = join(PROJECT_ROOT, ".cursor", "hooks", PLUGIN_NAME, "user.js");
     fs.setFile(userScript, "user owned");
     const repo = new InMemoryManifestRepository(manifest);
-    const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
+    const remove = pluginRemover({ fs, manifestRepo: repo, logger: createOutput(false) });
     await remove.execute({
-      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,

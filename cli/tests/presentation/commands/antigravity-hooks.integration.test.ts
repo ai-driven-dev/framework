@@ -1,15 +1,16 @@
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createTestEnv } from "../../e2e/helpers.js";
-import { setupFromFixture } from "../../helpers/fixture-setup.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
-import { readJson } from "../../helpers/project-state.js";
+import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
+import { setupFromFixture } from "../testing/fixture-setup.builder.js";
+import { readJson } from "../testing/project-state.builder.js";
 
 const PLUGIN = "aidd-context";
 const SCRIPT = `.agents/hooks/${PLUGIN}/update_memory.js`;
 const OWN_SKILL = `.agents/skills/${PLUGIN}-05-learn/SKILL.md`;
+const FOREIGN_SKILL = "# mine\n";
 const LINT_HOOK = { SessionStart: [{ type: "command", command: "echo lint" }] };
 
 type Hooks = Record<string, unknown>;
@@ -37,6 +38,14 @@ async function installWithUserLintHook(): Promise<Hooks> {
   const hooks = await readHooks();
   await writeFile(hooksFile(), JSON.stringify({ ...hooks, lint: LINT_HOOK }, null, 2));
   return hooks;
+}
+
+/** A skill of the person's own, beside the plugin's. */
+async function writeForeignSkill(): Promise<string> {
+  const path = join(project, ".agents", "skills", "mine", "SKILL.md");
+  await mkdir(join(project, ".agents", "skills", "mine"), { recursive: true });
+  await writeFile(path, FOREIGN_SKILL);
+  return path;
 }
 
 async function editScript(): Promise<string> {
@@ -96,8 +105,9 @@ describe("antigravity hooks the user edited after setup", () => {
     expect(Object.keys(plugin?.projectHooks.scripts ?? {})).toEqual([SCRIPT]);
   });
 
-  it("sync --force rewrites an edited hook script, restores a drifted skill and keeps the user hook", async () => {
+  it("sync --force rewrites an edited hook script, restores a drifted skill and keeps the user hook and skill", async () => {
     const hooks = await installWithUserLintHook();
+    const foreign = await writeForeignSkill();
     const installed = await editScript();
     const skill = join(project, OWN_SKILL);
     const skillInstalled = await readFile(skill, "utf-8");
@@ -108,6 +118,7 @@ describe("antigravity hooks the user edited after setup", () => {
     expect(sync.exitCode, sync.stderr).toBe(0);
     expect(await readFile(join(project, SCRIPT), "utf-8")).toBe(installed);
     expect(await readFile(skill, "utf-8")).toBe(skillInstalled);
+    expect(await readFile(foreign, "utf-8")).toBe(FOREIGN_SKILL);
     expect(await readHooks()).toEqual({ ...hooks, lint: LINT_HOOK });
   });
 
@@ -121,8 +132,9 @@ describe("antigravity hooks the user edited after setup", () => {
     expect(await readHooks()).toEqual({ ...hooks, lint: LINT_HOOK });
   });
 
-  it("clean --force removes an edited hook and every plugin file, and keeps the user hook", async () => {
+  it("clean --force removes an edited hook and every plugin file, and keeps the user hook and skill", async () => {
     await installWithUserLintHook();
+    const foreign = await writeForeignSkill();
     await editScript();
     await editEntry();
 
@@ -131,6 +143,7 @@ describe("antigravity hooks the user edited after setup", () => {
     expect(clean.exitCode, clean.stderr).toBe(0);
     expect(existsSync(join(project, SCRIPT))).toBe(false);
     expect(existsSync(join(project, OWN_SKILL))).toBe(false);
+    expect(await readFile(foreign, "utf-8")).toBe(FOREIGN_SKILL);
     expect(await readHooks()).toEqual({ lint: LINT_HOOK });
   });
 

@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registeredAiConfig, TOOL } from "../../../testing/catalog-of.js";
+import { registeredAiConfig } from "../../../../../shared/testing/catalog-of.builder.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };
 

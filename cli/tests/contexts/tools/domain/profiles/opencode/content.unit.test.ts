@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 
 describe("opencode.rewriteContent()", () => {
   it("routes a numbered command folder under commands/aidd/<phase>/, with or without the @ prefix", () => {

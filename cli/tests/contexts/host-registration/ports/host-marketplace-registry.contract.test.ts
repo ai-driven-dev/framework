@@ -1,13 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { InstallLocationsByNameReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
-import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.fake.js";
 import {
   describeHostMarketplaceRegistryContract,
   type MarketplaceRegistryScenario,
   type MarketplaceRegistrySubject,
-} from "../testing/host-marketplace-registry-contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+} from "../testing/host-marketplace-registry.contract.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostMarketplaceRegistryContract(
   "the fake",

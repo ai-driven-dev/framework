@@ -2,37 +2,38 @@ import { describe, expect, it } from "vitest";
 import { InitProject } from "../../../../src/contexts/installation/application/init-project.js";
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import {
+  ManifestUnavailableError,
+  ToolNotInstalledError,
+} from "../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { NoManifestError, ToolNotInstalledError } from "../../../../src/shared/domain/errors.js";
-import { InstallationFile } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { buildInstallationDeps } from "../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { aManifest } from "../testing/manifest.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const TRACKED = ".claude/rules/one.md";
 const CONTENT = "one\n";
 const MERGE_PATH = ".vscode/settings.json";
 const KEY = "editor.formatOnSave";
-const hasher = new DeterministicHasher();
 
 function tracking(manifest: Manifest, toolId: ToolId, relativePath: string, content: string) {
   manifest.addTool(toolId, "test", [
-    new InstallationFile({ relativePath, content, hash: hasher.hash(content) }),
+    new InstallationFile({ relativePath, content, hash: FileHash.of(content) }),
   ]);
 }
 
 function merging(manifest: Manifest) {
-  manifest.addTool(
-    TOOL.vscode,
-    "test",
-    [],
-    [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: hasher.hash("true") } }]
-  );
+  manifest.addTool(TOOL.vscode, "test", []);
+  manifest.updateToolMergeFiles(TOOL.vscode, [
+    { relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: FileHash.of("true") } },
+  ]);
 }
 
 function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
@@ -42,12 +43,14 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
       content,
     ])
   );
-  const fs = new InMemoryFileAdapter(files, hasher);
+  const fs = new InMemoryFileAdapter(files);
   return new ReportStatus(
-    fs,
-    new InMemoryManifestRepository(manifest, PROJECT_ROOT),
-    hasher,
-    new DetectPluginDrift(fs)
+    {
+      fs,
+      manifestRepo: new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+      detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+    },
+    registeredTools()
   );
 }
 
@@ -58,9 +61,24 @@ function inSyncTool(toolId: ToolId) {
 describe("ReportStatus", () => {
   describe("which tools are reported", () => {
     it("fails when no manifest exists", async () => {
-      await expect(
-        statusOver({}, null).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
-      ).rejects.toThrow(NoManifestError);
+      const failure = await statusOver({}, null)
+        .execute({ projectRoot: PROJECT_ROOT })
+        .catch((e: unknown) => e);
+
+      expect(failure).toBeInstanceOf(ManifestUnavailableError);
+      expect(failure).toMatchObject({ code: "manifest-missing" });
+    });
+
+    it("reports from the manifest it is handed, reading none of its own", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "test", []);
+
+      const report = await statusOver({}, null).execute({
+        projectRoot: PROJECT_ROOT,
+        manifest,
+      });
+
+      expect(report.tools).toStrictEqual([inSyncTool(TOOL.claude)]);
     });
 
     it("refuses a filter naming a tool that is not installed", async () => {
@@ -69,7 +87,6 @@ describe("ReportStatus", () => {
 
       await expect(
         statusOver({}, manifest).execute({
-          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           filterToolId: TOOL.cursor,
         })
@@ -77,12 +94,12 @@ describe("ReportStatus", () => {
     });
 
     it("reports only the filtered tool", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
-      manifest.addTool(TOOL.vscode, "test", []);
+      const manifest = aManifest()
+        .withTool(TOOL.claude, [], { version: "test" })
+        .withTool(TOOL.vscode, [], { version: "test" })
+        .build();
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         filterToolId: TOOL.claude,
       });
@@ -95,12 +112,12 @@ describe("ReportStatus", () => {
     });
 
     it("reports only the tools of the requested category", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
-      manifest.addTool(TOOL.vscode, "test", []);
+      const manifest = aManifest()
+        .withTool(TOOL.claude, [], { version: "test" })
+        .withTool(TOOL.vscode, [], { version: "test" })
+        .build();
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -117,7 +134,6 @@ describe("ReportStatus", () => {
       manifest.addTool(TOOL.claude, "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -138,7 +154,6 @@ describe("ReportStatus", () => {
 
     it("reports an untouched tracked file as in sync", async () => {
       const report = await statusOver({ [TRACKED]: CONTENT }, manifestTracking()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -151,7 +166,6 @@ describe("ReportStatus", () => {
 
     it("calls a tracked file whose content changed modified", async () => {
       const report = await statusOver({ [TRACKED]: "edited\n" }, manifestTracking()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -170,7 +184,6 @@ describe("ReportStatus", () => {
 
     it("calls a tracked file gone from disk deleted", async () => {
       const report = await statusOver({}, manifestTracking()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -187,7 +200,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [TRACKED]: CONTENT, ".claude/rules/two.md": "two\n" },
         manifestTracking()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([
         {
@@ -202,7 +215,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [TRACKED]: CONTENT, ".claude/rules/one.md.backup": "old\n" },
         manifestTracking()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([inSyncTool(TOOL.claude)]);
     });
@@ -221,7 +234,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [MERGE_PATH]: `{ "${KEY}": true }` },
         manifestMerging()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report).toStrictEqual({
         tools: [inSyncTool(TOOL.vscode)],
@@ -232,7 +245,6 @@ describe("ReportStatus", () => {
 
     it("calls every managed key of a missing merge file deleted", async () => {
       const report = await statusOver({}, manifestMerging()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -247,7 +259,6 @@ describe("ReportStatus", () => {
 
     it("calls a managed key missing from the merge file deleted", async () => {
       const report = await statusOver({ [MERGE_PATH]: "{}" }, manifestMerging()).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -264,7 +275,7 @@ describe("ReportStatus", () => {
       const report = await statusOver(
         { [MERGE_PATH]: `{ "${KEY}": false }` },
         manifestMerging()
-      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([
         {
@@ -279,20 +290,23 @@ describe("ReportStatus", () => {
 
 describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitProject(deps.fs, deps.manifestRepo).execute({
+    const deps = await buildInstallationDeps();
+    await new InitProject(
+      { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
     });
 
     const useCase = new ReportStatus(
-      deps.fs,
-      deps.manifestRepo,
-      deps.hasher,
-      new DetectPluginDrift(deps.fs)
+      {
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      },
+      registeredTools()
     );
     const report = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -301,10 +315,12 @@ describe("status", () => {
   });
 
   it("does not call a machine-local file an addition, whatever the profile declares", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitProject(deps.fs, deps.manifestRepo).execute({
+    const deps = await buildInstallationDeps();
+    await new InitProject(
+      { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf(),
     });
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest missing");
@@ -313,21 +329,27 @@ describe("status", () => {
 
     // Written by the CLI on purpose and never tracked. Reading the exclusion off
     // `machineLocalFilesOf` is what keeps it matching the path the profile declares.
-    for (const relativePath of registeredAiConfig(TOOL.claude)
+    for (const relativePath of registeredTools()
+      .aiProfile(TOOL.claude)
       .marketplaceRegistration()
       ?.machineLocalFiles() ?? []) {
       await deps.fs.writeFile(`${PROJECT_ROOT}/${relativePath}`, "{}");
     }
     expect(
-      (registeredAiConfig(TOOL.claude).marketplaceRegistration()?.machineLocalFiles() ?? []).length
+      (
+        registeredTools().aiProfile(TOOL.claude).marketplaceRegistration()?.machineLocalFiles() ??
+        []
+      ).length
     ).toBeGreaterThan(0);
 
     const report = await new ReportStatus(
-      deps.fs,
-      deps.manifestRepo,
-      deps.hasher,
-      new DetectPluginDrift(deps.fs)
-    ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
+      {
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      },
+      registeredTools()
+    ).execute({ projectRoot: PROJECT_ROOT });
 
     const drifted = report.tools.flatMap((tool) => tool.drifted);
     expect(drifted).toEqual([]);

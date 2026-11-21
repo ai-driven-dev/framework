@@ -7,12 +7,13 @@ import {
   createFrameworkBuildUseCase,
   type FrameworkBuildDeps,
 } from "../../src/composition/translate.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { FlatTargetExistsError } from "../../src/shared/domain/errors.js";
-import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
-import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
-import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
+import { FlatTargetExistsError } from "../../src/contexts/translate/domain/translate.error.js";
+import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // Canonical flat destination for the fixture's "aidd-test" plugin agent, under --target copilot.
@@ -27,7 +28,7 @@ function makeDeps(fs: InMemoryFileAdapter): FrameworkBuildDeps {
   };
 }
 
-describe("createFrameworkBuildUseCase threads the caller's --force through to the flat build strategy", () => {
+describe("createFrameworkBuildUseCase threads the caller's --force through to the flat sink", () => {
   let outDir: string;
   let fs: InMemoryFileAdapter;
 
@@ -36,7 +37,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
     fs = new InMemoryFileAdapter();
     await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
     // outDir must exist for both the in-memory fs (fileExists) and the real disk
-    // (FlatBuildStrategy's isDirectory guard is backed by a real fs.stat call).
+    // (the flat sink's directory guard).
     fs.setFile(`${outDir}/.keep`, "");
     fs.setFile(`${outDir}/${COLLIDING_RELATIVE_PATH}`, STALE_CONTENT);
   });

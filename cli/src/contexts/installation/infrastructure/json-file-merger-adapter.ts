@@ -1,4 +1,4 @@
-import type { FileHash } from "../../../shared/domain/file.js";
+import type { FileHash } from "../../../shared/domain/file-hash.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../shared/domain/merge.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
@@ -27,6 +27,9 @@ export class JsonFileMergerAdapter implements FileReader, FileWriter, FileMerger
   listFilesRecursive(dirPath: string): Promise<string[]> {
     return this.files.listFilesRecursive(dirPath);
   }
+  isDirectory(path: string): Promise<boolean> {
+    return this.files.isDirectory(path);
+  }
   isExecutable(path: string): Promise<boolean> {
     return this.files.isExecutable(path);
   }
@@ -50,6 +53,6 @@ export class JsonFileMergerAdapter implements FileReader, FileWriter, FileMerger
   }
 
   mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
-    return mergeIntoJsonFile(this.files, path, content, strategy);
+    return mergeIntoJsonFile(this.files, { path, content, strategy });
   }
 }

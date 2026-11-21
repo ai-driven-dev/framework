@@ -54,9 +54,7 @@ describe("rewritePluginRootInJson", () => {
     it("does NOT rewrite object keys that contain the variable", () => {
       const input: Record<string, unknown> = {};
       input[SCRIPTS_PATH] = "value";
-      const result = rewritePluginRootInJson(input) as Record<string, unknown>;
-      expect(Object.keys(result)).toContain(SCRIPTS_PATH);
-      expect(Object.values(result)).toContain("value");
+      expect(rewritePluginRootInJson(input)).toEqual({ [SCRIPTS_PATH]: "value" });
     });
   });
 

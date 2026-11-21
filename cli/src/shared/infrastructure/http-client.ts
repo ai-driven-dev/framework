@@ -6,7 +6,7 @@ import {
   HttpError,
   HttpNotFoundError,
   HttpRedirectError,
-} from "../domain/errors.js";
+} from "../domain/shared.error.js";
 import type { HttpGet, HttpGetOptions, HttpResponse } from "../ports/http-get.js";
 
 function collectBuffer(response: IncomingMessage): Promise<Buffer> {
@@ -90,7 +90,7 @@ export class HttpClient implements HttpGet {
 
     if (contentType.includes("application/json")) {
       const text = buffer.toString("utf-8");
-      return { body: JSON.parse(text) as unknown, statusCode, contentType };
+      return { body: JSON.parse(text), statusCode, contentType };
     }
 
     return { body: buffer, statusCode, contentType };

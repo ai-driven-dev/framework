@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { Scope } from "../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 import { Marketplace } from "../domain/marketplace.js";
@@ -8,16 +8,16 @@ export interface RegisterFrameworkMarketplaceCommand {
   projectRoot: string;
   force?: boolean;
   frameworkPath?: string;
-  /** Explicit plugin source — when provided, deriveSource() is skipped. */
+  /** Explicit plugin source: when provided, deriveSource() is skipped. */
   pluginSource?: PluginSource;
 }
 
 export interface RegisterFrameworkMarketplaceResult {
   registered: boolean;
-  /** The scope this registration actually lives at once `execute` returns — always `"user"`
+  /** The scope this registration actually lives at once `execute` returns: always `"user"`
    * today, since a pre-existing project-scope entry is migrated unconditionally. Carried back
    * rather than hardcoded again by a caller that needs to know. */
-  scope: MarketplaceScope;
+  scope: Scope;
 }
 
 /** Registering the bundled framework marketplace. */
@@ -44,7 +44,7 @@ export class RegisterFrameworkMarketplace {
     const source = options.pluginSource ?? this.deriveSource(options.frameworkPath);
     // Machine scope, not project: every project on this machine registers the same framework
     // marketplace, so a second project must find the first project's entry rather than write
-    // its own — codex and copilot refuse a second source under the same name outright, and
+    // its own: codex and copilot refuse a second source under the same name outright, and
     // claude would otherwise silently repoint the whole machine at whichever project last ran
     // `setup`.
     const marketplace = Marketplace.create({

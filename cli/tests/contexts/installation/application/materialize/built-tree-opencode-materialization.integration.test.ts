@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
@@ -44,21 +44,17 @@ function distWithHooks(): PluginDistribution {
   });
 }
 
-async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
-  const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "local", path: "/src/framework" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
+  const registry = new FakeMarketplaceRegistry();
+  registry.seed(PROJECT_ROOT, {
+    name: "aidd-framework",
+    source: { kind: "local", path: "/src/framework" },
+    scope: "project",
+  });
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => {
+describe("BuiltTreeMaterializationTranslator - opencode (integration)", () => {
   it("copies only this plugin's flat files into the project, byte-for-byte", async () => {
     const fs = new InMemoryFileAdapter();
     const skill = "Load [assets/x.md](../assets/x.md)";
@@ -71,22 +67,22 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
+      platform: process.platform,
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
 
-    await translator.addPlugin(
-      dist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/skills/aidd-vcs/01-commit/SKILL.md`)).toBe(skill);
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/agents/aidd-vcs-helper.md`)).toBe("agent body");
@@ -108,22 +104,22 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
+      platform: process.platform,
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
 
-    await translator.addPlugin(
-      distWithHooks(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: distWithHooks(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/hooks/aidd-vcs/journal.cjs`)).toBe("// journal");
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/hooks/aidd-vcs/lib/host.cjs`)).toBe("// host");
@@ -136,28 +132,28 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
   });
 });
 
-describe("BuiltTreeMaterializationTranslator — what the opencode flat tree never yields", () => {
+describe("BuiltTreeMaterializationTranslator - what the opencode flat tree never yields", () => {
   async function installFrom(
     fs: InMemoryFileAdapter,
     distribution: PluginDistribution
   ): Promise<{ skipped: readonly unknown[] }> {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
-    return translator.addPlugin(
-      distribution,
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
+      platform: process.platform,
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
+    return translator.addPlugin({
+      dist: distribution,
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
   }
 
   it("reports no skip for a tool that keeps hooks inside its own plugin tree", async () => {
@@ -195,10 +191,9 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
   });
 });
 
-describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
+describe("BuiltTreeMaterializationTranslator - kilo (integration)", () => {
   it("copies Kilo's namespaced flat files and the generated bridge", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
     const configPath = `${PROJECT_ROOT}/.kilo/kilo.jsonc`;
     const baseConfig = '{\n  "$schema": "https://app.kilo.ai/config.json"\n}';
     fs.setFile(configPath, baseConfig);
@@ -213,16 +208,16 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
       new InstallationFile({
         relativePath: ".kilo/kilo.jsonc",
         content: baseConfig,
-        hash: hasher.hash(baseConfig),
+        hash: FileHash.of(baseConfig),
       }),
     ]);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      hasher,
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
+      platform: process.platform,
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
     const distribution = new PluginDistribution({
       manifest: { name: "aidd-vcs", version: "1.0.0" },
       format: TOOL.claude,
@@ -247,14 +242,14 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
       },
     });
 
-    await translator.addPlugin(
-      distribution,
-      registeredAiProfile(TOOL.kilo),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: distribution,
+      tool: registeredTools().aiProfile(TOOL.kilo),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     expect(fs.getFile(`${PROJECT_ROOT}/.kilo/skills/aidd-vcs/01-commit/SKILL.md`)).toBe("skill");
     expect(fs.getFile(`${PROJECT_ROOT}/.kilo/agents/aidd-vcs-helper.md`)).toBe("agent");
@@ -272,7 +267,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
         ?.mcpEntries.get("context")
     ).toBeTruthy();
     expect(manifest.getToolFiles(TOOL.kilo)[0]?.hash).toEqual(
-      hasher.hash(await fs.readFile(configPath))
+      FileHash.of(await fs.readFile(configPath))
     );
   });
 });

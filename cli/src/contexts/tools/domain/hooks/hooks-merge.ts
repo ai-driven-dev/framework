@@ -6,26 +6,9 @@
 
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import type { PluginHooksShape, PluginMatcherGroup } from "./plugin-hooks-shape.js";
-
-/** A field a flat entry can carry, each read from the plugin's item or its matcher group. */
-export type FlatHookField = "type" | "command" | "matcher" | "timeout";
-
-/** How a tool's hooks file holds a plugin's entries. */
-export interface HooksFileFormat {
-  /** Keys the file holds beside `hooks`, written where the file has none of its own. */
-  readonly wrapper: Readonly<Record<string, number>>;
-  /** `matchers` keeps each item whole under its event and matcher group; `flat` lists one
-   * entry per item under the event, with the fields named, in that order. */
-  readonly entries:
-    | {
-        readonly shape: "matchers";
-        /** `all` keeps every group and item as shipped; `commands` keeps only the items that
-         * run a command, each typed, under its group's matcher. */
-        readonly itemsKept: "all" | "commands";
-      }
-    | { readonly shape: "flat"; readonly fieldsKept: readonly FlatHookField[] };
-}
+import type { ShippedHooks } from "../../contract/build-contract.js";
+import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
+import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 
 /** What the engine reads of a descriptor: the file's form and the events the tool fires. */
 export interface HooksMergeTarget {
@@ -40,7 +23,6 @@ export interface HooksMergeTarget {
 
 const SCRIPTS = "hooks/";
 
-type Entry = Record<string, unknown>;
 type HooksFile = Record<string, unknown> & { hooks?: Record<string, Entry[]> };
 
 /** The folder a plugin's scripts land in. Every entry the plugin contributes names it, and no
@@ -55,35 +37,35 @@ export function pluginScriptPath(scriptsDir: string, plugin: string, pluginPath:
   return genericFlatHooksScriptPath(scriptsDir, plugin, rest);
 }
 
-/** How a command names a path the plugin ships outside `hooks/`; the caller knows its other
- * artifacts. Left as written where the caller says nothing. */
-export type LocatePluginPath = (pluginPath: string) => string;
-
 /** Merges a plugin's hooks, as the plugin ships them, into the tool's file: its commands
  * pointed at where its scripts land, its earlier entries removed first, every other entry kept.
  * An event the tool does not fire is skipped and reported. */
 export function mergeHooks(
   existing: string | null,
-  pluginHooks: string,
-  plugin: string,
-  target: HooksMergeTarget,
-  locate: LocatePluginPath = (pluginPath) => pluginPath
+  shipped: ShippedHooks,
+  target: HooksMergeTarget
 ): { content: string; warnings: readonly string[] } {
-  const file = stripPlugin(parseFile(existing), plugin, target);
+  const file = stripPlugin(parseFile(existing), shipped.plugin, target);
   const hooks = file.hooks ?? {};
   const warnings: string[] = [];
-  const shipped = rewriteRoot(pluginHooks, plugin, target.scriptsDir, locate).hooks ?? {};
-  for (const [event, groups] of Object.entries(shipped)) {
+  const rewritten = rewriteRoot(shipped, target.scriptsDir).hooks ?? {};
+  for (const [event, groups] of Object.entries(rewritten)) {
     const toolEvents = target.eventMap === undefined ? [event] : target.eventMap[event];
     if (toolEvents === undefined) {
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    const entries = shapeEntries(groups, target.file);
-    for (const toolEvent of toolEvents)
-      hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...entries];
+    appendEntries(hooks, toolEvents, shapeEntries(groups, target.file));
   }
   return { content: serialize(file, hooks, target.file), warnings };
+}
+
+function appendEntries(
+  hooks: Record<string, Entry[]>,
+  toolEvents: readonly string[],
+  entries: readonly Entry[]
+): void {
+  for (const toolEvent of toolEvents) hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...entries];
 }
 
 /** Takes one plugin's entries out of the tool's file, leaving every other entry as it was. */
@@ -103,7 +85,7 @@ export function pluginEntries(
     entries
       .flatMap((entry) => (Array.isArray(entry.hooks) ? (entry.hooks as Entry[]) : [entry]))
       .filter((item): item is Entry & { command: string } =>
-        runsPluginScript(String(item.command), target.scriptsDir, plugin, target.rootToken)
+        runsPluginScript(String(item.command), plugin, target)
       )
       .map((entry) => ({ event, entry }))
   );
@@ -126,12 +108,10 @@ function serialize(file: HooksFile, hooks: Record<string, Entry[]>, format: Hook
 }
 
 function rewriteRoot(
-  pluginHooks: string,
-  plugin: string,
-  scriptsDir: string,
-  locate: LocatePluginPath
+  { json, plugin, locate = (pluginPath) => pluginPath }: ShippedHooks,
+  scriptsDir: string
 ): PluginHooksShape {
-  return rewritePluginRootInJson(JSON.parse(pluginHooks), (suffix) =>
+  return rewritePluginRootInJson(JSON.parse(json), (suffix) =>
     suffix.startsWith(SCRIPTS)
       ? `./${pluginScriptPath(scriptsDir, plugin, suffix)}`
       : locate(suffix)
@@ -146,9 +126,8 @@ function escaped(text: string): string {
  * of the command or after a space or a quote, bare, after `./` or after the tool's root token. */
 function runsPluginScript(
   command: string,
-  scriptsDir: string,
   plugin: string,
-  rootToken?: string
+  { scriptsDir, rootToken }: HooksMergeTarget
 ): boolean {
   const dir = escaped(pluginScriptDir(scriptsDir, plugin));
   const prefix = rootToken === undefined ? "\\./" : `\\./|${escaped(rootToken)}/`;
@@ -158,51 +137,19 @@ function runsPluginScript(
 /** The file without the plugin's entries: an event, or a matcher group, left with none of its
  * own is dropped, one that never had any is kept. */
 function stripPlugin(file: HooksFile, plugin: string, target: HooksMergeTarget): HooksFile {
-  const ours = (item: Entry) =>
-    runsPluginScript(String(item.command), target.scriptsDir, plugin, target.rootToken);
+  const ours = (item: Entry) => runsPluginScript(String(item.command), plugin, target);
   const hooks: Record<string, Entry[]> = {};
   for (const [event, entries] of Object.entries(file.hooks ?? {})) {
-    const kept = entries.flatMap((entry) => {
-      if (!Array.isArray(entry.hooks)) return ours(entry) ? [] : [entry];
-      const items = (entry.hooks as Entry[]).filter((item) => !ours(item));
-      if (items.length === entry.hooks.length) return [entry];
-      return items.length === 0 ? [] : [{ ...entry, hooks: items }];
-    });
+    const kept = entries.flatMap((entry) => withoutOurs(entry, ours));
     if (kept.length > 0) hooks[event] = kept;
   }
   return { ...file, hooks };
 }
 
-/** A group without a hooks list runs nothing: kept as shipped where items are kept whole,
- * skipped everywhere else. */
-function shapeEntries(groups: readonly PluginMatcherGroup[], format: HooksFileFormat): Entry[] {
-  const { entries } = format;
-  const listed = groups.filter((group) => Array.isArray(group.hooks));
-  const commands = (group: PluginMatcherGroup) =>
-    group.hooks.filter((item) => typeof item.command === "string");
-  if (entries.shape === "flat") {
-    return listed.flatMap((group) =>
-      commands(group).map((item) => flatEntry(item, group.matcher, entries.fieldsKept))
-    );
-  }
-  if (entries.itemsKept === "all") return [...groups];
-  return listed.map((group) => ({
-    matcher: group.matcher,
-    hooks: commands(group).map((item) => ({ ...item, type: item.type ?? "command" })),
-  }));
-}
-
-function flatEntry(
-  item: PluginMatcherGroup["hooks"][number],
-  matcher: string | undefined,
-  fields: readonly FlatHookField[]
-): Entry {
-  const value: Record<FlatHookField, unknown> = {
-    type: item.type ?? "command",
-    command: item.command,
-    matcher: matcher === "" ? undefined : matcher,
-    timeout: typeof item.timeout === "number" ? item.timeout : undefined,
-  };
-  // An absent field is left out when the file is serialized.
-  return Object.fromEntries(fields.map((field) => [field, value[field]]));
+/** The entry left once the plugin's items are out of it: none, itself, or itself trimmed. */
+function withoutOurs(entry: Entry, ours: (item: Entry) => boolean): Entry[] {
+  if (!Array.isArray(entry.hooks)) return ours(entry) ? [] : [entry];
+  const items = (entry.hooks as Entry[]).filter((item) => !ours(item));
+  if (items.length === entry.hooks.length) return [entry];
+  return items.length === 0 ? [] : [{ ...entry, hooks: items }];
 }

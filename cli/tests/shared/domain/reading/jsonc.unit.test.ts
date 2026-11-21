@@ -13,8 +13,8 @@ describe("stripJsonComments", () => {
   });
 
   describe("a block comment", () => {
-    it("is dropped whole, its inner asterisks included", () => {
-      expect(stripJsonComments("/* a * b */1")).toBe("1");
+    it("is dropped whole, its inner asterisks and slashes included", () => {
+      expect(stripJsonComments("/* a * b / c */1")).toBe("1");
     });
 
     it("is dropped whole when a slash follows its opening marker", () => {
@@ -28,7 +28,7 @@ describe("stripJsonComments", () => {
 
   describe("a lone slash", () => {
     it("is not a comment and stays", () => {
-      expect(stripJsonComments("1/2")).toBe("1/2");
+      expect(stripJsonComments("1/2*3")).toBe("1/2*3");
     });
   });
 

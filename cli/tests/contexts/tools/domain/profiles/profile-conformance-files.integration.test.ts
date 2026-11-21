@@ -1,13 +1,13 @@
-import { existsSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { describeProfileFileConformance } from "../../testing/profile-file-conformance.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.js";
+import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
+import { describeProfileFileConformance } from "../../testing/profile-file-conformance.contract.js";
 
 /**
- * Adding a tool that runs hooks costs one descriptor, `profiles/<tool>/hooks.ts`, and one
+ * Adding a tool that runs hooks costs one `hooks:` descriptor in the profile, and one
  * payload the tool was seen sending. This reads the disk; the checks themselves are pure.
  */
 
@@ -24,16 +24,15 @@ const PROFILES = join(
 );
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 
-async function hooksModuleOf(toolId: string): Promise<Readonly<Record<string, unknown>> | null> {
-  const file = join(PROFILES, toolId, "hooks.ts");
-  return existsSync(file) ? await import(pathToFileURL(file).href) : null;
+function hooksOf(profile: BuiltToolConfig): object | undefined {
+  return profile.kind === "ai" ? profile.hooks : undefined;
 }
 
 describe("the profile files on disk", () => {
   it("read at least one tool that runs hooks and one that runs none", async () => {
-    const modules = await Promise.all(REGISTERED_PROFILES.map((p) => hooksModuleOf(p.toolId)));
-    expect(modules.some((module) => module !== null)).toBe(true);
-    expect(modules.some((module) => module === null)).toBe(true);
+    const declared = REGISTERED_PROFILES.map(hooksOf);
+    expect(declared.some((hooks) => hooks !== undefined)).toBe(true);
+    expect(declared.some((hooks) => hooks === undefined)).toBe(true);
     expect(REGISTERED_PROFILES.some((profile) => profile.kind === "ai")).toBe(true);
   });
 
@@ -44,7 +43,7 @@ describe("the profile files on disk", () => {
       profileFolders: readdirSync(PROFILES, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name),
-      hooksModule: await hooksModuleOf(profile.toolId),
+      hooks: hooksOf(profile),
       payloadFixtures: readdirSync(PAYLOADS),
     }));
   }

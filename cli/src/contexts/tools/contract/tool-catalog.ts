@@ -1,6 +1,13 @@
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "./tool-profile.js";
 
+/** What a recommendation reads of a project: its stack and whether the framework is already there. */
+export interface RecommendationContext {
+  readonly stack: "typescript" | "python" | "unknown";
+  readonly isMonorepo: boolean;
+  readonly hasFramework: boolean;
+}
+
 /** The registered tools, asked by id or walked in one of three orders that must never be mixed. */
 export interface ToolCatalog {
   /** The profile of a registered id; an unregistered one is refused. */
@@ -29,6 +36,13 @@ export interface ToolCatalog {
   idsInCanonicalOrder(category: "ai"): readonly AiToolId[];
   idsInCanonicalOrder(category: "ide"): readonly IdeToolId[];
   idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[];
-  /** Every profile sorted by id: the order the setup and doctor flows walk them. */
-  sortedById(): readonly ToolProfile[];
+  /** Every id sorted: the order the setup and doctor flows walk the tools. */
+  sortedIds(): readonly ToolId[];
+  /** Every provider some registered tool runs the framework's agents on, in the order the
+   * framework's model table lists them. */
+  agentProviders(): readonly string[];
+  /** The ids of one category setup recommends for a project, or for one it knows nothing of, in
+   * registration order: none for a project that already holds the framework. */
+  recommended(category: "ai", project?: RecommendationContext): readonly AiToolId[];
+  recommended(category: "ide", project?: RecommendationContext): readonly IdeToolId[];
 }

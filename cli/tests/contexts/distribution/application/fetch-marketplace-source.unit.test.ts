@@ -4,9 +4,9 @@ import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/ap
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const LOCAL_PATH = "/local/marketplace";
@@ -41,38 +41,37 @@ function makeGitHubMarketplace(ref?: string): Marketplace {
 }
 
 class SpyRawCatalogFetcher implements RawCatalogFetcher {
-  calls: Array<{ source: PluginSourceGitHub; catalogPath: string; cacheDir: string }> = [];
+  calls: Array<{ source: PluginSourceGitHub; catalogPath: string }> = [];
 
-  async fetchCatalog(
-    source: PluginSourceGitHub,
-    catalogPath: string,
-    cacheDir: string
-  ): Promise<string> {
-    this.calls.push({ source, catalogPath, cacheDir });
-    return cacheDir;
+  constructor(private readonly body = ABSOLUTE_CATALOG_JSON) {}
+
+  async fetchCatalog(source: PluginSourceGitHub, catalogPath: string): Promise<string> {
+    this.calls.push({ source, catalogPath });
+    return this.body;
   }
 }
 
 function makeSpyFileAdapter(
   seed: Record<string, string> = {}
 ): InMemoryFileAdapter & { deletedFiles: string[] } {
-  const hasher = new DeterministicHasher();
-  const adapter = new InMemoryFileAdapter(seed, hasher);
+  const adapter = new InMemoryFileAdapter(seed);
   const deletedFiles: string[] = [];
   const origDelete = adapter.deleteFile.bind(adapter);
   adapter.deleteFile = async (path: string) => {
     deletedFiles.push(path);
     return origDelete(path);
   };
-  (adapter as InMemoryFileAdapter & { deletedFiles: string[] }).deletedFiles = deletedFiles;
-  return adapter as InMemoryFileAdapter & { deletedFiles: string[] };
+  return Object.assign(adapter, { deletedFiles });
 }
 
 describe("FetchMarketplaceSource", () => {
   describe("local source", () => {
     it("delegates to pluginFetcher for local sources", async () => {
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSource(fetcher);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: unusedRawCatalog(),
+      });
 
       const result = await uc.execute({ marketplace: makeLocalMarketplace(), cacheDir: CACHE_DIR });
 
@@ -80,27 +79,14 @@ describe("FetchMarketplaceSource", () => {
     });
   });
 
-  describe("github source without rawCatalogFetcher", () => {
-    it("delegates to pluginFetcher when no rawCatalogFetcher provided", async () => {
-      const fetcher = new FixturePluginFetcher({
-        '{"kind":"github","repo":"owner/repo"}': "/cached/path",
-      });
-      const uc = new FetchMarketplaceSource(fetcher);
-
-      const result = await uc.execute({
-        marketplace: makeGitHubMarketplace(),
-        cacheDir: CACHE_DIR,
-      });
-
-      expect(result).toBe("/cached/path");
-    });
-  });
-
-  describe("github source with rawCatalogFetcher only (no fs)", () => {
+  describe("github source through rawCatalogFetcher", () => {
     it("routes github sources through rawCatalogFetcher and returns cacheDir", async () => {
       const spy = new SpyRawCatalogFetcher();
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSource(fetcher, spy);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace("v3.9.0"),
@@ -113,7 +99,10 @@ describe("FetchMarketplaceSource", () => {
 
     it("preserves ref when routing github source to rawCatalogFetcher", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+      });
 
       await uc.execute({
         marketplace: makeGitHubMarketplace("v4.1.0-beta.14"),
@@ -125,7 +114,10 @@ describe("FetchMarketplaceSource", () => {
 
     it("passes undefined ref to rawCatalogFetcher when no ref set", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: spy, fs: makeSpyFileAdapter() },
+      });
 
       await uc.execute({
         marketplace: makeGitHubMarketplace(undefined),
@@ -134,28 +126,34 @@ describe("FetchMarketplaceSource", () => {
 
       expect(spy.calls[0]?.source.ref).toBeUndefined();
     });
+  });
 
-    it("passes cacheDir to rawCatalogFetcher", async () => {
-      const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy);
-
-      await uc.execute({
-        marketplace: makeGitHubMarketplace("v3.9.0"),
-        cacheDir: CACHE_DIR,
+  describe("catalog cache write", () => {
+    it("writes the fetched catalog body at cacheDir/.claude-plugin/marketplace.json", async () => {
+      const spy = new SpyRawCatalogFetcher(ABSOLUTE_CATALOG_JSON);
+      const fsAdapter = makeSpyFileAdapter();
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
       });
 
-      expect(spy.calls[0]?.cacheDir).toBe(CACHE_DIR);
+      await uc.execute({ marketplace: makeGitHubMarketplace("v3.9.0"), cacheDir: CACHE_DIR });
+
+      expect(await fsAdapter.readFile(CATALOG_FILE_PATH)).toBe(ABSOLUTE_CATALOG_JSON);
     });
   });
 
   describe("github source with relative plugin sources (probe trips)", () => {
     it("calls deleteFile on the raw marketplace.json before falling back to pluginFetcher", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = new SpyRawCatalogFetcher(RELATIVE_CATALOG_JSON);
       const fetcher = new FixturePluginFetcher({
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       await uc.execute({ marketplace: makeGitHubMarketplace(), cacheDir: CACHE_DIR });
 
@@ -163,12 +161,15 @@ describe("FetchMarketplaceSource", () => {
     });
 
     it("returns the path from pluginFetcher fallback (subdir), not cacheDir", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = new SpyRawCatalogFetcher(RELATIVE_CATALOG_JSON);
       const fetcher = new FixturePluginFetcher({
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -179,12 +180,15 @@ describe("FetchMarketplaceSource", () => {
     });
 
     it("invokes pluginFetcher.fetch with the marketplace github source", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = new SpyRawCatalogFetcher(RELATIVE_CATALOG_JSON);
       const fetchSpy = vi.fn().mockResolvedValue(FALLBACK_PATH);
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       await uc.execute({ marketplace: makeGitHubMarketplace("HEAD"), cacheDir: CACHE_DIR });
 
@@ -204,7 +208,10 @@ describe("FetchMarketplaceSource", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: ABSOLUTE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -215,33 +222,19 @@ describe("FetchMarketplaceSource", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(fsAdapter.deletedFiles).toHaveLength(0);
     });
-
-    it("returns cacheDir when catalog file is missing", async () => {
-      const spy = new SpyRawCatalogFetcher();
-      const fetchSpy = vi.fn().mockResolvedValue(FALLBACK_PATH);
-      const fetcher = new FixturePluginFetcher();
-      fetcher.fetch = fetchSpy;
-      const fsAdapter = makeSpyFileAdapter({});
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
-
-      const result = await uc.execute({
-        marketplace: makeGitHubMarketplace(),
-        cacheDir: CACHE_DIR,
-      });
-
-      expect(result).toBe(CACHE_DIR);
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
   });
 
   describe("probe error handling (fail-open)", () => {
     it("returns cacheDir when catalog file contains invalid JSON", async () => {
-      const spy = new SpyRawCatalogFetcher();
+      const spy = new SpyRawCatalogFetcher("not-json");
       const fetchSpy = vi.fn();
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: "not-json" });
-      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy, fs: fsAdapter },
+      });
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -262,7 +255,10 @@ describe("FetchMarketplaceSource", () => {
         calls.push({ forceRefresh: opts?.forceRefresh });
         return origFetch(source, cacheDir, opts);
       };
-      const uc = new FetchMarketplaceSource(fetcher);
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: unusedRawCatalog(),
+      });
 
       await uc.execute({
         marketplace: makeLocalMarketplace(),

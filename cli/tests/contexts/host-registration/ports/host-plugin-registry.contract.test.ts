@@ -1,17 +1,15 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import {
-  EnabledPluginsMapReader,
-  PluginEntriesByScopeReader,
-  TomlPluginTablesReader,
-} from "../../../../src/contexts/host-registration/infrastructure/plugin-registry-readers.js";
-import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.js";
+import { EnabledPluginsMapReader } from "../../../../src/contexts/host-registration/infrastructure/enabled-plugins-map-reader.js";
+import { PluginEntriesByScopeReader } from "../../../../src/contexts/host-registration/infrastructure/plugin-entries-by-scope-reader.js";
+import { TomlPluginTablesReader } from "../../../../src/contexts/host-registration/infrastructure/toml-plugin-tables-reader.js";
+import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.fake.js";
 import {
   describeHostPluginRegistryContract,
   type PluginRegistryScenario,
   type PluginRegistrySubject,
-} from "../testing/host-plugin-registry-contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+} from "../testing/host-plugin-registry.contract.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostPluginRegistryContract(
   "the fake",

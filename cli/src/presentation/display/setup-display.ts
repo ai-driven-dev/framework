@@ -1,4 +1,4 @@
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 interface ToolInstallOutcome {
   readonly toolId: string;
@@ -14,30 +14,30 @@ interface SetupOutcome {
   readonly globalPlugins?: readonly string[];
 }
 
+function debugFiles(output: Output, installed: readonly ToolInstallOutcome[]): void {
+  for (const { toolId, files } of installed) {
+    output.debug(`Tool: ${toolId}`);
+    for (const f of files) output.debug(`  + ${f.relativePath}`);
+  }
+}
+
 function displayInstall(
-  output: CLIOutput,
+  output: Output,
   results: readonly ToolInstallOutcome[],
   verbose: boolean
 ): void {
   const skipped = results.filter((r) => r.skipped);
   const installed = results.filter((r) => !r.skipped);
   for (const r of skipped) output.warn(`${r.toolId} is already installed.`);
-  for (const r of installed) for (const w of r.warnings) output.warn(w);
-  if (verbose) {
-    for (const r of installed) {
-      output.debug(`Tool: ${r.toolId}`);
-      for (const f of r.files) output.debug(`  + ${f.relativePath}`);
-    }
-  }
-  if (installed.length === 1) {
-    output.success(`Installed ${installed[0].toolId} (${installed[0].fileCount} files)`);
-  } else if (installed.length > 1) {
-    const total = installed.reduce((s, r) => s + r.fileCount, 0);
+  for (const w of installed.flatMap((r) => r.warnings)) output.warn(w);
+  if (verbose) debugFiles(output, installed);
+  if (installed.length > 0) {
+    const total = installed.reduce((sum, r) => sum + r.fileCount, 0);
     output.success(`Installed ${installed.map((r) => r.toolId).join(", ")} (${total} files)`);
   }
 }
 
-export function printSetupOutcome(output: CLIOutput, result: SetupOutcome, verbose: boolean): void {
+export function printSetupOutcome(output: Output, result: SetupOutcome, verbose: boolean): void {
   if (result.globalPlugins !== undefined) {
     output.success(
       result.globalPlugins.length === 0
@@ -60,11 +60,11 @@ export function printSetupOutcome(output: CLIOutput, result: SetupOutcome, verbo
   }
 }
 
-export function printDetectedContext(output: CLIOutput, description: string): void {
+export function printDetectedContext(output: Output, description: string): void {
   output.info(`Detected: ${description}.`);
 }
 
-export function printWelcomeBanner(output: CLIOutput): void {
+export function printWelcomeBanner(output: Output): void {
   output.print("");
   output.print("AI-Driven Development setup");
   output.print("Wires your AI tools, registers the framework marketplace, installs plugins.");
@@ -72,7 +72,7 @@ export function printWelcomeBanner(output: CLIOutput): void {
   output.print("");
 }
 
-export function printNextSteps(output: CLIOutput, installedAnything: boolean): void {
+export function printNextSteps(output: Output, installedAnything: boolean): void {
   output.print("");
   output.print("Next steps:");
   if (installedAnything) output.print("  aidd doctor             # verify drift");

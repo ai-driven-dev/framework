@@ -68,7 +68,8 @@ export function daysAround(records: readonly UsageRecord[]): ReadonlySet<string>
   return days;
 }
 
-function id(record: UsageRecord): string {
+/** What makes two records one call: its tool and key. */
+export function usageId(record: UsageRecord): string {
   return `${record.tool}\u0000${record.key}`;
 }
 
@@ -89,22 +90,25 @@ export function upsertUsage(
   held: readonly StoredUsage[],
   incoming: readonly StoredUsage[]
 ): Upserted {
-  const before = new Map(held.map((record) => [id(record), record]));
+  const before = new Map(held.map((record) => [usageId(record), record]));
   const records = foldUsage([...held, ...incoming]);
   const days = new Set<string>();
   let added = 0;
   let updated = 0;
   for (const record of records) {
-    const was = before.get(id(record));
-    if (was !== undefined && was === record) continue;
+    const was = before.get(usageId(record));
+    if (was === record) continue;
     if (was === undefined) added += 1;
     else updated += 1;
-    for (const moved of [record, was]) {
-      const day = moved === undefined ? null : dayOf(moved.at);
-      if (day !== null) days.add(day);
-    }
+    for (const day of daysOf(record, was)) days.add(day);
   }
   return { records, added, updated, days };
+}
+
+/** The days a record and the one it replaced fall on. */
+function daysOf(record: StoredUsage, was: StoredUsage | undefined): string[] {
+  const found = [dayOf(record.at), was === undefined ? null : dayOf(was.at)];
+  return found.filter((day): day is string => day !== null);
 }
 
 /** Records grouped by the day of their own time, each day in time order then key, so the
@@ -114,17 +118,20 @@ export function upsertUsage(
 export function partitionByDay(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {
-  const dated: { readonly record: StoredUsage; readonly instant: number; readonly id: string }[] =
-    [];
+  const dated: {
+    readonly record: StoredUsage;
+    readonly day: string;
+    readonly instant: number;
+    readonly id: string;
+  }[] = [];
   for (const record of records) {
-    if (dayOf(record.at) !== null) {
-      dated.push({ record, instant: Date.parse(record.at), id: id(record) });
-    }
+    const day = dayOf(record.at);
+    if (day !== null)
+      dated.push({ record, day, instant: Date.parse(record.at), id: usageId(record) });
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
   const days = new Map<string, StoredUsage[]>();
-  for (const { record } of dated) {
-    const day = dayOf(record.at) as string;
+  for (const { record, day } of dated) {
     const held = days.get(day);
     if (held === undefined) days.set(day, [record]);
     else held.push(record);
@@ -134,6 +141,10 @@ export function partitionByDay(
 
 function isText(value: unknown): value is string {
   return typeof value === "string" && value !== "";
+}
+
+function isListed<T>(list: readonly T[], value: unknown): value is T {
+  return list.some((member) => member === value);
 }
 
 function isCounter(value: unknown): boolean {
@@ -148,8 +159,8 @@ function isStoredUsage(
   object: Record<string, unknown>
 ): object is Record<string, unknown> & StoredUsage {
   return (
-    (USAGE_TOOLS as readonly unknown[]).includes(object.tool) &&
-    (USAGE_AGENTS as readonly unknown[]).includes(object.agent) &&
+    isListed(USAGE_TOOLS, object.tool) &&
+    isListed(USAGE_AGENTS, object.agent) &&
     isText(object.key) &&
     isText(object.session_id) &&
     typeof object.at === "string" &&

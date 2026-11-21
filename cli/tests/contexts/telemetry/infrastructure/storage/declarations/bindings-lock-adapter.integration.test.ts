@@ -7,8 +7,8 @@ import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/in
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { FakeBindings } from "../../../testing/fake-bindings.js";
-import { NO_ALIASES } from "../../../testing/no-aliases.js";
+import { FakeBindings } from "../../../testing/fake-bindings.fake.js";
+import { NO_ALIASES } from "../../../testing/no-aliases.fake.js";
 
 let root: string;
 const storage = new PrivateStorageAdapter();
@@ -43,8 +43,8 @@ describe("the bindings lock", () => {
       waitMs: 0,
     });
     const failure = await bindings.exclusively(async () => "unreachable").catch((e: Error) => e);
-    expect(failure).toBeInstanceOf(Error);
-    const message = (failure as Error).message;
+    if (!(failure instanceof Error)) throw new Error("the lock did not refuse");
+    const message = failure.message;
     expect(message).toContain("The telemetry bindings store is locked by process 4242");
     expect(message).toContain(join(dir, ".lock"));
     expect(message).not.toContain("ledger");
@@ -65,7 +65,8 @@ describe("the bindings lock", () => {
     const failure = await bindings
       .exclusively(async () => "unreachable", { waitMs: 0 })
       .catch((e: Error) => e);
-    expect((failure as Error).message).toContain("is locked by process 4242");
+    if (!(failure instanceof Error)) throw new Error("the lock did not refuse");
+    expect(failure.message).toContain("is locked by process 4242");
   });
 
   it("leaves one snapshot when a declaration and an ingest snapshot the same branch at once", async () => {
@@ -81,12 +82,12 @@ describe("the bindings lock", () => {
       },
     ]);
     const snapshotter = () =>
-      new SnapshotBindings(
+      new SnapshotBindings({
         source,
-        new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
-        new BindingsLockAdapter(dir, storage),
-        () => new Date("2026-10-09T09:00:00.000Z")
-      );
+        store: new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
+        lock: new BindingsLockAdapter(dir, storage),
+        now: () => new Date("2026-10-09T09:00:00.000Z"),
+      });
     const added = await Promise.all([
       snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),
       snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),

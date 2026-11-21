@@ -30,15 +30,14 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 function makeAdapter(): PluginFetcherAdapter {
-  const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+  const fs = new InMemoryFileAdapter({});
   return new PluginFetcherAdapter(fs);
 }
 
-describe("PluginFetcherAdapter — fail-fast git clone", () => {
+describe("PluginFetcherAdapter - fail-fast git clone", () => {
   it("sets GIT_TERMINAL_PROMPT=0 on every clone to prevent interactive credential prompts", async () => {
     const adapter = makeAdapter();
 
@@ -48,7 +47,7 @@ describe("PluginFetcherAdapter — fail-fast git clone", () => {
   });
 });
 
-describe("PluginFetcherAdapter — npm option-injection prevention", () => {
+describe("PluginFetcherAdapter - npm option-injection prevention", () => {
   it("passes -- before the package spec in pnpm add argv", async () => {
     mockExecFile.mockClear();
     const adapter = makeAdapter();
@@ -56,7 +55,7 @@ describe("PluginFetcherAdapter — npm option-injection prevention", () => {
     // InMemoryFileAdapter has no node_modules dir, so execFile is invoked
     await adapter.fetch({ kind: "npm", package: "my-plugin", version: "1.0.0" }, "/cache");
 
-    const argv: string[] = mockExecFile.mock.calls[0][1] as string[];
+    const argv: string[] = mockExecFile.mock.calls[0][1];
     const separatorIndex = argv.indexOf("--");
     const specIndex = argv.indexOf("my-plugin@1.0.0");
     expect(separatorIndex).toBeGreaterThanOrEqual(0);
@@ -69,7 +68,7 @@ describe("PluginFetcherAdapter — npm option-injection prevention", () => {
 
     await adapter.fetch({ kind: "npm", package: "@scope/my-plugin" }, "/cache");
 
-    const argv: string[] = mockExecFile.mock.calls[0][1] as string[];
+    const argv: string[] = mockExecFile.mock.calls[0][1];
     const separatorIndex = argv.indexOf("--");
     expect(separatorIndex).toBeGreaterThanOrEqual(0);
     expect(argv[separatorIndex + 1]).toBe("@scope/my-plugin@latest");

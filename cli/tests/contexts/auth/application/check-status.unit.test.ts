@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
-import { aCheckStatus } from "../testing/auth-builders.js";
-import { anExternalRecord, aStoredRecord } from "../testing/credential-records.js";
-import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.js";
-import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";
-import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.js";
+import { AuthenticationError } from "../../../../src/shared/domain/shared.error.js";
+import { aCheckStatus } from "../testing/auth.builder.js";
+import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
+import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
+import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.fake.js";
+import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
 describe("CheckStatus", () => {
   describe("when nothing is stored", () => {

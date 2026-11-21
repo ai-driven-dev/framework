@@ -1,9 +1,12 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git } from "../../helpers/git-sandbox.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
-import { createTelemetrySandbox, type TelemetrySandbox } from "../../helpers/telemetry-sandbox.js";
+import {
+  createTelemetrySandbox,
+  type TelemetrySandbox,
+} from "../../contexts/telemetry/testing/telemetry-sandbox.builder.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 

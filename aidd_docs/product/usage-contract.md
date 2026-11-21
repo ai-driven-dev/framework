@@ -1,6 +1,6 @@
 # Usage contract
 
-> For: maintainers, hook authors, a later destination. What `aidd telemetry` records, stores and reports for Claude Code and Codex. How to use it: [plugin README](../../plugins/aidd-telemetry/README.md). Where the code is: [`cli/aidd_docs/memory/telemetry.md`](../../cli/aidd_docs/memory/telemetry.md).
+> For: maintainers, hook authors, a later destination. What `aidd telemetry` records, stores and reports for Claude Code and Codex. How to use it: [plugin README](../../plugins/aidd-telemetry/README.md). Where the code is: [`cli/aidd_docs/memory/internal/telemetry.md`](../../cli/aidd_docs/memory/internal/telemetry.md).
 
 The code is the authority. A change to a format below changes this page in the same commit.
 

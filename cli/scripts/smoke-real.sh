@@ -16,7 +16,7 @@
 # profile instead. The `clean --scope user` whitelist deletes `cache/built/`, the self-update
 # cache and `references.json` outright, none of which may point at a real profile. The
 # variable does not move `identity.json`: `resolveAiddConfigDir()`
-# (`contexts/framework/domain/reading/home-dir.ts`) refuses it on purpose, so identity is read from the real one.
+# (`shared/infrastructure/home-dir.ts`) refuses it on purpose, so identity is read from the real one.
 #
 # Every `--scope user` call passes `--no-default-marketplace`; without it `setup --scope user`
 # registers the reserved name machine-wide at every host.
@@ -124,7 +124,7 @@ MKT="aidd-smoke-$(date +%s)-$$"
 MKT_USER="$MKT-user"
 echo "Marketplace/plugin name for this run: $MKT (machine scope: $MKT_USER)"
 
-# `translate-source.ts`'s `buildPlugin`, the path cursor and opencode install by, resolves a
+# `build-native-tree.ts`'s `buildPlugin`, the path cursor and opencode install by, resolves a
 # plugin directory as `plugins/<entry.name>` and never reads `source`, so the directory must
 # be renamed too and `source` kept in step for every resolution path to agree.
 derive_fixture() {

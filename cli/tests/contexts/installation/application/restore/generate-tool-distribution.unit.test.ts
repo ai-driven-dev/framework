@@ -1,41 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
+import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.js";
 import { GenerateToolDistribution } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
-import { registeredAiConfig, registeredConfig, TOOL } from "../../../tools/testing/catalog-of.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { FakePlatform } from "../../testing/fake-platform.fake.js";
 
 const PROJECT_ROOT = "/test-project";
-const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";
 
-const descriptor = new FrameworkDescriptor({
-  version: "test",
-  contentSections: ["agents", "commands", "rules", "skills", "templates"].map((name) => ({
-    name,
-    directory: name,
-    entryFile: null,
-  })),
-  templateRefs: [],
-  configRefs: [{ name: "vscodeSettings", path: "config/vscode/settings.json" }],
-});
+const configRefs = [{ name: "vscodeSettings", path: "config/vscode/settings.json" }];
 
-const contentFiles = new Map([
-  ["agents/reviewer.md", MARKDOWN],
-  ["commands/greet.md", MARKDOWN],
-  ["rules/naming.md", MARKDOWN],
-  ["skills/hello/SKILL.md", MARKDOWN],
-  ["templates/AGENTS.md", MARKDOWN],
-  ["config/vscode/settings.json", '{"editor.tabSize": 2}'],
-]);
+const contentFiles = new Map([["config/vscode/settings.json", '{"editor.tabSize": 2}']]);
 
-const hasher = new DeterministicHasher();
 const assets = new BundledAssetProviderAdapter(wireTools());
 
 function generate(
@@ -43,71 +24,47 @@ function generate(
   assetProvider?: BundledAssetProviderAdapter
 ): Promise<InstallationFile[]> {
   return new GenerateToolDistribution(
-    new InMemoryFileAdapter({}, hasher),
-    hasher,
+    new InstallConfig(new InMemoryFileAdapter({})),
     new FakePlatform("linux"),
     assetProvider
-  ).execute({ config, descriptor, contentFiles, projectRoot: PROJECT_ROOT });
+  ).execute({ config, configRefs, contentFiles, projectRoot: PROJECT_ROOT });
 }
 
 async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdapter) {
-  return (await generate(registeredConfig(toolId), assetProvider))
+  return (await generate(registeredTools().profile(toolId), assetProvider))
     .map((f) => f.relativePath)
     .sort();
 }
 
-describe("GenerateToolDistribution — content sections", () => {
+describe("GenerateToolDistribution - IDE tools", () => {
   it("gives an IDE tool its config files and no content section", async () => {
     expect(await pathsFor(TOOL.vscode)).toStrictEqual([".vscode/settings.json"]);
   });
-
-  it("gives an AI tool one file per content section its capabilities accept", async () => {
-    expect(await pathsFor(TOOL.claude)).toStrictEqual([
-      ".claude/agents/reviewer.md",
-      ".claude/commands/greet.md",
-      ".claude/rules/naming.md",
-      ".claude/skills/hello/SKILL.md",
-    ]);
-  });
-
-  it("skips a section the tool declares no capability for", async () => {
-    const claude = registeredAiConfig(TOOL.claude);
-
-    const paths = (await generate(withSections(claude, { rules: null })))
-      .map((f) => f.relativePath)
-      .sort();
-
-    expect(paths).toStrictEqual([
-      ".claude/agents/reviewer.md",
-      ".claude/commands/greet.md",
-      ".claude/skills/hello/SKILL.md",
-    ]);
-  });
 });
 
-describe("GenerateToolDistribution — a tool's own config assets", () => {
+describe("GenerateToolDistribution - a tool's own config assets", () => {
   it("regenerates the shared OpenCode plugin runtime alongside tool configuration", async () => {
-    const files = await generate(registeredConfig(TOOL.opencode), assets);
+    const files = await generate(registeredTools().profile(TOOL.opencode), assets);
     expect(
       files.find((file) => file.relativePath === ".opencode/hooks/opencode-events.js")?.content
     ).toBe(assets.loadConfigAsset(TOOL.opencode, "opencode-events.js"));
   });
 
   it("writes a JSON asset pretty-printed at the path the tool declares", async () => {
-    const files = await generate(registeredConfig(TOOL.claude), assets);
+    const files = await generate(registeredTools().profile(TOOL.claude), assets);
     const content = JSON.stringify(assets.loadConfigAsset(TOOL.claude, "settings.json"), null, 2);
 
     expect(files.find((f) => f.relativePath === ".claude/settings.json")).toStrictEqual(
       new InstallationFile({
         relativePath: ".claude/settings.json",
         content,
-        hash: hasher.hash(content),
+        hash: FileHash.of(content),
       })
     );
   });
 
   it("writes the files the tool's profile answers for its config, wherever the profile keeps them", async () => {
-    const claude = registeredAiConfig(TOOL.claude);
+    const claude = registeredTools().aiProfile(TOOL.claude);
     const relocated = { ...claude, configFiles: () => ({ "settings.json": ".relocated/s.json" }) };
 
     const paths = (await generate(relocated, assets)).map((f) => f.relativePath);
@@ -120,7 +77,7 @@ describe("GenerateToolDistribution — a tool's own config assets", () => {
     const asset = assets.loadConfigAsset(TOOL.codex, "config.toml");
     if (typeof asset !== "string") throw new Error("the codex config asset is text");
 
-    const files = await generate(registeredConfig(TOOL.codex), assets);
+    const files = await generate(registeredTools().profile(TOOL.codex), assets);
 
     expect(files.find((f) => f.relativePath === ".codex/config.toml")?.content).toBe(asset);
   });

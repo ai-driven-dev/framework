@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isErrnoException, tryParseJson } from "../../../../src/shared/domain/reading/json-file.js";
+import {
+  isErrnoException,
+  tryParseJson,
+  whenAbsent,
+} from "../../../../src/shared/domain/reading/json-file.js";
 
 describe("isErrnoException", () => {
   it("recognises an Error carrying a code", () => {
@@ -27,5 +31,21 @@ describe("tryParseJson", () => {
   it("says so when the text is not JSON", () => {
     expect(tryParseJson("{nope")).toEqual({ ok: false });
     expect(tryParseJson("")).toEqual({ ok: false });
+  });
+});
+
+describe("whenAbsent", () => {
+  const failing = (code: string) => () => Promise.reject(Object.assign(new Error("x"), { code }));
+
+  it("returns what the read returns", async () => {
+    expect(await whenAbsent(() => Promise.resolve("here"), null)).toBe("here");
+  });
+
+  it("returns the fallback when the read finds nothing there", async () => {
+    expect(await whenAbsent(failing("ENOENT"), "fallback")).toBe("fallback");
+  });
+
+  it("rethrows any other failure", async () => {
+    await expect(whenAbsent(failing("EACCES"), null)).rejects.toThrow("x");
   });
 });

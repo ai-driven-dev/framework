@@ -74,7 +74,7 @@ A use case is a command: one file, one class of the same name, one public `execu
 | `describe` names a situation ("when the manifest is missing") | mandatory | 31 % of `describe` are bare identifiers; 20 files have none, 13 of them e2e |
 | `it` names an observable result ("lists the tools without writing") | mandatory | titles are already clear at ~97 %: keep |
 | One subject per file | one test file per module or per command | same measure as the first row |
-| Max size | 400 lines (warning), 800 (failure) | 14 files exceed 800 in the whole suite; the code map splits the 11 of them under `tests/contexts/framework` by subject (the largest about 3,100 lines) |
+| Max size | 800 lines (failure); 400 lines is a review grid point, not checked | 8 files exceed 800 in the whole suite, the `BASELINE` of `test-file-size`; a file leaves it when it is split by subject |
 | `it.each` | only for inputs of one behaviour; not to hide 10 behaviours | 8.5 % of `it` are expanded |
 | `E2E:` prefix | removed: the suffix and the folder say it | 28 occurrences |
 | Mirror | tests mirror `src/` of the target layout: `tests/<source path>/<module>.<level>.test.ts` | see section 7 |
@@ -293,7 +293,7 @@ The first gain (about 15 job-min per PR on average, i.e. 55 % of the mutation mi
 | --- | --- | --- |
 | Failure output | diff size: not bounded, verified in vitest 5.0.5: its only size option, `diff.truncateThreshold`, cuts each side before comparing and hides the changed line; vitest already picks a minimal reporter for an agent and keeps 5 context lines. Still open: bounding the number of detailed failures and summarizing the rest | a failure costs ~12.5k tokens, the reporter does not change it |
 | Agent mode | minimal reporter, no `--reporter verbose`, for agent-driven runs | green costs ~2k |
-| File size | 800 lines is a failure, 400 a warning, checked by a mechanical script (no model) | a 3136-line file cannot be loaded at a good cost |
+| File size | 800 lines is a failure, checked by a mechanical script (no model); 400 lines is a review grid point, not checked | a 3136-line file cannot be loaded at a good cost |
 | Discovery | mirror path: tests mirror `src/` of the target layout; the test of `src/contexts/installation/application/remove-plugin.ts` is `tests/contexts/installation/application/remove-plugin.unit.test.ts`; checked by an architecture test (every domain/application module has its mirror test or a written exception) | the agent finds the test without searching |
 | Naming | `describe` = situation, `it` = result, state verbs in the present tense, English | the failure itself says what to fix |
 | No automatic guard calls a model | size, naming and mirror lints as scripts, off-the-shelf tools first (Biome or ESLint rules if they exist, jscpd extended to `tests/`) | validated decision |
@@ -332,11 +332,11 @@ Each step is deliverable alone and does not depend on the previous one unless st
 | # | Step | Depends on the architecture? | Gain |
 | --- | --- | --- | --- |
 | 1 | Limit failure output for agents: diff size settled (not boundable without hiding the cause, see section 7); the number of detailed failures is still open | no | fewer tokens at each failure (measure to do) |
-| 2 | Written discipline rules + size and naming lints as warnings (400 lines, English titles, one file per command) | no | stops the growth |
+| 2 | Written discipline rules + size and naming lints (800 lines fails; 400 lines, English titles and one file per command are review grid points) | no | stops the growth |
 | 3 | Fix the mutation triggers (tooling no longer launches the matrix) | no | about 15 job-min per PR on average |
 | 4 | E2E policy: one per command and per family of failure, the rest moves down to integration | no | main time lever (76 % of the time is in 255 e2e tests) |
 | 5 | Contract suite of the file port (fake + real); extract the merge from the fake | no | verifies the base of 113 importers |
-| 6 | Split the 14 files > 800 lines (11 under `tests/contexts/framework`, per the code map), one subject per file; the size failure threshold takes effect | no | readability for the agent |
+| 6 | Split the 8 files > 800 lines (the `BASELINE` of `test-file-size`), one subject per file; the size failure threshold takes effect | no | readability for the agent |
 | 7 | One golden update mechanism; jscpd on `tests/` | no | consistency, measure |
 | 8 | Profile conformance suite, migrate one profile then the others | partial (injectable registry) | about 500 to 800 lines |
 | 9 | New scheduled host contract job (on the existing weekly schedule) + recorded fixtures | no | covers the 1st cause of bugs |
@@ -357,7 +357,7 @@ Decided:
 
 1. Mutation: the per-PR gate stays only on `telemetry` and `shared` (today's `kernel` scope); the confidence of the other contexts is measured by the weekly trend with no blocking threshold, the contracts and the smoke; the rest runs in the weekly cron, which is non-blocking. Accepted risk: a regression in another context reaches `next` before the weekly signal. `run-mutation.mjs --changed` stays available locally. The real cost per scope is measured at the level of totals only (section 0); to re-verify on a forced run.
 2. Floors: never lowered without a written reason during the transition (raising to the measured score stays allowed, as the existing rule says), removed with each scope that disappears, set at the target for `telemetry` and `shared` only, from the measured score of the new scopes.
-3. Max size of a test file: 800 is a failure, 400 a warning.
+3. Max size of a test file: 800 is a failure, 400 a review grid point.
 4. Scheduled host contract job: a new job on the existing weekly schedule, accepted as a non-blocking guard, opening a ticket on failure, after a manual installation trial of codex, copilot and cursor on a runner (unattended install unverified).
 5. Import between kits of different contexts: forbidden (architecture rule). Cross-context imports go only through `application/` and `contract/`.
 6. Translation form 1 (one pure engine, two sinks): the `framework-build` golden is reduced to the tree, then run in memory once the engine is pure.

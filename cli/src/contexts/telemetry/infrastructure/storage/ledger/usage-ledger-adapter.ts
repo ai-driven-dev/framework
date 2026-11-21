@@ -2,22 +2,24 @@ import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import {
-  parseStoredUsage,
-  partitionByDay,
-  type StoredUsage,
-} from "../../../domain/stored-usage.js";
-import { compareText } from "../../../domain/text-order.js";
+  type DayPart,
+  dayContent,
+  keptLines,
+  mergeDays,
+  readDay,
+} from "../../../domain/day-file.js";
+import { partitionByDay, type StoredUsage } from "../../../domain/stored-usage.js";
 import {
   parsePositions,
   renderPositions,
   type TranscriptPosition,
 } from "../../../domain/transcript-position.js";
-import { foldUsage } from "../../../domain/usage-fold.js";
 import type { PrivateStorage } from "../../../ports/private-storage.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
 import { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
-import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
+import { DirectoryLock } from "./directory-lock.js";
+import type { LockOptions } from "./ledger-lock.js";
 import { LeftOutAdapter } from "./left-out-adapter.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
@@ -25,8 +27,17 @@ const EXTENSION = ".jsonl";
 const OFFSETS_FILE = "offsets.json";
 const LOCK_FILE = ".lock";
 
+function isNamed(partitions: ReadonlySet<string> | undefined, day: string): boolean {
+  return partitions === undefined || partitions.has(day);
+}
+
 function partitionOf(name: string): string {
   return name.slice(0, -EXTENSION.length);
+}
+
+interface Held {
+  readonly held: ReadonlyMap<string, string | null>;
+  readonly kept: ReadonlyMap<string, ReadonlySet<string>>;
 }
 
 /** The ledger as files under one private directory.
@@ -58,77 +69,58 @@ export class UsageLedgerAdapter implements UsageLedger {
   }
 
   exclusively<T>(work: () => Promise<T>): Promise<T> {
-    return new DirectoryLock(this.dir, LOCK_FILE, this.storage, this.lockOptions).exclusively(work);
+    return new DirectoryLock({
+      dir: this.dir,
+      file: LOCK_FILE,
+      storage: this.storage,
+      options: this.lockOptions,
+    }).exclusively(work);
   }
 
   async load(holds?: (day: string) => boolean): Promise<LoadedLedger> {
     const names = await this.partitions();
-    const found: StoredUsage[] = [];
-    let skippedLines = 0;
-    const damaged = new Set<string>();
-    const unsettled = new Set<string>();
-    const heldIn = new Map<string, string>();
     // Every read applies the rules of now, so a call an earlier version named otherwise is
     // still a call of one repository, and its partition is rewritten.
     const ids = (await this.aliases.load()) ?? new Map<string, string>();
+    const parts: DayPart[] = [];
     for (const name of names) {
       const partition = partitionOf(name);
       if (holds !== undefined && !holds(partition)) continue;
       const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
-      for (const line of text.split("\n")) {
-        if (line === "") continue;
-        const read = parseStoredUsage(line);
-        if (read === null) {
-          skippedLines += 1;
-          damaged.add(partition);
-          continue;
-        }
-        const now = ids.get(read.repository_id);
-        const record = now === undefined ? read : { ...read, repository_id: now };
-        if (record !== read) unsettled.add(partition);
-        found.push(record);
-        const id = `${record.tool}\u0000${record.key}`;
-        const first = heldIn.get(id);
-        if (first === undefined) heldIn.set(id, partition);
-        else unsettled.add(first).add(partition);
-      }
+      parts.push({ partition, ...readDay(text, ids) });
     }
-    return { records: foldUsage(found), skippedLines, damaged, unsettled };
+    return mergeDays(parts);
   }
 
   async save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void> {
     await this.storage.ensureDirectory(this.dir);
-    const named = (day: string): boolean => partitions === undefined || partitions.has(day);
-    const held = new Map<string, string | null>();
-    const kept = new Map<string, Set<string>>();
-    for (const name of await this.partitions()) {
-      const day = partitionOf(name);
-      if (!named(day)) continue;
-      const text = await readTextIfPresent(join(this.dir, name));
-      held.set(day, text);
-      for (const line of (text ?? "").split("\n")) {
-        if (line !== "" && parseStoredUsage(line) === null) {
-          kept.set(day, (kept.get(day) ?? new Set()).add(line));
-        }
-      }
-    }
+    const named = (day: string): boolean => isNamed(partitions, day);
+    const { held, kept } = await this.readHeld(named);
     const days = partitionByDay(records);
     const emptied: string[] = [];
     // Every write comes before any removal, so the order of the writes is free.
     for (const day of new Set([...days.keys(), ...kept.keys(), ...held.keys()])) {
       if (!named(day)) continue;
-      const lines = [
-        ...(days.get(day) ?? []).map((record) => JSON.stringify(record)),
-        ...[...(kept.get(day) ?? [])].sort(compareText),
-      ];
-      const path = join(this.dir, `${day}${EXTENSION}`);
-      const content = `${lines.join("\n")}\n`;
-      if (lines.length === 0) emptied.push(path);
-      else if (held.get(day) !== content) await this.storage.replace(path, content);
+      const content = dayContent(days.get(day) ?? [], kept.get(day) ?? []);
+      const emptiedPath = await this.writeDay(day, content, held.get(day));
+      if (emptiedPath !== null) emptied.push(emptiedPath);
     }
     // After the writes: a record whose better snapshot moved to another day can leave its old
     // day empty.
     for (const path of emptied) await rm(path);
+  }
+
+  /** The day's file rewritten when its content changed. The path to remove when nothing is
+   * left of the day. */
+  private async writeDay(
+    day: string,
+    content: string | null,
+    held: string | null | undefined
+  ): Promise<string | null> {
+    const path = join(this.dir, `${day}${EXTENSION}`);
+    if (content === null) return path;
+    if (held !== content) await this.storage.replace(path, content);
+    return null;
   }
 
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
@@ -138,6 +130,22 @@ export class UsageLedgerAdapter implements UsageLedger {
   async savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void> {
     await this.storage.ensureDirectory(this.dir);
     await this.storage.replace(join(this.dir, OFFSETS_FILE), renderPositions(positions));
+  }
+
+  /** What each named day's file holds now, and the lines in it that are no record: kept as
+   * they are. */
+  private async readHeld(named: (day: string) => boolean): Promise<Held> {
+    const held = new Map<string, string | null>();
+    const kept = new Map<string, ReadonlySet<string>>();
+    for (const name of await this.partitions()) {
+      const day = partitionOf(name);
+      if (!named(day)) continue;
+      const text = await readTextIfPresent(join(this.dir, name));
+      held.set(day, text);
+      const lines = keptLines(text);
+      if (lines.size > 0) kept.set(day, lines);
+    }
+    return { held, kept };
   }
 
   private async partitions(): Promise<string[]> {

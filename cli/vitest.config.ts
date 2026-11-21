@@ -1,8 +1,19 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
-import { textLoader } from "./tests/helpers/vitest-text-loader.js";
+import { textLoader } from "./tests/setup/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
+
+// Tests of the test tooling itself (mutation filter, sequencer, throwaway profile, platform
+// fixtures). They run in the `tooling` project, which CI runs and the default run skips.
+const TOOLING_TESTS = [
+  "tests/mutation/stryker-filter.integration.test.ts",
+  "tests/shared/testing/realpath-windows.unit.test.ts",
+  "tests/mutation/mutation-sequencer.integration.test.ts",
+  "tests/setup/throwaway-profile.unit.test.ts",
+  "tests/mutation/unloadable-file-as-failed-test.integration.test.ts",
+  "tests/mutation/unloadable-file-as-failed-test.unit.test.ts",
+];
 
 export default defineConfig({
   plugins: [textLoader(TEXT_EXTENSIONS)],
@@ -14,11 +25,12 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["tests/**/*.unit.test.ts"],
+          exclude: [...TOOLING_TESTS],
           globals: false,
           environment: "node",
           globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
           ],
         },
       },
@@ -31,8 +43,8 @@ export default defineConfig({
           globals: false,
           environment: "node",
           globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
           ],
         },
       },
@@ -44,6 +56,7 @@ export default defineConfig({
           include: ["tests/architecture/**/*.arch.test.ts"],
           globals: false,
           environment: "node",
+          testTimeout: 60000,
         },
       },
       {
@@ -52,14 +65,31 @@ export default defineConfig({
         test: {
           name: "integration",
           include: ["tests/**/*.integration.test.ts"],
+          exclude: [...TOOLING_TESTS],
           globals: false,
           environment: "node",
           testTimeout: 60000,
           // A `beforeEach` that spawns git is slower than the 10s default on a loaded Windows runner.
           hookTimeout: 60000,
           globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
+          ],
+        },
+      },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
+          name: "tooling",
+          include: TOOLING_TESTS,
+          globals: false,
+          environment: "node",
+          testTimeout: 60000,
+          hookTimeout: 60000,
+          globalSetup: [
+            "./tests/setup/sweep-stale-temp-dirs.ts",
+            "./tests/setup/throwaway-profile.ts",
           ],
         },
       },
@@ -72,7 +102,7 @@ export default defineConfig({
           globals: false,
           environment: "node",
           testTimeout: 60000,
-          globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
+          globalSetup: ["./tests/setup/global-setup.ts", "./tests/setup/sweep-stale-temp-dirs.ts"],
         },
       },
       {
@@ -80,11 +110,24 @@ export default defineConfig({
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "golden",
-          include: ["tests/**/*.golden.test.ts"],
+          include: ["tests/golden/**/*.golden.test.ts"],
           globals: false,
           environment: "node",
           testTimeout: 60000,
-          globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
+          globalSetup: ["./tests/setup/global-setup.ts", "./tests/setup/sweep-stale-temp-dirs.ts"],
+        },
+      },
+      {
+        // The presenters' and errors' goldens render in process: no binary to build.
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
+          name: "display",
+          include: ["tests/presentation/**/*.golden.test.ts"],
+          globals: false,
+          environment: "node",
+          testTimeout: 60000,
+          globalSetup: ["./tests/setup/sweep-stale-temp-dirs.ts"],
         },
       },
     ],
@@ -110,7 +153,7 @@ export default defineConfig({
       // Three of these globs still named their pre-refactor locations, under the layer
       // directories the contexts replaced. They excluded nothing, so the files this comment
       // argues must not be counted were counted, and the thresholds below sat about a point
-      // from failing for a reason nobody intended. `referenced-paths.arch.test.ts` now reads
+      // from failing for a reason nobody intended. `scripts/check-referenced-paths.js` now reads
       // this file, so a glob cannot outlive the directory it points at again.
       exclude: [
         "src/cli.ts",

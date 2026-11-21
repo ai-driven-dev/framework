@@ -1,10 +1,9 @@
-// Capture the snapshot by running this file with `UPDATE_HELP_GOLDEN=1`.
-
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, runCli } from "../e2e/helpers.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { expectGolden } from "./testing/expect-golden.builder.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const SNAPSHOT_FILE = join(ROOT, "tests/golden/snapshots/help/surface.json");
@@ -27,26 +26,29 @@ function normalize(text: string): string {
     .trimEnd();
 }
 
+const indentOf = (line: string) => line.length - line.trimStart().length;
+
+/** The command a line names, when it sits at the command column and is not `help`. */
+function commandNamed(line: string, indent: number): string[] {
+  if (indentOf(line) !== indent) return [];
+  const match = /^\s+([a-z][a-z-]*)(?:\||\s|$)/.exec(line);
+  return match && match[1] !== "help" ? [match[1]] : [];
+}
+
 /** Commander wraps a long description past the name column, so only lines at the first entry's
- * exact indentation are commands — reading a wrapped word as one hangs on the interactive menu. */
+ * exact indentation are commands - reading a wrapped word as one hangs on the interactive menu. */
 function subcommandsOf(help: string): string[] {
   const lines = help.split("\n");
   const start = lines.findIndex((line) => line.trim() === "Commands:");
   if (start === -1) return [];
 
   const body = lines.slice(start + 1);
-  const first = body.find((line) => line.trim() !== "");
-  if (first === undefined) return [];
-  const indent = first.length - first.trimStart().length;
+  const end = body.findIndex((line) => line.trim() === "");
+  const entries = end === -1 ? body : body.slice(0, end);
+  if (entries.length === 0) return [];
 
-  const names: string[] = [];
-  for (const line of body) {
-    if (line.trim() === "") break;
-    if (line.length - line.trimStart().length !== indent) continue;
-    const match = /^\s+([a-z][a-z-]*)(?:\||\s|$)/.exec(line);
-    if (match && match[1] !== "help") names.push(match[1]);
-  }
-  return names;
+  const indent = indentOf(entries[0]);
+  return entries.flatMap((line) => commandNamed(line, indent));
 }
 
 /** Depth-first walk of the command tree, capturing each node's help. */
@@ -72,20 +74,22 @@ describe("help surface", () => {
     try {
       const captured = await captureTree(projectDir, fakeHome);
 
-      if (process.env.UPDATE_HELP_GOLDEN === "1") {
-        await mkdir(dirname(SNAPSHOT_FILE), { recursive: true });
-        await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-        return;
-      }
-
-      const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as HelpEntry[];
-      expect(captured.map((e) => e.invocation)).toEqual(stored.map((e) => e.invocation));
-      for (const entry of captured) {
-        const match = stored.find((s) => s.invocation === entry.invocation);
-        expect(entry, `help changed for \`${entry.invocation}\``).toEqual(match);
-      }
+      await expectGolden(SNAPSHOT_FILE, captured);
     } finally {
       await cleanup();
     }
   }, 120000);
+
+  // The build embeds only `version` from the manifest, and the tree above masks it.
+  it("prints the manifest version", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("help-version");
+    try {
+      const { version } = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+      const { stdout } = await runCli(["--version"], projectDir, fakeHome);
+
+      expect(stdout.split(" ")[0]).toBe(`aidd/${version}`);
+    } finally {
+      await cleanup();
+    }
+  });
 });

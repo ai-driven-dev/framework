@@ -25,10 +25,10 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `02-project-memory`    | Give the AI a memory of the project, wired into the tools you use              | `01-scan`, `02-write`, `03-check`, `04-sync`                                                             |
 | `03-context-generate`  | Router that dispatches an artifact-generation request to the dedicated generator below | delegates to `04`–`08` (and plugins / marketplaces)                                            |
 | `04-skill-generate`    | Generate a router-based skill across the host AI tool(s)                       | `01-scope`, `02-plan`, `03-write`, `04-validate`                                                         |
-| `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-capture-rule`, `02-write-rule`                                                                       |
-| `06-agent-generate`    | Generate an agent across the host AI tool(s)                                   | `01-capture-agent`, `02-write-agent`, `03-validate`                                                      |
+| `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-frame`, `02-draft`, `03-plan`, `04-write`                                                            |
+| `06-agent-generate`    | Generate an agent across the host AI tool(s)                                   | `01-frame`, `02-write`, `03-validate`                                                                    |
 | `07-command-generate`  | Generate a flat slash command across the host AI tool(s)                       | `01-capture-command`, `02-write-command`, `03-validate`                                                  |
-| `08-hook-generate`     | Generate a lifecycle hook across the host AI tool(s)                           | `01-capture-hook`, `02-write-hook`, `03-validate`                                                        |
+| `08-hook-generate`     | Generate a lifecycle hook in each host AI tool's native format                 | `01-frame`, `02-plan`, `03-write`, `04-verify`                                                           |
 | `09-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
 | `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
@@ -42,7 +42,6 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | Event | Runs |
 | --- | --- |
 | `SessionStart` | `hooks/memory.cjs` |
-| `PostToolUse` | `hooks/memory.cjs` |
 | `Stop` | `hooks/memory.cjs` |
 
 <!--extras-aidd-context:end-->
@@ -105,6 +104,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
 | `05-resolve-conflict` | Resolve deterministic conflicts or approved choices | `01-resolve` |
+| `06-answer-comments` | Answer review comments, resolve settled threads, summarize pending decisions, and propose learnings | `01-answer-comments` |
 
 ## 🎼 aidd-orchestrator
 

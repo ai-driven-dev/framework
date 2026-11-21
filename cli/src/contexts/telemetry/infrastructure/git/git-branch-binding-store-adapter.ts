@@ -24,10 +24,11 @@ export class GitBranchBindingStoreAdapter implements BranchBindingStore {
    * names the branch, so a copy or a rename, which carries the keys away, carries no
    * declaration. */
   async declare(root: string, branch: string, declaration: TaskDeclaration): Promise<void> {
-    this.setOrUnset(root, branch, "aiddTask", declaration.task);
-    this.setOrUnset(root, branch, "aiddTicket", declaration.ticket);
-    this.setOrUnset(root, branch, "aiddDeclaredFor", branch);
-    this.setOrUnset(root, branch, "aiddDeclaredAt", declaration.declared_at);
+    const key = (variable: string): string => `branch.${branch}.${variable}`;
+    this.setOrUnset(root, key("aiddTask"), declaration.task);
+    this.setOrUnset(root, key("aiddTicket"), declaration.ticket);
+    this.setOrUnset(root, key("aiddDeclaredFor"), branch);
+    this.setOrUnset(root, key("aiddDeclaredAt"), declaration.declared_at);
   }
 
   private symbolicRef(root: string, ref: string): string | null {
@@ -37,8 +38,7 @@ export class GitBranchBindingStoreAdapter implements BranchBindingStore {
     throw new Error(`git could not read ${ref} in ${root}`);
   }
 
-  private setOrUnset(root: string, branch: string, variable: string, value: string | null): void {
-    const key = `branch.${branch}.${variable}`;
+  private setOrUnset(root: string, key: string, value: string | null): void {
     // After `--`, so a value that starts with a dash is never read as an option. `-all`: a
     // branch copied onto with `git branch -C` holds every key twice, and a plain set refuses.
     const args =

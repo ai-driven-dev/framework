@@ -1,6 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
+  ABSENT_AXES,
   NO_FILTERS,
   type ReportFilters,
 } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
@@ -26,7 +27,7 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { aUsageRecord } from "../../testing/usage-record-builder.js";
+import { aUsageRecord } from "../../testing/usage-record.builder.js";
 
 const call = (over: Partial<StoredUsage> = {}): StoredUsage =>
   aUsageRecord()
@@ -54,7 +55,7 @@ const keeps = (
   record = call(),
   attribution: Attribution = on("t-1", "T-1"),
   person: string | null = "p-1"
-) => matchesFilter(only(over), record, attribution, person);
+) => matchesFilter({ filters: only(over), record, attribution, person });
 
 describe("a filter", () => {
   it("keeps every call when no flag is given", () => {
@@ -246,7 +247,11 @@ const facts = fc
 
 /** The flags a person types to select one row: the row's own value, as the contract lists it. */
 function filtersOfRow(axis: ReportAxis, value: AxisValue): ReportFilters {
-  if (value.kind === "absent") return only({ absent: axis as ReportFilters["absent"] });
+  if (value.kind === "absent") {
+    const absent = ABSENT_AXES.find((candidate) => candidate === axis);
+    if (absent === undefined) throw new Error(`${axis} has no absent selector`);
+    return only({ absent });
+  }
   if (value.kind === "unattributed") return only({ unattributed: value.reason });
   return only({ [axis]: value.value });
 }
@@ -260,13 +265,15 @@ describe("selecting a row", () => {
         fc.option(fc.constant("p-1"), { nil: null }),
         fc.constantFrom(...REPORT_AXES.filter((axis) => axis !== "total" && axis !== "day")),
         (records, held, person, axis) => {
-          for (const row of buildReport(records, held, person, axis).rows) {
+          for (const row of buildReport({ records, facts: held, person, axis }).rows) {
             const filters = filtersOfRow(axis, row.value);
             const kept = records.filter((record) =>
-              matchesFilter(filters, record, attribute(record, held), person)
+              matchesFilter({ filters, record, attribution: attribute(record, held), person })
             );
             const { records: n, counters, total } = row;
-            expect(buildReport(kept, held, person, "total").totals).toEqual({
+            expect(
+              buildReport({ records: kept, facts: held, person, axis: "total" }).totals
+            ).toEqual({
               records: n,
               counters,
               total,

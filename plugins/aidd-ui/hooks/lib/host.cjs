@@ -74,18 +74,23 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
- * turn end that is already a continuation is never continued again. */
-function continueTurn(text) {
+/** Asks the model to go on before the turn ends, with `text` as what it must do, and shows the
+ * person `person` where the host allows it. Asks once: a turn end that is already a continuation
+ * is never continued again. */
+function continueTurn(text, person) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
-  print({ decision: "block", reason: text });
+  print({
+    decision: "block",
+    reason: text,
+    ...(typeof person === "string" && person !== "" ? { systemMessage: person } : {}),
+  });
 }
 
 /** Level 1 informs the model, level 2 requires a fix after a write. At Stop, any answer
  * continues the turn: there is no other way to reach the model there. */
-function answer({ level, text } = {}) {
+function answer({ level, text, person } = {}) {
   if (current === undefined || typeof text !== "string" || text === "") return;
-  if (current.event === "Stop") return continueTurn(text);
+  if (current.event === "Stop") return continueTurn(text, person);
   if (level === 2 && current.event === "PostToolUse") {
     return print({ decision: "block", reason: text });
   }

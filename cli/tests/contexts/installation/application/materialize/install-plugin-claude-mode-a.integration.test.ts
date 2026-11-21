@@ -1,20 +1,19 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { marketplaceSync } from "../../../../shared/testing/marketplace-sync.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -22,28 +21,20 @@ const MARKETPLACE_NAME = "aidd-framework";
 function syncWithProvenFreshHost(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository,
-  registry: InMemoryMarketplaceRegistry,
-  hasher: DeterministicHasher,
+  registry: FakeMarketplaceRegistry,
   activator: FakeHostActions
-): MarketplaceSyncSettingsUseCase {
-  return new MarketplaceSyncSettingsUseCase(
+): SyncSettings {
+  return marketplaceSync({
     fs,
     manifestRepo,
-    registry,
-    hasher,
-    new CapturingLogger(),
-    new Map([[TOOL.claude, activator]]),
-    fakeEnsureBuiltMarketplace(),
-    new Map(),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    marketplaceRegistry: registry,
+    logger: new CapturingLogger(),
+    activators: new Map([[TOOL.claude, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostPluginRegistries: new Map([
       [TOOL.claude, new FakeHostPluginRegistry({ location: "fake claude", refs: new Map() })],
     ]),
-    undefined,
-    new Map([
+    nativeSources: new Map([
       [
         TOOL.claude,
         new FakeHostMarketplaceSources(
@@ -53,12 +44,12 @@ function syncWithProvenFreshHost(
           new Map()
         ),
       ],
-    ])
-  );
+    ]),
+  });
 }
 
 /** A readable catalog at the path the default `fakeEnsureBuiltMarketplace()` resolves
- * "claude" to — a real build always leaves one there, and an unreadable one now fails hard. */
+ * "claude" to - a real build always leaves one there, and an unreadable one now fails hard. */
 async function seedBuiltCatalog(fs: InMemoryFileAdapter, name = MARKETPLACE_NAME): Promise<void> {
   await fs.writeFile(
     "/built/claude/.claude-plugin/marketplace.json",
@@ -86,42 +77,37 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("leaves the registration to claude and keeps only what it owns", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      MARKETPLACE_NAME
-    );
+      marketplace: MARKETPLACE_NAME,
+    });
     await manifestRepo.save(manifest);
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: MARKETPLACE_NAME,
-        source: { kind: "local", path: "/marketplace-source" },
-        scope: "project",
-        addedAt: "2026-01-01T00:00:00Z",
-      })
-    );
+    registry.seed(PROJECT_ROOT, {
+      name: MARKETPLACE_NAME,
+      source: { kind: "local", path: "/marketplace-source" },
+      scope: "project",
+    });
 
-    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, activator);
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const shared = JSON.parse(
       await fs.readFile(resolve(PROJECT_ROOT, ".claude/settings.json"))
     ) as Record<string, unknown>;
 
     // Claude registers its own marketplaces through its own command, so this CLI
-    // writes no registration anywhere — not in the shared file, not beside it.
+    // writes no registration anywhere - not in the shared file, not beside it.
     expect(shared.extraKnownMarketplaces).toBeUndefined();
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".claude/settings.local.json"))).toBe(false);
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
@@ -137,34 +123,29 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("takes a registration left in the shared file by an older install out of it", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      MARKETPLACE_NAME
-    );
+      marketplace: MARKETPLACE_NAME,
+    });
     await manifestRepo.save(manifest);
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: MARKETPLACE_NAME,
-        source: { kind: "local", path: "/marketplace-source" },
-        scope: "project",
-        addedAt: "2026-01-01T00:00:00Z",
-      })
-    );
+    registry.seed(PROJECT_ROOT, {
+      name: MARKETPLACE_NAME,
+      source: { kind: "local", path: "/marketplace-source" },
+      scope: "project",
+    });
 
-    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
+    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, activator);
 
     // What a project installed before the split looks like: the registration sitting in
     // the committed file, naming a path that belongs to whoever ran the install.
@@ -177,7 +158,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       })
     );
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const shared = JSON.parse(
       await fs.readFile(resolve(PROJECT_ROOT, ".claude/settings.json"))
@@ -185,7 +166,7 @@ describe("install claude plugin via Mode A (integration)", () => {
 
     expect(shared.extraKnownMarketplaces).toBeUndefined();
     expect(activator.addedMarketplaces).toContain("/built/claude");
-    // Both branches wrote the shared file in this one call — the eviction, then the enabled-
+    // Both branches wrote the shared file in this one call - the eviction, then the enabled-
     // plugins merge; the plugin landing proves the second did not carry the evicted key back.
     expect(
       (shared.enabledPlugins as Record<string, boolean>)[`aidd-context@${MARKETPLACE_NAME}`]

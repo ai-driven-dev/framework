@@ -1,8 +1,9 @@
-import { DuplicatePluginError, PluginNotFoundError } from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import { InstalledPlugin, type PluginEntryData } from "../plugins/installed-plugin.js";
+import { DuplicatePluginError, PluginNotFoundError } from "../installation.error.js";
+import { InstalledPlugin } from "../plugins/installed-plugin.js";
+import type { PluginEntryData } from "../plugins/plugin-entry.js";
 import {
   type MergeFileEntryData,
   parseMergeFileEntries,
@@ -10,9 +11,8 @@ import {
 } from "./merge-files.js";
 import {
   type NativeRegistrations,
-  type NativeRegistrationsData,
   parseNativeRegistrations,
-  toNativeRegistrationsData,
+  serializeNativeRegistrations,
 } from "./native-registrations.js";
 import {
   parseTrackedFiles,
@@ -29,7 +29,7 @@ export interface ToolEntry {
   readonly mergeFiles: readonly MergeFileEntry[];
   readonly plugins: readonly InstalledPlugin[];
   /** What this tool's own CLI was asked to register, or `undefined` for a tool with
-   * no `nativeActivation` — see {@link NativeRegistrations}. */
+   * no `nativeActivation`: see {@link NativeRegistrations}. */
   readonly nativeRegistrations?: NativeRegistrations;
 }
 
@@ -39,7 +39,7 @@ export interface ToolEntryData {
   files: TrackedFileData[];
   mergeFiles?: MergeFileEntryData[];
   plugins?: PluginEntryData[];
-  nativeRegistrations?: NativeRegistrationsData;
+  nativeRegistrations?: unknown;
 }
 
 export function createToolEntry(params: {
@@ -82,10 +82,18 @@ export function updatePluginInEntry(entry: ToolEntry, plugin: InstalledPlugin): 
   };
 }
 
-export function isFileTrackedInEntry(entry: ToolEntry, relativePath: string): boolean {
-  if (entry.files.some((f) => f.relativePath === relativePath)) return true;
-  if (entry.mergeFiles.some((m) => m.relativePath === relativePath)) return true;
-  return entry.plugins.some((p) => p.isFileTracked(relativePath));
+/** Every tracked path under `dir`: files, merge files and plugin files alike, across the entries. */
+export function trackedPathsInDirectory(entries: Iterable<ToolEntry>, dir: string): Set<string> {
+  const tracked = new Set<string>();
+  for (const entry of entries) {
+    const paths = [
+      ...entry.files.map((f) => f.relativePath),
+      ...entry.mergeFiles.map((m) => m.relativePath),
+      ...entry.plugins.flatMap((plugin) => [...plugin.files.keys()]),
+    ];
+    for (const path of paths) if (path.startsWith(dir)) tracked.add(path);
+  }
+  return tracked;
 }
 
 export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
@@ -96,7 +104,7 @@ export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
     mergeFiles: toMergeFileEntryData(entry.mergeFiles),
     ...(entry.plugins.length > 0 && { plugins: entry.plugins.map((p) => p.toJSON()) }),
     ...(entry.nativeRegistrations !== undefined && {
-      nativeRegistrations: toNativeRegistrationsData(entry.nativeRegistrations),
+      nativeRegistrations: serializeNativeRegistrations(entry.nativeRegistrations),
     }),
   };
 }

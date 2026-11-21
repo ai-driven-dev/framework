@@ -14,17 +14,17 @@ import type { Period } from "../../../../../src/contexts/telemetry/contract/peri
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
-import { FakeBindings } from "../../testing/fake-bindings.js";
-import { FakeConsents } from "../../testing/fake-consents.js";
-import { FakeLocator } from "../../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
-import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
-import { InMemorySessions } from "../../testing/in-memory-sessions.js";
-import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
-import { InMemoryTranscripts } from "../../testing/in-memory-transcripts.js";
+import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
+import { FakeBindings } from "../../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../../testing/fake-consents.fake.js";
+import { FakeLocator } from "../../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
+import { InMemoryTranscripts } from "../../testing/in-memory-transcripts.fake.js";
 
 let root: string;
 let runs = 0;
@@ -83,7 +83,7 @@ const transcriptLine = fc.oneof(
       // A call is made in one place, at one kind of time, with or without a request id: only
       // its snapshots differ.
       .map(({ id, output, time }) => {
-        const times = TIMES[Math.floor((id % CALLS) / PLACES.length)] as string[];
+        const times = TIMES[Math.floor((id % CALLS) / PLACES.length)] ?? [];
         const place = PLACES[id % PLACES.length];
         return { id, output, place, at: times[time % times.length], requestless: id >= CALLS };
       })
@@ -113,26 +113,41 @@ const transcriptLine = fc.oneof(
 /** What one machine keeps, by the contract, from these lines: the undated calls, the dated
  * calls with no request id, and the lines that are no usage line of the clone that consents, at
  * a time it consents, each once. */
+function parsedOrNull(line: string) {
+  try {
+    return JSON.parse(line);
+  } catch {
+    return null;
+  }
+}
+
+type Kept =
+  | { readonly kind: "undated" | "requestless"; readonly id: number }
+  | { readonly kind: "unrecognised"; readonly line: string }
+  | null;
+
+/** What the contract keeps of one line, if anything. */
+function keptOf(line: string): Kept {
+  const parsed = parsedOrNull(line);
+  if (!CONSENTING.includes(parsed?.cwd)) return null;
+  if (parsed.message?.id === undefined) {
+    return parsed.timestamp === "2025-06-01T00:00:00.000Z" ? null : { kind: "unrecognised", line };
+  }
+  const id = Number(parsed.message.id.slice(4));
+  if (UNDATED_KINDS.includes(Math.floor((id % CALLS) / PLACES.length))) {
+    return { kind: "undated", id };
+  }
+  return parsed.requestId === undefined ? { kind: "requestless", id } : null;
+}
+
 function expectedLeftOut(lines: readonly string[]) {
   const undated = new Set<number>();
   const requestless = new Set<number>();
   const unrecognised = new Set<string>();
-  for (const line of lines) {
-    const parsed = (() => {
-      try {
-        return JSON.parse(line);
-      } catch {
-        return null;
-      }
-    })();
-    if (!CONSENTING.includes(parsed?.cwd)) continue;
-    if (parsed.message?.id === undefined) {
-      if (parsed.timestamp !== "2025-06-01T00:00:00.000Z") unrecognised.add(line);
-    } else {
-      const id = Number(parsed.message.id.slice(4));
-      if (UNDATED_KINDS.includes(Math.floor((id % CALLS) / PLACES.length))) undated.add(id);
-      else if (parsed.requestId === undefined) requestless.add(id);
-    }
+  for (const kept of lines.map(keptOf)) {
+    if (kept?.kind === "unrecognised") unrecognised.add(kept.line);
+    else if (kept?.kind === "undated") undated.add(kept.id);
+    else if (kept?.kind === "requestless") requestless.add(kept.id);
   }
   return { undated: undated.size, unrecognised: unrecognised.size, requestless: requestless.size };
 }
@@ -182,29 +197,39 @@ function machine() {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const snapshots = new SnapshotBindings(
-    new FakeBindings(),
-    new InMemorySnapshots(),
-    new InMemoryBindingsLock(),
-    () => NOW
-  );
-  const ingest = new IngestUsage(
-    [new ReadUsage(transcripts)],
+  const snapshots = new SnapshotBindings({
+    source: new FakeBindings(),
+    store: new InMemorySnapshots(),
+    lock: new InMemoryBindingsLock(),
+    now: () => NOW,
+  });
+  const ingest = new IngestUsage({
+    readers: [new ReadUsage(transcripts)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
-      now: () => NOW,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
     }),
     snapshots,
-    { environment: { get: () => undefined } }
-  );
-  const report = new ReportUsage(
+    options: { environment: { get: () => undefined } },
+  });
+  const report = new ReportUsage({
     ingest,
     ledger,
-    new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots(), new InMemoryIdentity()),
+    declared: new DeclaredBindings(
+      new InMemorySessions(),
+      new InMemorySnapshots(),
+      new InMemoryIdentity()
+    ),
     locator,
-    { get: () => undefined }
-  );
+    environment: { get: () => undefined },
+  });
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   /** Git refuses, or reads again, the clone at `/work/locked`. */
   const lock = (refused: boolean) =>
@@ -223,48 +248,64 @@ async function bytes(dir: string): Promise<Record<string, string>> {
   return Object.fromEntries(Object.entries(found).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
+type Scenario = {
+  files: string[][];
+  ingests: { written: number[]; forget: boolean }[];
+  period: Period;
+};
+
+/** The first machine: ingested many times, each over a prefix of the transcripts. */
+async function ingestInPieces(many: ReturnType<typeof machine>, scenario: Scenario) {
+  many.lock(true);
+  for (const { written, forget } of scenario.ingests) {
+    scenario.files.forEach((lines, index) => {
+      many.transcripts.files.set(`/t/${index}.jsonl`, lines.slice(0, written[index]));
+    });
+    if (forget) await many.ledger.savePositions(new Map());
+    await many.ingest.execute();
+  }
+  many.lock(false);
+}
+
+async function ingestWhole(m: ReturnType<typeof machine>, files: readonly string[][]) {
+  for (const [index, lines] of files.entries()) {
+    m.transcripts.files.set(`/t/${index}.jsonl`, lines);
+  }
+  await m.ingest.execute();
+}
+
+async function reportedOf(m: ReturnType<typeof machine>, period: Period) {
+  const result = await m.report.execute({ axis: "total", period });
+  if (result.status !== "reported") throw new Error(result.status);
+  return result;
+}
+
+const neverConsented = (files: readonly string[][]) =>
+  !files.flat().some((line) => CONSENTING.some((place) => line.includes(`"cwd":"${place}"`)));
+
 describe("what ingests leave out, once a report has run", () => {
   it("is kept and reported as one ingest of the same transcripts keeps and reports it, whatever ingested them, how often, from where, and while a clone that consents could not be read", async () => {
     await fc.assert(
-      fc.asyncProperty(scenario, async ({ files, ingests, period }) => {
+      fc.asyncProperty(scenario, async (given) => {
+        const { files, period } = given;
         const many = machine();
-        many.lock(true);
-        for (const { written, forget } of ingests) {
-          files.forEach((lines, index) => {
-            many.transcripts.files.set(`/t/${index}.jsonl`, lines.slice(0, written[index]));
-          });
-          if (forget) await many.ledger.savePositions(new Map());
-          await many.ingest.execute();
-        }
         const one = machine();
-        many.lock(false);
-        for (const m of [many, one]) {
-          for (const [index, lines] of files.entries()) {
-            m.transcripts.files.set(`/t/${index}.jsonl`, lines);
-          }
-          await m.ingest.execute();
-        }
-        const reported = await Promise.all(
-          [many, one].map((m) => m.report.execute({ axis: "total", period }))
+        await ingestInPieces(many, given);
+        await ingestWhole(many, files);
+        await ingestWhole(one, files);
+        const bounded = await reportedOf(many, period);
+        const alone = await reportedOf(one, period);
+        expect(JSON.stringify(reportEnvelopeOf(bounded))).toBe(
+          JSON.stringify(reportEnvelopeOf(alone))
         );
-        const envelopes = reported.map((result) => {
-          if (result.status !== "reported") throw new Error(result.status);
-          return JSON.stringify(reportEnvelopeOf(result));
-        });
-        expect(envelopes[0]).toBe(envelopes[1]);
-        const full = await many.report.execute({ axis: "total", period: { from: null, to: null } });
-        await one.report.execute({ axis: "total", period: { from: null, to: null } });
+        const full = await reportedOf(many, { from: null, to: null });
+        await reportedOf(one, { from: null, to: null });
         expect(await bytes(many.dir)).toEqual(await bytes(one.dir));
         // A bounded report says what a full one says; both what the contract keeps.
-        if (full.status !== "reported" || reported[0]?.status !== "reported") throw new Error();
-        expect(reported[0].coverage.leftOut).toEqual(full.coverage.leftOut);
+        expect(bounded.coverage.leftOut).toEqual(full.coverage.leftOut);
         expect(full.coverage.leftOut).toEqual(expectedLeftOut(files.flat()));
         // A clone that never opted in leaves no byte of this.
-        if (
-          !files
-            .flat()
-            .some((line) => CONSENTING.some((place) => line.includes(`"cwd":"${place}"`)))
-        ) {
+        if (neverConsented(files)) {
           expect(Object.keys(await bytes(many.dir))).not.toContain("/left-out.txt");
         }
       }),

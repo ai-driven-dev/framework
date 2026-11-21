@@ -1,3 +1,5 @@
+import { asPlainObject } from "../reading/plain-object.js";
+
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 const SOURCE_ROOT_PREFIX = "$" + "{CLAUDE_PLUGIN_ROOT}/";
 const DEFAULT_RELATIVE_PREFIX = "./";
@@ -10,21 +12,19 @@ export function rewritePluginRootInJson(
 ): unknown {
   if (typeof parsed === "string") return rewriteStringValue(parsed, substitute);
   if (Array.isArray(parsed)) return parsed.map((item) => rewritePluginRootInJson(item, substitute));
-  if (parsed !== null && typeof parsed === "object")
-    return rewriteObject(parsed as Record<string, unknown>, substitute);
+  const object = asPlainObject(parsed);
+  if (object !== null) return rewriteObject(object, substitute);
   return parsed;
 }
 
 function rewriteStringValue(value: string, substitute?: (suffix: string) => string): string {
-  if (!value.includes(SOURCE_ROOT_PREFIX)) return value;
   if (!substitute) return value.replaceAll(SOURCE_ROOT_PREFIX, DEFAULT_RELATIVE_PREFIX);
-  return value.split(SOURCE_ROOT_PREFIX).reduce((acc, segment, i) => {
-    if (i === 0) return segment;
+  return value.split(SOURCE_ROOT_PREFIX).reduce((acc, segment) => {
     const spaceIdx = segment.search(/[\s"'<>]/);
     const suffix = spaceIdx === -1 ? segment : segment.slice(0, spaceIdx);
     const rest = spaceIdx === -1 ? "" : segment.slice(spaceIdx);
     return acc + substitute(suffix) + rest;
-  }, "");
+  });
 }
 
 function rewriteObject(

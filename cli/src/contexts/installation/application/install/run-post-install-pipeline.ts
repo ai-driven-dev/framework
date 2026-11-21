@@ -7,24 +7,24 @@ import type { UpdateGitignore } from "../update-gitignore.js";
 interface RunPostInstallPipelineCommand {
   projectRoot: string;
   manifest: Manifest;
-  /** The profiles the installed tools are answered from. */
-  tools: ToolCatalog;
 }
 
 export class RunPostInstallPipeline {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly updateGitignore: UpdateGitignore
+    private readonly updateGitignore: UpdateGitignore,
+    /** The profiles the installed tools are answered from. */
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RunPostInstallPipelineCommand): Promise<void> {
-    const { projectRoot, manifest, tools } = options;
+    const { projectRoot, manifest } = options;
     await this.manifestRepo.save(manifest);
     // One call for everything this CLI's own writes require ignored: the plugin cache and each
     // installed tool's machine-local file.
     await this.updateGitignore.execute(
       projectRoot,
-      aiddGitignoreEntries(manifest, (toolId) => tools.profile(toolId).machineLocalFiles())
+      aiddGitignoreEntries(manifest, (toolId) => this.tools.profile(toolId).machineLocalFiles())
     );
   }
 }

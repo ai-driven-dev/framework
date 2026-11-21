@@ -1,4 +1,5 @@
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 
 /** Resolve an existing file or its nearest existing parent before mutating project-local content. */
@@ -13,24 +14,30 @@ export async function assertProjectPathWithinRoot(
     throw new Error(`'${path}' escapes project root '${projectRoot}'; local mutation refused.`);
   }
   const canonicalRoot = await fs.realpath(lexicalRoot);
-  let candidate = lexicalPath;
-  while (true) {
-    try {
-      const canonical = await fs.realpath(candidate);
-      if (!within(canonicalRoot, canonical)) {
-        throw new Error(
-          `'${path}' resolves outside project root '${projectRoot}'; local mutation refused.`
-        );
-      }
-      return;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-      if (candidate === lexicalRoot) {
-        throw new Error(`Project root '${projectRoot}' disappeared; local mutation refused.`);
-      }
-      candidate = dirname(candidate);
-    }
+  const canonical = await realpathOfNearest(fs, lexicalPath, lexicalRoot);
+  if (canonical === null) {
+    throw new Error(`Project root '${projectRoot}' disappeared; local mutation refused.`);
   }
+  if (!within(canonicalRoot, canonical)) {
+    throw new Error(
+      `'${path}' resolves outside project root '${projectRoot}'; local mutation refused.`
+    );
+  }
+}
+
+/** The real path of `candidate`, or of its nearest existing parent; null once `root` itself is gone. */
+async function realpathOfNearest(
+  fs: FileReader,
+  candidate: string,
+  root: string
+): Promise<string | null> {
+  try {
+    return await fs.realpath(candidate);
+  } catch (error) {
+    if (!(isErrnoException(error) && error.code === "ENOENT")) throw error;
+  }
+  if (candidate === root) return null;
+  return realpathOfNearest(fs, dirname(candidate), root);
 }
 
 function within(root: string, path: string): boolean {

@@ -1,8 +1,13 @@
 export interface MutationScope {
   readonly mutate: string | readonly string[];
-  readonly break: number;
+  /** The floor the score must hold; a scope without one never fails on its score. */
+  readonly break?: number;
   /** CI legs the scope is split into; one when absent. */
   readonly shards?: number;
+  /** Test paths whose change runs the scope per change, like its source. */
+  readonly tests?: readonly string[];
+  /** Run only for a harness file or a full run, never for a change to its own files. */
+  readonly harnessOnly?: boolean;
 }
 
 export interface MutationReport {

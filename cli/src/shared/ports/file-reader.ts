@@ -1,4 +1,4 @@
-import type { FileHash } from "../domain/file.js";
+import type { FileHash } from "../domain/file-hash.js";
 
 export interface FileReader {
   readFile(path: string): Promise<string>;
@@ -7,10 +7,13 @@ export interface FileReader {
    * platform, so Windows' native separator must never reach a caller. */
   listDirectory(path: string): Promise<string[]>;
   fileExists(path: string): Promise<boolean>;
+  /** Whether `path` exists and is a directory: false for a file and for a missing path. */
+  isDirectory(path: string): Promise<boolean>;
   readFileHash(path: string): Promise<FileHash>;
+  /** Every file below `dirPath`; empty for a missing directory. */
   listFilesRecursive(dirPath: string): Promise<string[]>;
 
-  /** Whether whoever is running this can execute the file — `access(X_OK)`, never a
+  /** Whether whoever is running this can execute the file: `access(X_OK)`, never a
    * permission bit. Windows records no execute bit at all: every readable file reports
    * `0o666` and runs through `sh` regardless, so `mode & 0o111` reports a hook git would
    * happily run as one it would refuse. */

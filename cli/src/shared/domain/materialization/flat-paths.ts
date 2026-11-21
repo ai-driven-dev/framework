@@ -3,19 +3,24 @@
  * onto the leaf filename instead, so a tool discovers the file at the depth it expects and
  * the plugin origin still survives in the name.
  */
-export function genericFlatAgentPath(
-  agentsPrefix: string,
-  plugin: string,
-  agentBaseName: string,
-  outputExt: string
-): string {
+export function genericFlatAgentPath({
+  agentsPrefix,
+  plugin,
+  agentBaseName,
+  outputExt,
+}: {
+  agentsPrefix: string;
+  plugin: string;
+  agentBaseName: string;
+  outputExt: string;
+}): string {
   const withoutMd = agentBaseName.endsWith(".md") ? agentBaseName.slice(0, -3) : agentBaseName;
   return `${agentsPrefix}${plugin}-${withoutMd}${outputExt}`;
 }
 
 /**
  * Assumes every immediate child of `skills/` is a self-contained skill folder: the hyphen
- * lands on that child's own name, so a non-skill sibling (a shared helper directory, a
+ * lands on that child's own name, so a non-skill sibling (a directory of files shared across skills, a
  * manifest file) is renamed exactly like one and any relative path reaching it by its
  * original name stops resolving. A plugin where that does not hold takes
  * `genericFlatSkillTreePath` instead.
@@ -30,7 +35,7 @@ export function genericFlatSkillPath(
 
 /**
  * Nests the plugin's entire `skills/` subtree under one `<plugin>/` segment, so every name
- * below `skillsPrefix` survives — a script's `require()` is never rewritten, so a path
+ * below `skillsPrefix` survives: a script's `require()` is never rewritten, so a path
  * crossing a renamed name would stop resolving.
  */
 export function genericFlatSkillTreePath(
@@ -74,12 +79,17 @@ export interface FlatHooksLoaderEntry {
  * `perPluginHooksDir`, giving a loader that also scans one flat directory a landing spot
  * for the scripts it does not import directly. `null` means no such convention.
  */
-export function flatHooksPathWithLoaderEntry(
-  perPluginHooksDir: string,
-  loaderEntry: FlatHooksLoaderEntry | null,
-  plugin: string,
-  hooksRelativePath: string
-): string {
+export function flatHooksPathWithLoaderEntry({
+  perPluginHooksDir,
+  loaderEntry,
+  plugin,
+  hooksRelativePath,
+}: {
+  perPluginHooksDir: string;
+  loaderEntry: FlatHooksLoaderEntry | null;
+  plugin: string;
+  hooksRelativePath: string;
+}): string {
   const rest = hooksRelativePath.replace(/^hooks\//, "");
   if (loaderEntry !== null && rest === loaderEntry.baseName) {
     return `${loaderEntry.dir}${plugin}.js`;

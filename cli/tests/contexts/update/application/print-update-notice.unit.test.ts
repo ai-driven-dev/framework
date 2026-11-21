@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.js";
-import { aPrintUpdateNotice } from "../testing/update-builders.js";
+import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
+import { aPrintUpdateNotice } from "../testing/update.builder.js";
 
 describe("PrintUpdateNotice", () => {
   it("warns of a newer release the last check kept, however old the check", async () => {
@@ -9,7 +9,7 @@ describe("PrintUpdateNotice", () => {
       .build();
 
     expect(await useCase.execute()).toStrictEqual({
-      lines: ["CLI update available: v1.0.0 → v2.0.0", "Run `aidd update`."],
+      notice: { current: "1.0.0", latest: "2.0.0" },
     });
   });
 
@@ -20,6 +20,6 @@ describe("PrintUpdateNotice", () => {
   ])("says nothing when %s", async (_label, kept) => {
     const useCase = aPrintUpdateNotice().withCache(new InMemoryUpdateCheckCache(kept)).build();
 
-    expect(await useCase.execute()).toStrictEqual({ lines: [] });
+    expect(await useCase.execute()).toStrictEqual({ notice: null });
   });
 });

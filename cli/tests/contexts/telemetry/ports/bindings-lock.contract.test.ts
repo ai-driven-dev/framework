@@ -6,8 +6,8 @@ import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infras
 import {
   type BindingsLockSubject,
   describeBindingsLockContract,
-} from "../testing/bindings-lock-contract.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
+} from "../testing/bindings-lock.contract.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
 
 describeBindingsLockContract(
   "the in-memory lock",

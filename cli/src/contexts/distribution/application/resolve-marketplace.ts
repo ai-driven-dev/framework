@@ -1,17 +1,20 @@
-import { fetchedMarketplaceDir } from "../../../shared/domain/paths.js";
 import type { PluginCatalog } from "../contract/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
+import { fetchedMarketplaceDir } from "../domain/marketplace-cache-layout.js";
 import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 import type { FetchMarketplaceSource } from "./fetch-marketplace-source.js";
 
+/** What resolving reads of a marketplace: its name, where it is fetched from and its scope. */
+export type ResolvableMarketplace = Pick<Marketplace, "name" | "source" | "scope">;
+
 export interface ResolveMarketplaceCommand {
-  marketplace: Marketplace;
+  marketplace: ResolvableMarketplace;
   projectRoot: string;
   forceRefresh?: boolean;
 }
 
 export interface ResolveMarketplaceResult {
-  marketplace: Marketplace;
+  marketplace: ResolvableMarketplace;
   localPath: string;
   catalog: PluginCatalog | null;
 }
@@ -35,7 +38,7 @@ export class ResolveMarketplace {
     return { marketplace: options.marketplace, localPath, catalog };
   }
 
-  cacheDirOf(marketplace: Marketplace, projectRoot: string): string {
+  cacheDirOf(marketplace: ResolvableMarketplace, projectRoot: string): string {
     return fetchedMarketplaceDir(marketplace, projectRoot, this.userConfigDir?.());
   }
 }

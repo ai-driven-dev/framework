@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 describe("ConfigSection", () => {
   describe("constructor", () => {
@@ -34,7 +35,13 @@ describe("ConfigSection", () => {
             consumes: [{ name: "mySignal", path: "config/my.json" }],
             staticContent: '{"key": true}',
           })
-      ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: set either 'consumes' or 'staticContent', not both."
+          ),
+        })
+      );
     });
 
     it("throws when both staticContent and staticContentAssetFile are provided", () => {
@@ -46,7 +53,13 @@ describe("ConfigSection", () => {
             staticContent: '{"key": true}',
             staticContentAssetFile: "vscode-settings.json",
           })
-      ).toThrow("ConfigSection: set either 'staticContent' or 'staticContentAssetFile', not both.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: set either 'staticContent' or 'staticContentAssetFile', not both."
+          ),
+        })
+      );
     });
 
     it("throws when consumes and staticContentAssetFile are both provided", () => {
@@ -58,24 +71,13 @@ describe("ConfigSection", () => {
             consumes: [{ name: "mySignal", path: "config/my.json" }],
             staticContentAssetFile: "vscode-settings.json",
           })
-      ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
-    });
-
-    it("accepts staticContentAssetFile without consumes", () => {
-      const cap = new ConfigSection({
-        outputPath: ".vscode/settings.json",
-        mergeStrategy: "framework-prime",
-        staticContentAssetFile: "vscode-settings.json",
-      });
-      const loaded: string[] = [];
-      expect(
-        cap.resolveStaticContent((name) => {
-          loaded.push(name);
-          return "{}";
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: set either 'consumes' or 'staticContent', not both."
+          ),
         })
-      ).toBe("{}");
-      expect(loaded).toStrictEqual(["vscode-settings.json"]);
-      expect(cap.consumes("mySignal")).toBe(false);
+      );
     });
 
     it("accepts neither consumes nor staticContent (empty capability)", () => {
@@ -88,24 +90,28 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("requiredTool", () => {
-    it("is null when not set", () => {
+  describe("the tool it requires", () => {
+    it("applies whatever is installed, and requires no tool, when none is set", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
       });
-      expect(cap.requiredTool()).toBeNull();
+      expect(cap.appliesWith(() => false)).toBe(true);
+      expect(cap.requires(TOOL.vscode)).toBe(false);
     });
 
-    it("is set when provided alongside staticContent", () => {
+    it("applies only once the tool it requires is installed, and requires that tool alone", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
         requiresTool: TOOL.vscode,
       });
-      expect(cap.requiredTool()).toBe("vscode");
+      expect(cap.appliesWith((toolId) => toolId === TOOL.vscode)).toBe(true);
+      expect(cap.appliesWith((toolId) => toolId === TOOL.cursor)).toBe(false);
+      expect(cap.requires(TOOL.vscode)).toBe(true);
+      expect(cap.requires(TOOL.cursor)).toBe(false);
     });
 
     it("throws when requiresTool is set without staticContent", () => {
@@ -116,7 +122,13 @@ describe("ConfigSection", () => {
             mergeStrategy: "framework-prime",
             requiresTool: TOOL.vscode,
           })
-      ).toThrow("ConfigSection: 'requiresTool' is only meaningful with 'staticContent'.");
+      ).toThrow(
+        expect.objectContaining({
+          detail: expect.stringContaining(
+            "ConfigSection: 'requiresTool' is only meaningful with 'staticContent'."
+          ),
+        })
+      );
     });
 
     it("accepts staticContentAssetFile with requiresTool", () => {
@@ -127,7 +139,7 @@ describe("ConfigSection", () => {
         requiresTool: TOOL.vscode,
       });
       expect(cap.resolveStaticContent()).toBeNull();
-      expect(cap.requiredTool()).toBe("vscode");
+      expect(cap.requires(TOOL.vscode)).toBe(true);
     });
   });
 
@@ -140,6 +152,18 @@ describe("ConfigSection", () => {
 
     it("writes an asset answered as an object as indented JSON", () => {
       expect(fromAsset.resolveStaticContent(() => ({ a: 1 }))).toBe('{\n  "a": 1\n}');
+    });
+
+    it("keeps an asset answered as text verbatim, with nothing to consume", () => {
+      const loaded: string[] = [];
+      expect(
+        fromAsset.resolveStaticContent((name) => {
+          loaded.push(name);
+          return "{}";
+        })
+      ).toBe("{}");
+      expect(loaded).toStrictEqual(["vscode-settings.json"]);
+      expect(fromAsset.consumes("mySignal")).toBe(false);
     });
 
     it("answers nothing for an asset when no loader is given", () => {
@@ -160,6 +184,19 @@ describe("ConfigSection", () => {
     });
   });
 
+  describe("writes", () => {
+    it("answers whether the section writes the destination", () => {
+      const cap = new ConfigSection({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+      });
+      expect([cap.writes(".vscode/settings.json"), cap.writes(".vscode/other.json")]).toEqual([
+        true,
+        false,
+      ]);
+    });
+  });
+
   describe("outputPath", () => {
     it("returns the configured output path", () => {
       const cap = new ConfigSection({
@@ -170,48 +207,20 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("mergeStrategy", () => {
-    it("returns the configured merge strategy", () => {
+  describe("fileOf", () => {
+    it("writes the content at its path, merged its way, from the canonical file named", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "user-prime",
       });
-      expect(cap.mergeStrategy()).toBe("user-prime");
+      const file = cap.fileOf("{}", { frameworkPath: "config/s.json" });
+      expect(file).toMatchObject({
+        relativePath: ".vscode/settings.json",
+        content: "{}",
+        mergeStrategy: "user-prime",
+        frameworkPath: "config/s.json",
+      });
+      expect(file.hash).toEqual(FileHash.of("{}"));
     });
-  });
-});
-
-describe("ConfigSection path acceptance", () => {
-  it("accepts exactly its own output path", () => {
-    const cap = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "none",
-    });
-
-    expect(cap.accepts(".vscode/settings.json")).toBe(true);
-    expect(cap.accepts(".vscode/extensions.json")).toBe(false);
-    expect(cap.accepts("x/.vscode/settings.json")).toBe(false);
-  });
-});
-
-describe("ConfigSection equality", () => {
-  const base = { outputPath: ".vscode/settings.json", mergeStrategy: "none" as const };
-
-  it("is equal on the same output path and merge strategy", () => {
-    expect(new ConfigSection(base).equals(new ConfigSection({ ...base }))).toBe(true);
-  });
-
-  it("differs on the output path", () => {
-    expect(
-      new ConfigSection(base).equals(
-        new ConfigSection({ ...base, outputPath: ".vscode/extensions.json" })
-      )
-    ).toBe(false);
-  });
-
-  it("differs on the merge strategy", () => {
-    expect(
-      new ConfigSection(base).equals(new ConfigSection({ ...base, mergeStrategy: "user-prime" }))
-    ).toBe(false);
   });
 });

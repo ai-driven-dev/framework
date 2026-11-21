@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runGit } from "../../../../../src/contexts/telemetry/infrastructure/git/run-git.js";
-import { sandboxGitEnv } from "../../../../helpers/git-sandbox.js";
+import { sandboxGitEnv } from "../../../../shared/testing/git-sandbox.builder.js";
 
 let dir: string;
 beforeEach(async () => {

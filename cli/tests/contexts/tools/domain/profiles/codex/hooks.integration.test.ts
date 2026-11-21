@@ -1,14 +1,18 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildCodexFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
+import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
+
+const TOML = new SmolTomlCodec();
+const codex = codexProfile(TOML);
 
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {
     it("outputs to .codex/hooks.json", () => {
-      expect(codex.section("hooks").config?.outputPath()).toBe(".codex/hooks.json");
+      expect(codex.section("hooks").config?.fileOf("{}").relativePath).toBe(".codex/hooks.json");
     });
 
     it("consumes the codex-hooks config name", () => {
@@ -16,7 +20,7 @@ describe("codex hooks", () => {
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.section("hooks").config?.mergeStrategy()).toBe("user-prime");
+      expect(codex.section("hooks").config?.fileOf("{}").mergeStrategy).toBe("user-prime");
     });
   });
 });
@@ -30,9 +34,13 @@ describe("the telemetry plugin's hooks on both Codex routes", () => {
       join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "hooks.json"),
       "utf8"
     );
-    const hooks = buildCodexFlatContract().artifacts.hooks;
+    const hooks = present(codex.buildContracts.flat)().artifacts.hooks;
     if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
-    const merged = hooks.hooksFile.merge(null, shipped, "aidd-telemetry", (path) => path).content;
+    const merged = hooks.hooksFile.merge(null, {
+      json: shipped,
+      plugin: "aidd-telemetry",
+      locate: (path) => path,
+    }).content;
 
     expect(JSON.parse(merged)).toStrictEqual(
       JSON.parse(shipped.replaceAll(`${ROOT}/hooks/`, "./.codex/hooks/aidd-telemetry/"))
@@ -55,11 +63,13 @@ describe("the Codex flat hooks file", () => {
         ],
       },
     });
-    const hooks = buildCodexFlatContract().artifacts.hooks;
+    const hooks = present(codex.buildContracts.flat)().artifacts.hooks;
     if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
 
     expect(
-      JSON.parse(hooks.hooksFile.merge(null, shipped, "p", (path) => path).content)
+      JSON.parse(
+        hooks.hooksFile.merge(null, { json: shipped, plugin: "p", locate: (path) => path }).content
+      )
     ).toStrictEqual({
       hooks: { Stop: [{ hooks: [{ command: "node ./.codex/hooks/p/a.cjs", type: "command" }] }] },
     });

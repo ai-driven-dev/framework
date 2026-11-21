@@ -7,18 +7,23 @@ import {
 
 describe("where the previous version wrote", () => {
   it("names the home default, whatever XDG_CONFIG_HOME says, and the telemetry directory", () => {
-    const found = legacyLocations({ XDG_CONFIG_HOME: "/xdg" }, "/h", "linux", "/h/t");
+    const found = legacyLocations({
+      env: { XDG_CONFIG_HOME: "/xdg" },
+      home: "/h",
+      platform: "linux",
+      telemetryDir: "/h/t",
+    });
     expect(found.sinkDirs).toEqual(["/h/t", join("/h", ".config", "aidd", "telemetry")]);
     expect(found.identityFiles).toEqual([join("/h", ".config", "aidd", "identity.json")]);
   });
 
   it("adds the directories the environment named", () => {
-    const found = legacyLocations(
-      { AIDD_TELEMETRY_DIR: "/named", AIDD_USER_CONFIG_DIR: "/user" },
-      "/h",
-      "linux",
-      join("/user", "telemetry")
-    );
+    const found = legacyLocations({
+      env: { AIDD_TELEMETRY_DIR: "/named", AIDD_USER_CONFIG_DIR: "/user" },
+      home: "/h",
+      platform: "linux",
+      telemetryDir: join("/user", "telemetry"),
+    });
     expect(found.sinkDirs).toEqual([
       join("/user", "telemetry"),
       "/named",
@@ -28,24 +33,24 @@ describe("where the previous version wrote", () => {
 
   it("adds APPDATA on Windows only", () => {
     const env = { APPDATA: "/app" };
-    expect(legacyLocations(env, "/h", "win32", "/t").sinkDirs).toContain(
-      join("/app", "aidd", "telemetry")
-    );
-    expect(legacyLocations(env, "/h", "win32", "/t").identityFiles).toContain(
-      join("/app", "aidd", "identity.json")
-    );
-    expect(legacyLocations(env, "/h", "linux", "/t").sinkDirs).not.toContain(
-      join("/app", "aidd", "telemetry")
-    );
+    expect(
+      legacyLocations({ env, home: "/h", platform: "win32", telemetryDir: "/t" }).sinkDirs
+    ).toContain(join("/app", "aidd", "telemetry"));
+    expect(
+      legacyLocations({ env, home: "/h", platform: "win32", telemetryDir: "/t" }).identityFiles
+    ).toContain(join("/app", "aidd", "identity.json"));
+    expect(
+      legacyLocations({ env, home: "/h", platform: "linux", telemetryDir: "/t" }).sinkDirs
+    ).not.toContain(join("/app", "aidd", "telemetry"));
   });
 
   it("treats an empty variable as unset, and lists a place once", () => {
-    const found = legacyLocations(
-      { AIDD_TELEMETRY_DIR: "", AIDD_USER_CONFIG_DIR: "" },
-      "/h",
-      "linux",
-      join("/h", ".config", "aidd", "telemetry")
-    );
+    const found = legacyLocations({
+      env: { AIDD_TELEMETRY_DIR: "", AIDD_USER_CONFIG_DIR: "" },
+      home: "/h",
+      platform: "linux",
+      telemetryDir: join("/h", ".config", "aidd", "telemetry"),
+    });
     expect(found.sinkDirs).toEqual([join("/h", ".config", "aidd", "telemetry")]);
   });
 });
@@ -60,7 +65,12 @@ describe("a day file's name", () => {
 
 describe("the edges of those places", () => {
   it("names the user configuration's telemetry directory apart from the one in use", () => {
-    const found = legacyLocations({ AIDD_USER_CONFIG_DIR: "/user" }, "/h", "linux", "/t");
+    const found = legacyLocations({
+      env: { AIDD_USER_CONFIG_DIR: "/user" },
+      home: "/h",
+      platform: "linux",
+      telemetryDir: "/t",
+    });
     expect(found.sinkDirs).toEqual([
       "/t",
       join("/user", "telemetry"),

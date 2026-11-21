@@ -1,4 +1,4 @@
-import { AIDD_DIR } from "../../../shared/domain/paths.js";
+import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 import type { Manifest } from "./manifest.js";
 

@@ -6,53 +6,10 @@ import type {
 import type { RequestReportResult } from "../../../contexts/telemetry/application/report/request-report.js";
 import type { Period } from "../../../contexts/telemetry/contract/period.js";
 import type { Selector } from "../../../contexts/telemetry/contract/report-filter.js";
-import {
-  type AxisValue,
-  COUNTERS,
-  type CounterSum,
-  type ReportAxis,
-  type ReportRow,
-  type Tally,
-} from "../../../contexts/telemetry/contract/usage-report.js";
-import type { CLIOutput } from "../../output.js";
-import { count, grouped, leftOutLines } from "../telemetry-display.js";
-
-const SHORT = 8;
-const COLUMNS = ["Input", "Output", "Cache read", "Cache write", "Total"] as const;
-
-const ABSENT: Readonly<Record<ReportAxis, string>> = {
-  total: "all",
-  person: "anonymous",
-  session: "no session",
-  model: "unknown model",
-  agent: "no agent",
-  day: "no day",
-  repository: "no repository",
-  task: "no task",
-  ticket: "no ticket",
-  tool: "no tool",
-};
-
-type Reason = Extract<AxisValue, { kind: "unattributed" }>["reason"];
-
-const UNATTRIBUTED: Readonly<Record<Reason, string>> = {
-  "no-binding": "unattributed: no task declared",
-  "declared-none": "unattributed: declared no task",
-};
-
-/** One line, whatever a person typed into a task name. */
-function oneLine(text: string): string {
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what is replaced
-  return text.replace(/[\u0000-\u001f\u007f\s]+/g, " ").trim();
-}
-
-function labelOf(axis: ReportAxis, value: AxisValue): string {
-  if (value.kind === "absent") return ABSENT[axis];
-  if (value.kind === "unattributed") return UNATTRIBUTED[value.reason];
-  const shown =
-    axis === "session" || axis === "repository" ? value.value.slice(0, SHORT) : value.value;
-  return oneLine(shown);
-}
+import type { ReportAxis } from "../../../contexts/telemetry/contract/usage-report.js";
+import type { Output } from "../../../orchestration/domain/output.js";
+import { count, leftOutLines } from "./telemetry-read-display.js";
+import { labelOf, table } from "./telemetry-report-table-display.js";
 
 /** Each filter given, as the row it selects is labelled; `null` when none is. */
 function selectionLine(selected: readonly (readonly [ReportAxis, Selector])[]): string | null {
@@ -69,49 +26,6 @@ function conflictWords(result: Extract<ReportUsageResult, { status: "conflicting
     flag === "absent" ? `--absent ${result.absent}` : `--${flag}`
   );
   return `${first} and ${second} select on the same axis, so together they keep nothing: give one of them.`;
-}
-
-/** A sum that left calls out is marked `+?`; one with nothing known at all is `unknown`. */
-function cell(sum: CounterSum, records: number): string {
-  if (sum.unknownRecords === 0) return grouped(sum.known);
-  return sum.unknownRecords >= records ? "unknown" : `${grouped(sum.known)}+?`;
-}
-
-/** The four counters added: partial when any call left one out, unknown only when no counter
- * of any call was reported. */
-function totalCell(tally: Tally): string {
-  if (COUNTERS.every((name) => tally.counters[name].unknownRecords >= tally.records)) {
-    return "unknown";
-  }
-  return tally.total.unknownRecords === 0
-    ? grouped(tally.total.known)
-    : `${grouped(tally.total.known)}+?`;
-}
-
-function cellsOf(tally: Tally): string[] {
-  return [...COUNTERS.map((name) => cell(tally.counters[name], tally.records)), totalCell(tally)];
-}
-
-function table(axis: ReportAxis, rows: readonly ReportRow[], totals: Tally): string[] {
-  const body = [
-    [titleOf(axis), ...COLUMNS],
-    ...rows.map((row) => [labelOf(axis, row.value), ...cellsOf(row)]),
-    // The total axis is one row that already is the total.
-    ...(axis === "total" ? [] : [["Total", ...cellsOf(totals)]]),
-  ];
-  const widths =
-    body[0]?.map((_, column) => Math.max(...body.map((line) => (line[column] ?? "").length))) ?? [];
-  return body.map((line) =>
-    line
-      .map((text, column) =>
-        column === 0 ? text.padEnd(widths[0] ?? 0) : text.padStart(widths[column] ?? 0)
-      )
-      .join("  ")
-  );
-}
-
-function titleOf(axis: ReportAxis): string {
-  return axis === "total" ? "Period" : axis[0]?.toUpperCase() + axis.slice(1);
 }
 
 function periodWords(period: Period): string {
@@ -139,31 +53,27 @@ function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
   ];
 }
 
-export function printUsageReport(output: CLIOutput, result: RequestReportResult): void {
+type Reported = Extract<RequestReportResult, { status: "reported" }>;
+
+function printNotReported(output: Output, result: Exclude<RequestReportResult, Reported>): void {
   if (result.status === "refused") {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
-    return;
-  }
-  if (result.status === "conflicting") {
+  } else if (result.status === "conflicting") {
     output.error(conflictWords(result));
-    return;
-  }
-  if (result.status === "not-a-repository") {
+  } else if (result.status === "not-a-repository") {
     output.error(
       "--repository . names the repository this directory is in, and it is in none: not a git repository, unreadable, or with neither an origin nor a commit."
     );
-    return;
-  }
-  if (result.status === "ambiguous") {
+  } else {
     const { flag, typed, ids } = result;
     const many = flag === "session" ? "sessions" : "repositories";
     output.error(
       `--${flag} ${typed} starts ${ids.length} ${many} of this period: ${ids.join(", ")}. Type more of it.`
     );
-    return;
   }
-  const { report, coverage, run, period, selected } = result;
-  output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
+}
+
+function printReportBody(output: Output, { report, selected }: Reported): void {
   const selection = selectionLine(selected);
   if (selection !== null) output.print(selection);
   if (report.totals.records === 0) {
@@ -172,17 +82,27 @@ export function printUsageReport(output: CLIOutput, result: RequestReportResult)
         ? "No calls in this period."
         : "No call in this period matches these filters."
     );
-  } else {
-    output.print("");
-    for (const line of table(report.axis, report.rows, report.totals)) output.print(line);
-    const unknown = report.totals.total.unknownRecords;
-    if (unknown > 0) {
-      output.print("");
-      output.print(
-        `${count(unknown, "call", "calls")} had an unknown counter: ${unknown === 1 ? "it is" : "they are"} left out of the sums marked +?, never counted as zero.`
-      );
-    }
+    return;
   }
+  output.print("");
+  for (const line of table(report.axis, report.rows, report.totals)) output.print(line);
+  const unknown = report.totals.total.unknownRecords;
+  if (unknown > 0) {
+    output.print("");
+    output.print(
+      `${count(unknown, "call", "calls")} had an unknown counter: ${unknown === 1 ? "it is" : "they are"} left out of the sums marked +?, never counted as zero.`
+    );
+  }
+}
+
+export function printUsageReport(output: Output, result: RequestReportResult): void {
+  if (result.status !== "reported") {
+    printNotReported(output, result);
+    return;
+  }
+  const { report, coverage, run, period } = result;
+  output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
+  printReportBody(output, result);
   output.print("");
   for (const line of coverageLines(coverage, run)) output.print(line);
 }

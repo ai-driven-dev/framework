@@ -1,0 +1,85 @@
+import { appendFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { CloneIdentity } from "../../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import { ConsentHistoryAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+
+let root: string;
+beforeEach(async () => {
+  root = await mkdtemp(join(tmpdir(), "aidd-resolutions-"));
+});
+afterEach(async () => {
+  await rm(root, { recursive: true, force: true });
+});
+
+const CLONE: CloneIdentity = {
+  path: "/a/.git",
+  dev: "16",
+  ino: "99",
+  birthtimeMs: 1_700_000_000_000,
+};
+
+describe("the consent history", () => {
+  const history = () =>
+    new ConsentHistoryAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+
+  it("creates nothing when read before anything is written", async () => {
+    await history().read();
+    await expect(readFile(join(root, "ledger", "consents.jsonl"), "utf8")).rejects.toThrow();
+  });
+
+  it("drops a last line a crash left unterminated before the next event, so it is never terminated into damage", async () => {
+    const file = join(root, "ledger", "consents.jsonl");
+    await history().append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
+    await appendFile(file, '{"token":"t1","clo');
+    expect(await history().read()).toMatchObject({ damaged: false });
+    await history().append({ kind: "close", token: "t1", at: "2026-10-02T00:00:00.000Z" });
+    const records = await history().read();
+    expect(records.damaged).toBe(false);
+    expect(records.events.map((event) => event.kind)).toEqual(["open", "close"]);
+    const lines = (await readFile(file, "utf8")).split("\n").filter(Boolean);
+    expect(lines).toHaveLength(2);
+    for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
+  });
+
+  it("says a line that is not exactly an event damaged the file, and still reads the rest", async () => {
+    await history().append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
+    const file = join(root, "ledger", "consents.jsonl");
+    await writeFile(file, `${await readFile(file, "utf8")}{broken\n`);
+    await history().append({ kind: "close", token: "t1", at: "2026-10-03T00:00:00.000Z" });
+    const records = await history().read();
+    expect(records.damaged).toBe(true);
+    expect(records.events.map((event) => event.kind)).toEqual(["open", "close"]);
+  });
+
+  it("reads a line another process appended, the hooks among them, in the format they write", async () => {
+    await history().append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
+    const file = join(root, "ledger", "consents.jsonl");
+    await writeFile(
+      file,
+      `${await readFile(file, "utf8")}{"token":"t1","close":"2026-10-02T00:00:00.000Z"}\n`
+    );
+    expect((await history().read()).events.at(-1)).toEqual({
+      kind: "close",
+      token: "t1",
+      at: "2026-10-02T00:00:00.000Z",
+    });
+  });
+});

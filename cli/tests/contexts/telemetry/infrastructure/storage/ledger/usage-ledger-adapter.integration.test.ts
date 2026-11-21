@@ -1,20 +1,22 @@
 import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoredUsage } from "../../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { aUsageRecord } from "../../../testing/usage-record-builder.js";
+import { aUsageRecord } from "../../../testing/usage-record.builder.js";
 
 let root: string;
 let dir: string;
 let ledger: UsageLedgerAdapter;
+let storage: PrivateStorageAdapter;
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-usage-ledger-"));
   dir = join(root, "ledger");
-  ledger = new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
+  storage = new PrivateStorageAdapter();
+  ledger = new UsageLedgerAdapter(dir, storage);
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });
@@ -22,6 +24,12 @@ afterEach(async () => {
 
 const stored = (overrides: Partial<StoredUsage> = {}): StoredUsage =>
   aUsageRecord().with(overrides).build();
+
+/** The files written from now on: the one thing a rewritten partition shows that no file system hides. */
+const writtenFrom = (): (() => string[]) => {
+  const replace = vi.spyOn(storage, "replace");
+  return () => replace.mock.calls.map(([path]) => path).sort();
+};
 
 const PARTITION_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 
@@ -66,14 +74,12 @@ describe("the ledger on disk", () => {
 
   it("does not touch a partition that already holds what it should", async () => {
     await ledger.save([stored({ key: "a" }), stored({ key: "z", at: "2026-11-02T00:00:00Z" })]);
-    const octoberBefore = await stat(join(dir, "2026-10-07.jsonl"));
-    const novemberBefore = await stat(join(dir, "2026-11-02.jsonl"));
+    const written = writtenFrom();
     await ledger.save([
       stored({ key: "a" }),
       stored({ key: "z", at: "2026-11-02T00:00:00Z", output: 99 }),
     ]);
-    expect((await stat(join(dir, "2026-10-07.jsonl"))).ino).toBe(octoberBefore.ino);
-    expect((await stat(join(dir, "2026-11-02.jsonl"))).ino).not.toBe(novemberBefore.ino);
+    expect(written()).toEqual([join(dir, "2026-11-02.jsonl")]);
   });
 
   it("rewrites only the days it is told changed, and reads no other partition", async () => {
@@ -81,7 +87,6 @@ describe("the ledger on disk", () => {
       stored({ key: "a", at: "2026-08-02T00:00:00Z" }),
       stored({ key: "b", at: "2026-09-02T00:00:00Z" }),
     ]);
-    const septemberBefore = await stat(join(dir, "2026-09-02.jsonl"));
     await writeFile(join(dir, "2026-08-02.jsonl"), "{not a record}\n");
     await ledger.save(
       [
@@ -92,7 +97,6 @@ describe("the ledger on disk", () => {
       new Set(["2026-09-02", "2026-10-02"])
     );
     expect(await readFile(join(dir, "2026-08-02.jsonl"), "utf8")).toBe("{not a record}\n");
-    expect((await stat(join(dir, "2026-09-02.jsonl"))).ino).not.toBe(septemberBefore.ino);
     expect(await readFile(join(dir, "2026-09-02.jsonl"), "utf8")).toContain('"output":99');
     expect(await partitions()).toEqual([
       "2026-08-02.jsonl",
@@ -330,9 +334,9 @@ describe("what was measured and left out, beside the ledger", () => {
 
   it("writes nothing when nothing new is added", async () => {
     await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
-    const before = await stat(FILE());
+    const written = writtenFrom();
     await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
-    expect((await stat(FILE())).ino).toBe(before.ino);
+    expect(written()).toEqual([]);
   });
 
   it("is no partition: the ledger neither loads it nor removes it", async () => {

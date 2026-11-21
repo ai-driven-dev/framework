@@ -1,9 +1,9 @@
 import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { describeMarketplaceRegistryContract } from "../testing/marketplace-registry-contract.js";
-import { makeRegistryAdapter } from "../testing/registry-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { describeMarketplaceRegistryContract } from "../testing/marketplace-registry.contract.js";
+import { makeRegistryAdapter } from "../testing/registry-adapter.builder.js";
 
 describeMarketplaceRegistryContract("the in-memory registry", async () => ({
   registry: new InMemoryMarketplaceRegistry(),

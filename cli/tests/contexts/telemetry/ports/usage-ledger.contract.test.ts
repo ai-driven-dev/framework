@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { InMemoryLedger } from "../testing/in-memory-ledger.js";
+import { InMemoryLedger } from "../testing/in-memory-ledger.fake.js";
 import {
   describeUsageLedgerContract,
   type LedgerSubject,
-} from "../testing/usage-ledger-contract.js";
+} from "../testing/usage-ledger.contract.js";
 
 describeUsageLedgerContract(
   "the in-memory ledger",

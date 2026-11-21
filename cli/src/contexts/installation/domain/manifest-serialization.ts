@@ -1,9 +1,6 @@
-import {
-  InvalidManifestDataError,
-  InvalidManifestToolIdError,
-} from "../../../shared/domain/errors.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
+import { InvalidManifestDataError, InvalidManifestToolIdError } from "./installation.error.js";
 import {
   parseToolEntry,
   serializeToolEntry,

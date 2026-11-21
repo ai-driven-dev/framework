@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { portableAgentFrontmatter } from "../../../../../src/contexts/tools/domain/formats/portable-agent.js";
-import { InvalidAgentFrontmatterError } from "../../../../../src/shared/domain/errors.js";
+import { InvalidAgentFrontmatterError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 import {
   parseFrontmatter,
   serializeFrontmatter,
@@ -68,7 +68,7 @@ describe("portableAgentFrontmatter", () => {
         InvalidAgentFrontmatterError
       );
       expect(() => portableAgentFrontmatter({ description }, "aidd-dev-executor")).toThrow(
-        /aidd-dev-executor/
+        expect.objectContaining({ agentName: "aidd-dev-executor" })
       );
     }
   );

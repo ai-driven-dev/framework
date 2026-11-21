@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { cliPath } from "./helpers.js";
+import { cliPath, failedRunOf } from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
 const FAKE_TAG = "v999.0.0"; // current CLI is 4.6.x → always outdated against this
@@ -97,12 +97,12 @@ async function runCli(
     });
     return { stdout, stderr, exitCode: 0 };
   } catch (error) {
-    const err = error as { stdout?: string; stderr?: string; code?: number };
-    return { stdout: err.stdout ?? "", stderr: err.stderr ?? "", exitCode: err.code ?? 1 };
+    const { stdout, stderr, code } = failedRunOf(error);
+    return { stdout, stderr, exitCode: code ?? 1 };
   }
 }
 
-describe("E2E: update-check piggyback", () => {
+describe("update-check piggyback", () => {
   it("hot path is read-only and offline: cold offline command makes no request and writes no cache", async () => {
     const t = await setupEnv("cold");
     try {

@@ -1,5 +1,3 @@
-import { basename, dirname, posix } from "node:path";
-
 // The same character class `rewriteCopilotContent` uses, so both recognise the same
 // reference.
 const REFERENCE_CHAR_CLASS = "[^\\s`'\">,]+";
@@ -40,9 +38,21 @@ function rewriteClaudeRootRef(
   resolveTargetPath?: (pluginRelPath: string) => string
 ): string {
   const resolved = resolveTargetPath ? resolveTargetPath(targetPluginRel) : targetPluginRel;
-  const currentDirPluginRel = dirname(currentFilePluginRelative);
-  let linkPath = posix.relative(currentDirPluginRel, resolved);
-  if (!linkPath.startsWith(".")) linkPath = `./${linkPath}`;
-  const label = basename(targetPluginRel);
-  return `[${label}](${linkPath})`;
+  const targetSegments = slashSegments(resolved);
+  const fromSegments = slashSegments(currentFilePluginRelative).slice(0, -1);
+  let shared = 0;
+  while (shared < fromSegments.length && fromSegments[shared] === targetSegments[shared]) shared++;
+  const linkPath = [
+    ...fromSegments.slice(shared).map(() => ".."),
+    ...targetSegments.slice(shared),
+  ].join("/");
+  const label = slashSegments(targetPluginRel).pop() ?? "";
+  return `[${label}](${linkPath.startsWith(".") ? linkPath : `./${linkPath}`})`;
+}
+
+// Plugin-relative paths are posix whatever the platform, so the link is slash arithmetic, not
+// `node:path`: shared domain imports no Node builtin for it. Paths are relative, never rooted,
+// and never climb above the plugin root; `..` is not resolved.
+function slashSegments(path: string): string[] {
+  return path.split("/").filter((segment) => segment !== "" && segment !== ".");
 }

@@ -2,8 +2,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RunPostInstallPipeline } from "../../../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -20,14 +23,17 @@ class RecordingGitignoreUseCase extends UpdateGitignore {
 
 describe("post-install pipeline", () => {
   it("saves manifest and updates gitignore after file write", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    await new RunPostInstallPipeline(deps.manifestRepo, deps.updateGitignore).execute({
-      tools: catalogOf(),
+    await new RunPostInstallPipeline(
+      deps.manifestRepo,
+      deps.updateGitignore,
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -42,14 +48,17 @@ describe("post-install pipeline", () => {
   });
 
   it("calls gitignore exactly once, with all three families of entries", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
     const recordingGitignore = new RecordingGitignoreUseCase(deps.fs);
-    await new RunPostInstallPipeline(deps.manifestRepo, recordingGitignore).execute({
-      tools: catalogOf(),
+    await new RunPostInstallPipeline(
+      deps.manifestRepo,
+      recordingGitignore,
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -61,13 +70,16 @@ describe("post-install pipeline", () => {
   });
 
   it("ignores the cache, and nothing wider than aidd_docs", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const deps = await buildInstallationDeps();
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    await new RunPostInstallPipeline(deps.manifestRepo, deps.updateGitignore).execute({
-      tools: catalogOf(),
+    await new RunPostInstallPipeline(
+      deps.manifestRepo,
+      deps.updateGitignore,
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
     });

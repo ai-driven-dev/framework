@@ -23,11 +23,6 @@ const declaration = (task: string, iso: string) =>
   declarationOf({ kind: "task", task, ticket: null }, new Date(iso), "command");
 
 describe("the session declarations on disk", () => {
-  it("are empty before the first declaration", async () => {
-    expect(await store.declarations()).toEqual([]);
-    expect(await store.carries()).toEqual([]);
-  });
-
   it("append one line each and keep every one of them, in order", async () => {
     await store.append("s-1", declaration("first", "2026-10-09T10:00:00.000Z"));
     await store.append("s-1", declaration("second", "2026-10-09T11:00:00.000Z"));

@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import { chmod, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, toNamespacedPath } from "node:path";
@@ -122,7 +123,8 @@ describe("a private directory on Windows", () => {
 });
 
 describe("a private directory on the machine itself, as Windows", () => {
-  const platform = Object.getOwnPropertyDescriptor(process, "platform") as PropertyDescriptor;
+  const platform = Object.getOwnPropertyDescriptor(process, "platform");
+  if (platform === undefined) throw new Error("process has no platform");
 
   afterEach(() => {
     Object.defineProperty(process, "platform", platform);
@@ -184,6 +186,13 @@ describe("appending to a file", () => {
     const path = join(dir, "a.jsonl");
     await storage.append(path, "one\n");
     expect(await readFile(path, "utf8")).toBe("one\n");
+  });
+
+  posix("leaves no file handle open once it has appended", async () => {
+    const path = join(dir, "a.jsonl");
+    const before = readdirSync("/dev/fd").length;
+    for (let i = 0; i < 20; i++) await storage.append(path, "one\n");
+    expect(readdirSync("/dev/fd").length).toBeLessThan(before + 10);
   });
 
   posix("creates it readable by its owner alone", async () => {

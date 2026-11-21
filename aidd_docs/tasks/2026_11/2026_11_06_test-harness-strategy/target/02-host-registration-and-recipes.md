@@ -254,7 +254,7 @@ Target: `contexts/host-registration/{domain,ports,application,infrastructure,con
 | `fw/application/shared/best-effort-native-call.ts` | merge | `application/confirmation.ts` |
 | `fw/application/shared/host-marketplace-source-conflict.ts` | move | `application/source-check.ts` |
 | `fw/application/shared/read-marketplace-catalog-identity.ts` | move | `infrastructure/catalog-identity-reader.ts` |
-| `fw/application/shared/purge-native-marketplace-cache.ts` | split | `domain/cache-purge-policy.ts` + private step of `application/withdraw-from-host.ts` |
+| `fw/application/shared/purge-native-marketplace-cache.ts` | split | `domain/policy/cache-purge-policy.ts` + private step of `application/withdraw-from-host.ts` |
 | `fw/application/shared/purge-declared-cache.ts` | split | path containment: `shared/domain` if `installation` also imports it (computed rule); empty and confirmed: `domain/cache-purge-policy.ts` |
 | `fw/application/shared/resolve-uninstall-scope.ts` | move (reads a host registry) | `domain/uninstall-scope-order.ts` |
 | `fw/application/shared/setup-marketplace-registration-use-case.ts` | keep | `orchestration/marketplace/` (calls `RegisterPluginWithHost`) |
@@ -264,10 +264,10 @@ Target: `contexts/host-registration/{domain,ports,application,infrastructure,con
 | `fw/application/plugin/plugin-remove-use-case.ts` (lines 143-300, 369-530, 537-570) | split | proofs and host calls replaced by `WithdrawFromHost`; files: `installation`; scenario: `orchestration/plugin/` |
 | `fw/application/doctor/doctor-registration-use-case.ts` | split | check: `application/inspect-host-registration.ts`; aggregation: `orchestration/doctor/` |
 | `fw/application/flows/marketplace-remove-use-case.ts`, `marketplace-check-use-case.ts` | keep | `orchestration/marketplace/`; `marketplace-remove` keeps only the manifest update |
-| `fw/domain/manifest/native-registrations.ts` | split | `RegistrationRecord` and its parse and merge functions: `host-registration/domain/registration-record.ts`, stored in its own file (phase 2); the claims part: `machine-claims`; `installation` no longer imports or stores it |
-| `fw/domain/marketplace-source-drift.ts` | move | `domain/source-drift.ts` |
+| `fw/domain/manifest/native-registrations.ts` | split | `RegistrationRecord` and its parse and merge functions: `host-registration/domain/record/registration-record.ts`, stored in its own file (phase 2); the claims part: `machine-claims`; `installation` no longer imports or stores it |
+| `fw/domain/marketplace-source-drift.ts` | move | `domain/source/marketplace-source-drift.ts` |
 | `tools/domain/host-plugin-registration.ts` | move | `domain/registration-answer.ts` |
-| `tools/domain/marketplace-source-conflict.ts` | move | `domain/source-conflict.ts` |
+| `tools/domain/marketplace-source-conflict.ts` | move | `domain/source/marketplace-source-conflict.ts` |
 | `tools/domain/ports/native-plugin-activator.ts` | move | `ports/host-actions.ts` |
 | `tools/domain/ports/host-plugin-registry-reader.ts` | move | `ports/host-plugin-registry.ts` |
 | `tools/domain/ports/host-marketplace-registry-reader.ts` | move | `ports/host-marketplace-registry.ts` |

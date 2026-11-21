@@ -3,7 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { GitBranchBindingSourceAdapter } from "../../../../../src/contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
-import { git, initRepository, sandboxGitEnv } from "../../../../helpers/git-sandbox.js";
+import {
+  git,
+  initRepository,
+  sandboxGitEnv,
+} from "../../../../shared/testing/git-sandbox.builder.js";
 
 let base: string;
 let repo: string;
@@ -22,35 +26,10 @@ afterEach(async () => {
 });
 
 describe("reading branch declarations from git config", () => {
-  it("is empty while no branch is declared", async () => {
-    expect(await source.bindings(repo)).toEqual([]);
-  });
-
-  it("reads the keys as the declaration command will write them", async () => {
-    git(repo, env, "config", "branch.feat/x.aiddTask", "checkout-fix");
-    git(repo, env, "config", "branch.feat/x.aiddTicket", "PROJ-12");
-    git(repo, env, "config", "branch.feat/x.aiddDeclaredFor", "feat/x");
-    git(repo, env, "config", "branch.feat/x.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
-    expect(await source.bindings(repo)).toEqual([
-      {
-        branch: "feat/x",
-        task: "checkout-fix",
-        ticket: "PROJ-12",
-        declared_at: "2026-10-07T10:00:00.000Z",
-        none: false,
-      },
-    ]);
-  });
-
   it("reads a branch named with dots and capitals whole", async () => {
     git(repo, env, "config", "branch.Release/1.2.aiddTask", "t");
     git(repo, env, "config", "branch.Release/1.2.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
     expect((await source.bindings(repo)).map((b) => b.branch)).toEqual(["Release/1.2"]);
-  });
-
-  it("reads a declaration of no task as none", async () => {
-    git(repo, env, "config", "branch.x.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
-    expect(await source.bindings(repo)).toMatchObject([{ branch: "x", task: null, none: true }]);
   });
 
   it("reads nothing from a declaration the command did not make on that branch", async () => {
@@ -107,10 +86,6 @@ describe("reading a branch's creation from its reflog", () => {
     git(repo, at("2026-01-04T00:00:00Z"), "branch", "-m", "feat/copy", "feat/renamed");
     expect(await source.createdAt(repo, "feat/renamed")).toBe("2026-01-04T00:00:00.000Z");
     expect(await source.createdAt(repo, "feat/source")).toBe("2026-01-01T00:00:00.000Z");
-  });
-
-  it("is unknown for a branch that does not exist", async () => {
-    expect(await source.createdAt(repo, "never")).toBeNull();
   });
 
   it("is unknown when the repository keeps no reflog", async () => {

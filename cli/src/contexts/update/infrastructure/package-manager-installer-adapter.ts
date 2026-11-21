@@ -1,10 +1,10 @@
 import { execSync } from "node:child_process";
+import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
 import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../shared/domain/errors.js";
-import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
+} from "../domain/update.error.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 
 /** Runs the package manager that owns the `aidd` found on the path. Everything it spawns
@@ -51,7 +51,10 @@ function extractStderr(err: unknown): string {
 
 /** The first match a `which` or a `where` printed: `where` lists one per line, CRLF on Windows. */
 function firstBinaryPath(output: string): string {
-  return (output.trim().split(/\r?\n/)[0] as string).trim();
+  return output
+    .trim()
+    .replace(/\r?\n[\s\S]*/, "")
+    .trim();
 }
 
 /** Whether what a failed install wrote to stderr says the process had no right to write where

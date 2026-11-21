@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
-import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.js";
-import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.js";
-import { aRefreshUpdateCheck } from "../testing/update-builders.js";
+import { FrameworkResolutionError } from "../../../../src/contexts/update/domain/update.error.js";
+import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.fake.js";
+import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
+import { aRefreshUpdateCheck } from "../testing/update.builder.js";
 
 describe("RefreshUpdateCheck", () => {
   it("keeps the latest version with the time it was asked", async () => {

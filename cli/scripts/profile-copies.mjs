@@ -3,12 +3,16 @@
  * Copies between two tool profiles, checked before push. The CI-wide `pnpm jscpd` reads all of
  * src/ against one percentage, so a copy between two profiles hides in the average.
  *
- * Measured on the profiles: their `build.ts` and `profile.ts` declare a tool's contract as
+ * Measured on the profiles: their `<tool>-build.model.ts` and `<tool>.profile.ts` declare a tool's contract as
  * object literals, and every one looks like every other (52 clones at 30 tokens, none of them
  * logic). No block size separates them from the real copies, merge and bridge code of 47 to 60
  * tokens, so those two files are left out and the rest is read with identifiers and literals
  * ignored, which is what makes a renamed merge loop a copy. A copy within one tool's folder is
  * not a copy between profiles.
+ *
+ * Import declarations are skipped (jscpd's `--ignore-pattern`, a regex whose matching tokens are
+ * left out of detection). With identifiers and literals erased, every profile's imports read the
+ * same, and so does the `declareHooks(` call they open, which is a declaration, not logic.
  */
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -20,6 +24,10 @@ const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PROFILES = join(CLI_ROOT, "src/contexts/tools/domain/profiles");
 const JSCPD = join(CLI_ROOT, "node_modules/jscpd/run-jscpd.js");
 
+// jscpd splits --ignore-pattern on commas, so the pattern holds none, and matches without
+// multiline anchors, so `^` never matches a line start.
+const IMPORT_DECLARATION = "import [^;]*;";
+
 export const JSCPD_ARGS = [
   "--min-lines",
   "5",
@@ -28,7 +36,9 @@ export const JSCPD_ARGS = [
   "--ignore-identifiers",
   "--ignore-literals",
   "--ignore",
-  "**/build.ts,**/profile.ts",
+  "**/*-build.model.ts,**/*.profile.ts",
+  "--ignore-pattern",
+  IMPORT_DECLARATION,
 ];
 
 /**

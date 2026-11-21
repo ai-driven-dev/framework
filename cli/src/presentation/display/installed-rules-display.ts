@@ -1,15 +1,15 @@
-import type { InstalledRule } from "../../contexts/installation/domain/installed-rule.js";
-import type { CLIOutput } from "../output.js";
+import type { InstalledRule } from "../../contexts/installation/contract/installed-rule.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 /** The contract the explore skill reads, field for field; the two-space indent and the
  * trailing newline are part of it. */
-export function printInstalledRulesJson(output: CLIOutput, rules: readonly InstalledRule[]): void {
+export function printInstalledRulesJson(output: Output, rules: readonly InstalledRule[]): void {
   output.print(JSON.stringify(rules, null, 2));
 }
 
 /** A project with no rule says so rather than printing nothing: on a terminal an empty
  * answer and a command that never ran look identical. */
-export function printInstalledRules(output: CLIOutput, rules: readonly InstalledRule[]): void {
+export function printInstalledRules(output: Output, rules: readonly InstalledRule[]): void {
   if (rules.length === 0) {
     output.info("No rules installed for any AI tool.");
     return;

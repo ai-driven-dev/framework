@@ -1,13 +1,13 @@
 // Plugin-scope Cursor hooks were measured never to fire, so `hooksDestination: "project"` routes
-// hooks/hooks.json into the project's own .cursor/hooks.json — the destination that does fire.
+// hooks/hooks.json into the project's own .cursor/hooks.json - the destination that does fire.
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -83,20 +83,23 @@ function buildDist(): PluginDistribution {
 
 describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   it("merges converted hooks.json into the project's .cursor/hooks.json with camelCase events", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    const { skipped } = await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const { skipped } = await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
     expect(fs.has(hooksPath)).toBe(true);
@@ -111,20 +114,23 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   // biome-ignore lint/suspicious/noTemplateCurlyInString: describes the Claude hook placeholder
   it("rewrites ${CLAUDE_PLUGIN_ROOT}/ to the project's own .cursor/hooks/<plugin>/ in hook commands", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
     const content = await fs.readFile(hooksPath);
@@ -134,44 +140,50 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   });
 
   it("writes mcp.json at plugin root with the source content unchanged", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const mcpPath = join(EXPECTED_BASE, PLUGIN_NAME, "mcp.json");
     expect(fs.has(mcpPath)).toBe(true);
-    // Cursor consumes Claude-format .mcp.json natively — content is passed through as-is
+    // Cursor consumes Claude-format .mcp.json natively - content is passed through as-is
     const written = JSON.parse(await fs.readFile(mcpPath)) as Record<string, unknown>;
     const source = JSON.parse(MCP_CONTENT) as Record<string, unknown>;
     expect(written).toEqual(source);
   });
 
   it("tracks mcp.json in Plugin.files for uninstall; hooks.json is not (it isn't under the plugin's own baseDir)", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const plugins = manifest.getPlugins(TOOL.cursor);
     const installed = plugins.find((p) => p.name === PLUGIN_NAME);
@@ -182,20 +194,23 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   });
 
   it("emits no skip warnings for hooks or mcp", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
-    const { skipped } = await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const { skipped } = await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     expect(skipped).toHaveLength(0);
   });

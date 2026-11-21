@@ -1,14 +1,13 @@
 import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../shared/domain/describe-error.js";
-import type {
-  HostMarketplaceRegistry,
-  HostMarketplaceRegistryReading,
-} from "../contract/host-marketplace-registry.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import type { HostMarketplaceRegistryReading } from "../domain/reading/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 
 /**
  * Reads a host's own marketplace registry: a JSON object keyed by marketplace name. Of the
  * entry a host's own `marketplace add` writes, `installLocation` is the field that
- * decides what the name currently resolves to — `source.path` is only what the CLI was
+ * decides what the name currently resolves to: `source.path` is only what the CLI was
  * pointed at. The file is the declaration's, never repeated as a literal here.
  */
 export class InstallLocationsByNameReader implements HostMarketplaceRegistry {
@@ -29,11 +28,12 @@ export class InstallLocationsByNameReader implements HostMarketplaceRegistry {
     } catch (error) {
       return { location: this.path, unreadable: describeError(error) };
     }
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    const registry = asPlainObject(parsed);
+    if (registry === null) {
       return { location: this.path, unreadable: "not a JSON object" };
     }
     const entries = new Map<string, string>();
-    for (const [name, value] of Object.entries(parsed as Record<string, unknown>)) {
+    for (const [name, value] of Object.entries(registry)) {
       const installLocation = installLocationOf(value);
       if (installLocation === undefined) continue;
       entries.set(name, await resolvedPath(installLocation));

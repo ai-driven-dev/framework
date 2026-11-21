@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
 import {
   buildTargetModesOf,
   type FrameworkBuildTarget,
-} from "../../src/contexts/translate/domain/build-target.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
-import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
+} from "../../src/contexts/translate/contract/build-targets.js";
+import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
+import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
 
 const ALL_TARGETS: readonly FrameworkBuildTarget[] = catalogOf().idsInCanonicalOrder("ai");
 const ALL_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];

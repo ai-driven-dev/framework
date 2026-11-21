@@ -58,7 +58,7 @@ export function ownerAt(
     (a, b) =>
       answeringFrom(a) - answeringFrom(b) || compareText(resolutionKeyOf(a), resolutionKeyOf(b))
   );
-  let owner = first as RepositoryResolution;
+  let owner = first;
   for (const candidate of later) if (answeringFrom(candidate) <= at) owner = candidate;
   return owner;
 }
@@ -67,15 +67,15 @@ function resolutionKeyOf(resolution: RepositoryResolution): string {
   return resolutionKey(resolution.dir, resolution.clone);
 }
 
+const filled = (value: unknown): value is string => typeof value === "string" && value !== "";
+
 function parseResolution(value: unknown): RepositoryResolution | null {
   const object = asPlainObject(value);
   if (object === null) return null;
   const clone = parseCloneIdentity(object.clone);
   if (clone === null) return null;
   const { dir, repository_id: repositoryId, root, seen_at: seenAt } = object;
-  if (typeof dir !== "string" || dir === "") return null;
-  if (typeof repositoryId !== "string" || repositoryId === "") return null;
-  if (typeof root !== "string") return null;
+  if (!filled(dir) || !filled(repositoryId) || typeof root !== "string") return null;
   if (typeof seenAt !== "string" || Number.isNaN(Date.parse(seenAt))) return null;
   return { dir, repository_id: repositoryId, root, clone, seen_at: seenAt };
 }

@@ -85,3 +85,5 @@ Fork the repository, or branch from it if you have write access.
 | Branch off `next` and target `next` | [Exceptions](aidd_docs/memory/vcs.md#branches) |
 | Fill in the template | [Pull request template](.github/PULL_REQUEST_TEMPLATE.md) |
 | Wait for a Maintainer review | [Governance](GOVERNANCE.md#code-decisions) |
+
+GitHub requests review from the [framework reviewers](https://github.com/orgs/ai-driven-dev/teams/framework-reviewers) through `CODEOWNERS`. If no reviewer is assigned, request a Maintainer; authors cannot approve their own PRs.

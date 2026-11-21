@@ -32,14 +32,16 @@ function nothingToForget(plan: ForgetPlan): boolean {
   );
 }
 
+interface ForgetTelemetryDeps {
+  readonly erasure: MeasurementErasure;
+  readonly declarations: RepositoryDeclarations;
+  readonly remembered: RememberedClones;
+  readonly ledger: UsageLedger;
+}
+
 /** Erases what measurement kept: previews by default, and removes only on confirmation. */
 export class ForgetTelemetry {
-  constructor(
-    private readonly erasure: MeasurementErasure,
-    private readonly declarations: RepositoryDeclarations,
-    private readonly remembered: RememberedClones,
-    private readonly ledger: UsageLedger
-  ) {}
+  constructor(private readonly deps: ForgetTelemetryDeps) {}
 
   async execute({ confirmed }: ForgetTelemetryCommand): Promise<ForgetTelemetryResult> {
     const plan = await this.plan();
@@ -47,23 +49,24 @@ export class ForgetTelemetry {
     if (nothingToForget(plan)) return { status: "forgotten", plan };
     // Held for the whole removal, so no ingest writes into what is being erased. What goes is
     // read again under the lock, and that is what is reported.
-    return this.ledger.exclusively(async () => {
+    return this.deps.ledger.exclusively(async () => {
       const held = await this.plan();
       // The declarations first: they are found through the files that follow, so a crash
       // between the two leaves the way back to them.
-      for (const repository of held.repositories) await this.declarations.clear(repository.clone);
-      await this.erasure.erase();
+      for (const repository of held.repositories)
+        await this.deps.declarations.clear(repository.clone);
+      await this.deps.erasure.erase();
       return { status: "forgotten" as const, plan: held };
     });
   }
 
   private async plan(): Promise<ForgetPlan> {
-    const entries = await this.erasure.inventory();
-    const found = await this.remembered.read();
+    const entries = await this.deps.erasure.inventory();
+    const found = await this.deps.remembered.read();
     const repositories: ({ clone: string } & RepositoryKeys)[] = [];
     const missing: string[] = [];
     for (const clone of found.clones) {
-      const keys = await this.declarations.count(clone);
+      const keys = await this.deps.declarations.count(clone);
       if (keys !== null) repositories.push({ clone, ...keys });
       else if (found.consenting.has(clone)) missing.push(clone);
     }

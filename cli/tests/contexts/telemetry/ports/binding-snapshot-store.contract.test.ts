@@ -6,9 +6,9 @@ import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infras
 import {
   describeBindingSnapshotStoreContract,
   type SnapshotStoreSubject,
-} from "../testing/binding-snapshot-store-contract.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
-import { NO_ALIASES } from "../testing/no-aliases.js";
+} from "../testing/binding-snapshot-store.contract.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
+import { NO_ALIASES } from "../testing/no-aliases.fake.js";
 
 describeBindingSnapshotStoreContract(
   "the in-memory store",

@@ -1,0 +1,307 @@
+/**
+ * A narrowed run's outcome carries only the marketplace it touched, so replacing
+ * `nativeRegistrations` wholesale would erase every other marketplace's record.
+ */
+import { describe, expect, it } from "vitest";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
+import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+
+const PROJECT_ROOT = "/test-project";
+
+function marketplace(name: string): Marketplace {
+  return Marketplace.create({
+    name,
+    source: { kind: "github", repo: `ai-driven-dev/${name}` },
+    scope: "project",
+    addedAt: "2026-09-02T00:00:00Z",
+  });
+}
+
+/** Keyed by marketplace name rather than tool - the default fake keys by tool alone,
+ * which would resolve two marketplaces to the same built tree and the same catalog. */
+function ensureBuiltPerMarketplace(): BuiltMarketplaceEnsurer {
+  return {
+    execute: async (options) => ({
+      builtDir: `/built/${options.marketplace.name}`,
+      version: "test",
+      rebuilt: true,
+    }),
+  };
+}
+
+function seededCatalogs(): InMemoryFileAdapter {
+  return new InMemoryFileAdapter({
+    "/built/market-a/.claude-plugin/marketplace.json": JSON.stringify({
+      name: "market-a",
+      version: "1.0.0",
+      plugins: [{ name: "plugin-a" }],
+    }),
+    "/built/market-b/.claude-plugin/marketplace.json": JSON.stringify({
+      name: "market-b",
+      version: "1.0.0",
+      plugins: [{ name: "plugin-b" }],
+    }),
+  });
+}
+
+function manifestWithTwoPlugins(): Manifest {
+  const manifest = aManifest()
+    .withTool(TOOL.claude, [], { version: "test" })
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromMetadata({
+        name: "plugin-a",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/A" },
+        strict: true,
+        scope: "project",
+        marketplace: "market-a",
+      })
+    )
+    .withPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromMetadata({
+        name: "plugin-b",
+        version: "1.0.0",
+        source: { kind: "github", repo: "ai-driven-dev/B" },
+        strict: true,
+        scope: "project",
+        marketplace: "market-b",
+      })
+    )
+    .build();
+  return manifest;
+}
+
+function build(activator: FakeHostActions) {
+  const registry = new InMemoryMarketplaceRegistry();
+  const fs = seededCatalogs();
+  const manifest = manifestWithTwoPlugins();
+  const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+  return {
+    registry,
+    fs,
+    manifest,
+    manifestRepo,
+    useCase: marketplaceSync({
+      fs,
+      manifestRepo,
+      marketplaceRegistry: registry,
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: ensureBuiltPerMarketplace(),
+      hostPluginRegistries: new Map([
+        [
+          TOOL.claude,
+          new FakeHostPluginRegistry({
+            location: "/host/installed_plugins.json",
+            refs: new Map(),
+          }),
+        ],
+      ]),
+      nativeSources: new Map([
+        [
+          TOOL.claude,
+          new FakeHostMarketplaceSources(
+            activator,
+            "registry",
+            (path) =>
+              path === "/built/market-a"
+                ? "market-a"
+                : path === "/built/market-b"
+                  ? "market-b"
+                  : undefined,
+            new Map()
+          ),
+        ],
+      ]),
+    }),
+  };
+}
+
+describe("marketplaceNames narrows a sync run to the marketplaces named", () => {
+  it("registers and enables only the named marketplace's own plugin", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry } = build(activator);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+
+    await useCase.execute({
+      projectRoot: PROJECT_ROOT,
+      marketplaceNames: ["market-b"],
+    });
+
+    expect(activator.addedMarketplaces).toEqual(["/built/market-b"]);
+    expect(activator.enabledPlugins).toEqual(["plugin-b@market-b"]);
+  });
+
+  it("keeps the untouched marketplace's own nativeRegistrations entry, never replacing it", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry, manifestRepo } = build(activator);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+    // A first full run seeds both marketplaces' own registrations.
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    await useCase.execute({
+      projectRoot: PROJECT_ROOT,
+      marketplaceNames: ["market-b"],
+    });
+
+    const reloaded = await manifestRepo.load();
+    const registrations = reloaded?.getNativeRegistrations(TOOL.claude);
+    expect(registrations?.marketplaces).toEqual(
+      expect.arrayContaining([
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a" },
+        },
+      ])
+    );
+    expect(registrations?.pluginRefs).toEqual(expect.arrayContaining(["plugin-a@market-a"]));
+  });
+
+  it("drops a stale ref for the touched marketplace by its hostName suffix, keeping the untouched marketplace's own refs", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry, manifest, manifestRepo } = build(activator);
+    manifest.setNativeRegistrations(TOOL.claude, {
+      binary: "claude",
+      marketplaces: [
+        { alias: "market-a", hostName: "market-a" },
+        { alias: "market-b", hostName: "market-b" },
+      ],
+      pluginRefs: ["plugin-a@market-a", "plugin-b-old@market-b"],
+    });
+    await manifestRepo.save(manifest);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+
+    await useCase.execute({
+      projectRoot: PROJECT_ROOT,
+      marketplaceNames: ["market-b"],
+    });
+
+    const reloaded = await manifestRepo.load();
+    const registrations = reloaded?.getNativeRegistrations(TOOL.claude);
+    expect(registrations?.pluginRefs).toContain("plugin-a@market-a");
+    expect(registrations?.pluginRefs).toContain("plugin-b@market-b");
+    expect(registrations?.pluginRefs).not.toContain("plugin-b-old@market-b");
+  });
+
+  it("returns the empty result and calls no activator at all for a name matching no registered marketplace", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry } = build(activator);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+
+    const result = await useCase.execute({
+      projectRoot: PROJECT_ROOT,
+      marketplaceNames: ["nope"],
+    });
+
+    expect(result).toEqual({
+      activated: [],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+      failed: false,
+    });
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(activator.enabledPlugins).toEqual([]);
+  });
+
+  it("activates every registered marketplace when marketplaceNames is not given at all", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry } = build(activator);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.addedMarketplaces.sort()).toEqual(["/built/market-a", "/built/market-b"]);
+    expect(activator.enabledPlugins.sort()).toEqual(["plugin-a@market-a", "plugin-b@market-b"]);
+  });
+
+  it("records exactly the named marketplace and its ref on a first narrowed run", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry, manifestRepo } = build(activator);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+
+    await useCase.execute({
+      projectRoot: PROJECT_ROOT,
+      marketplaceNames: ["market-b"],
+    });
+
+    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b" },
+        },
+      ],
+      pluginRefs: ["plugin-b@market-b"],
+    });
+  });
+
+  it("drops a stale ref of either touched marketplace when narrowed to both", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const { useCase, registry, manifest, manifestRepo } = build(activator);
+    manifest.setNativeRegistrations(TOOL.claude, {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a" },
+        },
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b" },
+        },
+      ],
+      pluginRefs: ["plugin-a@market-a", "plugin-b-old@market-b"],
+    });
+    await manifestRepo.save(manifest);
+    await registry.save(PROJECT_ROOT, marketplace("market-a"));
+    await registry.save(PROJECT_ROOT, marketplace("market-b"));
+
+    await useCase.execute({
+      projectRoot: PROJECT_ROOT,
+      marketplaceNames: ["market-a", "market-b"],
+    });
+
+    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a" },
+        },
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b" },
+        },
+      ],
+      pluginRefs: ["plugin-a@market-a", "plugin-b@market-b"],
+    });
+  });
+});

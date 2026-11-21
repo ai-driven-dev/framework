@@ -1,57 +1,66 @@
 import { join } from "node:path";
-import type { PluginSourceGitHub } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { PluginCatalog } from "../contract/catalog.js";
 import { hasRelativePluginSources, parsePluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
+import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-layout.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
 import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";
 
-const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
+/** What fetching reads of a marketplace: its name and where it is fetched from. */
+type FetchableMarketplace = Pick<Marketplace, "name" | "source">;
 
 export interface FetchMarketplaceSourceCommand {
-  marketplace: Marketplace;
+  marketplace: FetchableMarketplace;
   cacheDir: string;
   fetchOptions?: PluginFetchOptions;
 }
 
+export interface FetchMarketplaceSourceDeps {
+  readonly pluginFetcher: PluginFetcher;
+  /** A raw catalog fetcher comes with the files its catalog is written to. */
+  readonly rawCatalog: { fetcher: RawCatalogFetcher; fs: FileReader & FileWriter };
+  readonly logger?: Logger;
+}
+
 export class FetchMarketplaceSource {
-  constructor(
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly rawCatalogFetcher?: RawCatalogFetcher,
-    private readonly fs?: FileReader & FileWriter,
-    private readonly logger?: Logger
-  ) {}
+  private readonly pluginFetcher: PluginFetcher;
+  private readonly rawCatalog: FetchMarketplaceSourceDeps["rawCatalog"];
+  private readonly logger: Logger | undefined;
+
+  constructor(deps: FetchMarketplaceSourceDeps) {
+    this.pluginFetcher = deps.pluginFetcher;
+    this.rawCatalog = deps.rawCatalog;
+    this.logger = deps.logger;
+  }
 
   async execute(options: FetchMarketplaceSourceCommand): Promise<string> {
     const { marketplace, cacheDir, fetchOptions } = options;
-    if (marketplace.source.kind === "github" && this.rawCatalogFetcher !== undefined) {
-      await this.rawCatalogFetcher.fetchCatalog(
-        marketplace.source as PluginSourceGitHub,
-        CLAUDE_CATALOG_PATH,
-        cacheDir
+    const { rawCatalog } = this;
+    if (marketplace.source.kind === "github") {
+      const catalog = await rawCatalog.fetcher.fetchCatalog(
+        marketplace.source,
+        MARKETPLACE_CATALOG_RELATIVE
       );
-      return this.probeAndMaybeFallback(marketplace, cacheDir, fetchOptions);
+      await rawCatalog.fs.writeFile(join(cacheDir, MARKETPLACE_CATALOG_RELATIVE), catalog);
+      return this.probeAndMaybeFallback(rawCatalog.fs, options);
     }
     return this.pluginFetcher.fetch(marketplace.source, cacheDir, fetchOptions);
   }
 
   private async probeAndMaybeFallback(
-    marketplace: Marketplace,
-    cacheDir: string,
-    fetchOptions?: PluginFetchOptions
+    fs: FileReader & FileWriter,
+    command: FetchMarketplaceSourceCommand
   ): Promise<string> {
-    if (this.fs === undefined) return cacheDir;
+    const { marketplace, cacheDir } = command;
     try {
-      const catalog = await this.loadRawCatalogSafely(this.fs, cacheDir);
+      const catalog = await this.loadRawCatalogSafely(fs, cacheDir);
       if (catalog === null || !hasRelativePluginSources(catalog)) return cacheDir;
-      return this.runFallback(this.fs, marketplace, cacheDir, fetchOptions);
+      return this.runFallback(fs, command);
     } catch (err) {
-      this.logger?.warn(
-        `Probe failed for ${marketplace.name}, falling back to cache: ${String(err)}`
-      );
+      this.logger?.warn(`Probe failed for ${marketplace.name}, falling back to cache: `, err);
       return cacheDir;
     }
   }
@@ -61,22 +70,20 @@ export class FetchMarketplaceSource {
     cacheDir: string
   ): Promise<PluginCatalog | null> {
     try {
-      const catalogFilePath = join(cacheDir, CLAUDE_CATALOG_PATH);
-      const raw = JSON.parse(await fs.readFile(catalogFilePath)) as unknown;
+      const catalogFilePath = join(cacheDir, MARKETPLACE_CATALOG_RELATIVE);
+      const raw: unknown = JSON.parse(await fs.readFile(catalogFilePath));
       return parsePluginCatalog(raw);
     } catch (err) {
-      this.logger?.warn(`Could not load raw catalog from ${cacheDir}: ${String(err)}`);
+      this.logger?.warn(`Could not load raw catalog from ${cacheDir}: `, err);
       return null;
     }
   }
 
   private async runFallback(
     fs: FileWriter,
-    marketplace: Marketplace,
-    cacheDir: string,
-    fetchOptions?: PluginFetchOptions
+    { marketplace, cacheDir, fetchOptions }: FetchMarketplaceSourceCommand
   ): Promise<string> {
-    await fs.deleteFile(join(cacheDir, CLAUDE_CATALOG_PATH));
+    await fs.deleteFile(join(cacheDir, MARKETPLACE_CATALOG_RELATIVE));
     return this.pluginFetcher.fetch(marketplace.source, cacheDir, fetchOptions);
   }
 }

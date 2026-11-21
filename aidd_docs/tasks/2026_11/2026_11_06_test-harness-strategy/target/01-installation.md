@@ -142,7 +142,7 @@ Context map (overview, section 4): `installation -> tools`, `machine-claims -> i
 | --- | --- | --- |
 | Upstream (reads) | `tools` | `ToolId`, `AiToolId`, tool profile, content and merge capabilities, the `FileMerger` port; `getToolSupportedScope` reads the tool registry (`install-scope.ts:19`), so the domain imports another context |
 | Upstream | `translate` | `PluginDistribution`, `ContentSection`, canonical descriptor; the plugin translators (`application/framework/translator/`, 8 files, 835 lines) write into `Manifest` |
-| Upstream | `distribution` | `PluginFetcher`, `FRAMEWORK_MARKETPLACE_NAME` |
+| Upstream | `distribution` | nothing imported: distribution's `PluginFetcher` reaches installation through the shape installation declares in `ports/marketplace-sources`, and the framework marketplace name arrives as a value from `orchestration` |
 | Downstream | `machine-claims` | `ownerOf` |
 | Downstream | `orchestration/` | the commands (`application/`) and published types (`contract/`) |
 
@@ -154,7 +154,7 @@ No other context imports `contexts/framework` today: only `presentation/` (11 fi
 
 Existing: `tests/contexts/framework/` has 172 files; `application/plugin` 20, `application/framework` 20, `application/flows` 17, `application/shared` 16. The tests of wide constructors pass 7 to 16 positional arguments.
 
-Titles in English, one test file per command, named with its level suffix (`remove-plugin.unit.test.ts`) (`describe` names a situation, `it` an observable result; 400-line warning, 800-line failure). A test is written before the code and must fail for the reason it names; a test that passes at once is not kept.
+Titles in English, one test file per command, named with its level suffix (`remove-plugin.unit.test.ts`) (`describe` names a situation, `it` an observable result; 800-line failure, 400 lines a review grid point). A test is written before the code and must fail for the reason it names; a test that passes at once is not kept.
 
 | Level | For what |
 | --- | --- |

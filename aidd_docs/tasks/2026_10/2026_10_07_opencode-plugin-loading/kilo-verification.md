@@ -7,15 +7,15 @@ Implementation: map session creation, completed tools and idle to `SessionStart/
 ## Tests
 
 - [Bridge](../../../../cli/tests/contexts/tools/domain/bridges/event-bridge.integration.test.ts): missing declarations/commands, argument parsing, released lifecycle events, malformed/incomplete/failed tools, matchers, replay, new turns and deleted-session recreation. Nonzero exit, spawn and dispatch failures are reported once.
-- [Delivery](../../../../cli/tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts): setup/install/update for `kilo.jsonc` and `.kilo/kilo.jsonc`; exact JSONC bytes, comments, model, permissions and MCP preserved. Verify scripts/manifest version and restore a deleted bridge. These are application use cases with filesystem/fetch doubles.
-- [Checkout](../../../../cli/tests/architecture/bundled-config-checkout.arch.test.ts): isolated real Git checkout with `core.autocrlf=true` preserves LF for embedded assets; removing the attribute rule defeats preservation.
-- [Real Kilo 7.7.5](../../../../cli/tests/e2e/kilo-runtime.e2e.test.ts): actual CLI translation, byte-identical memory script updating `AGENTS.md`, skills/agents/MCP discovery, real read/result and exact hook payloads. Independent host observation and a final snapshot after process-group shutdown reject late duplicates. Assert server/captured-process shutdown and model cleanup. Profiles are isolated; only inference is substituted. Translation may normalize JSON; delivered configuration remains byte-identical during execution.
+- [Delivery](../../../../cli/tests/contexts/installation/application/plugin/kilo-plugin-delivery.integration.test.ts): setup/install/update for `kilo.jsonc` and `.kilo/kilo.jsonc`; exact JSONC bytes, comments, model, permissions and MCP preserved. Verify scripts/manifest version and restore a deleted bridge. These are application use cases with filesystem/fetch doubles.
+- [Checkout](../../../../cli/tests/integration/bundled-config-checkout.integration.test.ts): isolated real Git checkout with `core.autocrlf=true` preserves LF for embedded assets; removing the attribute rule defeats preservation.
+- [Real Kilo 7.7.5](../../../../cli/scripts/smoke-kilo.sh): actual CLI translation, byte-identical memory script updating `AGENTS.md`, skills/agents/MCP discovery, real read/result and exact hook payloads. Independent host observation and a final snapshot after process-group shutdown reject late duplicates. Assert server/captured-process shutdown and model cleanup. Profiles are isolated; only inference is substituted. Translation may normalize JSON; delivered configuration remains byte-identical during execution.
 
 Re-run in a disposable environment, as [CI](../../../../.github/workflows/cli-ci.yml) does; the install command replaces its global Kilo executable:
 
 ```sh
 npm install -g @kilocode/cli@7.7.5
-pnpm --dir cli test:e2e:kilo
+pnpm --dir cli smoke:kilo
 pnpm --dir cli exec vitest run --project=integration tests/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.integration.test.ts
 pnpm --dir cli exec vitest run --config vitest.mutation.config.ts tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts
 pnpm --dir cli test:mutation:tools-opencode

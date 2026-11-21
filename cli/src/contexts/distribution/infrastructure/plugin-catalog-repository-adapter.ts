@@ -1,15 +1,19 @@
 import { isAbsolute, join, resolve } from "node:path";
-import { MalformedMarketplaceCatalogError } from "../../../shared/domain/errors.js";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../shared/domain/paths.js";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
+import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.js";
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { PluginCatalog } from "../contract/catalog.js";
 import { parsePluginCatalog } from "../domain/catalog.js";
 import { parseCopilotMarketplaceCatalog } from "../domain/catalog-parsers/copilot-marketplace-catalog.js";
+import { MalformedMarketplaceCatalogError } from "../domain/distribution.error.js";
+import {
+  MARKETPLACE_CACHE_SUBDIR,
+  MARKETPLACE_CATALOG_RELATIVE,
+} from "../domain/marketplace-cache-layout.js";
 import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 
 const COPILOT_MARKETPLACE_PATH = ".plugin/marketplace.json";
-const CLAUDE_MARKETPLACE_PATH = ".claude-plugin/marketplace.json";
 
 export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   constructor(private readonly fs: FileReader) {}
@@ -20,7 +24,7 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
       const catalog = await this.readCopilotNativeCatalog(copilotPath);
       return this.resolveLocalPaths(catalog, frameworkPath);
     }
-    const claudePath = join(frameworkPath, CLAUDE_MARKETPLACE_PATH);
+    const claudePath = join(frameworkPath, MARKETPLACE_CATALOG_RELATIVE);
     if (!(await this.fs.fileExists(claudePath))) {
       return null;
     }
@@ -33,8 +37,8 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   }
 
   private parseDetail(err: unknown): string {
-    const message = err instanceof Error ? err.message : String(err);
-    return message.replace(/^Invalid plugin manifest:\s*/, "");
+    if (err instanceof InvalidPluginManifestError) return err.detail ?? "";
+    return errorMessage(err);
   }
 
   private async readCopilotNativeCatalog(fullPath: string): Promise<PluginCatalog> {

@@ -6,6 +6,7 @@ import { SelfUpdate } from "../contexts/update/application/self-update.js";
 import { NpmRegistryReleaseAdapter } from "../contexts/update/infrastructure/npm-registry-release-adapter.js";
 import { PackageManagerInstallerAdapter } from "../contexts/update/infrastructure/package-manager-installer-adapter.js";
 import { UpdateCheckCacheAdapter } from "../contexts/update/infrastructure/update-check-cache-adapter.js";
+import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -30,9 +31,11 @@ export interface UpdateDeps {
 }
 
 export function wireUpdate(shared: UpdateWiring): UpdateDeps {
-  const releases = new NpmRegistryReleaseAdapter(shared.http, {
+  const github = new GitHubAdapter(shared.http, {
+    apiBase: shared.environment.get("AIDD_SELF_UPDATE_API_BASE"),
     tokenProvider: shared.tokenProvider,
-    githubApiBase: shared.environment.get("AIDD_SELF_UPDATE_API_BASE"),
+  });
+  const releases = new NpmRegistryReleaseAdapter(shared.http, github, {
     npmRegistryBase: shared.environment.get("AIDD_SELF_UPDATE_NPM_BASE"),
     logger: shared.logger,
   });

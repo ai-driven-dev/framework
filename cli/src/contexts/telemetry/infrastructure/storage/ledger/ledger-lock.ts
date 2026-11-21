@@ -1,8 +1,6 @@
 import { rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { isErrnoException, tryParseJson } from "../../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import { modifiedAtIfPresent, readTextIfPresent } from "../../reading/text-file.js";
 
 export interface LockOptions {
@@ -51,32 +49,10 @@ function holderIn(text: string): Holder | null {
   const parsed = tryParseJson(text);
   const lock = parsed.ok ? asPlainObject(parsed.value) : null;
   const createdAt = Date.parse(String(lock?.created_at));
-  return Number.isInteger(lock?.pid) && !Number.isNaN(createdAt)
-    ? { pid: lock?.pid as number, createdAt }
+  const pid = lock?.pid;
+  return typeof pid === "number" && Number.isInteger(pid) && !Number.isNaN(createdAt)
+    ? { pid, createdAt }
     : null;
-}
-
-/** A lock on a file in a directory kept private, taken around some work. */
-export class DirectoryLock {
-  constructor(
-    private readonly dir: string,
-    private readonly file: string,
-    private readonly storage: PrivateStorage,
-    private readonly options: Partial<LockOptions>
-  ) {}
-
-  async exclusively<T>(work: () => Promise<T>, waitMs?: number): Promise<T> {
-    await this.storage.ensureDirectory(this.dir);
-    const release = await new LedgerLock(join(this.dir, this.file), {
-      ...this.options,
-      ...(waitMs === undefined ? {} : { waitMs }),
-    }).acquire();
-    try {
-      return await work();
-    } finally {
-      await release();
-    }
-  }
 }
 
 /** A lock file holding the pid and creation time of its owner, created exclusively. The owner
@@ -95,36 +71,49 @@ export class LedgerLock {
 
   /** Resolves with the function that releases the lock. */
   async acquire(): Promise<() => Promise<void>> {
-    const { now, waitMs, name, sleep, pollMs } = this.options;
+    const { now, waitMs, sleep, pollMs } = this.options;
     const deadline = now() + waitMs;
     for (;;) {
-      if (await this.tryCreate()) return () => this.release();
-      const holder = await this.holder();
-      if (holder === null) continue;
-      if (this.isStale(holder)) {
-        await rm(this.path, { force: true });
-        continue;
-      }
-      if (now() >= deadline) {
-        throw new Error(
-          `The ${name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
-            `Wait for it to finish, or remove ${this.path} if that process is not an aidd command.`
-        );
-      }
-      await sleep(pollMs);
+      const step = await this.attempt(deadline);
+      if (step === "taken") return () => this.release();
+      if (step === "wait") await sleep(pollMs);
     }
   }
 
-  private async tryCreate(): Promise<boolean> {
+  /** One try at the lock: taken, to wait before the next try, or to try again at once. */
+  private async attempt(deadline: number): Promise<"taken" | "wait" | "again"> {
+    const created = await this.tryCreate(this.options.now() >= deadline);
+    if (created === "taken") return "taken";
+    if (created === "removing") return "wait";
+    const holder = await this.holder();
+    if (holder === null) return "again";
+    if (this.isStale(holder)) {
+      await rm(this.path, { force: true });
+      return "again";
+    }
+    if (this.options.now() >= deadline) throw this.lockedBy(holder);
+    return "wait";
+  }
+
+  private lockedBy(holder: Holder): Error {
+    return new Error(
+      `The ${this.options.name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
+        `Wait for it to finish, or remove ${this.path} if that process is not an aidd command.`
+    );
+  }
+
+  private async tryCreate(pastDeadline: boolean): Promise<"taken" | "held" | "removing"> {
     const created = new Date(this.options.now()).toISOString();
     try {
       await writeFile(this.path, JSON.stringify({ pid: this.options.pid, created_at: created }), {
         flag: "wx",
         mode: 0o600,
       });
-      return true;
+      return "taken";
     } catch (error) {
-      if (isErrnoException(error) && error.code === "EEXIST") return false;
+      if (isErrnoException(error) && error.code === "EEXIST") return "held";
+      // Windows refuses a file another handle is still deleting, until that handle closes.
+      if (isErrnoException(error) && error.code === "EPERM" && !pastDeadline) return "removing";
       throw error;
     }
   }

@@ -4,15 +4,14 @@ import { describe, expect, it } from "vitest";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");
-const HASHER = new DeterministicHasher();
-const HASH_OF_ONE = HASHER.hash("one").value;
-const HASH_OF_TWO = HASHER.hash("two").value;
+const HASH_OF_ONE = FileHash.of("one").value;
+const HASH_OF_TWO = FileHash.of("two").value;
 
 function manifestWith(plugins: Record<string, Record<string, string>>): Manifest {
   const manifest = Manifest.create();
@@ -39,10 +38,9 @@ describe("DetectPluginDrift", () => {
       "aidd-one": { "aidd-one/a.md": HASH_OF_ONE },
       "aidd-two": { "aidd-two/a.md": HASH_OF_ONE },
     });
-    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}, HASHER));
+    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}), registeredTools());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: [TOOL.cursor],
@@ -58,14 +56,12 @@ describe("DetectPluginDrift", () => {
     const manifest = manifestWith({
       "aidd-one": { "aidd-one/gone.md": HASH_OF_ONE, "aidd-one/changed.md": HASH_OF_ONE },
     });
-    const fs = new InMemoryFileAdapter(
-      { [join(USER_PLUGINS_DIR, "aidd-one", "changed.md")]: "two" },
-      HASHER
-    );
-    const useCase = new DetectPluginDrift(fs);
+    const fs = new InMemoryFileAdapter({
+      [join(USER_PLUGINS_DIR, "aidd-one", "changed.md")]: "two",
+    });
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
-      tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: [TOOL.cursor],

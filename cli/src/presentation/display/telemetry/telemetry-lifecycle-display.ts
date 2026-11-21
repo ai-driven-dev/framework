@@ -13,11 +13,11 @@ import {
   RETENTION_WANTED_DAYS,
 } from "../../../contexts/telemetry/contract/claude-retention.js";
 import type { ErasureKind } from "../../../contexts/telemetry/contract/measurement-erasure.js";
-import type { CLIOutput } from "../../output.js";
-import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
+import type { Output } from "../../../orchestration/domain/output.js";
+import { IDENTITY_RULE } from "./telemetry-identity-display.js";
+import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON } from "./telemetry-read-display.js";
 
-/** What `telemetry on` says of an identifier that cannot name a person. */
-export const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
+const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
 
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
@@ -44,12 +44,12 @@ function identityLine({ personId, previous }: OnIdentity): string {
 }
 
 /** A typed identifier refused, before it is asked for again. */
-export function printIdentityRule(output: CLIOutput): void {
+export function printIdentityRule(output: Output): void {
   output.warn(IDENTITY_RULE);
 }
 
 export function printOnResult(
-  output: CLIOutput,
+  output: Output,
   result: EnableTelemetryResult,
   retention?: ReadTranscriptRetentionResult
 ): void {
@@ -80,7 +80,7 @@ export function printOnResult(
   );
 }
 
-export function printOffResult(output: CLIOutput, result: DisableTelemetryResult): void {
+export function printOffResult(output: Output, result: DisableTelemetryResult): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -100,7 +100,7 @@ const WHAT: Readonly<Record<ErasureKind, string>> = {
   "previous-identity": "the previous version's identity",
 };
 
-function listKept(output: CLIOutput, plan: ForgetPlan): void {
+function listKept(output: Output, plan: ForgetPlan): void {
   for (const entry of plan.entries) {
     output.info(`  - ${WHAT[entry.kind]}: ${entry.path} (${plural(entry.files, "file")})`);
   }
@@ -116,7 +116,7 @@ function listKept(output: CLIOutput, plan: ForgetPlan): void {
   }
 }
 
-function warnSkipped(output: CLIOutput, plan: ForgetPlan): void {
+function warnSkipped(output: Output, plan: ForgetPlan): void {
   for (const root of plan.missing) {
     output.warn(`Skipped ${root}: it is gone, or is no longer that clone.`);
   }
@@ -133,7 +133,7 @@ function empty(plan: ForgetPlan): boolean {
   );
 }
 
-export function printForgetResult(output: CLIOutput, result: ForgetTelemetryResult): void {
+export function printForgetResult(output: Output, result: ForgetTelemetryResult): void {
   if (empty(result.plan)) {
     output.info("Nothing measured is kept on this machine.");
     warnSkipped(output, result.plan);

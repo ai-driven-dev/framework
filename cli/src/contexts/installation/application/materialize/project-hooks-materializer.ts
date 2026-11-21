@@ -1,84 +1,83 @@
-import { dirname, join } from "node:path";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
+import { join } from "node:path";
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../translate/domain/plugin-distribution.js";
+} from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type {
   PluginTranslationSkip,
   ReadonlySkipList,
-} from "../../../translate/domain/plugin-translation-skip.js";
-import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
+} from "../../../../shared/domain/plugin/plugin-translation-skip.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import {
   assertProjectHooksUnchanged,
-  OVERWRITE_EDITED_HINT,
   type ProjectHooksGuard,
+} from "../shared/assert-project-hooks-unchanged.js";
+import {
   recordedProjectHookEntries,
   removeRecordedProjectHooks,
 } from "../shared/remove-project-hooks.js";
 
-const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
+import {
+  assertScriptsNotUserOwned,
+  HOOKS_MANIFEST_PATH,
+  type HooksDelivery,
+  removeObsoleteScripts,
+  writeProjectHookScripts,
+} from "./project-hook-scripts.js";
+
+export interface ProjectHooksMaterializerRequest {
+  readonly dist: PluginDistribution;
+  readonly tool: ProjectHooksSection;
+  readonly projectRoot: string;
+  readonly previous?: ProjectHooksProvenance;
+  readonly guard?: ProjectHooksGuard;
+}
+
+export interface ProjectHooksMaterialized {
+  readonly skipped: ReadonlySkipList;
+  readonly projectHooks?: ProjectHooksProvenance;
+}
 
 /**
- * Delivers a plugin's hooks to the destination a `hooksDestination: "project"` capability names —
- * merged into the project's own hooks file, scripts copied beside it — rather than into the
+ * Delivers a plugin's hooks to the destination a `hooksDestination: "project"` capability names -
+ * merged into the project's own hooks file, scripts copied beside it: rather than into the
  * plugin's own directory. Both materialization routes call it, so where a tool's hooks land is
  * decided by its own declaration, never by which translator happened to run.
  */
 export class ProjectHooksMaterializer {
   constructor(private readonly fs: FileWriter & FileReader) {}
 
-  async materialize(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    projectRoot: string
-  ): Promise<ReadonlySkipList> {
-    return (await this.materializeWithProvenance(dist, tool, projectRoot)).skipped;
-  }
-
-  async materializeWithProvenance(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    projectRoot: string,
-    previous?: ProjectHooksProvenance,
-    guard: ProjectHooksGuard = {}
-  ): Promise<{ skipped: ReadonlySkipList; projectHooks?: ProjectHooksProvenance }> {
-    const delivery = tool.projectHooksDelivery();
-    if (delivery === null) return { skipped: [] };
+  async execute({
+    dist,
+    tool,
+    projectRoot,
+    previous,
+    guard = {},
+  }: ProjectHooksMaterializerRequest): Promise<ProjectHooksMaterialized> {
+    const location = tool.projectHooksDelivery();
+    if (location === null) return { skipped: [] };
     const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST_PATH);
     if (manifestFile === undefined) {
-      if (previous !== undefined) {
-        await removeRecordedProjectHooks(
-          this.fs,
-          dist.manifest.name,
-          previous,
-          tool,
-          projectRoot,
-          guard
-        );
-      }
+      await this.detachPrevious({ dist, tool, projectRoot, previous, guard });
       return { skipped: [] };
     }
-    await assertProjectHooksUnchanged(
-      this.fs,
-      dist.manifest.name,
-      previous,
+    await assertProjectHooksUnchanged({
+      fs: this.fs,
+      pluginName: dist.manifest.name,
+      provenance: previous,
       tool,
       projectRoot,
-      guard
-    );
-    await this.assertScriptsNotUserOwned(dist, projectRoot, delivery, previous);
-    const { warnings, entries } = await this.mergeProjectHooksJson(
-      dist,
-      manifestFile,
-      projectRoot,
-      delivery
-    );
-    const scripts = await this.writeProjectHooksScripts(dist, projectRoot, delivery);
-    await this.removeObsoleteScripts(previous, scripts, projectRoot, delivery, guard);
+      guard,
+    });
+    const delivery: HooksDelivery = { dist, projectRoot, location, previous, guard };
+    await assertScriptsNotUserOwned(this.fs, delivery);
+    const { warnings, entries } = await this.mergeProjectHooksJson(delivery, manifestFile);
+    const scripts = await writeProjectHookScripts(this.fs, delivery);
+    await removeObsoleteScripts(this.fs, delivery, scripts);
     return {
       skipped: warnings.map(
         (reason): PluginTranslationSkip => ({
@@ -92,15 +91,26 @@ export class ProjectHooksMaterializer {
     };
   }
 
+  private async detachPrevious(request: ProjectHooksMaterializerRequest): Promise<void> {
+    const { dist, tool, projectRoot, previous, guard } = request;
+    if (previous === undefined) return;
+    await removeRecordedProjectHooks({
+      fs: this.fs,
+      pluginName: dist.manifest.name,
+      provenance: previous,
+      tool,
+      projectRoot,
+      guard,
+    });
+  }
+
   private async mergeProjectHooksJson(
-    dist: PluginDistribution,
-    manifestFile: PluginComponentFile,
-    projectRoot: string,
-    delivery: ProjectHooksLocation
+    { dist, projectRoot, location }: HooksDelivery,
+    manifestFile: PluginComponentFile
   ): Promise<{ warnings: readonly string[]; entries: ProjectHooksProvenance["entries"] }> {
-    const destPath = join(projectRoot, delivery.relativePath);
+    const destPath = join(projectRoot, location.relativePath);
     const existing = await this.readExistingJson(destPath);
-    const { content, warnings } = delivery.format.merge(
+    const { content, warnings } = location.format.merge(
       existing,
       manifestFile.content,
       dist.manifest.name
@@ -108,80 +118,22 @@ export class ProjectHooksMaterializer {
     await this.fs.writeFile(destPath, content);
     return {
       warnings,
-      entries: recordedProjectHookEntries(delivery.format, content, dist.manifest.name),
+      entries: recordedProjectHookEntries(location.format, content, dist.manifest.name),
     };
-  }
-
-  private async assertScriptsNotUserOwned(
-    dist: PluginDistribution,
-    projectRoot: string,
-    delivery: ProjectHooksLocation,
-    previous?: ProjectHooksProvenance
-  ): Promise<void> {
-    for (const file of dist.components.hooks) {
-      if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const relativePath = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
-      if (previous?.scripts.has(relativePath) === true) continue;
-      if (await this.fs.fileExists(join(projectRoot, relativePath))) {
-        throw new Error(
-          `${delivery.toolName} hook script '${relativePath}' is user-owned; install refused.`
-        );
-      }
-    }
-  }
-
-  private async writeProjectHooksScripts(
-    dist: PluginDistribution,
-    projectRoot: string,
-    delivery: ProjectHooksLocation
-  ): Promise<ReadonlyMap<string, string>> {
-    const scripts = new Map<string, string>();
-    for (const file of dist.components.hooks) {
-      if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const dest = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
-      await this.fs.writeFile(
-        join(projectRoot, dest),
-        delivery.hookScript(file.relativePath, file.content)
-      );
-      scripts.set(dest, (await this.fs.readFileHash(join(projectRoot, dest))).value);
-    }
-    return scripts;
-  }
-
-  private async removeObsoleteScripts(
-    previous: ProjectHooksProvenance | undefined,
-    current: ReadonlyMap<string, string>,
-    projectRoot: string,
-    delivery: ProjectHooksLocation,
-    { overwriteEdited = false }: ProjectHooksGuard
-  ): Promise<void> {
-    if (previous === undefined) return;
-    for (const [relativePath, digest] of previous.scripts) {
-      if (current.has(relativePath)) continue;
-      const path = join(projectRoot, relativePath);
-      if (!(await this.fs.fileExists(path))) continue;
-      if (!overwriteEdited && (await this.fs.readFileHash(path)).value !== digest) {
-        throw new Error(
-          `${delivery.toolName} hook script '${relativePath}' was edited during reinstall; removal refused. ${OVERWRITE_EDITED_HINT}`
-        );
-      }
-      await this.fs.deleteFile(path);
-      await this.fs.deleteEmptyDirectories(dirname(path));
-    }
   }
 
   private async readExistingJson(path: string): Promise<string | null> {
     try {
       return await this.fs.readFile(path);
     } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+      if (isErrnoException(err) && err.code === "ENOENT") return null;
       throw err;
     }
   }
 }
 
 /** A copy of `dist` with every `hooks/` file dropped, from `files` and from `components.hooks`
- * alike — for a capability declaring `hooksDestination: "project"`, so none of its hooks are
+ * alike: for a capability declaring `hooksDestination: "project"`, so none of its hooks are
  * written under the plugin's own directory, only through `materialize`. */
 export function withoutHooks(dist: PluginDistribution): PluginDistribution {
   return new PluginDistribution({

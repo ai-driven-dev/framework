@@ -44,14 +44,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
-| [bank-guard.cjs](hooks/lib/bank-guard.cjs) |
-| [changes.cjs](hooks/lib/changes.cjs) |
-| [common-rules.cjs](hooks/lib/common-rules.cjs) |
-| [fact-sheet.cjs](hooks/lib/fact-sheet.cjs) |
 | [host.cjs](hooks/lib/host.cjs) |
-| [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
-| [plan.cjs](hooks/lib/plan.cjs) |
-| [report.cjs](hooks/lib/report.cjs) |
+| [markdown.cjs](hooks/lib/markdown.cjs) |
 
 ### `skills`
 
@@ -86,25 +80,23 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-scan.md](skills/02-project-memory/actions/01-scan.md) | - |
+| `actions` | [01-read.md](skills/02-project-memory/actions/01-read.md) | - |
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
-| `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
-| `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [fact-sheet.md](skills/02-project-memory/assets/fact-sheet.md) | - |
+| `actions` | [03-wire.md](skills/02-project-memory/actions/03-wire.md) | - |
 | `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
-| `references` | [engine.md](skills/02-project-memory/references/engine.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or update the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request about the project memory, even a bare "check the project memory"; with no bank it sets one up, with a bank it refreshes it. Not for editing one existing memory file.` |
+| `scripts` | [project-memory.cjs](skills/02-project-memory/scripts/project-memory.cjs) | - |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or wire the project memory of its architecture, conventions and decisions into your AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.` |
 
 #### `skills/03-context-generate`
 
 | File | Description |
 |------|---|
-| [SKILL.md](skills/03-context-generate/SKILL.md) | `Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its generator when the kind is unnamed. A named kind triggers its generator directly. Not for listing existing artifacts.` |
+| [SKILL.md](skills/03-context-generate/SKILL.md) | `Routes a request to generate a skill, rule, agent, command or hook to its generator when the kind is unnamed, not for listing existing artifacts.` |
 
 #### `skills/04-skill-generate`
 
@@ -115,66 +107,77 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-write.md](skills/04-skill-generate/actions/03-write.md) | - |
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<what it produces>. Use when the user wants to <intents>. <Not for X when needed.>` |
+| `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<description>` |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
-| `references` | [review-protocol.md](skills/04-skill-generate/references/review-protocol.md) | - |
-| `references` | [scope-frame.md](skills/04-skill-generate/references/scope-frame.md) | - |
+| `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
-| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.` |
+| `scripts` | [check-skill.cjs](skills/04-skill-generate/scripts/check-skill.cjs) | - |
+| `scripts` | [scaffold-skill.cjs](skills/04-skill-generate/scripts/scaffold-skill.cjs) | - |
+| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Creates or updates a skill across the host AI tools, when the user wants to create a skill, or to refactor, rewrite or reformat an existing one.` |
 
 #### `skills/05-rule-generate`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-rule.md](skills/05-rule-generate/actions/01-capture-rule.md) | - |
-| `actions` | [02-write-rule.md](skills/05-rule-generate/actions/02-write-rule.md) | - |
+| `actions` | [01-frame.md](skills/05-rule-generate/actions/01-frame.md) | - |
+| `actions` | [02-draft.md](skills/05-rule-generate/actions/02-draft.md) | - |
+| `actions` | [03-plan.md](skills/05-rule-generate/actions/03-plan.md) | - |
+| `actions` | [04-write.md](skills/05-rule-generate/actions/04-write.md) | - |
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
+| `references` | [hosts.md](skills/05-rule-generate/references/hosts.md) | - |
+| `references` | [policy-discovery.md](skills/05-rule-generate/references/policy-discovery.md) | - |
 | `references` | [rule-assessment.md](skills/05-rule-generate/references/rule-assessment.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
-| `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
-| `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
+| `references` | [writer.md](skills/05-rule-generate/references/writer.md) | - |
 | `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
-| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
+| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Creates, updates, publishes or removes a coding rule across hosts when a convention is set, changed or dropped, not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-agent.md](skills/06-agent-generate/actions/01-capture-agent.md) | - |
-| `actions` | [02-write-agent.md](skills/06-agent-generate/actions/02-write-agent.md) | - |
-| `actions` | [03-validate.md](skills/06-agent-generate/actions/03-validate.md) | - |
-| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does + when to use>  # required, third person` |
+| `actions` | [01-frame.md](skills/06-agent-generate/actions/01-frame.md) | - |
+| `actions` | [02-plan.md](skills/06-agent-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/06-agent-generate/actions/03-write.md) | - |
+| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does>. Use to <when to call it>.` |
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
-| `references` | [tool-paths.md](skills/06-agent-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Generate an agent across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor an agent, subagent or specialized role. Not for other artifacts like skills, rules, commands, hooks.` |
+| `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/06-agent-generate/references/writer.md) | - |
+| `scripts` | [write-agent.cjs](skills/06-agent-generate/scripts/write-agent.cjs) | - |
+| `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.` |
 
 #### `skills/07-command-generate`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-command.md](skills/07-command-generate/actions/01-capture-command.md) | - |
-| `actions` | [02-write-command.md](skills/07-command-generate/actions/02-write-command.md) | - |
-| `actions` | [03-validate.md](skills/07-command-generate/actions/03-validate.md) | - |
+| `actions` | [01-frame.md](skills/07-command-generate/actions/01-frame.md) | - |
+| `actions` | [02-plan.md](skills/07-command-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/07-command-generate/actions/03-write.md) | - |
 | `assets` | [command-template.md](skills/07-command-generate/assets/command-template.md) | - |
 | `references` | [command-authoring.md](skills/07-command-generate/references/command-authoring.md) | - |
-| `references` | [tool-paths.md](skills/07-command-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/07-command-generate/SKILL.md) | `Generate a flat slash command across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a one-shot slash command. Not for multi-step skills or other artifacts like rules, agents, hooks.` |
+| `references` | [hosts.md](skills/07-command-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/07-command-generate/references/writer.md) | - |
+| `scripts` | [write-command.cjs](skills/07-command-generate/scripts/write-command.cjs) | - |
+| `-` | [SKILL.md](skills/07-command-generate/SKILL.md) | `Creates or updates a slash command, a one-shot prompt typed as /name, across the host AI tools, when the user wants a new command or to refactor one.` |
 
 #### `skills/08-hook-generate`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-hook.md](skills/08-hook-generate/actions/01-capture-hook.md) | - |
-| `actions` | [02-write-hook.md](skills/08-hook-generate/actions/02-write-hook.md) | - |
-| `actions` | [03-validate.md](skills/08-hook-generate/actions/03-validate.md) | - |
-| `assets` | [hook-script-template.sh](skills/08-hook-generate/assets/hook-script-template.sh) | - |
-| `assets` | [hook-template.json](skills/08-hook-generate/assets/hook-template.json) | - |
+| `actions` | [01-frame.md](skills/08-hook-generate/actions/01-frame.md) | - |
+| `actions` | [02-plan.md](skills/08-hook-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/08-hook-generate/actions/03-write.md) | - |
+| `actions` | [04-verify.md](skills/08-hook-generate/actions/04-verify.md) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
-| `references` | [tool-paths.md](skills/08-hook-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generate a hook, a handler that runs at a lifecycle event, across the host AI tools. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills or rules.` |
+| `references` | [hosts.md](skills/08-hook-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/08-hook-generate/references/writer.md) | - |
+| `scripts` | [verify-hook.cjs](skills/08-hook-generate/scripts/verify-hook.cjs) | - |
+| `scripts` | [write-hook.cjs](skills/08-hook-generate/scripts/write-hook.cjs) | - |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.` |
 
 #### `skills/09-mermaid`
 
@@ -188,22 +191,18 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-source.md](skills/10-learn/actions/01-source.md) | - |
-| `actions` | [02-gather.md](skills/10-learn/actions/02-gather.md) | - |
-| `actions` | [03-assess.md](skills/10-learn/actions/03-assess.md) | - |
-| `actions` | [04-write.md](skills/10-learn/actions/04-write.md) | - |
-| `actions` | [05-sync.md](skills/10-learn/actions/05-sync.md) | - |
+| `actions` | [01-find.md](skills/10-learn/actions/01-find.md) | - |
+| `actions` | [02-propose.md](skills/10-learn/actions/02-propose.md) | - |
+| `actions` | [03-write.md](skills/10-learn/actions/03-write.md) | - |
 | `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | - |
-| `assets` | [learning-packet.md](skills/10-learn/assets/learning-packet.md) | - |
-| `assets` | [recommendation-table.md](skills/10-learn/assets/recommendation-table.md) | - |
-| `assets` | [write-report.md](skills/10-learn/assets/write-report.md) | - |
-| `references` | [assessment.md](skills/10-learn/references/assessment.md) | - |
+| `assets` | [learn-record.md](skills/10-learn/assets/learn-record.md) | - |
+| `assets` | [proposal-table.md](skills/10-learn/assets/proposal-table.md) | - |
+| `assets` | [report.md](skills/10-learn/assets/report.md) | - |
 | `references` | [destinations.md](skills/10-learn/references/destinations.md) | - |
-| `references` | [gather-protocol.md](skills/10-learn/references/gather-protocol.md) | - |
-| `references` | [review-protocol.md](skills/10-learn/references/review-protocol.md) | - |
-| `references` | [sources.md](skills/10-learn/references/sources.md) | - |
-| `references` | [sync-arguments.md](skills/10-learn/references/sync-arguments.md) | - |
-| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings. Use when the user wants to remember, record, or formalize a decision, convention, lesson, pitfall, reusable workflow, or review finding. Not for preferences or temporary notes.` |
+| `references` | [signals.md](skills/10-learn/references/signals.md) | - |
+| `references` | [writer.md](skills/10-learn/references/writer.md) | - |
+| `scripts` | [write-decision.cjs](skills/10-learn/scripts/write-decision.cjs) | - |
+| `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Captures durable project learnings as memory, decisions or generated rules, when the user wants to remember, record or formalize one.` |
 
 #### `skills/11-explore`
 

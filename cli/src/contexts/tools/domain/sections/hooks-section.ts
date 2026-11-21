@@ -1,7 +1,10 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { FlatHooksBridge } from "../../contract/build-contract.js";
+import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 export type HooksConfigParams = {
   outputPath: string;
@@ -29,12 +32,14 @@ export class HooksConfigPart {
     return this.#params.consumes?.includes(configName) ?? false;
   }
 
-  outputPath(): string {
-    return this.#params.outputPath;
-  }
-
-  mergeStrategy(): "user-prime" | "none" {
-    return this.#params.mergeStrategy ?? "user-prime";
+  fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
+    return new InstallationFile({
+      relativePath: place.relativePath ?? this.#params.outputPath,
+      content,
+      hash: FileHash.of(content),
+      mergeStrategy: this.#params.mergeStrategy ?? "user-prime",
+      frameworkPath: place.frameworkPath,
+    });
   }
 
   accepts(relativePath: string): boolean {

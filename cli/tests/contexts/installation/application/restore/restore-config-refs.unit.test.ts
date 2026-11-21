@@ -1,15 +1,15 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Restore } from "../../../../../src/contexts/installation/application/restore/restore.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import {
-  buildUnitDeps,
+  buildInstallationDeps,
   FIXTURE_DIR,
   initAndInstall,
-} from "../../../../helpers/ports/build-unit-deps.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
-import { OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
+import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -33,7 +33,7 @@ describe("restore reads every config artifact a profile consumes", () => {
 });
 
 async function installedThenDeleted(toolId: ToolId, relativePath: string) {
-  const deps = await buildUnitDeps(PROJECT_ROOT);
+  const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, toolId);
   const target = join(PROJECT_ROOT, relativePath);
   expect(deps.fs.has(target)).toBe(true);
@@ -41,18 +41,12 @@ async function installedThenDeleted(toolId: ToolId, relativePath: string) {
   return { deps, target };
 }
 
-async function restore(deps: Awaited<ReturnType<typeof buildUnitDeps>>, toolId: ToolId) {
-  await new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
-    new OverwritePrompter(),
-    deps.pluginFetcher,
-    deps.pluginDistributionReader
-  ).execute({
-    tools: catalogOf(),
+async function restore(deps: Awaited<ReturnType<typeof buildInstallationDeps>>, toolId: ToolId) {
+  await restoreOf({
+    ...deps,
+    prompter: new OverwritePrompter(),
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+  }).execute({
     frameworkPath: FIXTURE_DIR,
     version: "test",
     projectRoot: PROJECT_ROOT,

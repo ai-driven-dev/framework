@@ -1,14 +1,14 @@
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { MAX_IDENTITY_LENGTH } from "../../contract/identity-limit.js";
 
-const MAX_LENGTH = 128;
 // biome-ignore lint/suspicious/noControlCharactersInRegex: a control character is what is refused
 const CONTROL = /[\u0000-\u001f\u007f]/;
 
 /** The identifier a person chose to be named by: one trimmed line, or `null`. */
 export function personIdOf(typed: string): string | null {
   const id = typed.trim();
-  return id === "" || id.length > MAX_LENGTH || CONTROL.test(id) ? null : id;
+  return id === "" || id.length > MAX_IDENTITY_LENGTH || CONTROL.test(id) ? null : id;
 }
 
 /** `identity.json`: exactly one field. */

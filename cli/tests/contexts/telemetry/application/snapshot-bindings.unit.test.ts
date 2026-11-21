@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
-import { FakeBindings } from "../testing/fake-bindings.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
 
 const ROOT = "/repo";
 const DECLARED = { branch: "feat/x", task: "t", ticket: null, declared_at: "d", none: false };
@@ -11,12 +11,12 @@ function setup() {
   const events: string[] = [];
   const source = new FakeBindings(events);
   const store = new InMemorySnapshots(events);
-  const useCase = new SnapshotBindings(
+  const useCase = new SnapshotBindings({
     source,
     store,
-    new InMemoryBindingsLock(events),
-    () => new Date(0)
-  );
+    lock: new InMemoryBindingsLock(events),
+    now: () => new Date(0),
+  });
   const run = () => useCase.execute({ repositoryId: "r", root: ROOT });
   return { source, store, events, run };
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { MarketplaceRegistration } from "../../../../../src/contexts/tools/domain/native-registration/marketplace-registration.js";
 import { NativeActivation } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
-import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
-import { keyAskedOf } from "../../../../helpers/settings-key-probe.js";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
+import { keyAskedOf } from "../../testing/settings-key-probe.builder.js";
 
 const settings = {
   settingsPath: ".claude/settings.json",
@@ -106,7 +106,11 @@ describe("MarketplaceRegistration", () => {
 
   it("refuses to register without a native activation, and says why", () => {
     expect(() => new MarketplaceRegistration(settings, null)).toThrow(
-      "marketplaceSettings requires a nativeActivation to drive the registration."
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "marketplaceSettings requires a nativeActivation to drive the registration."
+        ),
+      })
     );
   });
 

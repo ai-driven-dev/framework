@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
-import type { PluginFetcher } from "../../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
+import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import type { PluginFetcher } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
+import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
-import type { Hasher } from "../../../../../src/shared/ports/hasher.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { restoreAllPluginsOf } from "../../testing/build-restore.builder.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+import { aManifest } from "../../testing/manifest.builder.js";
 
 const noopFs: FileReader & FileWriter = {
   fileExists: async () => false,
   isExecutable: async () => false,
+  isDirectory: async () => false,
   realpath: async (path: string) => path,
   readFileHash: async () => new FileHash("00000000000000000000000000000000"),
   readFile: async () => "",
@@ -24,10 +28,6 @@ const noopFs: FileReader & FileWriter = {
   createDirectory: async () => {},
   deleteEmptyDirectories: async () => {},
   deleteDirectory: async () => {},
-};
-
-const noopHasher: Hasher = {
-  hash: () => new FileHash("00000000000000000000000000000000"),
 };
 
 const stubFetcher: PluginFetcher = {
@@ -46,7 +46,7 @@ const emptyDistributionReader: PluginDistributionReader = {
 
 function nativePlugin(
   files: Record<string, string> = {},
-  scope: "project" | "user" = "project"
+  scope: Scope = "project"
 ): InstalledPlugin {
   return InstalledPlugin.fromJSON({
     name: "aidd-test",
@@ -58,15 +58,20 @@ function nativePlugin(
   });
 }
 
-describe("RestoreAllPlugins — native-activation tools", () => {
+describe("RestoreAllPlugins - native-activation tools", () => {
   it("names claude in nativeOnlyToolIds when its only installed plugin tracks zero files", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(TOOL.claude, nativePlugin({}));
-    const useCase = new RestoreAllPlugins(noopFs, noopHasher, stubFetcher, emptyDistributionReader);
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(TOOL.claude, nativePlugin({}))
+      .build();
+    const useCase = restoreAllPluginsOf({
+      fs: noopFs,
+      pluginFetcher: stubFetcher,
+      pluginDistributionReader: emptyDistributionReader,
+      builtDeps: fakeBuiltDeps(),
+    });
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -77,16 +82,21 @@ describe("RestoreAllPlugins — native-activation tools", () => {
   });
 
   it("does not name a tool whose plugin files are actually tracked", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.cursor,
-      nativePlugin({ "a/one.md": "00000000000000000000000000000000" }, "user")
-    );
-    const useCase = new RestoreAllPlugins(noopFs, noopHasher, stubFetcher, emptyDistributionReader);
+    const manifest = aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        nativePlugin({ "a/one.md": "00000000000000000000000000000000" }, "user")
+      )
+      .build();
+    const useCase = restoreAllPluginsOf({
+      fs: noopFs,
+      pluginFetcher: stubFetcher,
+      pluginDistributionReader: emptyDistributionReader,
+      builtDeps: fakeBuiltDeps(),
+    });
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -98,10 +108,14 @@ describe("RestoreAllPlugins — native-activation tools", () => {
   it("does not name a tool that has no plugin installed at all", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
-    const useCase = new RestoreAllPlugins(noopFs, noopHasher, stubFetcher, emptyDistributionReader);
+    const useCase = restoreAllPluginsOf({
+      fs: noopFs,
+      pluginFetcher: stubFetcher,
+      pluginDistributionReader: emptyDistributionReader,
+      builtDeps: fakeBuiltDeps(),
+    });
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -122,22 +136,27 @@ function trackedPlugin(name: string): InstalledPlugin {
   });
 }
 
-describe("RestoreAllPlugins — restricting to one plugin", () => {
+describe("RestoreAllPlugins - restricting to one plugin", () => {
   function claudeWithMixedPlugins(): Manifest {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.addPlugin(TOOL.claude, nativePlugin({}));
-    manifest.addPlugin(TOOL.claude, trackedPlugin("tracked-plugin"));
+    const manifest = aManifest()
+      .withTool(TOOL.claude, [])
+      .withPlugin(TOOL.claude, nativePlugin({}))
+      .withPlugin(TOOL.claude, trackedPlugin("tracked-plugin"))
+      .build();
     return manifest;
   }
 
   function useCase(): RestoreAllPlugins {
-    return new RestoreAllPlugins(noopFs, noopHasher, stubFetcher, emptyDistributionReader);
+    return restoreAllPluginsOf({
+      fs: noopFs,
+      pluginFetcher: stubFetcher,
+      pluginDistributionReader: emptyDistributionReader,
+      builtDeps: fakeBuiltDeps(),
+    });
   }
 
   it("names the tool when the one plugin asked for tracks zero files, whatever its others track", async () => {
     const result = await useCase().execute({
-      tools: catalogOf(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,
@@ -149,7 +168,6 @@ describe("RestoreAllPlugins — restricting to one plugin", () => {
 
   it("does not name the tool when the plugin asked for tracks files", async () => {
     const result = await useCase().execute({
-      tools: catalogOf(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,
@@ -161,7 +179,6 @@ describe("RestoreAllPlugins — restricting to one plugin", () => {
 
   it("does not name the tool when any of its plugins tracks files", async () => {
     const result = await useCase().execute({
-      tools: catalogOf(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,

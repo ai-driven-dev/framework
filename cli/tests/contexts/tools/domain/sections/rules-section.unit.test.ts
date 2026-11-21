@@ -8,7 +8,7 @@ const stubParams = {
 };
 
 describe("RulesSection", () => {
-  const params = { directory: ".claude/", toolSuffix: ".claude.md", ...stubParams };
+  const params = { toolSuffix: ".claude.md", ...stubParams };
 
   // Where a rule lands is `buildInstallPath`, a closure per tool.
   // Asking it with a sentinel keeps the answer where the knowledge is, not in a path parser here.
@@ -43,44 +43,11 @@ describe("RulesSection", () => {
       expect(cap.installedLocation()).toBeNull();
     });
   });
-
-  describe("accepts", () => {
-    it("returns true when path starts with directory", () => {
-      const cap = new RulesSection(params);
-      expect(cap.accepts(".claude/rules/foo.md")).toBe(true);
-    });
-
-    it("returns false when path does not start with directory", () => {
-      const cap = new RulesSection(params);
-      expect(cap.accepts(".cursor/rules/foo.md")).toBe(false);
-    });
-  });
-
-  describe("equals", () => {
-    it("returns true for identical params", () => {
-      const a = new RulesSection(params);
-      const b = new RulesSection({ ...params });
-      expect(a.equals(b)).toBe(true);
-    });
-
-    it("returns false when directory differs", () => {
-      const a = new RulesSection(params);
-      const b = new RulesSection({ ...params, directory: ".cursor/" });
-      expect(a.equals(b)).toBe(false);
-    });
-
-    it("returns false when toolSuffix differs", () => {
-      const a = new RulesSection(params);
-      const b = new RulesSection({ ...params, toolSuffix: ".cursor.md" });
-      expect(a.equals(b)).toBe(false);
-    });
-  });
 });
 
 describe("RulesSection installed location edge cases", () => {
   it("answers an empty directory for an installer that files a rule at the project root", () => {
     const cap = new RulesSection({
-      directory: ".x/",
       toolSuffix: ".x.md",
       buildInstallPath: (fileName) => fileName.replace(/\.x\.md$/, ".mdc"),
       convertFrontmatter: (fm) => fm,
@@ -91,7 +58,6 @@ describe("RulesSection installed location edge cases", () => {
 
   it("reads the extension even when the installer prefixes the stem", () => {
     const cap = new RulesSection({
-      directory: ".x/",
       toolSuffix: ".x.md",
       buildInstallPath: (fileName) => `.x/rules/_${fileName.replace(/\.x\.md$/, ".mdc")}`,
       convertFrontmatter: (fm) => fm,
@@ -102,48 +68,9 @@ describe("RulesSection installed location edge cases", () => {
 
   it("answers nothing when the installer rewrote the stem past recognition", () => {
     const cap = new RulesSection({
-      directory: ".x/",
       toolSuffix: ".x.md",
       buildInstallPath: () => ".x/rules/renamed.mdc",
       convertFrontmatter: (fm) => fm,
-    });
-
-    expect(cap.installedLocation()).toBeNull();
-  });
-});
-
-describe("RulesSection file acceptance", () => {
-  const cap = new RulesSection({
-    directory: ".claude/",
-    toolSuffix: ".claude.md",
-    buildInstallPath: (fileName) => fileName,
-    convertFrontmatter: (fm) => fm,
-  });
-
-  it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("rules/a.claude.md")).toBe(true);
-    expect(cap.acceptsFileName("rules/a.md")).toBe(true);
-  });
-
-  it("reads the input suffix as its own when the tool declares one", () => {
-    const mdc = new RulesSection({
-      directory: ".cursor/",
-      toolSuffix: ".mdc",
-      inputSuffix: ".cursor.md",
-      buildInstallPath: (fileName) => fileName,
-      convertFrontmatter: (fm) => fm,
-    });
-
-    expect(mdc.acceptsFileName("a.cursor.md")).toBe(true);
-    expect(mdc.acceptsFileName("a.claude.md")).toBe(false);
-  });
-
-  it("answers nothing when the probe stem sits in a directory and not in the file name", () => {
-    const cap = new RulesSection({
-      directory: ".claude/",
-      toolSuffix: ".claude.md",
-      ...stubParams,
-      buildInstallPath: () => ".x/aidd-installed-location-probe/rule.md",
     });
 
     expect(cap.installedLocation()).toBeNull();

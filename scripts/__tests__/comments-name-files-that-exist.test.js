@@ -22,14 +22,6 @@ const NAMED_AS_HISTORY = Object.freeze({
 
 /** Named inside a fixture or a runtime path a test builds, never a file of this repository. */
 const NOT_A_REPOSITORY_FILE = Object.freeze({
-  // Illustrations inside a rule's own probe: each names a file deliberately absent, which is
-  // what the probe is for — a guard that only ever sees real paths never proves it can see a
-  // dead one.
-  "cli/tests/architecture/referenced-paths.arch.test.ts": [
-    "contexts/gone.ts",
-    "shared/gone.ts",
-    "application/shared/x.ts",
-  ],
   "scripts/__tests__/cli-type-honesty.test.js": [
     "cli/src/honest.ts",
     "cli/src/widened.ts",
@@ -37,7 +29,7 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
     "cli/tests/silenced.ts",
     "cli/tests/.keep.ts",
   ],
-  "cli/tests/contexts/framework/application/doctor-use-case.unit.test.ts": [
+  "cli/tests/orchestration/doctor/doctor-use-case.unit.test.ts": [
     "@.claude/rules/test.md",
   ],
   // A seam artefact one plugin writes into a reader's own project and another reads back —
@@ -50,8 +42,8 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   "scripts/__tests__/aidd-ui/extract.test.js": ["system.md"],
   "scripts/__tests__/aidd-ui/skill.test.js": ["system.md", "history.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
-  "cli/tests/e2e/helpers.ts": ["dist/cli.js"],
-  "cli/tests/e2e/global-setup.ts": ["dist/cli.js"],
+  "cli/tests/shared/testing/cli-sandbox.builder.ts": ["dist/cli.js"],
+  "cli/tests/setup/global-setup.ts": ["dist/cli.js"],
 });
 
 const SOURCE_FILE_TOKEN = /^[\w./@-]+\.(?:ts|cjs|js|md)$/u;

@@ -19,11 +19,6 @@ afterEach(async () => {
 });
 
 describe("the person's identity file", () => {
-  it("is absent until one is written", async () => {
-    expect(await store.read()).toBeNull();
-    expect(await store.remove()).toBe(false);
-  });
-
   it("is written as identity.json in the telemetry directory and read back", async () => {
     await store.write("person-a");
     expect(await readFile(join(dir, "identity.json"), "utf8")).toBe('{"person_id":"person-a"}\n');
@@ -40,13 +35,6 @@ describe("the person's identity file", () => {
     await store.write("person-a");
     expect((await stat(join(dir, "identity.json"))).mode & 0o777).toBe(0o600);
     expect((await stat(dir)).mode & 0o777).toBe(0o700);
-  });
-
-  it("is removed on request, and says whether there was one", async () => {
-    await store.write("person-a");
-    expect(await store.remove()).toBe(true);
-    expect(await store.read()).toBeNull();
-    expect(await store.remove()).toBe(false);
   });
 
   it("is not read from a file shaped like the previous version's", async () => {

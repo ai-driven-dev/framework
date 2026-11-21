@@ -1,15 +1,14 @@
 import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
-import { InputRequiredError } from "../../shared/domain/errors.js";
-import { AIDD_DIR } from "../../shared/domain/paths.js";
-import type { Prompter } from "../../shared/ports/prompter.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
+import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
-import { ErrorHandler } from "../error-handler.js";
-import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
+type Prompting = Deps["prompter"];
+
 type AuthKeys = "prompter" | "logIn" | "logOut" | "checkStatus";
 
 interface LoginOptions {
@@ -18,12 +17,12 @@ interface LoginOptions {
   level?: string;
 }
 
-function refuse(output: CLIOutput, message: string): void {
+function refuse(output: Output, message: string): void {
   output.error(message);
-  process.exit(1);
+  output.exit(1);
 }
 
-function refuseInvalidOptions(options: LoginOptions, output: CLIOutput): void {
+function refuseInvalidOptions(options: LoginOptions, output: Output): void {
   if (options.gh && options.token) refuse(output, "--gh and --token are mutually exclusive.");
   if (!options.gh && !options.token && !process.stdout.isTTY) {
     refuse(output, "Use --gh or --token <value> in non-interactive mode.");
@@ -36,21 +35,20 @@ function refuseInvalidOptions(options: LoginOptions, output: CLIOutput): void {
   }
 }
 
-async function askLevel(prompter: Prompter, rawLevel: string | undefined): Promise<AuthLevel> {
-  if (rawLevel !== undefined) return rawLevel as AuthLevel;
+async function askLevel(prompter: Prompting, rawLevel: string | undefined): Promise<AuthLevel> {
+  if (rawLevel === "user" || rawLevel === "project") return rawLevel;
   return prompter.select<AuthLevel>("Storage level:", [
     { name: "User (~/.config/aidd/auth.json)", value: "user" },
     { name: `Project (${AIDD_DIR}/auth.json)`, value: "project" },
   ]);
 }
 
-async function askCredential(prompter: Prompter, options: LoginOptions): Promise<Credential> {
+async function askCredential(prompter: Prompting, options: LoginOptions): Promise<Credential> {
   if (options.gh) return { method: "external", provider: "gh" };
   if (options.token) return { method: "stored", token: options.token };
   const wantsPat = await prompter.confirm("Do you have a Personal Access Token?");
   if (!wantsPat) return { method: "external", provider: "gh" };
   const token = await prompter.input("Paste your GitHub Personal Access Token:");
-  if (!token) throw new InputRequiredError("Token cannot be empty.");
   return { method: "stored", token };
 }
 
@@ -58,16 +56,11 @@ async function askCredential(prompter: Prompter, options: LoginOptions): Promise
 function reportingErrors(
   program: Command,
   createDeps: DepsSliceFactory<AuthKeys>,
-  run: (deps: Pick<Deps, AuthKeys>, output: CLIOutput) => Promise<void>
+  run: (deps: Pick<Deps, AuthKeys>, output: Output) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
-    const errorHandler = new ErrorHandler(output);
-    try {
-      await run(await createDeps(projectRoot, { verbose }, output), output);
-    } catch (error) {
-      errorHandler.handle(error);
-    }
+    await run(await createDeps(projectRoot, { verbose }, output), output);
   };
 }
 
@@ -86,19 +79,14 @@ export function registerAuthCommand(
     .option("--level <user|project>", "Storage level (user or project)")
     .action(async (cmdOptions: LoginOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
 
       refuseInvalidOptions(cmdOptions, output);
 
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const level = await askLevel(deps.prompter, cmdOptions.level);
-        const credential = await askCredential(deps.prompter, cmdOptions);
-        const result = await deps.logIn.execute({ credential, level });
-        printAuthenticated(output, result.login, result.level);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
+      const deps = await createDeps(projectRoot, { verbose }, output);
+      const level = await askLevel(deps.prompter, cmdOptions.level);
+      const credential = await askCredential(deps.prompter, cmdOptions);
+      const result = await deps.logIn.execute({ credential, level });
+      printAuthenticated(output, result.login, result.level);
     });
 
   authCmd

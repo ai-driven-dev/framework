@@ -1,5 +1,5 @@
 import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 interface NamedPlugin {
   readonly name: string;
@@ -17,7 +17,7 @@ interface PluginInstallOutcome {
 }
 
 export function printInstalledPlugins(
-  output: CLIOutput,
+  output: Output,
   byTool: ReadonlyMap<string, readonly NamedPlugin[]>
 ): void {
   let printed = false;
@@ -30,7 +30,7 @@ export function printInstalledPlugins(
   if (!printed) output.info("No plugins installed.");
 }
 
-export function printPluginInstallOutcome(output: CLIOutput, result: PluginInstallOutcome): void {
+export function printPluginInstallOutcome(output: Output, result: PluginInstallOutcome): void {
   if (result.kind === "picked") {
     if (result.installed.length === 0) {
       output.info("No plugins selected.");
@@ -46,7 +46,7 @@ export function printPluginInstallOutcome(output: CLIOutput, result: PluginInsta
   }
 }
 
-export function printSearchHits(output: CLIOutput, hits: readonly SearchedPlugin[]): void {
+export function printSearchHits(output: Output, hits: readonly SearchedPlugin[]): void {
   if (hits.length === 0) output.info("No matches.");
   for (const hit of hits) {
     const flag = hit.entry.recommended ? " (recommended)" : "";
@@ -56,7 +56,7 @@ export function printSearchHits(output: CLIOutput, hits: readonly SearchedPlugin
   }
 }
 
-export function printPluginsUpdated(output: CLIOutput, updated: readonly string[]): void {
+export function printPluginsUpdated(output: Output, updated: readonly string[]): void {
   if (updated.length === 0) {
     output.success("All plugins are up to date.");
     return;
@@ -64,6 +64,6 @@ export function printPluginsUpdated(output: CLIOutput, updated: readonly string[
   output.success(`Updated: ${updated.join(", ")}.`);
 }
 
-export function printPluginRemoved(output: CLIOutput, name: string): void {
+export function printPluginRemoved(output: Output, name: string): void {
   output.success(`Plugin '${name}' removed.`);
 }

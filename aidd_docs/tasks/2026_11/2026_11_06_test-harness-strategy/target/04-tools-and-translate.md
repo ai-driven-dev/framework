@@ -129,7 +129,7 @@ A test must provide: a reference distribution with the six artefacts, two plugin
 | `domain/formats/` (10 files) | keep | `domain/formats/` (`cursor-hooks-project-merge.ts` stays, the only tolerated tool name, outside the baseline) |
 | `domain/marketplace-catalog.ts`, `marketplace-entry.ts` | keep | `domain/`: build-contract helper shared by the claude and cursor profiles (decision 4) |
 | `domain/marketplace-settings.ts` | move | `host-registration/domain/marketplace-settings.ts`: settings section type defined by its reading context |
-| `domain/marketplace-source-conflict.ts`, `host-plugin-registration.ts` | move | `host-registration/domain/source-conflict.ts`, `registration-answer.ts` |
+| `domain/marketplace-source-conflict.ts`, `host-plugin-registration.ts` | move | `host-registration/domain/source/marketplace-source-conflict.ts`, `registration-answer.ts` |
 | `domain/mcp-launch-command.ts` | move | `domain/formats/mcp-launch-command.ts`: a Windows MCP config transform (content format), not a registration |
 | `domain/ports/file-merger.ts`, `schema-validator.ts` | move | `shared/ports` |
 | `domain/ports/{host-marketplace-registry-reader,host-plugin-registry-reader,native-marketplace-source-reader,native-plugin-activator}.ts` | move | `host-registration/ports/` (`host-marketplace-registry.ts`, `host-plugin-registry.ts`, `host-marketplace-sources.ts`, `host-actions.ts`) |
@@ -213,7 +213,7 @@ Engine signature (decided): `translate(distribution, profile) -> OutputFile[]`.
 - Pure: reads no disk and no clock; the distribution is already in memory and the profile is data plus named behaviours from `tools`. Output order is sorted (I4).
 - `OutputFile`: today B returns `InstallationFile[]`. The exact shape of `OutputFile` (at least path and content; whether installation's ownership and hash fields belong to it or to the list sink) is to fix. Proposal, not evidenced.
 - Two sinks, same engine output:
-  - Disk sink: writes the list under an output root through the `FileWriter` port and owns what only A does today: output guard (`force`, non-empty folder), manifest, catalogue, schema check. Used by `aidd translate`, `aidd sync`, build for distributions and ensure-built. The canon read from disk (today `translate-source.ts`) produces the `PluginDistribution` that feeds the engine.
+  - Disk sink: writes the list under an output root through the `FileWriter` port and owns what only A does today: output guard (`force`, non-empty folder), manifest, catalogue, schema check. Used by `aidd translate`, `aidd sync`, build for distributions and ensure-built. The canon read from disk (today `build-native-tree.ts`) produces the `PluginDistribution` that feeds the engine.
   - List sink: no code of its own: the list is the result, handed to `installation`, which keeps writing, ownership and drift. Used by install, add, update and restore.
 - What moves where (proposal, sized from the table above):
   - From the profiles' `build.ts` (7, about 1200 lines) and the `artifact-rules` duplicated steps: paths, token, hooks shape, bridge, rename and collision detection become one implementation in the engine, parameterised by profile data.
@@ -226,7 +226,7 @@ Engine signature (decided): `translate(distribution, profile) -> OutputFile[]`.
 
 | Heading | Content |
 | --- | --- |
-| Domain services | reading and validating the source catalogue (`translate-source.ts:57-100`); translating one component (scattered between A and B today, one engine under form 1); collision detection (duplicated today); `@{{TOOLS}}/` guard (`shared-plugin-helpers.ts`) |
+| Domain services | reading and validating the source catalogue (`readSourceMarketplace` in `build-native-tree.ts`); translating one component (scattered between A and B today, one engine under form 1); collision detection (duplicated today); `@{{TOOLS}}/` guard (`shared-plugin-helpers.ts`) |
 | Commands owned | build a native tree from the canon (today `FrameworkBuildUseCase`); translate a distribution into installation files (today `translateWithComponentPaths`); both renamed to the command convention (one file, one class of the same name, public `execute(command)`, no `UseCase` suffix) |
 | Ports owned | `FrameworkBuild`, consumed by `framework` (ensure-built) and `presentation` (`translate` command); target: consumers reach it through `translate`'s `application/` |
 | Ports consumed | `ToolCatalog`, `FileReader`, `FileWriter`, `Hasher`, `Logger`, `JsonSchemaValidator` |
@@ -263,7 +263,7 @@ Overlap: the 4 `marketplace-build-strategy.*` tests (1519 lines) and the 2 `flat
 | `domain/formats/cursor-hooks.ts` | move | `tools/domain/formats/` |
 | `domain/formats/plugin-root-token-rewrite.ts` | merge | `tools/domain/formats/plugin-root-token.ts` |
 | `application/translate-source.ts` | rename | `application/build-native-tree.ts`, class `BuildNativeTree` (proposal: name per the command convention) |
-| `application/strategies/*` (5) | merge | `application/sinks/disk-sink.ts`; `plugin-source-tree-reader.ts` renamed `sinks/canon-tree-reader.ts` (proposal) |
+| `application/strategies/*` (5) | merge | `application/sinks/disk-sink.ts`; `plugin-source-tree-reader.ts` moved to `sinks/` |
 | none | add | `application/translate-distribution.ts` (command exposing the engine to installation) and `contract/output-file.ts` (proposal: exact fields to fix) |
 | `application/shared-plugin-helpers.ts` | keep | same |
 | `infrastructure/schema-validator.ts` | move | `shared/infrastructure` (2 contexts use it) |

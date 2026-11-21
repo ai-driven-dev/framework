@@ -32,6 +32,8 @@
 
 ## Agents
 
+Archive each chat session you spawn after its work is complete and its result is collected. Verify the archive succeeded.
+
 When you own the overall flow, fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
 
 | Responsibility | Agent |
@@ -65,6 +67,14 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
+
+<!-- folders other plugins own, read on demand -->
+- aidd_docs/brainstorm/
+- aidd_docs/product/
+- aidd_docs/recipes/
+- aidd_docs/release-video/
+- aidd_docs/specs/
+- aidd_docs/tasks/
 
 <!-- aidd_project_memory:end -->
 

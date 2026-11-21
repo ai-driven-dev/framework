@@ -1,4 +1,3 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   FlatLayout,
@@ -19,6 +18,7 @@ import {
 import type { FlatPlacement, LayoutSection, NativeLayout } from "../sections/layout-section.js";
 import type { ManifestSection } from "../sections/manifest-section.js";
 import { DEFAULT_PLUGIN_MCP_PATH, type McpSection } from "../sections/mcp-section.js";
+import { CapabilityConfigError } from "../tools.error.js";
 
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 
@@ -76,11 +76,16 @@ function deliveryOf(
   };
 }
 
+interface DeliverySections {
+  readonly manifest: ManifestSection | null;
+  readonly hooks: HooksSection;
+  readonly mcp: McpSection | null;
+}
+
 function nativeAnswers(
   layout: NativeLayout,
   manifest: ManifestSection,
-  hooks: HooksSection,
-  mcp: McpSection | null
+  { hooks, mcp }: DeliverySections
 ): NativePluginAnswers {
   const { delivery } = hooks;
   const plugin = mcp?.plugin ?? { accepts: false, relativePath: DEFAULT_PLUGIN_MCP_PATH };
@@ -92,7 +97,6 @@ function nativeAnswers(
   return {
     ...deliveryOf(layout, hooks),
     kind: "native",
-    translatesAsMarketplace: () => manifest.translationMode === "marketplace",
     pluginOutputDir: (name) => `${layout.pluginsDir}${name}/`,
     manifestPath: () => manifest.manifestRelativePath,
     rootToken: () => manifest.pluginRootToken,
@@ -124,12 +128,12 @@ function flatAnswers(layout: FlatPlacement, hooks: HooksSection): FlatPluginAnsw
     hooksInstallPath: (pluginName, hooksRelativePath) =>
       flatLayout.hooksDir === null
         ? null
-        : flatHooksPathWithLoaderEntry(
-            flatLayout.hooksDir,
-            flatLayout.hooksLoaderEntry,
-            pluginName,
-            hooksRelativePath
-          ),
+        : flatHooksPathWithLoaderEntry({
+            perPluginHooksDir: flatLayout.hooksDir,
+            loaderEntry: flatLayout.hooksLoaderEntry,
+            plugin: pluginName,
+            hooksRelativePath,
+          }),
     hookScript: hookScriptOf(hooks.delivery),
   };
 }
@@ -137,15 +141,11 @@ function flatAnswers(layout: FlatPlacement, hooks: HooksSection): FlatPluginAnsw
 /** What a tool answers about how a plugin is delivered, composed from the sections it declares.
  * The caller has checked that they agree (a native layout holds a manifest, a delivery suits
  * its layout). */
-export function pluginAnswers(
-  layout: LayoutSection,
-  manifest: ManifestSection | null,
-  hooks: HooksSection,
-  mcp: McpSection | null
-): PluginAnswers {
+export function pluginAnswers(layout: LayoutSection, sections: DeliverySections): PluginAnswers {
+  const { manifest, hooks } = sections;
   if (layout.mode === "native") {
     if (manifest === null) throw new CapabilityConfigError("a native layout requires a manifest.");
-    return nativeAnswers(layout, manifest, hooks, mcp);
+    return nativeAnswers(layout, manifest, sections);
   }
   if (layout.mode === "flat") return flatAnswers(layout, hooks);
   const unsupported: UnsupportedPluginAnswers = {

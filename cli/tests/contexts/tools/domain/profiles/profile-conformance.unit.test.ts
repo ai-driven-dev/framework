@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import {
-  describeProfileConformance,
-  registeredSuffixesMatchVocabulary,
-} from "../../testing/profile-conformance.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.js";
+import { describeProfileConformance } from "../../testing/profile-conformance.contract.js";
 
 describe("the registered profiles", () => {
-  it("carry exactly the suffixes the foreign file filter knows", () => {
-    registeredSuffixesMatchVocabulary(REGISTERED_PROFILES);
-  });
-
   it("include at least one AI tool and one IDE tool", () => {
     const kinds = REGISTERED_PROFILES.map((profile) => profile.kind === "ai");
     expect(kinds).toContain(true);

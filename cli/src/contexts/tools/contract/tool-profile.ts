@@ -1,6 +1,6 @@
-import type { ConfigAsset, FileHash } from "../../../shared/domain/file.js";
+import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
+import type { InstallationFile } from "../../../shared/domain/installation-file.js";
 import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
-import type { MergeStrategy } from "../../../shared/domain/merge.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
@@ -65,7 +65,7 @@ export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
  * `"nested"` when the mode has none. */
 export interface FlatLayout {
   skillLayout: FlatSkillLayout;
-  namespacePrefix: string | null;
+  namespacePrefix: string;
   hooksDir: string | null;
   hooksLoaderEntry: FlatHooksLoaderEntry | null;
   hooksBridge: FlatHooksBridge | null;
@@ -74,8 +74,6 @@ export interface FlatLayout {
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
 export interface NativePluginAnswers extends PluginDelivery {
   readonly kind: "native";
-  /** Whether the plugin is installed by registering a marketplace with the host. */
-  translatesAsMarketplace(): boolean;
   /** The directory a plugin's files land in. */
   pluginOutputDir(pluginName: string): string;
   /** The manifest file relative to that directory, or null when the tool takes none. */
@@ -109,8 +107,6 @@ export type PluginAnswers = NativePluginAnswers | FlatPluginAnswers | Unsupporte
 export interface MarkdownSectionAnswers {
   /** Where a built file lands, or null when the tool takes none by that name. */
   buildInstallPath(fileName: string): string | null;
-  /** Whether the tool takes a framework file of this name, a file for another tool's suffix refused. */
-  acceptsFileName(fileName: string): boolean;
   convertFrontmatter(fm: Record<string, unknown>, fileName: string): Record<string, unknown>;
   serialize(fm: Record<string, unknown>, body: string): string;
 }
@@ -128,13 +124,21 @@ export interface McpPluginMerge {
   editedPreviousEntries: ReadonlyArray<string>;
 }
 
+/** Where a config file lands when its own path is not the answer: the path resolved for it, and
+ * the canonical file its content came from. */
+export interface ConfigFilePlace {
+  readonly relativePath?: string;
+  readonly frameworkPath?: string;
+}
+
 /** A tool's mcp file, as an install asks it. */
 export interface McpConfigAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
   /** Every config artifact this file takes in, with where the canonical source keeps it. */
   consumedRefs(): readonly ConfigRef[];
-  mergeStrategy(): "user-prime" | "framework-prime" | "none";
+  /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
+  fileOf(content: string, place?: ConfigFilePlace): InstallationFile;
   /** A plugin's mcp json rewritten to this tool's own shape. */
   transform(mcpJson: string): string;
   /** How a server launch is rewritten for `platform` once the tool's own transform has run,
@@ -145,13 +149,12 @@ export interface McpConfigAnswers {
   mergePluginServers(
     existing: string | null,
     incomingTransformed: string,
-    previousEntries: ReadonlyMap<string, string>,
-    hasher: { hash(content: string): FileHash }
+    previousEntries: ReadonlyMap<string, string>
   ): McpPluginMerge;
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string;
-  /** The project-relative file the tool's mcp servers live in. */
-  outputPath(): string;
+  /** Whether `relativePath` is the project file the tool's mcp servers live in by default. */
+  accepts(relativePath: string): boolean;
   /** Whether the config asset named `fileName` is that file, merged over what a person keeps. */
   isFrameworkPrimeJson(fileName: string): boolean;
   /** The file a project already keeps its mcp servers in, `exists` asking the project. */
@@ -170,10 +173,15 @@ export interface SettingsFileAnswers {
   consumes(configName: string): boolean;
   /** Every config artifact this file takes in, with where the canonical source keeps it. */
   consumedRefs(): readonly ConfigRef[];
-  /** The tool that must be installed for this file to apply, or null. */
-  requiredTool(): string | null;
+  /** Whether this file applies, `installed` telling which tools are there. */
+  appliesWith(installed: (toolId: string) => boolean): boolean;
+  /** Whether this file applies only because `toolId` is installed. */
+  requires(toolId: string): boolean;
+  /** Whether this file is the one at `destination`. */
+  writes(destination: string): boolean;
   outputPath(): string;
-  mergeStrategy(): MergeStrategy;
+  /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
+  fileOf(content: string, place?: ConfigFilePlace): InstallationFile;
   /** The file's fixed content, loaded through `loadAsset` when it lives in an asset. */
   resolveStaticContent(loadAsset?: (fileName: string) => ConfigAsset): string | null;
 }
@@ -182,8 +190,8 @@ export interface SettingsFileAnswers {
 export interface HooksFileAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
-  outputPath(): string;
-  mergeStrategy(): "user-prime" | "none";
+  /** The file holding `content`, merged the tool's way, at its own path unless `place` names one. */
+  fileOf(content: string, place?: ConfigFilePlace): InstallationFile;
 }
 
 /** One config file a tool ships bundled: its content and where it lands, declared together so a
@@ -228,10 +236,41 @@ export interface MarketplaceRegistrationAnswers {
   machineLocalFiles(): readonly string[];
 }
 
+/** A model and the effort it runs at, in the tool's own ids. */
+export interface ModelChoice {
+  readonly model: string;
+  readonly effort: string;
+}
+
+/** The agent roles of one tier, and the model they run on. */
+export interface RoleModels extends ModelChoice {
+  readonly roles: readonly string[];
+}
+
+/** Which providers' models a tool's main session and agents run on, asked and never read. */
+export interface AgentModelAnswers {
+  /** The providers it runs, in the framework's order. */
+  providers(): readonly string[];
+  /** The provider, once the tool is known to run it; refused, naming the ones it runs, otherwise. */
+  supportedProvider(provider: string): string;
+  /** The main session's model at the provider; its effort only where its settings take one. */
+  mainModel(provider: string): { readonly model: string; readonly effort?: string };
+  /** The agent roles of each tier and their model at the provider, highest tier first. */
+  roleModels(provider: string): readonly RoleModels[];
+  /** The main session's settings file, read from the machine-wide directory where the tool names
+   * no user settings file of its own, and the schema heading one aidd creates; null when the main
+   * session's model stays the tool's choice. */
+  mainSettings(): { readonly file: string; readonly schema?: string } | null;
+  /** The keys and values the main session's settings take for the provider. */
+  mainSettingsValues(provider: string): Readonly<Record<string, string>>;
+}
+
 /** An AI assistant, as an outside caller asks it. */
 export interface AiToolProfile {
   readonly kind: "ai";
   readonly toolId: AiToolId;
+  /** The `.<tool>.md` ending that marks a source file as written for this tool. */
+  readonly toolSuffix: string;
   /** Where a built file lands, relative to the project root, ending in a slash. */
   readonly directory: string;
   /** Where its plugin manifest or marketplace catalog may sit inside a distribution it produced,
@@ -240,8 +279,9 @@ export interface AiToolProfile {
   distributionPaths(kind: "manifest" | "marketplace"): readonly string[];
   /** Flat when its plugins are injected into the project tree, a marketplace otherwise. */
   frameworkBuildMode(): FrameworkBuildMode;
-  /** The framework-build contract for `mode`, or null when the tool declares none for it. */
-  buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
+  /** The framework-build contract for `mode`, or null when the tool declares none for it. With a
+   * provider, every agent of a role the framework tiers runs on that tier's model there. */
+  buildContract(mode: FrameworkBuildMode, provider?: string): ToolBuildContract | null;
   /** Where a flat plugin's file of `section` lands, relative to the project root. */
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
   /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree. */
@@ -258,6 +298,8 @@ export interface AiToolProfile {
   skillsSection(): SkillsSectionAnswers | null;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
+  /** The providers its main session and agents can run on, or null when it runs none. */
+  agentModels(): AgentModelAnswers | null;
   /** Whether a ref the host's registry lists is a plugin in use: an enabled one always, a disabled
    * one unless the host's uninstall leaves refs disabled. Every ref counts for a tool with no native CLI. */
   hostRefInUse(enabled: boolean): boolean;

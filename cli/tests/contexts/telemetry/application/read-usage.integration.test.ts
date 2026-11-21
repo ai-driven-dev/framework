@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/claude-transcript-usage.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
 
@@ -29,7 +29,7 @@ afterEach(async () => {
 function decodedBy(source: UsageSource, decode: UsageSource["decode"]): UsageSource {
   return {
     list: () => source.list(),
-    read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
+    read: (request, each) => source.read(request, each),
     decode,
   };
 }
@@ -37,7 +37,7 @@ function decodedBy(source: UsageSource, decode: UsageSource["decode"]): UsageSou
 function reversed(source: UsageSource): UsageSource {
   return {
     list: async () => [...(await source.list())].reverse(),
-    read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
+    read: (request, each) => source.read(request, each),
     decode: (line, context) => source.decode(line, context),
   };
 }
@@ -301,7 +301,7 @@ describe("reading Codex usage", () => {
     await mkdir(sessions, { recursive: true });
     const path = join(sessions, "rollout-a.jsonl");
     await writeFile(path, meta + turn("gpt-5.5", "/work/one") + call("resp_1"));
-    const useCase = new ReadUsage(new CodexTranscriptSourceAdapter([sessions]));
+    const useCase = new ReadUsage(new CodexTranscriptSourceAdapter({ roots: [sessions] }));
     const first = await useCase.execute({ since: new Map() });
     await appendFile(path, call("resp_2") + turn("gpt-5.6", "/work/two") + call("resp_3"));
     const second = await useCase.execute({ since: first.positions });
@@ -317,9 +317,9 @@ describe("reading Codex usage", () => {
     await mkdir(sessions, { recursive: true });
     const path = join(sessions, "rollout-a.jsonl.zst");
     await writeFile(path, "");
-    const reading = await new ReadUsage(new CodexTranscriptSourceAdapter([sessions], null)).execute(
-      { since: new Map() }
-    );
+    const reading = await new ReadUsage(
+      new CodexTranscriptSourceAdapter({ roots: [sessions], decompress: null })
+    ).execute({ since: new Map() });
     expect(reading.unrecognised).toEqual([
       `${path}: a compressed session file is not read: this Node has no zstd`,
     ]);

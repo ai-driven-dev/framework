@@ -4,9 +4,9 @@ import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/ap
 import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_DIR = "/marketplace-source";
@@ -20,7 +20,10 @@ function seedMarketplaceJson(
 }
 
 function buildUseCase(fs: InMemoryFileAdapter) {
-  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  const fetchMarketplaceSource = new FetchMarketplaceSource({
+    pluginFetcher: new FixturePluginFetcher(),
+    rawCatalog: unusedRawCatalog(),
+  });
   return new ResolveMarketplace(fetchMarketplaceSource, new PluginCatalogRepositoryAdapter(fs));
 }
 
@@ -36,8 +39,11 @@ function makeMarketplace(name: string): Marketplace {
 describe("ResolveMarketplace", () => {
   it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
     const useCase = new ResolveMarketplace(
-      new FetchMarketplaceSource(new FixturePluginFetcher()),
-      new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({}, new DeterministicHasher())),
+      new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: unusedRawCatalog(),
+      }),
+      new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({})),
       () => "/config/aidd"
     );
     const shared = Marketplace.create({
@@ -56,8 +62,7 @@ describe("ResolveMarketplace", () => {
   });
 
   it("returns the parsed catalog for a local marketplace", async () => {
-    const hasher = new DeterministicHasher();
-    const fs = new InMemoryFileAdapter({}, hasher);
+    const fs = new InMemoryFileAdapter({});
     seedMarketplaceJson(fs, MARKETPLACE_DIR, [
       { name: "p1", source: { kind: "local", path: "./plugins/p1" }, version: "1.0.0" },
     ]);
@@ -74,8 +79,7 @@ describe("ResolveMarketplace", () => {
   });
 
   it("returns null catalog when marketplace.json missing", async () => {
-    const hasher = new DeterministicHasher();
-    const fs = new InMemoryFileAdapter({}, hasher);
+    const fs = new InMemoryFileAdapter({});
     const useCase = buildUseCase(fs);
 
     const result = await useCase.execute({

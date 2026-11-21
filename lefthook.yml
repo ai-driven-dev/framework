@@ -103,7 +103,7 @@ pre-commit:
         fi
         node scripts/check-context-reference-form.js
     referenced-paths:
-      glob: "{*.md,docs/**,aidd_docs/memory/**}"
+      glob: "{*.md,docs/**,aidd_docs/memory/**,cli/.claude/**,cli/aidd_docs/memory/**,cli/*.md,cli/*.ts,cli/*.json,cli/src/**,cli/tests/**}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping referenced-paths'
@@ -179,7 +179,7 @@ pre-commit:
     cli-type-honesty:
       # Type honesty only; dependency direction between layers belongs to biome
       # (cli/biome.json's noRestrictedImports overrides), not here.
-      glob: "{cli/src/**,cli/tests/**}"
+      glob: "{cli/src/**,cli/tests/**,cli/type-assertions-baseline.json}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping cli-type-honesty'
@@ -192,6 +192,9 @@ pre-push:
     cli-knip:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
+    cli-knip-production:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-knip-production -- pnpm --dir cli knip:production
     cli-jscpd-profiles:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-jscpd-profiles -- pnpm --dir cli jscpd:profiles

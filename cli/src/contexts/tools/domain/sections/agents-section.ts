@@ -1,6 +1,5 @@
-import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { AgentFrontmatter } from "../formats/agent-format.js";
-import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 import { ToolSuffix } from "../profile/tool-suffix.js";
 
 function agentNameFromFrontmatter(
@@ -39,12 +38,10 @@ type AgentsSectionParams = {
 export class AgentsSection {
   readonly #params: AgentsSectionParams;
   readonly #suffix: ToolSuffix;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: AgentsSectionParams) {
     this.#params = params;
     this.#suffix = new ToolSuffix(params.toolSuffix);
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(relativeFileName: string): string | null {
@@ -56,14 +53,6 @@ export class AgentsSection {
     return this.#suffix.strip(`${this.#params.directory}agents/${basename}`);
   }
 
-  accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.#params.directory);
-  }
-
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
-  }
-
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
     return this.#params.frontmatter({ ...fm, name: agentNameFromFrontmatter(fm, fileName) });
   }
@@ -71,17 +60,5 @@ export class AgentsSection {
   serialize(frontmatter: Record<string, unknown>, body: string): string {
     if (this.#params.serialize) return this.#params.serialize(frontmatter, body);
     return serializeFrontmatter(frontmatter, body, this.#params.quote);
-  }
-
-  deserialize(content: string): { frontmatter: Record<string, unknown>; body: string } {
-    return parseFrontmatter(content);
-  }
-
-  equals(other: AgentsSection): boolean {
-    return (
-      this.#params.directory === other.#params.directory &&
-      this.#params.toolSuffix === other.#params.toolSuffix &&
-      this.#params.format === other.#params.format
-    );
   }
 }

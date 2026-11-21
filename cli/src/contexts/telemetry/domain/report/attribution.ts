@@ -76,19 +76,32 @@ function inForce(
   generation: readonly DeclaredSnapshot[],
   at: number
 ): DeclaredSnapshot | undefined {
+  const first = earliest(generation);
+  if (first === undefined) return undefined;
+  return declaredBy(generation, at) ?? latestOfFirst(generation, first);
+}
+
+function earliest(generation: readonly DeclaredSnapshot[]): DeclaredSnapshot | undefined {
   let first: DeclaredSnapshot | undefined;
-  let current: DeclaredSnapshot | undefined;
   for (const snapshot of generation) {
     if (first === undefined || declaredAt(snapshot) < declaredAt(first)) first = snapshot;
-    if (
-      declaredAt(snapshot) <= at &&
-      (current === undefined || declaredAt(snapshot) >= declaredAt(current))
-    ) {
+  }
+  return first;
+}
+
+/** The latest declaration made by the instant, the later snapshot winning an equal time. */
+function declaredBy(
+  generation: readonly DeclaredSnapshot[],
+  at: number
+): DeclaredSnapshot | undefined {
+  let current: DeclaredSnapshot | undefined;
+  for (const snapshot of generation) {
+    const made = declaredAt(snapshot) <= at;
+    if (made && (current === undefined || declaredAt(snapshot) >= declaredAt(current))) {
       current = snapshot;
     }
   }
-  if (first === undefined) return undefined;
-  return current ?? latestOfFirst(generation, first);
+  return current;
 }
 
 /** The latest snapshot of the earliest declaration. */

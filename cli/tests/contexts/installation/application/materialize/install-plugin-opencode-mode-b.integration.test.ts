@@ -3,10 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";
@@ -41,19 +41,22 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 describe("install opencode plugin via Mode B (integration)", () => {
   it("materializes project commands and namespaced native agents", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const written = fs.listAll();
     expect(
@@ -64,38 +67,44 @@ describe("install opencode plugin via Mode B (integration)", () => {
 
   it("does not write any file under user home for project-scope flat tools", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     expect(fs.listAll().every((p) => !p.startsWith(STUB_HOME))).toBe(true);
   });
 
   it("registers plugin in manifest with files map keyed by relative path", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
 
     const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === "aidd-context");
     expect(installed).toBeDefined();

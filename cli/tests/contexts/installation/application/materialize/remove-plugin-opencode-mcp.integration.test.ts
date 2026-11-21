@@ -1,14 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import { createOutput } from "../../../../../src/composition/shared.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { CLIOutput } from "../../../../../src/presentation/output.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";
@@ -44,30 +44,27 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
   it("removes only plugin-contributed servers; preserves user-added servers", async () => {
     const existingJson = JSON.stringify({ mcp: { "user-server": USER_SERVER } }, null, 2);
     const fs = new InMemoryFileAdapter({ [OPENCODE_JSON]: existingJson });
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await manifestRepo.save(manifest);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
     await removeUseCase.execute({
-      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
@@ -83,30 +80,27 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("removes the plugin from the manifest after unmerge", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await manifestRepo.save(manifest);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
     await removeUseCase.execute({
-      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
@@ -119,32 +113,29 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await fs.deleteFile(OPENCODE_JSON);
     await manifestRepo.save(manifest);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
@@ -156,19 +147,19 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     const fs = new InMemoryFileAdapter();
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
-      new DeterministicHasher(),
-      () => STUB_HOME
+      () => STUB_HOME,
+      translateDistribution
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    await translator.addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     const prior = manifest.getPlugins(TOOL.opencode)[0].mcpEntries;
     const config = JSON.parse(fs.getFile(OPENCODE_JSON) ?? "null") as {
       mcp: Record<string, unknown>;
@@ -179,15 +170,15 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     fs.setFile(OPENCODE_JSON, edited);
     manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
     await expect(
-      translator.addPlugin(
-        buildDist(),
-        registeredAiProfile(TOOL.opencode),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+      translator.addPlugin({
+        dist: buildDist(),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined,
-        prior
-      )
+        marketplace: undefined,
+        previousMcpEntries: prior,
+      })
     ).rejects.toThrow(/edited.*MCP|MCP.*edited/);
     expect(fs.getFile(OPENCODE_JSON)).toBe(edited);
   });

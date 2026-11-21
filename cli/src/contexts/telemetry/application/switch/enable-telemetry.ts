@@ -1,7 +1,10 @@
 import { personIdOf } from "../../domain/identity/person-identity.js";
+import type { ConsentSource } from "../../ports/consent-source.js";
 import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
-import type { ConsentSwitch, NewInterval } from "./consent-switch.js";
-import type { OwnRoots } from "./remember-own-root.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
+import { readCloneConsent } from "./clone-consent.js";
+import type { GrantConsent } from "./grant-consent.js";
+import type { RememberOwnRoot } from "./remember-own-root.js";
 
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
 export type IdentityChoice = "keep" | "none" | { readonly set: string };
@@ -40,40 +43,55 @@ export type EnableTelemetryResult =
       readonly identity: OnIdentity;
     };
 
+interface EnableTelemetryDeps {
+  readonly locator: RepositoryLocator;
+  readonly consents: ConsentSource;
+  readonly grant: GrantConsent;
+  readonly roots: RememberOwnRoot;
+  readonly identities: PersonIdentityStore;
+}
+
 /** Opts a clone in, in its own git config. Measurement starts here: nothing made before is read
  * back. */
 export class EnableTelemetry {
-  constructor(
-    private readonly consent: ConsentSwitch,
-    private readonly roots: OwnRoots,
-    /** A fresh token and its moment for each interval. */
-    private readonly newInterval: NewInterval,
-    private readonly identities: PersonIdentityStore
-  ) {}
+  constructor(private readonly deps: EnableTelemetryDeps) {}
 
   async execute({ cwd, choice }: EnableTelemetryCommand): Promise<EnableTelemetryResult> {
-    const previous = await this.identities.read();
-    const chosen = typeof choice === "object" ? personIdOf(choice.set) : null;
-    if (typeof choice === "object" && chosen === null)
-      return { status: "refused", reason: "invalid-identity" };
-    if (choice === "none" && previous !== null)
-      return { status: "refused", reason: "identity-set" };
-    const clone = await this.consent.read(cwd);
+    const previous = await this.deps.identities.read();
+    const named = chosenIdentity(choice, previous);
+    if ("status" in named) return named;
+    const clone = await readCloneConsent(this.deps.locator, this.deps.consents, cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
-    const identity = located.clone;
-    if (identity === null) return { status: "refused", reason: "unidentified-clone" };
-    const consentWritten = await this.consent.grant(located.root, identity, this.newInterval);
-    if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
+    if (located.clone === null) return refusal("unidentified-clone");
+    const consentWritten = await this.deps.grant.execute({
+      root: located.root,
+      identity: located.clone,
+    });
+    if (consentWritten === "damaged") return refusal("damaged-consent-log");
     // Written only once the clone is on: a refused `on` leaves the identity as it was.
-    if (chosen !== null) await this.identities.write(chosen);
-    await this.roots.remember(located);
-
+    if (named.chosen !== null) await this.deps.identities.write(named.chosen);
+    await this.deps.roots.execute(located);
     return {
       status: "on",
       consentWritten,
       root: located.root,
-      identity: { personId: choice === "keep" ? previous : chosen, previous },
+      identity: { personId: choice === "keep" ? previous : named.chosen, previous },
     };
   }
+}
+
+type Refused = Extract<EnableTelemetryResult, { status: "refused" }>;
+
+const refusal = (reason: Refused["reason"]): Refused => ({ status: "refused", reason });
+
+/** The identifier a choice names, `null` for none, or why the choice cannot be followed. */
+function chosenIdentity(
+  choice: IdentityChoice,
+  previous: string | null
+): { readonly chosen: string | null } | Refused {
+  if (choice === "none") return previous === null ? { chosen: null } : refusal("identity-set");
+  if (choice === "keep") return { chosen: null };
+  const chosen = personIdOf(choice.set);
+  return chosen === null ? refusal("invalid-identity") : { chosen };
 }

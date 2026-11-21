@@ -1,19 +1,14 @@
 import type { Environment } from "../../../shared/ports/environment.js";
 import type { NotStoredReason } from "../contract/repository-resolution.js";
-import type { UsageRecord } from "../contract/usage-record.js";
-import {
-  dayOf,
-  isRequestless,
-  requestlessCallOf,
-  type StoredUsage,
-} from "../domain/stored-usage.js";
-import { measurementRefused } from "../domain/telemetry-consent.js";
+import { MEASUREMENT_SWITCH, measurementRefused } from "../domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
-import type { LeftOutEntry, UsageLedger } from "../ports/usage-ledger.js";
-import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
+import type { UsageLedger } from "../ports/usage-ledger.js";
+import type { DirectoryResolver } from "./directory-resolver.js";
 import { storeCalls } from "./ledger-upkeep.js";
 import type { ReadUsage, UsageReading } from "./read-usage.js";
+import type { ResolutionRun } from "./resolution-run.js";
 import type { SnapshotBindings } from "./snapshot-bindings.js";
+import { judgeReading, NOT_STORED, type Verdicts } from "./usage-judgement.js";
 
 export interface IngestUsageResult {
   /** `AIDD_TELEMETRY=0`: nothing was read, nothing was written. */
@@ -38,16 +33,6 @@ export interface IngestUsageResult {
   readonly oldestTranscriptAt: string | null;
 }
 
-const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
-  "outside-repo": 0,
-  "never-seen-alive": 0,
-  "no-consent": 0,
-  "consent-closed": 0,
-  "unreadable-consent": 0,
-  "no-cwd": 0,
-  undated: 0,
-};
-
 /** How far a file's modification time may lag the clock that stamps calls: coarse kernel
  * ticks, 2 s on FAT, a network file system's own clock. A transcript last written longer than
  * this before the first interval opened holds nothing that could be stored. */
@@ -66,21 +51,31 @@ function moved(before: TranscriptPosition | undefined, now: TranscriptPosition):
   );
 }
 
+/** What an ingest kept, and what is left to do once the resolutions are. */
+interface Kept extends Verdicts {
+  readonly reading: UsageReading;
+  readonly movedPaths: readonly string[];
+  readonly stored: { added: number; updated: number; skippedLines: number };
+  readonly consentLogDamaged: boolean;
+}
+
+interface IngestUsageDeps {
+  /** One per tool measured: adding a tool is its format and its transcripts, here. */
+  readonly readers: readonly ReadUsage[];
+  readonly ledger: UsageLedger;
+  readonly directories: DirectoryResolver;
+  readonly snapshots: SnapshotBindings;
+  readonly options: IngestOptions;
+}
+
 /** Reads what every transcript gained since the last ingest and stores the billed calls of the
  * projects that opted in, one record per call. Safe to run any number of times, from any
  * number of processes. */
 export class IngestUsage {
-  constructor(
-    /** One per tool measured: adding a tool is its format and its transcripts, here. */
-    private readonly readers: readonly ReadUsage[],
-    private readonly ledger: UsageLedger,
-    private readonly directories: DirectoryResolver,
-    private readonly snapshots: SnapshotBindings,
-    private readonly options: IngestOptions
-  ) {}
+  constructor(private readonly deps: IngestUsageDeps) {}
 
   async execute(): Promise<IngestUsageResult> {
-    if (measurementRefused(this.options.environment)) {
+    if (measurementRefused(this.deps.options.environment.get(MEASUREMENT_SWITCH))) {
       return {
         refused: true,
         filesRead: 0,
@@ -94,100 +89,69 @@ export class IngestUsage {
         oldestTranscriptAt: null,
       };
     }
-    return this.ledger.exclusively(() => this.ingest());
+    return this.deps.ledger.exclusively(() => this.ingest());
   }
 
   private async ingest(): Promise<IngestUsageResult> {
-    const before = await this.ledger.positions();
-    // The consent log first: a transcript last written before any interval opened is not read.
-    const resolver = await this.directories.open();
-    const reading = await this.readAll(before, resolver.coveredFrom - FILE_CLOCK_MARGIN_MS);
-    const movedPaths = [...reading.positions]
-      .filter(([path, now]) => moved(before.get(path), now))
-      .map(([path]) => path);
-    const filesRead = movedPaths.filter((path) => !reading.skipped.has(path)).length;
-
-    const notStored = { ...NOT_STORED };
-    const toStore: StoredUsage[] = [];
-    // What was measured and cannot be stored is kept, so a later report says it, whoever ran
-    // this: only of a clone that consents, at the thing's own time or, with none, now.
-    const leftOut: LeftOutEntry[] = [];
-    // A transcript holding what a clone that consents could not be read for is read again
-    // next time; a hold that could never end (no clone known to consent there, a consent log
-    // that stays damaged until `forget`) is not taken.
-    const held = new Set<string>();
-    const hold = (path: string | undefined, cwd: string, at: string) => {
-      if (!resolver.consentLogDamaged && resolver.mayConsent(cwd, at)) held.add(path ?? "");
-    };
-    const measured = async (cwd: string | null, at: string | null, path: string | undefined) => {
-      if (cwd === null) return false;
-      const when = at !== null && dayOf(at) !== null ? at : resolver.now;
-      const outcome = await resolver.resolve(cwd, when);
-      if ("skipped" in outcome && outcome.skipped === "unreadable-consent") hold(path, cwd, when);
-      return "stored" in outcome;
-    };
-    for (const { line, cwd, at, path } of reading.dropped) {
-      if (await measured(cwd, at, path)) leftOut.push({ reason: "unrecognised", of: line });
-    }
-    const live = new Map<string, string>();
-    for (const record of reading.records) {
-      const outcome = await this.outcomeOf(record, resolver);
-      if ("skipped" in outcome) {
-        const { skipped } = outcome;
-        notStored[skipped] += 1;
-        if (skipped === "unreadable-consent") {
-          hold(reading.fileOf.get(record), record.cwd ?? "", record.at);
-        }
-        if (
-          skipped === "undated" &&
-          (await measured(record.cwd, null, reading.fileOf.get(record)))
-        ) {
-          leftOut.push({ reason: "undated", of: `${record.tool}\u0000${record.key}` });
-        }
-        continue;
-      }
-      if (isRequestless(record)) {
-        leftOut.push({ reason: "requestless", of: requestlessCallOf(record) });
-        continue;
-      }
-      toStore.push({ ...record, repository_id: outcome.stored.repository_id });
-      if (outcome.live) live.set(outcome.stored.repository_id, outcome.stored.root);
-    }
-
-    const stored =
-      toStore.length > 0
-        ? await storeCalls(this.ledger, toStore)
-        : { added: 0, updated: 0, skippedLines: 0 };
-    if (leftOut.length > 0) await this.ledger.leftOut.add(leftOut);
-    await resolver.close();
-    const consentLogDamaged = resolver.consentLogDamaged;
-
+    const before = await this.deps.ledger.positions();
+    const kept = await this.deps.directories.execute((resolver) => this.keep(resolver, before));
     let snapshots = 0;
-    for (const [repositoryId, root] of live) {
-      snapshots += await this.snapshots.execute({ repositoryId, root });
+    for (const [repositoryId, root] of kept.live) {
+      snapshots += await this.deps.snapshots.execute({ repositoryId, root });
     }
-
-    // Last, so a crash before it only means the same lines are read again.
-    const positions = new Map(reading.positions);
-    for (const path of held) {
-      const was = before.get(path);
-      if (was === undefined) positions.delete(path);
-      else positions.set(path, was);
-    }
-    if (movedPaths.length > 0) await this.ledger.savePositions(positions);
-
+    await this.savePositions(before, kept);
+    const { reading, stored } = kept;
     return {
       refused: false,
-      filesRead,
+      filesRead: kept.movedPaths.filter((path) => !reading.skipped.has(path)).length,
       added: stored.added,
       updated: stored.updated,
       unrecognised: reading.unrecognised.length,
       skippedLedgerLines: stored.skippedLines,
       snapshots,
-      notStored,
-      consentLogDamaged,
+      notStored: kept.notStored,
+      consentLogDamaged: kept.consentLogDamaged,
       oldestTranscriptAt: reading.oldestTranscriptAt,
     };
+  }
+
+  /** The reading judged call by call and stored, with the resolutions it needed. */
+  private async keep(
+    resolver: ResolutionRun,
+    before: ReadonlyMap<string, TranscriptPosition>
+  ): Promise<Kept> {
+    // The consent log first: a transcript last written before any interval opened is not read.
+    const reading = await this.readAll(before, resolver.coveredFrom - FILE_CLOCK_MARGIN_MS);
+    const movedPaths = [...reading.positions]
+      .filter(([path, now]) => moved(before.get(path), now))
+      .map(([path]) => path);
+    const verdicts = await judgeReading(resolver, reading);
+    const stored =
+      verdicts.toStore.length > 0
+        ? await storeCalls(this.deps.ledger, verdicts.toStore)
+        : { added: 0, updated: 0, skippedLines: 0 };
+    if (verdicts.leftOut.length > 0) await this.deps.ledger.leftOut.add(verdicts.leftOut);
+    return {
+      ...verdicts,
+      reading,
+      movedPaths,
+      stored,
+      consentLogDamaged: resolver.consentLogDamaged,
+    };
+  }
+
+  /** Last, so a crash before it only means the same lines are read again. */
+  private async savePositions(
+    before: ReadonlyMap<string, TranscriptPosition>,
+    kept: Kept
+  ): Promise<void> {
+    const positions = new Map(kept.reading.positions);
+    for (const path of kept.held) {
+      const was = before.get(path);
+      if (was === undefined) positions.delete(path);
+      else positions.set(path, was);
+    }
+    if (kept.movedPaths.length > 0) await this.deps.ledger.savePositions(positions);
   }
 
   /** Every tool's reading as one. Each tool hands back its own files' positions only, laid over
@@ -197,7 +161,7 @@ export class IngestUsage {
     coveredFrom: number
   ): Promise<UsageReading> {
     const readings = await Promise.all(
-      this.readers.map((reader) => reader.execute({ since: before, writtenFrom: coveredFrom }))
+      this.deps.readers.map((reader) => reader.execute({ since: before, writtenFrom: coveredFrom }))
     );
     const oldest = readings.flatMap((reading) => reading.oldestTranscriptAt ?? []).sort();
     return {
@@ -209,13 +173,5 @@ export class IngestUsage {
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),
     };
-  }
-
-  /** A call with no time has no day to be kept in, and one with no directory has no
-   * repository to be tied to. */
-  private async outcomeOf(record: UsageRecord, resolver: ResolutionRun): Promise<DirectoryOutcome> {
-    if (dayOf(record.at) === null) return { skipped: "undated" };
-    if (record.cwd === null) return { skipped: "no-cwd" };
-    return resolver.resolve(record.cwd, record.at);
   }
 }

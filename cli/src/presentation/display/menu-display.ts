@@ -1,4 +1,4 @@
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../../orchestration/domain/output.js";
 
 const BANNER = `
    _    ___ ___  ___
@@ -8,6 +8,6 @@ const BANNER = `
 
  AI-Driven Development CLI`;
 
-export function printBanner(output: CLIOutput): void {
+export function printBanner(output: Output): void {
   output.print(BANNER);
 }

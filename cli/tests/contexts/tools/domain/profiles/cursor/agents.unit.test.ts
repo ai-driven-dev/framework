@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
+import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
 
 const PREFIXED = `---
 name: "aidd-dev-planner"

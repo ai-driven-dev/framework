@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ToolSuffix } from "../../../../../src/contexts/tools/domain/profile/tool-suffix.js";
-import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 describe("ToolSuffix", () => {
   it.each([".claude.md", ".agent.md", ".instructions.md"])("accepts %s", (value) => {
@@ -45,7 +45,9 @@ describe("ToolSuffix", () => {
 
   it("names the refused value and the expected shape", () => {
     expect(() => new ToolSuffix("claude")).toThrow(
-      '"claude" is not a tool suffix, expected ".<tool>.md".'
+      expect.objectContaining({
+        detail: expect.stringContaining('"claude" is not a tool suffix, expected ".<tool>.md".'),
+      })
     );
   });
 

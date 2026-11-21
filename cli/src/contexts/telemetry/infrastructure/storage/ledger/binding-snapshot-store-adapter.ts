@@ -1,9 +1,6 @@
 import { join } from "node:path";
-import {
-  type BranchSnapshot,
-  parseBranchSnapshot,
-  snapshotKey,
-} from "../../../domain/branch-binding.js";
+import { type BranchSnapshot, snapshotKey } from "../../../domain/branch-binding.js";
+import { parseBranchSnapshot } from "../../../domain/branch-snapshot-line.js";
 import type { BindingSnapshotStore } from "../../../ports/bindings/binding-snapshot-store.js";
 import type { PrivateStorage } from "../../../ports/private-storage.js";
 import type { RepositoryAliasStore } from "../../../ports/repository-alias-store.js";

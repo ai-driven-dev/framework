@@ -1,0 +1,30 @@
+import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
+import type {
+  FlatInstallSection,
+  FrameworkBuildMode,
+  MarkdownSectionAnswers,
+  PluginAnswers,
+  SkillsSectionAnswers,
+} from "../../tools/contract/tool-profile.js";
+
+/** The part of an AI tool the engine reads. The tools context owns the profile, and the caller
+ * hands over the real one, which satisfies this by shape. */
+export interface TranslatedAiTool {
+  readonly kind: "ai";
+  readonly toolId: AiToolId;
+  readonly directory: string;
+  buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
+  flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
+  rewriteContent(content: string): string;
+  plugins(): PluginAnswers | null;
+  markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
+  skillsSection(): SkillsSectionAnswers | null;
+}
+
+/** An editor has nothing to translate: the engine answers it with no files. */
+export interface UntranslatedTool {
+  readonly kind: "ide";
+}
+
+export type TranslateProfile = TranslatedAiTool | UntranslatedTool;

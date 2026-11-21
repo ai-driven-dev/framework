@@ -1,9 +1,10 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { ValidateRecipes } from "../../../../src/contexts/recipes/application/validate-recipes.js";
-import { InputRequiredError } from "../../../../src/shared/domain/errors.js";
-import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.js";
-import { categorized, markdown, validDirect, withLines } from "../testing/recipe-builders.js";
+import { InputRequiredError } from "../../../../src/shared/domain/shared.error.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
+import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.fake.js";
+import { categorized, markdown, validDirect, withLines } from "../testing/recipe.builder.js";
 
 const at = (name: string): string => path.resolve("/recipes", name);
 const recipe = at("recipe.md");
@@ -80,7 +81,7 @@ describe("a recipe that cannot be validated is a finding", () => {
   it("nothing at all to validate", () => {
     const run = () => new ValidateRecipes(filesOf({})).execute({ files: [], directories: [] });
     expect(run).toThrow(InputRequiredError);
-    expect(run).toThrow(/Pass at least one recipe path/u);
+    expect(run).toThrow(saying(/Pass at least one recipe path/u));
   });
 });
 

@@ -1,4 +1,5 @@
-import { AuthenticationError } from "../../../shared/domain/errors.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { AuthenticationError } from "../../../shared/domain/shared.error.js";
 import type { AuthLevel, AuthMethod, Credential } from "../contract/credential.js";
 
 /** The document one level keeps: what `auth.json` holds, once read and accepted. */
@@ -28,8 +29,8 @@ export function parseCredentialRecord(value: unknown): CredentialRecord | null {
 }
 
 function holdsTheInvariants(value: unknown): value is CredentialRecord {
-  if (typeof value !== "object" || value === null) return false;
-  const candidate = value as Record<string, unknown>;
+  const candidate = asPlainObject(value);
+  if (candidate === null) return false;
   return (
     candidate.version === 1 &&
     (candidate.method === "external" || candidate.method === "stored") &&

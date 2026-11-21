@@ -1,5 +1,6 @@
 import {
   type AxisValue,
+  byCounter,
   COUNTERS,
   type CounterSum,
   type ReportAxis,
@@ -24,16 +25,12 @@ function addCounter(sum: CounterSum, value: number | null): CounterSum {
 const EMPTY_SUM: CounterSum = { known: 0, unknownRecords: 0 };
 const EMPTY_TALLY: Tally = {
   records: 0,
-  counters: Object.fromEntries(
-    COUNTERS.map((counter) => [counter, EMPTY_SUM])
-  ) as Tally["counters"],
+  counters: byCounter(() => EMPTY_SUM),
   total: EMPTY_SUM,
 };
 
 function tally(held: Tally, record: StoredUsage): Tally {
-  const counters = Object.fromEntries(
-    COUNTERS.map((counter) => [counter, addCounter(held.counters[counter], record[counter])])
-  ) as Tally["counters"];
+  const counters = byCounter((counter) => addCounter(held.counters[counter], record[counter]));
   const known = COUNTERS.reduce((sum, counter) => sum + (record[counter] ?? 0), 0);
   const unknown = COUNTERS.some((counter) => record[counter] === null);
   return {
@@ -53,12 +50,17 @@ function unattributedValue(
 }
 
 /** What a call is on one axis: the row it lands on, and what a filter on that axis compares. */
-export function axisValueOf(
-  axis: ReportAxis,
-  record: StoredUsage,
-  attribution: Attribution,
-  person: string | null
-): AxisValue {
+export function axisValueOf({
+  axis,
+  record,
+  attribution,
+  person,
+}: {
+  readonly axis: ReportAxis;
+  readonly record: StoredUsage;
+  readonly attribution: Attribution;
+  readonly person: string | null;
+}): AxisValue {
   const value = (text: string | null): AxisValue =>
     text === null ? ABSENT : { kind: "value", value: text };
   switch (axis) {
@@ -110,16 +112,21 @@ function compareRows(axis: ReportAxis, a: ReportRow, b: ReportRow): number {
 
 /** What the calls cost, split along one axis. Every axis is a partition of the same calls, so
  * every axis adds up to the same totals: a call lands on exactly one row. */
-export function buildReport(
-  records: readonly StoredUsage[],
-  facts: AttributionFacts,
-  person: string | null,
-  axis: ReportAxis
-): UsageReport {
+export function buildReport({
+  records,
+  facts,
+  person,
+  axis,
+}: {
+  readonly records: readonly StoredUsage[];
+  readonly facts: AttributionFacts;
+  readonly person: string | null;
+  readonly axis: ReportAxis;
+}): UsageReport {
   const rows = new Map<string, ReportRow>();
   let totals = EMPTY_TALLY;
   for (const record of records) {
-    const value = axisValueOf(axis, record, attribute(record, facts), person);
+    const value = axisValueOf({ axis, record, attribution: attribute(record, facts), person });
     const key = JSON.stringify(value);
     rows.set(key, { value, ...tally(rows.get(key) ?? EMPTY_TALLY, record) });
     totals = tally(totals, record);

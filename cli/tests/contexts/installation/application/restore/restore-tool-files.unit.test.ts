@@ -1,19 +1,18 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  RestoreToolFiles,
-  type RestoreToolFilesCommand,
-} from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
+import type { RestoreToolFilesCommand } from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { KeepPrompter, OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import {
+  KeepPrompter,
+  OverwritePrompter,
+} from "../../../../shared/testing/scripted-prompter.fake.js";
+import { restoreToolFilesOf } from "../../testing/build-restore.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -22,15 +21,10 @@ const GHOST = ".vscode/ghost.json";
 const KEYBINDINGS_CONTENT = '[{"key":"ctrl+k","command":"noop"}]';
 const EXTENSIONS_CONTENT = '{"recommendations":["a.ext"]}';
 
-const descriptor = new FrameworkDescriptor({
-  version: "test",
-  contentSections: [],
-  templateRefs: [],
-  configRefs: [
-    { name: "vscodeKeybindings", path: "config/vscode/keybindings.json" },
-    { name: "vscodeExtensions", path: "config/vscode/extensions.json" },
-  ],
-});
+const configRefs = [
+  { name: "vscodeKeybindings", path: "config/vscode/keybindings.json" },
+  { name: "vscodeExtensions", path: "config/vscode/extensions.json" },
+];
 
 function contentFiles(extensions = EXTENSIONS_CONTENT): Map<string, string> {
   return new Map([
@@ -41,19 +35,14 @@ function contentFiles(extensions = EXTENSIONS_CONTENT): Map<string, string> {
 
 interface Installed {
   fs: InMemoryFileAdapter;
-  hasher: DeterministicHasher;
   manifest: Manifest;
 }
 
 function installedVscode(extraTracked: string[] = []): Installed {
-  const hasher = new DeterministicHasher();
-  const fs = new InMemoryFileAdapter(
-    {
-      [join(PROJECT_ROOT, KEYBINDINGS)]: KEYBINDINGS_CONTENT,
-      [join(PROJECT_ROOT, EXTENSIONS)]: EXTENSIONS_CONTENT,
-    },
-    hasher
-  );
+  const fs = new InMemoryFileAdapter({
+    [join(PROJECT_ROOT, KEYBINDINGS)]: KEYBINDINGS_CONTENT,
+    [join(PROJECT_ROOT, EXTENSIONS)]: EXTENSIONS_CONTENT,
+  });
   const manifest = Manifest.create();
   manifest.addTool(
     TOOL.vscode,
@@ -63,18 +52,18 @@ function installedVscode(extraTracked: string[] = []): Installed {
         new InstallationFile({
           relativePath,
           content: "",
-          hash: hasher.hash(relativePath === KEYBINDINGS ? KEYBINDINGS_CONTENT : relativePath),
+          hash: FileHash.of(relativePath === KEYBINDINGS ? KEYBINDINGS_CONTENT : relativePath),
         })
-    ),
-    [
-      {
-        relativePath: EXTENSIONS,
-        sectionKey: null,
-        entries: { recommendations: hasher.hash(JSON.stringify(["a.ext"])) },
-      },
-    ]
+    )
   );
-  return { fs, hasher, manifest };
+  manifest.updateToolMergeFiles(TOOL.vscode, [
+    {
+      relativePath: EXTENSIONS,
+      sectionKey: null,
+      entries: { recommendations: FileHash.of(JSON.stringify(["a.ext"])) },
+    },
+  ]);
+  return { fs, manifest };
 }
 
 function restore(
@@ -83,28 +72,26 @@ function restore(
   prompter: Prompter = new OverwritePrompter(),
   logger = new CapturingLogger()
 ) {
-  return new RestoreToolFiles(
-    installed.fs,
-    installed.hasher,
+  return restoreToolFilesOf({
+    fs: installed.fs,
+
     logger,
-    new FakePlatform("linux"),
-    prompter
-  ).execute({
+    prompter,
+  }).execute({
     toolId: TOOL.vscode,
     manifest: installed.manifest,
-    descriptor,
+    configRefs,
     contentFiles: contentFiles(),
     projectRoot: PROJECT_ROOT,
     version: "test",
     force: true,
     interactive: false,
     fileFilter: null,
-    tools: catalogOf(),
     ...overrides,
   });
 }
 
-describe("RestoreToolFiles — what it reports", () => {
+describe("RestoreToolFiles - what it reports", () => {
   it("announces the tool it is checking", async () => {
     const installed = installedVscode();
     const logger = new CapturingLogger();
@@ -162,7 +149,7 @@ describe("RestoreToolFiles — what it reports", () => {
   });
 });
 
-describe("RestoreToolFiles — what it records", () => {
+describe("RestoreToolFiles - what it records", () => {
   it("keeps the version the tool was installed at, not the one the restore runs with", async () => {
     const installed = installedVscode();
     await installed.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
@@ -207,8 +194,8 @@ describe("RestoreToolFiles — what it records", () => {
         relativePath: EXTENSIONS,
         sectionKey: null,
         entries: {
-          recommendations: installed.hasher.hash(JSON.stringify(["a.ext"])),
-          unwantedRecommendations: installed.hasher.hash(JSON.stringify(["b.ext"])),
+          recommendations: FileHash.of(JSON.stringify(["a.ext"])),
+          unwantedRecommendations: FileHash.of(JSON.stringify(["b.ext"])),
         },
       },
     ]);

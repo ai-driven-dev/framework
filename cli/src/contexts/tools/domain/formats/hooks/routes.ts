@@ -1,0 +1,116 @@
+/** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
+
+import type { ArtifactContract } from "../../../contract/build-contract.js";
+import type { HookScript } from "../../../contract/tool-vocabulary.js";
+import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
+import {
+  type HooksMergeTarget,
+  isHooksFileEmpty,
+  mergeHooks,
+  pluginEntries,
+  pluginScriptDir,
+  pluginScriptPath,
+  unmergeHooks,
+} from "../../hooks/hooks-merge.js";
+import {
+  type HooksConfigParams,
+  HooksConfigPart,
+  type PluginFileDelivery,
+  type ProjectMergeDelivery,
+} from "../../sections/hooks-section.js";
+import { CapabilityConfigError } from "../../tools.error.js";
+import { type HooksRouting, PLUGIN_HOOKS_SOURCE, type ProjectHooksRoute } from "./descriptor.js";
+
+/** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
+ * which a build for another tool replaces with that tool's. */
+const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
+
+export function hookScript(descriptor: HooksRouting): HookScript | undefined {
+  const adapter = descriptor.runtime?.adapter;
+  if (adapter === undefined) return undefined;
+  return (pluginPath, content) => (pluginPath === HOST_ADAPTER_PATH ? adapter : content);
+}
+
+export function withHookScript(descriptor: HooksRouting): { readonly hookScript?: HookScript } {
+  const swap = hookScript(descriptor);
+  return swap === undefined ? {} : { hookScript: swap };
+}
+
+/** A native plugin tree keeps the hooks where, and as, the plugin authored them, the tool's
+ * adapter aside. */
+export function pluginTreeHooksArtifact(descriptor: HooksRouting): ArtifactContract {
+  return {
+    supported: true,
+    source: PLUGIN_HOOKS_SOURCE,
+    path: (_plugin, rel) => rel,
+    script: hookScript(descriptor),
+  };
+}
+
+export function mergeTarget(
+  descriptor: HooksRouting,
+  file: HooksFileFormat,
+  route: { readonly scriptsDir: string }
+): HooksMergeTarget {
+  return {
+    file,
+    scriptsDir: route.scriptsDir,
+    eventMap: descriptor.undeclaredEvents === "skipped" ? descriptor.eventMap : undefined,
+    rootToken: descriptor.rootToken,
+  };
+}
+
+/** The part the framework install reads to write the tool's own hooks file. */
+export function hooksConfigPart(descriptor: {
+  readonly config: HooksConfigParams;
+}): HooksConfigPart {
+  return new HooksConfigPart(descriptor.config);
+}
+
+/** A native tool's hooks, as far as plugins go: they stay in the plugin's own directory. */
+export function nativeHooksSupport(descriptor: HooksRouting): {
+  readonly delivery: PluginFileDelivery;
+  readonly rootToken: string;
+} {
+  const { rootToken, trustNotice } = descriptor;
+  if (rootToken === undefined) {
+    throw new CapabilityConfigError("native mode requires a pluginRootToken.");
+  }
+  return {
+    delivery: {
+      kind: "plugin-file",
+      ...withHookScript(descriptor),
+      ...(trustNotice === undefined ? {} : { trustNotice }),
+    },
+    rootToken,
+  };
+}
+
+/** The hooks of a tool whose `plugin install` merges them into the project's own file. */
+export function projectHooksSupport(
+  descriptor: HooksRouting & {
+    readonly project: ProjectHooksRoute;
+    readonly file: HooksFileFormat;
+  }
+): ProjectMergeDelivery {
+  const route = descriptor.project;
+  const target = mergeTarget(descriptor, descriptor.file, route);
+  const { trustNotice } = descriptor;
+  return {
+    kind: "project-merge",
+    pluginFile: route.pluginFile,
+    project: {
+      relativePath: route.sharedFile,
+      format: {
+        merge: (existing, json, plugin) => mergeHooks(existing, { json, plugin }, target),
+        unmerge: (existing, plugin) => unmergeHooks(existing, plugin, target),
+        contributedEntries: (content, plugin) => pluginEntries(content, plugin, target),
+        isEmpty: isHooksFileEmpty,
+        scriptPath: (plugin, rel) => pluginScriptPath(route.scriptsDir, plugin, rel),
+        scriptDir: (plugin) => pluginScriptDir(route.scriptsDir, plugin),
+      },
+    },
+    ...withHookScript(descriptor),
+    ...(trustNotice === undefined ? {} : { trustNotice }),
+  };
+}

@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MarketplaceTrustStoreAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
 
 const githubSource: PluginSource = { kind: "github", repo: "owner/repo" };
@@ -21,7 +20,7 @@ describe("MarketplaceTrustStoreAdapter", () => {
 
   beforeEach(async () => {
     projectRoot = await mkdtemp(join(tmpdir(), "trust-store-test-"));
-    store = new MarketplaceTrustStoreAdapter(new HasherAdapter());
+    store = new MarketplaceTrustStoreAdapter();
   });
 
   afterEach(async () => {

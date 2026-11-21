@@ -1,4 +1,5 @@
-import { FileHash, type InstallationFile } from "../../../../shared/domain/file.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 
 // One tool's paths and hashes: what was written, and, for a framework-owned file, where it came
 // from in the source tree.

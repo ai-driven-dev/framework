@@ -2,13 +2,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import type { Hasher } from "../../../../src/shared/ports/hasher.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { aManifest } from "../testing/manifest.builder.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -17,19 +17,20 @@ const DRIFTED_HASH = "def456def456def456def456def456de";
 const PLUGIN_KEY = "aidd-context/commands/hello.md";
 
 function makeManifest(pluginFileHash: string): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.cursor, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.cursor,
-    InstalledPlugin.fromJSON({
-      name: "aidd-context",
-      source: { kind: "local", path: "/some/path" },
-      version: "1.0.0",
-      strict: false,
-      files: { [PLUGIN_KEY]: pluginFileHash },
-      scope: "user",
-    })
-  );
+  const manifest = aManifest()
+    .withTool(TOOL.cursor, [])
+    .withPlugin(
+      TOOL.cursor,
+      InstalledPlugin.fromJSON({
+        name: "aidd-context",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: { [PLUGIN_KEY]: pluginFileHash },
+        scope: "user",
+      })
+    )
+    .build();
   return manifest;
 }
 
@@ -37,6 +38,7 @@ function makeFs(fileExists: boolean, diskHash: string): FileReader {
   return {
     fileExists: async () => fileExists,
     isExecutable: async () => false,
+    isDirectory: async () => false,
     realpath: async (path: string) => path,
     readFileHash: async () => new FileHash(diskHash),
     readFile: async () => "",
@@ -54,11 +56,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   };
 }
 
-const noopHasher: Hasher = {
-  hash: () => new FileHash("00000000000000000000000000000000"),
-};
-
-describe("ReportStatus — cursor plugin drift (user-scope)", () => {
+describe("ReportStatus - cursor plugin drift (user-scope)", () => {
   describe("when cursor plugin file has drifted (base-relative key)", () => {
     it("resolves absolute path from homedir via userPluginsBaseDir before checking disk", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
@@ -69,6 +67,7 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
           return true;
         },
         isExecutable: async () => false,
+        isDirectory: async () => false,
         realpath: async (path: string) => path,
         readFileHash: async () => new FileHash(DRIFTED_HASH),
         readFile: async () => "",
@@ -77,12 +76,14 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       };
 
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        noopHasher,
-        new DetectPluginDrift(fs)
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
+        registeredTools()
       );
-      await useCase.execute({ tools: catalogOf(), projectRoot: "/proj" });
+      await useCase.execute({ projectRoot: "/proj" });
 
       expect(checkedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(true);
       expect(checkedPaths.every((p) => !p.includes(join("/proj", PLUGIN_KEY)))).toBe(true);
@@ -92,14 +93,15 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        noopHasher,
-        new DetectPluginDrift(fs)
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
+        registeredTools()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -112,29 +114,31 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
 
   describe("when cursor was never installed on this machine (every tracked file missing)", () => {
     it("reports one collapsed drift entry instead of one per file", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
-      manifest.addPlugin(
-        TOOL.cursor,
-        InstalledPlugin.fromJSON({
-          name: "aidd-context",
-          source: { kind: "local", path: "/some/path" },
-          version: "1.0.0",
-          strict: false,
-          files: { "aidd-context/a.md": EXPECTED_HASH, "aidd-context/b.md": EXPECTED_HASH },
-          scope: "user",
-        })
-      );
+      const manifest = aManifest()
+        .withTool(TOOL.cursor, [])
+        .withPlugin(
+          TOOL.cursor,
+          InstalledPlugin.fromJSON({
+            name: "aidd-context",
+            source: { kind: "local", path: "/some/path" },
+            version: "1.0.0",
+            strict: false,
+            files: { "aidd-context/a.md": EXPECTED_HASH, "aidd-context/b.md": EXPECTED_HASH },
+            scope: "user",
+          })
+        )
+        .build();
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        noopHasher,
-        new DetectPluginDrift(fs)
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
+        registeredTools()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -149,14 +153,15 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
       const useCase = new ReportStatus(
-        fs,
-        makeManifestRepo(manifest),
-        noopHasher,
-        new DetectPluginDrift(fs)
+        {
+          fs,
+          manifestRepo: makeManifestRepo(manifest),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+        },
+        registeredTools()
       );
 
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: "/proj",
       });
 

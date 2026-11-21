@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
-import {
-  type ComponentPathMap,
-  InstalledPlugin,
-  type McpDigestMap,
-  type PluginEntryData,
-  parsePluginSpec,
-} from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { parsePluginSpec } from "../../../../../src/contexts/installation/contract/plugin-spec.js";
 import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
   MalformedPluginScopeError,
-} from "../../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type {
+  ComponentPathMap,
+  McpDigestMap,
+  PluginEntryData,
+} from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
   const data = makePluginData({
@@ -91,7 +92,7 @@ describe("InstalledPlugin", () => {
       // cannot construct as invalid data.
       delete (data as { scope?: unknown }).scope;
       expect(() => InstalledPlugin.fromJSON(data)).toThrow(MalformedPluginScopeError);
-      expect(() => InstalledPlugin.fromJSON(data)).toThrow(/my-plugin/);
+      expect(() => InstalledPlugin.fromJSON(data)).toThrow(saying(/my-plugin/));
     });
 
     it("throws MalformedPluginScopeError when scope is neither project nor user", () => {
@@ -208,26 +209,36 @@ describe("InstalledPlugin", () => {
 
     it("is strict only where the distribution's manifest says so", () => {
       expect(
-        InstalledPlugin.fromDistribution(makeDistribution(true), source, [], "project").strict
+        InstalledPlugin.fromDistribution({
+          dist: makeDistribution(true),
+          source,
+          files: [],
+          scope: "project",
+        }).strict
       ).toBe(true);
     });
 
     it("is lenient where the distribution's manifest says nothing", () => {
       expect(
-        InstalledPlugin.fromDistribution(makeDistribution(), source, [], "project").strict
+        InstalledPlugin.fromDistribution({
+          dist: makeDistribution(),
+          source,
+          files: [],
+          scope: "project",
+        }).strict
       ).toBe(false);
     });
 
     it("keeps each installed path's component path", () => {
       const componentPaths = new Map([[".claude/rules/naming.md", "rules/naming.md"]]);
 
-      const plugin = InstalledPlugin.fromDistribution(
-        makeDistribution(),
+      const plugin = InstalledPlugin.fromDistribution({
+        dist: makeDistribution(),
         source,
-        [],
-        "project",
-        componentPaths
-      );
+        files: [],
+        scope: "project",
+        componentPaths,
+      });
 
       expect([...plugin.componentPaths]).toStrictEqual([
         [".claude/rules/naming.md", "rules/naming.md"],
@@ -235,7 +246,12 @@ describe("InstalledPlugin", () => {
     });
 
     it("keeps no component path when handed none", () => {
-      const plugin = InstalledPlugin.fromDistribution(makeDistribution(), source, [], "project");
+      const plugin = InstalledPlugin.fromDistribution({
+        dist: makeDistribution(),
+        source,
+        files: [],
+        scope: "project",
+      });
 
       expect([...plugin.componentPaths]).toStrictEqual([]);
     });
@@ -246,7 +262,7 @@ describe("InstalledPlugin", () => {
       const plugin = InstalledPlugin.fromJSON(makePluginData());
 
       function acceptsComponentPaths(_m: ComponentPathMap): void {}
-      // @ts-expect-error files is a PathHashMap, not a ComponentPathMap — same runtime
+      // @ts-expect-error files is a PathHashMap, not a ComponentPathMap - same runtime
       // shape (ReadonlyMap<string, string>), different brand.
       acceptsComponentPaths(plugin.files);
 
@@ -260,7 +276,7 @@ describe("InstalledPlugin", () => {
   });
 });
 
-describe("parsePluginSpec — a plugin argument as typed on the command line", () => {
+describe("parsePluginSpec - a plugin argument as typed on the command line", () => {
   it("reads the version after the last @", () => {
     expect(parsePluginSpec("aidd-context@1.2.3")).toStrictEqual({
       name: "aidd-context",

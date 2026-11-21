@@ -4,17 +4,8 @@
  * the callers counted are contexts: a module only one context imports belongs to that context.
  */
 import { describe, expect, it } from "vitest";
-import {
-  contextOf,
-  expectRatchet,
-  importersByFile,
-  isContext,
-  read,
-  sourceFiles,
-} from "./helpers.js";
-
-/** Files that fail the rule today. This list may only shrink. */
-const BASELINE: string[] = [];
+import { present } from "../shared/testing/present.builder.js";
+import { contextOf, importersByFile, isContext, read, sourceFiles } from "./source-graph.js";
 
 /** The functional area a file belongs to. Two callers in one area are still one area. */
 function areaOf(file: string): string {
@@ -33,7 +24,6 @@ function areaOf(file: string): string {
   const scenario = /^src\/orchestration\/([^/]+)\//.exec(file);
   if (scenario) return `scenario:${scenario[1]}`;
   if (file.startsWith("src/presentation/commands/")) return "commands";
-  if (file.startsWith("src/presentation/prompts/")) return "prompts";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/shared/")) return "shared";
   return "other";
@@ -70,13 +60,69 @@ function contextsImporting(file: string, importers: Map<string, Set<string>>): S
 
 /** The interface names a shared port file declares. */
 function declaredBy(portText: string): string[] {
-  return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => m[1] as string);
+  return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => present(m[1]));
+}
+
+/** What the search for earned shared files holds: who imports each file, which files are earned so
+ * far, and the text of a file. */
+interface Sharing {
+  readonly importers: Map<string, Set<string>>;
+  readonly earned: Set<string>;
+  readonly textOf: (file: string) => string;
+}
+
+const importersOf = (file: string, { importers }: Sharing): string[] => [
+  ...(importers.get(file) ?? []),
+];
+
+const readByEarned =
+  (prefix: string) =>
+  (file: string, sharing: Sharing): boolean =>
+    importersOf(file, sharing).some((i) => i.startsWith(prefix) && sharing.earned.has(i));
+
+const readByEarnedAdapter = readByEarned("src/shared/infrastructure/");
+const readByEarnedPort = readByEarned("src/shared/ports/");
+
+const reachedByEarned = (file: string, sharing: Sharing): boolean =>
+  importersOf(file, sharing).some((i) => sharing.earned.has(i));
+
+const wiredTwice = (file: string, sharing: Sharing): boolean =>
+  importersOf(file, sharing).filter((i) => i.startsWith("src/composition/")).length >= 2;
+
+function implemented(file: string, sharing: Sharing): boolean {
+  const clause = /implements ([^{]+)\{/.exec(sharing.textOf(file))?.[1] ?? "";
+  return [...sharing.earned].some(
+    (port) =>
+      port.startsWith("src/shared/ports/") &&
+      declaredBy(sharing.textOf(port)).some((name) => new RegExp(`\\b${name}\\b`).test(clause))
+  );
+}
+
+const earnedInfrastructure = (file: string, sharing: Sharing): boolean =>
+  implemented(file, sharing) || wiredTwice(file, sharing) || reachedByEarned(file, sharing);
+
+interface Candidates {
+  readonly files: readonly string[];
+  readonly qualifies: (file: string, sharing: Sharing) => boolean;
+}
+
+/** Earns the candidates that qualify until none more does: one earned file can earn the next. */
+function growEarned(groups: readonly Candidates[], sharing: Sharing): void {
+  const joining = (): string[] =>
+    groups.flatMap(({ files, qualifies }) =>
+      files.filter((file) => !sharing.earned.has(file) && qualifies(file, sharing))
+    );
+  for (let next = joining(); next.length > 0; next = joining()) {
+    for (const file of next) sharing.earned.add(file);
+  }
 }
 
 /**
  * Every file under `src/shared/` that is not earned. Domain and ports are earned by two
  * contexts. An infrastructure file is earned when it implements an earned port, when an earned
- * infrastructure file imports it, or when two compositions wire it: no context reaches it.
+ * infrastructure file imports it, or when two compositions wire it: no context reaches it. A
+ * port is also earned when an earned infrastructure file reads it: that adapter is the second
+ * caller its contexts no longer are.
  */
 function unearnedShared(
   files: readonly string[],
@@ -84,6 +130,7 @@ function unearnedShared(
   textOf: (file: string) => string
 ): string[] {
   const shared = files.filter((file) => file.startsWith("src/shared/"));
+  const inside = (prefix: string): string[] => shared.filter((file) => file.startsWith(prefix));
   const earned = new Set(
     shared.filter(
       (file) =>
@@ -91,30 +138,14 @@ function unearnedShared(
         contextsImporting(file, importers).size >= 2
     )
   );
-  const infrastructure = shared.filter((file) => file.startsWith("src/shared/infrastructure/"));
-  const implemented = (file: string): boolean => {
-    const clause = /implements ([^{]+)\{/.exec(textOf(file))?.[1] ?? "";
-    return [...earned].some(
-      (port) =>
-        port.startsWith("src/shared/ports/") &&
-        declaredBy(textOf(port)).some((name) => new RegExp(`\\b${name}\\b`).test(clause))
-    );
-  };
-  const wiredTwice = (file: string): boolean =>
-    [...(importers.get(file) ?? [])].filter((i) => i.startsWith("src/composition/")).length >= 2;
-  const reachedByEarned = (file: string): boolean =>
-    [...(importers.get(file) ?? [])].some((i) => earned.has(i));
-
-  for (let grew = true; grew; ) {
-    grew = false;
-    for (const file of infrastructure) {
-      if (earned.has(file)) continue;
-      if (implemented(file) || wiredTwice(file) || reachedByEarned(file)) {
-        earned.add(file);
-        grew = true;
-      }
-    }
-  }
+  growEarned(
+    [
+      { files: inside("src/shared/domain/"), qualifies: readByEarnedPort },
+      { files: inside("src/shared/ports/"), qualifies: readByEarnedAdapter },
+      { files: inside("src/shared/infrastructure/"), qualifies: earnedInfrastructure },
+    ],
+    { importers, earned, textOf }
+  );
   return shared.filter((file) => !earned.has(file));
 }
 
@@ -123,7 +154,7 @@ describe("shared modules are earned", () => {
     const files = sourceFiles();
     expect(
       files.filter((file) => file.startsWith("src/shared/")).length,
-      "no shared file found — the scope of this rule is stale"
+      "no shared file found - the scope of this rule is stale"
     ).toBeGreaterThan(0);
 
     expect(
@@ -137,13 +168,11 @@ describe("shared modules are earned", () => {
     // A rule that selects nothing passes forever, and this one selects a single directory.
     expect(
       files.filter(underSharedDirectory).length,
-      "no shared module found — the scope of this rule is stale"
+      "no shared module found - the scope of this rule is stale"
     ).toBeGreaterThan(0);
     const violations = unearned(files, importersByFile());
 
-    const { added, fixed } = expectRatchet(violations, BASELINE);
-    expect(added, "new shared module with fewer than two calling areas").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+    expect(violations, "a shared module with fewer than two calling areas").toEqual([]);
   });
 });
 
@@ -166,20 +195,20 @@ describe("the guard itself", () => {
   });
 
   it("does not count the shared folder of the orchestration as an area", () => {
-    const helper = "src/orchestration/shared/b.ts";
+    const leaf = "src/orchestration/shared/b.ts";
     const importers = new Map([
-      [helper, new Set(["src/orchestration/shared/a.ts", "src/orchestration/setup/x.ts"])],
+      [leaf, new Set(["src/orchestration/shared/a.ts", "src/orchestration/setup/x.ts"])],
     ]);
 
-    expect(unearned([helper], importers)).toEqual([helper]);
+    expect(unearned([leaf], importers)).toEqual([leaf]);
   });
 
   it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
     const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
-    const [C1, C2] = ["src/composition/framework.ts", "src/composition/tools.ts"];
+    const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
     const port = "src/shared/ports/port.ts";
     const adapter = "src/shared/infrastructure/adapter.ts";
-    const helper = "src/shared/infrastructure/helper.ts";
+    const leaf = "src/shared/infrastructure/leaf.ts";
     const wired = "src/shared/infrastructure/wired.ts";
     const text: Record<string, string> = {
       [port]: "export interface Reader {}",
@@ -189,7 +218,7 @@ describe("the guard itself", () => {
       ["src/shared/domain/lonely.ts", new Set([A, "src/presentation/commands/doctor.ts"])],
       ["src/shared/domain/earned.ts", new Set([A, B])],
       [port, new Set([A, B])],
-      [helper, new Set([adapter])],
+      [leaf, new Set([adapter])],
       [wired, new Set([C1, C2])],
       ["src/shared/infrastructure/lonely.ts", new Set([C1])],
     ]);
@@ -199,6 +228,35 @@ describe("the guard itself", () => {
       "src/shared/domain/lonely.ts",
       "src/shared/infrastructure/lonely.ts",
     ]);
+  });
+
+  it("clears a port one context imports when an earned adapter in shared infrastructure reads it", () => {
+    const A = "src/contexts/framework/domain/x.ts";
+    const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
+    const read = "src/shared/ports/read.ts";
+    const lonely = "src/shared/ports/lonely.ts";
+    const adapter = "src/shared/infrastructure/adapter.ts";
+    const importers = new Map([
+      [read, new Set([A, adapter])],
+      [lonely, new Set([A, C1])],
+      [adapter, new Set([C1, C2])],
+    ]);
+
+    expect(unearnedShared([read, lonely, adapter], importers, () => "")).toEqual([lonely]);
+  });
+
+  it("clears a domain type one context imports when an earned port in shared declares it in its signature", () => {
+    const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
+    const port = "src/shared/ports/port.ts";
+    const read = "src/shared/domain/read.ts";
+    const lonely = "src/shared/domain/lonely.ts";
+    const importers = new Map([
+      [port, new Set([A, B])],
+      [read, new Set([A, port])],
+      [lonely, new Set([A])],
+    ]);
+
+    expect(unearnedShared([port, read, lonely], importers, () => "")).toEqual([lonely]);
   });
 
   it("names an area for every place a caller lives, so two callers are not both 'other'", () => {

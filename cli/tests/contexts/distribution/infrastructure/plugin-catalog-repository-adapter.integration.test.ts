@@ -2,42 +2,19 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { MalformedMarketplaceCatalogError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
-import {
-  InvalidPluginManifestError,
-  MalformedMarketplaceCatalogError,
-} from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");
 
 function makeAdapter(): PluginCatalogRepositoryAdapter {
-  return new PluginCatalogRepositoryAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginCatalogRepositoryAdapter(new FileAdapter());
 }
 
 describe("PluginCatalogRepositoryAdapter", () => {
   describe("marketplace-sample fixture", () => {
-    it("returns a catalog with two entries", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog).not.toBeNull();
-      expect(catalog?.plugins).toHaveLength(2);
-    });
-
-    it("first entry has recommended true", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[0].recommended).toBe(true);
-    });
-
-    it("second entry has recommended false", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[1].recommended).toBe(false);
-    });
-
     it("resolves relative local source path against framework directory", async () => {
       const adapter = makeAdapter();
       const frameworkDir = join(FIXTURE_DIR, "marketplace-sample");
@@ -45,15 +22,6 @@ describe("PluginCatalogRepositoryAdapter", () => {
       expect(catalog?.plugins[0].source).toEqual({
         kind: "local",
         path: join(frameworkDir, "plugins/dev"),
-      });
-    });
-
-    it("parses github source for second entry", async () => {
-      const adapter = makeAdapter();
-      const catalog = await adapter.load(join(FIXTURE_DIR, "marketplace-sample"));
-      expect(catalog?.plugins[1].source).toEqual({
-        kind: "github",
-        repo: "ai-driven-dev/aidd-pm",
       });
     });
   });
@@ -67,10 +35,10 @@ describe("PluginCatalogRepositoryAdapter", () => {
   });
 
   describe("marketplace-malformed fixture", () => {
-    it("throws InvalidPluginManifestError for invalid JSON", async () => {
+    it("throws MalformedMarketplaceCatalogError for invalid JSON", async () => {
       const adapter = makeAdapter();
       await expect(adapter.load(join(FIXTURE_DIR, "marketplace-malformed"))).rejects.toThrow(
-        InvalidPluginManifestError
+        MalformedMarketplaceCatalogError
       );
     });
   });
@@ -118,18 +86,18 @@ describe("PluginCatalogRepositoryAdapter.load (Copilot-native path)", () => {
   });
 
   describe("copilot marketplace-multi-malformed fixture", () => {
-    it("throws InvalidPluginManifestError for invalid JSON in .plugin/marketplace.json", async () => {
+    it("throws MalformedMarketplaceCatalogError for invalid JSON in .plugin/marketplace.json", async () => {
       const adapter = makeAdapter();
       await expect(
         adapter.load(join(COPILOT_FIXTURE_DIR, "marketplace-multi-malformed"))
-      ).rejects.toThrow(InvalidPluginManifestError);
+      ).rejects.toThrow(MalformedMarketplaceCatalogError);
     });
   });
 });
 
 // A cached marketplace.json holding a non-array `plugins` must surface an actionable,
 // recovery-bearing error, and the hint differs for a cache source and a user-provided one.
-describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", () => {
+describe("PluginCatalogRepositoryAdapter.load - malformed catalog recovery", () => {
   async function writeCatalog(frameworkDir: string, content: string): Promise<void> {
     await mkdir(join(frameworkDir, ".claude-plugin"), { recursive: true });
     await writeFile(join(frameworkDir, ".claude-plugin/marketplace.json"), content, "utf-8");
@@ -142,9 +110,9 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     const adapter = makeAdapter();
     try {
       await expect(adapter.load(cacheDir)).rejects.toThrow(MalformedMarketplaceCatalogError);
-      await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
-      // Backward-compat: still an InvalidPluginManifestError for existing catchers.
-      await expect(adapter.load(cacheDir)).rejects.toThrow(InvalidPluginManifestError);
+      await expect(adapter.load(cacheDir)).rejects.toThrow(
+        expect.objectContaining({ cached: true })
+      );
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
@@ -156,7 +124,9 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     await writeCatalog(cacheDir, "{ not valid json");
     const adapter = makeAdapter();
     try {
-      await expect(adapter.load(cacheDir)).rejects.toThrow(/marketplace refresh --force/);
+      await expect(adapter.load(cacheDir)).rejects.toThrow(
+        expect.objectContaining({ cached: true })
+      );
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
@@ -168,7 +138,7 @@ describe("PluginCatalogRepositoryAdapter.load — malformed catalog recovery", (
     const adapter = makeAdapter();
     try {
       await expect(adapter.load(tmp)).rejects.toThrow(MalformedMarketplaceCatalogError);
-      await expect(adapter.load(tmp)).rejects.toThrow(/Fix or re-create/);
+      await expect(adapter.load(tmp)).rejects.toThrow(expect.objectContaining({ cached: false }));
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }

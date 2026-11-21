@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import type { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
-  InvalidPluginManifestError,
   InvalidPluginNameError,
   InvalidPluginVersionError,
-} from "../../../../src/shared/domain/errors.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
+} from "../../../../src/contexts/installation/domain/installation.error.js";
+import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { InvalidPluginManifestError } from "../../../../src/shared/domain/shared.error.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { MANIFEST_PROBES } from "../testing/manifest-probes.builder.js";
 
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
@@ -15,7 +15,7 @@ const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 function readInMemory(manifestText: string): Promise<PluginDistribution> {
   return new PluginDistributionReaderAdapter(
     new InMemoryFileAdapter({ [`${IN_MEMORY_ROOT}/${IN_MEMORY_MANIFEST}`]: manifestText }),
-    registeredManifestProbes()
+    MANIFEST_PROBES
   ).read(IN_MEMORY_ROOT);
 }
 

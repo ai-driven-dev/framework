@@ -37,7 +37,7 @@ flowchart TD
 | --- | --- |
 | Binary | `cli/src/cli.ts` → `dist/cli.js`, bin name `aidd` |
 | Workflow | `plugins/<plugin>/skills/<NN>-<name>/SKILL.md` |
-| Memory refresh | `plugins/aidd-context/hooks/memory.cjs`, on `SessionStart` |
+| Memory hook | `plugins/aidd-context/hooks/memory.cjs`: `load` on `SessionStart`, `guard` on `Stop` |
 
 ## Packages
 

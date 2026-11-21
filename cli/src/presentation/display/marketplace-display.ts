@@ -1,8 +1,9 @@
 import type { RefreshEntryResult } from "../../contexts/distribution/application/refresh-marketplace.js";
 import type { PluginCatalog } from "../../contexts/distribution/contract/catalog.js";
-import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
+import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import { describePluginSource } from "../../shared/domain/source.js";
-import type { CLIOutput } from "../output.js";
+import { render } from "../errors/error-translator.presenter.js";
 
 interface MarketplaceCheckOutcome {
   readonly stale: readonly { readonly name: string }[];
@@ -11,11 +12,11 @@ interface MarketplaceCheckOutcome {
     readonly plugin: string;
     readonly toolId: string;
   }[];
-  readonly skipped: readonly { readonly marketplace: string; readonly error: string }[];
+  readonly skipped: readonly { readonly marketplace: string; readonly error: unknown }[];
 }
 
 export function printCatalogEntries(
-  output: CLIOutput,
+  output: Output,
   marketplaceName: string,
   catalogs: ReadonlyMap<string, PluginCatalog>
 ): void {
@@ -33,8 +34,8 @@ export function printCatalogEntries(
 }
 
 export function printRegisteredMarketplaces(
-  output: CLIOutput,
-  marketplaces: readonly Marketplace[],
+  output: Output,
+  marketplaces: readonly MarketplaceView[],
   catalogs: ReadonlyMap<string, PluginCatalog> | undefined
 ): void {
   if (marketplaces.length === 0) output.info("No marketplaces registered.");
@@ -45,33 +46,33 @@ export function printRegisteredMarketplaces(
   }
 }
 
-export function printMarketplaceRegistered(output: CLIOutput, name: string): void {
+export function printMarketplaceRegistered(output: Output, name: string): void {
   output.success(`Marketplace '${name}' registered.`);
 }
 
 export function printMarketplaceRemoved(
-  output: CLIOutput,
+  output: Output,
   name: string,
   removedPluginCount: number
 ): void {
   output.success(`Marketplace '${name}' removed (${removedPluginCount} plugin(s) cleaned up).`);
 }
 
-export function printRefreshResults(
-  output: CLIOutput,
-  results: readonly RefreshEntryResult[]
-): void {
+export function printRefreshResults(output: Output, results: readonly RefreshEntryResult[]): void {
   for (const result of results) {
-    output.print(`${result.name}: ${result.status}${result.error ? ` (${result.error})` : ""}`);
+    output.print(
+      `${result.name}: ${result.status}${result.error === undefined ? "" : ` (${render(result.error)})`}`
+    );
   }
 }
 
-export function printMarketplaceCheck(output: CLIOutput, result: MarketplaceCheckOutcome): void {
+export function printMarketplaceCheck(output: Output, result: MarketplaceCheckOutcome): void {
   for (const marketplace of result.stale) output.print(`stale: ${marketplace.name}`);
   for (const removed of result.upstreamRemoved) {
     output.print(`removed: ${removed.marketplace}/${removed.plugin} (${removed.toolId})`);
   }
-  for (const skip of result.skipped) output.warn(`skipped: ${skip.marketplace} — ${skip.error}`);
+  for (const skip of result.skipped)
+    output.warn(`skipped: ${skip.marketplace} — ${render(skip.error)}`);
   if (
     result.stale.length === 0 &&
     result.upstreamRemoved.length === 0 &&

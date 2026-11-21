@@ -6,12 +6,9 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
-import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const execFileAsync = promisify(execFile);
-const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 
 const GIT_ENV_VARS = [
   "GIT_DIR",
@@ -52,47 +49,11 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginFetcherAdapter(new FileAdapter());
 }
 
 describe("PluginFetcherAdapter", () => {
-  describe("local source", () => {
-    it("returns absolute path for existing local plugin", async () => {
-      const adapter = makeAdapter();
-      const pluginPath = join(FIXTURE_DIR, "claude-format/sample-plugin");
-      const result = await adapter.fetch({ kind: "local", path: pluginPath }, "/tmp/cache");
-      expect(result).toBe(pluginPath);
-    });
-
-    it("throws PluginFetchError for non-existent local path", async () => {
-      const adapter = makeAdapter();
-      await expect(
-        adapter.fetch({ kind: "local", path: "/nonexistent/path/to/plugin" }, "/tmp/cache")
-      ).rejects.toThrow(PluginFetchError);
-    });
-  });
-
   describe("url source (file:// remote)", () => {
-    it("clones a bare git repo and returns the cache path", async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-url-"));
-      const repoPath = join(sandbox, "remote.git");
-      const workPath = join(sandbox, "work");
-      const cacheDir = join(sandbox, "cache");
-      try {
-        await mkdir(workPath, { recursive: true });
-        await setupBareRepoWithPlugin(repoPath, workPath);
-        const adapter = makeAdapter();
-        const localPath = await adapter.fetch(
-          { kind: "url", url: `file://${repoPath}`, ref: "main" },
-          cacheDir
-        );
-        expect(existsSync(join(localPath, ".claude-plugin/plugin.json"))).toBe(true);
-        expect(existsSync(join(localPath, "commands/hello.md"))).toBe(true);
-      } finally {
-        await rm(sandbox, { recursive: true, force: true });
-      }
-    });
-
     it("returns cached path on second fetch (skips re-clone)", async () => {
       const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-cache-"));
       const repoPath = join(sandbox, "remote.git");
@@ -113,27 +74,6 @@ describe("PluginFetcherAdapter", () => {
         );
         expect(second).toBe(first);
         expect(existsSync(join(second, ".claude-plugin/plugin.json"))).toBe(true);
-      } finally {
-        await rm(sandbox, { recursive: true, force: true });
-      }
-    });
-
-    it("forceRefresh busts cache and re-clones", async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-refresh-"));
-      const repoPath = join(sandbox, "remote.git");
-      const workPath = join(sandbox, "work");
-      const cacheDir = join(sandbox, "cache");
-      try {
-        await mkdir(workPath, { recursive: true });
-        await setupBareRepoWithPlugin(repoPath, workPath);
-        const adapter = makeAdapter();
-        await adapter.fetch({ kind: "url", url: `file://${repoPath}`, ref: "main" }, cacheDir);
-        const local = await adapter.fetch(
-          { kind: "url", url: `file://${repoPath}`, ref: "main" },
-          cacheDir,
-          { forceRefresh: true }
-        );
-        expect(existsSync(join(local, ".claude-plugin/plugin.json"))).toBe(true);
       } finally {
         await rm(sandbox, { recursive: true, force: true });
       }

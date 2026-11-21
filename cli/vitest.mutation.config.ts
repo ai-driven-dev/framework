@@ -1,14 +1,14 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
-import { CheapestKillerFirst } from "./tests/helpers/mutation-sequencer.js";
-import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
-import { textLoader } from "./tests/helpers/vitest-text-loader.js";
+import { CheapestKillerFirst } from "./tests/mutation/mutation-sequencer.js";
+import { UnloadableFileAsFailedTest } from "./tests/mutation/unloadable-file-as-failed-test.js";
+import { textLoader } from "./tests/setup/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
 /**
- * Every test file that drives the CLI in process, directly or through a helper that does.
+ * Every test file that drives the CLI in process, directly or through a kit that does.
  * Those tests replace e2e tests that never ran under mutation either, and they cannot run here:
  * Stryker runs Vitest on worker threads, where `os.homedir()` ignores the substituted HOME.
  * Scanned at load, so a new such test is left out without anyone remembering to list it.
@@ -19,12 +19,14 @@ function inProcessCliTests(): string[] {
     .map((path) => path.split("\\").join("/"))
     .filter((path) => path.endsWith(".ts"));
   const imports = (path: string, module: string): boolean =>
-    new RegExp(`from "[^"]*/${module}\\.js"`).test(readFileSync(join(testsDir, path), "utf8"));
+    new RegExp(`from "[^"]*/${module.replaceAll(".", "\\.")}\\.js"`).test(
+      readFileSync(join(testsDir, path), "utf8")
+    );
   const isTest = (path: string): boolean => /\.(unit|integration)\.test\.ts$/.test(path);
-  const drivers = ["in-process-cli"];
+  const drivers = ["in-process-cli.builder"];
   for (const path of files) {
-    if (!isTest(path) && path.startsWith("helpers/") && imports(path, "in-process-cli")) {
-      drivers.push(path.replace(/^helpers\//, "").replace(/\.ts$/, ""));
+    if (!isTest(path) && imports(path, "in-process-cli.builder")) {
+      drivers.push(path.replace(/^.*\//, "").replace(/\.ts$/, ""));
     }
   }
   return files
@@ -35,7 +37,7 @@ function inProcessCliTests(): string[] {
 const IN_PROCESS_CLI_TESTS = inProcessCliTests();
 
 /**
- * The projects a mutation run may use: the two that measure behaviour.
+ * The projects a mutation run may use: the ones that measure behaviour, the presenters' golden tests among them.
  *
  * The architecture ratchets read the source tree as text — folder sizes, cited paths,
  * the import graph. Stryker works on a copy of that tree with a mutant injected, so those
@@ -72,7 +74,7 @@ export default defineConfig({
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+          globalSetup: ["./tests/setup/throwaway-profile.ts"],
         },
       },
       {
@@ -83,7 +85,7 @@ export default defineConfig({
           include: ["tests/**/*.contract.test.ts"],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+          globalSetup: ["./tests/setup/throwaway-profile.ts"],
         },
       },
       {
@@ -95,9 +97,19 @@ export default defineConfig({
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+          globalSetup: ["./tests/setup/throwaway-profile.ts"],
           testTimeout: 60000,
           hookTimeout: 60000,
+        },
+      },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
+          name: "golden",
+          include: ["tests/presentation/**/*.golden.test.ts"],
+          globals: false,
+          environment: "node",
         },
       },
     ],

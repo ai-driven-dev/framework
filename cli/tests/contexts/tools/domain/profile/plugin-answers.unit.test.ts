@@ -8,14 +8,14 @@ import {
   flatPlacement,
   nativeLayout,
 } from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
+import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import {
   answersOf,
   flatOf,
   flatPlugins,
-  nativeOf,
   nativePlugins,
   unsupportedPlugins,
-} from "../../testing/plugin-mode.js";
+} from "../../testing/plugin-mode.builder.js";
 
 const projectHooksFormat: ProjectHooksFormat = {
   merge: () => ({ content: "", warnings: [] }),
@@ -70,15 +70,6 @@ describe("where a flat tool puts the hooks of a plugin", () => {
 });
 
 describe("what a native tool answers", () => {
-  it("builds as neutral native until its manifest says marketplace", () => {
-    expect(nativeOf(answersOf(nativePlugins())).translatesAsMarketplace()).toBe(false);
-    expect(
-      nativeOf(
-        answersOf(nativePlugins({ translationMode: "marketplace" }))
-      ).translatesAsMarketplace()
-    ).toBe(true);
-  });
-
   it("delivers no mcp, lands hooks in the plugin, and names a plugin's directory", () => {
     const answers = nativeOf(answersOf(nativePlugins({ pluginsDir: ".x/plugins/" })));
 
@@ -139,8 +130,10 @@ describe("what a native tool answers", () => {
   it("refuses a native layout with no manifest", () => {
     const { layout, hooks } = nativePlugins();
 
-    expect(() => pluginAnswers(layout, null, hooks, null)).toThrow(
-      "a native layout requires a manifest."
+    expect(() => pluginAnswers(layout, { manifest: null, hooks, mcp: null })).toThrow(
+      expect.objectContaining({
+        detail: expect.stringContaining("a native layout requires a manifest."),
+      })
     );
   });
 });
@@ -171,12 +164,11 @@ describe("what any tool answers about hooks it does not run", () => {
 describe("a layout composed by hand", () => {
   it("answers the user directory its global files map to when no user resolver exists", () => {
     const globalFiles = { dir: (home: string) => `${home}/.g`, map: () => null };
-    const answers = pluginAnswers(
-      nativeLayout({ pluginsDir: ".x/", globalFiles }),
-      nativePlugins().manifest,
-      nativePlugins().hooks,
-      null
-    );
+    const answers = pluginAnswers(nativeLayout({ pluginsDir: ".x/", globalFiles }), {
+      manifest: nativePlugins().manifest,
+      hooks: nativePlugins().hooks,
+      mcp: null,
+    });
 
     expect([answers.userPluginsBaseDir("/h"), answers.copiesFilesGlobally()]).toEqual([
       "/h/.g",

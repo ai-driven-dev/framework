@@ -7,7 +7,7 @@ import {
   type MarketplaceData,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
-import { makeRegistryAdapter } from "../testing/registry-adapter.js";
+import { makeRegistryAdapter } from "../testing/registry-adapter.builder.js";
 
 const baseData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome",
@@ -42,13 +42,17 @@ describe("MarketplaceRegistryAdapter", () => {
   it("refuses a registry file that carries no list, naming the file rather than crashing", async () => {
     await writeFile(userFile, '{"version":1}', "utf-8");
 
-    await expect(adapter.list(projectRoot)).rejects.toThrow(userFile);
+    await expect(adapter.list(projectRoot)).rejects.toThrow(
+      expect.objectContaining({ path: userFile })
+    );
   });
 
   it("refuses a registry file that is not JSON at all, naming the file", async () => {
     await writeFile(userFile, "not json", "utf-8");
 
-    await expect(adapter.list(projectRoot)).rejects.toThrow(userFile);
+    await expect(adapter.list(projectRoot)).rejects.toThrow(
+      expect.objectContaining({ path: userFile })
+    );
   });
 
   it("reads a registry file whose list is present and empty as an empty registry", async () => {

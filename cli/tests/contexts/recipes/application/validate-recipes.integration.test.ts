@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { inspectRecipe } from "../../../../src/contexts/recipes/domain/recipe-rules.js";
-import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
-import { markdown, withLines } from "../testing/recipe-builders.js";
+import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import { markdown, withLines } from "../testing/recipe.builder.js";
 
 const templatePath = path.join(
   REPOSITORY_ROOT,

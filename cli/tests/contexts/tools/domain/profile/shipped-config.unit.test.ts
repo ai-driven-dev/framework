@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defineAiTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { anEmptyContract } from "../../testing/profiles.js";
+import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.builder.js";
 
 const aiSpec = {
   toolId: "claude" as const,

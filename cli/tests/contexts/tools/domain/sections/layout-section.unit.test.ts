@@ -3,7 +3,7 @@ import {
   flatGlobalFilePath,
   nativeLayout,
 } from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
-import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 const MARKETPLACE_SETTINGS = {
   settingsPath: ".claude/settings.json",
@@ -17,7 +17,11 @@ const ACTIVATION = { binary: "claude", enableVerb: "install", disableVerb: "unin
 describe("a native layout", () => {
   it("refuses a user-scope install without the resolver of its user directory", () => {
     expect(() => nativeLayout({ pluginsDir: "", installScope: "user" })).toThrow(
-      "installScope 'user' requires a userPluginsDir resolver function."
+      expect.objectContaining({
+        detail: expect.stringContaining(
+          "installScope 'user' requires a userPluginsDir resolver function."
+        ),
+      })
     );
   });
 

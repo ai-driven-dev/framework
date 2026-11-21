@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
-import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 let home: string;
 
@@ -17,12 +17,10 @@ afterEach(async () => {
   await rm(home, { recursive: true, force: true });
 });
 
-/** Read off claude's own profile, never a literal, so this path cannot drift from
- * `profile.ts`'s own `marketplaceRegistry`. */
+/** Where claude keeps its marketplace registry under a home. The tools context's own profile test
+ * pins this same path against the declared one. */
 function registryPath(): string {
-  const declared = registeredAiConfig(TOOL.claude).nativeActivation()?.marketplaceRegistryAt(home);
-  if (declared === undefined) throw new Error("claude's profile declares no marketplaceRegistry");
-  return declared.path;
+  return join(home, ".claude", "plugins", "known_marketplaces.json");
 }
 
 async function write(content: string): Promise<void> {
@@ -32,7 +30,9 @@ async function write(content: string): Promise<void> {
 }
 
 function reader() {
-  const found = wireHostRegistration(catalogOf(), home).marketplaceRegistries.get(TOOL.claude);
+  const found = wireHostRegistration(registeredTools(), home).marketplaceRegistries.get(
+    TOOL.claude
+  );
   if (found === undefined) throw new Error("no reader declared for claude");
   return found;
 }
@@ -81,7 +81,7 @@ describe("Claude Code's own known_marketplaces.json", () => {
   });
 
   it("says a registry path it cannot read for any other reason is unreadable, never absent", async () => {
-    // A directory where the registry file should be: ENOENT never fires, EISDIR does — the
+    // A directory where the registry file should be: ENOENT never fires, EISDIR does - the
     // shape ENOENT-only handling would wrongly report as absent.
     await mkdir(registryPath(), { recursive: true });
 
@@ -113,9 +113,9 @@ describe("Claude Code's own known_marketplaces.json", () => {
 
 describe("which hosts declare a marketplace registry to read", () => {
   it("is claude alone, read off the profiles rather than a list", () => {
-    expect([...wireHostRegistration(catalogOf(), home).marketplaceRegistries.keys()]).toStrictEqual(
-      ["claude"]
-    );
+    expect([
+      ...wireHostRegistration(registeredTools(), home).marketplaceRegistries.keys(),
+    ]).toStrictEqual(["claude"]);
   });
 });
 

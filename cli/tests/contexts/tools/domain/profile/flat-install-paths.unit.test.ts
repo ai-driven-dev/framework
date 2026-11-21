@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { antigravity } from "../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { antigravity } from "../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 
 describe("where a flat plugin's files are installed", () => {
   it("nests a skill under its plugin when the tool scans nested folders", () => {

@@ -1,12 +1,11 @@
 # Host registration
 
-What a host (Claude Code, Codex, Copilot) says it has registered, and the calls that change it. The context's language is `src/contexts/host-registration/glossary.md`; its shape is the `reference-context.md` rule.
+What a host (Claude Code, Codex, Copilot) says it has registered, and the calls that change it. Language: `src/contexts/host-registration/glossary.md`; shape: `reference-context.md`; record rules: the `host-registration` rule page.
 
 ## Shape
 
-- `contract/` holds the four published ports and the pure rules over their types. There is no `domain/` folder: the rules are the whole domain (exception E11).
-- `infrastructure/` holds every reader, parser and the CLI adapter. Only the composition root imports it.
-- `src/composition/host-registration.ts` is the one reader of `tools`' declarations. It builds every reader from each tool's declared activation.
+- `contract/` is what an outside caller reads, `ports/` the host ports, `domain/` the rules and readings, `application/` the use cases.
+- `infrastructure/` holds every reader, parser and the CLI adapter, imported by the composition root alone, which is also the one reader of `tools`' declarations.
 
 ## Ports
 
@@ -19,25 +18,18 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 
 ## Choosing a reader
 
-- A tool never names itself here. Its declared activation names a layout; the composition root maps each layout to a reader in a `satisfies Record<Layout, ...>` table.
-- A new layout is a union member in `tools`, one reader, and one row in each of the three tables. `tsc` refuses the build until all three exist.
-- A new tool on an existing layout touches no file of this context.
+- A tool never names itself here: its declared layout selects a reader from a `satisfies Record<Layout, ...>` table, so `tsc` refuses a layout with no row, and a new tool on an existing layout touches nothing here.
+- Registry layouts are tables in `src/composition/host-registration.ts`; list layouts are the parsers in `infrastructure/marketplace-list-parsers.ts`.
 
-## Reading a registry
+## Reading and driving
 
-- A reading is the refs, or the reason there are none. An absent file, an unreadable one and a parsed empty one are three different answers.
-- `answeredRegistry` turns a reading into refs or an `unanswerable` verdict naming the file. An unknown is never a zero.
-- Copilot's registry is JSONC, opening with two `//` lines. A plain parse throws on it.
-
-## Driving the host CLI
-
+- A reading is the refs or the reason there are none; `answeredRegistry` makes an unknown never a zero, and the Codex TOML is line-scanned.
 - `HostCliAdapter` spawns the declared binary with a 120 second timeout.
-- On Windows it runs `.cmd` and `.bat` launchers through a shell, with the command line quoted by `windowsCommandLine`.
-- Each call takes a scope and turns it into the host's own scope flags through the declared `scopeArgs`. A plugin uninstalled must use the scope it was enabled with, or the entry written is missed.
+- On Windows it runs `.cmd` and `.bat` launchers through a shell, quoted by `windowsCommandLine`.
+- A scope becomes the host's flags through `scopeArgs`, and an uninstall uses the scope the plugin was enabled with.
 
 ## Tests
 
-- Each port has one contract suite in `tests/contexts/host-registration/testing/`, run on its fake and on its real adapter from `tests/contexts/host-registration/ports/`.
-- The real `HostActions` and `HostMarketplaceSources` arms run a `#!/bin/sh` script on a narrowed `PATH`, so they are skipped on Windows. The repository fakes no runnable `.cmd`.
-- The disabled case is skipped for a layout whose host records none (`recordsDisabled: false`).
-- Mutation: `host-registration-rules` covers `contract/`, the only check on it since coverage excludes that folder. `host-registration-adapters` covers `infrastructure/`.
+- Each port has one contract suite in `tests/contexts/host-registration/testing/`, run on its fake and its real adapter from `tests/contexts/host-registration/ports/`.
+- The real `HostActions` and `HostMarketplaceSources` arms run a `#!/bin/sh` script on a narrowed `PATH`, so Windows skips them; the disabled case is skipped where the host records none (`recordsDisabled: false`).
+- Mutation: one `host-registration` scope; `contract/` and `ports/` excluded.

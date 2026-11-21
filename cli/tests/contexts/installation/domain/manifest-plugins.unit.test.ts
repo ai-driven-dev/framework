@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   DuplicatePluginError,
   PluginNotFoundError,
-  ToolNotInManifestError,
-} from "../../../../src/shared/domain/errors.js";
-import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
-import { resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
+} from "../../../../src/contexts/installation/domain/installation.error.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const CLAUDE = TOOL.claude;
 const CURSOR = TOOL.cursor;
@@ -31,26 +32,6 @@ const makePlugin = (name = "my-plugin") =>
     files: { [`.claude/plugins/${name}/README.md`]: "c".repeat(32) },
     scope: "project",
   });
-
-describe("plugin serialization round-trip", () => {
-  it("serializes and re-parses a manifest with plugins", () => {
-    const manifest = makeManifest();
-    manifest.addPlugin(CLAUDE, makePlugin("cool-plugin"));
-    const serialized = manifest.toJSON();
-    const reparsed = Manifest.fromJSON(serialized, resolveRegisteredToolId);
-    const plugins = reparsed.getPlugins(CLAUDE);
-    expect(plugins).toHaveLength(1);
-    expect(plugins[0].name).toBe("cool-plugin");
-    expect(plugins[0].version).toBe("1.0.0");
-  });
-
-  it("round-trips a manifest with no plugins identically to one without plugin field", () => {
-    const manifest = makeManifest();
-    const json = manifest.toJSON();
-    expect(json.tools.claude.plugins).toBeUndefined();
-    expect(json.tools.cursor.plugins).toBeUndefined();
-  });
-});
 
 describe("addPlugin()", () => {
   it("adds a plugin to the specified tool", () => {
@@ -122,6 +103,62 @@ describe("updatePlugin()", () => {
   it("throws PluginNotFoundError when plugin does not exist", () => {
     const manifest = makeManifest();
     expect(() => manifest.updatePlugin(CLAUDE, makePlugin("ghost"))).toThrow(PluginNotFoundError);
+  });
+});
+
+describe("withPlugin()", () => {
+  it("adds the plugin when its name is not recorded", () => {
+    const manifest = makeManifest();
+    manifest.withPlugin(CLAUDE, makePlugin("fresh"));
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["fresh"]);
+  });
+
+  it("replaces the plugin of that name in place when it is recorded", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("first"));
+    manifest.addPlugin(CLAUDE, makePlugin("target"));
+    manifest.addPlugin(CLAUDE, makePlugin("last"));
+
+    manifest.withPlugin(CLAUDE, makePlugin("target").withVersion("2.0.0"));
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => [p.name, p.version])).toStrictEqual([
+      ["first", "1.0.0"],
+      ["target", "2.0.0"],
+      ["last", "1.0.0"],
+    ]);
+  });
+
+  it("refuses a tool that is not installed, naming it", () => {
+    expect(() => makeManifest().withPlugin(TOOL.codex, makePlugin())).toThrow(
+      ToolNotInManifestError
+    );
+  });
+});
+
+describe("withoutPlugin()", () => {
+  it("drops the plugin of that name and keeps the others", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("keep"));
+    manifest.addPlugin(CLAUDE, makePlugin("drop"));
+
+    manifest.withoutPlugin(CLAUDE, "drop");
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["keep"]);
+  });
+
+  it("leaves the manifest alone when the plugin is not recorded", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("keep"));
+
+    manifest.withoutPlugin(CLAUDE, "ghost");
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["keep"]);
+  });
+
+  it("leaves the manifest alone when the tool is not installed", () => {
+    const manifest = makeManifest();
+    expect(() => manifest.withoutPlugin(TOOL.codex, "my-plugin")).not.toThrow();
+    expect(manifest.hasTool(TOOL.codex)).toBe(false);
   });
 });
 

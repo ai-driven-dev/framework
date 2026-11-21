@@ -8,13 +8,14 @@ import { removeRecordedProjectHooks } from "../../../../../src/contexts/installa
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+} from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";
@@ -56,27 +57,27 @@ function distWithHooks(hooks: readonly PluginComponentFile[]): PluginDistributio
 describe("ProjectHooksMaterializer", () => {
   it("refuses a preexisting user-owned script without changing the project's hooks", async () => {
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "extra.js");
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const materializer = new ProjectHooksMaterializer(fs);
-    const first = await materializer.materializeWithProvenance(
-      distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+    const first = await materializer.execute({
+      dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
     const originalHooks = fs.getFile(HOOKS_PATH);
     fs.setFile(scriptPath, "user script");
 
     await expect(
-      materializer.materializeWithProvenance(
-        distWithHooks([
+      materializer.execute({
+        dist: distWithHooks([
           hooksManifest("PreToolUse"),
           SCRIPT,
           { relativePath: "hooks/extra.js", content: "new owned script" },
         ]),
-        registeredAiProfile(TOOL.cursor),
-        PROJECT_ROOT,
-        first.projectHooks
-      )
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        projectRoot: PROJECT_ROOT,
+        previous: first.projectHooks,
+      })
     ).rejects.toThrow(
       `Cursor hook script '.cursor/hooks/${PLUGIN_NAME}/extra.js' is user-owned; install refused.`
     );
@@ -88,35 +89,35 @@ describe("ProjectHooksMaterializer", () => {
   it.each(["present", "already missing"] as const)(
     "reinstall removes only the obsolete owned script when it is %s",
     async (state) => {
-      const fs = new InMemoryFileAdapter();
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const materializer = new ProjectHooksMaterializer(fs);
       const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
       const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
       const userPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "notes.txt");
       const otherPath = join(PROJECT_ROOT, ".cursor/hooks/other-plugin/check.js");
-      const first = await materializer.materializeWithProvenance(
-        distWithHooks([
+      const first = await materializer.execute({
+        dist: distWithHooks([
           hooksManifest("PreToolUse"),
           SCRIPT,
           { relativePath: "hooks/old.js", content: "old script" },
         ]),
-        registeredAiProfile(TOOL.cursor),
-        PROJECT_ROOT
-      );
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        projectRoot: PROJECT_ROOT,
+      });
       fs.setFile(userPath, "user notes");
       fs.setFile(otherPath, "other plugin script");
       const previousHooks = fs.getFile(HOOKS_PATH);
       if (state === "already missing") await fs.deleteFile(oldPath);
 
-      const second = await materializer.materializeWithProvenance(
-        distWithHooks([
+      const second = await materializer.execute({
+        dist: distWithHooks([
           hooksManifest("PreToolUse"),
           { ...SCRIPT, content: "updated owned script" },
         ]),
-        registeredAiProfile(TOOL.cursor),
-        PROJECT_ROOT,
-        first.projectHooks
-      );
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        projectRoot: PROJECT_ROOT,
+        previous: first.projectHooks,
+      });
 
       expect(fs.getFile(oldPath)).toBeUndefined();
       expect(fs.getFile(scriptPath)).toBe("updated owned script");
@@ -133,19 +134,19 @@ describe("ProjectHooksMaterializer", () => {
   );
 
   it("preserves an obsolete script edited after preflight instead of deleting it during reinstall", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const materializer = new ProjectHooksMaterializer(fs);
     const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
-    const first = await materializer.materializeWithProvenance(
-      distWithHooks([
+    const first = await materializer.execute({
+      dist: distWithHooks([
         hooksManifest("PreToolUse"),
         SCRIPT,
         { relativePath: "hooks/old.js", content: "old script" },
       ]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
     const writeFile = fs.writeFile.bind(fs);
     vi.spyOn(fs, "writeFile").mockImplementation(async (path, content) => {
       if (path === scriptPath && content === "updated owned script")
@@ -154,43 +155,43 @@ describe("ProjectHooksMaterializer", () => {
     });
 
     await expect(
-      materializer.materializeWithProvenance(
-        distWithHooks([
+      materializer.execute({
+        dist: distWithHooks([
           hooksManifest("PreToolUse"),
           { ...SCRIPT, content: "updated owned script" },
         ]),
-        registeredAiProfile(TOOL.cursor),
-        PROJECT_ROOT,
-        first.projectHooks
-      )
-    ).rejects.toThrow(/edited during reinstall.*removal refused/);
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        projectRoot: PROJECT_ROOT,
+        previous: first.projectHooks,
+      })
+    ).rejects.toThrow(saying(/edited during reinstall.*removal refused/));
 
     expect(fs.getFile(oldPath)).toBe("concurrent user edit");
     expect(first.projectHooks?.scripts.has(`.cursor/hooks/${PLUGIN_NAME}/old.js`)).toBe(true);
   });
 
   it("removes an edited obsolete script when told to overwrite edits", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const materializer = new ProjectHooksMaterializer(fs);
     const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
-    const first = await materializer.materializeWithProvenance(
-      distWithHooks([
+    const first = await materializer.execute({
+      dist: distWithHooks([
         hooksManifest("PreToolUse"),
         SCRIPT,
         { relativePath: "hooks/old.js", content: "old script" },
       ]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
     fs.setFile(oldPath, "user edit");
 
-    const second = await materializer.materializeWithProvenance(
-      distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT,
-      first.projectHooks,
-      { overwriteEdited: true }
-    );
+    const second = await materializer.execute({
+      dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+      previous: first.projectHooks,
+      guard: { overwriteEdited: true },
+    });
 
     expect(fs.getFile(oldPath)).toBeUndefined();
     expect([...(second.projectHooks?.scripts.keys() ?? [])]).toStrictEqual([
@@ -199,51 +200,51 @@ describe("ProjectHooksMaterializer", () => {
   });
 
   it("rewrites an edited script and entry when told to overwrite edits, and names --force otherwise", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const materializer = new ProjectHooksMaterializer(fs);
     const dist = distWithHooks([hooksManifest("PreToolUse"), SCRIPT]);
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
-    const first = await materializer.materializeWithProvenance(
+    const first = await materializer.execute({
       dist,
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
     const installedHooks = fs.getFile(HOOKS_PATH);
     fs.setFile(scriptPath, "user edit");
     fs.setFile(HOOKS_PATH, (installedHooks ?? "").replace("pre.js", "pre.js --verbose"));
 
     await expect(
-      materializer.materializeWithProvenance(
+      materializer.execute({
         dist,
-        registeredAiProfile(TOOL.cursor),
-        PROJECT_ROOT,
-        first.projectHooks
-      )
-    ).rejects.toThrow(/edited after install; detach refused\. Rerun aidd sync --force/);
-    await materializer.materializeWithProvenance(
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        projectRoot: PROJECT_ROOT,
+        previous: first.projectHooks,
+      })
+    ).rejects.toThrow(saying(/edited after install; detach refused\. Rerun aidd sync --force/));
+    await materializer.execute({
       dist,
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT,
-      first.projectHooks,
-      {
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+      previous: first.projectHooks,
+      guard: {
         overwriteEdited: true,
-      }
-    );
+      },
+    });
 
     expect(fs.getFile(scriptPath)).toBe(SCRIPT.content);
     expect(fs.getFile(HOOKS_PATH)).toBe(installedHooks);
   });
 
   it("merges the plugin's hooks manifest whichever position it holds among the hook files", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    const skips = await new ProjectHooksMaterializer(fs).materialize(
-      distWithHooks([SCRIPT, hooksManifest("PreToolUse")]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+    const { skipped } = await new ProjectHooksMaterializer(fs).execute({
+      dist: distWithHooks([SCRIPT, hooksManifest("PreToolUse")]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
 
-    expect(skips).toStrictEqual([]);
+    expect(skipped).toStrictEqual([]);
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
       version: 1,
       hooks: { preToolUse: [{ command: `node ./.cursor/hooks/${PLUGIN_NAME}/pre.js` }] },
@@ -257,11 +258,11 @@ describe("ProjectHooksMaterializer", () => {
       [HOOKS_PATH]: JSON.stringify({ version: 1, hooks: { postToolUse: [foreign] } }),
     });
     const materializer = new ProjectHooksMaterializer(fs);
-    const first = await materializer.materializeWithProvenance(
-      distWithHooks([SCRIPT, hooksManifest("PostToolUse")]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+    const first = await materializer.execute({
+      dist: distWithHooks([SCRIPT, hooksManifest("PostToolUse")]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks.postToolUse).toStrictEqual([
       foreign,
       { command },
@@ -280,12 +281,12 @@ describe("ProjectHooksMaterializer", () => {
       }),
     };
 
-    await materializer.materializeWithProvenance(
-      distWithHooks([SCRIPT, matched]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT,
-      first.projectHooks
-    );
+    await materializer.execute({
+      dist: distWithHooks([SCRIPT, matched]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+      previous: first.projectHooks,
+    });
 
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
       version: 1,
@@ -294,15 +295,15 @@ describe("ProjectHooksMaterializer", () => {
   });
 
   it("reports an event the tool cannot map as a hooks skip for this plugin", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    const skips = await new ProjectHooksMaterializer(fs).materialize(
-      distWithHooks([hooksManifest("Notification"), SCRIPT]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+    const { skipped } = await new ProjectHooksMaterializer(fs).execute({
+      dist: distWithHooks([hooksManifest("Notification"), SCRIPT]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
 
-    expect(skips).toStrictEqual([
+    expect(skipped).toStrictEqual([
       {
         pluginName: PLUGIN_NAME,
         component: "hooks",
@@ -313,13 +314,13 @@ describe("ProjectHooksMaterializer", () => {
   });
 
   it("copies every hook script beside the project's hooks file, never the manifest itself", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    await new ProjectHooksMaterializer(fs).materialize(
-      distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-      registeredAiProfile(TOOL.cursor),
-      PROJECT_ROOT
-    );
+    await new ProjectHooksMaterializer(fs).execute({
+      dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fs.listUnder(join(PROJECT_ROOT, ".cursor", "hooks"))).toStrictEqual([
       `${PROJECT_ROOT}/.cursor/hooks/${PLUGIN_NAME}/pre.js`,
@@ -327,15 +328,15 @@ describe("ProjectHooksMaterializer", () => {
   });
 
   it("propagates a failure to read the project's hooks file other than its absence", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [PROJECT_ROOT]);
     fs.failOn("readFile", HOOKS_PATH, errnoError("EACCES"));
 
     await expect(
-      new ProjectHooksMaterializer(fs).materialize(
-        distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-        registeredAiProfile(TOOL.cursor),
-        PROJECT_ROOT
-      )
+      new ProjectHooksMaterializer(fs).execute({
+        dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow("EACCES: planted by the test");
   });
 });
@@ -345,23 +346,23 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
   const USER_HOOKS = `${JSON.stringify({ lint: { Stop: [{ command: "./lint.sh" }] } }, null, 2)}\n`;
 
   it("adds the plugin's key beside the user's, rewrites nothing on a second run, and removes only its own on clean", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(AGENTS_HOOKS, USER_HOOKS);
     const materializer = new ProjectHooksMaterializer(fs);
     const dist = distWithHooks([hooksManifest("SessionStart"), SCRIPT]);
 
-    const first = await materializer.materializeWithProvenance(
+    const first = await materializer.execute({
       dist,
-      registeredAiProfile(TOOL.antigravity),
-      PROJECT_ROOT
-    );
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+    });
     const afterFirst = fs.getFile(AGENTS_HOOKS);
-    const second = await materializer.materializeWithProvenance(
+    const second = await materializer.execute({
       dist,
-      registeredAiProfile(TOOL.antigravity),
-      PROJECT_ROOT,
-      first.projectHooks
-    );
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+      previous: first.projectHooks,
+    });
 
     expect(JSON.parse(afterFirst ?? "")).toEqual({
       lint: { Stop: [{ command: "./lint.sh" }] },
@@ -381,48 +382,48 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     );
     expect(fs.getFile(AGENTS_HOOKS)).toBe(afterFirst);
 
-    await removeRecordedProjectHooks(
+    await removeRecordedProjectHooks({
       fs,
-      PLUGIN_NAME,
-      second.projectHooks,
-      registeredAiProfile(TOOL.antigravity),
-      PROJECT_ROOT
-    );
+      pluginName: PLUGIN_NAME,
+      provenance: second.projectHooks,
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fs.getFile(AGENTS_HOOKS)).toBe(USER_HOOKS);
     expect(fs.getFile(join(PROJECT_ROOT, ".agents/hooks", PLUGIN_NAME, "pre.js"))).toBeUndefined();
   });
 
   it("deletes the hooks file on clean when nothing but the plugin's key was in it", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const materializer = new ProjectHooksMaterializer(fs);
-    const { projectHooks } = await materializer.materializeWithProvenance(
-      distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
-      registeredAiProfile(TOOL.antigravity),
-      PROJECT_ROOT
-    );
+    const { projectHooks } = await materializer.execute({
+      dist: distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+    });
 
-    await removeRecordedProjectHooks(
+    await removeRecordedProjectHooks({
       fs,
-      PLUGIN_NAME,
-      projectHooks,
-      registeredAiProfile(TOOL.antigravity),
-      PROJECT_ROOT
-    );
+      pluginName: PLUGIN_NAME,
+      provenance: projectHooks,
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(await fs.fileExists(AGENTS_HOOKS)).toBe(false);
   });
 
   it("stops on an unparsable hooks file, naming it and leaving it as found", async () => {
-    const fs = new InMemoryFileAdapter();
+    const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(AGENTS_HOOKS, "{ not json");
 
     await expect(
-      new ProjectHooksMaterializer(fs).materializeWithProvenance(
-        distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
-        registeredAiProfile(TOOL.antigravity),
-        PROJECT_ROOT
-      )
+      new ProjectHooksMaterializer(fs).execute({
+        dist: distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
+        tool: registeredTools().aiProfile(TOOL.antigravity),
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow(/^\.agents\/hooks\.json is not valid JSON/);
     expect(fs.getFile(AGENTS_HOOKS)).toBe("{ not json");
   });

@@ -46,7 +46,7 @@ function referenceForm(line) {
 }
 
 /** A file with no block, and one whose markers are unpaired, both yield nothing:
- * `memory.cjs sync` reports the unpaired case itself, and two voices for one fault
+ * the memory hook reports the unpaired case itself, and two voices for one fault
  * help nobody. */
 function referenceFormProblems(content, expected) {
   const lines = content.split("\n");

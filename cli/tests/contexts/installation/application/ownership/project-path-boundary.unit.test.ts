@@ -4,8 +4,8 @@ import { assertProjectPathWithinRoot } from "../../../../../src/contexts/install
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+} from "../../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const ROOT = resolve("/project");
 
@@ -14,13 +14,13 @@ describe("project-local mutation boundary", () => {
     "refuses a path outside the strict project subtree: %s",
     async (path) => {
       await expect(
-        assertProjectPathWithinRoot(new FaultingFileAdapter(), ROOT, path)
+        assertProjectPathWithinRoot(new FaultingFileAdapter({}, [ROOT]), ROOT, path)
       ).rejects.toThrow(/escapes project root/);
     }
   );
 
   it("allows a new nested file only after resolving its nearest existing project parent", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [ROOT]);
     for (const path of ["/project/new/deep/file", "/project/new/deep", "/project/new"])
       fs.failOn("realpath", path, errnoError("ENOENT"));
     fs.setFile("/project/marker", "project bytes");
@@ -32,7 +32,7 @@ describe("project-local mutation boundary", () => {
   });
 
   it("refuses a missing file below a parent resolving outside the project", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [ROOT]);
     fs.setSymlink("/project/link", "/foreign");
     fs.setFile("/foreign/new/marker", "foreign bytes");
     fs.failOn("realpath", "/project/link/new/file", errnoError("ENOENT"));
@@ -44,7 +44,7 @@ describe("project-local mutation boundary", () => {
   });
 
   it("propagates an unreadable path instead of treating it as a missing child", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [ROOT]);
     const error = errnoError("EACCES");
     fs.failOn("realpath", "/project/private/file", error);
 
@@ -54,7 +54,7 @@ describe("project-local mutation boundary", () => {
   });
 
   it("refuses a project root that disappears while a missing child is being resolved", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [ROOT]);
     let rootRead = false;
     vi.spyOn(fs, "realpath").mockImplementation(async (path) => {
       if (path === ROOT && !rootRead) {
@@ -70,7 +70,7 @@ describe("project-local mutation boundary", () => {
   });
 
   it("allows a child of a project whose own root is a symlink", async () => {
-    const fs = new FaultingFileAdapter();
+    const fs = new FaultingFileAdapter({}, [ROOT]);
     fs.setSymlink(ROOT, "/canonical-project");
     fs.setFile("/canonical-project/file", "project bytes");
 
@@ -82,7 +82,7 @@ describe("project-local mutation boundary on a filesystem that rejects a missing
   it("allows a missing nested file once an existing project parent resolves inside the root", async () => {
     const fs = new InMemoryFileAdapter({
       "/project/marker": "project bytes",
-    }).rejectMissingRealpath();
+    });
 
     await expect(
       assertProjectPathWithinRoot(fs, ROOT, "/project/new/deep/file")
@@ -93,7 +93,7 @@ describe("project-local mutation boundary on a filesystem that rejects a missing
     const fs = new InMemoryFileAdapter({
       "/project/marker": "project bytes",
       "/foreign/keep": "foreign bytes",
-    }).rejectMissingRealpath();
+    });
     fs.setSymlink("/project/link", "/foreign");
 
     await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/link/new/file")).rejects.toThrow(
@@ -102,7 +102,7 @@ describe("project-local mutation boundary on a filesystem that rejects a missing
   });
 
   it("propagates ENOENT of a project root that does not exist, refusing the mutation", async () => {
-    const fs = new InMemoryFileAdapter().rejectMissingRealpath();
+    const fs = new InMemoryFileAdapter();
 
     await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/new/file")).rejects.toMatchObject({
       code: "ENOENT",

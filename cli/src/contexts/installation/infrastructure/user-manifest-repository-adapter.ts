@@ -1,15 +1,16 @@
 import { mkdir, rm, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
-import { userManifestPath } from "../../../shared/domain/paths.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Manifest } from "../domain/manifest.js";
+import { userManifestPath } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { readManifestFile } from "./manifest-file-io.js";
 
 /**
- * The user-scope counterpart of `ManifestRepositoryAdapter` — same schema, same version and refusal
+ * The user-scope counterpart of `ManifestRepositoryAdapter`: same schema, same version and refusal
  * rule, same file I/O. Only the path differs, and what a version-refusal message names to fix it.
  *
  * `delete()` removes only `manifest.json` itself, never its parent directory: `userConfigDir()`
@@ -33,7 +34,7 @@ export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
       {
         path: this.path,
         location: "for this machine",
-        reinstallCommand: "aidd setup --global",
+        scope: "user",
       },
       this.resolveToolId
     );
@@ -51,25 +52,35 @@ export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
   async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
     const lock = `${this.path}.lock`;
     await mkdir(dirname(lock), { recursive: true });
-    const deadline = Date.now() + 30_000;
-    while (true) {
-      try {
-        await mkdir(lock);
-        break;
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-        if (Date.now() >= deadline) {
-          throw new Error(
-            `User manifest is busy: ${lock}. Retry after the other AIDD operation finishes.`
-          );
-        }
-        await pause(100);
-      }
-    }
+    await this.acquire(lock);
     try {
       return await action();
     } finally {
       await rmdir(lock);
     }
+  }
+
+  /** Takes the lock directory, waiting for whoever holds it up to a deadline. */
+  private async acquire(lock: string): Promise<void> {
+    const deadline = Date.now() + 30_000;
+    while (!(await tryTake(lock))) {
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `User manifest is busy: ${lock}. Retry after the other AIDD operation finishes.`
+        );
+      }
+      await pause(100);
+    }
+  }
+}
+
+/** False when another process holds the lock directory. */
+async function tryTake(lock: string): Promise<boolean> {
+  try {
+    await mkdir(lock);
+    return true;
+  } catch (error) {
+    if (isErrnoException(error) && error.code === "EEXIST") return false;
+    throw error;
   }
 }

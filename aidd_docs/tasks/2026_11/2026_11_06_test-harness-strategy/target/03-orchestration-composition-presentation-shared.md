@@ -85,7 +85,7 @@ Rule: a question to the person is a call to the prompt port from a scenario; onl
 
 Detect the project context (installation, read-only); resolve the marketplace source (distribution); initialize manifest and gitignore (installation; `SetupUseCase` instantiates `InitUseCase` itself); register the marketplace (host-registration, single decision); choose the tools (scenario, prompt port, tools); install runtime config then IDE (installation); propose plugins if `registerDefaultMarketplace` (scenario, distribution, installation); sync activation (host-registration).
 
-One edge point: source resolution depends on the root-release listing (`listRootReleases` in `runtime/self-update/latest-release-resolver.ts`), read by 2 `framework` files. Target: `distribution` exposes it (`ListMarketplaceReleases`, over the shared `ReleaseLister` port), and the scenario passes the resolved source to `installation`, so there is no edge towards `update`, consistent with the context map of the overview. `resolveLatest` has no caller and is deleted.
+One edge point: source resolution depends on the root-release listing (`listRootReleases`, now `listReleaseTags`, in `runtime/self-update/latest-release-resolver.ts`), read by 2 `framework` files. Target: `distribution` exposes it (`ListMarketplaceReleases`, over the shared `ReleaseLister` port), and the scenario passes the resolved source to `installation`, so there is no edge towards `update`, consistent with the context map of the overview. `resolveLatest` has no caller and is deleted.
 
 ## 5. Ports
 
@@ -120,7 +120,7 @@ An external system that has business meaning (a host, a native registry) keeps a
 
 ## 7. Dependencies
 
-Contexts import `shared/domain`, `shared/ports` and, as customer/supplier, the `application/` and `contract/` folders of another context, only along an edge listed in the allowed-edges table; no barrel, no re-export; no cycle. Contexts never import `shared/infrastructure`, `composition`, `orchestration`, `presentation`. `orchestration` imports only the `application/` and `contract/` of the contexts and `shared`; it holds no business rule and no direct disk access. `presentation` imports `orchestration`, `shared/domain` and, for a simple query, a single context through its `application/`; never `composition`: `cli.ts` builds the container and passes it to the `register*Command` functions. `composition` imports everything and is imported by nobody. `shared/domain` and `shared/ports` import nothing outside themselves.
+Contexts import `shared/domain`, `shared/ports` and, as customer/supplier, the `contract/` folder of another context and nothing else of it, only along an edge listed in the allowed-edges table; no barrel, no re-export; no cycle. Contexts never import `shared/infrastructure`, `composition`, `orchestration`, `presentation`. `orchestration` and `presentation` see the `application/` and `contract/` of a context, never its `domain/`, `ports/` or `infrastructure/`; `orchestration` imports only those and `shared`; it holds no business rule and no direct disk access. `presentation` imports `orchestration`, `shared/domain` and, for a simple query, a single context through its `application/`; never `composition`: `cli.ts` builds the container and passes it to the `register*Command` functions. `composition` imports everything and is imported by nobody. `shared/domain` and `shared/ports` import nothing outside themselves.
 
 Current deviations: `setup-marketplace-source-use-case.ts` and `shared/setup-marketplace-registration-use-case.ts` import `runtime/self-update`; three `framework` files import `presentation/prompts`; 13 files of `presentation/commands` import `runtime/wiring/framework.js`.
 
@@ -218,10 +218,10 @@ Gap with a written rule: "a use case never catches its own errors" does not desc
 | `merge.ts` | framework, tools, runtime | shared/domain |
 | `materialization/flat-paths.ts` | framework, tools, translate | shared/domain |
 | `materialization/relative-link-rewrite.ts`, `claude-root-path-rewrite.ts` | tools, translate | shared/domain (uses `node:path`, which must leave, see 10.1) |
-| `paths.ts` | 5 contexts + presentation + runtime | split: pure path comparison (`samePath`, `pathContainsOrEquals`, `posixRelative`) to shared/domain with the platform as a parameter and no `process.platform` default; `.aidd` layout constants and functions to their owner (marketplace cache: distribution; manifest: installation); telemetry imports only `AIDD_DIR` and `AIDD_CONFIG_FILENAME` |
+| `paths.ts` | 5 contexts + presentation + runtime | split, done: pure path comparison (`samePath`, `pathContainsOrEquals`, `posixRelative`) stays in shared/domain with the platform as a required parameter and no `process.platform` default; the marketplace cache layout is `distribution/domain/marketplace-cache-layout.ts`, the manifest and config layout `installation/domain/project-layout.ts`; the built-marketplace builders and the two machine-wide file names stay in `shared/domain/layout/aidd-layout.ts`, while the built-marketplace parsers live in `host-registration/domain/source/built-marketplace-location.ts` because no arrow of the map reaches their owner from every reader; telemetry imports nothing from it |
 | `scope.ts` | distribution, framework, tools, presentation | shared/domain, becomes the single `Scope` type |
 | `semver.ts` | framework, runtime/self-update | shared/domain if `installation` and `update` both import it (expected) |
-| `source.ts` | distribution, framework, tools, presentation | shared/domain provisional; natural owner: distribution; to settle with the `distribution` document |
+| `source.ts` | distribution, framework, tools, presentation | shared/domain, settled: the plugin source is the vocabulary of `distribution`, `tools` and `translate` alike, and no one of them can own it without the others importing it sideways |
 | `tool.ts` | all | shared/domain; move `assertValidAiToolId` (throws an error) and `parseToolOption` (CLI option parsing) to `presentation` |
 | `ports/file-reader.ts`, `file-writer.ts`, `hasher.ts`, `logger.ts` | 4 to 5 contexts | shared/ports |
 | `ports/prompter.ts` | framework, distribution, presentation | prompt port owned by `orchestration`, implemented by `presentation` (see 4.4) |
@@ -246,7 +246,7 @@ Gap with a written rule: "a use case never catches its own errors" does not desc
 | `assets/*` | none outside runtime | see 10.4 |
 | `user-config-dir.ts` | distribution | split: pure `userConfigDirOf(env, home)` to shared/domain (read by distribution, installation, update); the wrapper that reads the environment and the home goes to composition |
 | `auth/*` (3 use cases, 8 ports, 6 adapters) | presentation; `TokenProvider`: framework, distribution | new context `auth`; `TokenProvider` published by its `contract/`, not in `shared/ports` |
-| `self-update/*` (2 use cases, ports, 3 adapters) | framework (resolver), cli (current version) | new context `update`; `listRootReleases` and `isRepoPublic` to the forge ports, `resolveLatest` deleted (no caller); release adapter merged into the shared GitHub adapter; `current-version-adapter` to shared/infrastructure |
+| `self-update/*` (2 use cases, ports, 3 adapters) | framework (resolver), cli (current version) | new context `update`; `listRootReleases`, now `listReleaseTags` and `isRepoPublic` to the forge ports, `resolveLatest` deleted (no caller); release adapter merged into the shared GitHub adapter; `current-version-adapter` to shared/infrastructure |
 
 ### 10.4 Embedded assets
 
@@ -305,6 +305,6 @@ Decisions still to take: the mechanism that takes `node:path` out of the domain 
 
 Assumptions about neighbours, unverified:
 - `installation` and `host-registration` expose in `application/` one command per operation useful to the scenarios; the `context-boundary` guard already requires a declaration.
-- The owner of `source.ts` and of the latest-version resolver is settled by the `distribution` and `update` documents.
+- The owner of `source.ts` is shared/domain, settled in the table above; the owner of the latest-version resolver is settled by the `update` document.
 - The single drift comparison is exposed by `installation`; it receives the conflict resolver (`SyncConflictResolverUseCase` today).
 - The "importers" count must be redone after the `framework` split; table 10.2 is only an upper bound on the number of contexts.

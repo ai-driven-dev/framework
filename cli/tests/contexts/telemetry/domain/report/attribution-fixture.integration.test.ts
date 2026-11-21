@@ -11,7 +11,7 @@ import {
   parseSessionDeclaration,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { attribute } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
-import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
 /** The hook answers what a session is bound to at one instant, to decide whether to ask. The
  * report answers what a call belongs to, once everything has been declared. They agree on every
@@ -110,6 +110,8 @@ describe("the report agrees with the hook's fixture", () => {
   );
 
   it.each(Object.entries(DIVERGES))("knows more than the hook for %s", (name, answer) => {
-    expect(reportAnswer(cases.binding[name] as Case)).toEqual(answer);
+    const input = cases.binding[name];
+    if (input === undefined) throw new Error(`no binding case named ${name}`);
+    expect(reportAnswer(input)).toEqual(answer);
   });
 });

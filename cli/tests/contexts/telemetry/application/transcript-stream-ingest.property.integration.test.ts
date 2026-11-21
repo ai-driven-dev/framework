@@ -12,15 +12,15 @@ import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetr
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
-import { cloneOf, grantedBy } from "../testing/clone-builders.js";
-import { FakeBindings } from "../testing/fake-bindings.js";
-import { FakeConsents } from "../testing/fake-consents.js";
-import { FakeLocator } from "../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
-import { InMemoryResolutions } from "../testing/in-memory-resolutions.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
-import { WholeTranscriptReader } from "../testing/whole-transcript-reader.js";
+import { cloneOf, grantedBy } from "../testing/clone.builder.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
+import { WholeTranscriptReader } from "../testing/whole-transcript-reader.fake.js";
 
 let root: string;
 let runs = 0;
@@ -127,21 +127,27 @@ function machine(source: UsageSource) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsage(
-    [new ReadUsage(source)],
+  const ingest = new IngestUsage({
+    readers: [new ReadUsage(source)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: new DirectoryResolver({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
       now: () => NOW,
     }),
-    new SnapshotBindings(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      () => NOW
-    ),
-    { environment: { get: () => undefined } }
-  );
+    options: { environment: { get: () => undefined } },
+  });
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   const lock = (refused: boolean) =>
     refused ? consents.unreadableClones.add(locked) : consents.unreadableClones.delete(locked);
@@ -159,6 +165,30 @@ async function bytes(dir: string): Promise<Record<string, string>> {
   return Object.fromEntries(Object.entries(found).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
+type Transcript = typeof transcript extends fc.Arbitrary<infer T> ? T : never;
+
+/** Write each transcript as far as this step has got, the last step writing all of it. */
+async function writeStep(
+  projects: string,
+  files: readonly Transcript[],
+  step: number,
+  last: boolean
+) {
+  for (const [index, file] of files.entries()) {
+    const cut = last ? file.bytes.length : (file.cuts[step] ?? file.bytes.length);
+    await writeFile(join(projects, `${index}.jsonl`), file.bytes.subarray(0, cut));
+  }
+}
+
+async function ingestBoth(machines: ReturnType<typeof machine>[], last: boolean) {
+  const results = [];
+  for (const m of machines) {
+    m.lock(!last);
+    results.push(await m.ingest.execute());
+  }
+  return results;
+}
+
 describe("ingesting transcripts read as a stream", () => {
   it("writes the same ledger, offsets and left-out bytes, and says the same, as the whole tail read at once, at any block size and however the transcripts were written between ingests", async () => {
     await fc.assert(
@@ -173,15 +203,8 @@ describe("ingesting transcripts read as a stream", () => {
           const steps = Math.max(...files.map((file) => file.cuts.length)) + 1;
           for (let step = 0; step < steps; step += 1) {
             const last = step === steps - 1;
-            for (const [index, file] of files.entries()) {
-              const cut = last ? file.bytes.length : (file.cuts[step] ?? file.bytes.length);
-              await writeFile(join(projects, `${index}.jsonl`), file.bytes.subarray(0, cut));
-            }
-            const results = [];
-            for (const m of [streamed, whole]) {
-              m.lock(!last);
-              results.push(await m.ingest.execute());
-            }
+            await writeStep(projects, files, step, last);
+            const results = await ingestBoth([streamed, whole], last);
             expect(results[0]).toEqual(results[1]);
             expect(await bytes(streamed.dir)).toEqual(await bytes(whole.dir));
           }

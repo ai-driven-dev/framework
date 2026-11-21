@@ -1,47 +1,51 @@
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { BranchDeclarations } from "../contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
+import { DeclareOnBranch } from "../contexts/telemetry/application/declaration/declare-on-branch.js";
 import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
+import { ReadCurrentBranch } from "../contexts/telemetry/application/declaration/read-current-branch.js";
 import { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
 import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
 import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.js";
+import { ChooseIdentity } from "../contexts/telemetry/application/identity/choose-identity.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
+import { ResolveIdentityRequest } from "../contexts/telemetry/application/identity/resolve-identity-request.js";
 import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
 import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
 import { ReadUsage } from "../contexts/telemetry/application/read-usage.js";
+import { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
 import { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
 import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
-import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
+import { CheckOnRequest } from "../contexts/telemetry/application/switch/check-on-request.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
+import { GrantConsent } from "../contexts/telemetry/application/switch/grant-consent.js";
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
-import { OwnRoots } from "../contexts/telemetry/application/switch/remember-own-root.js";
+import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.js";
+import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.js";
+import { environmentWithoutGitVariables } from "../contexts/telemetry/domain/git-environment.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
-import { environmentWithoutGitVariables } from "../contexts/telemetry/infrastructure/git/git-environment.js";
 import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import {
   claudeConfigDir,
   claudeProjectsRoot,
-} from "../contexts/telemetry/infrastructure/sources/claude/claude-projects-root.js";
+} from "../contexts/telemetry/infrastructure/sources/claude/claude-config-dir.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import {
-  CodexTranscriptSourceAdapter,
-  codexSessionRoots,
-} from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { codexSessionRoots } from "../contexts/telemetry/infrastructure/sources/codex/codex-session-roots.js";
+import { CodexTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
@@ -53,16 +57,19 @@ import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
-import type { TelemetryDeps, TelemetryRequests } from "../presentation/deps.js";
+import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
+import type { Prompter } from "../shared/ports/prompter.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 export function wireTelemetryRequests(): TelemetryRequests {
   return {
     resolveTaskRequest: new ResolveTaskRequest(),
     resolveReportRequest: new ResolveReportRequest(() => new Date()),
-    checkIdentity: new CheckIdentity(),
+    checkOnRequest: new CheckOnRequest(new CheckIdentity()),
+    checkFilterValue: new CheckFilterValue(),
+    resolveIdentityRequest: new ResolveIdentityRequest(),
   };
 }
 
@@ -94,101 +101,201 @@ export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
   return platform === "darwin" || platform === "win32";
 }
 
-export function wireTelemetry(homedir: () => string): TelemetryDeps {
-  const root = telemetryDir();
+/** What lives on disk: the ledger, the bindings, the consents and the person's identity. */
+function wireStores(root: string) {
   const ledgerDir = join(root, "ledger");
-  const storage = new PrivateStorageAdapter();
-  const gitEnv = environmentWithoutGitVariables();
   const bindingsDir = join(root, "bindings");
-  const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
+  const storage = new PrivateStorageAdapter();
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
-  const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases);
-  const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
-  const snapshotBindings = new SnapshotBindings(
-    branchSource,
-    snapshotStore,
-    bindingsLock,
-    () => new Date()
-  );
-  const ledger = new UsageLedgerAdapter(ledgerDir, storage);
+  return {
+    root,
+    ledger: new UsageLedgerAdapter(ledgerDir, storage),
+    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage),
+    consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
+    snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
+    bindingsLock: new BindingsLockAdapter(bindingsDir, storage),
+    sessions: new SessionBindingStoreAdapter(bindingsDir, storage),
+    identity: new PersonIdentityAdapter(root, storage),
+  };
+}
+
+type Stores = ReturnType<typeof wireStores>;
+
+/** What git answers: the repositories, their consents and the branch a task is declared on. */
+function wireGit(stores: Stores) {
+  const gitEnv = environmentWithoutGitVariables(process.env);
   const locator = new GitRepositoryLocatorAdapter(gitEnv);
   const consents = new GitConsentAdapter(gitEnv);
-  const resolutionStore = new ResolutionStoreAdapter(ledgerDir, storage);
-  const consentHistory = new ConsentHistoryAdapter(ledgerDir, storage);
-  const environment = {
-    caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
+  const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
+  return {
+    gitEnv,
+    locator,
+    consents,
+    branchSource,
+    branchStore: new GitBranchBindingStoreAdapter(gitEnv),
+    repositories: new ConsentedRepositories(locator, consents, stores.consentHistory),
+    snapshotBindings: new SnapshotBindings({
+      source: branchSource,
+      store: stores.snapshotStore,
+      lock: stores.bindingsLock,
+      now: () => new Date(),
+    }),
+  };
+}
+
+type Git = ReturnType<typeof wireGit>;
+
+const processEnvironment = new EnvironmentAdapter();
+
+const environment = {
+  caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
+  now: () => new Date(),
+};
+
+/** Declaring the task a person works on, and reading which one is declared. */
+function wireDeclaration(stores: Stores, git: Git) {
+  const declareOnBranch = new DeclareOnBranch(git.branchStore, git.snapshotBindings);
+  const readCurrentBranch = new ReadCurrentBranch(git.branchStore, git.branchSource);
+  const declaration = {
+    environment: processEnvironment,
+    sessionId: declaringSessionOf(process.env),
     now: () => new Date(),
   };
-  const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
-  const sessionId = declaringSessionOf(process.env);
-  const processEnvironment = new EnvironmentAdapter();
-  const repositories = new ConsentedRepositories(locator, consents, consentHistory);
-  const branchDeclarations = new BranchDeclarations(
-    new GitBranchBindingStoreAdapter(gitEnv),
-    branchSource,
-    snapshotBindings
-  );
-  const declaration = { environment: processEnvironment, sessionId, now: () => new Date() };
-  const declareTask = new DeclareTask(
-    repositories,
-    sessions,
-    branchDeclarations,
-    bindingsLock,
-    declaration
-  );
-  const identity = new PersonIdentityAdapter(root, storage);
-  const readTelemetryStatus = new ReadTelemetryStatus(
-    repositories,
-    sessions,
-    branchDeclarations,
-    declaration,
-    identity
-  );
+  return {
+    declareTask: new DeclareTask({
+      repositories: git.repositories,
+      sessions: stores.sessions,
+      branches: declareOnBranch,
+      lock: stores.bindingsLock,
+      options: declaration,
+    }),
+    readTelemetryStatus: new ReadTelemetryStatus({
+      repositories: git.repositories,
+      sessions: stores.sessions,
+      branches: readCurrentBranch,
+      options: declaration,
+      identities: stores.identity,
+    }),
+  };
+}
+
+/** Counting the tokens the measured tools consumed, and reporting them. */
+function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
   // The measured tools, registered once: a tool is one source here and nowhere else.
   const usageSources: readonly UsageSource[] = [
     new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
-    new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
+    new CodexTranscriptSourceAdapter({
+      roots: codexSessionRoots(process.env.CODEX_HOME, homedir()),
+    }),
   ];
-  const ingestUsage = new IngestUsage(
-    usageSources.map((source) => new ReadUsage(source)),
-    ledger,
-    new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
-    snapshotBindings,
-    { environment: processEnvironment }
+  const ingestUsage = new IngestUsage({
+    readers: usageSources.map((source) => new ReadUsage(source)),
+    ledger: stores.ledger,
+    directories: new DirectoryResolver({
+      locator: git.locator,
+      consentSource: git.consents,
+      store: stores.resolutionStore,
+      history: stores.consentHistory,
+      environment,
+    }),
+    snapshots: git.snapshotBindings,
+    options: { environment: processEnvironment },
+  });
+  const requestReport = new RequestReport(
+    new ReportUsage({
+      ingest: ingestUsage,
+      ledger: stores.ledger,
+      declared: new DeclaredBindings(stores.sessions, stores.snapshotStore, stores.identity),
+      locator: git.locator,
+      environment: processEnvironment,
+    })
   );
-  const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
-  const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
+  return { ingestUsage, requestReport };
+}
+
+/** Naming the person the measurement is attributed to. */
+function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
+  const manageIdentity = new ManageIdentity(stores.identity);
+  const proposeIdentity = new ProposeIdentity(
+    new GitUserSourceAdapter(git.gitEnv),
+    processEnvironment
+  );
   return {
-    declareTask,
-    readTelemetryStatus,
-    ingestUsage,
-    requestReport: new RequestReport(
-      new ReportUsage(
-        ingestUsage,
+    manageIdentity,
+    proposeIdentity,
+    chooseIdentity: new ChooseIdentity({
+      manageIdentity,
+      proposeIdentity,
+      checkIdentity: new CheckIdentity(),
+      prompter,
+    }),
+  };
+}
+
+/** Forgetting what was measured: the stores, the legacy locations and every remembered clone. */
+function forgetTelemetryOf(stores: Stores, git: Git, homedir: () => string) {
+  const { resolutionStore, consentHistory, ledger } = stores;
+  return new ForgetTelemetry({
+    erasure: new MeasurementErasureAdapter(
+      stores.root,
+      legacyLocations({
+        env: process.env,
+        home: homedir(),
+        platform: process.platform,
+        telemetryDir: stores.root,
+      })
+    ),
+    declarations: new RepositoryDeclarationsAdapter(git.gitEnv),
+    remembered: new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
+    ledger,
+  });
+}
+
+/** Turning measurement on and off for a repository, and forgetting what was measured. */
+function wireConsent(stores: Stores, git: Git, homedir: () => string) {
+  const { locator, consents } = git;
+  const { ledger, resolutionStore, consentHistory } = stores;
+  return {
+    readTranscriptRetention: new ReadTranscriptRetention(
+      new ClaudeSettingsAdapter(claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir()))
+    ),
+    enableTelemetry: new EnableTelemetry({
+      locator,
+      consents,
+      grant: new GrantConsent({
+        consents,
+        writer: consents,
+        history: consentHistory,
         ledger,
-        new DeclaredBindings(sessions, snapshotStore, identity),
-        locator,
-        processEnvironment
-      )
+        newInterval: () => ({
+          token: randomUUID(),
+          at: environment.now(),
+        }),
+      }),
+      roots: new RememberOwnRoot(ledger, resolutionStore, environment),
+      identities: stores.identity,
+    }),
+    disableTelemetry: new DisableTelemetry(
+      locator,
+      consents,
+      new WithdrawConsent({
+        writer: consents,
+        history: consentHistory,
+        ledger,
+        now: environment.now,
+      })
     ),
-    manageIdentity: new ManageIdentity(identity),
-    proposeIdentity: new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment),
-    readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
-    enableTelemetry: new EnableTelemetry(
-      consentSwitch,
-      new OwnRoots(ledger, resolutionStore, environment),
-      () => ({ token: randomUUID(), at: environment.now() }),
-      identity
-    ),
-    disableTelemetry: new DisableTelemetry(consentSwitch, environment.now),
-    forgetTelemetry: new ForgetTelemetry(
-      new MeasurementErasureAdapter(
-        root,
-        legacyLocations(process.env, homedir(), process.platform, root)
-      ),
-      new RepositoryDeclarationsAdapter(gitEnv),
-      new RememberedClones(resolutionStore, consentHistory, snapshotStore),
-      ledger
-    ),
+    forgetTelemetry: forgetTelemetryOf(stores, git, homedir),
+  };
+}
+
+export function wireTelemetry(homedir: () => string, prompter: Prompter): TelemetryDeps {
+  const stores = wireStores(telemetryDir());
+  const git = wireGit(stores);
+  return {
+    ...wireDeclaration(stores, git),
+    ...wireMeasurement(stores, git, homedir),
+    ...wireIdentity(stores, git, prompter),
+    ...wireConsent(stores, git, homedir),
   };
 }

@@ -1,8 +1,5 @@
-import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
-
-const AGENTS_SKILLS_PREFIX = ".agents/skills/";
+import { CapabilityConfigError } from "../tools.error.js";
 
 type SkillsSectionParams = {
   directory?: string;
@@ -14,7 +11,6 @@ type SkillsSectionParams = {
 
 export class SkillsSection {
   readonly #params: SkillsSectionParams;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: SkillsSectionParams) {
     this.#params = params;
@@ -23,7 +19,6 @@ export class SkillsSection {
         "SkillsSection requires either agentsSkillsDirectory or directory"
       );
     }
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(fileName: string): string | null {
@@ -34,26 +29,7 @@ export class SkillsSection {
     return this.#params.convertFrontmatter(fm);
   }
 
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
-  }
-
   serialize(frontmatter: Record<string, unknown>, body: string): string {
     return serializeFrontmatter(frontmatter, body);
-  }
-
-  accepts(relativePath: string): boolean {
-    if (this.#params.agentsSkillsDirectory) {
-      return relativePath.startsWith(AGENTS_SKILLS_PREFIX);
-    }
-    return relativePath.startsWith(this.#params.directory as string);
-  }
-
-  equals(other: SkillsSection): boolean {
-    return (
-      this.#params.directory === other.#params.directory &&
-      this.#params.toolSuffix === other.#params.toolSuffix &&
-      this.#params.agentsSkillsDirectory === other.#params.agentsSkillsDirectory
-    );
   }
 }

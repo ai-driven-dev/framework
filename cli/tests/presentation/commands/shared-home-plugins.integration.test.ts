@@ -2,9 +2,12 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { copyFixtureTree, createTestEnv } from "../../e2e/helpers.js";
-import { FRAMEWORK_REAL, setupFromFixture } from "../../helpers/fixture-setup.js";
-import { runInProcess } from "../../helpers/in-process-cli.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { TOOL } from "../../shared/testing/catalog-of.builder.js";
+import { copyFixtureTree, createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
+import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
+import { resolveRegisteredToolId } from "../../shared/testing/registered-tools.builder.js";
+import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
 
 let first: string;
 let second: string;
@@ -29,11 +32,20 @@ const userPlugins = () => join(home, ".cursor", "plugins", "local");
 const names = "aidd-context,aidd-dev";
 
 describe("two projects on one home that installed the same cursor plugins", () => {
-  it("removes one machine-owned plugin only after both projects detach", async () => {
+  it("gives each project its hooks, records both as dependents, and removes the plugin only after both detach", async () => {
     for (const cwd of [first, second]) {
       const setup = await aidd(setupFromFixture("cursor", names), cwd);
       expect(setup.exitCode, setup.stderr).toBe(0);
+      expect(await readFile(join(cwd, ".cursor", "hooks.json"), "utf-8")).toContain(
+        "update_memory"
+      );
     }
+    const machine = Manifest.fromJSON(
+      JSON.parse(await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")),
+      resolveRegisteredToolId
+    );
+    const owned = machine.getPlugins(TOOL.cursor).find((plugin) => plugin.name === "aidd-context");
+    expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
     const contextDir = join(userPlugins(), "aidd-context");
     const devDir = join(userPlugins(), "aidd-dev");
     const remove = ["plugin", "remove", "aidd-context", "--tool", "cursor", "--scope", "user"];

@@ -1,4 +1,4 @@
-import { stringifyToml } from "./toml.js";
+import type { TomlCodec } from "./toml.js";
 
 interface StdioServer {
   command: string;
@@ -54,7 +54,7 @@ function mapServerToToml(raw: Record<string, unknown>): Record<string, unknown> 
   return {};
 }
 
-export function mcpJsonToToml(json: string): string {
+export function mcpJsonToToml(toml: TomlCodec, json: string): string {
   const parsed = JSON.parse(json) as { mcpServers?: Record<string, Record<string, unknown>> };
   const servers = parsed.mcpServers ?? {};
   if (Object.keys(servers).length === 0) return "";
@@ -62,7 +62,7 @@ export function mcpJsonToToml(json: string): string {
   for (const [name, raw] of Object.entries(servers)) {
     mcp_servers[name] = mapServerToToml(raw);
   }
-  return stringifyToml({ mcp_servers });
+  return toml.stringify({ mcp_servers });
 }
 
 export function mergeJsonUserPrime(existing: string, incoming: string): string {
@@ -79,10 +79,7 @@ export function deepMerge(
   for (const [key, value] of Object.entries(source)) {
     const existing = result[key];
     if (isPlainObject(value) && isPlainObject(existing)) {
-      result[key] = deepMerge(
-        existing as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
+      result[key] = deepMerge(existing, value);
     } else {
       result[key] = value;
     }
@@ -90,6 +87,6 @@ export function deepMerge(
   return result;
 }
 
-function isPlainObject(value: unknown): boolean {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

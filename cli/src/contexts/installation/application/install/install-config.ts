@@ -1,10 +1,9 @@
 import { join } from "node:path";
-import { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
-import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
+import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Platform } from "../../ports/platform.js";
 
@@ -19,48 +18,46 @@ interface InstallConfigCommand {
 }
 
 export class InstallConfig {
-  constructor(
-    private readonly fs: FileReader,
-    private readonly hasher: Hasher
-  ) {}
+  constructor(private readonly fs: FileReader) {}
 
   async execute(options: InstallConfigCommand): Promise<InstallationFile[]> {
+    return [...(await this.referencedFiles(options)), ...this.staticFiles(options)];
+  }
+
+  private async referencedFiles(options: InstallConfigCommand): Promise<InstallationFile[]> {
     const { writes, configRefs, contentFiles, projectRoot, platform } = options;
     const platformName = platform.current();
     const results: InstallationFile[] = [];
     for (const ref of configRefs) {
       const write = writes.find((w) => w.capability.consumes(ref.name));
       if (write === undefined) continue;
-      const file = await this.processRef(ref, write, contentFiles, projectRoot, platformName);
-      if (file !== null) results.push(file);
-    }
-    for (const write of writes) {
-      if (write.kind !== "settings") continue;
-      const file = this.processStaticWrite(write.capability, options);
+      const file = await this.processRef(ref, write, { contentFiles, projectRoot, platformName });
       if (file !== null) results.push(file);
     }
     return results;
   }
 
+  private staticFiles(options: InstallConfigCommand): InstallationFile[] {
+    const files: InstallationFile[] = [];
+    for (const write of options.writes) {
+      if (write.kind !== "settings") continue;
+      const file = this.processStaticWrite(write.capability, options);
+      if (file !== null) files.push(file);
+    }
+    return files;
+  }
+
   private async processRef(
     ref: ConfigRef,
     write: ConfigWrite,
-    contentFiles: Map<string, string>,
-    projectRoot: string,
-    platformName: string
+    context: { contentFiles: Map<string, string>; projectRoot: string; platformName: string }
   ): Promise<InstallationFile | null> {
+    const { contentFiles, projectRoot, platformName } = context;
     const rawContent = contentFiles.get(ref.path);
     if (rawContent === undefined) return null;
-    const outputPath = await this.resolveOutputPath(write, projectRoot);
-    if (outputPath === null) return null;
-    const content = this.applyTransforms(write, ref.name, rawContent, platformName);
-    return new InstallationFile({
-      relativePath: outputPath,
-      content,
-      hash: this.hasher.hash(content),
-      mergeStrategy: write.capability.mergeStrategy(),
-      frameworkPath: ref.path,
-    });
+    const relativePath = await this.resolveOutputPath(write, projectRoot);
+    const content = this.applyTransforms(write, rawContent, platformName);
+    return write.capability.fileOf(content, { relativePath, frameworkPath: ref.path });
   }
 
   private processStaticWrite(
@@ -74,32 +71,24 @@ export class InstallConfig {
         : (fileName) => assetProvider.loadConfigAsset(toolId, fileName)
     );
     if (content === null) return null;
-    return new InstallationFile({
-      relativePath: capability.outputPath(),
-      content,
-      hash: this.hasher.hash(content),
-      mergeStrategy: capability.mergeStrategy(),
-    });
+    return capability.fileOf(content);
   }
 
-  private async resolveOutputPath(write: ConfigWrite, projectRoot: string): Promise<string | null> {
-    if (write.kind === "mcp") {
-      return write.capability.resolveOutputPath((relativePath) =>
-        this.fs.fileExists(join(projectRoot, relativePath))
-      );
-    }
-    return write.capability.outputPath();
-  }
-
-  private applyTransforms(
+  /** The mcp file a project already keeps, or undefined for a file that lands at its own path. */
+  private async resolveOutputPath(
     write: ConfigWrite,
-    configName: string,
-    rawContent: string,
-    platformName: string
-  ): string {
+    projectRoot: string
+  ): Promise<string | undefined> {
+    if (write.kind !== "mcp") return undefined;
+    return write.capability.resolveOutputPath((relativePath) =>
+      this.fs.fileExists(join(projectRoot, relativePath))
+    );
+  }
+
+  private applyTransforms(write: ConfigWrite, rawContent: string, platformName: string): string {
     if (write.kind !== "mcp") return rawContent;
     const toolContent = write.capability.transform(rawContent);
     const launch = write.capability.launchTransformFor(platformName);
-    return configName === CONFIG_MCP && launch ? launch(toolContent) : toolContent;
+    return launch ? launch(toolContent) : toolContent;
   }
 }

@@ -1,0 +1,100 @@
+import { describe, expect, it } from "vitest";
+import {
+  printToolAlreadyInstalled,
+  printToolInstalled,
+  printToolRemoved,
+  printUpdateResult,
+} from "../../../src/presentation/display/tool-config-display.js";
+import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+
+describe("printToolAlreadyInstalled", () => {
+  it("warns that the tool is there and names the flag that reinstalls it", () => {
+    const output = new CapturingOutput(false);
+
+    printToolAlreadyInstalled(output, TOOL.claude);
+
+    expect(output.at("warn")).toEqual(["claude is already installed. Use `--force` to reinstall."]);
+  });
+});
+
+describe("printToolInstalled", () => {
+  it("announces the tool and its file count when nothing warned", () => {
+    const output = new CapturingOutput(false);
+
+    printToolInstalled(output, { toolId: TOOL.cursor, fileCount: 12, warnings: [] });
+
+    expect(output.at("success")).toEqual(["Installed cursor (12 files)"]);
+  });
+
+  it("puts every warning before the success line, in the order given", () => {
+    const output = new CapturingOutput(false);
+
+    printToolInstalled(output, {
+      toolId: TOOL.codex,
+      fileCount: 3,
+      warnings: ["first", "second"],
+    });
+
+    expect(output.captured).toEqual([
+      { level: "warn", message: "first" },
+      { level: "warn", message: "second" },
+      { level: "success", message: "Installed codex (3 files)" },
+    ]);
+  });
+});
+
+describe("printToolRemoved", () => {
+  it("announces the tool and how many files went with it", () => {
+    const output = new CapturingOutput(false);
+
+    printToolRemoved(output, TOOL.claude, 7);
+
+    expect(output.at("success")).toEqual(["Removed claude (7 files removed)"]);
+  });
+});
+
+describe("printUpdateResult", () => {
+  it("says no tool is installed when there is neither an update nor an error", () => {
+    const output = new CapturingOutput(false);
+
+    printUpdateResult(output, [], []);
+
+    expect(output.captured).toEqual([{ level: "info", message: "No tools installed." }]);
+  });
+
+  it("prints one success per updated tool, then every error", () => {
+    const output = new CapturingOutput(false);
+
+    printUpdateResult(
+      output,
+      [
+        { toolId: TOOL.claude, fileCount: 4 },
+        { toolId: TOOL.cursor, fileCount: 1 },
+      ],
+      [{ scope: "codex", error: "binary missing" }]
+    );
+
+    expect(output.captured).toEqual([
+      { level: "success", message: "Updated claude (4 files)" },
+      { level: "success", message: "Updated cursor (1 files)" },
+      { level: "warn", message: "[codex] binary missing" },
+    ]);
+  });
+
+  it("stays silent about missing tools once an update alone came back", () => {
+    const output = new CapturingOutput(false);
+
+    printUpdateResult(output, [{ toolId: TOOL.claude, fileCount: 2 }], []);
+
+    expect(output.captured).toEqual([{ level: "success", message: "Updated claude (2 files)" }]);
+  });
+
+  it("stays silent about missing tools once an error alone came back", () => {
+    const output = new CapturingOutput(false);
+
+    printUpdateResult(output, [], [{ scope: "claude", error: "refused" }]);
+
+    expect(output.captured).toEqual([{ level: "warn", message: "[claude] refused" }]);
+  });
+});

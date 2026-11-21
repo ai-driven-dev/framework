@@ -17,6 +17,11 @@ const ROOT = path.resolve(__dirname, "../..");
 
 // A script test cannot read the registration without building the CLI, so it takes the folder
 // name of each profile as the registered id: folder name = registered id.
+function profileFile(toolId) {
+  const dir = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId);
+  return path.join(dir, `${toolId}.profile.ts`);
+}
+
 function aiToolIds() {
   const profiles = path.join(ROOT, "cli/src/contexts/tools/domain/profiles");
   const ids = fs
@@ -24,17 +29,16 @@ function aiToolIds() {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter((id) =>
-      /defineAiTool\(/u.test(fs.readFileSync(path.join(profiles, id, "profile.ts"), "utf8"))
+      /defineAiTool\(/u.test(fs.readFileSync(profileFile(id), "utf8"))
     );
   assert.ok(ids.length > 0, "no profile is defined with defineAiTool; the guard reads nothing");
   return ids;
 }
 
 function declaresUserScopeActivation(toolId) {
-  const profile = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId, "profile.ts");
-  const text = fs.readFileSync(profile, "utf8");
+  const text = fs.readFileSync(profileFile(toolId), "utf8");
   return (
-    /nativeActivation:\s*\{/u.test(text) ||
+    /nativeActivation:\s*[\w{]/u.test(text) ||
     /installScope:\s*"user"/u.test(text) ||
     /globalFiles:\s*\{/u.test(text)
   );

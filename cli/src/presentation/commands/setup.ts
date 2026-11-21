@@ -1,140 +1,139 @@
-import { resolve } from "node:path";
-import { type Command, Option } from "commander";
-import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
-import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
-import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
+import type { Command } from "commander";
+import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
-import { CategoryMismatchError } from "../../shared/domain/errors.js";
-import type { DepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
+import type { Output } from "../../orchestration/domain/output.js";
+import { type PluginInstallMode, SetupFlow } from "../../orchestration/setup/setup-flow.js";
+import { agentModelsRequest, isInteractiveRun } from "../../orchestration/setup/setup-request.js";
+import { reportAgentModels } from "../display/agent-models-display.js";
 import {
   printDetectedContext,
   printNextSteps,
   printSetupOutcome,
   printWelcomeBanner,
 } from "../display/setup-display.js";
-import { ErrorHandler } from "../error-handler.js";
-import type { CLIOutput } from "../output.js";
+import { reportNativeActivation } from "../display/sync-display.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
-import { reportSyncActivation } from "./sync-native-activation.js";
+import {
+  activatesAtUserScope,
+  declareSetupOptions,
+  globalSetupHelp,
+  parsePluginsFlag,
+  parseSourceFlag,
+  parseToolIds,
+  requireAgentHosts,
+  type SetupCmdOptions,
+} from "./setup-flags.js";
 
 /** What this command reads of the graph. */
-type SetupKeys =
-  | "fs"
-  | "manifestRepo"
-  | "setupMarketplaceRegistration"
-  | "marketplaceSyncSettingsUseCase"
-  | "setupToolsUseCase"
-  | "setupPluginsPromptUseCase"
-  | "currentVersionProvider"
-  | "setupToolsPromptUseCase"
-  | "projectContextDetector"
-  | "setupMachineScopeUseCase";
+type SetupKeys = "runSetup" | "setAgentModels";
 
-interface SetupCmdOptions {
-  source?: "remote" | "local";
-  path?: string;
-  release?: string;
-  ai?: string;
-  ide?: string;
-  plugins?: string;
-  yes?: boolean;
-  defaultMarketplace?: boolean;
-  scope?: string;
-  global?: boolean;
+interface SetupRequest {
+  source: FrameworkSource | undefined;
+  scope: ReturnType<typeof parseScopeFlag>;
+  toolIds: { aiTools: string[]; ideTools: string[] };
+  interactive: boolean;
+  plugins: { mode: PluginInstallMode; names: string[] };
 }
 
-export function parseSourceFlag(
+function parseSetupRequest(
   cmdOptions: SetupCmdOptions,
-  output: CLIOutput
-): MarketplaceSourceMode | undefined {
-  if (!cmdOptions.source) return undefined;
-  if (cmdOptions.source === "local") {
-    if (!cmdOptions.path) {
-      output.error("--source local requires --path <dir>");
-      process.exit(1);
-    }
-    return MarketplaceSourceMode.local(resolve(cmdOptions.path));
-  }
-  return MarketplaceSourceMode.remote(undefined, cmdOptions.release);
-}
+  output: Output,
+  catalog: ToolCatalog
+): SetupRequest {
+  const source = parseSourceFlag(cmdOptions, output);
+  const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
+  const toolIds = parseToolIds(cmdOptions, catalog);
 
-export function expandAllKeyword(raw: string | undefined, all: readonly string[]): string[] {
-  if (raw === undefined) return [];
-  if (raw.trim() === "all") return [...all];
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-/** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
- * still takes AI tools alone. Each id lands in the list its category decides. */
-export function parseToolIds(
-  cmdOptions: SetupCmdOptions,
-  errorHandler: ErrorHandler,
-  tools: ToolCatalog
-): { aiTools: string[]; ideTools: string[] } | null {
-  const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
-  const ids = expandAllKeyword(cmdOptions.ide, tools.idsInCanonicalOrder());
-  try {
-    if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all") assertAiToolIds(aiIds, tools);
-  } catch (e) {
-    errorHandler.handle(e);
-    return null;
-  }
-  const unique = [...new Set([...aiIds, ...ids])];
+  const interactive = isInteractiveRun(process.stdout.isTTY, [
+    cmdOptions.source,
+    cmdOptions.release,
+    cmdOptions.ai,
+    cmdOptions.ide,
+    cmdOptions.plugins,
+    cmdOptions.yes,
+    cmdOptions.global,
+    cmdOptions.provider,
+  ]);
   return {
-    aiTools: unique.filter((id) => !tools.isIdeTool(id)),
-    ideTools: unique.filter((id) => tools.isIdeTool(id)),
+    source,
+    scope,
+    toolIds,
+    interactive,
+    plugins: parsePluginsFlag(cmdOptions.plugins, interactive),
   };
 }
 
-function assertAiToolIds(toolIds: readonly string[], tools: ToolCatalog): void {
-  const wrong = toolIds.filter((id) => !tools.isAiTool(id));
-  if (wrong.length > 0) {
-    throw new CategoryMismatchError(wrong, "ai", tools.idsInCanonicalOrder("ai"));
+function buildSetupFlow(
+  { projectRoot, catalog, cmdOptions }: Pick<SetupRun, "projectRoot" | "catalog" | "cmdOptions">,
+  request: SetupRequest
+): SetupFlow {
+  return new SetupFlow({
+    projectRoot,
+    registeredToolIds: catalog.idsInCanonicalOrder(),
+    aiToolIds: catalog.idsInCanonicalOrder("ai"),
+    ideToolIds: catalog.idsInCanonicalOrder("ide"),
+    supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
+    source: request.source,
+    aiTools: request.toolIds.aiTools,
+    ideTools: request.toolIds.ideTools,
+    pluginMode: request.plugins.mode,
+    pluginNames: request.plugins.names,
+    interactive: request.interactive,
+    force: false,
+    registerDefaultMarketplace: cmdOptions.defaultMarketplace !== false,
+    scope: request.scope,
+  });
+}
+
+interface SetupRun {
+  verbose: boolean;
+  output: Output;
+  projectRoot: string;
+  catalog: ToolCatalog;
+  createDeps: DepsSliceFactory<SetupKeys>;
+  cmdOptions: SetupCmdOptions;
+}
+
+async function runSetupAction(run: SetupRun): Promise<void> {
+  const { verbose, output, projectRoot, catalog, createDeps, cmdOptions } = run;
+  const request = parseSetupRequest(cmdOptions, output, catalog);
+  const { interactive, scope } = request;
+  const flow = buildSetupFlow(run, request);
+  const { runnable, ...agents } = agentModelsRequest(
+    cmdOptions.provider,
+    request.toolIds.aiTools,
+    catalog
+  );
+  requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
+
+  if (interactive) printWelcomeBanner(output);
+
+  const deps = await createDeps(projectRoot, { verbose }, output);
+  const result = await deps.runSetup.execute(flow);
+
+  if (interactive && result.context !== undefined) {
+    printDetectedContext(output, result.context.describe());
   }
-}
-
-type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
-
-export function parsePluginsFlag(
-  raw: string | undefined,
-  interactive: boolean
-): { mode: PluginsMode; names: string[] } {
-  if (raw === undefined) return { mode: interactive ? "interactive" : "none", names: [] };
-  const value = raw.trim();
-  if (value === "none") return { mode: "none", names: [] };
-  if (value === "all") return { mode: "all", names: [] };
-  if (value === "recommended") return { mode: "recommended", names: [] };
-  const names = value
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return { mode: "named", names };
-}
-
-function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
-  return profile.kind === "ai" && profile.supportsUserScopeActivation();
-}
-
-/** What `--global` does for each registered tool, read from its profile. */
-export function globalSetupHelp(catalog: ToolCatalog): string {
-  const global = catalog.sortedById().filter(activatesAtUserScope);
-  const tools = global.map((profile) => profile.toolId);
-  const native = global.filter((profile) => profile.nativeActivation() !== undefined);
-  const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
-  const where = (profile: AiToolProfile) =>
-    profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
-  return [
-    "",
-    "Global:",
-    `  Pass --ide ${tools.join(",")} (one or more, no editor) and --plugins all, recommended, none or names.`,
-    `  ${native.map((p) => p.toolId).join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
-    `  ${copying.map((p) => `${p.toolId} gets their files in ${where(p)}`).join(", ")}.`,
-    "  `aidd sync --global` refreshes them from the framework source.",
-  ].join("\n");
+  printSetupOutcome(output, result, verbose);
+  // Once the install has succeeded: the provider and the main session's model hold for
+  // every project on the machine, so a failed install leaves both as they were.
+  if (cmdOptions.provider !== undefined) {
+    const main = await deps.setAgentModels.execute({
+      projectRoot,
+      ...agents,
+      scope: scope ?? "project",
+    });
+    reportAgentModels({
+      output,
+      catalog,
+      provider: agents.provider,
+      hosts: agents.hosts,
+      main,
+    });
+  }
+  if (interactive) printNextSteps(output, result.install.results.length > 0);
+  reportNativeActivation(output, result.activation);
 }
 
 export function registerSetupCommand(
@@ -142,101 +141,13 @@ export function registerSetupCommand(
   catalog: ToolCatalog,
   createDeps: DepsSliceFactory<SetupKeys>
 ): void {
-  program
-    .command("setup")
+  declareSetupOptions(program.command("setup"), catalog)
     .description(
       "Set up or update the project to a correct state — bootstraps the whole project (marketplace, framework, tools, plugins); see `framework install`, which acts on the framework alone"
     )
-    .option("--source <mode>", "Framework source: remote or local")
-    .option("--path <dir>", "Absolute path to local framework (required with --source local)")
-    .option("--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)")
-    .option("--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)")
-    .addOption(new Option("--ai <ids>", "Former spelling of --ide, for AI tools").hideHelp())
-    .option(
-      "--plugins <mode>",
-      "Plugin install mode: none | all | recommended | comma-separated names"
-    )
-    .option(
-      "--no-default-marketplace",
-      "Skip auto-registering aidd-framework (no source prompt, no plugin install)"
-    )
-    .option("--yes", "Accept defaults without prompting")
-    .option(
-      "--global",
-      "install for every project on this machine instead of into this project; see the " +
-        "requirements below"
-    )
-    .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
     .addHelpText("after", () => globalSetupHelp(catalog))
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-
-      const source = parseSourceFlag(cmdOptions, output);
-      const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
-      const toolIds = parseToolIds(cmdOptions, errorHandler, catalog);
-      if (toolIds === null) return;
-
-      const hasScriptingFlags = !!(
-        cmdOptions.source ||
-        cmdOptions.release ||
-        cmdOptions.ai ||
-        cmdOptions.ide ||
-        cmdOptions.plugins ||
-        cmdOptions.yes ||
-        cmdOptions.global
-      );
-      const interactive = process.stdout.isTTY && !hasScriptingFlags;
-
-      const { mode: pluginMode, names: pluginNames } = parsePluginsFlag(
-        cmdOptions.plugins,
-        interactive
-      );
-
-      const registerDefaultMarketplace = cmdOptions.defaultMarketplace !== false;
-      try {
-        const flow = new SetupFlow({
-          projectRoot,
-          registeredToolIds: catalog.idsInCanonicalOrder(),
-          aiToolIds: catalog.idsInCanonicalOrder("ai"),
-          ideToolIds: catalog.idsInCanonicalOrder("ide"),
-          supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
-          source,
-          aiTools: toolIds.aiTools,
-          ideTools: toolIds.ideTools,
-          pluginMode,
-          pluginNames,
-          interactive,
-          force: false,
-          registerDefaultMarketplace,
-          scope,
-        });
-
-        if (interactive) printWelcomeBanner(output);
-
-        const deps = await createDeps(projectRoot, { verbose }, output);
-
-        const result = await new SetupUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.setupMarketplaceRegistration,
-          deps.marketplaceSyncSettingsUseCase,
-          deps.setupToolsUseCase,
-          deps.setupPluginsPromptUseCase,
-          deps.currentVersionProvider,
-          deps.setupToolsPromptUseCase,
-          deps.projectContextDetector,
-          deps.setupMachineScopeUseCase
-        ).execute(flow, catalog);
-
-        if (interactive && result.context !== undefined) {
-          printDetectedContext(output, result.context.describe());
-        }
-        printSetupOutcome(output, result, verbose);
-        if (interactive) printNextSteps(output, result.install.results.length > 0);
-        reportSyncActivation(output, result.activation);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
+      await runSetupAction({ verbose, output, projectRoot, catalog, createDeps, cmdOptions });
     });
 }

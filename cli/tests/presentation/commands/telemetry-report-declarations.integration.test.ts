@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { git } from "../../helpers/git-sandbox.js";
-import { useInProcessReportWorld } from "../../helpers/telemetry-report-in-process.js";
-import { rowsOf, S_BRANCH } from "../../helpers/telemetry-report-seed.js";
+import { useInProcessReportWorld } from "../../contexts/telemetry/testing/telemetry-report-in-process.builder.js";
+import {
+  rowsOf,
+  S_BRANCH,
+} from "../../contexts/telemetry/testing/telemetry-report-seed.builder.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
 
 const world = useInProcessReportWorld();
 

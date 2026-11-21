@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { git, initRepository } from "../../helpers/git-sandbox.js";
+import { git, initRepository } from "../../shared/testing/git-sandbox.builder.js";
 import {
   BEFORE,
   checkRow,
@@ -12,7 +12,7 @@ import {
   SHARED,
   startWorld,
   stopWorld,
-} from "./testing/consent-world.js";
+} from "./testing/consent-world.builder.js";
 
 const ROWS: readonly Row[] = [
   {

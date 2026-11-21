@@ -1,30 +1,15 @@
 import type { Command } from "commander";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import {
-  NoManifestError,
-  SyncFailedError,
-  UserScopeFilterUnsupportedError,
-} from "../../shared/domain/errors.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
 } from "../display/sync-display.js";
-import { ErrorHandler } from "../error-handler.js";
-import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
-type SyncKeys =
-  | "userManifestRepo"
-  | "userPluginUpdateUseCase"
-  | "marketplaceSyncSettingsUseCase"
-  | "restoreAllUseCase"
-  | "manifestRepo"
-  | "currentVersionProvider"
-  | "restoreUseCase";
+type SyncKeys = "runSync" | "runUserScopeSync";
 
 interface SyncCmdOptions {
   force: boolean;
@@ -34,148 +19,46 @@ interface SyncCmdOptions {
   global?: boolean;
 }
 
-/** A user-scope install writes nothing under any project, so this skips `restoreAllUseCase`:
- * it rebuilds the global files aidd copied into each tool's user directory from the shared
- * source, then drives native activation, through `deps.userManifestRepo` and never this
- * project's own manifest. */
-async function runUserScopeSync(
-  deps: Pick<Deps, SyncKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  fileArgs: string[],
-  cmdOptions: SyncCmdOptions,
-  catalog: ToolCatalog
-): Promise<void> {
-  // Neither has a user-scope counterpart, so both are refused rather than read and
-  // silently discarded.
-  if (cmdOptions.plugin !== undefined) {
-    throw new UserScopeFilterUnsupportedError("--plugin", "sync --plugin <name>");
-  }
-  if (fileArgs.length > 0) {
-    throw new UserScopeFilterUnsupportedError("a file argument", "sync <files...>");
-  }
-  // An editor or an unknown name owns no user-scope file and no native activation, so it narrows
-  // the run to nothing instead of failing it.
-  const aiToolIds = (names: readonly string[]) =>
-    names.flatMap((name) => catalog.aiToolId(name) ?? []);
-  const toolIds = cmdOptions.tool === undefined ? undefined : aiToolIds([cmdOptions.tool]);
-  const machine = await deps.userManifestRepo.load();
-  const withFiles = (toolIds ?? aiToolIds(machine?.getInstalledToolIds() ?? [])).filter((id) =>
-    machine?.getPlugins(id).some((plugin) => plugin.scope === "user")
-  );
-  const refreshed =
-    withFiles.length === 0
-      ? []
-      : await deps.userPluginUpdateUseCase.execute({
-          toolIds: withFiles,
-          projectRoot,
-          scope: "user",
-          rebuild: true,
-          tools: catalog,
-        });
-  const activation = await deps.marketplaceSyncSettingsUseCase.execute({
-    projectRoot,
-    tools: catalog,
-    scope: "user",
-    manifestRepo: deps.userManifestRepo,
-    toolIds,
-    recreateFrameworkIfMissing: true,
-  });
-  printActivationOutcome(output, activation);
-  if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
-  printUserScopeSyncOutcome(output, activation.activated, [...new Set(refreshed)]);
-}
-
-async function runSyncAction(
-  program: Command,
-  tools: ToolCatalog,
-  createDeps: DepsSliceFactory<SyncKeys>,
-  fileArgs: string[],
-  cmdOptions: SyncCmdOptions
-): Promise<void> {
+async function runSyncAction({
+  program,
+  createDeps,
+  fileArgs,
+  cmdOptions,
+}: {
+  program: Command;
+  createDeps: DepsSliceFactory<SyncKeys>;
+  fileArgs: string[];
+  cmdOptions: SyncCmdOptions;
+}): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const errorHandler = new ErrorHandler(output);
-  try {
-    const deps = await createDeps(projectRoot, { verbose }, output);
-    const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
+  const deps = await createDeps(projectRoot, { verbose }, output);
+  const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
+  const { tool, plugin, force } = cmdOptions;
 
-    if (scope === "user") {
-      await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
-      return;
-    }
-
-    if (cmdOptions.tool !== undefined) {
-      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, tools, cmdOptions.tool);
-      return;
-    }
-
-    const interactive = !cmdOptions.force && process.stdout.isTTY;
-    const result = await deps.restoreAllUseCase.execute(
-      projectRoot,
-      cmdOptions.force,
-      interactive,
-      tools
+  if (scope === "user") {
+    await deps.runUserScopeSync.execute(
+      { projectRoot, tool, plugin, files: fileArgs },
+      {
+        activated: (activation) => printActivationOutcome(output, activation),
+        synced: ({ activated, refreshed }) =>
+          printUserScopeSyncOutcome(output, activated, refreshed),
+      }
     );
-    printRestoreOutcome(output, result);
-
-    // After restoration, never before: activation drives the host CLI that writes into the
-    // settings file restoration regenerates, which must be on disk before that CLI runs.
-    const activation = await deps.marketplaceSyncSettingsUseCase.execute({
-      projectRoot,
-      tools,
-      recreateFrameworkIfMissing: true,
-    });
-    printActivationOutcome(output, activation);
-
-    // A run that errored synced nothing for that scope, so reporting success would name the
-    // unhealthy state healthy. `errorHandler` turns this into the non-zero exit.
-    const errors = [...result.errors, ...activation.errors];
-    if (errors.length > 0) throw new SyncFailedError(errors);
-  } catch (error) {
-    errorHandler.handle(error);
+    return;
   }
-}
 
-async function runScopedSync(
-  deps: Pick<Deps, SyncKeys>,
-  output: CLIOutput,
-  projectRoot: string,
-  fileArgs: string[],
-  cmdOptions: SyncCmdOptions,
-  catalog: ToolCatalog,
-  toolName: string
-): Promise<void> {
-  const manifest = await deps.manifestRepo.load();
-  if (!manifest) throw new NoManifestError();
-  const version = manifest.getToolVersion(toolName) ?? deps.currentVersionProvider.get();
-  const result = await deps.restoreUseCase.execute({
-    version,
-    projectRoot,
-    toolIds: [toolName],
-    files: fileArgs.length > 0 ? fileArgs : undefined,
-    force: cmdOptions.force,
-    interactive: process.stdout.isTTY,
-    manifest,
-    pluginName: cmdOptions.plugin,
-    tools: catalog,
-  });
-  printToolRestoreOutcome(output, result);
-
-  // Same order as the full sync, narrowed to this one tool so fixing it re-drives no other
-  // installed tool's activation.
-  const activation = await deps.marketplaceSyncSettingsUseCase.execute({
-    projectRoot,
-    tools: catalog,
-    toolIds: result.tools.map((tool) => tool.toolId),
-    recreateFrameworkIfMissing: true,
-  });
-  printActivationOutcome(output, activation);
-  if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
+  await deps.runSync.execute(
+    { projectRoot, force, interactive: process.stdout.isTTY, tool, plugin, files: fileArgs },
+    {
+      restored: (result) => printRestoreOutcome(output, result),
+      toolRestored: (result) => printToolRestoreOutcome(output, result),
+      activated: (activation) => printActivationOutcome(output, activation),
+    }
+  );
 }
 
 export function registerSyncCommand(
   program: Command,
-  tools: ToolCatalog,
   createDeps: DepsSliceFactory<SyncKeys>
 ): void {
   program
@@ -194,6 +77,6 @@ export function registerSyncCommand(
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction(program, tools, createDeps, fileArgs, cmdOptions);
+      await runSyncAction({ program, createDeps, fileArgs, cmdOptions });
     });
 }

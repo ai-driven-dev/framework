@@ -8,9 +8,8 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, rename: vi.fn(actual.rename) };
 });
 
-import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { CapturingLogger } from "../testing/capturing-logger.fake.js";
 
 // What the file port contract cannot observe stays here: the rename step, the stop at a
 // directory the filesystem refuses to remove, and what the adapter tells its logger.
@@ -20,7 +19,7 @@ describe("FileAdapter", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-fs-adapter-"));
-    fs = new FileAdapter(new HasherAdapter());
+    fs = new FileAdapter();
   });
 
   afterEach(async () => {
@@ -38,7 +37,7 @@ describe("FileAdapter", () => {
       await fs.writeFile(path, "new content");
 
       expect(rename).toHaveBeenCalledTimes(1);
-      const [renamedFrom, renamedTo] = vi.mocked(rename).mock.calls[0] as [string, string];
+      const [renamedFrom, renamedTo] = vi.mocked(rename).mock.calls[0] ?? [];
       expect(renamedTo).toBe(path);
       expect(renamedFrom).not.toBe(path);
       expect(await readFile(path, "utf-8")).toBe("new content");
@@ -54,7 +53,7 @@ describe("FileAdapter, at the edges", () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-fs-edges-"));
     logger = new CapturingLogger();
-    fs = new FileAdapter(new HasherAdapter(), logger);
+    fs = new FileAdapter(logger);
   });
 
   afterEach(async () => {
@@ -76,7 +75,7 @@ describe("FileAdapter, at the edges", () => {
       await writeFile(join(tempDir, "real.txt"), "");
       await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
 
-      expect(await new FileAdapter(new HasherAdapter()).listFilesRecursive(tempDir)).toStrictEqual([
+      expect(await new FileAdapter().listFilesRecursive(tempDir)).toStrictEqual([
         join(tempDir, "real.txt"),
       ]);
     });

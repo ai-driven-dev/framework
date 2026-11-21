@@ -1,8 +1,9 @@
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import type { ShippedHooks } from "../../contract/build-contract.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
-import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks-descriptor.js";
+import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook.
@@ -50,11 +51,9 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
 
 function convert(
   target: WrappedCommandHooksTarget,
-  pluginHooksJson: string,
-  pluginName: string,
-  locate: (pluginPath: string) => string
+  { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
 ): { handlers: Record<string, ProjectHookEntry[]>; warnings: string[] } {
-  const parsed = JSON.parse(pluginHooksJson) as unknown;
+  const parsed = JSON.parse(json) as unknown;
   const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${wrappedCommandHooksScriptPath(target, pluginName, suffix)}`
@@ -85,13 +84,12 @@ function serialize(hooks: NamedHooks): string {
 export function mergeWrappedCommandHooks(
   target: WrappedCommandHooksTarget,
   existingJson: string | null,
-  pluginHooksJson: string,
-  pluginName: string,
-  locate: (pluginPath: string) => string = (pluginPath) => pluginPath
+  shipped: ShippedHooks
 ): { content: string; warnings: readonly string[] } {
+  const pluginName = shipped.plugin;
   const { [pluginName]: previous, ...kept } =
     existingJson === null ? {} : (JSON.parse(existingJson) as NamedHooks);
-  const { handlers, warnings } = convert(target, pluginHooksJson, pluginName, locate);
+  const { handlers, warnings } = convert(target, shipped);
   const merged =
     Object.keys(handlers).length > 0
       ? {

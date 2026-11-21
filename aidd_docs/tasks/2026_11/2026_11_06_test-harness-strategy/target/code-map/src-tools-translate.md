@@ -19,11 +19,11 @@
 | `src/contexts/tools/domain/plugin-translation-mode.ts` | `src/contexts/tools/domain/plugin-translation-mode.ts` | keep |  |
 | `src/contexts/tools/domain/models/plugin-install-notice.ts` | `src/contexts/installation/domain/plugin-install-notice.ts` | move | proposal: installation if read only there, to verify |
 | `src/contexts/tools/domain/formats/plugin-root-token.ts` | `src/contexts/tools/domain/formats/plugin-root-token.ts` | merge | absorbs translate plugin-root-token-rewrite |
-| `src/contexts/tools/domain/formats/*` | `src/contexts/tools/domain/formats/*` | keep | format library; cursor-hooks-project-merge stays |
+| `src/contexts/tools/domain/formats/*` | `src/contexts/tools/domain/formats/*` | keep | format library; cursor-hooks-project-merge stays; `formats/hooks/{descriptor,routes,declaration}.ts` split from hooks-descriptor.ts |
 | `src/contexts/tools/domain/marketplace-catalog.ts` | `src/contexts/tools/domain/marketplace-catalog.ts` | keep | build-contract helper shared by claude and cursor; 02 decides tools over the open question in 04 |
 | `src/contexts/tools/domain/marketplace-entry.ts` | `src/contexts/tools/domain/marketplace-entry.ts` | keep | proposal: companion of marketplace-catalog, same build-contract role |
 | `src/contexts/tools/domain/marketplace-settings.ts` | `src/contexts/host-registration/domain/marketplace-settings.ts` | move | settings section type defined by host-registration |
-| `src/contexts/tools/domain/marketplace-source-conflict.ts` | `src/contexts/host-registration/domain/source-conflict.ts` | move |  |
+| `src/contexts/tools/domain/marketplace-source-conflict.ts` | `src/contexts/host-registration/domain/source/marketplace-source-conflict.ts` | move |  |
 | `src/contexts/tools/domain/host-plugin-registration.ts` | `src/contexts/host-registration/domain/registration-answer.ts` | move |  |
 | `src/contexts/tools/domain/mcp-launch-command.ts` | `src/contexts/tools/domain/formats/mcp-launch-command.ts` | move | proposal: 04 says host-registration but the file is a win32 MCP config transform (content format), not a registration |
 | `src/contexts/tools/domain/ports/file-merger.ts` | `src/shared/ports/file-merger.ts` | move | used by several contexts |
@@ -82,11 +82,11 @@
 | `src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts` | `src/contexts/tools/domain/formats/plugin-root-token.ts` | merge |  |
 | `src/contexts/translate/application/translate-source.ts` | `src/contexts/translate/application/build-native-tree.ts` | rename | proposal: build command per the command convention, class BuildNativeTree; canon read feeds the engine |
 | `src/contexts/translate/application/shared-plugin-helpers.ts` | `src/contexts/translate/application/shared-plugin-helpers.ts` | keep |  |
-| `src/contexts/translate/application/strategies/build-output-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts` | merge | disk sink replaces the strategies |
-| `src/contexts/translate/application/strategies/flat-build-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts` | merge | flat rules move into the engine; output guard and writing stay in the sink |
+| `src/contexts/translate/application/strategies/build-output-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts`; `src/contexts/translate/application/sinks/flat-writer.ts` | merge | disk sink replaces the strategies; flat writing split into flat-writer.ts for the size cap |
+| `src/contexts/translate/application/strategies/flat-build-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts`; `src/contexts/translate/application/sinks/flat-writer.ts` | merge | flat rules move into the engine; output guard and writing stay in the sink; flat writing split into flat-writer.ts for the size cap |
 | `src/contexts/translate/application/strategies/marketplace-build-strategy.ts` | `src/contexts/translate/application/sinks/disk-sink.ts` | merge | manifest, catalogue and schema check stay in the sink |
-| `src/contexts/translate/application/strategies/plugin-source-tree-reader.ts` | `src/contexts/translate/application/sinks/canon-tree-reader.ts` | rename | proposal: reads the canon from disk to feed the engine |
+| `src/contexts/translate/application/strategies/plugin-source-tree-reader.ts` | `src/contexts/translate/application/sinks/plugin-source-tree-reader.ts` | move | proposal: reads the canon from disk to feed the engine |
 | `src/contexts/translate/application/strategies/write-skill-tree.ts` | `src/contexts/translate/application/sinks/disk-sink.ts` | merge | proposal: skill writing folded into the disk sink |
 | `src/contexts/translate/infrastructure/schema-validator.ts` | `src/shared/infrastructure/schema-validator.ts` | move | Ajv adapter, 2 contexts use it |
 | - | `src/contexts/translate/application/translate-distribution.ts` | add | proposal: command exposing the engine to installation (list sink, no sink code) |
-| - | `src/contexts/translate/contract/output-file.ts` | add | proposal: OutputFile shape published to installation; exact fields to fix |
+| - | `src/contexts/translate/ports/translate-profile.ts` | add | the tool input translate reads, declared in translate's own ports; OutputFile stays in `domain/output-file.ts` |

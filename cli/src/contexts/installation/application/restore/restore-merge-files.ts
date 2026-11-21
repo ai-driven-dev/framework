@@ -1,16 +1,17 @@
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import {
   extractMergeEntries,
   type MergeFileEntry,
   type MergeStrategy,
 } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import { type DriftVerdict, driftOfKeys } from "../../domain/manifest/drift.js";
+import { planRestore, type RecordedVerdict } from "../../domain/manifest/restore-plan.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
-import { RestoreDriftEntries } from "./restore-drift-entries.js";
+import { restoreDriftEntries } from "./restore-drift-entries.js";
 
 interface MergeDriftEntry {
   relativePath: string;
@@ -36,108 +37,103 @@ export interface RestoreMergeFilesResult {
   updatedMergeFiles: MergeFileEntry[];
 }
 
-export class RestoreMergeFiles {
-  private readonly restoreDriftEntries: RestoreDriftEntries;
+export async function restoreMergeFiles(
+  fs: FileReader & FileMerger,
+  prompter: Prompter,
+  options: RestoreMergeFilesCommand
+): Promise<RestoreMergeFilesResult | null> {
+  const mergeMap = new Map(options.mergeFiles.map((m) => [m.relativePath, m]));
 
-  constructor(
-    private readonly fs: FileReader & FileMerger,
-    private readonly hasher: Hasher,
-    prompter: Prompter
-  ) {
-    this.restoreDriftEntries = new RestoreDriftEntries(prompter);
-  }
+  return restoreDriftEntries(
+    prompter,
+    {
+      collectDrift: () => collectMergeDrift(fs, options),
+      restore: (entry) =>
+        applyOneMergeRestore(fs, entry, { projectRoot: options.projectRoot, mergeMap }),
+      buildResult: (restored, kept, unrestorable) => ({
+        restored,
+        kept,
+        unrestorable,
+        updatedMergeFiles: [...mergeMap.values()],
+      }),
+    },
+    options
+  );
+}
 
-  async execute(options: RestoreMergeFilesCommand): Promise<RestoreMergeFilesResult | null> {
-    const mergeMap = new Map(options.mergeFiles.map((m) => [m.relativePath, m]));
+async function collectMergeDrift(
+  fs: FileReader,
+  options: RestoreMergeFilesCommand
+): Promise<DriftCollection<MergeDriftEntry>> {
+  const { distMap } = options;
+  const { recorded, entries } = await recordMergeVerdicts(fs, options);
 
-    return this.restoreDriftEntries.execute(
-      {
-        collectDrift: () =>
-          this.collectMergeDrift(
-            options.mergeFiles,
-            options.distMap,
-            options.projectRoot,
-            options.fileFilter
-          ),
-        restore: (entry) => this.applyOneMergeRestore(entry, options.projectRoot, mergeMap),
-        buildResult: (restored, kept, unrestorable) => ({
-          restored,
-          kept,
-          unrestorable,
-          updatedMergeFiles: [...mergeMap.values()],
-        }),
-      },
-      options.force,
-      options.interactive
-    );
-  }
-
-  private async collectMergeDrift(
-    mergeFiles: readonly MergeFileEntry[],
-    distMap: Map<string, InstallationFile>,
-    projectRoot: string,
-    fileFilter: ((p: string) => boolean) | null
-  ): Promise<DriftCollection<MergeDriftEntry>> {
-    const drift: MergeDriftEntry[] = [];
-    const unrestorable: DriftDescriptor[] = [];
-    for (const entry of mergeFiles) {
-      if (fileFilter && !fileFilter(entry.relativePath)) continue;
-      const reason = await this.detectMergeDrift(entry, projectRoot);
-      if (reason === null) continue;
-
-      // A file the current distribution no longer merge-tracks (dropped, or its
-      // strategy became "none") has nothing left to restore drift from.
-      const distFile = distMap.get(entry.relativePath);
-      if (!distFile || distFile.mergeStrategy === "none") {
-        unrestorable.push({ relativePath: entry.relativePath, reason });
-        continue;
-      }
-      drift.push(this.buildDriftEntry(entry, distFile, reason));
+  // A file the current distribution no longer merge-tracks (dropped, or its
+  // strategy became "none") has nothing left to restore drift from.
+  const distributed = new Set(
+    [...distMap.values()].filter((f) => f.mergeStrategy !== "none").map((f) => f.relativePath)
+  );
+  const drift: MergeDriftEntry[] = [];
+  const unrestorable: DriftDescriptor[] = [];
+  for (const step of planRestore(recorded, distributed)) {
+    const entry = entries.get(step.relativePath);
+    const distFile = distMap.get(step.relativePath);
+    if (step.kind === "rewrite" && entry && distFile) {
+      drift.push({
+        relativePath: step.relativePath,
+        content: distFile.content,
+        reason: step.reason,
+        mergeStrategy: distFile.mergeStrategy,
+        sectionKey: entry.sectionKey,
+      });
+    } else {
+      unrestorable.push({ relativePath: step.relativePath, reason: step.reason });
     }
-    return { drift, unrestorable };
   }
+  return { drift, unrestorable };
+}
 
-  private async detectMergeDrift(
-    entry: MergeFileEntry,
-    projectRoot: string
-  ): Promise<"deleted" | "modified" | null> {
-    const diskPath = join(projectRoot, entry.relativePath);
-    if (!(await this.fs.fileExists(diskPath))) return "deleted";
-    const diskContent = await this.fs.readFile(diskPath);
-    const diskEntries = extractMergeEntries(diskContent, entry.sectionKey, this.hasher);
-    const hasDrift = Object.keys(entry.entries).some(
-      (key) => diskEntries[key]?.value !== entry.entries[key].value
-    );
-    return hasDrift ? "modified" : null;
-  }
+async function mergeVerdictOf(
+  fs: FileReader,
+  entry: MergeFileEntry,
+  projectRoot: string
+): Promise<DriftVerdict> {
+  const diskPath = join(projectRoot, entry.relativePath);
+  if (!(await fs.fileExists(diskPath))) return "missing";
+  const diskContent = await fs.readFile(diskPath);
+  return driftOfKeys(entry.entries, extractMergeEntries(diskContent, entry.sectionKey));
+}
 
-  private buildDriftEntry(
-    entry: MergeFileEntry,
-    distFile: InstallationFile,
-    reason: MergeDriftEntry["reason"]
-  ): MergeDriftEntry {
-    return {
+async function applyOneMergeRestore(
+  fs: FileMerger & FileReader,
+  entry: MergeDriftEntry,
+  target: { projectRoot: string; mergeMap: Map<string, MergeFileEntry> }
+): Promise<void> {
+  const { projectRoot, mergeMap } = target;
+  const fullPath = join(projectRoot, entry.relativePath);
+  await fs.mergeJsonFile(fullPath, entry.content, entry.mergeStrategy);
+  const mergedContent = await fs.readFile(fullPath);
+  const newEntries = extractMergeEntries(mergedContent, entry.sectionKey);
+  mergeMap.set(entry.relativePath, {
+    relativePath: entry.relativePath,
+    sectionKey: entry.sectionKey,
+    entries: newEntries,
+  });
+}
+
+async function recordMergeVerdicts(
+  fs: FileReader,
+  { mergeFiles, projectRoot, fileFilter }: RestoreMergeFilesCommand
+): Promise<{ recorded: RecordedVerdict[]; entries: Map<string, MergeFileEntry> }> {
+  const recorded: RecordedVerdict[] = [];
+  const entries = new Map<string, MergeFileEntry>();
+  for (const entry of mergeFiles) {
+    if (fileFilter && !fileFilter(entry.relativePath)) continue;
+    entries.set(entry.relativePath, entry);
+    recorded.push({
       relativePath: entry.relativePath,
-      content: distFile.content,
-      reason,
-      mergeStrategy: distFile.mergeStrategy,
-      sectionKey: entry.sectionKey,
-    };
-  }
-
-  private async applyOneMergeRestore(
-    entry: MergeDriftEntry,
-    projectRoot: string,
-    mergeMap: Map<string, MergeFileEntry>
-  ): Promise<void> {
-    const fullPath = join(projectRoot, entry.relativePath);
-    await this.fs.mergeJsonFile(fullPath, entry.content, entry.mergeStrategy);
-    const mergedContent = await this.fs.readFile(fullPath);
-    const newEntries = extractMergeEntries(mergedContent, entry.sectionKey, this.hasher);
-    mergeMap.set(entry.relativePath, {
-      relativePath: entry.relativePath,
-      sectionKey: entry.sectionKey,
-      entries: newEntries,
+      verdict: await mergeVerdictOf(fs, entry, projectRoot),
     });
   }
+  return { recorded, entries };
 }

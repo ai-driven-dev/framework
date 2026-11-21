@@ -27,7 +27,7 @@ Include:
 
 ## Why automated tests aren't sufficient
 
-A previous fix shipped with 1813 passing tests, two green E2E scenarios, and a reviewer score of 82/100 — but the user-reported bug was NOT fixed. The E2E used `--source local` which bypassed the broken code path. A 30-second manual `aidd marketplace add + aidd framework install --tool cursor` would have caught it.
+A previous fix shipped with every test green, two E2E scenarios passing and a passing review score, yet the user-reported bug was not fixed: the E2E used `--source local`, which bypassed the broken code path. A manual `aidd marketplace add` then `aidd framework install --tool cursor` would have caught it.
 
 ## Coverage ranking
 

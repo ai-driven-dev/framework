@@ -1,10 +1,12 @@
+import { assertActivated } from "../../orchestration/domain/activation-outcome.model.js";
+import type { Output } from "../../orchestration/domain/output.js";
 import type { ToolId } from "../../shared/domain/tool.js";
-import type { CLIOutput } from "../output.js";
+import { render } from "../errors/error-translator.presenter.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";
 
 interface ScopedError {
   readonly scope: string;
-  readonly message: string;
+  readonly error: unknown;
 }
 
 interface RestoreAllResult {
@@ -27,8 +29,8 @@ interface ActivationOutcome {
   readonly errors: readonly ScopedError[];
 }
 
-export function printRestoreOutcome(output: CLIOutput, result: RestoreAllResult): void {
-  for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);
+export function printRestoreOutcome(output: Output, result: RestoreAllResult): void {
+  for (const e of result.errors) output.warn(`[${e.scope}] ${render(e.error)}`);
 
   const nothingToRestore =
     result.errors.length === 0 &&
@@ -48,7 +50,7 @@ export function printRestoreOutcome(output: CLIOutput, result: RestoreAllResult)
   printUnrestorable(output, result.unrestorable);
 }
 
-export function printToolRestoreOutcome(output: CLIOutput, result: ToolRestoreResult): void {
+export function printToolRestoreOutcome(output: Output, result: ToolRestoreResult): void {
   const nothingDone = result.tools.every((t) => t.nothingToRestore);
   if (nothingDone) {
     output.success("Nothing to restore — all files are unmodified.");
@@ -62,13 +64,13 @@ export function printToolRestoreOutcome(output: CLIOutput, result: ToolRestoreRe
 
 /** Every line native activation produced, in the order a host's own CLI produced them: a
  * missing binary first, then whatever the run refused. The refusal itself stays the caller's. */
-export function printActivationOutcome(output: CLIOutput, activation: ActivationOutcome): void {
+export function printActivationOutcome(output: Output, activation: ActivationOutcome): void {
   printNativeActivation(output, activation.binaryMissing);
-  for (const e of activation.errors) output.warn(`[${e.scope}] ${e.message}`);
+  for (const e of activation.errors) output.warn(`[${e.scope}] ${render(e.error)}`);
 }
 
 export function printUserScopeSyncOutcome(
-  output: CLIOutput,
+  output: Output,
   activated: readonly string[],
   refreshed: readonly string[] = []
 ): void {
@@ -78,4 +80,22 @@ export function printUserScopeSyncOutcome(
   } else if (refreshed.length === 0) {
     output.success("Nothing to sync — no tool is registered at user scope yet.");
   }
+}
+
+/** Named structurally: every real caller's result already satisfies this shape. */
+interface SyncActivationOutcome {
+  readonly errors: readonly ScopedError[];
+  readonly failed: boolean;
+}
+
+export function printScopedFailures(output: Output, failures: readonly ScopedError[]): void {
+  for (const failure of failures) output.warn(`[${failure.scope}] ${render(failure.error)}`);
+}
+
+/** Prints what an activation reported and turns its `failed` verdict into the failing exit.
+ * A result thrown away would turn a refusal into exit 0 with nothing printed and a plugin that
+ * never loads. */
+export function reportNativeActivation(output: Output, activation: SyncActivationOutcome): void {
+  printScopedFailures(output, activation.errors);
+  assertActivated(activation);
 }

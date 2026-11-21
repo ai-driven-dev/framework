@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { git } from "../../helpers/git-sandbox.js";
-import { useInProcessReportWorld } from "../../helpers/telemetry-report-in-process.js";
+import { useInProcessReportWorld } from "../../contexts/telemetry/testing/telemetry-report-in-process.builder.js";
 import {
   AXES,
   CALLS,
@@ -10,12 +9,19 @@ import {
   rowsOf,
   S_BRANCH,
   WINDOW,
-} from "../../helpers/telemetry-report-seed.js";
+} from "../../contexts/telemetry/testing/telemetry-report-seed.builder.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
 
 const world = useInProcessReportWorld();
 
 describe("aidd telemetry report, narrowed", () => {
   const tallyOf = ({ kind: _k, key: _key, reason: _r, ...tally }: Row) => tally;
+  const selectingFlags = (axis: string, row: Row): string[] => {
+    if (row.kind === "absent") return ["--absent", axis];
+    if (row.kind === "unattributed") return ["--unattributed", row.reason as string];
+    const key = row.key as string;
+    return [`--${axis}`, axis === "session" ? key.slice(0, 8) : key];
+  };
   async function narrowed(...args: string[]): Promise<Envelope> {
     const run = await world().aidd(["report", ...WINDOW, "--json", ...args]);
     expect(run.exitCode, run.stderr).toBe(0);
@@ -26,15 +32,7 @@ describe("aidd telemetry report, narrowed", () => {
     await world().declareBranch();
     for (const axis of ["ticket", "session", "model", "tool"]) {
       for (const row of (await world().json(axis)).rows) {
-        const flags =
-          row.kind === "absent"
-            ? ["--absent", axis]
-            : row.kind === "unattributed"
-              ? ["--unattributed", row.reason as string]
-              : [
-                  `--${axis}`,
-                  axis === "session" ? (row.key as string).slice(0, 8) : (row.key as string),
-                ];
+        const flags = selectingFlags(axis, row);
         const envelope = await narrowed(...flags);
         expect(envelope.totals, flags.join(" ")).toEqual(tallyOf(row));
         expect(envelope.coverage.records).toBe(CALLS.length);
@@ -162,5 +160,30 @@ describe("aidd telemetry report, attribution and text", () => {
     expect(second.stdout).toContain(
       `Read 0 transcripts just now; ${CALLS.length} calls in this period`
     );
+  });
+});
+
+describe("aidd telemetry report --json in another time zone", () => {
+  /** UTC, and two zones 25 hours apart: a call at 21:00 UTC is on another local day in each. */
+  const ZONES = ["Pacific/Kiritimati", "America/Adak"];
+
+  async function figures(axis: string, zone: string) {
+    const run = await world().aidd(["report", ...WINDOW, "--axis", axis, "--json"], { TZ: zone });
+    expect(run.exitCode, run.stderr).toBe(0);
+    const { run: facts, ...rest } = Object.fromEntries(Object.entries(JSON.parse(run.stdout)));
+    return { figures: JSON.stringify(rest, null, 2), facts };
+  }
+
+  it("prints the same figures as UTC, and reads no transcript again, in any zone", async () => {
+    await world().declareBranch();
+    for (const axis of ["day", "task"]) {
+      const first = await figures(axis, "UTC");
+      for (const zone of ZONES) {
+        const later = await figures(axis, zone);
+        expect(later.figures, `${axis} in ${zone}`).toBe(first.figures);
+        expect(later.facts).toMatchObject({ files_read: 0 });
+      }
+      expect(first.facts).toMatchObject({ files_read: axis === "day" ? 2 : 0 });
+    }
   });
 });

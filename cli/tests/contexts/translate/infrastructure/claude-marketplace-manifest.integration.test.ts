@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
-import { JsonSchemaValidationError } from "../../../../src/shared/domain/errors.js";
 
 const schemaPath = new URL(
   "../../../../assets/schemas/claude-marketplace-manifest.json",
@@ -22,7 +22,7 @@ describe("claude-marketplace-manifest.json schema", () => {
         "../../../fixtures/framework-real/.claude-plugin/marketplace.json",
         import.meta.url
       );
-      const fixture = JSON.parse(readFileSync(fileURLToPath(fixturePath), "utf8")) as unknown;
+      const fixture: unknown = JSON.parse(readFileSync(fileURLToPath(fixturePath), "utf8"));
       expect(() => validate(fixture)).not.toThrow();
     });
 

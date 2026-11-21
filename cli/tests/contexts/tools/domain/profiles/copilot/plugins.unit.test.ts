@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { keyAskedOf } from "../../../../../helpers/settings-key-probe.js";
-import { nativeOf } from "../../../testing/plugin-mode.js";
+import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
+import { keyAskedOf } from "../../../testing/settings-key-probe.builder.js";
 
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {
@@ -57,7 +57,7 @@ describe("copilot plugins", () => {
         ).toBe("aidd-framework");
       });
 
-      it("keys a local marketplace by its name too — the source decides only whether there is a key", () => {
+      it("keys a local marketplace by its name too - the source decides only whether there is a key", () => {
         expect(
           ms?.entryKeyFor({ name: "my-marketplace", source: { kind: "local", path: "/dev/aidd" } })
         ).toBe("my-marketplace");

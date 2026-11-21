@@ -1,15 +1,22 @@
 import { constants } from "node:fs";
 import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { FileHash } from "../domain/file.js";
+import { FileHash } from "../domain/file-hash.js";
 import { posixRelative } from "../domain/paths.js";
 import type { FileReader } from "../ports/file-reader.js";
 import type { FileWriter } from "../ports/file-writer.js";
-import type { Hasher } from "../ports/hasher.js";
 import type { Logger } from "../ports/logger.js";
 import { atomicWriteFile } from "./atomic-write.js";
 
 export class FileAdapter implements FileReader, FileWriter {
+  async isDirectory(path: string): Promise<boolean> {
+    try {
+      return (await stat(path)).isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
   async isExecutable(path: string): Promise<boolean> {
     try {
       await access(path, constants.X_OK);
@@ -19,10 +26,7 @@ export class FileAdapter implements FileReader, FileWriter {
     }
   }
 
-  constructor(
-    private readonly hasher: Hasher,
-    private readonly logger?: Logger
-  ) {}
+  constructor(private readonly logger?: Logger) {}
 
   async writeFile(path: string, content: string): Promise<void> {
     await mkdir(dirname(path), { recursive: true });
@@ -30,6 +34,7 @@ export class FileAdapter implements FileReader, FileWriter {
   }
 
   async deleteFile(path: string): Promise<void> {
+    // biome-ignore lint/plugin: a refusal to delete something present must not fail an uninstall midway
     try {
       await rm(path);
     } catch {
@@ -79,7 +84,7 @@ export class FileAdapter implements FileReader, FileWriter {
       if (entry.isDirectory()) {
         await this.collectFiles(baseDir, fullPath, results);
       } else {
-        results.push(posixRelative(baseDir, fullPath));
+        results.push(posixRelative(baseDir, fullPath, process.platform));
       }
     }
   }
@@ -99,7 +104,7 @@ export class FileAdapter implements FileReader, FileWriter {
 
   async readFileHash(path: string): Promise<FileHash> {
     const content = await this.readFile(path);
-    return this.hasher.hash(content);
+    return FileHash.of(content);
   }
 
   async deleteDirectory(path: string): Promise<void> {

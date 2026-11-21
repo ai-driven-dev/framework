@@ -1,8 +1,6 @@
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 type RulesSectionParams = {
-  directory: string;
   toolSuffix: string;
   inputSuffix?: string;
   buildInstallPath: (fileName: string) => string | null;
@@ -11,11 +9,9 @@ type RulesSectionParams = {
 
 export class RulesSection {
   readonly #params: RulesSectionParams;
-  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: RulesSectionParams) {
     this.#params = params;
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
   }
 
   /** A name no rule of a reader's own will ever carry, asked of `buildInstallPath` only so its
@@ -25,7 +21,7 @@ export class RulesSection {
 
   /** Where an installed rule of this tool lives, and what it is called at the end, asked of the
    * installer rather than restated beside it: a reader scanning a project needs the *installed*
-   * shape, and only `buildInstallPath` — a closure written per tool — knows it. `null` when the tool
+   * shape, and only `buildInstallPath`: a closure written per tool: knows it. `null` when the tool
    * installs nothing for the name asked about, or answers a path whose stem it rewrote past
    * recognition; neither is a guess. */
   installedLocation(): { readonly directory: string; readonly extension: string } | null {
@@ -49,22 +45,7 @@ export class RulesSection {
     return this.#params.convertFrontmatter(fm);
   }
 
-  acceptsFileName(fileName: string): boolean {
-    return this.#foreignSuffixes.accepts(fileName);
-  }
-
   serialize(frontmatter: Record<string, unknown>, body: string): string {
     return serializeFrontmatter(frontmatter, body);
-  }
-
-  accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.#params.directory);
-  }
-
-  equals(other: RulesSection): boolean {
-    return (
-      this.#params.directory === other.#params.directory &&
-      this.#params.toolSuffix === other.#params.toolSuffix
-    );
   }
 }

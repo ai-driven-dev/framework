@@ -1,4 +1,4 @@
-import type { ConfigAsset, SchemaName } from "../../../shared/domain/file.js";
+import type { ConfigAsset, SchemaName } from "../../../shared/domain/config-asset.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -17,7 +17,7 @@ export interface FlatHooksBridge {
   /** Output path for the generated bridge module, relative to the project root. */
   readonly path: (plugin: string) => string;
   /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
-   * already — generate nothing for it. */
+   * already: generate nothing for it. */
   readonly skipIfSourceHas: string;
 }
 
@@ -47,7 +47,7 @@ export type ArtifactContract =
         incomingPrefixed: Record<string, unknown>,
         force: boolean
       ) => { mergedContent: string; collisions: ReadonlyArray<string> };
-      /** servers-key of the mcp merge target — `servers` for copilot, `mcpServers` for claude.
+      /** servers-key of the mcp merge target: `servers` for copilot, `mcpServers` for claude.
        * Only meaningful alongside `merge`. */
       readonly mcpServersKey?: string;
       /** Absolute path to the shared merge target; only for merge contracts. */
@@ -62,16 +62,14 @@ export type ArtifactContract =
          * `locate` names, in a command, a path the plugin ships outside `hooks/`. */
         readonly merge: (
           existing: string | null,
-          pluginHooks: string,
-          plugin: string,
-          locate: (pluginPath: string) => string
+          shipped: ShippedHooks
         ) => { content: string; warnings: readonly string[] };
       };
       /** A hook script as the tool runs it, given its path in the plugin: the tool's own host
        * adapter replaces the one the plugin ships. Absent, every script is written as shipped. */
       readonly script?: (pluginPath: string, content: string) => string;
       /** Delivers everything under hooks/ except hooks.json, for a tool whose own side reads
-       * none — OpenCode today, whose scripts are still delivered and whose trigger is
+       * none: OpenCode today, whose scripts are still delivered and whose trigger is
        * `hooksBridge`. */
       readonly skipHooksJson?: boolean;
       /** A generated event bridge, for a tool with no hooks.json of its own and no other way
@@ -80,7 +78,7 @@ export type ArtifactContract =
     };
 
 export interface ToolBuildContract {
-  /** Rewrites the source `${CLAUDE_PLUGIN_ROOT}` placeholder in hooks and mcp content — e.g.
+  /** Rewrites the source `${CLAUDE_PLUGIN_ROOT}` placeholder in hooks and mcp content: e.g.
    * `${CURSOR_PLUGIN_ROOT}`, `${PLUGIN_ROOT}`. Absent for a flat-only contract, which
    * substitutes nothing. */
   readonly pluginRootToken?: string;
@@ -122,14 +120,26 @@ export interface ToolBuildContract {
     | null;
 
   readonly buildMarketplaceEntry:
-    | ((
-        name: string,
-        pluginSrc: string,
-        outDir: string,
-        srcEntry: SourcePluginEntryRef | undefined,
-        fs: BuildFileReader
-      ) => Promise<Record<string, unknown>>)
+    | ((entry: MarketplaceEntryInput) => Promise<Record<string, unknown>>)
     | null;
+}
+
+/** What a marketplace entry is built from: the plugin, as built under `outDir`, and the entry
+ * the source marketplace holds for it. */
+export interface MarketplaceEntryInput {
+  readonly name: string;
+  readonly pluginSrc: string;
+  readonly outDir: string;
+  readonly srcEntry: SourcePluginEntryRef | undefined;
+  readonly fs: BuildFileReader;
+}
+
+/** A plugin's hooks as it ships them. `locate` names, in a command, a path the plugin ships
+ * outside `hooks/`; left out, such a path stays as written. */
+export interface ShippedHooks {
+  readonly json: string;
+  readonly plugin: string;
+  readonly locate?: (pluginPath: string) => string;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and

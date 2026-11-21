@@ -5,7 +5,8 @@ import { ResolveMarketplace } from "../../../../src/contexts/distribution/applic
 import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/ports/plugin-catalog-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { cloneRequiringRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
 
 const SAMPLE_MARKETPLACE = Marketplace.create({
   name: "awesome",
@@ -54,7 +55,10 @@ describe("ListMarketplaces", () => {
         ],
       };
       const fakeFetcher = new FetchMarketplaceSource({
-        fetch: async () => "/fake/local-path",
+        pluginFetcher: {
+          fetch: async () => "/fake/local-path",
+        },
+        rawCatalog: cloneRequiringRawCatalog(),
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => fakeCatalog,
@@ -71,9 +75,12 @@ describe("ListMarketplaces", () => {
 
     it("skips marketplace when catalog fetch fails and continues", async () => {
       const failingFetcher = new FetchMarketplaceSource({
-        fetch: async () => {
-          throw new Error("network error");
+        pluginFetcher: {
+          fetch: async () => {
+            throw new Error("network error");
+          },
         },
+        rawCatalog: cloneRequiringRawCatalog(),
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => null,
@@ -90,9 +97,12 @@ describe("ListMarketplaces", () => {
 
     it("logs a warning through the logger when the catalog fetch fails", async () => {
       const failingFetcher = new FetchMarketplaceSource({
-        fetch: async () => {
-          throw new Error("network error");
+        pluginFetcher: {
+          fetch: async () => {
+            throw new Error("network error");
+          },
         },
+        rawCatalog: cloneRequiringRawCatalog(),
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => null,
@@ -104,7 +114,8 @@ describe("ListMarketplaces", () => {
       await useCase.execute({ projectRoot, withCatalogs: true });
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining("Skipping marketplace 'awesome'")
+        expect.stringContaining("Skipping marketplace 'awesome'"),
+        expect.any(Error)
       );
     });
 

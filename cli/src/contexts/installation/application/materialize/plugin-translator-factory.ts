@@ -1,42 +1,25 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { PluginAnswers } from "../../../tools/contract/tool-profile.js";
-import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { BuiltTreeMaterializationTranslator } from "./built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "./mode-a-marketplace-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 
 export interface TranslatorDeps {
   fs: FileWriter & FileReader;
-  hasher: Hasher;
-  homedir: () => string;
-  ensureBuilt: BuiltMarketplaceEnsurer;
-  marketplaceRegistry: MarketplaceRegistry;
+  built: BuiltMaterializationDeps;
 }
 
 /**
- * Resolves the translation adapter for a tool's plugin answers, or `null` when none applies.
+ * Resolves the translation adapter for a tool's plugin answers.
  *
  * A materializing tool copies the per-target BUILT tree verbatim, so installed bytes match the
  * build's own output; a raw local-path install falls back to flat materialization.
  */
-export function resolveTranslator(
-  plugins: PluginAnswers,
-  deps: TranslatorDeps
-): PluginTranslator | null {
+export function resolveTranslator(plugins: PluginAnswers, deps: TranslatorDeps): PluginTranslator {
   if (plugins.materializesFromBuiltTree()) {
-    return new BuiltTreeMaterializationTranslator(
-      deps.fs,
-      deps.hasher,
-      deps.homedir,
-      deps.ensureBuilt,
-      deps.marketplaceRegistry
-    );
+    return new BuiltTreeMaterializationTranslator(deps.fs, deps.built);
   }
-  if (plugins.kind === "native" && plugins.translatesAsMarketplace()) {
-    return new ModeAMarketplaceTranslator();
-  }
-  return null;
+  return new ModeAMarketplaceTranslator();
 }

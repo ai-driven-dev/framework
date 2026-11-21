@@ -1,11 +1,15 @@
-import type { Hasher } from "../../../../shared/ports/hasher.js";
+import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
+import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
+import type { TomlCodec } from "../formats/toml.js";
 import {
   buildTypedMcpFlatConfig,
   mergeTypedMcp,
   unmergeTypedMcp,
 } from "../formats/typed-mcp-merge.js";
+import { transformMcpForWin32 } from "./mcp-win32-launch.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
  * first tier that has any file present, two present files make `conflict` throw, one is the answer.
@@ -16,9 +20,9 @@ export type McpOutputPathCandidates = {
   readonly conflict: () => never;
 };
 
-export type McpConfigParams = {
+/** A TOML file is written through the codec the profile was given. */
+export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: TomlCodec }) & {
   outputPath: string;
-  format: "json" | "toml";
   mergeStrategy?: "user-prime" | "framework-prime" | "none";
   mergeFn?: (existing: string, incoming: string) => string;
   transformContent?: (content: string) => string;
@@ -26,31 +30,13 @@ export type McpConfigParams = {
   consumes?: readonly ConfigRef[];
 };
 
-interface McpServerWin32 {
-  command?: string;
-  args?: string[];
-  [key: string]: unknown;
-}
-
-interface McpConfigWin32 {
-  mcpServers?: Record<string, McpServerWin32>;
-  [key: string]: unknown;
-}
-
-function transformMcpForWin32(content: string): string {
-  const config = JSON.parse(content) as McpConfigWin32;
-  if (!config.mcpServers) return JSON.stringify(config, null, 2);
-  for (const server of Object.values(config.mcpServers)) {
-    if (server.command === "npx") {
-      server.args = ["/c", "npx", ...(server.args ?? [])];
-      server.command = "cmd";
-    } else if (server.command === "uvx") {
-      server.command = "uvx.exe";
-    } else if (server.command === "uv") {
-      server.command = "uv.exe";
-    }
-  }
-  return JSON.stringify(config, null, 2);
+async function presentIn(
+  tier: readonly string[],
+  exists: (relativePath: string) => Promise<boolean>
+): Promise<string[]> {
+  const present: string[] = [];
+  for (const candidate of tier) if (await exists(candidate)) present.push(candidate);
+  return present;
 }
 
 /** The file a tool's own MCP servers are written to, and how it is merged and converted. */
@@ -70,12 +56,19 @@ export class McpConfigPart {
     return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
-  outputPath(): string {
-    return this.#params.outputPath;
+  fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
+    return new InstallationFile({
+      relativePath: place.relativePath ?? this.#params.outputPath,
+      content,
+      hash: FileHash.of(content),
+      mergeStrategy: this.#params.mergeStrategy ?? "user-prime",
+      frameworkPath: place.frameworkPath,
+    });
   }
 
-  mergeStrategy(): "user-prime" | "framework-prime" | "none" {
-    return this.#params.mergeStrategy ?? "user-prime";
+  /** Whether the framework's half of the file is written over what a person keeps in it. */
+  isFrameworkPrime(): boolean {
+    return this.#params.mergeStrategy === "framework-prime";
   }
 
   /** Whether `fileName` is the JSON file this tool shares with a person, the framework's half of
@@ -84,7 +77,7 @@ export class McpConfigPart {
     return (
       this.#params.outputPath === fileName &&
       this.#params.format === "json" &&
-      this.mergeStrategy() === "framework-prime"
+      this.isFrameworkPrime()
     );
   }
 
@@ -94,7 +87,7 @@ export class McpConfigPart {
       ? this.#params.transformContent(mcpJson)
       : mcpJson;
     if (this.#params.format === "toml") {
-      return mcpJsonToToml(afterTransform);
+      return mcpJsonToToml(this.#params.toml, afterTransform);
     }
     return afterTransform;
   }
@@ -112,10 +105,7 @@ export class McpConfigPart {
     const candidates = this.#params.outputPathCandidates;
     if (candidates === undefined) return this.#params.outputPath;
     for (const tier of candidates.tiers) {
-      const present: string[] = [];
-      for (const candidate of tier) {
-        if (await exists(candidate)) present.push(candidate);
-      }
+      const present = await presentIn(tier, exists);
       if (present.length > 1) candidates.conflict();
       if (present.length === 1) return present[0] as string;
     }
@@ -127,10 +117,9 @@ export class McpConfigPart {
   mergePluginServers(
     existing: string | null,
     incomingTransformed: string,
-    previousEntries: ReadonlyMap<string, string>,
-    hasher: Hasher
+    previousEntries: ReadonlyMap<string, string>
   ): ReturnType<typeof mergeTypedMcp> {
-    return mergeTypedMcp(existing, incomingTransformed, previousEntries, hasher);
+    return mergeTypedMcp(existing, incomingTransformed, previousEntries);
   }
 
   /** Removes the servers a plugin contributed, refusing one edited since. */
@@ -142,10 +131,9 @@ export class McpConfigPart {
   frameworkConfigOver(
     baseConfig: string,
     existing: string | null,
-    incoming: Record<string, unknown>,
-    mergedKeys: readonly string[] = []
+    incoming: Record<string, unknown>
   ): string {
-    return buildTypedMcpFlatConfig(baseConfig, existing, incoming, mergedKeys);
+    return buildTypedMcpFlatConfig({ baseConfig, existing, incoming });
   }
 
   merge(existing: string, incoming: string): string {

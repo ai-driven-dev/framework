@@ -1,21 +1,10 @@
-import type { FileReader } from "../ports/file-reader.js";
-import type { FileWriter } from "../ports/file-writer.js";
-import type { Hasher } from "../ports/hasher.js";
-import { JsonParseError } from "./errors.js";
-import type { FileHash } from "./file.js";
+import { FileHash } from "./file-hash.js";
+import { isErrnoException } from "./reading/json-file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
+import { asPlainObject } from "./reading/plain-object.js";
+import { JsonParseError } from "./shared.error.js";
 
-export type PerKeyMergeStrategy = {
-  default: "framework-prime" | "user-prime";
-  /** Keys where framework always wins, overriding the default strategy. */
-  frameworkOverrideKeys: readonly string[];
-};
-
-export type MergeStrategy = "none" | "framework-prime" | "user-prime" | PerKeyMergeStrategy;
-
-export function isPerKeyMergeStrategy(s: MergeStrategy): s is PerKeyMergeStrategy {
-  return typeof s === "object" && s !== null;
-}
+export type MergeStrategy = "none" | "framework-prime" | "user-prime";
 
 export interface MergeFileEntry {
   readonly relativePath: string;
@@ -25,34 +14,26 @@ export interface MergeFileEntry {
 
 export function extractMergeEntries(
   jsonContent: string,
-  sectionKey: string | null,
-  hasher: Hasher
+  sectionKey: string | null
 ): Record<string, FileHash> {
-  let parsed: Record<string, unknown>;
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(stripJsonComments(jsonContent)) as Record<string, unknown>;
+    parsed = JSON.parse(stripJsonComments(jsonContent));
   } catch {
     return {};
   }
-  const container = resolveContainer(parsed, sectionKey);
-  if (container === null || typeof container !== "object" || Array.isArray(container)) return {};
-  return hashJsonEntries(container as Record<string, unknown>, hasher);
+  const root = asPlainObject(parsed);
+  if (root === null) return {};
+  const container = asPlainObject(sectionKey === null ? root : root[sectionKey]);
+  return container === null ? {} : hashJsonEntries(container);
 }
 
-export function hashJsonEntries(
-  entries: Record<string, unknown>,
-  hasher: Hasher
-): Record<string, FileHash> {
+export function hashJsonEntries(entries: Record<string, unknown>): Record<string, FileHash> {
   const result: Record<string, FileHash> = {};
   for (const [key, value] of Object.entries(entries)) {
-    result[key] = hasher.hash(JSON.stringify(value));
+    result[key] = FileHash.of(JSON.stringify(value));
   }
   return result;
-}
-
-function resolveContainer(parsed: Record<string, unknown>, sectionKey: string | null): unknown {
-  if (sectionKey === null) return parsed;
-  return parsed[sectionKey] ?? null;
 }
 
 export function removeEntriesFromJson(
@@ -60,84 +41,85 @@ export function removeEntriesFromJson(
   sectionKey: string | null,
   keysToRemove: string[]
 ): string {
-  const parsed = JSON.parse(content) as Record<string, unknown>;
+  const value: unknown = JSON.parse(content);
+  const parsed = asPlainObject(value);
+  // A root that is not an object holds none of the keys we track: it is written back as it is.
+  if (parsed === null) return JSON.stringify(value, null, 2);
   if (sectionKey === null) {
-    for (const key of keysToRemove) delete parsed[key];
+    deleteKeys(parsed, keysToRemove);
     return JSON.stringify(parsed, null, 2);
   }
-  const container = (parsed[sectionKey] as Record<string, unknown> | undefined) ?? {};
-  for (const key of keysToRemove) delete container[key];
+  const section = parsed[sectionKey] ?? {};
+  deleteKeys(asPlainObject(section), keysToRemove);
   // An emptied section must vanish, not linger as `{}`: a settings file sharing its top
   // level with unrelated keys must come back byte-identical once every key we own is gone.
-  if (Object.keys(container).length === 0) {
-    delete parsed[sectionKey];
-  } else {
-    parsed[sectionKey] = container;
-  }
+  if (Object.keys(section).length === 0) delete parsed[sectionKey];
   return JSON.stringify(parsed, null, 2);
+}
+
+function deleteKeys(container: Record<string, unknown> | null, keys: readonly string[]): void {
+  if (container === null) return;
+  for (const key of keys) delete container[key];
 }
 
 export function isMergeContentEmpty(content: string, sectionKey: string | null): boolean {
   try {
-    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const parsed = asPlainObject(JSON.parse(content));
+    // Limit: a root that is not an object is never empty here, not even `[]`; no merge file
+    // with such a root has been seen.
+    if (parsed === null) return false;
     if (sectionKey === null) return Object.keys(parsed).length === 0;
     const otherKeys = Object.keys(parsed).filter((k) => k !== sectionKey);
     if (otherKeys.length > 0) return false;
-    const section = parsed[sectionKey] as Record<string, unknown> | undefined;
+    const section = parsed[sectionKey];
     return !section || Object.keys(section).length === 0;
   } catch {
     return false;
   }
 }
 
+/** The two file operations a merge needs; any file adapter satisfies it. */
+export interface MergeTarget {
+  readFile(path: string): Promise<string>;
+  writeFile(path: string, content: string): Promise<void>;
+}
+
+export interface JsonMerge {
+  readonly path: string;
+  readonly content: string;
+  readonly strategy: MergeStrategy;
+}
+
 export async function mergeIntoJsonFile(
-  files: FileReader & FileWriter,
-  path: string,
-  content: string,
-  strategy: MergeStrategy
+  files: MergeTarget,
+  { path, content, strategy }: JsonMerge
 ): Promise<void> {
-  let existing: Record<string, unknown> = {};
-
-  try {
-    const raw = await files.readFile(path);
-    existing = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code !== "ENOENT") {
-      throw new JsonParseError(path, (err as Error).message);
-    }
-  }
-
-  const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
-
-  if (isPerKeyMergeStrategy(strategy)) {
-    await files.writeFile(path, JSON.stringify(mergePerKey(existing, incoming, strategy), null, 2));
-    return;
-  }
+  const existing = await readExistingJson(files, path);
+  const incoming = asPlainObject(JSON.parse(stripJsonComments(content))) ?? {};
 
   const merged =
     strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
   await files.writeFile(path, JSON.stringify(merged, null, 2));
 }
 
-// Intentionally shallow: a nested object is replaced wholesale, never merged into.
-function mergePerKey(
-  existing: Record<string, unknown>,
-  incoming: Record<string, unknown>,
-  strategy: PerKeyMergeStrategy
-): Record<string, unknown> {
-  const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
-  const result: Record<string, unknown> = {};
-  for (const key of allKeys) {
-    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
-    const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
-    if (effectiveStrategy === "framework-prime") {
-      result[key] = key in incoming ? incoming[key] : existing[key];
-    } else {
-      result[key] = key in existing ? existing[key] : incoming[key];
-    }
+/** Limit: a file whose root is not an object merges as an empty one; no such file has been seen. */
+async function readExistingJson(
+  files: MergeTarget,
+  path: string
+): Promise<Record<string, unknown>> {
+  try {
+    const raw = await files.readFile(path);
+    return asPlainObject(JSON.parse(stripJsonComments(raw))) ?? {};
+  } catch (err) {
+    rethrowUnlessMissing(path, err);
+    return {};
   }
-  return result;
+}
+
+function rethrowUnlessMissing(path: string, err: unknown): void {
+  const code = isErrnoException(err) ? err.code : undefined;
+  if (code === "ENOENT") return;
+  throw new JsonParseError(path, err instanceof Error ? err.message : String(err));
 }
 
 const PROTOTYPE_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
@@ -150,25 +132,22 @@ function deepMerge(
 
   for (const [key, value] of Object.entries(source)) {
     if (PROTOTYPE_POLLUTION_KEYS.has(key)) continue;
-    const existing = result[key];
-
-    if (Array.isArray(value) && Array.isArray(existing)) {
-      // A JSON-serialized key, so objects deduplicate as well as primitives.
-      const combined = [...existing, ...value];
-      result[key] = [...new Map(combined.map((v) => [JSON.stringify(v), v])).values()];
-    } else if (isPlainObject(value) && isPlainObject(existing)) {
-      result[key] = deepMerge(
-        existing as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
-    } else {
-      result[key] = value;
-    }
+    result[key] = mergeValue(result[key], value);
   }
 
   return result;
 }
 
-function isPlainObject(value: unknown): boolean {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+function mergeValue(existing: unknown, value: unknown): unknown {
+  if (Array.isArray(value) && Array.isArray(existing)) {
+    // A JSON-serialized key, so objects deduplicate as well as primitives.
+    const combined = [...existing, ...value];
+    return [...new Map(combined.map((v) => [JSON.stringify(v), v])).values()];
+  }
+  if (isPlainObject(value) && isPlainObject(existing)) return deepMerge(existing, value);
+  return value;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return asPlainObject(value) !== null;
 }

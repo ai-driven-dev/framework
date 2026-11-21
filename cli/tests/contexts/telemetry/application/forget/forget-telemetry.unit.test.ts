@@ -6,11 +6,11 @@ import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/rep
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { ErasureEntry } from "../../../../../src/contexts/telemetry/ports/forget/measurement-erasure.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { cloneOf } from "../../testing/clone-builders.js";
-import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
-import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
-import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
-import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
+import { cloneOf } from "../../testing/clone.builder.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.fake.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
 
 const located = (
   root: string,
@@ -47,8 +47,8 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
   /** The clones that exist, with the task keys they hold. */
   const keys = new Map<string, number>();
   const consented = new Set<string>();
-  const use = new ForgetTelemetry(
-    {
+  const use = new ForgetTelemetry({
+    erasure: {
       async inventory() {
         events.push("inventory");
         return entries;
@@ -57,7 +57,7 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
         events.push("erase");
       },
     },
-    {
+    declarations: {
       async count(clone) {
         const taskKeys = keys.get(clone);
         return taskKeys === undefined ? null : { taskKeys, consent: consented.has(clone) };
@@ -68,9 +68,9 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
         return { taskKeys: keys.get(clone) ?? 0, consent: consented.has(clone) };
       },
     },
-    new RememberedClones(resolutions, history, snapshots),
-    ledger
-  );
+    remembered: new RememberedClones(resolutions, history, snapshots),
+    ledger,
+  });
   return { use, events, history, snapshots, resolutions, ledger, cleared, keys, consented };
 }
 

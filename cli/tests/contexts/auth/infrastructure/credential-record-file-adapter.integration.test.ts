@@ -153,7 +153,9 @@ describe("CredentialRecordFileAdapter", () => {
       "refuses to leave inheritance stripped with no grant when the account is %s",
       async (_state, account) => {
         await expect(asWin32(() => records.save(STORED, "user"), account)).rejects.toThrow(
-          `Failed to set restrictive permissions on ${userFile()}: USERNAME is not set, so no account can be granted access`
+          expect.objectContaining({
+            detail: `Failed to set restrictive permissions on ${userFile()}: USERNAME is not set, so no account can be granted access`,
+          })
         );
       }
     );

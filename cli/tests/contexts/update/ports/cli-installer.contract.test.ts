@@ -3,9 +3,9 @@ import { PackageManagerInstallerAdapter } from "../../../../src/contexts/update/
 import {
   describeCliInstallerContract,
   type InstallerSubject,
-} from "../testing/cli-installer-contract.js";
-import { FakeCliInstaller, type InstallScenario } from "../testing/fake-cli-installer.js";
-import { aStubMachine } from "../testing/stub-package-managers.js";
+} from "../testing/cli-installer.contract.js";
+import { FakeCliInstaller, type InstallScenario } from "../testing/fake-cli-installer.fake.js";
+import { aStubMachine } from "../testing/stub-package-managers.fake.js";
 
 describeCliInstallerContract(
   "the fake",

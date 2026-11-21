@@ -2,13 +2,13 @@ import { chmod, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe } from "vitest";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { FakeHostActions } from "../testing/fake-host-actions.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import {
   describeHostActionsContract,
   type HostActionsScenario,
   type HostActionsSubject,
-} from "../testing/host-actions-contract.js";
-import { scratchDirectory } from "../testing/scratch-directory.js";
+} from "../testing/host-actions.contract.js";
+import { scratchDirectory } from "../testing/scratch-directory.builder.js";
 
 describeHostActionsContract(
   "the fake",

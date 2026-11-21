@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
+import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
 
 const NATIVE = `---
 name: 'planner'

@@ -1,7 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { nativeOf } from "../../../testing/plugin-mode.js";
+import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
+
+const codex = codexProfile(new SmolTomlCodec());
 
 describe("codex plugins", () => {
   describe("capabilities.plugins", () => {
@@ -37,7 +40,7 @@ describe("codex plugins", () => {
         );
       });
 
-      it("follows CODEX_HOME when a real machine has it set — the real codex binary reads there, not ~/.codex", () => {
+      it("follows CODEX_HOME when a real machine has it set - the real codex binary reads there, not ~/.codex", () => {
         const activation = codex.nativeActivation();
         expect(
           activation?.userSettingsFile(
@@ -50,10 +53,6 @@ describe("codex plugins", () => {
 
     it("does not write a project-local marketplace settings file", () => {
       expect(codex.marketplaceRegistration()).toBeNull();
-    });
-
-    it("keeps the marketplace translation mode", () => {
-      expect(nativeOf(codex.plugins()).translatesAsMarketplace()).toBe(true);
     });
 
     it("warns that Codex runs no hook it has not been told to trust, and how to tell it", () => {
