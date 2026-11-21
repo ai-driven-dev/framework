@@ -13,7 +13,7 @@ In a user's project, an artifact the model wrote during a turn is judged by its 
 - Holds in every install layout (plugin install and flat), so the hook relies only on its own plugin's `hooks/` folder, the one folder every layout ships whole.
 - A plugin never reads another plugin's or another skill's folder; what the hook needs from a skill reaches `hooks/` as a generated copy, and a copy that differs from its source is a finding in the repo check.
 - The contract stays the single source of where its artifacts live in a user's project; no separate mapping file.
-- Only files the model wrote in the current turn are judged; a file the user edited by hand is never reported.
+- Only files the model wrote in the current turn are judged; a file the user edited by hand is never reported, except one in a contract's scope edited during a turn in which the model ran a shell command, which the check cannot tell from the model's own writes (accepted by the spec owner).
 - A contract judges only the formats it can read: the neutral source and the Claude form. Host formats it cannot read (`.toml`, `.mdc`, `.instructions.md`, `.agent.md`, `.prompt.md`) are skipped, never reported.
 - A file of a folder artifact is judged with its whole folder, found by its marker inside `aidd_docs/`; with no marker, the file is skipped.
 - The hook never fails the tool call or the turn, answers at most once per turn, and stays inside its host's hook timeout.
