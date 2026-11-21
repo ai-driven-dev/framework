@@ -14,7 +14,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
-import { OpencodeDualConfigError } from "../../tools.error.js";
+import { DualConfigError } from "../../tools.error.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_CONFIG_REF } from "./config-refs.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
@@ -86,7 +86,7 @@ export const opencode = defineAiTool({
           tiers: [["opencode.json", "opencode.jsonc"]],
           fallback: "opencode.json",
           conflict: () => {
-            throw new OpencodeDualConfigError();
+            throw new DualConfigError("opencode", "opencode.json and opencode.jsonc exist");
           },
         },
       }),

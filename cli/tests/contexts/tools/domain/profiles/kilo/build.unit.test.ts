@@ -4,7 +4,7 @@ import type {
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
-import { KiloDualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
+import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
@@ -151,6 +151,6 @@ describe("buildKiloFlatContract", () => {
     [".kilo/kilo.json", ".kilo/kilo.jsonc"],
     ["kilo.json", "kilo.jsonc"],
   ])("rejects ambiguous Kilo config files %s and %s", (json, jsonc) => {
-    expect(() => emit({ existing: { [json]: "{}", [jsonc]: "{}" } })).toThrow(KiloDualConfigError);
+    expect(() => emit({ existing: { [json]: "{}", [jsonc]: "{}" } })).toThrow(DualConfigError);
   });
 });

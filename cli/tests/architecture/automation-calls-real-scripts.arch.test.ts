@@ -13,7 +13,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
-import { CLI_ROOT } from "./helpers.js";
+import { CLI_ROOT } from "./source-graph.js";
 
 const REPO_ROOT = join(CLI_ROOT, "..");
 const WORKFLOWS = join(REPO_ROOT, ".github", "workflows");

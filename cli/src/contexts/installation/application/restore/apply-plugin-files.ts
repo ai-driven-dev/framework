@@ -9,13 +9,11 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginFetcher } from "../../ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
+import { materializeViaTranslator } from "../materialize/materialize-via-translator.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
-import {
-  deleteOldFiles,
-  isPluginFileAtDesiredState,
-  materializeViaTranslator,
-} from "../plugin/plugin-helpers.js";
+import { isPluginFileAtDesiredState } from "../plugin/check-plugin-file-state.js";
+import { deleteOldFiles } from "../plugin/delete-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";

@@ -16,7 +16,7 @@ import {
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
-import { isPluginFileAtDesiredState } from "../plugin/plugin-helpers.js";
+import { isPluginFileAtDesiredState } from "../plugin/check-plugin-file-state.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";

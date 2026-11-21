@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import {
-  KiloDualConfigError,
-  OpencodeDualConfigError,
-} from "../../../../../src/contexts/tools/domain/tools.error.js";
+import { DualConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 const withFiles =
   (...relPaths: string[]) =>
@@ -36,9 +33,7 @@ describe("the file a tool's MCP config goes in", () => {
     });
 
     it("refuses when both opencode.json and opencode.jsonc exist", async () => {
-      await expect(resolve("opencode.json", "opencode.jsonc")).rejects.toThrow(
-        OpencodeDualConfigError
-      );
+      await expect(resolve("opencode.json", "opencode.jsonc")).rejects.toThrow(DualConfigError);
     });
   });
 
@@ -63,10 +58,8 @@ describe("the file a tool's MCP config goes in", () => {
     });
 
     it("refuses when both files of the answering tier exist", async () => {
-      await expect(resolve("kilo.json", "kilo.jsonc")).rejects.toThrow(KiloDualConfigError);
-      await expect(resolve(".kilo/kilo.json", ".kilo/kilo.jsonc")).rejects.toThrow(
-        KiloDualConfigError
-      );
+      await expect(resolve("kilo.json", "kilo.jsonc")).rejects.toThrow(DualConfigError);
+      await expect(resolve(".kilo/kilo.json", ".kilo/kilo.jsonc")).rejects.toThrow(DualConfigError);
     });
   });
 });

@@ -3,7 +3,7 @@ import {
   chooseKiloConfigPath,
   KILO_OUTPUT_PATH_CANDIDATES,
 } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-paths.js";
-import { KiloDualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
+import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 
 const existing =
   (...paths: string[]) =>
@@ -25,7 +25,7 @@ describe("chooseKiloConfigPath", () => {
   it.each([[[".kilo/kilo.json", ".kilo/kilo.jsonc"]], [["kilo.json", "kilo.jsonc"]]])(
     "refuses %j, two variants of one tier",
     (found) => {
-      expect(() => chooseKiloConfigPath(existing(...found))).toThrow(KiloDualConfigError);
+      expect(() => chooseKiloConfigPath(existing(...found))).toThrow(DualConfigError);
     }
   );
 });
@@ -40,6 +40,6 @@ describe("KILO_OUTPUT_PATH_CANDIDATES", () => {
   });
 
   it("raises the dual-config error on a conflict", () => {
-    expect(() => KILO_OUTPUT_PATH_CANDIDATES.conflict()).toThrow(KiloDualConfigError);
+    expect(() => KILO_OUTPUT_PATH_CANDIDATES.conflict()).toThrow(DualConfigError);
   });
 });

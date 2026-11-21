@@ -22,10 +22,11 @@ import {
 import { withoutHooks } from "../materialize/project-hooks-materializer.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
+import { deleteOldFiles } from "./delete-plugin-files.js";
 import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugin-files.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
-import { deleteOldFiles, writePluginFiles } from "./plugin-helpers.js";
 import { scopeBaseOf } from "./plugin-target-resolution.js";
+import { writePluginFiles } from "./write-plugin-files.js";
 
 /**
  * Plans and applies the file half of a machine-scope plugin update. The containment rule a

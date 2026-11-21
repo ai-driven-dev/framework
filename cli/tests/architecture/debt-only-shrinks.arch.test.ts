@@ -21,7 +21,7 @@ import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, REPO_ROOT } from "./helpers.js";
+import { CLI_ROOT, REPO_ROOT } from "./source-graph.js";
 
 const DEBT_PATH = "tests/architecture/kinds-debt.json";
 const DEBT_PATH_IN_REPO = `cli/${DEBT_PATH}`;

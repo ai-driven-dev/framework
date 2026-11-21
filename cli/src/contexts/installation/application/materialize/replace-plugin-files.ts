@@ -8,14 +8,12 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import {
-  deleteOldFiles,
-  materializeViaTranslator,
-  writePluginFiles,
-} from "../plugin/plugin-helpers.js";
+import { deleteOldFiles } from "../plugin/delete-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
+import { writePluginFiles } from "../plugin/write-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
+import { materializeViaTranslator } from "./materialize-via-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { resolvePluginTranslator } from "./resolve-plugin-translator.js";
 

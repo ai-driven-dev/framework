@@ -6,8 +6,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
-import { expectRatchet, read, sourceFiles } from "./helpers.js";
 import { loadDebt } from "./kinds.js";
+import { expectRatchet, read, sourceFiles } from "./source-graph.js";
 
 const DEBT = loadDebt();
 

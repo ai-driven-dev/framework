@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import { strykerArgs } from "../../scripts/run-mutation.mjs";
-import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./helpers.js";
+import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./source-graph.js";
 
 interface Scope {
   readonly mutate: string | readonly string[];

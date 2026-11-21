@@ -17,6 +17,7 @@ import {
   flatLinkTarget,
   flatPathOfPluginSuffix,
 } from "../../domain/flat-layout.js";
+import { assertNoToolsPlaceholder } from "../../domain/tools-placeholder.js";
 import {
   FlatMergeTargetNotJsonError,
   FlatTargetExistsError,
@@ -28,7 +29,6 @@ import type {
   FlatPluginWriter,
   FlatTarget,
 } from "../../ports/flat-plugin-writer.js";
-import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 
 function parsePluginMcp(pluginName: string, content: string): unknown {
   try {

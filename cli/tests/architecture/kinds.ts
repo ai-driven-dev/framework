@@ -5,7 +5,7 @@
  *
  * A file is recognised by its suffix (`<name>.use-case.ts`). A file with no kind suffix falls back
  * to the folder that owns a kind today, so the suffix rollout is not a violation of its own.
- * Written limits: an import is read by the one extractor in `helpers.ts`, so a specifier quoted in
+ * Written limits: an import is read by the one extractor in `source-graph.ts`, so a specifier quoted in
  * a comment counts; an import that resolves to no file of the tree is not judged.
  */
 import { readFileSync } from "node:fs";
@@ -13,7 +13,7 @@ import { join, posix } from "node:path";
 import { parseJsonRecord, stringList } from "../shared/testing/json-value.builder.js";
 import { present } from "../shared/testing/present.builder.js";
 import { ALLOWED } from "./allowed-edges.js";
-import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./helpers.js";
+import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./source-graph.js";
 
 export type KindId =
   | "use-case"
@@ -298,7 +298,7 @@ export interface Shape {
 }
 
 const CODE_FILE = /\.(?:ts|mts|cts|js|mjs|cjs)$/;
-/** The import reader of `helpers.ts` takes relative and `@/` specifiers. This one takes the rest,
+/** The import reader of `source-graph.ts` takes relative and `@/` specifiers. This one takes the rest,
  * from import and export statements only, so `Array.from(", ")` and a quoted sentence do not count. */
 const EXTERNAL_IMPORT =
   /^\s*(?:import|export)\b[^"';]*?\bfrom\s*["']([^"']+)["']|^\s*import\s*["']([^"']+)["']|\bimport\(\s*["']([^"']+)["']\s*\)/gm;

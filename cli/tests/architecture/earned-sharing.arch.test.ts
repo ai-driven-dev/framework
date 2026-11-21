@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { present } from "../shared/testing/present.builder.js";
-import { contextOf, importersByFile, isContext, read, sourceFiles } from "./helpers.js";
+import { contextOf, importersByFile, isContext, read, sourceFiles } from "./source-graph.js";
 
 /** The functional area a file belongs to. Two callers in one area are still one area. */
 function areaOf(file: string): string {

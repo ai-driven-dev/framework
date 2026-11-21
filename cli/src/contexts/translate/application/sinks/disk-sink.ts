@@ -12,6 +12,7 @@ import {
   PLUGIN_MCP_RELATIVE,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
 } from "../../domain/canon-format.js";
+import { assertNoToolsPlaceholder } from "../../domain/tools-placeholder.js";
 import {
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
@@ -19,7 +20,6 @@ import {
 import type { FlatPluginWriter, SupportedArtifact } from "../../ports/flat-plugin-writer.js";
 import type { JsonSchemaValidator } from "../../ports/json-schema-validator.js";
 import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";
-import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";
 import { writeSkillTree } from "./write-skill-tree.js";
 
