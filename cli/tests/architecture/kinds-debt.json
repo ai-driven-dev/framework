@@ -25,11 +25,7 @@
     "exemptProfileList": "the folder stops listing profiles",
     "profile": "the reader names the sections of the tool it reads in its own ports, never the whole profile"
   },
-  "classification": [
-    "src/presentation/deps.ts",
-    "src/presentation/exit.ts",
-    "src/presentation/output.ts"
-  ],
+  "classification": ["src/presentation/deps.ts"],
   "imports": ["src/contexts/tools/domain/formats/toml.ts -> smol-toml"],
   "mirror": [
     "src/contexts/installation/application/install/content/install-content-section.ts",
@@ -197,10 +193,10 @@
   "toolSites": ["src/composition/telemetry.ts: 2"],
   "toolOwn": [],
   "toolIdentifiers": [],
-  "exemptProcessExit": ["src/presentation/exit.ts"],
+  "exemptProcessExit": [],
   "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],
   "exemptDefaultExport": ["**/*.d.ts"],
   "exemptProfileImport": ["src/composition/**"],
-  "exemptProfileList": ["src/presentation/**"],
+  "exemptProfileList": [],
   "profile": []
 }

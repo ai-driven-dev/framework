@@ -1,7 +1,7 @@
 import type { SelfUpdateResult } from "../../contexts/update/application/self-update.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
-export function printSelfUpdateResult(output: CLIOutput, result: SelfUpdateResult): void {
+export function printSelfUpdateResult(output: Output, result: SelfUpdateResult): void {
   switch (result.kind) {
     case "up-to-date":
     case "check-current":

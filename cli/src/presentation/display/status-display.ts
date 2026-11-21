@@ -1,4 +1,4 @@
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 const STATUS_SYMBOL: Record<string, string> = {
   modified: "~",
@@ -6,7 +6,7 @@ const STATUS_SYMBOL: Record<string, string> = {
   added: "+",
 };
 
-export function printDriftStats(output: CLIOutput, drifted: { status: string }[]): void {
+export function printDriftStats(output: Output, drifted: { status: string }[]): void {
   const modified = drifted.filter((f) => f.status === "modified").length;
   const deleted = drifted.filter((f) => f.status === "deleted").length;
   const added = drifted.filter((f) => f.status === "added").length;
@@ -14,7 +14,7 @@ export function printDriftStats(output: CLIOutput, drifted: { status: string }[]
 }
 
 export function printScopeReport(
-  output: CLIOutput,
+  output: Output,
   report: {
     tools: {
       toolId: string;
@@ -49,10 +49,7 @@ interface PluginDriftLine {
   notInstalledOnMachine: boolean;
 }
 
-export function printPluginDrift(
-  output: CLIOutput,
-  report: { pluginDrift: PluginDriftLine[] }
-): void {
+export function printPluginDrift(output: Output, report: { pluginDrift: PluginDriftLine[] }): void {
   if (report.pluginDrift.length === 0) {
     output.print("  (all in sync)");
     return;

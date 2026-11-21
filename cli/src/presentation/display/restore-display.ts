@@ -1,7 +1,7 @@
 import type { ToolId } from "../../shared/domain/tool.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
-export function printUnrestorable(output: CLIOutput, unrestorable: readonly string[]): void {
+export function printUnrestorable(output: Output, unrestorable: readonly string[]): void {
   if (unrestorable.length === 0) return;
   output.warn(
     `Could not restore ${unrestorable.length} file(s) no longer part of the current distribution: ${unrestorable.join(", ")}`
@@ -11,7 +11,7 @@ export function printUnrestorable(output: CLIOutput, unrestorable: readonly stri
 /** A binary off PATH is a fact, not a failure, so this warns: the settings written for that
  * tool will not load until its own CLI has run. */
 export function printNativeActivation(
-  output: CLIOutput,
+  output: Output,
   binaryMissing: readonly { toolId: ToolId; binary: string }[]
 ): void {
   for (const { toolId, binary } of binaryMissing) {

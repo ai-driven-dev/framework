@@ -2,7 +2,9 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { registeredAiConfig } from "../../shared/testing/catalog-of.builder.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -81,6 +83,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerDoctorCommand(program, CATALOG, createDeps);
@@ -533,6 +536,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 describe("aidd doctor — the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerDoctorCommand(program, CATALOG, createDeps);
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");

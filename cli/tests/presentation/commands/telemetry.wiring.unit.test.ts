@@ -5,7 +5,9 @@ import { ChooseIdentity } from "../../../src/contexts/telemetry/application/iden
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.js";
 import type { ReportFilters } from "../../../src/contexts/telemetry/contract/report-filter.js";
 import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import surface from "../../golden/snapshots/help/surface.json" with { type: "json" };
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const ingest = vi.fn();
@@ -78,6 +80,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<number | null> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
@@ -552,6 +555,7 @@ describe("the telemetry command surface", () => {
 
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");
+    bindOutput(program, processOutputFactory());
     registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
     const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({

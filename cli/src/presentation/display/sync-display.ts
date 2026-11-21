@@ -1,6 +1,6 @@
 import { SyncFailedError } from "../../shared/domain/errors.js";
 import type { ToolId } from "../../shared/domain/tool.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";
 
 interface ScopedError {
@@ -28,7 +28,7 @@ interface ActivationOutcome {
   readonly errors: readonly ScopedError[];
 }
 
-export function printRestoreOutcome(output: CLIOutput, result: RestoreAllResult): void {
+export function printRestoreOutcome(output: Output, result: RestoreAllResult): void {
   for (const e of result.errors) output.warn(`[${e.scope}] ${e.message}`);
 
   const nothingToRestore =
@@ -49,7 +49,7 @@ export function printRestoreOutcome(output: CLIOutput, result: RestoreAllResult)
   printUnrestorable(output, result.unrestorable);
 }
 
-export function printToolRestoreOutcome(output: CLIOutput, result: ToolRestoreResult): void {
+export function printToolRestoreOutcome(output: Output, result: ToolRestoreResult): void {
   const nothingDone = result.tools.every((t) => t.nothingToRestore);
   if (nothingDone) {
     output.success("Nothing to restore — all files are unmodified.");
@@ -63,13 +63,13 @@ export function printToolRestoreOutcome(output: CLIOutput, result: ToolRestoreRe
 
 /** Every line native activation produced, in the order a host's own CLI produced them: a
  * missing binary first, then whatever the run refused. The refusal itself stays the caller's. */
-export function printActivationOutcome(output: CLIOutput, activation: ActivationOutcome): void {
+export function printActivationOutcome(output: Output, activation: ActivationOutcome): void {
   printNativeActivation(output, activation.binaryMissing);
   for (const e of activation.errors) output.warn(`[${e.scope}] ${e.message}`);
 }
 
 export function printUserScopeSyncOutcome(
-  output: CLIOutput,
+  output: Output,
   activated: readonly string[],
   refreshed: readonly string[] = []
 ): void {
@@ -87,14 +87,14 @@ interface SyncActivationOutcome {
   readonly failed: boolean;
 }
 
-export function printScopedFailures(output: CLIOutput, failures: readonly ScopedError[]): void {
+export function printScopedFailures(output: Output, failures: readonly ScopedError[]): void {
   for (const failure of failures) output.warn(`[${failure.scope}] ${failure.message}`);
 }
 
 /** Prints what an activation reported and turns its `failed` verdict into the failing exit.
  * A result thrown away would turn a refusal into exit 0 with nothing printed and a plugin that
  * never loads. */
-export function reportNativeActivation(output: CLIOutput, activation: SyncActivationOutcome): void {
+export function reportNativeActivation(output: Output, activation: SyncActivationOutcome): void {
   printScopedFailures(output, activation.errors);
   if (activation.failed) throw new SyncFailedError(activation.errors);
 }

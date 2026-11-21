@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { CLIOutput } from "../../src/presentation/output.js";
+import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 
-describe("CLIOutput", () => {
+const ended = (code: number): never => {
+  throw new Error(`ended ${String(code)}`);
+};
+
+describe("OutputAdapter", () => {
   describe("debug()", () => {
     it("writes to stderr with [verbose] prefix when verbose is true", () => {
       const written: string[] = [];
@@ -12,7 +16,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(true);
+        const output = new OutputAdapter(true, ended);
         output.debug("debug message");
         expect(written.some((m) => m.includes("[verbose]") && m.includes("debug message"))).toBe(
           true
@@ -31,7 +35,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(false);
+        const output = new OutputAdapter(false, ended);
         output.debug("debug message");
         expect(written.length).toBe(0);
       } finally {
@@ -48,7 +52,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput();
+        const output = new OutputAdapter(false, ended);
         output.debug("silent debug");
         expect(written.length).toBe(0);
       } finally {
@@ -67,7 +71,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(false);
+        const output = new OutputAdapter(false, ended);
         output.debug("env verbose debug");
         expect(written.some((m) => m.includes("env verbose debug"))).toBe(true);
       } finally {
@@ -87,7 +91,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(false);
+        const output = new OutputAdapter(false, ended);
         output.info("info message");
         expect(written.some((m) => m.includes("info message"))).toBe(true);
       } finally {
@@ -106,7 +110,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(false);
+        const output = new OutputAdapter(false, ended);
         output.warn("something wrong");
         expect(written.some((m) => m.includes("Warning:") && m.includes("something wrong"))).toBe(
           true
@@ -127,7 +131,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(false);
+        const output = new OutputAdapter(false, ended);
         output.error("something failed");
         expect(written.some((m) => m.includes("Error:") && m.includes("something failed"))).toBe(
           true
@@ -148,7 +152,7 @@ describe("CLIOutput", () => {
       };
 
       try {
-        const output = new CLIOutput(false);
+        const output = new OutputAdapter(false, ended);
         output.success("Installed claude (42 files)");
         output.print("  + .claude/CLAUDE.md");
         expect(written.some((m) => m.includes("Installed claude (42 files)"))).toBe(true);
@@ -156,6 +160,19 @@ describe("CLIOutput", () => {
       } finally {
         process.stdout.write = original;
       }
+    });
+  });
+
+  describe("exit()", () => {
+    it("hands the code to the process end it was given, and does not return", () => {
+      const codes: number[] = [];
+      const output = new OutputAdapter(false, (code) => {
+        codes.push(code);
+        throw new Error("stopped");
+      });
+
+      expect(() => output.exit(3)).toThrow("stopped");
+      expect(codes).toEqual([3]);
     });
   });
 });

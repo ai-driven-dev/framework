@@ -16,7 +16,7 @@ import {
   selectTools,
 } from "../../orchestration/setup/setup-request.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
-import type { DepsSliceFactory } from "../deps.js";
+import type { DepsSliceFactory, Output } from "../deps.js";
 import {
   printDetectedContext,
   printNextSteps,
@@ -25,8 +25,6 @@ import {
 } from "../display/setup-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -35,7 +33,7 @@ type SetupKeys = "runSetup" | "setAgentModels";
 /** Says, per host, what the main session and each agent now run on, where the main session's
  * model was written, which plugins were updated, and what other projects still need. */
 function reportAgentModels(
-  output: CLIOutput,
+  output: Output,
   catalog: ToolCatalog,
   provider: string | undefined,
   hosts: readonly AiToolId[],
@@ -95,13 +93,13 @@ interface SetupCmdOptions {
 
 export function parseSourceFlag(
   cmdOptions: SetupCmdOptions,
-  output: CLIOutput
+  output: Output
 ): FrameworkSource | undefined {
   if (!cmdOptions.source) return undefined;
   if (cmdOptions.source === "local") {
     if (!cmdOptions.path) {
       output.error("--source local requires --path <dir>");
-      exitWith(1);
+      output.exit(1);
     }
     return localFrameworkSource(resolve(cmdOptions.path));
   }
@@ -149,7 +147,7 @@ export function requireAgentHosts(
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
   cmdOptions: SetupCmdOptions,
-  output: CLIOutput,
+  output: Output,
   tools: ToolCatalog
 ): { aiTools: string[]; ideTools: string[] } | null {
   const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));

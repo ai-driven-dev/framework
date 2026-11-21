@@ -2,11 +2,9 @@ import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
 import { InputRequiredError } from "../../shared/domain/errors.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -20,12 +18,12 @@ interface LoginOptions {
   level?: string;
 }
 
-function refuse(output: CLIOutput, message: string): void {
+function refuse(output: Output, message: string): void {
   output.error(message);
-  exitWith(1);
+  output.exit(1);
 }
 
-function refuseInvalidOptions(options: LoginOptions, output: CLIOutput): void {
+function refuseInvalidOptions(options: LoginOptions, output: Output): void {
   if (options.gh && options.token) refuse(output, "--gh and --token are mutually exclusive.");
   if (!options.gh && !options.token && !process.stdout.isTTY) {
     refuse(output, "Use --gh or --token <value> in non-interactive mode.");
@@ -60,7 +58,7 @@ async function askCredential(prompter: Prompting, options: LoginOptions): Promis
 function reportingErrors(
   program: Command,
   createDeps: DepsSliceFactory<AuthKeys>,
-  run: (deps: Pick<Deps, AuthKeys>, output: CLIOutput) => Promise<void>
+  run: (deps: Pick<Deps, AuthKeys>, output: Output) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);

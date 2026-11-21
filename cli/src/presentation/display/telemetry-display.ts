@@ -5,7 +5,7 @@ import type { IngestUsageResult } from "../../contexts/telemetry/application/ing
 import type { ReadTelemetryStatusResult } from "../../contexts/telemetry/application/read-telemetry-status.js";
 import type { NotStoredReason } from "../../contexts/telemetry/contract/repository-resolution.js";
 import { IDENTITY_RULE } from "../../shared/domain/errors.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 /** What a shape the reader did not recognise came to: a call lacking a counter is stored with it
  * unknown, never zero; a line that is no usage line is no call (what is kept of it is said
@@ -76,7 +76,7 @@ export function leftOutLines(
   return lines;
 }
 
-export function printIngestResult(output: CLIOutput, result: IngestUsageResult): void {
+export function printIngestResult(output: Output, result: IngestUsageResult): void {
   if (result.refused) {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing was stored.");
     return;
@@ -130,7 +130,7 @@ function describeTask(task: string | null, ticket: string | null): string {
   return ticket === null ? `task "${task}"` : `task "${task}" (ticket ${ticket})`;
 }
 
-export function printDeclareResult(output: CLIOutput, result: DeclareTaskResult): void {
+export function printDeclareResult(output: Output, result: DeclareTaskResult): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -154,7 +154,7 @@ export function printDeclareResult(output: CLIOutput, result: DeclareTaskResult)
   if (sessionId === null) output.warn("Nothing was bound: no session and no working branch.");
 }
 
-export function printTelemetryStatus(output: CLIOutput, result: ReadTelemetryStatusResult): void {
+export function printTelemetryStatus(output: Output, result: ReadTelemetryStatusResult): void {
   if (result.status === "refused") {
     output.info(NOT_MEASURED[result.reason]);
     return;
@@ -169,7 +169,7 @@ export function printTelemetryStatus(output: CLIOutput, result: ReadTelemetrySta
 }
 
 function printBinding(
-  output: CLIOutput,
+  output: Output,
   result: Extract<ReadTelemetryStatusResult, { status: "shown" }>
 ): void {
   const { binding, sessionId, branch, role } = result;
@@ -196,7 +196,7 @@ function printBinding(
   }
 }
 
-export function printIdentityResult(output: CLIOutput, result: ManageIdentityResult): void {
+export function printIdentityResult(output: Output, result: ManageIdentityResult): void {
   switch (result.status) {
     case "set":
       output.success(`Measurement names you as "${result.personId}". Stop with \`--off\`.`);

@@ -1,5 +1,7 @@
 import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
 const refresh = vi.fn(async () => ({ checkedAt: 0, latest: "0.0.0" }));
@@ -15,6 +17,7 @@ const createDeps = vi.fn<Parameters<typeof registerUpdateNoticeHooks>[1]>();
 /** Runs `path` as nested commands (`marketplace list` is a `list` under `marketplace`). */
 async function run(path: string, extraArgs: string[] = []): Promise<void> {
   const program = new Command("aidd");
+  bindOutput(program, processOutputFactory());
   program.option("--verbose");
   program.exitOverride();
   registerUpdateNoticeHooks(program, createDeps);

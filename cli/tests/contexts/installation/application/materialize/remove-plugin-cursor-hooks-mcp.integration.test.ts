@@ -4,10 +4,10 @@
  */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createOutput } from "../../../../../src/composition/shared.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -146,7 +146,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     expect(fs.has(SCRIPT_PATH)).toBe(true);
     expect(fs.has(OTHER_SCRIPT_PATH)).toBe(true);
 
-    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
     await removeUseCase.execute({
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.cursor],
@@ -227,7 +227,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     await installPlugin(fs, manifest, PLUGIN_NAME);
     fs.setFile(SCRIPT_PATH, "user-edited script");
     const repo = new InMemoryManifestRepository(manifest);
-    const remove = pluginRemover({ fs, manifestRepo: repo, logger: new CLIOutput(false) });
+    const remove = pluginRemover({ fs, manifestRepo: repo, logger: createOutput(false) });
     await expect(
       remove.execute({
         pluginName: PLUGIN_NAME,
@@ -256,7 +256,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     hooks.hooks.preToolUse[0].command += " --user-flag";
     fs.setFile(HOOKS_PATH, JSON.stringify(hooks));
     const repo = new InMemoryManifestRepository(manifest);
-    const remove = pluginRemover({ fs, manifestRepo: repo, logger: new CLIOutput(false) });
+    const remove = pluginRemover({ fs, manifestRepo: repo, logger: createOutput(false) });
     await expect(
       remove.execute({
         pluginName: PLUGIN_NAME,
@@ -277,7 +277,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const userScript = join(PROJECT_ROOT, ".cursor", "hooks", PLUGIN_NAME, "user.js");
     fs.setFile(userScript, "user owned");
     const repo = new InMemoryManifestRepository(manifest);
-    const remove = pluginRemover({ fs, manifestRepo: repo, logger: new CLIOutput(false) });
+    const remove = pluginRemover({ fs, manifestRepo: repo, logger: createOutput(false) });
     await remove.execute({
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.cursor],

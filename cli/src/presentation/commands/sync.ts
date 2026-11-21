@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { SyncFailedError, UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
@@ -9,7 +9,6 @@ import {
   printUserScopeSyncOutcome,
 } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -34,7 +33,7 @@ interface SyncCmdOptions {
  * project's own manifest. */
 async function runUserScopeSync(
   deps: Pick<Deps, SyncKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions,
@@ -122,7 +121,7 @@ async function runSyncAction(
 
 async function runScopedSync(
   deps: Pick<Deps, SyncKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions,

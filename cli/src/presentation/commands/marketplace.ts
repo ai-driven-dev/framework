@@ -12,7 +12,6 @@ import {
 } from "../display/marketplace-display.js";
 import { reportNativeActivation } from "../display/sync-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -71,7 +70,7 @@ export function registerMarketplaceCommand(
         const interactive = process.stdout.isTTY;
         if (!interactive && (!nameArg || !sourceArg)) {
           output.error("name and source are required in non-interactive mode.");
-          exitWith(1);
+          output.exit(1);
         }
         if (
           cmdOptions.scope !== undefined &&
@@ -79,7 +78,7 @@ export function registerMarketplaceCommand(
           cmdOptions.scope !== "user"
         ) {
           output.error(`Invalid --scope '${cmdOptions.scope}'. Expected 'project' or 'user'.`);
-          exitWith(1);
+          output.exit(1);
         }
         try {
           const scope: Scope = cmdOptions.scope === "user" ? "user" : "project";
@@ -172,7 +171,7 @@ export function registerMarketplaceCommand(
         });
         reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         printRefreshResults(output, results);
-        if (failedCount > 0) exitWith(1);
+        if (failedCount > 0) output.exit(1);
       } catch (error) {
         failCommand(output, error);
       }

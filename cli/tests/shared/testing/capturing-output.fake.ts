@@ -1,4 +1,4 @@
-import { CLIOutput } from "../../../src/presentation/output.js";
+import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 
 export type OutputLevel = "debug" | "info" | "warn" | "print" | "success" | "error";
 
@@ -7,10 +7,23 @@ export interface CapturedLine {
   readonly message: string;
 }
 
+/** What `exit` throws: a run that ends never returns, so a test sees it as a thrown code. */
+export class ExitRequested extends Error {
+  constructor(readonly code: number) {
+    super(`exit ${String(code)}`);
+  }
+}
+
 /** Extends the real output rather than standing in for it, so a widened double cannot stop
  * failing the day the class grows a method a display starts calling. */
-export class CapturingOutput extends CLIOutput {
+export class CapturingOutput extends OutputAdapter {
   readonly captured: CapturedLine[] = [];
+
+  constructor(verbose = false) {
+    super(verbose, (code) => {
+      throw new ExitRequested(code);
+    });
+  }
 
   /** Every message, in order, whatever its level. */
   get lines(): string[] {

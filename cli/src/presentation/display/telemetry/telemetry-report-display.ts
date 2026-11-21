@@ -14,7 +14,7 @@ import {
   type ReportRow,
   type Tally,
 } from "../../../contexts/telemetry/contract/usage-report.js";
-import type { CLIOutput } from "../../output.js";
+import type { Output } from "../../deps.js";
 import { count, grouped, leftOutLines } from "../telemetry-display.js";
 
 const SHORT = 8;
@@ -139,7 +139,7 @@ function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
   ];
 }
 
-export function printUsageReport(output: CLIOutput, result: RequestReportResult): void {
+export function printUsageReport(output: Output, result: RequestReportResult): void {
   if (result.status === "refused") {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
     return;

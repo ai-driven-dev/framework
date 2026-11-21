@@ -4,6 +4,7 @@ import type { CommandRunner, DepsFactory, TelemetryRequests } from "../deps.js";
 import { registerAuthCommand } from "./auth.js";
 import { registerCleanCommand } from "./clean.js";
 import { registerDoctorCommand } from "./doctor.js";
+import { bindOutput, type OutputFactory } from "./global-options.js";
 import { registerMarketplaceCommand } from "./marketplace.js";
 import { registerPluginCommand } from "./plugin.js";
 import { registerSetupCommand } from "./setup.js";
@@ -20,12 +21,14 @@ export interface CommandWiring {
   readonly createSlice: DepsFactory;
   readonly telemetryRequests: TelemetryRequests;
   readonly runCommand: CommandRunner;
+  readonly createOutput: OutputFactory;
 }
 
 export function registerCommands(
   program: Command,
-  { tools, createSlice, telemetryRequests, runCommand }: CommandWiring
+  { tools, createSlice, telemetryRequests, runCommand, createOutput }: CommandWiring
 ): void {
+  bindOutput(program, createOutput);
   registerSetupCommand(program, tools, createSlice);
   registerToolConfigCommand(program, tools, createSlice);
   registerTranslateCommand(program, tools, createSlice);

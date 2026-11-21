@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { wireTools } from "../../../src/composition/tools.js";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.js";
 import { MenuLoop } from "../../../src/orchestration/menu/menu-loop.js";
+import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const loadManifest = vi.fn();
@@ -67,7 +68,13 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop(menuOf, resolveProjectRoot())).rejects.toThrow(/^exit /);
+  await expect(
+    runMenuLoop(
+      menuOf,
+      resolveProjectRoot(),
+      new OutputAdapter(false, (code) => process.exit(code))
+    )
+  ).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {

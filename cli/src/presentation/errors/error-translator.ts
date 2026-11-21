@@ -1,8 +1,7 @@
-import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 /** Reports the error and ends the process with a failure code. */
-export function failCommand(output: CLIOutput, error: unknown): never {
+export function failCommand(output: Output, error: unknown): never {
   output.error(error instanceof Error ? error.message : String(error));
-  return exitWith(1);
+  return output.exit(1);
 }

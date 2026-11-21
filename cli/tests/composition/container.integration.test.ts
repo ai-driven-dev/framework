@@ -6,12 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindContainer, createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
-import { wireBase } from "../../src/composition/shared.js";
+import { createOutput, wireBase } from "../../src/composition/shared.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import { CLIOutput } from "../../src/presentation/output.js";
+import type { Output } from "../../src/presentation/deps.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../src/shared/domain/scope.js";
@@ -25,7 +25,7 @@ import { registeredTools, TOOL } from "../shared/testing/registered-tools.builde
 const graphOf = (
   projectRoot: string,
   options: Parameters<ReturnType<typeof bindContainer>>[1],
-  output: CLIOutput | undefined,
+  output: Output | undefined,
   tools: ReturnType<typeof catalogOf>
 ) => bindContainer(tools)(projectRoot, options, output);
 
@@ -42,7 +42,7 @@ describe("the graph a container hands the commands", () => {
   });
 
   it("logs through the output it was handed", async () => {
-    const output = new CLIOutput(false);
+    const output = createOutput(false);
     const withOutput = await mkdtemp(join(tmpdir(), "aidd-create-deps-output-"));
     try {
       expect((await graphOf(withOutput, { verbose: false }, output, tools)).logger).toBe(output);

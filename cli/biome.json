@@ -4742,12 +4742,7 @@
       }
     },
     {
-      "includes": [
-        "src/shared/**",
-        "src/contexts/**",
-        "src/presentation/**",
-        "!src/presentation/exit.ts"
-      ],
+      "includes": ["src/shared/**", "src/contexts/**", "src/presentation/**"],
       "plugins": ["./biome-plugins/no-process-exit.grit"]
     },
     {
@@ -6043,7 +6038,7 @@
       ]
     },
     {
-      "includes": ["src/**", "!src/presentation/**"],
+      "includes": ["src/**"],
       "plugins": ["./biome-plugins/no-profile-list.grit"]
     },
     {

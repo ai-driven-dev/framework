@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
   printInstalledRules,
   printInstalledRulesJson,
@@ -14,7 +14,6 @@ import {
   printUpdateResult,
 } from "../display/tool-config-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { type RecipesKeys, registerRecipesCommand } from "./recipes.js";
 
@@ -39,7 +38,7 @@ export function assertKnownToolId(raw: string, catalog: ToolCatalog): ToolId {
 
 async function installTool(
   deps: Pick<Deps, ToolConfigKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   raw: string,
   cmdOptions: { force: boolean; plugins: boolean },
@@ -55,7 +54,7 @@ async function installTool(
 
 async function installAiTool(
   deps: Pick<Deps, ToolConfigKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   toolId: AiToolId,
   cmdOptions: { force: boolean; plugins: boolean }
@@ -81,7 +80,7 @@ async function installAiTool(
 
 async function installIdeTool(
   deps: Pick<Deps, ToolConfigKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   toolId: IdeToolId,
   cmdOptions: { force: boolean }
@@ -102,7 +101,7 @@ async function installIdeTool(
 
 async function removeTool(
   deps: Pick<Deps, ToolConfigKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   raw: string,
   catalog: ToolCatalog
@@ -119,7 +118,7 @@ async function removeTool(
 
 async function updateTools(
   deps: Pick<Deps, ToolConfigKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   raw: string | undefined,
   cmdOptions: { force: boolean },

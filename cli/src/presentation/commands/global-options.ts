@@ -1,20 +1,35 @@
 import type { Command } from "commander";
 import type { Scope } from "../../shared/domain/scope.js";
-import { exitWith } from "../exit.js";
-import { CLIOutput } from "../output.js";
+import type { Output } from "../deps.js";
 
 export interface GlobalOptions {
   verbose: boolean;
-  output: CLIOutput;
+  output: Output;
   projectRoot: string;
 }
 
+/** Builds the output a command writes to, `verbose` already read from the arguments. */
+export type OutputFactory = (verbose: boolean) => Output;
+
+const outputFactories = new WeakMap<Command, OutputFactory>();
+
+/** Hands the program the factory its commands build their output with: the composition decides
+ * which output backs them, a command never does. */
+export function bindOutput(program: Command, createOutput: OutputFactory): void {
+  outputFactories.set(program, createOutput);
+}
+
+export function outputOf(program: Command): Output {
+  const createOutput = outputFactories.get(program);
+  if (createOutput === undefined) throw new Error("the program has no output: call bindOutput");
+  return createOutput(program.opts<{ verbose?: boolean }>().verbose ?? false);
+}
+
 export function parseGlobalOptions(program: Command): GlobalOptions {
-  const opts = program.opts<{ verbose?: boolean }>();
-  const verbose = opts.verbose ?? false;
+  const verbose = program.opts<{ verbose?: boolean }>().verbose ?? false;
   return {
     verbose,
-    output: new CLIOutput(verbose),
+    output: outputOf(program),
     projectRoot: process.cwd(),
   };
 }
@@ -26,13 +41,13 @@ export const GLOBAL_FLAG_HELP = "act on the machine-wide install `setup --global
 
 export function resolveScopeFlags(
   options: { scope?: string; global?: boolean },
-  output: CLIOutput
+  output: Output
 ): Scope | undefined {
   return options.global === true ? "user" : parseScopeFlag(options.scope, output);
 }
 
-export function parseScopeFlag(raw: string | undefined, output: CLIOutput): Scope | undefined {
+export function parseScopeFlag(raw: string | undefined, output: Output): Scope | undefined {
   if (raw === undefined || raw === "project" || raw === "user") return raw;
   output.error(`Invalid --scope "${raw}" — expected "project" or "user".`);
-  exitWith(1);
+  output.exit(1);
 }

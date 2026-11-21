@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
 import { parsePluginSourceShorthand } from "../../../src/shared/domain/source.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const marketplaceAdd = vi.fn();
@@ -79,6 +81,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   registerMarketplaceCommand(program, createDeps, spawn);
@@ -388,6 +391,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
 describe("aidd marketplace — the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     registerMarketplaceCommand(program, createDeps, spawn);
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");

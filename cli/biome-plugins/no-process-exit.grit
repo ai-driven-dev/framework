@@ -2,5 +2,5 @@ language js
 
 // Only the presentation exit function ends the process; everything else throws or calls it.
 `process.exit($args)` where {
-  register_diagnostic(span=$args, message="process.exit belongs to presentation/exit.ts: throw a typed error from shared/domain/errors.ts or call exitWith", severity="error")
+  register_diagnostic(span=$args, message="process.exit belongs to the composition root: throw a typed error from shared/domain/errors.ts or call output.exit", severity="error")
 }

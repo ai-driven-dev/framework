@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { createOutput } from "../../../src/composition/shared.js";
 import { wireTools } from "../../../src/composition/tools.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/config/install-ide-config.js";
@@ -11,7 +12,6 @@ import { UpdateTool } from "../../../src/contexts/installation/application/updat
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { FakeHostActions } from "./fake-host-actions.fake.js";
@@ -31,7 +31,7 @@ export async function buildInstallationDeps() {
   const fs = new InMemoryFileAdapter({});
   const manifestRepo = new InMemoryManifestRepository();
   const userManifestRepo = new InMemoryManifestRepository();
-  const logger = new CLIOutput(false);
+  const logger = createOutput(false);
   const assetProvider = new BundledAssetProviderAdapter(wireTools());
   const pluginFetcher = new FixturePluginFetcher();
   const pluginDistributionReader = new PluginDistributionReaderAdapter(

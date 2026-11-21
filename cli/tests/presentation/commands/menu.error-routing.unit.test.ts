@@ -1,37 +1,19 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { routeMenuError } from "../../../src/presentation/commands/menu.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-
-/** Makes the `never` return observable: both routing branches call process.exit. */
-class ProcessExited extends Error {
-  constructor(readonly code: number) {
-    super(`process.exit(${code})`);
-  }
-}
+import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 
 function exitCodeOf(route: () => never): number {
   try {
     route();
   } catch (error) {
-    if (error instanceof ProcessExited) return error.code;
+    if (error instanceof ExitRequested) return error.code;
     throw error;
   }
   throw new Error("the route returned instead of exiting");
 }
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe("routeMenuError", () => {
-  function stubExit() {
-    vi.spyOn(process, "exit").mockImplementation((code) => {
-      throw new ProcessExited(typeof code === "number" ? code : 0);
-    });
-  }
-
   it("exits 0 without reporting when the user aborts a prompt (Ctrl-C)", () => {
-    stubExit();
     const output = new CapturingOutput(false);
     const abort = Object.assign(new Error("prompt aborted"), { name: "ExitPromptError" });
 
@@ -40,7 +22,6 @@ describe("routeMenuError", () => {
   });
 
   it("reports any other error and exits 1 instead of swallowing it", () => {
-    stubExit();
     const output = new CapturingOutput(false);
 
     expect(exitCodeOf(() => routeMenuError(new Error("manifest is corrupt"), output))).toBe(1);
@@ -48,7 +29,6 @@ describe("routeMenuError", () => {
   });
 
   it("reports non-Error throws too, rather than treating them as an abort", () => {
-    stubExit();
     const output = new CapturingOutput(false);
 
     expect(exitCodeOf(() => routeMenuError("boom", output))).toBe(1);
@@ -56,7 +36,6 @@ describe("routeMenuError", () => {
   });
 
   it("does not treat a same-message Error as an abort, only the ExitPromptError name", () => {
-    stubExit();
     const output = new CapturingOutput(false);
 
     expect(exitCodeOf(() => routeMenuError(new Error("ExitPromptError"), output))).toBe(1);

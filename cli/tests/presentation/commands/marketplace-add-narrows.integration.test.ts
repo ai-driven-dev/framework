@@ -2,7 +2,8 @@
 // registered; `marketplace remove | refresh` deliberately keep the bare, unnarrowed call.
 import { Command } from "commander";
 import { describe, expect, it, vi } from "vitest";
-
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 
 const marketplaceSyncExecute = vi
@@ -28,6 +29,7 @@ const { registerMarketplaceCommand } = await import(
 describe("marketplace add narrows native activation to the marketplace it just registered", () => {
   it("passes marketplaceNames: [name] to SyncSettings.execute", async () => {
     const program = new Command();
+    bindOutput(program, processOutputFactory());
     program.exitOverride();
     registerMarketplaceCommand(program, createDeps, vi.fn());
 

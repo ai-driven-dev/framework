@@ -1,6 +1,8 @@
 import { join, resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/commands/global-options.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 
 const validate = vi.fn();
 const createDeps = vi.fn(async () => ({ validateRecipes: { execute: validate } }));
@@ -34,6 +36,7 @@ afterEach(() => {
 
 async function run(...args: string[]): Promise<void> {
   const program = new Command();
+  bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
   const toolConfig = program.command("framework");

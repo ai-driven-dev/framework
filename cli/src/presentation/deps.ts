@@ -60,7 +60,15 @@ import type { Environment } from "../shared/ports/environment.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
-import type { CLIOutput } from "./output.js";
+
+/** Where a command's result and its failure go, and how the run ends. */
+export interface Output extends Logger {
+  print(message: string): void;
+  success(message: string): void;
+  error(message: string): void;
+  /** Ends the run with this exit code. */
+  exit(code: number): never;
+}
 
 export interface FactoryOptions {
   verbose: boolean;
@@ -156,7 +164,7 @@ export interface Deps {
 export type DepsFactory = (
   projectRoot: string,
   options: FactoryOptions,
-  output: CLIOutput | undefined
+  output: Output | undefined
 ) => Promise<Deps>;
 
 /** A factory of the part of the graph a command reads. The real `DepsFactory` is assignable to

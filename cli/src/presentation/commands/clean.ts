@@ -1,8 +1,7 @@
 import type { Command } from "commander";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -16,7 +15,7 @@ interface CleanCmdOptions {
 
 async function runProjectScopeClean(
   deps: Pick<Deps, CleanKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   cmdOptions: CleanCmdOptions
 ): Promise<void> {
@@ -32,7 +31,7 @@ async function runProjectScopeClean(
 
 async function runUserScopeClean(
   deps: Pick<Deps, CleanKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   cmdOptions: CleanCmdOptions
 ): Promise<void> {

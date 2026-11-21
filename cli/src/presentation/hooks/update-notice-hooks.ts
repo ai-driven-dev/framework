@@ -1,6 +1,6 @@
 import type { Command } from "commander";
+import { outputOf } from "../commands/global-options.js";
 import type { DepsSliceFactory } from "../deps.js";
-import { CLIOutput } from "../output.js";
 
 /** What this command reads of the graph. */
 type UpdateNoticeKeys = "printUpdateNotice" | "logger" | "refreshUpdateCheck";
@@ -24,7 +24,7 @@ export function registerUpdateNoticeHooks(
     // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
     if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
     const opts = program.opts<{ verbose?: boolean }>();
-    const output = new CLIOutput(opts.verbose ?? false);
+    const output = outputOf(program);
     const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
       () => null
     );
@@ -52,7 +52,7 @@ export function registerUpdateNoticeHooks(
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
     const opts = program.opts<{ verbose?: boolean }>();
-    const output = new CLIOutput(opts.verbose ?? false);
+    const output = outputOf(program);
     const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
       () => null
     );

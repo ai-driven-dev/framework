@@ -3,7 +3,7 @@ import type { DoctorReport } from "../../contexts/installation/contract/doctor-i
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
-import type { Deps, DepsSliceFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory, Output } from "../deps.js";
 import {
   printAllToolsDrift,
   printInventory,
@@ -14,8 +14,6 @@ import {
   printUserScopeTools,
 } from "../display/doctor-display.js";
 import { failCommand } from "../errors/error-translator.js";
-import { exitWith } from "../exit.js";
-import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
@@ -31,7 +29,7 @@ type DoctorKeys =
 
 async function runFullDoctor(
   deps: Pick<Deps, DoctorKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   pluginName: string | undefined
 ): Promise<void> {
@@ -61,12 +59,12 @@ async function runFullDoctor(
     output.success("\nInstallation is healthy");
     return;
   }
-  exitWith(1);
+  output.exit(1);
 }
 
 async function runScopedDoctor(
   deps: Pick<Deps, DoctorKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   toolId: string,
   tools: ToolCatalog,
@@ -107,7 +105,7 @@ async function runScopedDoctor(
     output.success("\nInstallation is healthy");
     return;
   }
-  exitWith(1);
+  output.exit(1);
 }
 
 /** A user-scope install writes nothing under any project, so the only check left is
@@ -116,7 +114,7 @@ async function runScopedDoctor(
 async function runUserScopeDoctor(
   tools: ToolCatalog,
   deps: Pick<Deps, DoctorKeys>,
-  output: CLIOutput,
+  output: Output,
   projectRoot: string,
   cmdOptions: DoctorCmdOptions
 ): Promise<void> {
@@ -161,7 +159,7 @@ async function runUserScopeDoctor(
     output.success("\nUser-scope installation is healthy");
     return;
   }
-  exitWith(1);
+  output.exit(1);
 }
 
 interface DoctorCmdOptions {
