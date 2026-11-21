@@ -3,7 +3,6 @@ import {
   basename,
   isComponentFile,
   isProse,
-  makeFile,
   parentDirOf,
   pathBelowHooks,
 } from "../../../../src/contexts/translate/domain/plugin-paths.js";
@@ -27,9 +26,5 @@ describe("plugin paths", () => {
   it("recognises a component by its top directory", () => {
     expect(isComponentFile("rules/a.md")).toBe(true);
     expect(isComponentFile("hooks/hooks.json")).toBe(false);
-  });
-
-  it("builds an output file", () => {
-    expect(makeFile("a", "b")).toEqual({ relativePath: "a", content: "b" });
   });
 });

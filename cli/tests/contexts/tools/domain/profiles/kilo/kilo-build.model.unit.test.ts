@@ -5,6 +5,7 @@ import type {
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
+import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
@@ -48,7 +49,7 @@ describe("buildKiloFlatContract", () => {
   });
 
   it("drops the name from a flat agent: Kilo names it after its file", () => {
-    const transform = supported(present(kilo.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(kilo.buildContracts.flat)(), "flat");
     expect(transform?.("---\nname: x\ndescription: Reads\n---\nBody.\n", "aidd-dev", "x.md")).toBe(
       "---\ndescription: 'Reads'\nmode: 'subagent'\n---\nBody.\n"
     );
@@ -71,7 +72,9 @@ describe("buildKiloFlatContract", () => {
       pluginMcp: new Map([
         [
           "aidd-dev",
-          JSON.stringify({ mcpServers: { context: { command: "node", args: ["server.js"] } } }),
+          JSON.stringify({
+            mcpServers: { "aidd-dev-context": { command: "node", args: ["server.js"] } },
+          }),
         ],
       ]),
     });
@@ -132,7 +135,9 @@ describe("buildKiloFlatContract", () => {
       pluginMcp: new Map([
         [
           "aidd-dev",
-          JSON.stringify({ mcpServers: { context: { command: "node", args: ["server.js"] } } }),
+          JSON.stringify({
+            mcpServers: { "aidd-dev-context": { command: "node", args: ["server.js"] } },
+          }),
         ],
       ]),
       existing: {

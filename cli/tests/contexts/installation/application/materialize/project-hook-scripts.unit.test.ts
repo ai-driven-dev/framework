@@ -7,7 +7,6 @@ import {
   writeProjectHookScripts,
 } from "../../../../../src/contexts/installation/application/materialize/project-hook-scripts.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
-import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
@@ -24,15 +23,12 @@ function delivery(options: {
 }): HooksDelivery {
   const location = registeredTools().aiProfile(TOOL.cursor).projectHooksDelivery();
   if (location === null) throw new Error("cursor delivers project hooks");
-  const hooks = (options.scripts ?? []).map((relativePath) => ({ relativePath, content: "code" }));
-  const dist = new PluginDistribution({
-    manifest: { name: PLUGIN, version: "1.0.0" },
-    format: TOOL.claude,
-    files: hooks,
-    components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },
-  });
+  const scripts = (options.scripts ?? []).map((relativePath) => ({
+    relativePath: location.format.scriptPath(PLUGIN, relativePath),
+    content: "code",
+  }));
   return {
-    dist,
+    scripts,
     projectRoot: PROJECT_ROOT,
     location,
     previous: options.previous && { entries: [], scripts: options.previous },
@@ -60,13 +56,10 @@ describe("assertScriptsNotUserOwned", () => {
 });
 
 describe("writeProjectHookScripts", () => {
-  it("writes each script beside the hooks file and returns its digest, skipping the manifest", async () => {
+  it("writes each script beside the hooks file and returns its digest", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    const written = await writeProjectHookScripts(
-      fs,
-      delivery({ scripts: ["hooks/hooks.json", "hooks/pre.js"] })
-    );
+    const written = await writeProjectHookScripts(fs, delivery({ scripts: ["hooks/pre.js"] }));
 
     expect([...written.keys()]).toStrictEqual([SCRIPT_RELATIVE]);
     expect(written.get(SCRIPT_RELATIVE)).toBe(FileHash.of(fs.getFile(SCRIPT_PATH) ?? "").value);

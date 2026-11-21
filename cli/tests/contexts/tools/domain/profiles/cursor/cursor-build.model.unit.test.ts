@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { buildCursorContract } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor-build.model.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
+import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
@@ -25,7 +26,7 @@ const AGENT_SOURCE = [
 
 describe("buildCursorContract(HOOKS)", () => {
   it("gives same-named plugin roles distinct native identities", () => {
-    const transform = supported(buildCursorContract(HOOKS).artifacts.agents).transform;
+    const transform = builtAgent(buildCursorContract(HOOKS), "marketplace");
     const first = transform?.(AGENT_SOURCE, "first-plugin", "planner.md") ?? "";
     const second = transform?.(AGENT_SOURCE, "second-plugin", "planner.md") ?? "";
     expect(parseFrontmatter(first).frontmatter.name).toBe("first-plugin-planner");
@@ -33,7 +34,7 @@ describe("buildCursorContract(HOOKS)", () => {
   });
 
   it("drops only the file's final .md from a plugin agent's name", () => {
-    const transform = supported(buildCursorContract(HOOKS).artifacts.agents).transform;
+    const transform = builtAgent(buildCursorContract(HOOKS), "marketplace");
     const output = transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md") ?? "";
 
     expect(parseFrontmatter(output).frontmatter.name).toBe("aidd-dev-read.md-first");
@@ -77,7 +78,7 @@ describe("buildCursorContract(HOOKS)", () => {
   });
 
   it("keeps an agent's supported frontmatter and links its plugin-root references from agents/", () => {
-    const transform = supported(buildCursorContract(HOOKS).artifacts.agents).transform;
+    const transform = builtAgent(buildCursorContract(HOOKS), "marketplace");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -131,7 +132,7 @@ describe("present(cursor.buildContracts.flat)()", () => {
   });
 
   it("drops only the file's own .md from a flat agent's name", () => {
-    const transform = supported(present(cursor.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(cursor.buildContracts.flat)(), "flat");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md")).toMatch(
       /^name: "aidd-dev-read\.md-first"$/mu
@@ -139,7 +140,7 @@ describe("present(cursor.buildContracts.flat)()", () => {
   });
 
   it("renames a flat agent after its plugin and points its references at their flat destinations", () => {
-    const transform = supported(present(cursor.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(cursor.buildContracts.flat)(), "flat");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -167,12 +168,12 @@ describe("present(cursor.buildContracts.flat)()", () => {
     );
   });
 
-  it("resolves a flat agent's references from the folder its nested file lands in", () => {
-    const transform = supported(present(cursor.buildContracts.flat)().artifacts.agents).transform;
+  it("resolves a flat agent's references from the folder the file lands in, by its file name alone", () => {
+    const transform = builtAgent(present(cursor.buildContracts.flat)(), "flat");
     const source = `---\nname: x\n---\nAsk @${ROOT}/agents/reviewer.md\n`;
 
-    expect(transform?.(source, "aidd-dev", "team/lead.md")).toContain(
-      "Ask [reviewer.md](../aidd-dev-reviewer.md)"
+    expect(transform(source, "aidd-dev", "team/lead.md")).toContain(
+      "Ask [reviewer.md](./aidd-dev-reviewer.md)"
     );
   });
 });

@@ -1,8 +1,13 @@
 import { join } from "node:path";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+  flatSectionPath,
+  ownsFlatArtifact,
+} from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   ConfigWrite,
   FlatInstallSection,
-  FlatSkillLayout,
   PluginAnswers,
   SettingsFileAnswers,
   ShippedConfig,
@@ -11,7 +16,6 @@ import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
 import type { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
 import type { NativeActivation } from "../native-registration/native-activation.js";
 import type { ProfileSection, ProfileSectionKey, ProfileSections } from "../profile.js";
-import { flatInstallPath, ownsFlatPath } from "./flat-install-paths.js";
 import { pluginAnswers, projectPlacement } from "./plugin-answers.js";
 
 /** Answers from the sections captured at construction, so the method survives being detached
@@ -55,8 +59,12 @@ export function signalDirectoryOf(
     : { absolute: join(projectRoot, signalDir), relative: signalDir };
 }
 
-function skillLayoutOf(sections: ProfileSections): FlatSkillLayout {
-  return sections.layout?.mode === "flat" ? sections.layout.skillLayout : "nested";
+/** A tool that does not install flat is never asked where a flat file lands; it answers with the
+ * nested layout its own directory would give. */
+function flatLayoutOf(directory: string, sections: ProfileSections): FlatArtifactLayout {
+  return sections.layout?.mode === "flat"
+    ? sections.layout.artifacts
+    : flatArtifactLayout(directory, { skills: "nested", agent: { ext: ".md" } });
 }
 
 export function pluginsOf(sections: ProfileSections): PluginAnswers | null {
@@ -93,12 +101,12 @@ function destinationsOf(
 
 /** Where a flat plugin's files land under the tool's directory, and which of them are its own. */
 export function pathAnswers(directory: string, capabilities: ProfileSections) {
-  const skillLayout = skillLayoutOf(capabilities);
+  const layout = flatLayoutOf(directory, capabilities);
   return {
     flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
-      flatInstallPath({ directory, skillLayout, section, pluginName, fileName }),
+      flatSectionPath(layout, section, { plugin: pluginName, name: fileName }),
     ownsFlatPath: (relativePath: string, pluginName: string) =>
-      ownsFlatPath({ directory, skillLayout, relativePath, pluginName }),
+      ownsFlatArtifact(layout, relativePath, pluginName),
   };
 }
 

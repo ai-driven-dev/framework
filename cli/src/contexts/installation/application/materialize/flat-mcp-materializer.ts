@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type {
   PluginTranslationSkip,
   ReadonlySkipList,
@@ -29,7 +28,10 @@ export async function refreshTrackedMcpConfigHash(refresh: {
 
 export async function materializeFlatMcp(materialization: {
   fs: FileReader & FileWriter;
-  dist: PluginDistribution;
+  pluginName: string;
+  /** The plugin's servers already in the tool's own shape, as the translation answers them, or
+   * null when the plugin declares none. This only merges them into the file. */
+  declaration: string | null;
   tool: FlatMcpSection;
   projectRoot: string;
   previousMcpEntries: ReadonlyMap<string, string>;
@@ -38,9 +40,9 @@ export async function materializeFlatMcp(materialization: {
   mcpSkips: ReadonlySkipList;
   outputRelPath?: string;
 }> {
-  const { fs, dist, tool, projectRoot, previousMcpEntries } = materialization;
-  const mcpCap = dist.components.mcp.length === 0 ? null : tool.flatPluginMcp();
-  if (mcpCap === null) {
+  const { fs, pluginName, declaration, tool, projectRoot, previousMcpEntries } = materialization;
+  const mcpCap = declaration === null ? null : tool.flatPluginMcp();
+  if (mcpCap === null || declaration === null) {
     return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };
   }
   const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
@@ -48,9 +50,8 @@ export async function materializeFlatMcp(materialization: {
   );
   const outputPath = join(projectRoot, outputRelPath);
   const existingContent = await readExistingJson(fs, outputPath);
-  const transformed = mcpCap.transform(dist.components.mcp[0].content);
   const { mergedContent, contributedEntries, collisions, editedPreviousEntries } =
-    mcpCap.mergePluginServers(existingContent, transformed, previousMcpEntries);
+    mcpCap.mergePluginServers(existingContent, declaration, previousMcpEntries);
   if (editedPreviousEntries.length > 0) {
     throw new Error(
       `MCP server '${editedPreviousEntries[0]}' was edited after install; reinstall refused.`
@@ -61,7 +62,7 @@ export async function materializeFlatMcp(materialization: {
   }
   const mcpSkips = collisions.map(
     (reason): PluginTranslationSkip => ({
-      pluginName: dist.manifest.name,
+      pluginName,
       component: "mcp",
       toolId: tool.toolId,
       reason,
@@ -85,10 +86,18 @@ async function readExistingJson(fs: FileReader, path: string): Promise<string | 
  */
 export async function materializeRequestedMcp(
   fs: FileReader & FileWriter,
-  request: AddPluginRequest
+  request: AddPluginRequest,
+  declaration: string | null
 ): Promise<Awaited<ReturnType<typeof materializeFlatMcp>>> {
   const { dist, tool, projectRoot, manifest, previousMcpEntries = new Map() } = request;
-  const mcp = await materializeFlatMcp({ fs, dist, tool, projectRoot, previousMcpEntries });
+  const mcp = await materializeFlatMcp({
+    fs,
+    pluginName: dist.manifest.name,
+    declaration,
+    tool,
+    projectRoot,
+    previousMcpEntries,
+  });
   await refreshTrackedMcpConfigHash({
     fs,
     manifest,

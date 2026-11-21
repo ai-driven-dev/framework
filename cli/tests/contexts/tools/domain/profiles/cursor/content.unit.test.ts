@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { applyLinkSyntax } from "../../../../../../src/contexts/tools/contract/link-syntax.js";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 
+const rewrite = (text: string) => applyLinkSyntax(text, cursor.linkSyntax);
+
 describe("cursor content", () => {
-  describe("rewriteContent()", () => {
+  describe("link syntax", () => {
     it("routes a numbered command folder under commands/aidd/<phase>/, with or without the @ prefix", () => {
-      const rewritten = cursor.rewriteContent?.(
+      const rewritten = rewrite(
         "Run .cursor/commands/04_code/implement.md, then @.cursor/commands/02-plan/plan.md.\n"
       );
       expect(rewritten).toBe(
@@ -14,11 +17,11 @@ describe("cursor content", () => {
 
     it("leaves a numbered command folder alone when nothing follows its slash", () => {
       const text = "See .cursor/commands/04_code/ for the list.\n";
-      expect(cursor.rewriteContent?.(text)).toBe(text);
+      expect(rewrite(text)).toBe(text);
     });
 
     it("gives a referenced rule Cursor's .mdc extension", () => {
-      const rewritten = cursor.rewriteContent?.("Read @.cursor/rules/01-standards/naming.md\n");
+      const rewritten = rewrite("Read @.cursor/rules/01-standards/naming.md\n");
       expect(rewritten).toBe("Read @.cursor/rules/01-standards/naming.mdc\n");
     });
   });

@@ -151,9 +151,8 @@ export const cursor = defineAiTool({
     models: new ModelsSection({ providers: ["anthropic"] }),
   }),
 
-  rewriteContent(content: string): string {
-    return content
-      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/(?=\S)/g, "$1.cursor/commands/aidd/$2/")
-      .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
-  },
+  linkSyntax: [
+    { from: /(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/(?=\S)/g, to: "$1.cursor/commands/aidd/$2/" },
+    { from: /(@\.cursor\/rules\/[^\s]+)\.md\b/g, to: "$1.mdc" },
+  ],
 });

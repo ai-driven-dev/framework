@@ -5,6 +5,7 @@ import type {
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
+import { applyLinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
@@ -100,7 +101,9 @@ function expectNumberedCommandsRouted(profile: AiTool): void {
   const reference = `${profile.directory}commands/${NUMBERED_COMMAND}`;
   for (const written of [reference, `@${reference}`]) {
     const expected = written.startsWith("@") ? `@${routed}` : routed;
-    expect(profile.rewriteContent(written), `${profile.toolId}: ${written}`).toBe(expected);
+    expect(applyLinkSyntax(written, profile.linkSyntax), `${profile.toolId}: ${written}`).toBe(
+      expected
+    );
   }
 }
 
@@ -113,7 +116,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   },
   aiCheck("has a well-formed shape", (profile) => {
     expect(profile.toolSuffix.startsWith(".")).toBe(true);
-    expect(typeof profile.rewriteContent).toBe("function");
+    expect(Array.isArray(profile.linkSyntax)).toBe(true);
     expect(profile.signalDir === null || typeof profile.signalDir === "string").toBe(true);
   }),
   aiCheck(

@@ -1,100 +1,78 @@
 import { describe, expect, it } from "vitest";
 import {
+  flatAgentFilePath,
+  flatArtifactLayout,
   flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
-  genericFlatAgentPath,
+  flatSkillPath,
   genericFlatHooksFile,
   genericFlatHooksScriptPath,
-  genericFlatSkillPath,
-  genericFlatSkillTreePath,
+  ownsFlatArtifact,
 } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
-describe("genericFlatAgentPath", () => {
-  it("strips .md suffix, adds outputExt, and prepends plugin prefix", () => {
-    expect(
-      genericFlatAgentPath({
-        agentsPrefix: ".github/agents/",
-        plugin: "aidd-dev",
-        agentBaseName: "implementer.md",
-        outputExt: ".agent.md",
-      })
-    ).toBe(".github/agents/aidd-dev-implementer.agent.md");
-  });
-
-  it("does not double-strip when name has no .md", () => {
-    expect(
-      genericFlatAgentPath({
-        agentsPrefix: ".github/agents/",
-        plugin: "aidd-dev",
-        agentBaseName: "reviewer",
-        outputExt: ".agent.md",
-      })
-    ).toBe(".github/agents/aidd-dev-reviewer.agent.md");
-  });
-
-  it("preserves .md output ext for tools that keep .md", () => {
-    expect(
-      genericFlatAgentPath({
-        agentsPrefix: ".claude/agents/",
-        plugin: "my-plugin",
-        agentBaseName: "agent.md",
-        outputExt: ".md",
-      })
-    ).toBe(".claude/agents/my-plugin-agent.md");
-  });
-
-  it("plugin param is used as name prefix", () => {
-    expect(
-      genericFlatAgentPath({
-        agentsPrefix: ".cursor/agents/",
-        plugin: "aidd-context",
-        agentBaseName: "agent.md",
-        outputExt: ".md",
-      })
-    ).toBe(".cursor/agents/aidd-context-agent.md");
-  });
+const nested = flatArtifactLayout(".opencode/", { skills: "nested", agent: { ext: ".md" } });
+const single = flatArtifactLayout(".agents/", {
+  skills: "single-level",
+  agent: { folderFile: "agent.md" },
 });
 
-describe("genericFlatSkillPath", () => {
-  it("sits directly under skills root with plugin prefix on folder name", () => {
-    expect(genericFlatSkillPath(".github/skills/", "aidd-dev", "commit/SKILL.md")).toBe(
-      ".github/skills/aidd-dev-commit/SKILL.md"
+describe("a flat artifact layout", () => {
+  it("places a skill under its plugin, or prefixed with it on a single-level scan", () => {
+    expect([
+      flatSkillPath(nested, "aidd-dev", "skills/commit/SKILL.md"),
+      flatSkillPath(single, "aidd-dev", "commit/SKILL.md"),
+    ]).toStrictEqual([
+      ".opencode/skills/aidd-dev/commit/SKILL.md",
+      ".agents/skills/aidd-dev-commit/SKILL.md",
+    ]);
+  });
+
+  it("keeps a non-skill top-level child's own name under a nested plugin", () => {
+    expect(flatSkillPath(nested, "aidd-telemetry", "shared/attribution.cjs")).toBe(
+      ".opencode/skills/aidd-telemetry/shared/attribution.cjs"
     );
   });
 
-  it("prepends plugin prefix to single-level rel path", () => {
-    expect(genericFlatSkillPath(".github/skills/", "aidd-dev", "hello.md")).toBe(
-      ".github/skills/aidd-dev-hello.md"
-    );
+  it("names an agent after its plugin and its file, in a file or in a folder", () => {
+    expect([
+      flatAgentFilePath(nested, "aidd-dev", "agents/executor.md"),
+      flatAgentFilePath(single, "aidd-dev", "executor.md"),
+      flatAgentFilePath(
+        flatArtifactLayout(".github/", { skills: "single-level", agent: { ext: ".agent.md" } }),
+        "aidd-dev",
+        "executor.md"
+      ),
+    ]).toStrictEqual([
+      ".opencode/agents/aidd-dev-executor.md",
+      ".agents/agents/aidd-dev-executor/agent.md",
+      ".github/agents/aidd-dev-executor.agent.md",
+    ]);
   });
 
-  it("works with different prefixes", () => {
-    expect(genericFlatSkillPath(".claude/skills/", "aidd-context", "00-onboard/SKILL.md")).toBe(
-      ".claude/skills/aidd-context-00-onboard/SKILL.md"
-    );
-  });
-});
-
-describe("genericFlatSkillTreePath", () => {
-  it("nests the whole plugin skills subtree under one plugin/ segment", () => {
-    expect(genericFlatSkillTreePath(".opencode/skills/", "aidd-dev", "commit/SKILL.md")).toBe(
-      ".opencode/skills/aidd-dev/commit/SKILL.md"
-    );
+  it.each([nested, single])("owns what it places, whichever the layout", (layout) => {
+    const placed = [
+      flatSkillPath(layout, "aidd", "plan/SKILL.md"),
+      flatAgentFilePath(layout, "aidd", "a.md"),
+    ];
+    expect(placed.map((path) => ownsFlatArtifact(layout, path, "aidd"))).toStrictEqual([
+      true,
+      true,
+    ]);
   });
 
-  it("keeps a non-skill top-level child's own name intact", () => {
-    expect(
-      genericFlatSkillTreePath(".opencode/skills/", "aidd-telemetry", "shared/attribution.cjs")
-    ).toBe(".opencode/skills/aidd-telemetry/shared/attribution.cjs");
-    expect(genericFlatSkillTreePath(".opencode/skills/", "aidd-telemetry", "package.json")).toBe(
-      ".opencode/skills/aidd-telemetry/package.json"
-    );
+  it("does not own a sibling plugin's nested skill whose name starts with its own", () => {
+    expect([
+      ownsFlatArtifact(nested, flatSkillPath(nested, "aidd-x", "plan/SKILL.md"), "aidd"),
+      ownsFlatArtifact(nested, flatSkillPath(nested, "aidd", "plan/SKILL.md"), "aidd-x"),
+    ]).toStrictEqual([false, false]);
   });
 
-  it("works with different prefixes", () => {
-    expect(genericFlatSkillTreePath(".claude/skills/", "aidd-context", "00-onboard/SKILL.md")).toBe(
-      ".claude/skills/aidd-context/00-onboard/SKILL.md"
-    );
+  it("does not own an artifact whose file name merely begins with the plugin name", () => {
+    expect([
+      ownsFlatArtifact(single, ".agents/skills/aiddx-plan/SKILL.md", "aidd"),
+      ownsFlatArtifact(single, ".agents/agents/aiddx-a/agent.md", "aidd"),
+      ownsFlatArtifact(nested, ".opencode/agents/aiddx-a.md", "aidd"),
+    ]).toStrictEqual([false, false, false]);
   });
 });
 

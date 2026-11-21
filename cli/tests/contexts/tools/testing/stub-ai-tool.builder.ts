@@ -15,6 +15,6 @@ export function stubAiTool(toolId: AiToolId, capabilities: ProfileSections): AiT
     displayName: toolId,
     buildContracts: { flat: () => anEmptyContract() },
     capabilities: () => capabilities,
-    rewriteContent: (content: string) => content,
+    linkSyntax: [],
   });
 }

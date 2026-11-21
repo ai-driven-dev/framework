@@ -6,7 +6,7 @@ import {
 import { DiskSink } from "../contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../contexts/translate/application/sinks/flat-writer.js";
 import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.js";
-import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
+import { canonFormatOf, pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -30,12 +30,15 @@ export function createFrameworkBuildUseCase(
   if (target === null) return undefined;
   const contract = tools.aiProfile(target).buildContract(ctx.mode, ctx.provider);
   if (contract === null) return undefined;
+  const canonFormat = canonFormatOf(tools);
+  if (canonFormat === null) return undefined;
   const sink = new DiskSink({
     fs: deps.fs,
     jsonSchemaValidator: new AjvSchemaValidatorAdapter(),
     assetProvider: deps.assetProvider,
     logger: deps.logger,
     flat: new FlatWriter(deps.fs, deps.assetProvider, deps.logger),
+    canonFormat,
   });
   return new BuildNativeTree({
     fs: deps.fs,

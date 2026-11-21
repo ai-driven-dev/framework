@@ -1,4 +1,4 @@
-import type { ToolBuildContract } from "../../contract/build-contract.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../contract/build-contract.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,
@@ -7,19 +7,15 @@ import {
 import type { HooksRouting } from "./hooks/descriptor.js";
 import { pluginTreeHooksArtifact } from "./hooks/routes.js";
 
-type AgentTransform = NonNullable<
-  Extract<ToolBuildContract["artifacts"]["agents"], { supported: true }>["transform"]
->;
-
 interface PluginTreeLayout {
   readonly manifestRelative: string;
   readonly marketplaceRelative: string;
-  readonly transformAgent: AgentTransform;
+  readonly agentMarkdown: AgentMarkdown;
 }
 
 function pluginTreeArtifacts(
   hooks: HooksRouting,
-  transformAgent: AgentTransform
+  agentMarkdown: AgentMarkdown
 ): ToolBuildContract["artifacts"] {
   return {
     skills: {
@@ -31,7 +27,7 @@ function pluginTreeArtifacts(
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
       path: (_p, rel) => rel,
-      transform: transformAgent,
+      agentMarkdown,
     },
     mcp: {
       supported: true,
@@ -48,7 +44,7 @@ function pluginTreeArtifacts(
  * MCP config and hooks keep their place, and a marketplace catalog lists them. */
 export function pluginTreeContract(
   hooks: HooksRouting,
-  { manifestRelative, marketplaceRelative, transformAgent }: PluginTreeLayout
+  { manifestRelative, marketplaceRelative, agentMarkdown }: PluginTreeLayout
 ): ToolBuildContract {
   return {
     pluginRootToken: hooks.rootToken,
@@ -59,7 +55,7 @@ export function pluginTreeContract(
         hooksField: hooks.manifestNamesHooks === true,
       }),
     manifestSchemaName: "plugin-manifest",
-    artifacts: pluginTreeArtifacts(hooks, transformAgent),
+    artifacts: pluginTreeArtifacts(hooks, agentMarkdown),
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
       catalog: buildSharedMarketplace(
         source as Parameters<typeof buildSharedMarketplace>[0],

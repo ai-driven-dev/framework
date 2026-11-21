@@ -1,5 +1,6 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createPluginTranslation } from "../../../../../src/composition/translate.js";
 import {
   materializeFlatMcp,
   refreshTrackedMcpConfigHash,
@@ -30,6 +31,11 @@ function dist(mcp: readonly string[]): PluginDistribution {
   });
 }
 
+/** What the engine hands an install to merge: the plugin's servers in the tool's own shape. */
+const declared = (mcp: readonly string[]) =>
+  createPluginTranslation(registeredTools()).execute({ distribution: dist(mcp), tool: opencode() })
+    .installedMcp;
+
 const SERVER = JSON.stringify({ mcpServers: { local: { command: "node", args: ["s.js"] } } });
 const opencode = () => registeredTools().aiProfile(TOOL.opencode);
 
@@ -38,7 +44,8 @@ describe("materializeFlatMcp", () => {
     const fs = new InMemoryFileAdapter();
     const result = await materializeFlatMcp({
       fs,
-      dist: dist([]),
+      pluginName: "ctx",
+      declaration: declared([]),
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -52,7 +59,8 @@ describe("materializeFlatMcp", () => {
     const fs = new InMemoryFileAdapter();
     const result = await materializeFlatMcp({
       fs,
-      dist: dist([SERVER]),
+      pluginName: "ctx",
+      declaration: declared([SERVER]),
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -68,7 +76,8 @@ describe("materializeFlatMcp", () => {
     });
     await materializeFlatMcp({
       fs,
-      dist: dist([SERVER]),
+      pluginName: "ctx",
+      declaration: declared([SERVER]),
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -82,7 +91,8 @@ describe("materializeFlatMcp", () => {
     const fs = new InMemoryFileAdapter();
     const first = await materializeFlatMcp({
       fs,
-      dist: dist([SERVER]),
+      pluginName: "ctx",
+      declaration: declared([SERVER]),
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -93,7 +103,8 @@ describe("materializeFlatMcp", () => {
     await expect(
       materializeFlatMcp({
         fs,
-        dist: dist([SERVER]),
+        pluginName: "ctx",
+        declaration: declared([SERVER]),
         tool: opencode(),
         projectRoot: PROJECT_ROOT,
         previousMcpEntries: first.mcpEntries,

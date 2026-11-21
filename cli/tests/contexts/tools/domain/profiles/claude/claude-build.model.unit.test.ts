@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
+import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
@@ -63,9 +64,7 @@ describe("present(claude.buildContracts.marketplace)()", () => {
   });
 
   it("keeps only the frontmatter Claude reads, so an agent gets every tool, and links its plugin-root references from agents/", () => {
-    const transform = supported(
-      present(claude.buildContracts.marketplace)().artifacts.agents
-    ).transform;
+    const transform = builtAgent(present(claude.buildContracts.marketplace)(), "marketplace");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -141,7 +140,7 @@ describe("present(claude.buildContracts.flat)()", () => {
   });
 
   it("renames a flat agent after its plugin and points its references at their flat destinations", () => {
-    const transform = supported(present(claude.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(claude.buildContracts.flat)(), "flat");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -159,7 +158,7 @@ describe("present(claude.buildContracts.flat)()", () => {
   });
 
   it("keeps an inner .md in a flat agent's declared name and removes only the extension", () => {
-    const transform = supported(present(claude.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(claude.buildContracts.flat)(), "flat");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "notes.md-helper.md")).toContain(
       "name: 'aidd-dev-notes.md-helper'"

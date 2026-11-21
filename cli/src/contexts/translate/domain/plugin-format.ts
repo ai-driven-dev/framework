@@ -1,5 +1,6 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "./canon-format.js";
 
 export interface DistributionProbe {
   /** The tool whose layout a plugin distribution follows. */
@@ -33,4 +34,13 @@ export function distributionProbesOf(
 /** Where a plugin manifest can sit, across every registered tool's layout. */
 export function pluginManifestProbes(tools: ToolCatalog): readonly DistributionProbe[] {
   return distributionProbesOf(tools, "manifest");
+}
+
+/** The tool the framework's source plugins are written for: the one whose manifest sits where the
+ * source plugin's does. `null` when no registered tool reads that place. */
+export function canonFormatOf(tools: ToolCatalog): AiToolId | null {
+  const probe = pluginManifestProbes(tools).find(
+    (candidate) => candidate.relativePath === SOURCE_PLUGIN_MANIFEST_RELATIVE
+  );
+  return probe?.format ?? null;
 }

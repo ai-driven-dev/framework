@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { applyLinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
@@ -30,7 +31,7 @@ describe("a plugin's executable files survive being installed", () => {
       const content = pluginFile(relativePath);
       const rewritten = registeredTools()
         .idsInCanonicalOrder("ai")
-        .map((tool) => registeredTools().aiProfile(tool).rewriteContent(content));
+        .map((tool) => applyLinkSyntax(content, registeredTools().aiProfile(tool).linkSyntax));
 
       // The rewrite is the thing the translator must not apply to this file. Where a tool's
       // rewrite happens to leave it alone, that is luck; where it does not, this names it.
@@ -143,7 +144,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     // the guard would be protecting nothing while looking thorough.
     const rewritten = [claude, codex, copilot, cursor, opencode].filter((tool) => {
       const script = rewritableScript(tool.directory);
-      return tool.rewriteContent(script) !== script;
+      return applyLinkSyntax(script, tool.linkSyntax) !== script;
     });
 
     expect(rewritten.length).toBeGreaterThan(0);

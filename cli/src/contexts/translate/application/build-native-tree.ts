@@ -21,7 +21,12 @@ import {
   SOURCE_MARKETPLACE_RELATIVE,
 } from "../domain/canon-format.js";
 import { InvalidBuildPathsError } from "../domain/translate.error.js";
-import type { DiskLayout, DiskTarget, PluginTreeSink } from "../ports/plugin-tree-sink.js";
+import type {
+  BuiltPlugin,
+  DiskLayout,
+  DiskTarget,
+  PluginTreeSink,
+} from "../ports/plugin-tree-sink.js";
 
 /** What a build for a target and mode asks of its caller. */
 export interface FrameworkBuildContext {
@@ -51,10 +56,13 @@ export class BuildNativeTree {
     const target: DiskTarget = { ...this.deps.layout, sourceDir, outDir };
     await this.deps.sink.prepare(target);
     const builtPlugins: BuildPluginResult[] = [];
+    const written: BuiltPlugin[] = [];
     for (const entry of sourceMarketplace.plugins) {
-      builtPlugins.push(await this.buildPlugin(target, entry));
+      const { result, declaredMcp } = await this.buildPlugin(target, entry);
+      builtPlugins.push(result);
+      written.push({ name: result.name, declaredMcp });
     }
-    const extraFiles = await this.deps.sink.finish(target, sourceMarketplace, builtPlugins);
+    const extraFiles = await this.deps.sink.finish(target, sourceMarketplace, written);
     const totalFiles = builtPlugins.reduce((sum, p) => sum + p.filesWritten, 0) + extraFiles;
     return { outDir, plugins: builtPlugins, totalFiles };
   }
@@ -99,14 +107,14 @@ export class BuildNativeTree {
   private async buildPlugin(
     target: DiskTarget,
     entry: SourcePluginEntryRef
-  ): Promise<BuildPluginResult> {
+  ): Promise<{ result: BuildPluginResult; declaredMcp: string | null }> {
     const pluginSrc = join(target.sourceDir, "plugins", entry.name);
     if (!(await this.deps.fs.fileExists(pluginSrc))) {
       throw new InvalidSourceMarketplaceError(`plugin '${entry.name}' not found at ${pluginSrc}`);
     }
-    const filesWritten = await this.deps.sink.writePlugin(target, entry.name, pluginSrc);
+    const { files, declaredMcp } = await this.deps.sink.writePlugin(target, entry.name, pluginSrc);
     const skippedSections = await this.warnOutOfScopeSections(entry.name, pluginSrc);
-    return { name: entry.name, filesWritten, skippedSections };
+    return { result: { name: entry.name, filesWritten: files, skippedSections }, declaredMcp };
   }
 
   private async warnOutOfScopeSections(

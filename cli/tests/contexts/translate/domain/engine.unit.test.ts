@@ -296,3 +296,27 @@ describe("a plugin whose content references the framework", () => {
     expect(file?.content).not.toContain("{{DOCS}}");
   });
 });
+
+describe("the MCP declaration an install merges into the tool's own config", () => {
+  const NO_COMPONENTS = { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] };
+  const declared = JSON.stringify({ mcpServers: { local: { command: "node", args: ["s.js"] } } });
+  const withMcp = () => {
+    const mcp = [makeFile(".mcp.json", declared)];
+    return makeDist({
+      files: mcp,
+      components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp },
+    });
+  };
+
+  it("is the declaration in the shape the tool's config holds", () => {
+    expect(JSON.parse(translator.mcp(withMcp(), opencode) ?? "null").mcp.local.type).toBe("local");
+  });
+
+  it("is nothing for a plugin that declares no servers", () => {
+    expect(translator.mcp(makeDist({ components: NO_COMPONENTS }), opencode)).toBeNull();
+  });
+
+  it("is nothing for a tool whose plugins carry their own MCP file", () => {
+    expect(translator.mcp(withMcp(), claude)).toBeNull();
+  });
+});

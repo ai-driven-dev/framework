@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { ModelsSection } from "../../../../../src/contexts/tools/domain/sections/models-section.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { builtAgent } from "../../../../shared/testing/built-agent.builder.js";
 import { registeredAiProfile } from "../../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -25,9 +26,7 @@ Review.
 `;
 
 function write(contract: ToolBuildContract, fileName: string, content = AGENT): string {
-  const agents = contract.artifacts.agents;
-  if (!agents.supported) throw new Error("no agents");
-  return agents.transform?.(content, "aidd-orchestrator", fileName) ?? content;
+  return builtAgent(contract, "flat")(content, "aidd-orchestrator", fileName);
 }
 
 describe("a build on a provider", () => {

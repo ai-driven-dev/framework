@@ -4,15 +4,14 @@
  * `domain/formats/`; the contracts themselves are thin wiring.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
-  genericFlatAgentPath,
-  genericFlatSkillPath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -29,43 +28,24 @@ export function buildClaudeContract(hooks: HooksRouting): ToolBuildContract {
   return pluginTreeContract(hooks, {
     manifestRelative: OUTPUT_CLAUDE_MANIFEST_RELATIVE,
     marketplaceRelative: OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
-    transformAgent: transformClaudeAgent,
+    agentMarkdown: claudeAgentMarkdown,
   });
 }
 
-function claudeFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: ".claude/agents/",
-    plugin,
-    agentBaseName: rel.slice("agents/".length),
-    outputExt: ".md",
-  });
-}
+/** Where a flat build puts claude's skills and agents. */
+const CLAUDE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".claude/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
-function claudeFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(".claude/skills/", plugin, rel.slice("skills/".length));
-}
+const claudeAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter),
+};
 
-function transformClaudeAgent(content: string, _plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: `agents/${outName}`,
-  });
-  return serializeFrontmatter(claudeAgentFrontmatter(frontmatter), rewrittenBody);
-}
-
-const claudeFlatResolveTarget = flatTargetsOf(claudeFlatAgentPath, claudeFlatSkillPath);
-
-function transformClaudeFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = claudeFlatAgentPath(plugin, `agents/${outName}`);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => claudeFlatResolveTarget(plugin, rel),
-  });
-  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(claudeAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
-}
+const claudeFlatAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
+};
 
 export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
@@ -76,14 +56,14 @@ export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: claudeFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(CLAUDE_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: claudeFlatAgentPath,
-        transform: transformClaudeFlatAgent,
+        path: (plugin, rel) => flatAgentFilePath(CLAUDE_FLAT_LAYOUT, plugin, rel),
+        agentMarkdown: claudeFlatAgentMarkdown,
       },
       mcp: {
         supported: true,

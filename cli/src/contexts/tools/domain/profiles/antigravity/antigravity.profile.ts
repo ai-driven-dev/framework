@@ -4,7 +4,10 @@ import { declareHooks } from "../../formats/hooks/declaration.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks/flat-routes.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
-import { buildAntigravityFlatContract } from "./antigravity-build.model.js";
+import {
+  ANTIGRAVITY_FLAT_LAYOUT,
+  buildAntigravityFlatContract,
+} from "./antigravity-build.model.js";
 import { antigravityHooksFormat } from "./antigravity-hooks.model.js";
 
 const DIRECTORY = ".agents/";
@@ -57,11 +60,9 @@ export const antigravity = defineAiTool({
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({
       namespacePrefix: "aidd-",
-      skillLayout: "single-level",
+      artifacts: ANTIGRAVITY_FLAT_LAYOUT,
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content;
-  },
+  linkSyntax: [],
 });

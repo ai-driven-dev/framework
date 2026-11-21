@@ -6,10 +6,9 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
 import { SharedSourceUnregisteredError } from "../../domain/installation.error.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import { withoutHooks } from "../materialize/project-hooks-materializer.js";
 import {
   readBuiltUserPluginFiles,
-  withoutHooksPrefix,
+  withoutDroppedFiles,
 } from "../materialize/read-built-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
@@ -72,11 +71,11 @@ async function readBuiltFiles(
     name: plugin.name,
     platform: deps.builtDeps.platform,
   });
-  const files =
-    tool.plugins()?.deliversHooksToProject() === true
-      ? withoutHooksPrefix(built, plugin.name)
-      : built;
-  return { files, componentPaths: new Map() };
+  const { dropsBuiltFile } = deps.builtDeps.translate.execute({ distribution: dist, tool });
+  return {
+    files: withoutDroppedFiles(built, plugin.name, dropsBuiltFile),
+    componentPaths: new Map(),
+  };
 }
 
 function translateUserPluginFiles(
@@ -90,8 +89,6 @@ function translateUserPluginFiles(
       `${tool.toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt`
     );
   }
-  const forGlobalFiles =
-    tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
-  const translated = deps.builtDeps.translate.execute({ distribution: forGlobalFiles, tool });
+  const translated = deps.builtDeps.translate.execute({ distribution: dist, tool });
   return { files: hashOutputFiles(translated.files), componentPaths: translated.componentPaths };
 }

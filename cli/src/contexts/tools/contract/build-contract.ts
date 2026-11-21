@@ -29,13 +29,33 @@ export type ArtifactSource =
   | { readonly kind: "configFile"; readonly srcPath: string }
   | { readonly kind: "hooksBundle"; readonly jsonPath: string; readonly scriptDir: string };
 
+/** How a tool keeps an agent's markdown: the frontmatter it reads, from the agent's own and the
+ * plugin and file it is built for. The engine reads and writes the file and resolves the links of
+ * its body, the same for every tool. */
+export interface AgentMarkdown {
+  readonly frontmatter: (
+    frontmatter: Record<string, unknown>,
+    of: { readonly plugin: string; readonly outName: string }
+  ) => Record<string, unknown>;
+  /** The engine gives the agent the name its plugin and file make, `<plugin>-<file>`, in place of
+   * the source's: for a layout that holds every plugin's agents in one place. */
+  readonly pluginPrefixedName?: true;
+  /** `double` for a reader that keeps single quotes literally. */
+  readonly quote?: "double";
+}
+
 export type ArtifactContract =
   | { readonly supported: false }
   | {
       readonly supported: true;
       readonly source: ArtifactSource;
       readonly path: (plugin: string, relPath: string) => string;
-      /** Defaults to identity, a byte-copy. */
+      /** An agent's markdown, as the tool keeps it. Wins over `transform` for an agent. */
+      readonly agentMarkdown?: AgentMarkdown;
+      /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */
+      readonly skillFrontmatter?: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
+      /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
+       * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
@@ -76,6 +96,9 @@ export type ArtifactContract =
        * to trigger a plugin's declared hooks. Read only when `skipHooksJson` is also true. */
       readonly hooksBridge?: FlatHooksBridge;
     };
+
+/** An artifact a tool carries, as opposed to one it declares unsupported. */
+export type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
 export interface ToolBuildContract {
   /** Rewrites the source `${CLAUDE_PLUGIN_ROOT}` placeholder in hooks and mcp content: e.g.
@@ -156,7 +179,8 @@ export interface ConfigArtifact {
 
 export interface ConfigArtifactInput {
   readonly builtPlugins: readonly string[];
-  /** Each built plugin's own `.mcp.json`, by plugin; a plugin shipping none is absent. */
+  /** Each built plugin's own `.mcp.json`, by plugin, its server keys already prefixed with the
+   * plugin's name; a plugin shipping none is absent. */
   readonly pluginMcp: ReadonlyMap<string, string>;
   /** Each file `reads` named that exists, by its path under the output root. */
   readonly existing: ReadonlyMap<string, string>;

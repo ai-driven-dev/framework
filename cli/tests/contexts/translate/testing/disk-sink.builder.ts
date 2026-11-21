@@ -5,6 +5,7 @@ import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 /** The disk sink with the flat writer it ships with, over the given files. */
 export function aDiskSink(
@@ -19,5 +20,6 @@ export function aDiskSink(
     assetProvider,
     logger,
     flat: new FlatWriter(fs, assetProvider, logger),
+    canonFormat: TOOL.claude,
   });
 }

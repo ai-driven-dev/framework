@@ -1,20 +1,19 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
-  flatMcpKeyPrefix,
-  genericFlatAgentPath,
-  genericFlatSkillTreePath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type {
+  AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
@@ -33,30 +32,15 @@ type KiloHooks = HooksRouting & {
   readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
 };
 
-function kiloFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: `${KILO_DIRECTORY}agents/`,
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: ".md",
-  });
-}
+/** Where a flat build, and a flat install, put kilo's skills and agents. */
+export const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
 
-function kiloFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillTreePath(`${KILO_DIRECTORY}skills/`, plugin, rel.replace(/^skills\//, ""));
-}
-
-const kiloFlatResolveTarget = flatTargetsOf(kiloFlatAgentPath, kiloFlatSkillPath);
-
-function transformKiloFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = kiloFlatAgentPath(plugin, `agents/${outName}`);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
-  });
-  return serializeFrontmatter(kiloAgentFrontmatter(frontmatter), rewrittenBody);
-}
+const kiloAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => kiloAgentFrontmatter(frontmatter),
+};
 
 function collectKiloMcp(
   builtPlugins: readonly string[],
@@ -70,7 +54,7 @@ function collectKiloMcp(
       mcp?: Record<string, unknown>;
     };
     for (const [key, value] of Object.entries(transformed.mcp ?? {})) {
-      incoming[`${flatMcpKeyPrefix(plugin)}${key}`] = value;
+      incoming[key] = value;
     }
   }
   return incoming;
@@ -103,14 +87,14 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: kiloFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(KILO_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: kiloFlatAgentPath,
-        transform: transformKiloFlatAgent,
+        path: (plugin, rel) => flatAgentFilePath(KILO_FLAT_LAYOUT, plugin, rel),
+        agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false },
       hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),

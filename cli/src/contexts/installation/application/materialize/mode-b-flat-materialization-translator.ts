@@ -12,13 +12,16 @@ import { ProjectScopeUnsupportedError } from "../../domain/installation.error.js
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
-import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
+import type {
+  PluginTranslation,
+  PluginTranslationResult,
+} from "../../ports/plugin/plugin-translation.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
 import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
-import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
+import { ProjectHooksMaterializer } from "./project-hooks-materializer.js";
 
 interface PluginRegistration {
   dist: PluginDistribution;
@@ -63,8 +66,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     } = request;
     const ctx = this.resolveFlatToolContext(tool, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
-    const mcp = await materializeRequestedMcp(this.fs, request);
-    const hooks = await this.projectHooksOf(request);
+    const mcp = await materializeRequestedMcp(this.fs, request, ctx.installedMcp);
+    const hooks = await this.projectHooksOf(request, ctx.projectHooks);
     const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
     if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
       return { skipped: allSkipped };
@@ -84,10 +87,14 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     return { skipped: allSkipped, written };
   }
 
-  private projectHooksOf(request: AddPluginRequest) {
+  private projectHooksOf(
+    request: AddPluginRequest,
+    hooks: PluginTranslationResult["projectHooks"]
+  ) {
     const { dist, tool, projectRoot, previousProjectHooks, hooksGuard = {} } = request;
     return this.projectHooks.execute({
       dist,
+      hooks,
       tool,
       projectRoot,
       previous: previousProjectHooks,
@@ -103,6 +110,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     files: InstallationFile[];
     componentPaths: ReadonlyMap<string, string>;
     skipped: ReadonlySkipList;
+    installedMcp: string | null;
+    projectHooks: PluginTranslationResult["projectHooks"];
     baseDir: string;
     scope: Scope;
   } | null {
@@ -111,17 +120,16 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     if (pluginsCap.kind === "native" && !pluginsCap.materializesFromBuiltTree()) {
       throw new ProjectScopeUnsupportedError();
     }
-    const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;
-    const translated = this.translate.execute({ distribution: distForNative, tool });
+    const translated = this.translate.execute({ distribution: dist, tool });
     const files = hashOutputFiles(translated.files);
-    const { componentPaths, skipped } = translated;
+    const { componentPaths, skipped, installedMcp, projectHooks } = translated;
     const scope = resolveScopeForInstall(tool);
     const baseDir = scopeBaseOf(tool, {
       scope: scope,
       projectRoot: projectRoot,
       homedir: () => this.homedir(),
     });
-    return { files, componentPaths, skipped, baseDir, scope };
+    return { files, componentPaths, skipped, installedMcp, projectHooks, baseDir, scope };
   }
 
   private async writeAndRegisterPlugin(registration: PluginRegistration): Promise<number> {

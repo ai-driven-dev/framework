@@ -4,8 +4,10 @@
  */
 
 import {
-  flatMcpKeyPrefix,
-  genericFlatSkillPath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
@@ -24,7 +26,7 @@ import {
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.model.js";
-import { transformCodexSkill } from "./codex-skill.model.js";
+import { stripCodexSkillFrontmatter } from "./codex-skill.model.js";
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
@@ -37,7 +39,7 @@ function codexPluginArtifacts(
       supported: true,
       source: { kind: "fullTree", srcDir: "skills" },
       path: (_p, rel) => rel,
-      transform: transformCodexSkill,
+      skillFrontmatter: stripCodexSkillFrontmatter,
     },
     agents: {
       supported: true,
@@ -82,18 +84,13 @@ export function buildCodexContract(toml: TomlCodec, hooks: HooksRouting): ToolBu
 // Codex scans `.agents/skills/` (cwd to repo root) for workspace skills, the documented project
 // skill root; verified live, a SKILL.md there appears in Codex's "Available skills" context.
 // `.codex/skills/` also resolves but is undocumented, so the documented root is what is used.
-const CODEX_SKILLS_PREFIX = ".agents/skills/";
+const CODEX_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".codex/", {
+  skillsDir: ".agents/skills/",
+  skills: "single-level",
+  agent: { ext: ".toml" },
+});
 
-function codexFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(CODEX_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));
-}
-
-function codexFlatAgentPath(plugin: string, rel: string): string {
-  const base = rel.replace(/^agents\//, "").replace(/\.md$/, ".toml");
-  return `.codex/agents/${plugin}-${base}`;
-}
-
-function collectPrefixedMcpServers(
+function collectMcpServers(
   builtPlugins: readonly string[],
   pluginMcp: ReadonlyMap<string, string>
 ): Record<string, unknown> {
@@ -102,9 +99,8 @@ function collectPrefixedMcpServers(
     const raw = pluginMcp.get(plugin);
     if (raw === undefined) continue;
     const parsed = JSON.parse(raw) as { mcpServers?: Record<string, unknown> };
-    const prefix = flatMcpKeyPrefix(plugin);
     for (const [k, v] of Object.entries(parsed.mcpServers ?? {})) {
-      mcpServers[`${prefix}${k}`] = v;
+      mcpServers[k] = v;
     }
   }
   return mcpServers;
@@ -122,13 +118,13 @@ function codexFlatArtifacts(toml: TomlCodec, hooks: FlatHooks): ToolBuildContrac
     skills: {
       supported: true,
       source: { kind: "fullTree", srcDir: "skills" },
-      path: codexFlatSkillPath,
+      path: (plugin, rel) => flatSkillPath(CODEX_FLAT_LAYOUT, plugin, rel),
       rewriteSkillName: true,
     },
     agents: {
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      path: codexFlatAgentPath,
+      path: (plugin, rel) => flatAgentFilePath(CODEX_FLAT_LAYOUT, plugin, rel),
       transform: tomlAgentMarkdownToToml(toml),
     },
     mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
@@ -151,7 +147,7 @@ export function buildCodexFlatContract(toml: TomlCodec, hooks: FlatHooks): ToolB
       probes: () => [],
       assets: { tool: "codex", names: [] },
       emit: ({ builtPlugins, pluginMcp, existing }) => {
-        const mcpServers = collectPrefixedMcpServers(builtPlugins, pluginMcp);
+        const mcpServers = collectMcpServers(builtPlugins, pluginMcp);
         const aiddPayload = buildCodexConfigPayload(toml, mcpServers);
         const merged = mergeCodexConfigToml(toml)(
           existing.get(CODEX_FLAT_CONFIG) ?? "",

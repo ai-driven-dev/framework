@@ -21,6 +21,17 @@ export interface PluginTranslationResult {
   readonly flatHookPaths: ReadonlySet<string>;
   readonly skipped: ReadonlySkipList;
   readonly notices: ReadonlyNoticeList;
+  /** The plugin's MCP servers in the shape the tool's own config holds, for the install to merge. */
+  readonly installedMcp: string | null;
+  /** The plugin's hooks for a tool that keeps them in the project: the manifest to merge into the
+   * project's hooks file and the scripts to place beside it, each as the tool takes them. */
+  readonly projectHooks: {
+    readonly manifest: string | null;
+    readonly scripts: readonly TranslatedFile[];
+  };
+  /** Whether an install leaves out a file of the plugin's built tree, by its path from the
+   * plugin's root. */
+  readonly dropsBuiltFile: (relativePath: string) => boolean;
 }
 
 /** A plugin's distribution turned into the files one tool installs. */

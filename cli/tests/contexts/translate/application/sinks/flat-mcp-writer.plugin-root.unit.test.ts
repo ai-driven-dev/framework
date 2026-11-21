@@ -69,8 +69,8 @@ async function build(tool: AiToolId, fs: InMemoryFileAdapter): Promise<void> {
   const sink = aDiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = { contract, mode: "flat", force: false, sourceDir: SOURCE, outDir: OUT } as const;
   await sink.prepare(target);
-  await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
-  await sink.finish(target, { name: "m", plugins: [] }, [{ name: PLUGIN }]);
+  const { declaredMcp } = await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
+  await sink.finish(target, { name: "m", plugins: [] }, [{ name: PLUGIN, declaredMcp }]);
 }
 
 function written(fs: InMemoryFileAdapter): Map<string, string> {

@@ -14,7 +14,7 @@ import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
-import { buildKiloFlatContract } from "./kilo-build.model.js";
+import { buildKiloFlatContract, KILO_FLAT_LAYOUT } from "./kilo-build.model.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
 import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.model.js";
 
@@ -69,6 +69,7 @@ export const kilo = defineAiTool({
     },
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({
+      artifacts: KILO_FLAT_LAYOUT,
       namespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "kilo"),
@@ -81,10 +82,7 @@ export const kilo = defineAiTool({
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content.replace(
-      /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-      "$1.kilo/commands/aidd/$2/$3"
-    );
-  },
+  linkSyntax: [
+    { from: /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.kilo/commands/aidd/$2/$3" },
+  ],
 });

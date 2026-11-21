@@ -1,9 +1,9 @@
+import type { FlatArtifactLayout } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type {
   MarketplaceSettings,
   NativeActivationSpec,
 } from "../../contract/native-registration-spec.js";
-import type { FlatSkillLayout } from "../../contract/tool-profile.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
 import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
 import { NativeActivation } from "../native-registration/native-activation.js";
@@ -47,7 +47,8 @@ export interface NativeLayout {
 /** A tool that loads a plugin's files from its own workspace directory. */
 export interface FlatPlacement {
   readonly mode: "flat";
-  readonly skillLayout: FlatSkillLayout;
+  /** Where the plugin's skills and agents land, for an install and a build alike. */
+  readonly artifacts: FlatArtifactLayout;
   readonly namespacePrefix: string;
   readonly globalFiles?: GlobalFiles;
 }
@@ -107,14 +108,14 @@ export function nativeLayout(params: NativeLayoutParams): NativeLayout {
 
 export interface FlatPlacementParams {
   namespacePrefix: string;
-  skillLayout?: FlatSkillLayout;
+  artifacts: FlatArtifactLayout;
   globalFiles?: GlobalFiles;
 }
 
 export function flatPlacement(params: FlatPlacementParams): FlatPlacement {
   return {
     mode: "flat",
-    skillLayout: params.skillLayout ?? "nested",
+    artifacts: params.artifacts,
     namespacePrefix: params.namespacePrefix,
     ...(params.globalFiles === undefined ? {} : { globalFiles: params.globalFiles }),
   };

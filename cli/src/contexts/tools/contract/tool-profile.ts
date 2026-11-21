@@ -1,9 +1,13 @@
 import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
-import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
+} from "../../../shared/domain/materialization/flat-paths.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
+import type { LinkSyntax } from "./link-syntax.js";
 import type {
   GlobalFiles,
   MarketplaceSettingsInput,
@@ -56,7 +60,7 @@ export type FrameworkBuildMode = (typeof FRAMEWORK_BUILD_MODES)[number];
 export type HooksAcceptance = { accepts: true } | { accepts: false; reason: string };
 
 /** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
-export type FlatSkillLayout = "nested" | "single-level";
+export type FlatSkillLayout = FlatArtifactLayout["skills"];
 
 /** The sections a flat plugin's files are installed under. */
 export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
@@ -284,10 +288,12 @@ export interface AiToolProfile {
   buildContract(mode: FrameworkBuildMode, provider?: string): ToolBuildContract | null;
   /** Where a flat plugin's file of `section` lands, relative to the project root. */
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
-  /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree. */
+  /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree.
+   * Limit: a flat skill or agent is matched by the `<plugin>-` prefix, so a plugin whose name
+   * prefixes a sibling's would claim its files; no framework plugin name does. */
   ownsFlatPath(relativePath: string, pluginName: string): boolean;
-  /** Rewrites source content to this tool's own conventions. */
-  rewriteContent(content: string): string;
+  /** How this tool writes the references of its documents. */
+  readonly linkSyntax: LinkSyntax;
   /** The tool's plugin delivery, or null when it declares none. */
   plugins(): PluginAnswers | null;
   /** Whether `--scope user` has anywhere to point this tool: false when it declares no plugins. */

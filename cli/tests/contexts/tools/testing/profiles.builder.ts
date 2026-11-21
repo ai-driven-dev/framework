@@ -139,7 +139,7 @@ export class ProfileBuilder {
       capabilities: () => capabilities,
       buildContracts: this.contracts,
       ...(this.probes === undefined ? {} : { distributionProbes: this.probes }),
-      rewriteContent: (content) => content,
+      linkSyntax: [],
     });
   }
 }

@@ -1,12 +1,10 @@
 import { basename } from "node:path";
 import type {
-  ArtifactContract,
   FlatHooksBridge,
+  SupportedArtifact,
   ToolBuildContract,
 } from "../../tools/contract/build-contract.js";
 import type { OutputFile } from "./output-file.js";
-
-type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
 
 /**
  * The generated hooks bridge of a flat install, whether it is built to disk or translated for an
@@ -28,6 +26,14 @@ export function flatHooksBridgeFile({
   const content = bridge.generate(rawHooksJson, pluginName);
   if (content === null) return null;
   return { relativePath: bridge.path(pluginName), content };
+}
+
+/** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */
+export function sourceShipsHooksBridge(
+  hooks: readonly { readonly relativePath: string }[],
+  bridge: FlatHooksBridge
+): boolean {
+  return hooks.some((file) => basename(file.relativePath) === bridge.skipIfSourceHas);
 }
 
 /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer, a
@@ -58,6 +64,26 @@ export function flatPathOfPluginSuffix(
     return art.hooks.path(pluginName, suffix);
   }
   return suffix;
+}
+
+type FlatHooksFile = NonNullable<
+  Extract<ToolBuildContract["artifacts"]["hooks"], { supported: true }>["hooksFile"]
+>;
+
+/** A plugin's hooks manifest folded into a tool's hooks file, every path it names placed where the
+ * flat layout puts it: the one merge a build writes, whether into a file of the plugin's own or
+ * one every plugin shares. */
+export function mergeFlatHooks(
+  { file, contract }: { file: FlatHooksFile; contract: ToolBuildContract },
+  existing: string | null,
+  shipped: { json: string; plugin: string }
+): { content: string; warnings: readonly string[] } {
+  const { json, plugin } = shipped;
+  return file.merge(existing, {
+    json,
+    plugin,
+    locate: (pluginPath) => `./${flatPathOfPluginSuffix(contract, pluginPath, plugin)}`,
+  });
 }
 
 /** Where a markdown link's target lands in the flat layout: only agents and skills move. */

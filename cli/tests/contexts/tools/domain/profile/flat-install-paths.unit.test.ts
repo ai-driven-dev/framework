@@ -15,16 +15,27 @@ describe("where a flat plugin's files are installed", () => {
     );
   });
 
-  it("nests every other section under its plugin whatever the skill layout", () => {
+  it("places an agent as a build does, and nests rules and commands under their plugin", () => {
     expect([
       antigravity.flatInstallPath("agents", "aidd", "a.md"),
       antigravity.flatInstallPath("rules", "aidd", "r.md"),
       antigravity.flatInstallPath("commands", "aidd", "c.md"),
     ]).toStrictEqual([
-      ".agents/agents/aidd/a.md",
+      ".agents/agents/aidd-a/agent.md",
       ".agents/rules/aidd/r.md",
       ".agents/commands/aidd/c.md",
     ]);
+  });
+
+  it("owns what it places for a skill and an agent, and no sibling plugin's nested skill", () => {
+    const placed = [
+      opencode.flatInstallPath("skills", "aidd", "plan/SKILL.md"),
+      opencode.flatInstallPath("agents", "aidd", "a.md"),
+    ];
+    expect(placed.map((path) => opencode.ownsFlatPath(path, "aidd"))).toStrictEqual([true, true]);
+    expect(
+      opencode.ownsFlatPath(opencode.flatInstallPath("skills", "aidd-x", "plan/SKILL.md"), "aidd")
+    ).toBe(false);
   });
 });
 
@@ -43,10 +54,10 @@ describe("whether a built path belongs to a flat plugin", () => {
     ]).toStrictEqual([true, false]);
   });
 
-  it("owns any other section's file by its plugin prefix", () => {
+  it("owns an agent by its plugin prefix", () => {
     expect([
-      antigravity.ownsFlatPath(".agents/agents/aidd-a.md", "aidd"),
-      antigravity.ownsFlatPath(".agents/agents/other-a.md", "aidd"),
+      antigravity.ownsFlatPath(".agents/agents/aidd-a/agent.md", "aidd"),
+      antigravity.ownsFlatPath(".agents/agents/other-a/agent.md", "aidd"),
     ]).toStrictEqual([true, false]);
   });
 

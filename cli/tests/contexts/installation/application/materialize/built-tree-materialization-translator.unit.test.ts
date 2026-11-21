@@ -69,6 +69,30 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     ).toBe("built skill");
   });
 
+  it("translates one install request once, for the built-tree read and the mcp merge together", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
+    const execute = vi.fn(translateDistribution.execute.bind(translateDistribution));
+    const translator = new BuiltTreeMaterializationTranslator(fs, {
+      platform: process.platform,
+      homedir: () => HOME,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: { execute },
+    });
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.cursor, "test", []);
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/source" },
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      marketplace: "aidd-framework",
+    });
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
   it("copies the built plugin subtree verbatim into the user plugin dir", async () => {
     const fs = new InMemoryFileAdapter();
     // Built cursor tree (transformed content already): @ expanded, .mdc rule, dotted .mcp.json.

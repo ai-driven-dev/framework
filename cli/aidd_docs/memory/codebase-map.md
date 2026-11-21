@@ -132,6 +132,8 @@ src/
 │   │   │   └── sinks/
 │   │   ├── contract/
 │   │   ├── domain/
+│   │   │   ├── layouts/    # where each sink puts a plugin, as data for the rules
+│   │   │   └── rules/    # the one rule set both sinks write content with
 │   │   ├── infrastructure/
 │   │   └── ports/
 │   └── update/    # replacing the installed CLI, and the notice that one exists

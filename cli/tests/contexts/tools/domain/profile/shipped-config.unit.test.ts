@@ -11,7 +11,7 @@ const aiSpec = {
   displayName: "X",
   buildContracts: { flat: () => anEmptyContract() },
   capabilities: () => ({}),
-  rewriteContent: (content: string) => content,
+  linkSyntax: [],
 };
 
 const settings = { name: "settings.json", content: { a: 1 }, destination: ".x/settings.json" };

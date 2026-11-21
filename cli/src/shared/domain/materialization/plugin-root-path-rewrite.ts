@@ -1,7 +1,9 @@
 import { asPlainObject } from "../reading/plain-object.js";
 
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
-const SOURCE_ROOT_PREFIX = "$" + "{CLAUDE_PLUGIN_ROOT}/";
+/** The variable plugins are authored against: the one spelling of it in the source. */
+export const SOURCE_PLUGIN_ROOT_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";
+const SOURCE_ROOT_PREFIX = `${SOURCE_PLUGIN_ROOT_TOKEN}/`;
 const DEFAULT_RELATIVE_PREFIX = "./";
 
 /** String values only, never keys: a key name carrying the same prefix is left untouched.
@@ -36,4 +38,9 @@ function rewriteObject(
     result[key] = rewritePluginRootInJson(value, substitute);
   }
   return result;
+}
+
+/** A literal, escaped to match itself inside a regular expression. */
+export function escapeRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -27,12 +27,12 @@ import {
 } from "./copilot-build.model.js";
 import {
   agentsHandler,
+  COPILOT_LINK_SYNTAX,
   commandsHandler,
   DIRECTORY,
   EXT_AGENT,
   EXT_INSTRUCTIONS,
   EXT_PROMPT,
-  rewriteCopilotContent,
   rulesHandler,
   skillsHandler,
   TOOL_SUFFIX,
@@ -226,5 +226,5 @@ export const copilot = defineAiTool({
     models: copilotModels(),
   }),
 
-  rewriteContent: rewriteCopilotContent,
+  linkSyntax: COPILOT_LINK_SYNTAX,
 });

@@ -4,15 +4,14 @@
  * `domain/formats/`; the contracts themselves are thin wiring.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
-  genericFlatAgentPath,
-  genericFlatSkillPath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -27,22 +26,20 @@ const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
 const OUTPUT_MARKETPLACE_RELATIVE = ".plugin/marketplace.json";
 
-/** Output prefix for agents in flat mode: .github/agents/<plugin>/<name>.agent.md */
-const FLAT_GITHUB_AGENTS_PREFIX = `${COPILOT_WORKSPACE_DIR}agents/`;
-
-/** Output prefix for skills in flat mode: .github/skills/<plugin>/<name>/ */
-const FLAT_GITHUB_SKILLS_PREFIX = `${COPILOT_WORKSPACE_DIR}skills/`;
-
 const FLAT_VSCODE_MCP_PATH = ".vscode/mcp.json";
 
-const FLAT_AGENT_OUTPUT_EXT = ".agent.md";
+/** Where a flat build puts copilot's skills and agents: `.github/agents/<plugin>-<name>.agent.md`. */
+const COPILOT_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(COPILOT_WORKSPACE_DIR, {
+  skills: "single-level",
+  agent: { ext: ".agent.md" },
+});
 
 export function buildCopilotMarketplaceContract(hooks: HooksRouting): ToolBuildContract {
   return {
     ...pluginTreeContract(hooks, {
       manifestRelative: OUTPUT_PLUGIN_MANIFEST_RELATIVE,
       marketplaceRelative: OUTPUT_MARKETPLACE_RELATIVE,
-      transformAgent: transformCopilotAgent,
+      agentMarkdown: copilotAgentMarkdown,
     }),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
@@ -74,39 +71,14 @@ export function buildCopilotMarketplaceContract(hooks: HooksRouting): ToolBuildC
   };
 }
 
-function copilotFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: FLAT_GITHUB_AGENTS_PREFIX,
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: FLAT_AGENT_OUTPUT_EXT,
-  });
-}
+const copilotAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => copilotAgentFrontmatter(frontmatter),
+};
 
-function copilotFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(FLAT_GITHUB_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));
-}
-
-function transformCopilotAgent(content: string, _plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: `agents/${outName}`,
-  });
-  return serializeFrontmatter(copilotAgentFrontmatter(frontmatter), rewrittenBody);
-}
-
-function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = copilotFlatAgentPath(plugin, outName);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
-  });
-  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(copilotAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
-}
-
-const copilotFlatResolveTarget = flatTargetsOf(copilotFlatAgentPath, copilotFlatSkillPath);
+const copilotFlatAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => copilotAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
+};
 
 export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
@@ -117,15 +89,15 @@ export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: copilotFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(COPILOT_FLAT_LAYOUT, plugin, rel),
         // VS Code Copilot requires SKILL.md frontmatter name === parent folder name.
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: copilotFlatAgentPath,
-        transform: transformCopilotFlatAgent,
+        path: (plugin, rel) => flatAgentFilePath(COPILOT_FLAT_LAYOUT, plugin, rel),
+        agentMarkdown: copilotFlatAgentMarkdown,
       },
       mcp: {
         supported: true,

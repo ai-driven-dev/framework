@@ -1,54 +1,63 @@
-import { join, relative } from "node:path";
+import { relative } from "node:path";
+import type { PluginComponentFile } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { PluginPresence } from "../../../tools/contract/build-contract.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_MCP_RELATIVE,
   PLUGIN_SKILL_ENTRY_FILE,
 } from "../../domain/canon-format.js";
+import type { PluginSource } from "../../ports/disk-sink-deps.js";
 
-export interface PluginPresenceFlags {
-  readonly hasAgents: boolean;
-  /** Agent markdown files relative to the plugin's `agents/` dir (e.g. "planner.md"), sorted. */
-  readonly agentsList: readonly string[];
-  readonly skillsList: readonly string[];
-  readonly hasHooksJson: boolean;
-  readonly hasMcpJson: boolean;
-}
-
-export async function listAgentFiles(
+/** A plugin's canon as one distribution: every file under its folder, read once, as the
+ * "/"-separated path inside the plugin. The build never reads the version, so none is claimed. */
+export async function readPluginCanon(
   fs: FileReader,
-  agentsDir: string
-): Promise<readonly string[]> {
-  const files = await fs.listFilesRecursive(agentsDir);
-  return files
-    .filter((f) => f.endsWith(PLUGIN_AGENT_INPUT_EXT))
-    .map((f) => relative(agentsDir, f).replace(/\\/g, "/"))
-    .sort();
-}
-
-export async function listSkillNames(
-  fs: FileReader,
-  pluginSrc: string
-): Promise<readonly string[]> {
-  const skillsDir = join(pluginSrc, "skills");
-  const files = await fs.listFilesRecursive(skillsDir);
-  const names = new Set<string>();
-  for (const f of files) {
-    const parts = relative(skillsDir, f).replace(/\\/g, "/").split("/");
-    if (parts.length >= 2 && parts.at(-1) === PLUGIN_SKILL_ENTRY_FILE) names.add(parts[0]);
+  plugin: PluginSource,
+  format: AiToolId
+): Promise<PluginDistribution> {
+  const files: PluginComponentFile[] = [];
+  for (const absPath of await fs.listFilesRecursive(plugin.src)) {
+    files.push({
+      relativePath: relative(plugin.src, absPath).replace(/\\/g, "/"),
+      content: await fs.readFile(absPath),
+    });
   }
-  return [...names].sort();
+  const under = (dir: string) => files.filter((file) => file.relativePath.startsWith(`${dir}/`));
+  return new PluginDistribution({
+    manifest: { name: plugin.name, version: "" },
+    format,
+    files,
+    components: {
+      commands: under("commands"),
+      agents: under("agents"),
+      skills: under("skills"),
+      rules: under("rules"),
+      hooks: under("hooks"),
+      mcp: files.filter((file) => file.relativePath === PLUGIN_MCP_RELATIVE),
+    },
+  });
 }
 
-export async function detectPluginPresenceFlags(
-  fs: FileReader,
-  pluginSrc: string
-): Promise<PluginPresenceFlags> {
-  const agentsDir = join(pluginSrc, "agents");
-  const agentsList = await listAgentFiles(fs, agentsDir);
-  const skillsList = await listSkillNames(fs, pluginSrc);
-  const hasHooksJson = await fs.fileExists(join(pluginSrc, PLUGIN_HOOKS_RELATIVE));
-  const hasMcpJson = await fs.fileExists(join(pluginSrc, PLUGIN_MCP_RELATIVE));
-  return { hasAgents: agentsList.length > 0, agentsList, skillsList, hasHooksJson, hasMcpJson };
+/** What a plugin's canon holds, for the manifest a tool synthesizes from it. */
+export function presenceOf(dist: PluginDistribution): PluginPresence {
+  const agentsList = dist.components.agents
+    .map((file) => file.relativePath.slice("agents/".length))
+    .filter((path) => path.endsWith(PLUGIN_AGENT_INPUT_EXT))
+    .sort();
+  const skillNames = new Set<string>();
+  for (const { relativePath } of dist.components.skills) {
+    const parts = relativePath.slice("skills/".length).split("/");
+    if (parts.length >= 2 && parts.at(-1) === PLUGIN_SKILL_ENTRY_FILE) skillNames.add(parts[0]);
+  }
+  return {
+    hasAgents: agentsList.length > 0,
+    agentsList,
+    skillsList: [...skillNames].sort(),
+    hasHooksJson: dist.components.hooks.some((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE),
+    hasMcpJson: dist.components.mcp.length > 0,
+  };
 }

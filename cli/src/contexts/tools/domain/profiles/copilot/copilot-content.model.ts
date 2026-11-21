@@ -1,4 +1,6 @@
+import { escapeRegExp } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
+import { type LinkSyntax, REFERENCE_CHARS } from "../../../contract/link-syntax.js";
 import { rulePatterns } from "../../formats/rule-frontmatter.js";
 
 export const DIRECTORY = ".github/";
@@ -16,10 +18,6 @@ const DOCS_DIR = "aidd_docs" as const;
 export const EXT_AGENT = ".agent.md";
 export const EXT_PROMPT = ".prompt.md";
 export const EXT_INSTRUCTIONS = ".instructions.md";
-
-function escapedRegex(literal: string): string {
-  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function basename(path: string): string {
   return path.split("/").at(-1) ?? path;
@@ -129,32 +127,31 @@ function resolveInstalledPath(path: string): string {
   return `${DIRECTORY}${path}`;
 }
 
-export function rewriteCopilotContent(content: string): string {
-  return (
-    content
-      .replace(
-        new RegExp(`${escapedRegex(AT_TOOLS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
-        (_match, path: string) => {
-          const fullPath = resolveInstalledPath(path);
-          return `[${fullPath}](../../${fullPath})`;
-        }
-      )
-      .replace(
-        new RegExp(`${escapedRegex(AT_DOCS_PLACEHOLDER)}([^\\s\`'">,]+)`, "g"),
-        (_match, path: string) => {
-          return `[${DOCS_DIR}/${path}](../../${DOCS_DIR}/${path})`;
-        }
-      )
-      // {{TOOLS}}/ (without @) replaces directory prefix only: used for path references in frontmatter or prose.
-      // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath: used for @-include syntax.
-      .replaceAll("{{TOOLS}}/agents/", `${DIRECTORY}agents/`)
-      .replace(/\{\{TOOLS\}\}\/commands\/([^\s\n`'">,]+)/g, (_match, path: string) => {
-        const flat = flattenFileName(path, EXT_PROMPT);
-        return `${DIRECTORY}prompts/${flat}`;
-      })
-      .replaceAll("{{TOOLS}}/rules/", `${DIRECTORY}instructions/`)
-      .replaceAll("{{TOOLS}}/skills/", `${DIRECTORY}skills/`)
-      .replaceAll(TOOLS_PLACEHOLDER, DIRECTORY)
-      .replaceAll(DOCS_PLACEHOLDER, `${DOCS_DIR}/`)
-  );
-}
+const reference = (placeholder: string): RegExp =>
+  new RegExp(`${escapeRegExp(placeholder)}(${REFERENCE_CHARS})`, "g");
+const literal = (text: string): RegExp => new RegExp(escapeRegExp(text), "g");
+
+export const COPILOT_LINK_SYNTAX: LinkSyntax = [
+  {
+    from: reference(AT_TOOLS_PLACEHOLDER),
+    to: (_match, path) => {
+      const fullPath = resolveInstalledPath(path);
+      return `[${fullPath}](../../${fullPath})`;
+    },
+  },
+  {
+    from: reference(AT_DOCS_PLACEHOLDER),
+    to: (_match, path) => `[${DOCS_DIR}/${path}](../../${DOCS_DIR}/${path})`,
+  },
+  // {{TOOLS}}/ (without @) replaces directory prefix only: used for path references in frontmatter or prose.
+  // @{{TOOLS}}/ (with @) resolves to a full installed path via resolveInstalledPath: used for @-include syntax.
+  { from: literal("{{TOOLS}}/agents/"), to: `${DIRECTORY}agents/` },
+  {
+    from: new RegExp(`${escapeRegExp("{{TOOLS}}/commands/")}(${REFERENCE_CHARS})`, "g"),
+    to: (_match, path) => `${DIRECTORY}prompts/${flattenFileName(path, EXT_PROMPT)}`,
+  },
+  { from: literal("{{TOOLS}}/rules/"), to: `${DIRECTORY}instructions/` },
+  { from: literal("{{TOOLS}}/skills/"), to: `${DIRECTORY}skills/` },
+  { from: literal(TOOLS_PLACEHOLDER), to: DIRECTORY },
+  { from: literal(DOCS_PLACEHOLDER), to: `${DOCS_DIR}/` },
+];

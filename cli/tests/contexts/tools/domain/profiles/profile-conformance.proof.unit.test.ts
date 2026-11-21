@@ -225,7 +225,7 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "asks, in each settings file, for a registered tool": () =>
     subjectOf({ ...NATIVE, settingsFiles: () => [REFUSES_EVERY_TOOL] }),
   "routes a numbered command and its references to the same folder": () =>
-    subjectOf({ ...NATIVE, rewriteContent: (content) => content }),
+    subjectOf({ ...NATIVE, linkSyntax: [] }),
   "names a numbered command after its phase and keeps only what it reads": () =>
     subjectOf(
       withSections(NATIVE, { commands: commandsWith(NATIVE, { convertFrontmatter: (fm) => fm }) })

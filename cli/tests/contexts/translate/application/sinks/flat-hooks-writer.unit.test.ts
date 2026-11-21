@@ -1,7 +1,5 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { writeFlatHooks } from "../../../../../src/contexts/translate/application/sinks/flat-hooks-writer.js";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
@@ -10,46 +8,54 @@ import {
   aSupportedArtifact,
 } from "../../testing/stub-build-contract.builder.js";
 
-const SRC = "/src/plugins/plug";
-
-function stepFor(force: boolean) {
-  const artifact = aSupportedArtifact({ path: (_p, rel) => `flat/${rel}` });
+function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
+  const artifact = aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over });
   if (!artifact.supported) throw new Error("stub artifact is supported");
   return {
-    target: aDiskTarget(aStubBuildContract(), { mode: "flat", force }),
+    target: aDiskTarget(aStubBuildContract(), { mode: "flat", force: false }),
     artifact,
     pluginName: "plug",
-    hooksSrc: `${SRC}/hooks/hooks.json`,
-    pluginSrc: SRC,
+    hooksJson: "{}",
   };
 }
 
+const OWN_FILE = {
+  path: (plugin: string) => `flat/${plugin}.json`,
+  shared: false,
+  merge: (_existing: string | null, shipped: { json: string }) => ({
+    content: `merged:${shipped.json}`,
+    warnings: [],
+  }),
+};
+
 function seeded(extra: Record<string, string> = {}): InMemoryFileAdapter {
-  return new InMemoryFileAdapter({
-    [`${SRC}/hooks/hooks.json`]: "{}",
-    [`${SRC}/hooks/run.sh`]: "echo hi",
-    ...extra,
-  });
+  return new InMemoryFileAdapter(extra);
 }
 
-describe("one plugin's flat hooks", () => {
-  it("writes each script beside the hooks file, which it leaves to the tool's own merge", async () => {
+describe("one plugin's flat hooks file", () => {
+  it("writes the merged hooks file of a tool every plugin shares", async () => {
     const fs = seeded();
-    const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor(false));
+    const shared = { ...OWN_FILE, path: () => "flat/all.json", shared: true };
+    const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: shared }));
     expect(count).toBe(1);
-    expect(fs.getFile("/out/flat/hooks/run.sh")).toBe("echo hi");
+    expect(fs.getFile("/out/flat/all.json")).toBe("merged:{}");
   });
 
-  it("refuses a script another build already wrote", async () => {
-    const fs = seeded({ "/out/flat/hooks/run.sh": "old" });
-    await expect(writeFlatHooks(fs, new CapturingLogger(), stepFor(false))).rejects.toThrow(
-      new FlatTargetExistsError(join("/out", "flat/hooks/run.sh"), "plug")
-    );
+  it("writes nothing for a hooks file one plugin owns: the engine lists it", async () => {
+    const fs = seeded();
+    const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: OWN_FILE }));
+    expect(count).toBe(0);
+    expect(fs.getFile("/out/flat/plug.json")).toBeUndefined();
   });
 
-  it("overwrites that script when forced", async () => {
-    const fs = seeded({ "/out/flat/hooks/run.sh": "old" });
-    await writeFlatHooks(fs, new CapturingLogger(), stepFor(true));
-    expect(fs.getFile("/out/flat/hooks/run.sh")).toBe("echo hi");
+  it("writes nothing for a tool that reads no hooks file", async () => {
+    const fs = seeded();
+    expect(await writeFlatHooks(fs, new CapturingLogger(), stepFor())).toBe(0);
+  });
+
+  it("writes nothing for a tool whose hooks file is skipped for a bridge", async () => {
+    const fs = seeded();
+    const step = stepFor({ hooksFile: OWN_FILE, skipHooksJson: true });
+    expect(await writeFlatHooks(fs, new CapturingLogger(), step)).toBe(0);
   });
 });

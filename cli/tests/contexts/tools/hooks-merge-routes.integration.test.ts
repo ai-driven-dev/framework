@@ -18,6 +18,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { present } from "../../shared/testing/present.builder.js";
+import { deliverProjectHooks } from "../../shared/testing/project-hooks-delivery.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const TOML = new SmolTomlCodec();
@@ -79,6 +80,7 @@ async function flatMerge(
     assetProvider: unused,
     logger,
     flat: new FlatWriter(fs, unused, logger),
+    canonFormat: TOOL.claude,
   });
   await sink.writePlugin(
     { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },
@@ -242,13 +244,13 @@ describe("plugin install merging a plugin into the project's hooks file again", 
       }),
     });
     const materializer = new ProjectHooksMaterializer(fs);
-    const first = await materializer.execute({
+    const first = await deliverProjectHooks(materializer, {
       dist: dist(),
       tool: registeredAiProfile(TOOL.cursor),
       projectRoot: PROJECT,
     });
 
-    await materializer.execute({
+    await deliverProjectHooks(materializer, {
       dist: dist(),
       tool: registeredAiProfile(TOOL.cursor),
       projectRoot: PROJECT,

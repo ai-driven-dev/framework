@@ -1,9 +1,10 @@
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
-import { flatHookPaths, translateWithComponentPaths } from "../domain/engine.js";
+import { translate } from "../domain/engine.js";
 import type { OutputFile } from "../domain/output-file.js";
 import type { DistributionProbe } from "../domain/plugin-format.js";
+import type { ProjectHooks } from "../domain/rules/hook-scripts.js";
 import type { TranslateProfile } from "../domain/translate-profile.js";
 
 export interface TranslateDistributionCommand {
@@ -17,6 +18,9 @@ export interface TranslateDistributionResult {
   readonly flatHookPaths: ReadonlySet<string>;
   readonly skipped: ReadonlySkipList;
   readonly notices: ReadonlyNoticeList;
+  readonly installedMcp: string | null;
+  readonly projectHooks: ProjectHooks;
+  readonly dropsBuiltFile: (relativePath: string) => boolean;
 }
 
 export class TranslateDistribution {
@@ -27,9 +31,25 @@ export class TranslateDistribution {
   }
 
   execute({ distribution, tool }: TranslateDistributionCommand): TranslateDistributionResult {
+    const {
+      files,
+      componentPaths,
+      flatHookPaths,
+      skipped,
+      notices,
+      installedMcp,
+      projectHooks,
+      dropsBuiltFile,
+    } = translate(distribution, { kind: "install", tool, manifestPaths: this.manifestPaths });
     return {
-      ...translateWithComponentPaths(distribution, tool, this.manifestPaths),
-      flatHookPaths: flatHookPaths(distribution, tool),
+      dropsBuiltFile,
+      files,
+      componentPaths,
+      flatHookPaths,
+      skipped,
+      notices,
+      installedMcp,
+      projectHooks,
     };
   }
 }

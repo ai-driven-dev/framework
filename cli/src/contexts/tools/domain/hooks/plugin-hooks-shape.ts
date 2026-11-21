@@ -1,3 +1,8 @@
+import {
+  escapeRegExp,
+  SOURCE_PLUGIN_ROOT_TOKEN,
+} from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+
 /**
  * The hooks source a plugin ships: matcher groups of commands keyed by event name. Each tool's
  * own hooks format reads it, so the shape lives here and the formats live in their profiles.
@@ -17,8 +22,9 @@ export interface BridgeHookCall {
 
 // Only `node <plugin root>/hooks/<rel> [args...]` can be replayed; any other shape is one only
 // Claude Code's own settings run, and is dropped rather than guessed at.
-const SOURCE_PLUGIN_ROOT = "\\$" + "\\{CLAUDE_PLUGIN_ROOT\\}";
-const BRIDGED_COMMAND = new RegExp(`^node\\s+${SOURCE_PLUGIN_ROOT}/hooks/(\\S+)(.*)$`);
+const BRIDGED_COMMAND = new RegExp(
+  `^node\\s+${escapeRegExp(SOURCE_PLUGIN_ROOT_TOKEN)}/hooks/(\\S+)(.*)$`
+);
 
 function bridgedCall(command: string | undefined): BridgeHookCall | null {
   if (typeof command !== "string") return null;

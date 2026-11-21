@@ -1,17 +1,25 @@
 import { join } from "node:path";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../domain/canon-format.js";
+import { translate } from "../../domain/engine.js";
+import type { OutputFile } from "../../domain/output-file.js";
 import {
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
 } from "../../domain/translate.error.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
-import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js";
+import type {
+  BuiltPlugin,
+  DiskTarget,
+  PluginTreeSink,
+  PluginWritten,
+} from "../../ports/plugin-tree-sink.js";
+import { assertFlatDestinationFree } from "./flat-collision.js";
 import { writeMarketplaceCatalog } from "./marketplace-catalog-writer.js";
-import { writePluginAgents, writePluginSkills } from "./plugin-content-writer.js";
 import { writePluginHooks, writePluginMcp } from "./plugin-runtime-writer.js";
-import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";
+import { presenceOf, readPluginCanon } from "./plugin-source-tree-reader.js";
 
 /**
  * Writes a built plugin tree to disk, in the marketplace layout or the flat one. It holds no
@@ -43,17 +51,23 @@ export class DiskSink implements PluginTreeSink {
   }
 
   /** Writes one plugin's manifest, agents, skills, hooks and MCP; returns the files written. */
-  async writePlugin(t: DiskTarget, pluginName: string, pluginSrc: string): Promise<number> {
+  async writePlugin(t: DiskTarget, pluginName: string, pluginSrc: string): Promise<PluginWritten> {
     await this.validateSourceManifest(pluginSrc);
     const plugin = { name: pluginName, src: pluginSrc };
-    const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, pluginName, pluginSrc);
-    return (
-      manifest +
-      (await writePluginAgents(this.deps, t, plugin)) +
-      (await writePluginSkills(this.deps, t, plugin)) +
-      (await writePluginHooks(this.deps, t, plugin)) +
-      (await writePluginMcp(this.deps, t, plugin))
-    );
+    const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
+    const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
+    const { files, hooks, mcp, warnings } = translate(canon, {
+      kind: "build",
+      contract: t.contract,
+      mode: t.mode,
+      outDir: t.outDir,
+    });
+    for (const warning of warnings) this.deps.logger.warn(warning);
+    for (const file of files) await this.writeBuilt(t, plugin.name, file);
+    const folded =
+      (await writePluginHooks(this.deps, t, { name: plugin.name, hooks })) +
+      (await writePluginMcp(this.deps, t, { name: plugin.name, mcp }));
+    return { files: manifest + files.length + folded, declaredMcp: mcp?.declared ?? null };
   }
 
   /** Once every plugin is built: the marketplace catalog, or the flat config artefact. Returns
@@ -61,7 +75,7 @@ export class DiskSink implements PluginTreeSink {
   async finish(
     t: DiskTarget,
     sourceMarketplace: SourceMarketplaceRef,
-    builtPlugins: readonly { name: string }[]
+    builtPlugins: readonly BuiltPlugin[]
   ): Promise<number> {
     return t.mode === "flat"
       ? this.deps.flat.writeConfig(t, builtPlugins)
@@ -76,20 +90,27 @@ export class DiskSink implements PluginTreeSink {
     );
   }
 
-  private async writeManifest(t: DiskTarget, pluginName: string, pluginSrc: string) {
+  /** A built file, at its place under outDir. A flat build refuses one a first build wrote. */
+  private async writeBuilt(t: DiskTarget, pluginName: string, file: OutputFile): Promise<void> {
+    const destPath = join(t.outDir, file.relativePath);
+    if (t.mode === "flat")
+      await assertFlatDestinationFree(this.deps.fs, { target: t, destPath, pluginName });
+    await this.deps.fs.writeFile(destPath, file.content);
+  }
+
+  private async writeManifest(t: DiskTarget, canon: PluginDistribution, pluginSrc: string) {
     const { contract } = t;
     if (!contract.synthesizeManifest || !contract.manifestFileRelative) return 0;
     const raw = await this.deps.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
     const source = asPlainObject(JSON.parse(raw)) ?? {};
-    const presence = await detectPluginPresenceFlags(this.deps.fs, pluginSrc);
-    const synthesized = contract.synthesizeManifest(source, presence);
+    const synthesized = contract.synthesizeManifest(source, presenceOf(canon));
     if (contract.manifestSchemaName) {
       this.deps.jsonSchemaValidator.validate(
         this.deps.assetProvider.loadSchema(contract.manifestSchemaName),
         synthesized
       );
     }
-    const dest = join(t.outDir, "plugins", pluginName, contract.manifestFileRelative);
+    const dest = join(t.outDir, "plugins", canon.manifest.name, contract.manifestFileRelative);
     await this.deps.fs.writeFile(dest, `${JSON.stringify(synthesized, null, 2)}\n`);
     return 1;
   }

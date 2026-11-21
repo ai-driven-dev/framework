@@ -1,52 +1,164 @@
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
+import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
 import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
-import type { PluginAnswers } from "../../tools/contract/tool-profile.js";
-import { flatHooksFiles } from "./flat-hooks.js";
-import { translateFlat } from "./flat-translation.js";
-import { translateNativeWithPaths } from "./native-translation.js";
+import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
+import { PLUGIN_HOOKS_RELATIVE } from "./canon-format.js";
+import { flatOwnHooksFile } from "./layouts/build-flat.js";
+import { buildPlans } from "./layouts/build-layout.js";
+import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
+import { applyPlan, type ComponentPlan } from "./rules/component-pipeline.js";
+import { flatMcp, type PluginMcp } from "./rules/flat-mcp.js";
+import {
+  isHooksFile,
+  type ProjectHooks,
+  projectHooks,
+  withoutHooks,
+} from "./rules/hook-scripts.js";
 import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
 
-/** `manifestPaths` is every place a host keeps a plugin manifest, built once by composition from
- * the registered profiles. */
-export function translateWithComponentPaths(
+/** Where a translation lands: one tool's install, or one tool's build. The rules are the same;
+ * the layout chooses where each file goes. `manifestPaths` is every place a host keeps a plugin
+ * manifest, built once by composition from the registered profiles. */
+export type TranslateLayout =
+  | {
+      readonly kind: "install";
+      readonly tool: TranslateProfile;
+      readonly manifestPaths: readonly string[];
+    }
+  | {
+      readonly kind: "build";
+      readonly contract: ToolBuildContract;
+      readonly mode: FrameworkBuildMode;
+      readonly outDir: string;
+    };
+
+/** What one plugin translates into. `files` is the plugin's own, a hooks file it owns included;
+ * `hooks` and `mcp` are what a flat build folds into files other plugins share, handed over so
+ * the sink never reads the plugin's source again. */
+export interface Translation {
+  readonly files: OutputFile[];
+  /** The canon file each of `files` is written from, by its path. A file the layout generates has
+   * none, so an install and a build of one plugin can be read against each other. */
+  readonly sources: ReadonlyMap<string, string>;
+  readonly componentPaths: ReadonlyMap<string, string>;
+  readonly flatHookPaths: ReadonlySet<string>;
+  readonly skipped: ReadonlySkipList;
+  readonly notices: ReadonlyNoticeList;
+  /** The plugin's hooks manifest, as a flat build merges it into the tool's shared file. */
+  readonly hooks: string | null;
+  readonly mcp: PluginMcp | null;
+  /** The plugin's MCP declaration in the shape the tool's own config holds, for an install to
+   * merge into that file. Null when the plugin declares none or the tool's plugins carry their own. */
+  readonly installedMcp: string | null;
+  /** The plugin's hooks as a tool that keeps them in the project takes them, for an install to
+   * merge and place. Empty for a tool whose plugins carry their own, which `files` then holds. */
+  readonly projectHooks: ProjectHooks;
+  /** Whether an install leaves out a file of the plugin's built tree, by its path from the plugin's
+   * root: the plugin's hooks, when the tool keeps them in the project and `projectHooks` places
+   * them there. */
+  readonly dropsBuiltFile: (relativePath: string) => boolean;
+  /** What merging the plugin's hooks into its own file reported. */
+  readonly warnings: readonly string[];
+}
+
+/** What a layout plans for one plugin, before any rule runs. */
+interface LayoutPlan extends Omit<Translation, "files" | "sources"> {
+  readonly plans: ComponentPlan[];
+}
+
+/** The one translation both sinks call: a plugin's canon, laid out for an install or a build. A
+ * layout plans each file as data, and `applyPlan` runs the rules, so a rule is written once. */
+export function translate(dist: PluginDistribution, layout: TranslateLayout): Translation {
+  const { plans, ...rest } = planLayout(dist, layout);
+  const files = plans.map(applyPlan);
+  const sources = new Map(
+    plans.flatMap(({ source }, at) => (source === "" ? [] : [[files[at].relativePath, source]]))
+  );
+  return { ...rest, files, sources };
+}
+
+function planLayout(dist: PluginDistribution, layout: TranslateLayout): LayoutPlan {
+  return layout.kind === "install"
+    ? installLayoutPlan(dist, layout.tool, layout.manifestPaths)
+    : buildLayoutPlan(dist, layout);
+}
+
+const UNTRANSLATED = {
+  componentPaths: new Map<string, string>(),
+  flatHookPaths: new Set<string>(),
+  skipped: [],
+  notices: [],
+};
+
+const NO_PROJECT_HOOKS: ProjectHooks = { manifest: null, scripts: [] };
+
+const NOTHING_FOLDED = {
+  dropsBuiltFile: () => false,
+  hooks: null,
+  mcp: null,
+  installedMcp: null,
+  projectHooks: NO_PROJECT_HOOKS,
+  warnings: [],
+};
+
+function buildLayoutPlan(
   dist: PluginDistribution,
-  toolConfig: TranslateProfile,
+  layout: Extract<TranslateLayout, { kind: "build" }>
+): LayoutPlan {
+  const { contract, mode } = layout;
+  const plans = buildPlans(dist, contract, mode);
+  if (mode !== "flat") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans };
+  const own = flatOwnHooksFile(dist, contract);
+  return {
+    ...UNTRANSLATED,
+    dropsBuiltFile: NOTHING_FOLDED.dropsBuiltFile,
+    plans: own ? [...plans, own.plan] : plans,
+    hooks: own === null ? hooksManifestOf(dist) : null,
+    installedMcp: null,
+    projectHooks: NO_PROJECT_HOOKS,
+    mcp: flatMcpOf(dist, layout),
+    warnings: own?.warnings ?? [],
+  };
+}
+
+function flatMcpOf(
+  dist: PluginDistribution,
+  { contract, outDir }: Extract<TranslateLayout, { kind: "build" }>
+): PluginMcp | null {
+  const { mcp } = contract.artifacts;
+  const foldsMcp = mcp.supported && mcp.merge !== undefined && mcp.mergeDest !== undefined;
+  return foldsMcp || contract.configArtifact ? flatMcp(dist, { contract, outDir }) : null;
+}
+
+function hooksManifestOf(dist: PluginDistribution): string | null {
+  return (
+    dist.components.hooks.find((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE)?.content ??
+    null
+  );
+}
+
+function installLayoutPlan(
+  dist: PluginDistribution,
+  tool: TranslateProfile,
   manifestPaths: readonly string[]
-): {
-  files: OutputFile[];
-  componentPaths: ReadonlyMap<string, string>;
-  skipped: ReadonlySkipList;
-  notices: ReadonlyNoticeList;
-} {
-  const delivery = asPluginTool(toolConfig);
-  if (delivery === null) return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
-  const { tool, plugins } = delivery;
-  if (plugins.kind === "native")
-    return translateNativeWithPaths({ dist, tool, plugins }, manifestPaths);
-  if (plugins.kind === "flat") {
-    const { files, skipped } = translateFlat(dist, tool, plugins);
-    return { files, componentPaths: new Map(), skipped, notices: [] };
-  }
-  return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
+): LayoutPlan {
+  if (tool.kind !== "ai") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans: [] };
+  const location = tool.projectHooksDelivery();
+  return {
+    ...installPlan(location === null ? dist : withoutHooks(dist), { tool, manifestPaths }),
+    ...NOTHING_FOLDED,
+    installedMcp: installedMcpOf(dist, tool),
+    projectHooks: location === null ? NO_PROJECT_HOOKS : projectHooks(dist, location),
+    dropsBuiltFile: location === null ? () => false : isHooksFile,
+  };
 }
 
-/** The hook paths a flat install writes for this plugin: its scripts and the generated bridge,
- * none for a tool that is not flat. */
-export function flatHookPaths(
-  dist: PluginDistribution,
-  toolConfig: TranslateProfile
-): ReadonlySet<string> {
-  const delivery = asPluginTool(toolConfig);
-  if (delivery === null || delivery.plugins.kind !== "flat") return new Set();
-  return new Set(flatHooksFiles(dist, delivery.plugins).map((file) => file.relativePath));
-}
-
-function asPluginTool(
-  profile: TranslateProfile
-): { tool: TranslatedAiTool; plugins: PluginAnswers } | null {
-  if (profile.kind !== "ai") return null;
-  const plugins = profile.plugins();
-  return plugins === null ? null : { tool: profile, plugins };
+function installedMcpOf(dist: PluginDistribution, tool: TranslatedAiTool): string | null {
+  const [declaration] = dist.components.mcp;
+  const config = declaration === undefined ? null : tool.flatPluginMcp();
+  return declaration === undefined || config === null
+    ? null
+    : config.transform(declaration.content);
 }

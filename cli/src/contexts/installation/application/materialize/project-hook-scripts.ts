@@ -1,17 +1,16 @@
 import { dirname, join } from "node:path";
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
 import { ProjectHooksEditedError } from "../../domain/installation.error.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import type { TranslatedFile } from "../../ports/plugin/plugin-translation.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 
-export const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
-
-/** One delivery of a plugin's hooks to the destination its tool declares. */
+/** One delivery of a plugin's hooks to the destination its tool declares: the scripts arrive
+ * already placed and rewritten by the translation, so this only puts them down. */
 export interface HooksDelivery {
-  readonly dist: PluginDistribution;
+  readonly scripts: readonly TranslatedFile[];
   readonly projectRoot: string;
   readonly location: ProjectHooksLocation;
   readonly previous?: ProjectHooksProvenance;
@@ -21,11 +20,9 @@ export interface HooksDelivery {
 /** A hook script AIDD did not record writing is the user's: installing over it is refused. */
 export async function assertScriptsNotUserOwned(
   fs: FileReader,
-  { dist, projectRoot, location, previous }: HooksDelivery
+  { scripts, projectRoot, location, previous }: HooksDelivery
 ): Promise<void> {
-  for (const file of dist.components.hooks) {
-    if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-    const relativePath = location.format.scriptPath(dist.manifest.name, file.relativePath);
+  for (const { relativePath } of scripts) {
     if (previous?.scripts.has(relativePath) === true) continue;
     if (await fs.fileExists(join(projectRoot, relativePath))) {
       throw new Error(
@@ -38,19 +35,14 @@ export async function assertScriptsNotUserOwned(
 /** Copies each hook script beside the project's hooks file, returning the digest of what it wrote. */
 export async function writeProjectHookScripts(
   fs: FileReader & FileWriter,
-  { dist, projectRoot, location }: HooksDelivery
+  { scripts, projectRoot }: HooksDelivery
 ): Promise<ReadonlyMap<string, string>> {
-  const scripts = new Map<string, string>();
-  for (const file of dist.components.hooks) {
-    if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-    const dest = location.format.scriptPath(dist.manifest.name, file.relativePath);
-    await fs.writeFile(
-      join(projectRoot, dest),
-      location.hookScript(file.relativePath, file.content)
-    );
-    scripts.set(dest, (await fs.readFileHash(join(projectRoot, dest))).value);
+  const written = new Map<string, string>();
+  for (const { relativePath, content } of scripts) {
+    await fs.writeFile(join(projectRoot, relativePath), content);
+    written.set(relativePath, (await fs.readFileHash(join(projectRoot, relativePath))).value);
   }
-  return scripts;
+  return written;
 }
 
 /** Deletes the scripts a previous install recorded and this one no longer ships, unless edited. */

@@ -4,6 +4,7 @@ import type {
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
+import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";
@@ -136,7 +137,7 @@ describe("present(opencode.buildContracts.flat)()", () => {
   });
 
   it("declares an agent a subagent, leaves its ID to the file name, and points its references at their flat destinations", () => {
-    const transform = supported(present(opencode.buildContracts.flat)().artifacts.agents).transform;
+    const transform = builtAgent(present(opencode.buildContracts.flat)(), "flat");
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
@@ -185,7 +186,7 @@ describe("present(opencode.buildContracts.flat)()", () => {
     const files = emit({
       builtPlugins: ["aidd-dev"],
       pluginMcp: new Map([
-        ["aidd-dev", JSON.stringify({ mcpServers: { context: { command: "node" } } })],
+        ["aidd-dev", JSON.stringify({ mcpServers: { "aidd-dev-context": { command: "node" } } })],
       ]),
       existing: { "opencode.json": JSON.stringify({ theme: "dark" }) },
     });

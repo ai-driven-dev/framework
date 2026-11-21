@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  rewritePluginRootToken,
-  SOURCE_PLUGIN_ROOT_TOKEN,
-} from "../../../../src/contexts/tools/contract/plugin-root-token.js";
+import { rewritePluginRootToken } from "../../../../src/contexts/tools/contract/plugin-root-token.js";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
 import { registeredAiConfig } from "../../../shared/testing/catalog-of.builder.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";

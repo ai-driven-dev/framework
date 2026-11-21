@@ -1,3 +1,5 @@
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+
 /**
  * The variable each tool expands to an installed plugin's own directory. A tool declares which
  * one it speaks (`plugins.pluginRootToken`) and its build contract substitutes the same one,
@@ -6,8 +8,7 @@
  * authored against it and every other tool's token is what it gets translated into.
  */
 
-// Split literals to avoid biome's noTemplateCurlyInString warning.
-export const SOURCE_PLUGIN_ROOT_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";
+// Split literal to avoid biome's noTemplateCurlyInString warning.
 export const PLUGIN_ROOT_TOKEN = "$" + "{PLUGIN_ROOT}";
 
 /**

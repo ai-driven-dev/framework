@@ -2,20 +2,19 @@
  * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
-  flatMcpKeyPrefix,
-  genericFlatAgentPath,
-  genericFlatSkillTreePath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type {
+  AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type {
   FlatHooksRoute,
   HooksDescriptor,
@@ -35,30 +34,15 @@ type OpencodeHooks = HooksRouting & {
   readonly bridgeRuntime: NonNullable<HooksDescriptor["bridgeRuntime"]>;
 };
 
-function opencodeFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: ".opencode/agents/",
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: ".md",
-  });
-}
+/** Where a flat build, and a flat install, put opencode's skills and agents. */
+export const OPENCODE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".opencode/", {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
 
-function opencodeFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillTreePath(".opencode/skills/", plugin, rel.replace(/^skills\//, ""));
-}
-
-const opencodeFlatResolveTarget = flatTargetsOf(opencodeFlatAgentPath, opencodeFlatSkillPath);
-
-function transformOpencodeFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = opencodeFlatAgentPath(plugin, `agents/${outName}`);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => opencodeFlatResolveTarget(plugin, rel),
-  });
-  return serializeFrontmatter(opencodeAgentFrontmatter(frontmatter), rewrittenBody);
-}
+const opencodeAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => opencodeAgentFrontmatter(frontmatter),
+};
 
 const OPENCODE_JSONC = "opencode.jsonc";
 const OPENCODE_JSON = "opencode.json";
@@ -74,9 +58,8 @@ function collectOpencodeMcp(
     const transformed = JSON.parse(toTypedMcpSection(raw)) as {
       mcp?: Record<string, unknown>;
     };
-    const prefix = flatMcpKeyPrefix(plugin);
     for (const [k, v] of Object.entries(transformed.mcp ?? {})) {
-      incoming[`${prefix}${k}`] = v;
+      incoming[k] = v;
     }
   }
   return incoming;
@@ -123,14 +106,14 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: opencodeFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(OPENCODE_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: opencodeFlatAgentPath,
-        transform: transformOpencodeFlatAgent,
+        path: (plugin, rel) => flatAgentFilePath(OPENCODE_FLAT_LAYOUT, plugin, rel),
+        agentMarkdown: opencodeAgentMarkdown,
       },
       mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)
       hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),

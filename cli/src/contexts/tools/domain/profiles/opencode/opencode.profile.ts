@@ -18,7 +18,7 @@ import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { DualConfigError } from "../../tools.error.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
-import { buildOpencodeFlatContract } from "./opencode-build.model.js";
+import { buildOpencodeFlatContract, OPENCODE_FLAT_LAYOUT } from "./opencode-build.model.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
 const DIRECTORY = ".opencode/";
@@ -39,7 +39,14 @@ const OPENCODE_CONFIG_REF: ConfigRef = {
 
 /** A machine-scope install puts a plugin's skills and agents where OpenCode loads them for every
  * project: its global config directory. */
-const globalFilePath = flatGlobalFilePath(DIRECTORY);
+const FLAT_PLACEMENT = flatPlacement({
+  artifacts: OPENCODE_FLAT_LAYOUT,
+  namespacePrefix: "aidd-",
+  globalFiles: {
+    dir: (homedir) => join(homedir, ".config", "opencode"),
+    map: flatGlobalFilePath(DIRECTORY),
+  },
+});
 
 // No family OpenCode's loader scans is named "hooks", so a plugin's scripts land under
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
@@ -119,13 +126,7 @@ export const opencode = defineAiTool({
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
     // only npm package names: no source or version a marketplace entry could express.
     hooks: { delivery: hooksDelivery },
-    layout: flatPlacement({
-      namespacePrefix: "aidd-",
-      globalFiles: {
-        dir: (homedir) => join(homedir, ".config", "opencode"),
-        map: globalFilePath,
-      },
-    }),
+    layout: FLAT_PLACEMENT,
     // OpenCode loads opencode.json, then opencode.jsonc over it: the model goes in the .jsonc.
     models: new ModelsSection({
       providers: ["openai", "anthropic", "mistral"],
@@ -134,10 +135,10 @@ export const opencode = defineAiTool({
     }),
   }),
 
-  rewriteContent(content: string): string {
-    return content.replace(
-      /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-      "$1.opencode/commands/aidd/$2/$3"
-    );
-  },
+  linkSyntax: [
+    {
+      from: /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+      to: "$1.opencode/commands/aidd/$2/$3",
+    },
+  ],
 });

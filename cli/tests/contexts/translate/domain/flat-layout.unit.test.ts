@@ -9,6 +9,7 @@ import {
   flatHooksBridgeFile,
   flatLinkTarget,
   flatPathOfPluginSuffix,
+  sourceShipsHooksBridge,
 } from "../../../../src/contexts/translate/domain/flat-layout.js";
 
 const unsupported: ArtifactContract = { supported: false };
@@ -116,5 +117,23 @@ describe("flatLinkTarget", () => {
     expect(at("agents/team/a.md")).toBe("A/p-agents/a.md");
     expect(at("skills/x/SKILL.md")).toBe("S/p-skills/x/SKILL.md");
     expect(at("hooks/run.js")).toBe("hooks/run.js");
+  });
+});
+
+describe("sourceShipsHooksBridge", () => {
+  const bridge: FlatHooksBridge = {
+    skipIfSourceHas: "bridge.js",
+    path: (plugin) => `bridge/${plugin}.js`,
+    generate: () => "generated",
+  };
+
+  it("finds the file by its name in any folder below hooks", () => {
+    expect(sourceShipsHooksBridge([{ relativePath: "hooks/deep/inner/bridge.js" }], bridge)).toBe(
+      true
+    );
+  });
+
+  it("does not take a file that only ends like the bridge's name", () => {
+    expect(sourceShipsHooksBridge([{ relativePath: "hooks/not-bridge.js" }], bridge)).toBe(false);
   });
 });

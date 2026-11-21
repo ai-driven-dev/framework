@@ -1,6 +1,7 @@
 import type {
   DiskTarget,
   PluginTreeSink,
+  PluginWritten,
 } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 
 /** A sink that writes nothing and remembers what it was asked, one entry per call. */
@@ -15,9 +16,9 @@ export class RecordingSink implements PluginTreeSink {
     this.calls.push("prepare");
   }
 
-  async writePlugin(_target: DiskTarget, pluginName: string): Promise<number> {
+  async writePlugin(_target: DiskTarget, pluginName: string): Promise<PluginWritten> {
     this.calls.push(`write ${pluginName}`);
-    return this.filesPerPlugin;
+    return { files: this.filesPerPlugin, declaredMcp: null };
   }
 
   async finish(

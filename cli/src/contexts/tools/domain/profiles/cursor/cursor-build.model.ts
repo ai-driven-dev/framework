@@ -4,15 +4,14 @@
  * `domain/formats/`; the contracts themselves are thin wiring.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
-  genericFlatAgentPath,
-  genericFlatSkillPath,
+  type FlatArtifactLayout,
+  flatAgentFilePath,
+  flatArtifactLayout,
+  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
-import { flatTargetsOf } from "../../formats/flat-targets.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -23,18 +22,11 @@ import { cursorAgentFrontmatter } from "./cursor-agent.model.js";
 const OUTPUT_CURSOR_MANIFEST_RELATIVE = ".cursor-plugin/plugin.json";
 const OUTPUT_CURSOR_MARKETPLACE_RELATIVE = ".cursor-plugin/marketplace.json";
 
-function transformCursorAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: `agents/${outName}`,
-  });
-  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(
-    cursorAgentFrontmatter({ ...frontmatter, name }),
-    rewrittenBody,
-    "double"
-  );
-}
+const cursorAgentMarkdown: AgentMarkdown = {
+  frontmatter: (frontmatter) => cursorAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
+  quote: "double",
+};
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
@@ -42,39 +34,15 @@ export function buildCursorContract(hooks: HooksRouting): ToolBuildContract {
   return pluginTreeContract(hooks, {
     manifestRelative: OUTPUT_CURSOR_MANIFEST_RELATIVE,
     marketplaceRelative: OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
-    transformAgent: transformCursorAgent,
+    agentMarkdown: cursorAgentMarkdown,
   });
 }
 
-function cursorFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath({
-    agentsPrefix: ".cursor/agents/",
-    plugin,
-    agentBaseName: rel.replace(/^agents\//, ""),
-    outputExt: ".md",
-  });
-}
-
-function cursorFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(".cursor/skills/", plugin, rel.replace(/^skills\//, ""));
-}
-
-const cursorFlatResolveTarget = flatTargetsOf(cursorFlatAgentPath, cursorFlatSkillPath);
-
-function transformCursorFlatAgent(content: string, plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = cursorFlatAgentPath(plugin, `agents/${outName}`);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: flatRelPath,
-    resolveTargetPath: (rel) => cursorFlatResolveTarget(plugin, rel),
-  });
-  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(
-    cursorAgentFrontmatter({ ...frontmatter, name }),
-    rewrittenBody,
-    "double"
-  );
-}
+/** Where a flat build puts cursor's skills and agents. */
+const CURSOR_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".cursor/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
 export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
   return {
@@ -85,14 +53,14 @@ export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: cursorFlatSkillPath,
+        path: (plugin, rel) => flatSkillPath(CURSOR_FLAT_LAYOUT, plugin, rel),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: cursorFlatAgentPath,
-        transform: transformCursorFlatAgent,
+        path: (plugin, rel) => flatAgentFilePath(CURSOR_FLAT_LAYOUT, plugin, rel),
+        agentMarkdown: cursorAgentMarkdown,
       },
       mcp: {
         supported: true,

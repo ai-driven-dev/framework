@@ -62,6 +62,20 @@ describe("the agents a flat layout writes", () => {
   });
 });
 
+describe("a flat build with a collision and a placeholder", () => {
+  it("names the placeholder first, before any destination is looked at", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/agents/a.md`]: "# a\n",
+      [`${STUB_PLUGIN_SRC}/agents/z.md`]: "See @{{TOOLS}}/x.md\n",
+      [`${STUB_OUT}/.stub/agents/aidd-test-a.md`]: "already built\n",
+    });
+    await expect(stubWrite(memFs, stubContract())).rejects.toThrow(
+      new FrameworkPlaceholderInPluginError("aidd-test", "agents/z.md")
+    );
+    expect(memFs.getFile(`${STUB_OUT}/.stub/agents/aidd-test-a.md`)).toBe("already built\n");
+  });
+});
+
 describe("the skills a flat layout writes", () => {
   const entry = "---\nname: hello\n---\n\nHello, see @./reference.json\n";
   const asset = '{ "see": "@./SKILL.md" }\n';

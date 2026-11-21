@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,
-  withoutHooksPrefix,
+  withoutDroppedFiles,
 } from "../../../../../src/contexts/installation/application/materialize/read-built-plugin-files.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -29,14 +29,15 @@ describe("readBuiltUserPluginFiles", () => {
   });
 });
 
-describe("withoutHooksPrefix", () => {
-  it("drops the plugin's hooks files and keeps the rest", () => {
+describe("withoutDroppedFiles", () => {
+  it("drops the files the engine says an install leaves out, below the plugin's own directory", () => {
     const file = (relativePath: string) =>
       new InstallationFile({ relativePath, content: "", hash: FileHash.of("") });
 
-    const kept = withoutHooksPrefix(
+    const kept = withoutDroppedFiles(
       [file("aidd-dev/hooks/run.js"), file("aidd-dev/skills/a.md"), file("other/hooks/x.js")],
-      "aidd-dev"
+      "aidd-dev",
+      (path) => path.startsWith("hooks/")
     );
 
     expect(kept.map((f) => f.relativePath)).toEqual(["aidd-dev/skills/a.md", "other/hooks/x.js"]);
