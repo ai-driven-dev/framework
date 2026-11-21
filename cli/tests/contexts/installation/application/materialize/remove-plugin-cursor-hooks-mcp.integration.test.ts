@@ -93,17 +93,17 @@ async function installPlugin(
     () => STUB_HOME,
     translateDistribution
   );
-  await adapter.addPlugin(
-    buildDist(name),
-    registeredTools().aiProfile(TOOL.cursor),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
+  await adapter.addPlugin({
+    dist: buildDist(name),
+    tool: registeredTools().aiProfile(TOOL.cursor),
+    source: { kind: "local", path: "/plugin-source" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    undefined,
-    new Map(),
-    false,
-    previous
-  );
+    marketplace: undefined,
+    previousMcpEntries: new Map(),
+    userScopeDirTaken: false,
+    previousProjectHooks: previous,
+  });
 }
 
 describe("Cursor plugin.files tracking enables uninstall of mcp.json; hooks.json is out-of-band (Phase 6)", () => {
@@ -204,17 +204,17 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
       () => STUB_HOME,
       translateDistribution
     );
-    await translator.addPlugin(
-      buildWithoutHooks(PLUGIN_NAME),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: buildWithoutHooks(PLUGIN_NAME),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined,
-      new Map(),
-      false,
-      previous
-    );
+      marketplace: undefined,
+      previousMcpEntries: new Map(),
+      userScopeDirTaken: false,
+      previousProjectHooks: previous,
+    });
     expect(fs.has(HOOKS_PATH)).toBe(false);
     expect(fs.has(SCRIPT_PATH)).toBe(false);
     expect(manifest.getPlugins(TOOL.cursor)[0].projectHooks).toBeUndefined();

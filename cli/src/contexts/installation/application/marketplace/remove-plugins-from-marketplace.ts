@@ -50,12 +50,7 @@ export class RemovePluginsFromMarketplace {
     if (orphans.length === 0 || !(await command.confirm(orphans.length))) {
       return { orphanCount: orphans.length, removedCount: 0 };
     }
-    const removedCount = await this.removeOrphans(
-      manifest,
-      orphans,
-      command.marketplace,
-      command.projectRoot
-    );
+    const removedCount = await this.removeOrphans(manifest, orphans, command);
     return { orphanCount: orphans.length, removedCount, claims: { nativeRefs, plugins: orphans } };
   }
 
@@ -72,9 +67,9 @@ export class RemovePluginsFromMarketplace {
   private async removeOrphans(
     manifest: Manifest,
     orphans: readonly OrphanRef[],
-    marketplace: string,
-    projectRoot: string
+    command: { marketplace: string; projectRoot: string }
   ): Promise<number> {
+    const { marketplace, projectRoot } = command;
     for (const { toolId, plugin } of orphans) {
       await this.cleanup.assertLocalIntegrationRemovable(
         this.tools.aiProfile(toolId),

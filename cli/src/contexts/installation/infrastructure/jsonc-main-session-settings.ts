@@ -2,8 +2,8 @@ import { applyEdits, modify, type ParseError, parse } from "jsonc-parser";
 import { stripJsonComments } from "../../../shared/domain/reading/jsonc.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type {
+  MainModelInstall,
   MainModelRecord,
-  MainModelValues,
   MainSessionSettings,
 } from "../ports/main-session-settings.js";
 
@@ -13,13 +13,11 @@ import type {
  * so its current value becomes the one to restore. Refuses a key holding no string. `schema`
  * heads a file this creates.
  */
-export function planMainModelInstall(
-  path: string,
-  content: string | null,
-  values: MainModelValues,
-  record: MainModelRecord | undefined,
-  schema?: string
-): { content: string; record: MainModelRecord } {
+export function planMainModelInstall(request: MainModelInstall): {
+  content: string;
+  record: MainModelRecord;
+} {
+  const { path, content, values, record, schema } = request;
   const settings = readSettings(content);
   const previous: Record<string, string | null> = {};
   for (const key of Object.keys(values)) {

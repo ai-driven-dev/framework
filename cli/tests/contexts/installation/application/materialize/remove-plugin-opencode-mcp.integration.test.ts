@@ -53,14 +53,14 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await manifestRepo.save(manifest);
 
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
@@ -89,14 +89,14 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await manifestRepo.save(manifest);
 
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
@@ -122,14 +122,14 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
 
-    await adapter.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await adapter.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await fs.deleteFile(OPENCODE_JSON);
     await manifestRepo.save(manifest);
 
@@ -152,14 +152,14 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    await translator.addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.opencode),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.opencode),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     const prior = manifest.getPlugins(TOOL.opencode)[0].mcpEntries;
     const config = JSON.parse(fs.getFile(OPENCODE_JSON) ?? "null") as {
       mcp: Record<string, unknown>;
@@ -170,15 +170,15 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     fs.setFile(OPENCODE_JSON, edited);
     manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
     await expect(
-      translator.addPlugin(
-        buildDist(),
-        registeredTools().aiProfile(TOOL.opencode),
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
+      translator.addPlugin({
+        dist: buildDist(),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
         manifest,
-        undefined,
-        prior
-      )
+        marketplace: undefined,
+        previousMcpEntries: prior,
+      })
     ).rejects.toThrow(/edited.*MCP|MCP.*edited/);
     expect(fs.getFile(OPENCODE_JSON)).toBe(edited);
   });

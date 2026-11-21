@@ -9,7 +9,12 @@ const P = "/home/me/.claude/settings.json";
 describe("main model settings", () => {
   it("sets the model, leaving the rest of the file as written, and restores the previous value", () => {
     const content = '{\n  "model": "opus",\n  "hooks": { "a": 1 }\n}';
-    const { content: next, record } = planMainModelInstall(P, content, { model: "x" }, undefined);
+    const { content: next, record } = planMainModelInstall({
+      path: P,
+      content,
+      values: { model: "x" },
+      record: undefined,
+    });
     expect(next).toBe('{\n  "model": "x",\n  "hooks": { "a": 1 }\n}\n');
     expect(record).toStrictEqual({
       path: P,
@@ -23,29 +28,39 @@ describe("main model settings", () => {
   });
 
   it("refuses a file holding no object, or a value that is not a string", () => {
-    expect(() => planMainModelInstall(P, "[]", { model: "x" }, undefined)).toThrow(
-      "no JSON object"
-    );
-    expect(() => planMainModelInstall(P, '{ "model": 1 }', { model: "x" }, undefined)).toThrow(
-      '"model" is not a string'
-    );
+    expect(() =>
+      planMainModelInstall({ path: P, content: "[]", values: { model: "x" }, record: undefined })
+    ).toThrow("no JSON object");
+    expect(() =>
+      planMainModelInstall({
+        path: P,
+        content: '{ "model": 1 }',
+        values: { model: "x" },
+        record: undefined,
+      })
+    ).toThrow('"model" is not a string');
   });
 
   it("keeps comments and trailing commas, on install and on removal", () => {
     const commented = '{\n  // mine\n  "model": "opus",\n}\n';
-    const { content, record } = planMainModelInstall(P, commented, { model: "x" }, undefined);
+    const { content, record } = planMainModelInstall({
+      path: P,
+      content: commented,
+      values: { model: "x" },
+      record: undefined,
+    });
     expect(content).toBe('{\n  // mine\n  "model": "x",\n}\n');
     expect(planMainModelRemoval(content, record)).toBe(commented);
   });
 
   it("heads a file it creates with the schema, and deletes that file once nothing else is in it", () => {
-    const { content, record } = planMainModelInstall(
-      P,
-      null,
-      { model: "x" },
-      undefined,
-      "https://example.test/schema.json"
-    );
+    const { content, record } = planMainModelInstall({
+      path: P,
+      content: null,
+      values: { model: "x" },
+      record: undefined,
+      schema: "https://example.test/schema.json",
+    });
     expect(content).toBe(
       '{\n  "$schema": "https://example.test/schema.json",\n  "model": "x"\n}\n'
     );
@@ -56,13 +71,29 @@ describe("main model settings", () => {
   });
 
   it("leaves an existing file's schema to its owner", () => {
-    const { content } = planMainModelInstall(P, "{}", { model: "x" }, undefined, "https://s.test");
+    const { content } = planMainModelInstall({
+      path: P,
+      content: "{}",
+      values: { model: "x" },
+      record: undefined,
+      schema: "https://s.test",
+    });
     expect(content).not.toContain("$schema");
   });
 
   it("keeps what each key held before AIDD first wrote it", () => {
-    const first = planMainModelInstall(P, null, { model: "x" }, undefined);
-    const again = planMainModelInstall(P, first.content, { model: "y" }, first.record);
+    const first = planMainModelInstall({
+      path: P,
+      content: null,
+      values: { model: "x" },
+      record: undefined,
+    });
+    const again = planMainModelInstall({
+      path: P,
+      content: first.content,
+      values: { model: "y" },
+      record: first.record,
+    });
     expect(again.record).toStrictEqual({
       path: P,
       written: { model: "y" },
@@ -72,27 +103,52 @@ describe("main model settings", () => {
   });
 
   it("takes a value the person set since AIDD wrote its own as the one to restore", () => {
-    const first = planMainModelInstall(P, '{ "model": "opus" }', { model: "x" }, undefined);
+    const first = planMainModelInstall({
+      path: P,
+      content: '{ "model": "opus" }',
+      values: { model: "x" },
+      record: undefined,
+    });
     const edited = first.content.replace('"x"', '"haiku"');
-    const again = planMainModelInstall(P, edited, { model: "y" }, first.record);
+    const again = planMainModelInstall({
+      path: P,
+      content: edited,
+      values: { model: "y" },
+      record: first.record,
+    });
     expect(again.record.previous).toStrictEqual({ model: "haiku" });
     expect(planMainModelRemoval(again.content, again.record)).toBe('{ "model": "haiku" }\n');
   });
 
   it("counts a file deleted since AIDD wrote it as one AIDD creates again", () => {
-    const first = planMainModelInstall(P, "{}", { model: "x" }, undefined);
-    const again = planMainModelInstall(P, null, { model: "y" }, first.record);
+    const first = planMainModelInstall({
+      path: P,
+      content: "{}",
+      values: { model: "x" },
+      record: undefined,
+    });
+    const again = planMainModelInstall({
+      path: P,
+      content: null,
+      values: { model: "y" },
+      record: first.record,
+    });
     expect(again.record.created).toBe(true);
     expect(planMainModelRemoval(again.content, again.record)).toBeNull();
   });
 
   it("restores only unchanged keys and deletes a file it created once empty", () => {
     const values = { model: "x", effortLevel: "high" };
-    const created = planMainModelInstall(P, null, values, undefined);
+    const created = planMainModelInstall({ path: P, content: null, values, record: undefined });
     expect(planMainModelRemoval(created.content, created.record)).toBeNull();
     const edited = created.content.replace('"high"', '"low"');
     expect(planMainModelRemoval(edited, created.record)).toBe('{\n  "effortLevel": "low"\n}\n');
-    const kept = planMainModelInstall(P, "{}", { model: "x" }, undefined);
+    const kept = planMainModelInstall({
+      path: P,
+      content: "{}",
+      values: { model: "x" },
+      record: undefined,
+    });
     expect(planMainModelRemoval(kept.content, kept.record)).toBe("{\n}\n");
   });
 

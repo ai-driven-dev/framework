@@ -25,9 +25,9 @@ export type UpdateToolResult =
 
 export class UpdateTool {
   constructor(
-    private readonly installRuntimeConfig: InstallRuntimeConfig,
-    private readonly installIdeConfig: InstallIdeConfig,
-    private readonly resolveSyncConflict: ResolveSyncConflict,
+    private readonly installRuntimeConfig: Pick<InstallRuntimeConfig, "execute">,
+    private readonly installIdeConfig: Pick<InstallIdeConfig, "execute">,
+    private readonly resolveSyncConflict: Pick<ResolveSyncConflict, "execute">,
     private readonly manifestRepo: ManifestRepository,
     /** Tells an AI tool from an IDE tool, the two kinds the update installs differently. */
     private readonly tools: ToolCatalog

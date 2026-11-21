@@ -688,7 +688,7 @@ const ALL_IDS = new Set(GUARDS.map(findingId));
 describe("the size guards bite", () => {
   let planted: string;
   let findings: string[];
-  let baselinePath: string;
+  const baselinePath = "src/kernel/baselined.ts";
 
   const sizeFindings = (prefix: string): string[] =>
     findings.filter(
@@ -698,7 +698,6 @@ describe("the size guards bite", () => {
 
   beforeAll(() => {
     planted = mkdtempSync(join(tmpdir(), "aidd-size-guards-bite-"));
-    cpSync(join(CLI_ROOT, "biome.json"), join(planted, "biome.json"));
     cpSync(join(CLI_ROOT, "biome-plugins"), join(planted, "biome-plugins"), { recursive: true });
     mkdirSync(join(planted, "src/kernel"), { recursive: true });
     mkdirSync(join(planted, "tests/kernel"), { recursive: true });
@@ -732,11 +731,13 @@ describe("the size guards bite", () => {
       writeFileSync(join(planted, path), content);
     }
 
-    const parameterGuard = present(GUARDS.find((g) => g.name === "function parameters"));
-    baselinePath = present(baselineOf(parameterGuard)[0]);
-    mkdirSync(join(planted, dirname(baselinePath)), { recursive: true });
+    const config = structuredClone(biomeConfig());
+    for (const o of config.overrides ?? []) {
+      if (o.plugins?.includes(pluginPath("max-function-params.grit")))
+        o.includes?.push(`!${baselinePath}`);
+    }
+    writeFileSync(join(planted, "biome.json"), JSON.stringify(config));
     writeFileSync(join(planted, baselinePath), fourParams("Baseline"));
-
     findings = biomeFindings(planted);
   }, 60_000);
 

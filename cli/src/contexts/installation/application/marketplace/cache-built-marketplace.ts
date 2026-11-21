@@ -40,6 +40,19 @@ export interface FrameworkBuilds {
   }): FrameworkBuild | undefined;
 }
 
+interface BuildJob {
+  target: AiToolId;
+  mode: FrameworkBuildMode;
+  sourceDir: string;
+  builtDir: string;
+  variant: string | undefined;
+}
+
+interface EnsureJob extends BuildJob {
+  sentinel: string;
+  versionIsTrustworthy: boolean;
+}
+
 const SENTINEL_FILE = ".build-version";
 const UNVERSIONED = "unversioned";
 
@@ -84,14 +97,15 @@ export class CacheBuiltMarketplace {
     const memoKey = `${options.marketplace.name}:${options.target}:${sentinel}`;
     const memoized = this.memo.get(memoKey);
     if (memoized !== undefined) return memoized;
-    const result = await this.ensure(
-      options,
+    const result = await this.ensure({
+      target: options.target,
+      mode: options.mode,
       builtDir,
-      resolve(resolved.localPath),
+      sourceDir: resolve(resolved.localPath),
       sentinel,
-      this.versionIsTrustworthy(options),
-      variant
-    );
+      versionIsTrustworthy: this.versionIsTrustworthy(options),
+      variant,
+    });
     this.memo.set(memoKey, result);
     return result;
   }
@@ -115,19 +129,13 @@ export class CacheBuiltMarketplace {
     return options.marketplace.source.kind !== "local";
   }
 
-  private async ensure(
-    options: EnsureBuiltMarketplaceCommand,
-    builtDir: string,
-    sourceDir: string,
-    sentinel: string,
-    versionIsTrustworthy: boolean,
-    variant: string | undefined
-  ): Promise<EnsureBuiltMarketplaceResult> {
+  private async ensure(job: EnsureJob): Promise<EnsureBuiltMarketplaceResult> {
+    const { builtDir, sentinel, versionIsTrustworthy } = job;
     const version = sentinel.split(":")[1];
     if (versionIsTrustworthy && (await this.isFresh(builtDir, sentinel))) {
       return { builtDir, version, rebuilt: false };
     }
-    await this.build(options.target, options.mode, sourceDir, builtDir, variant);
+    await this.build(job);
     await this.fs.writeFile(join(builtDir, SENTINEL_FILE), sentinel);
     return { builtDir, version, rebuilt: true };
   }
@@ -141,34 +149,23 @@ export class CacheBuiltMarketplace {
     return current === sentinel;
   }
 
-  private async build(
-    target: AiToolId,
-    mode: FrameworkBuildMode,
-    sourceDir: string,
-    builtDir: string,
-    variant: string | undefined
-  ): Promise<void> {
-    if (this.nested(sourceDir, builtDir)) {
-      await this.buildViaTemp(target, mode, sourceDir, builtDir, variant);
+  private async build(job: BuildJob): Promise<void> {
+    if (this.nested(job.sourceDir, job.builtDir)) {
+      await this.buildViaTemp(job);
       return;
     }
-    await this.runBuild(target, mode, sourceDir, builtDir, variant);
+    await this.runBuild({ ...job, outDir: job.builtDir });
   }
 
   private nested(sourceDir: string, builtDir: string): boolean {
     return pathsOverlap(sourceDir, builtDir);
   }
 
-  private async buildViaTemp(
-    target: AiToolId,
-    mode: FrameworkBuildMode,
-    sourceDir: string,
-    builtDir: string,
-    variant: string | undefined
-  ): Promise<void> {
+  private async buildViaTemp(job: BuildJob): Promise<void> {
+    const { target, mode, builtDir } = job;
     const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
     await this.fs.deleteDirectory(temp);
-    await this.runBuild(target, mode, sourceDir, temp, variant);
+    await this.runBuild({ ...job, outDir: temp });
     await this.fs.deleteDirectory(builtDir);
     await this.copyDir(temp, builtDir);
     await this.fs.deleteDirectory(temp);
@@ -177,13 +174,8 @@ export class CacheBuiltMarketplace {
   // Every outDir reaching this method is either `builtMarketplaceDir()` or a temp dir this class
   // just deleted: an aidd-owned cache, never a user directory, so a collision here is stale-cache
   // reuse, not data loss.
-  private async runBuild(
-    target: AiToolId,
-    mode: FrameworkBuildMode,
-    sourceDir: string,
-    outDir: string,
-    variant: string | undefined
-  ): Promise<void> {
+  private async runBuild(job: BuildJob & { outDir: string }): Promise<void> {
+    const { target, mode, sourceDir, outDir, variant } = job;
     await this.fs.createDirectory(outDir);
     const build = this.builds.buildFor({ target, mode, outDir, variant });
     if (build === undefined) {

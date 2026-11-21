@@ -33,14 +33,14 @@ describe("ModeAMarketplaceTranslator", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("aidd-context");
-      await adapter.addPlugin(
+      await adapter.addPlugin({
         dist,
-        registeredTools().aiProfile(TOOL.claude),
-        { kind: "local", path: "/plugin-source" },
-        "/project",
+        tool: registeredTools().aiProfile(TOOL.claude),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: "/project",
         manifest,
-        "aidd-framework"
-      );
+        marketplace: "aidd-framework",
+      });
       const plugins = manifest.getPlugins(TOOL.claude);
       const installed = plugins.find((p) => p.name === "aidd-context");
       expect(installed).toBeDefined();
@@ -53,14 +53,14 @@ describe("ModeAMarketplaceTranslator", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
 
-      const result = await adapter.addPlugin(
-        buildDist("aidd-context"),
-        registeredTools().aiProfile(TOOL.claude),
-        { kind: "local", path: "/plugin-source" },
-        "/project",
+      const result = await adapter.addPlugin({
+        dist: buildDist("aidd-context"),
+        tool: registeredTools().aiProfile(TOOL.claude),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: "/project",
         manifest,
-        "aidd-framework"
-      );
+        marketplace: "aidd-framework",
+      });
 
       expect(result).toStrictEqual({ skipped: [] });
     });
@@ -72,14 +72,14 @@ describe("ModeAMarketplaceTranslator", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("test-plugin");
-      await adapter.addPlugin(
+      await adapter.addPlugin({
         dist,
-        registeredTools().aiProfile(TOOL.claude),
-        { kind: "local", path: "/plugin-source" },
-        "/project",
+        tool: registeredTools().aiProfile(TOOL.claude),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: "/project",
         manifest,
-        undefined
-      );
+        marketplace: undefined,
+      });
       const plugins = manifest.getPlugins(TOOL.claude);
       const installed = plugins.find((p) => p.name === "test-plugin");
       expect(installed).toBeDefined();

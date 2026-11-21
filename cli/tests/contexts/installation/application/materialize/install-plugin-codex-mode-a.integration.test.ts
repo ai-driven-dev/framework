@@ -85,14 +85,14 @@ async function seedCodexPlugin(
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.codex, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin(
-    buildDist(),
-    registeredTools().aiProfile(TOOL.codex),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
+  await new ModeAMarketplaceTranslator().addPlugin({
+    dist: buildDist(),
+    tool: registeredTools().aiProfile(TOOL.codex),
+    source: { kind: "local", path: "/plugin-source" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    MARKETPLACE_NAME
-  );
+    marketplace: MARKETPLACE_NAME,
+  });
   await manifestRepo.save(manifest);
   registry.seed(PROJECT_ROOT, {
     name: MARKETPLACE_NAME,
@@ -109,14 +109,14 @@ async function seedTwoCodexPlugins(
   manifest.addTool(TOOL.codex, "test", []);
   const translator = new ModeAMarketplaceTranslator();
   for (const name of ["aidd-context", "aidd-vcs"]) {
-    await translator.addPlugin(
-      buildDist(name),
-      registeredTools().aiProfile(TOOL.codex),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: buildDist(name),
+      tool: registeredTools().aiProfile(TOOL.codex),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      MARKETPLACE_NAME
-    );
+      marketplace: MARKETPLACE_NAME,
+    });
   }
   await manifestRepo.save(manifest);
   registry.seed(PROJECT_ROOT, {

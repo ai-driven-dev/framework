@@ -117,14 +117,14 @@ async function sync(setup: SyncSetup = {}) {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "test", []);
 
-  await new ModeAMarketplaceTranslator().addPlugin(
-    distribution("aidd-context"),
-    registeredAiProfile(TOOL.claude),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
+  await new ModeAMarketplaceTranslator().addPlugin({
+    dist: distribution("aidd-context"),
+    tool: registeredAiProfile(TOOL.claude),
+    source: { kind: "local", path: "/plugin-source" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    names[0]
-  );
+    marketplace: names[0],
+  });
   await manifestRepo.save(manifest);
   for (const name of names) {
     await registry.save(
@@ -391,14 +391,14 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       .withTool(TOOL.claude, [], { version: "test" })
       .withTool(TOOL.codex, [], { version: "test" })
       .build();
-    await new ModeAMarketplaceTranslator().addPlugin(
-      distribution("aidd-context"),
-      registeredAiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: distribution("aidd-context"),
+      tool: registeredAiProfile(TOOL.claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
     await manifestRepo.save(manifest);
     await registry.save(
       PROJECT_ROOT,

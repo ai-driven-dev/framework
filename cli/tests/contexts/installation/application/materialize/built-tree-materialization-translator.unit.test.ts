@@ -31,7 +31,7 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
+describe("BuiltTreeMaterializationTranslator — cursor", () => {
   it("counts changed files and skips byte-identical files on repeated materialization", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
@@ -45,14 +45,14 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     const install = () => {
       const restored = Manifest.create();
       restored.addTool(TOOL.cursor, "test", []);
-      return translator.addPlugin(
-        dist(),
-        registeredTools().aiProfile(TOOL.cursor),
-        { kind: "local", path: "/source" },
-        PROJECT_ROOT,
-        restored,
-        "aidd-framework"
-      );
+      return translator.addPlugin({
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/source" },
+        projectRoot: PROJECT_ROOT,
+        manifest: restored,
+        marketplace: "aidd-framework",
+      });
     };
     const first = await install();
     expect(first.written).toBe(1);
@@ -91,14 +91,14 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
       translate: translateDistribution,
     });
 
-    await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework"
-    );
+      marketplace: "aidd-framework",
+    });
 
     const base = `${HOME}/.cursor/plugins/local/sample-plugin`;
     // Byte-equal to the built tree, with the plugins/<name> prefix stripped.
@@ -125,16 +125,16 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
       translate: translateDistribution,
     });
 
-    const result = await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const result = await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "aidd-framework",
-      new Map(),
-      true
-    );
+      marketplace: "aidd-framework",
+      previousMcpEntries: new Map(),
+      userScopeDirTaken: true,
+    });
     expect(result.written).toBe(0);
     expect(fs.getFile(occupied)).toBe("foreign bytes");
     expect(manifest.getPlugins(TOOL.cursor)[0]?.files.size).toBe(0);
@@ -151,19 +151,19 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
       marketplaceRegistry: await makeRegistry(),
       translate: translateDistribution,
     });
-    const result = await translator.addPlugin(
-      dist(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    const result = await translator.addPlugin({
+      dist: dist(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     expect(result.skipped).toEqual([]);
   });
 });
 
-describe("BuiltTreeMaterializationTranslator — when no built tree applies (integration)", () => {
+describe("BuiltTreeMaterializationTranslator — when no built tree applies", () => {
   const COMMAND = "---\nname: aidd:01:hello\n---\n# Hello";
 
   function distWithCommand(): PluginDistribution {
@@ -194,14 +194,14 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
       marketplaceRegistry: await makeRegistry(),
       translate: translateDistribution,
     });
-    await translator.addPlugin(
-      distWithCommand(),
-      registeredTools().aiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await translator.addPlugin({
+      dist: distWithCommand(),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      marketplace
-    );
+      marketplace,
+    });
     return fs;
   }
 

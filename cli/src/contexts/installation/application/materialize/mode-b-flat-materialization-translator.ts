@@ -19,10 +19,23 @@ import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js
 import { isPluginFileAtDesiredState } from "../plugin/plugin-helpers.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
-import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
-import type { PluginTranslator } from "./plugin-translator.js";
+import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
+
+interface PluginRegistration {
+  dist: PluginDistribution;
+  toolId: AiToolId;
+  source: PluginSource;
+  files: InstallationFile[];
+  mcpEntries: ReadonlyMap<string, string>;
+  projectHooks: ProjectHooksProvenance | undefined;
+  componentPaths: ReadonlyMap<string, string>;
+  marketplace: string | undefined;
+  baseDir: string;
+  scope: Scope;
+  manifest: Manifest;
+}
 
 /**
  * Mode B: flat materialization: writes a plugin's content directly into the tool's plugin
@@ -41,28 +54,35 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     this.projectHooks = new ProjectHooksMaterializer(fs);
   }
 
-  async addPlugin(
-    dist: PluginDistribution,
-    tool: AiToolProfile,
-    source: PluginSource,
-    projectRoot: string,
-    manifest: Manifest,
-    marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map(),
-    userScopeDirTaken = false,
-    previousProjectHooks?: ProjectHooksProvenance,
-    hooksGuard: ProjectHooksGuard = {}
-  ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
+  async addPlugin(request: AddPluginRequest): Promise<AddPluginResult> {
+    const {
+      dist,
+      tool,
+      source,
+      projectRoot,
+      manifest,
+      marketplace,
+      previousMcpEntries = new Map(),
+      userScopeDirTaken = false,
+      previousProjectHooks,
+      hooksGuard = {},
+    } = request;
     const ctx = this.resolveFlatToolContext(tool, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
-    const mcp = await materializeFlatMcp(this.fs, dist, tool, projectRoot, previousMcpEntries);
-    await refreshTrackedMcpConfigHash(
-      this.fs,
-      manifest,
-      tool.toolId,
+    const mcp = await materializeFlatMcp({
+      fs: this.fs,
+      dist,
+      tool,
       projectRoot,
-      mcp.outputRelPath
-    );
+      previousMcpEntries,
+    });
+    await refreshTrackedMcpConfigHash({
+      fs: this.fs,
+      manifest,
+      toolId: tool.toolId,
+      projectRoot,
+      outputRelPath: mcp.outputRelPath,
+    });
     const hooks = await this.projectHooks.execute({
       dist,
       tool,
@@ -73,19 +93,19 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
     if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
       return { skipped: allSkipped };
-    const written = await this.writeAndRegisterPlugin(
+    const written = await this.writeAndRegisterPlugin({
       dist,
-      tool.toolId,
+      toolId: tool.toolId,
       source,
-      userScopeDirTaken ? [] : ctx.files,
-      mcp.mcpEntries,
-      hooks.projectHooks,
-      ctx.componentPaths,
+      files: userScopeDirTaken ? [] : ctx.files,
+      mcpEntries: mcp.mcpEntries,
+      projectHooks: hooks.projectHooks,
+      componentPaths: ctx.componentPaths,
       marketplace,
-      ctx.baseDir,
-      ctx.scope,
-      manifest
-    );
+      baseDir: ctx.baseDir,
+      scope: ctx.scope,
+      manifest,
+    });
     return { skipped: allSkipped, written };
   }
 
@@ -118,19 +138,20 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     return { files, componentPaths, skipped, baseDir, scope };
   }
 
-  private async writeAndRegisterPlugin(
-    dist: PluginDistribution,
-    toolId: AiToolId,
-    source: PluginSource,
-    files: InstallationFile[],
-    mcpEntries: ReadonlyMap<string, string>,
-    projectHooks: ProjectHooksProvenance | undefined,
-    componentPaths: ReadonlyMap<string, string>,
-    marketplace: string | undefined,
-    baseDir: string,
-    scope: Scope,
-    manifest: Manifest
-  ): Promise<number> {
+  private async writeAndRegisterPlugin(registration: PluginRegistration): Promise<number> {
+    const {
+      dist,
+      toolId,
+      source,
+      files,
+      mcpEntries,
+      projectHooks,
+      componentPaths,
+      marketplace,
+      baseDir,
+      scope,
+      manifest,
+    } = registration;
     let written = 0;
     for (const file of files) {
       const outputPath = join(baseDir, file.relativePath);

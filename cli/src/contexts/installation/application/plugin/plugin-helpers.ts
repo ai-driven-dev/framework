@@ -107,17 +107,17 @@ export async function materializeViaTranslator(
 ): Promise<number> {
   const { dist, tool, plugin, projectRoot, manifest, hooksGuard = {} } = rematerialization;
   manifest.removePlugin(tool.toolId, plugin.name);
-  const { written } = await translator.addPlugin(
+  const { written } = await translator.addPlugin({
     dist,
     tool,
-    plugin.source,
+    source: plugin.source,
     projectRoot,
     manifest,
-    plugin.marketplace,
-    plugin.mcpEntries,
-    false,
-    plugin.projectHooks,
-    hooksGuard
-  );
+    marketplace: plugin.marketplace,
+    previousMcpEntries: plugin.mcpEntries,
+    userScopeDirTaken: false,
+    previousProjectHooks: plugin.projectHooks,
+    hooksGuard,
+  });
   return written ?? 0;
 }

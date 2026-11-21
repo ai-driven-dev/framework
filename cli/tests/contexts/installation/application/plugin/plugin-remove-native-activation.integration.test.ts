@@ -263,14 +263,14 @@ describe("RemovePlugin undoes native activation", () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      MARKETPLACE_NAME
-    );
+      marketplace: MARKETPLACE_NAME,
+    });
     const repo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const activator = new FakeHostActions({ available: false });
     const logger = new CapturingLogger();
@@ -441,14 +441,14 @@ describe("RemovePlugin undoes native activation", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      undefined
-    );
+      marketplace: undefined,
+    });
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
@@ -494,14 +494,14 @@ describe("RemovePlugin undoes native activation", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      "local"
-    );
+      marketplace: "local",
+    });
     manifest.setNativeRegistrations(claude, {
       binary: "claude",
       marketplaces: [

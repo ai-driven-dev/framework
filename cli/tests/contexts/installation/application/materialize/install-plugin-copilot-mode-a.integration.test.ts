@@ -56,14 +56,14 @@ async function seedCopilotPlugin(
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.copilot, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin(
-    buildDist(),
-    registeredTools().aiProfile(TOOL.copilot),
-    { kind: "github", repo: "ai-driven-dev/framework" },
-    PROJECT_ROOT,
+  await new ModeAMarketplaceTranslator().addPlugin({
+    dist: buildDist(),
+    tool: registeredTools().aiProfile(TOOL.copilot),
+    source: { kind: "github", repo: "ai-driven-dev/framework" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    MARKETPLACE_NAME
-  );
+    marketplace: MARKETPLACE_NAME,
+  });
   await manifestRepo.save(manifest);
   registry.seed(PROJECT_ROOT, {
     name: MARKETPLACE_NAME,

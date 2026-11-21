@@ -44,14 +44,14 @@ function buildDist(): PluginDistribution {
 async function seedManifest(): Promise<Manifest> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin(
-    buildDist(),
-    registeredTools().aiProfile(TOOL.claude),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
+  await new ModeAMarketplaceTranslator().addPlugin({
+    dist: buildDist(),
+    tool: registeredTools().aiProfile(TOOL.claude),
+    source: { kind: "local", path: "/plugin-source" },
+    projectRoot: PROJECT_ROOT,
     manifest,
-    ALIAS
-  );
+    marketplace: ALIAS,
+  });
   // hostName differs from this project's own local alias — the same divergence
   // `clean`'s own marketplace cache purge already addresses by hostName, never alias.
   manifest.setNativeRegistrations(TOOL.claude, {
@@ -184,14 +184,14 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     await fs.writeFile(witness, "still here");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.claude),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      ALIAS
-    );
+      marketplace: ALIAS,
+    });
     manifest.setNativeRegistrations(TOOL.claude, {
       binary: "claude",
       marketplaces: [
@@ -266,14 +266,14 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.copilot, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredTools().aiProfile(TOOL.copilot),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
+    await new ModeAMarketplaceTranslator().addPlugin({
+      dist: buildDist(),
+      tool: registeredTools().aiProfile(TOOL.copilot),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
       manifest,
-      ALIAS
-    );
+      marketplace: ALIAS,
+    });
     manifest.setNativeRegistrations(TOOL.copilot, {
       binary: "copilot",
       marketplaces: [
