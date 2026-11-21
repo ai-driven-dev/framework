@@ -3,7 +3,7 @@ import { describeError } from "../../../../shared/domain/describe-error.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { flatPathOfPluginSuffix } from "../../domain/flat-layout.js";
+import { mergeFlatHooks } from "../../domain/flat-layout.js";
 import { FlatMergeTargetNotJsonError } from "../../domain/translate.error.js";
 import type { FlatHooksStep } from "../../ports/flat-plugin-writer.js";
 
@@ -21,10 +21,9 @@ export async function writeFlatHooks(
   if (file === undefined || !file.shared) return 0;
   const destPath = join(target.outDir, file.path(pluginName));
   const existing = await readSharedHooksTarget(fs, target.outDir, destPath);
-  const { content, warnings } = file.merge(existing, {
+  const { content, warnings } = mergeFlatHooks({ file, contract: target.contract }, existing, {
     json: hooksJson,
     plugin: pluginName,
-    locate: (pluginPath) => `./${flatPathOfPluginSuffix(target.contract, pluginPath, pluginName)}`,
   });
   for (const w of warnings) logger.warn(w);
   await fs.writeFile(destPath, content);

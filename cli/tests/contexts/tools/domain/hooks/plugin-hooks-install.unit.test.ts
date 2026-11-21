@@ -10,7 +10,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { flatOf, hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
-import { translatePlugin } from "../../testing/translate-plugin.builder.js";
+import { translatePluginIntoProject } from "../../testing/translate-plugin.builder.js";
 import type { WithSections } from "../../testing/with-sections.builder.js";
 
 const codex = codexProfile(new SmolTomlCodec());
@@ -46,7 +46,7 @@ function pluginWithHookAndScript(): PluginDistribution {
 }
 
 function installedFor(tool: AiTool<WithSections<"layout">>) {
-  return translatePlugin(pluginWithHookAndScript(), tool);
+  return translatePluginIntoProject(pluginWithHookAndScript(), tool);
 }
 
 function contentEndingWith(
@@ -54,6 +54,16 @@ function contentEndingWith(
   suffix: string
 ): string | undefined {
   return result.files.find((file) => file.relativePath.endsWith(suffix))?.content;
+}
+
+/** What a hook command opens with: the variable the tool expands, or, for a tool keeping its
+ * hooks in the project, where its scripts land there. */
+function expectedRoot(tool: AiTool<WithSections<"layout">>): string {
+  return (
+    tool.projectHooksDelivery()?.format.scriptDir("aidd-telemetry") ??
+    nativeOf(tool.plugins()).rootToken() ??
+    ""
+  );
 }
 
 describe("installing a plugin that ships hooks", () => {
@@ -67,7 +77,7 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const manifest = contentEndingWith(installedFor(tool), "hooks.json") ?? "";
 
-      expect(manifest, tool.toolId).toContain(nativeOf(tool.plugins()).rootToken());
+      expect(manifest, tool.toolId).toContain(expectedRoot(tool));
       if (nativeOf(tool.plugins()).rootToken() === SOURCE_TOKEN) continue;
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }

@@ -109,6 +109,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     if (!deliversHooksToProject) return { files: builtFiles, hooks: { skipped: [] } };
     const hooks = await this.projectHooks.execute({
       dist,
+      hooks: this.built.translate.execute({ distribution: dist, tool }).projectHooks,
       tool,
       projectRoot,
       previous: previousProjectHooks,

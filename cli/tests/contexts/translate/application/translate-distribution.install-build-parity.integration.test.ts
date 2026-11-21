@@ -106,12 +106,21 @@ interface OneSided {
 const MANIFEST_REASON =
   "an install writes the plugin's manifest among its files; a build synthesizes it in the sink, which folds it with the marketplace catalog";
 
-const ONE_SIDED: readonly OneSided[] = ["claude", "copilot", "codex"].map((tool) => ({
-  cell: `${tool}:marketplace`,
-  side: "install",
-  file: /^generated:.*\/plugins\/[^/]+\/plugin\.json$/,
-  reason: MANIFEST_REASON,
-}));
+const ONE_SIDED: readonly OneSided[] = [
+  ...["claude", "copilot", "codex"].map((tool) => ({
+    cell: `${tool}:marketplace`,
+    side: "install" as const,
+    file: /^generated:.*\/plugins\/[^/]+\/plugin\.json$/,
+    reason: MANIFEST_REASON,
+  })),
+  {
+    cell: "cursor:marketplace",
+    side: "build",
+    file: /^hooks\/hooks\.json$/,
+    reason:
+      "a build writes the hooks manifest as a file; an install of a tool keeping its hooks in the project hands it over to merge into the project's hooks file",
+  },
+];
 
 const tools = registeredTools();
 const CELLS = tools.idsInCanonicalOrder("ai").flatMap((id) => {
@@ -123,18 +132,20 @@ const CELLS = tools.idsInCanonicalOrder("ai").flatMap((id) => {
 });
 
 /** What the engine writes for a plugin, by the canon file each comes from, and by its own path for
- * a file the layout generates: nothing the engine writes is left out of the comparison. */
+ * a file the layout generates, a script a tool keeps in the project included: nothing the engine
+ * writes is left out of the comparison. */
 function written(
   dist: PluginDistribution,
   layout: Parameters<typeof translate>[1]
 ): Map<string, string> {
-  const { files, sources } = translate(dist, layout);
-  return new Map(
-    files.map(({ relativePath, content }) => [
+  const { files, sources, projectHooks } = translate(dist, layout);
+  return new Map([
+    ...files.map(({ relativePath, content }): [string, string] => [
       sources.get(relativePath) ?? `generated:${relativePath}`,
       content,
-    ])
-  );
+    ]),
+    ...projectHooks.scripts.map(({ source, content }): [string, string] => [source, content]),
+  ]);
 }
 
 function withoutOneSided(

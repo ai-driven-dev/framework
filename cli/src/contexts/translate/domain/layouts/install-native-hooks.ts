@@ -7,9 +7,9 @@ import type {
   ReadonlyNoticeList,
 } from "../../../tools/contract/plugin-install-notice.js";
 import type { NativePluginAnswers } from "../../../tools/contract/tool-profile.js";
+import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { isProse, PLUGIN_HOOKS_DIR, parentDirOf, pathBelowHooks } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
-import { HOOKS_MANIFEST } from "../rules/hook-scripts.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 
@@ -27,7 +27,7 @@ export function nativeHooksPlan(
   const { tool, plugins, pluginRoot } = at;
   if (!plugins.hooksAcceptance().accepts) return null;
   const { relativePath: source, content } = file;
-  if (source === HOOKS_MANIFEST) {
+  if (source === PLUGIN_HOOKS_RELATIVE) {
     const path = `${pluginRoot}${plugins.hooksFilePath()}`;
     return { source, path, content, rootToken: plugins.rootToken() };
   }

@@ -66,6 +66,26 @@ export function flatPathOfPluginSuffix(
   return suffix;
 }
 
+type FlatHooksFile = NonNullable<
+  Extract<ToolBuildContract["artifacts"]["hooks"], { supported: true }>["hooksFile"]
+>;
+
+/** A plugin's hooks manifest folded into a tool's hooks file, every path it names placed where the
+ * flat layout puts it: the one merge a build writes, whether into a file of the plugin's own or
+ * one every plugin shares. */
+export function mergeFlatHooks(
+  { file, contract }: { file: FlatHooksFile; contract: ToolBuildContract },
+  existing: string | null,
+  shipped: { json: string; plugin: string }
+): { content: string; warnings: readonly string[] } {
+  const { json, plugin } = shipped;
+  return file.merge(existing, {
+    json,
+    plugin,
+    locate: (pluginPath) => `./${flatPathOfPluginSuffix(contract, pluginPath, plugin)}`,
+  });
+}
+
 /** Where a markdown link's target lands in the flat layout: only agents and skills move. */
 export function flatLinkTarget(
   contract: ToolBuildContract,

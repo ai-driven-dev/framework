@@ -3,11 +3,11 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../tools/contract/build-contract.js";
-import { flatAgentPath, flatLinkTarget, flatPathOfPluginSuffix } from "../flat-layout.js";
+import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
+import { flatAgentPath, flatLinkTarget, mergeFlatHooks } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
-import { HOOKS_MANIFEST } from "../rules/hook-scripts.js";
 import { agentFiles, baseOf, isEntry } from "./build-shared.js";
 
 /** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
@@ -94,13 +94,12 @@ export function flatOwnHooksFile(
 ): { plan: ComponentPlan; warnings: readonly string[] } | null {
   const { hooks } = contract.artifacts;
   const file = hooks.supported && !hooks.skipHooksJson ? hooks.hooksFile : undefined;
-  const manifest = canon.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST);
+  const manifest = canon.components.hooks.find((f) => f.relativePath === PLUGIN_HOOKS_RELATIVE);
   if (file === undefined || file.shared || manifest === undefined) return null;
   const plugin = canon.manifest.name;
-  const { content, warnings } = file.merge(null, {
+  const { content, warnings } = mergeFlatHooks({ file, contract }, null, {
     json: manifest.content,
     plugin,
-    locate: (pluginPath) => `./${flatPathOfPluginSuffix(contract, pluginPath, plugin)}`,
   });
   return { plan: { source: "", path: file.path(plugin), content }, warnings };
 }

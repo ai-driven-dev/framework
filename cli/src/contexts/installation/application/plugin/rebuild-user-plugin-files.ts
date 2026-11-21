@@ -5,7 +5,6 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import { withoutHooks } from "../materialize/project-hooks-materializer.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
@@ -89,8 +88,6 @@ function translateUserPluginFiles(
       `${tool.toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
     );
   }
-  const forGlobalFiles =
-    tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
-  const translated = deps.builtDeps.translate.execute({ distribution: forGlobalFiles, tool });
+  const translated = deps.builtDeps.translate.execute({ distribution: dist, tool });
   return { files: hashOutputFiles(translated.files), componentPaths: translated.componentPaths };
 }

@@ -8,7 +8,10 @@ import { createHash } from "node:crypto";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { TranslateDistribution } from "../../src/contexts/translate/application/translate-distribution.js";
+import {
+  TranslateDistribution,
+  type TranslateDistributionResult,
+} from "../../src/contexts/translate/application/translate-distribution.js";
 import {
   distributionOf,
   FRAMEWORK_SOURCE,
@@ -22,6 +25,17 @@ import { expectGolden } from "./testing/expect-golden.builder.js";
 const SNAPSHOT_FILE = join(process.cwd(), "tests/golden/snapshots/translate-install/golden.json");
 
 const sha = (content: string) => createHash("sha256").update(content, "utf-8").digest("hex");
+
+/** What a tool keeping its hooks in the project is handed to place; nothing to pin for any other. */
+function projectHooksOf({ manifest, scripts }: TranslateDistributionResult["projectHooks"]) {
+  if (manifest === null && scripts.length === 0) return {};
+  return {
+    projectHooks: {
+      manifest: manifest === null ? null : sha(manifest),
+      scripts: Object.fromEntries(scripts.map((file) => [file.relativePath, sha(file.content)])),
+    },
+  };
+}
 
 describe("Install translation golden", () => {
   let tree: InMemoryFileAdapter;
@@ -48,6 +62,7 @@ describe("Install translation golden", () => {
           flatHookPaths: [...result.flatHookPaths].sort(),
           skipped: result.skipped,
           notices: result.notices,
+          ...projectHooksOf(result.projectHooks),
         };
       }
     }

@@ -23,6 +23,12 @@ export interface PluginTranslationResult {
   readonly notices: ReadonlyNoticeList;
   /** The plugin's MCP servers in the shape the tool's own config holds, for the install to merge. */
   readonly installedMcp: string | null;
+  /** The plugin's hooks for a tool that keeps them in the project: the manifest to merge into the
+   * project's hooks file and the scripts to place beside it, each as the tool takes them. */
+  readonly projectHooks: {
+    readonly manifest: string | null;
+    readonly scripts: readonly TranslatedFile[];
+  };
 }
 
 /** A plugin's distribution turned into the files one tool installs. */

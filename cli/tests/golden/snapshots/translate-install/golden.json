@@ -997,7 +997,6 @@
   "cursor/aidd-async-dev": {
     "files": {
       "aidd-async-dev/agents/async-orchestrator.md": "7acbb573c0f62eef29fc81a5e1f3f5084353d4c86b9d8d3350fc59c16003c01c",
-      "aidd-async-dev/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
       "aidd-async-dev/skills/01-setup/SKILL.md": "a0164200c439431091bd4a682440b8f3e2bf4bbb97081548a25f3e463a8405bc",
       "aidd-async-dev/skills/01-setup/actions/skills/01-detect-context.md": "83f3ba3022dd75fa2597a872a55e8f75173762f932ed39ae73d8181c0b1b4536",
       "aidd-async-dev/skills/01-setup/actions/skills/02-ask-config.md": "986335d1e86a633d0083fe4488aae58266a82ec35d0cdb0b74f0bbcea70e6f4e",
@@ -1137,12 +1136,14 @@
     ],
     "flatHookPaths": [],
     "skipped": [],
-    "notices": []
+    "notices": [],
+    "projectHooks": {
+      "manifest": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
+      "scripts": {}
+    }
   },
   "cursor/aidd-context": {
     "files": {
-      "aidd-context/hooks.json": "03cfdeea0b07abf6cedb358b36275922abeaa853b6438bd370ca85542a4afcf3",
-      "aidd-context/hooks/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
       "aidd-context/skills/01-bootstrap/SKILL.md": "cff89e30857b72b6c4870da67ec4adf97b0d238acdeff857ecd422e8aec4b926",
       "aidd-context/skills/01-bootstrap/actions/01-gather-needs.md": "b3251034285434b06775ab4a59ffe27259bb23cb97ac65927c946a4846ea946d",
       "aidd-context/skills/01-bootstrap/actions/02-propose-candidates.md": "57376071d9d0b011c5f19ba218a3ef28c3bf1fba1220a87260806a2d79e341d6",
@@ -1488,7 +1489,13 @@
     ],
     "flatHookPaths": [],
     "skipped": [],
-    "notices": []
+    "notices": [],
+    "projectHooks": {
+      "manifest": "4f8e1b575af40e9a2d19f4e30af39553cac47d53e34d738c56ef09e14f94f495",
+      "scripts": {
+        ".cursor/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149"
+      }
+    }
   },
   "cursor/aidd-dev": {
     "files": {
@@ -4498,11 +4505,14 @@
     "componentPaths": [],
     "flatHookPaths": [],
     "skipped": [],
-    "notices": []
+    "notices": [],
+    "projectHooks": {
+      "manifest": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
+      "scripts": {}
+    }
   },
   "antigravity/aidd-context": {
     "files": {
-      ".agents/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
       ".agents/skills/aidd-context-01-bootstrap/SKILL.md": "73685c32640bd6a7ebb77e36464ddbb1ab2c254bc4e02dfe923e53aac858a1cc",
       ".agents/skills/aidd-context-01-bootstrap/actions/01-gather-needs.md": "b3251034285434b06775ab4a59ffe27259bb23cb97ac65927c946a4846ea946d",
       ".agents/skills/aidd-context-01-bootstrap/actions/02-propose-candidates.md": "57376071d9d0b011c5f19ba218a3ef28c3bf1fba1220a87260806a2d79e341d6",
@@ -4573,11 +4583,15 @@
       ".agents/skills/aidd-context-06-discovery/actions/01-find-skill.md": "600caf7822017bfe75d40773e1673ada784227b98f5b88d4ba98a57822fa0dcf"
     },
     "componentPaths": [],
-    "flatHookPaths": [
-      ".agents/hooks/aidd-context/update_memory.js"
-    ],
+    "flatHookPaths": [],
     "skipped": [],
-    "notices": []
+    "notices": [],
+    "projectHooks": {
+      "manifest": "4f8e1b575af40e9a2d19f4e30af39553cac47d53e34d738c56ef09e14f94f495",
+      "scripts": {
+        ".agents/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149"
+      }
+    }
   },
   "antigravity/aidd-dev": {
     "files": {

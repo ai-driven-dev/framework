@@ -3,13 +3,14 @@ import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-tran
 import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
 import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
 import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
+import { PLUGIN_HOOKS_RELATIVE } from "./canon-format.js";
 import { flatOwnHooksFile } from "./layouts/build-flat.js";
 import { buildPlans } from "./layouts/build-layout.js";
 import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
 import { applyPlan, type ComponentPlan } from "./rules/component-pipeline.js";
 import { flatMcp, type PluginMcp } from "./rules/flat-mcp.js";
-import { HOOKS_MANIFEST } from "./rules/hook-scripts.js";
+import { type ProjectHooks, projectHooks, withoutHooks } from "./rules/hook-scripts.js";
 import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
 
 /** Where a translation lands: one tool's install, or one tool's build. The rules are the same;
@@ -46,6 +47,9 @@ export interface Translation {
   /** The plugin's MCP declaration in the shape the tool's own config holds, for an install to
    * merge into that file. Null when the plugin declares none or the tool's plugins carry their own. */
   readonly installedMcp: string | null;
+  /** The plugin's hooks as a tool that keeps them in the project takes them, for an install to
+   * merge and place. Empty for a tool whose plugins carry their own, which `files` then holds. */
+  readonly projectHooks: ProjectHooks;
   /** What merging the plugin's hooks into its own file reported. */
   readonly warnings: readonly string[];
 }
@@ -79,7 +83,15 @@ const UNTRANSLATED = {
   notices: [],
 };
 
-const NOTHING_FOLDED = { hooks: null, mcp: null, installedMcp: null, warnings: [] };
+const NO_PROJECT_HOOKS: ProjectHooks = { manifest: null, scripts: [] };
+
+const NOTHING_FOLDED = {
+  hooks: null,
+  mcp: null,
+  installedMcp: null,
+  projectHooks: NO_PROJECT_HOOKS,
+  warnings: [],
+};
 
 function buildLayoutPlan(
   dist: PluginDistribution,
@@ -94,6 +106,7 @@ function buildLayoutPlan(
     plans: own ? [...plans, own.plan] : plans,
     hooks: own === null ? hooksManifestOf(dist) : null,
     installedMcp: null,
+    projectHooks: NO_PROJECT_HOOKS,
     mcp: flatMcpOf(dist, layout),
     warnings: own?.warnings ?? [],
   };
@@ -110,7 +123,8 @@ function flatMcpOf(
 
 function hooksManifestOf(dist: PluginDistribution): string | null {
   return (
-    dist.components.hooks.find((file) => file.relativePath === HOOKS_MANIFEST)?.content ?? null
+    dist.components.hooks.find((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE)?.content ??
+    null
   );
 }
 
@@ -120,10 +134,12 @@ function installLayoutPlan(
   manifestPaths: readonly string[]
 ): LayoutPlan {
   if (tool.kind !== "ai") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans: [] };
+  const location = tool.projectHooksDelivery();
   return {
-    ...installPlan(dist, { tool, manifestPaths }),
+    ...installPlan(location === null ? dist : withoutHooks(dist), { tool, manifestPaths }),
     ...NOTHING_FOLDED,
     installedMcp: installedMcpOf(dist, tool),
+    projectHooks: location === null ? NO_PROJECT_HOOKS : projectHooks(dist, location),
   };
 }
 

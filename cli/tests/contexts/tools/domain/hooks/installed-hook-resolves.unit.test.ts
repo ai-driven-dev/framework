@@ -12,7 +12,7 @@ import { nativeOf } from "../../../../shared/testing/native-plugin-answers.build
 import { present } from "../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
-import { translatePlugin } from "../../testing/translate-plugin.builder.js";
+import { translatePluginIntoProject } from "../../testing/translate-plugin.builder.js";
 import type { WithSections } from "../../testing/with-sections.builder.js";
 
 const TOML = new SmolTomlCodec();
@@ -57,17 +57,30 @@ function distribution(): PluginDistribution {
  * variable and a leading `./` both mean the plugin's own directory. */
 function commandTargets(manifest: string, tool: AiTool<WithSections<"layout">>): string[] {
   const token = nativeOf(tool.plugins()).rootToken() ?? "";
+  const kept = tool.projectHooksDelivery()?.format.scriptDir(PLUGIN);
   return [...manifest.matchAll(/"command":\s*"([^"]+)"/gu)]
     .flatMap((match) => (match[1] ?? "").split(" "))
     .filter((word) => word.includes("/") && !word.startsWith("-"))
-    .map((word) => word.replace(token, "").replace(/^\.\//u, "").replace(/^\//u, ""));
+    .map((word) => word.replace(token, "").replace(/^\.\//u, "").replace(/^\//u, ""))
+    .map((word) => inPlugin(word, kept));
+}
+
+/** A tool keeping its hooks in the project lays a plugin's scripts out under its own directory
+ * there; the plugin's own file is what remains once that directory is read as `hooks/`. */
+function inPlugin(path: string, projectScriptDir: string | undefined): string {
+  return projectScriptDir !== undefined && path.startsWith(projectScriptDir)
+    ? `hooks/${path.slice(projectScriptDir.length)}`
+    : path;
 }
 
 function installed(tool: AiTool<WithSections<"layout">>): { paths: string[]; manifest: string } {
-  const { files } = translatePlugin(distribution(), tool);
+  const { files } = translatePluginIntoProject(distribution(), tool);
   const root = nativeOf(tool.plugins()).pluginOutputDir(PLUGIN) ?? "";
+  const kept = tool.projectHooksDelivery()?.format.scriptDir(PLUGIN);
   return {
-    paths: files.map((file) => file.relativePath.replace(root, "")),
+    paths: files.map(({ relativePath }) =>
+      inPlugin(relativePath.startsWith(root) ? relativePath.slice(root.length) : relativePath, kept)
+    ),
     manifest: files.find((file) => file.relativePath.endsWith("hooks.json"))?.content ?? "",
   };
 }
@@ -133,7 +146,7 @@ describe("the two ways a plugin gets installed", () => {
 
   it("deliver hooks exactly when the tool runs them", () => {
     for (const tool of [...HOOK_HOSTS, opencode]) {
-      const { files, skipped } = translatePlugin(distribution(), tool);
+      const { files, skipped } = translatePluginIntoProject(distribution(), tool);
       const carriesHooks = files.some((file) => file.relativePath.endsWith(".cjs"));
 
       expect(carriesHooks, tool.toolId).toBe(hooksAcceptanceOf(tool).accepts);

@@ -12,3 +12,20 @@ export function translatePlugin(
 ): TranslateDistributionResult {
   return createPluginTranslation(registeredTools()).execute({ distribution, tool });
 }
+
+/** What installing a plugin leaves in the project, hooks a tool keeps there included: the files the
+ * install writes, then its scripts and its hooks file with the manifest merged in. */
+export function translatePluginIntoProject(
+  distribution: PluginDistribution,
+  tool: ToolProfile
+): TranslateDistributionResult {
+  const result = translatePlugin(distribution, tool);
+  const location = tool.kind === "ai" ? tool.projectHooksDelivery() : null;
+  const { manifest, scripts } = result.projectHooks;
+  if (location === null || manifest === null) return result;
+  const merged = location.format.merge(null, manifest, distribution.manifest.name).content;
+  return {
+    ...result,
+    files: [...result.files, ...scripts, { relativePath: location.relativePath, content: merged }],
+  };
+}

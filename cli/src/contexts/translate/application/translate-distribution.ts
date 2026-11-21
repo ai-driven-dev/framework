@@ -4,6 +4,7 @@ import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-not
 import { translate } from "../domain/engine.js";
 import type { OutputFile } from "../domain/output-file.js";
 import type { DistributionProbe } from "../domain/plugin-format.js";
+import type { ProjectHooks } from "../domain/rules/hook-scripts.js";
 import type { TranslateProfile } from "../domain/translate-profile.js";
 
 export interface TranslateDistributionCommand {
@@ -18,6 +19,7 @@ export interface TranslateDistributionResult {
   readonly skipped: ReadonlySkipList;
   readonly notices: ReadonlyNoticeList;
   readonly installedMcp: string | null;
+  readonly projectHooks: ProjectHooks;
 }
 
 export class TranslateDistribution {
@@ -28,14 +30,16 @@ export class TranslateDistribution {
   }
 
   execute({ distribution, tool }: TranslateDistributionCommand): TranslateDistributionResult {
-    const { files, componentPaths, flatHookPaths, skipped, notices, installedMcp } = translate(
-      distribution,
-      {
-        kind: "install",
-        tool,
-        manifestPaths: this.manifestPaths,
-      }
-    );
-    return { files, componentPaths, flatHookPaths, skipped, notices, installedMcp };
+    const { files, componentPaths, flatHookPaths, skipped, notices, installedMcp, projectHooks } =
+      translate(distribution, { kind: "install", tool, manifestPaths: this.manifestPaths });
+    return {
+      files,
+      componentPaths,
+      flatHookPaths,
+      skipped,
+      notices,
+      installedMcp,
+      projectHooks,
+    };
   }
 }
