@@ -89,22 +89,38 @@ async function globalActivation(toolId: AiToolId) {
   return { refs, activator, userRepo, sync, options };
 }
 
+type RefState = "enabled" | "missing" | "disabled" | "claims only";
+
+async function dropRegisteredRefs(
+  toolId: AiToolId,
+  refs: Map<string, HostPluginRegistryEntry>,
+  userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
+) {
+  const manifest = await userRepo.load();
+  const registrations = manifest?.getNativeRegistrations(toolId);
+  if (manifest === null || registrations === undefined) throw new Error("missing setup record");
+  manifest.setNativeRegistrations(toolId, { ...registrations, pluginRefs: [] });
+  await userRepo.save(manifest);
+  refs.delete(REF);
+}
+
+async function applyRefState(
+  state: RefState,
+  toolId: AiToolId,
+  refs: Map<string, HostPluginRegistryEntry>,
+  userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
+) {
+  if (state === "missing") refs.delete(REF);
+  if (state === "disabled") refs.set(REF, { enabled: false, scope: "user" });
+  if (state === "claims only") await dropRegisteredRefs(toolId, refs, userRepo);
+}
+
 describe.each([TOOL.claude, TOOL.copilot] as const)("global %s native plugins", (toolId) => {
   it.each(["enabled", "missing", "disabled", "claims only"] as const)(
     "sync retains and restores a successful selection when the ref is %s",
     async (state) => {
       const { refs, activator, userRepo, sync, options } = await globalActivation(toolId);
-      if (state === "missing") refs.delete(REF);
-      if (state === "disabled") refs.set(REF, { enabled: false, scope: "user" });
-      if (state === "claims only") {
-        const manifest = await userRepo.load();
-        const registrations = manifest?.getNativeRegistrations(toolId);
-        if (manifest === null || registrations === undefined)
-          throw new Error("missing setup record");
-        manifest.setNativeRegistrations(toolId, { ...registrations, pluginRefs: [] });
-        await userRepo.save(manifest);
-        refs.delete(REF);
-      }
+      await applyRefState(state, toolId, refs, userRepo);
 
       const result = await sync.execute({ ...options });
 

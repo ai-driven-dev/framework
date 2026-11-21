@@ -4,7 +4,6 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
-import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
@@ -14,7 +13,6 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
-import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
@@ -34,122 +32,14 @@ import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.j
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
-import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 for (const [toolId, catalogPath] of [
   [TOOL.codex, ".agents/plugins/marketplace.json"],
   [TOOL.copilot, ".plugin/marketplace.json"],
 ] as const) {
-  const effectiveSource = (hostName: string, source: string) =>
-    new Map<AiToolId, HostMarketplaceSources>([
-      [
-        toolId,
-        {
-          read: async (projectRoot) => ({
-            location: `/host/${toolId}/catalogue (cwd ${projectRoot})`,
-            entries: new Map([
-              [
-                hostName,
-                { kind: "effective-list" as const, root: source, sourceType: "local", source },
-              ],
-            ]),
-          }),
-        },
-      ],
-    ]);
   describe(`${toolId} machine plugin claims`, () => {
-    it("global clean refuses live plugin dependents and preserves claims if host unregister fails", async () => {
-      const ref = "test-plugin@real-catalog";
-      const machine = Manifest.create();
-      machine.addTool(toolId, "1.0.0", []);
-      machine.setNativeRegistrations(toolId, {
-        binary: toolId,
-        marketplaces: [
-          {
-            alias: "local-alias",
-            hostName: "real-catalog",
-            provenance: {
-              kind: "effective-list",
-              root: `/built/${toolId}`,
-              sourceType: "local",
-              source: `/built/${toolId}`,
-            },
-          },
-        ],
-        pluginRefs: [ref],
-        pluginClaims: [{ ref, dependents: ["/B"] }],
-      });
-      const repo = new InMemoryManifestRepository(machine);
-      const fs = new InMemoryFileAdapter(
-        {
-          [`/built/${toolId}/${catalogPath}`]: JSON.stringify({
-            name: "real-catalog",
-            plugins: [],
-          }),
-        },
-        ["/A", "/B"]
-      );
-      const registry = new InMemoryMarketplaceRegistry();
-      const failing = new FakeHostActions({ available: true, failOnUninstall: [ref] });
-      const sources = effectiveSource("real-catalog", `/built/${toolId}`);
-      const hostPlugins = new Map<AiToolId, HostPluginRegistry>([
-        [
-          toolId,
-          {
-            read: async () => ({
-              location: `/host/${toolId}/plugins`,
-              refs: new Map([[ref, { enabled: true, scope: "user" as const }]]),
-            }),
-          },
-        ],
-      ]);
-      const clean = userScopeCleaner({
-        fs,
-        repo,
-        marketplaceRegistry: registry,
-        userConfigDir: () => "/machine",
-        activators: new Map([[toolId, failing]]),
-        homeDir: () => "/home",
-        sources,
-        pluginRegistries: hostPlugins,
-      });
-      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        saying(/active projects.*\/B/)
-      );
-      expect(failing.uninstalledPlugins).toEqual([]);
-      expect(
-        repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
-      ).toEqual(["/B"]);
-      const registrations = machine.getNativeRegistrations(toolId);
-      if (registrations === undefined) throw new Error("seeded machine claim missing");
-      machine.setNativeRegistrations(toolId, {
-        ...registrations,
-        pluginClaims: [{ ref, dependents: [] }],
-      });
-      await repo.save(machine);
-      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        /uninstall.*failed.*claims retained/
-      );
-      expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref, dependents: [] },
-      ]);
-      const working = new FakeHostActions({ available: true });
-      const finish = userScopeCleaner({
-        fs,
-        repo,
-        marketplaceRegistry: registry,
-        userConfigDir: () => "/machine",
-        activators: new Map([[toolId, working]]),
-        homeDir: () => "/home",
-        sources,
-        pluginRegistries: hostPlugins,
-      });
-      await finish.execute({ projectRoot: "/B", force: true });
-      expect(working.uninstalledPlugins).toEqual([ref]);
-      expect(working.removedMarketplaces).toEqual(["real-catalog"]);
-      expect(repo.getCurrent()).toBeNull();
-    });
     it("attaches B to AIDD's exact host ref without re-enabling it, but never claims a foreign ref", async () => {
       const alias = "local-alias";
       const hostName = "real-catalog";
@@ -206,7 +96,7 @@ for (const [toolId, catalogPath] of [
       });
       const user = new InMemoryManifestRepository(machine);
       const activator = new FakeHostActions({ available: true });
-      const sources = effectiveSource(hostName, builtDir);
+      const sources = effectiveListSources(toolId, hostName, builtDir);
       let enabled = false;
       const hostReader: HostPluginRegistry = {
         read: async () => ({

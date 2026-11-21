@@ -59,14 +59,110 @@ class RealpathRefusingFileAdapter extends InMemoryFileAdapter {
   }
 }
 
-async function sync(setup: Setup = {}) {
-  const toolId = setup.toolId ?? TOOL.claude;
-  const aiddName = setup.aiddName ?? "probe-mkt";
-  const catalogName = setup.catalogName ?? aiddName;
-  const fs = setup.fs ?? new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+function catalogRelativeOf(toolId: AiToolId): string {
+  // Written at whichever relative path this tool's own `distributionProbes.marketplace` names,
+  // codex's differing from claude's, so the `marketplaceRegistry` gate is exercised for codex too.
+  return toolId === "codex"
+    ? ".agents/plugins/marketplace.json"
+    : ".claude-plugin/marketplace.json";
+}
+
+function catalogJson(name: string, version: string | undefined, pluginNames: readonly string[]) {
+  return JSON.stringify({
+    name,
+    version,
+    plugins: pluginNames.map((pluginName) => ({ name: pluginName })),
+  });
+}
+
+async function writeCatalogs(
+  fs: InMemoryFileAdapter,
+  setup: Setup,
+  catalogName: string,
+  builtDir: string
+) {
+  const relative = catalogRelativeOf(setup.toolId ?? TOOL.claude);
+  if (!setup.omitRequestedCatalog) {
+    await fs.writeFile(
+      `${builtDir}/${relative}`,
+      catalogJson(catalogName, setup.requestedVersion, setup.requestedPluginNames ?? [])
+    );
+  }
+  const rc = setup.registeredCatalog;
+  if (rc === undefined) return;
+  await fs.writeFile(
+    `${rc.path}/${relative}`,
+    catalogJson(rc.name ?? catalogName, rc.version, rc.pluginNames ?? [])
+  );
+}
+
+function provenanceOf(toolId: AiToolId, registeredSource: string | undefined) {
+  if (registeredSource === undefined) return undefined;
+  if (toolId === "claude") return { kind: "registry", source: registeredSource } as const;
+  return {
+    kind: "effective-list",
+    root: registeredSource,
+    sourceType: "local",
+    source: registeredSource,
+  } as const;
+}
+
+function ownedMachineManifest(
+  toolId: AiToolId,
+  aiddName: string,
+  catalogName: string,
+  currentSource: ReturnType<typeof provenanceOf>
+) {
+  const machine = Manifest.create();
+  machine.addTool(toolId, "test", []);
+  machine.setNativeRegistrations(toolId, {
+    binary: toolId,
+    marketplaces: [
+      {
+        alias: aiddName,
+        hostName: catalogName,
+        ...(currentSource === undefined ? {} : { provenance: currentSource }),
+      },
+    ],
+    pluginRefs: [],
+    pluginClaims: [],
+  });
+  return machine;
+}
+
+function nativeSourceReader(
+  toolId: AiToolId,
+  activator: FakeHostActions,
+  hostReading: Awaited<ReturnType<FakeHostMarketplaceRegistry["read"]>> | undefined,
+  catalogName: string,
+  builtDir: string,
+  currentSource: ReturnType<typeof provenanceOf>
+) {
+  if (hostReading?.unreadable !== undefined) {
+    const { location, unreadable } = hostReading;
+    return { read: async () => ({ location, unreadable }) };
+  }
+  return new FakeHostMarketplaceSources(
+    activator,
+    toolId === "claude" ? "registry" : "effective-list",
+    (path) => (path === builtDir ? catalogName : undefined),
+    currentSource === undefined ? new Map() : new Map([[catalogName, currentSource]])
+  );
+}
+
+function ownedMachineOf(
+  setup: Setup,
+  aiddName: string,
+  catalogName: string,
+  currentSource: ReturnType<typeof provenanceOf>
+) {
+  if (!setup.ownedCatalog) return undefined;
+  return ownedMachineManifest(setup.toolId ?? TOOL.claude, aiddName, catalogName, currentSource);
+}
+
+async function projectWithOneMarketplace(toolId: AiToolId, aiddName: string) {
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
-  const logger = new CapturingLogger();
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   await manifestRepo.save(manifest);
@@ -79,73 +175,31 @@ async function sync(setup: Setup = {}) {
       addedAt: "2026-01-01T00:00:00Z",
     })
   );
+  return { manifestRepo, registry };
+}
+
+async function sync(setup: Setup = {}) {
+  const toolId = setup.toolId ?? TOOL.claude;
+  const aiddName = setup.aiddName ?? "probe-mkt";
+  const catalogName = setup.catalogName ?? aiddName;
+  const fs = setup.fs ?? new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+  const { manifestRepo, registry } = await projectWithOneMarketplace(toolId, aiddName);
   const builtDir = `/built/${toolId}`;
-  // Written at whichever relative path this tool's own `distributionProbes.marketplace` names,
-  // codex's differing from claude's, so the `marketplaceRegistry` gate is exercised for codex too.
-  const catalogRelative =
-    toolId === "codex" ? ".agents/plugins/marketplace.json" : ".claude-plugin/marketplace.json";
-  if (!setup.omitRequestedCatalog) {
-    await fs.writeFile(
-      `${builtDir}/${catalogRelative}`,
-      JSON.stringify({
-        name: catalogName,
-        version: setup.requestedVersion,
-        plugins: (setup.requestedPluginNames ?? []).map((name) => ({ name })),
-      })
-    );
-  }
-  if (setup.registeredCatalog !== undefined) {
-    const rc = setup.registeredCatalog;
-    await fs.writeFile(
-      `${rc.path}/${catalogRelative}`,
-      JSON.stringify({
-        name: rc.name ?? catalogName,
-        version: rc.version,
-        plugins: (rc.pluginNames ?? []).map((name) => ({ name })),
-      })
-    );
-  }
+  await writeCatalogs(fs, setup, catalogName, builtDir);
   const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-  const hostRegistries = new Map<AiToolId, FakeHostMarketplaceRegistry>(
-    setup.hostReader === undefined ? [] : [[toolId, setup.hostReader]]
-  );
   const hostReading = toolId === "claude" ? await setup.hostReader?.read() : undefined;
-  const registeredSource = hostReading?.entries?.get(catalogName);
-  const currentSource =
-    registeredSource === undefined
-      ? undefined
-      : toolId === "claude"
-        ? ({ kind: "registry", source: registeredSource } as const)
-        : ({
-            kind: "effective-list",
-            root: registeredSource,
-            sourceType: "local",
-            source: registeredSource,
-          } as const);
-  const machine = setup.ownedCatalog ? Manifest.create() : undefined;
-  if (machine !== undefined) {
-    machine.addTool(toolId, "test", []);
-    machine.setNativeRegistrations(toolId, {
-      binary: toolId,
-      marketplaces: [
-        {
-          alias: aiddName,
-          hostName: catalogName,
-          ...(currentSource === undefined ? {} : { provenance: currentSource }),
-        },
-      ],
-      pluginRefs: [],
-      pluginClaims: [],
-    });
-  }
+  const currentSource = provenanceOf(toolId, hostReading?.entries?.get(catalogName));
+  const machine = ownedMachineOf(setup, aiddName, catalogName, currentSource);
   const useCase = marketplaceSync({
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
-    logger,
+    logger: new CapturingLogger(),
     activators: new Map([[toolId === "claude" ? "claude" : "codex", activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
-    hostMarketplaceRegistries: hostRegistries,
+    hostMarketplaceRegistries: new Map(
+      setup.hostReader === undefined ? [] : [[toolId, setup.hostReader]]
+    ),
     hostPluginRegistries: new Map([
       [
         toolId,
@@ -155,28 +209,16 @@ async function sync(setup: Setup = {}) {
         }),
       ],
     ]),
-    userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    userManifestRepo: machine && new InMemoryManifestRepository(machine),
     nativeSources: new Map([
       [
         toolId,
-        hostReading?.unreadable !== undefined
-          ? {
-              read: async () => ({
-                location: hostReading.location,
-                unreadable: hostReading.unreadable,
-              }),
-            }
-          : new FakeHostMarketplaceSources(
-              activator,
-              toolId === "claude" ? "registry" : "effective-list",
-              (path) => (path === builtDir ? catalogName : undefined),
-              currentSource === undefined ? new Map() : new Map([[catalogName, currentSource]])
-            ),
+        nativeSourceReader(toolId, activator, hostReading, catalogName, builtDir, currentSource),
       ],
     ]),
   });
   const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
-  return { result, activator, manifestRepo, builtDir, catalogRelative };
+  return { result, activator, manifestRepo, builtDir, catalogRelative: catalogRelativeOf(toolId) };
 }
 
 describe("the sync guard against a marketplace name a host already holds", () => {
