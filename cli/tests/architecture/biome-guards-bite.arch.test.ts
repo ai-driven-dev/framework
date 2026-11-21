@@ -464,8 +464,11 @@ const EXEMPTIONS = [
   },
 ] as const;
 
-const exemptionsOf = (carrier: (o: Override) => boolean | undefined): string[] =>
-  (biomeConfig().overrides ?? [])
+const exemptionsOf = (
+  carrier: (o: Override) => boolean | undefined,
+  overrides: Override[] = biomeConfig().overrides ?? []
+): string[] =>
+  overrides
     .filter((o) => carrier(o))
     .flatMap((o) => (o.includes ?? []).filter((entry) => entry.startsWith("!")))
     .map((entry) => entry.slice(1));
@@ -481,9 +484,8 @@ describe("biome spares only what the debt file lists", () => {
   }
 
   it("reads a negated include as its exclusion, and no other include", () => {
-    const only = (o: Override) => o.includes?.[0] === "src/**";
-    expect(exemptionsOf(only)).toContain("src/shared/infrastructure/github-adapter.ts");
-    expect(exemptionsOf(only)).not.toContain("src/**");
+    const overrides: Override[] = [{ includes: ["src/**", "!src/spared.ts", "tests/**"] }];
+    expect(exemptionsOf(() => true, overrides)).toEqual(["src/spared.ts"]);
   });
 });
 

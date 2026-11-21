@@ -198,9 +198,9 @@
   "toolOwn": [],
   "toolIdentifiers": [],
   "exemptProcessExit": ["src/presentation/exit.ts"],
-  "exemptGithubUrl": ["src/shared/infrastructure/github-adapter.ts"],
+  "exemptGithubUrl": [],
   "exemptDefaultExport": ["**/*.d.ts"],
-  "exemptProfileImport": ["src/composition/**"],
+  "exemptProfileImport": [],
   "exemptProfileList": ["src/presentation/**"],
   "profile": []
 }

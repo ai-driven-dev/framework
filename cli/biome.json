@@ -4751,7 +4751,7 @@
       "plugins": ["./biome-plugins/no-process-exit.grit"]
     },
     {
-      "includes": ["src/**", "!src/shared/infrastructure/github-adapter.ts"],
+      "includes": ["src/**"],
       "plugins": ["./biome-plugins/one-github-api-url.grit"]
     },
     {
@@ -6036,7 +6036,7 @@
       "plugins": ["./biome-plugins/no-laundered-test-interior.grit"]
     },
     {
-      "includes": ["src/**", "!src/composition/**"],
+      "includes": ["src/**"],
       "plugins": [
         "./biome-plugins/whole-profile-import.grit",
         "./biome-plugins/whole-profile-namespace-import.grit"
