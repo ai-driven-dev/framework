@@ -5,10 +5,8 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { windowsCommandLine } from "../../../../src/contexts/host-registration/infrastructure/executable-on-path.js";
-import {
-  HostCliAdapter,
-  type HostCliShape,
-} from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
+import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
+import type { HostCliShape } from "../../../../src/contexts/host-registration/ports/host-cli-shape.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),

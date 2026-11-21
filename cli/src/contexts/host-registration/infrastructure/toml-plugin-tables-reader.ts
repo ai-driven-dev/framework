@@ -75,13 +75,19 @@ function outsideMultilineStrings(lines: readonly string[]): readonly (string | n
  * neither ends the table nor answers for it. */
 function enabledInTableBody(lines: readonly (string | null)[], from: number): boolean {
   for (let at = from; at < lines.length; at += 1) {
-    const line = lines[at];
-    if (line === null || line === undefined) continue;
-    const trimmed = line.trim();
-    if (TOML_TABLE_HEADER.test(trimmed)) return true;
-    if (trimmed === "" || trimmed.startsWith("#")) continue;
-    const enabled = TOML_ENABLED_LINE.exec(trimmed);
-    if (enabled !== null) return enabled[1] === "true";
+    const answer = bodyLineAnswer(lines[at]);
+    if (answer !== null) return answer;
   }
   return true;
+}
+
+/** What one line of a table body says of `enabled`: the next table ends it as enabled, an
+ * `enabled` assignment answers, anything else says nothing (`null`). */
+function bodyLineAnswer(line: string | null | undefined): boolean | null {
+  if (line === null || line === undefined) return null;
+  const trimmed = line.trim();
+  if (TOML_TABLE_HEADER.test(trimmed)) return true;
+  if (trimmed === "" || trimmed.startsWith("#")) return null;
+  const enabled = TOML_ENABLED_LINE.exec(trimmed);
+  return enabled === null ? null : enabled[1] === "true";
 }

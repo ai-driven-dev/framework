@@ -1,4 +1,8 @@
-import { type SpawnSyncOptionsWithStringEncoding, spawnSync } from "node:child_process";
+import {
+  type SpawnSyncOptionsWithStringEncoding,
+  type SpawnSyncReturns,
+  spawnSync,
+} from "node:child_process";
 import type { NativeMarketplaceSourceReading } from "../domain/record/native-marketplace-source-reading.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import {
@@ -14,35 +18,42 @@ export class NativeMarketplaceSourceReaderAdapter implements HostMarketplaceSour
   constructor(private readonly contract: NativeMarketplaceSourceListContract) {}
 
   async read(projectRoot: string): Promise<NativeMarketplaceSourceReading> {
-    const location = `${this.contract.binary} ${this.contract.args.join(" ")} (cwd ${projectRoot})`;
-    const options: SpawnSyncOptionsWithStringEncoding = {
-      cwd: projectRoot,
-      encoding: "utf-8",
-      timeout: 30000,
-      stdio: ["ignore", "pipe", "pipe"],
-      shell: false,
-    };
-    const executable = resolveExecutableOnPath(this.contract.binary, hostExecutableLookup());
-    const result =
-      executable !== undefined && runsThroughShell(executable)
-        ? spawnSync(windowsCommandLine(executable, this.contract.args), { ...options, shell: true })
-        : spawnSync(this.contract.binary, [...this.contract.args], options);
+    const { binary, args } = this.contract;
+    const location = `${binary} ${args.join(" ")} (cwd ${projectRoot})`;
+    const result = runList(this.contract, projectRoot);
     if (result.error !== undefined || result.status !== 0) {
       const detail = result.error?.message ?? result.stderr?.trim() ?? "unknown failure";
       return { location, unreadable: `${this.contract.unavailableMessage}: ${detail}` };
     }
-    if (this.contract.parse === undefined)
-      return {
-        location,
-        unreadable: this.contract.unverifiedMessage,
-      };
+    return { location, ...this.parsed(result.stdout ?? "") };
+  }
+
+  private parsed(stdout: string): Pick<NativeMarketplaceSourceReading, "entries" | "unreadable"> {
+    if (this.contract.parse === undefined) return { unreadable: this.contract.unverifiedMessage };
     try {
-      return { location, entries: this.contract.parse(result.stdout ?? "") };
+      return { entries: this.contract.parse(stdout) };
     } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
       return {
-        location,
-        unreadable: `${this.contract.binary} marketplace list could not prove a source: ${error instanceof Error ? error.message : String(error)}`,
+        unreadable: `${this.contract.binary} marketplace list could not prove a source: ${reason}`,
       };
     }
   }
+}
+
+function runList(
+  contract: NativeMarketplaceSourceListContract,
+  projectRoot: string
+): SpawnSyncReturns<string> {
+  const options: SpawnSyncOptionsWithStringEncoding = {
+    cwd: projectRoot,
+    encoding: "utf-8",
+    timeout: 30000,
+    stdio: ["ignore", "pipe", "pipe"],
+    shell: false,
+  };
+  const executable = resolveExecutableOnPath(contract.binary, hostExecutableLookup());
+  return executable !== undefined && runsThroughShell(executable)
+    ? spawnSync(windowsCommandLine(executable, contract.args), { ...options, shell: true })
+    : spawnSync(contract.binary, [...contract.args], options);
 }

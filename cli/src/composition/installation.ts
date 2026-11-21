@@ -1,12 +1,10 @@
 import { homedir } from "node:os";
+import { mergeCatalogueClaims } from "../contexts/host-registration/domain/record/catalogue-claims.js";
 import {
   refOnAnyHost,
   refOnHostName,
 } from "../contexts/host-registration/domain/record/host-ref.js";
-import {
-  afterActivation,
-  mergeCatalogueClaims,
-} from "../contexts/host-registration/domain/record/registration-projection.js";
+import { afterActivation } from "../contexts/host-registration/domain/record/registration-projection.js";
 import {
   claimsOnMarketplace,
   isQualifiedRef,
