@@ -3,6 +3,7 @@
 // scripts/check/engine/hook.cjs). `start` notes the session's start, `mark` notes the artifacts the model wrote,
 // `check` judges them at Stop by the contracts under ./lib/contracts and hands each finding back once.
 // It knows no kind: each contract names where its artifacts live in a user's project (`scope`). Node built-ins only.
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -10,19 +11,20 @@ const host = require("./lib/host.cjs");
 
 const CONTRACTS = path.join(__dirname, "lib", "contracts");
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/u;
-const SAFE_NAME = /[^A-Za-z0-9._-]/gu;
 const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
 const OTHERS_BITS = 0o077;
 const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const SKIPPED_DIRS = new Set([".git", "node_modules"]);
 const WILDCARD = /[*{]/u;
 const REF_SUFFIX = ".ref";
+const MARK_SUFFIX = ".mark";
 
 const posix = (file) => file.split(path.sep).join("/");
-const plugin = () => path.basename(path.resolve(__dirname, "..")).replace(SAFE_NAME, "_") || "plugin";
+/** One state folder per installed copy: the real path of this hooks folder, since neither its name nor its parent's tells two plugins or two versions apart. */
+const copy = () => crypto.createHash("sha256").update(fs.realpathSync(__dirname)).digest("hex").slice(0, 16);
 const sessionOf = (event) => (typeof event.sessionId === "string" && SAFE_SESSION_ID.test(event.sessionId) ? event.sessionId : null);
 
-// ---- state: one folder per user and plugin in the system temp folder ---------------------------------
+// ---- state: one folder per user and installed copy in the system temp folder ---------------------------------
 
 /** Whether `folder` is a folder of this user's alone, created when `create` and missing. */
 function ownFolder(folder, create) {
@@ -42,10 +44,10 @@ function ownFolder(folder, create) {
   }
 }
 
-/** `<tmpdir>/aidd-hooks-<uid>/<plugin>`, or null when it is not this user's alone; created only when `create`. */
+/** `<tmpdir>/aidd-hooks-<uid>/<copy>`, or null when it is not this user's alone; created only when `create`. */
 function stateFolder(create) {
   const hooks = path.join(os.tmpdir(), HOOKS_FOLDER);
-  const own = path.join(hooks, plugin());
+  const own = path.join(hooks, copy());
   return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
 }
 
@@ -78,7 +80,7 @@ function sweepState(folder) {
 
 // ---- contracts: the copies under ./lib/contracts, each with its own engine -----------------------------
 
-/** Every carried contract, lazily read. A contract that cannot be read or loaded is `broken`: it claims every file, so it is reported. */
+/** Every carried contract, loaded and validated by its own engine. One that cannot be loaded is `broken` with its `error`: it claims every file, so it is reported. */
 function contracts() {
   if (!fs.existsSync(CONTRACTS)) return [];
   return fs
@@ -87,17 +89,15 @@ function contracts() {
     .map((name) => ({ name, file: path.join(CONTRACTS, name, "scripts", "contract.json") }))
     .filter((entry) => fs.existsSync(entry.file))
     .map((entry) => {
-      entry.raw = readJson(entry.file);
       try {
         entry.engine = require(path.join(CONTRACTS, entry.name, "scripts", "lib", "engine.cjs"));
-        const scope = entry.raw?.scope;
-        if (scope !== undefined && !(Array.isArray(scope) && scope.every((g) => typeof g === "string"))) throw new Error("scope");
-        entry.scope = scope ?? [];
+        entry.contract = entry.engine.loadContract(entry.file);
+        entry.scope = entry.contract.scope ?? [];
         entry.globs = entry.scope.map((glob) => entry.engine.globRegex(glob));
-      } catch {
+      } catch (error) {
         entry.broken = true;
+        entry.error = error;
       }
-      if (entry.raw === null) entry.broken = true;
       return entry;
     });
 }
@@ -121,10 +121,21 @@ function relative(cwd, file) {
 
 // ---- glob expansion for the shell scan ---------------------------------------------------------------
 
+/** What `fn` returns, or `fallback` when it throws: an entry that cannot be read is skipped, never fatal. */
+function attempt(fn, fallback) {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+const statOf = (file) => attempt(() => fs.statSync(file, { throwIfNoEntry: false }), undefined);
+const listOf = (dir, options) => attempt(() => fs.readdirSync(dir, options), []);
+
 /** Every file below a folder, `.git` and `node_modules` left out. */
 function filesBelow(dir) {
   const found = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of listOf(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
       if (!SKIPPED_DIRS.has(entry.name)) found.push(...filesBelow(path.join(dir, entry.name)));
     } else found.push(path.join(dir, entry.name));
@@ -135,7 +146,7 @@ function filesBelow(dir) {
 /** Folders under `dir`, itself included, `.git` and `node_modules` left out. */
 function foldersBelow(dir) {
   const found = [dir];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of listOf(dir, { withFileTypes: true })) {
     if (entry.isDirectory() && !SKIPPED_DIRS.has(entry.name)) found.push(...foldersBelow(path.join(dir, entry.name)));
   }
   return found;
@@ -148,13 +159,13 @@ function expand(root, glob, globRegex) {
   for (const [index, segment] of segments.entries()) {
     const next = [];
     for (const dir of found) {
-      if (!fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) continue;
+      if (!statOf(dir)?.isDirectory()) continue;
       // a trailing `**` is the folder itself: the final walk lists every file below it
       if (segment === "**") next.push(...(index === segments.length - 1 ? [dir] : foldersBelow(dir)));
       else if (!WILDCARD.test(segment)) next.push(path.join(dir, segment));
       else {
         const match = globRegex(segment);
-        for (const name of fs.readdirSync(dir)) if (match.test(name)) next.push(path.join(dir, name));
+        for (const name of listOf(dir)) if (match.test(name)) next.push(path.join(dir, name));
       }
     }
     found = next;
@@ -162,7 +173,7 @@ function expand(root, glob, globRegex) {
   const files = [];
   const dirs = [];
   for (const entry of found) {
-    const stat = fs.statSync(entry, { throwIfNoEntry: false });
+    const stat = statOf(entry);
     if (stat?.isDirectory()) dirs.push(entry);
     else if (stat) files.push(entry);
   }
@@ -185,7 +196,7 @@ function modifiedSince(cwd, entries, since) {
       for (const file of expand(cwd, glob, entry.engine.globRegex)) {
         if (seen.has(file)) continue;
         seen.add(file);
-        if (fs.statSync(file).mtimeMs > since) found.push(file);
+        if (statOf(file)?.mtimeMs > since) found.push(file);
       }
     }
   }
@@ -194,30 +205,49 @@ function modifiedSince(cwd, entries, since) {
 
 // ---- goals --------------------------------------------------------------------------------------------
 
-/** SessionStart: the reference time shell writes are told apart by. */
+/** SessionStart: the reference time shell writes are told apart by. One already there stays: the session goes on (compaction, resume) and Stop renews it. */
 function start(event) {
   const id = sessionOf(event);
   const folder = id && stateFolder(true);
-  if (folder) writeAtomic(path.join(folder, `${id}${REF_SUFFIX}`), String(Date.now()));
+  if (!folder) return;
+  const ref = path.join(folder, `${id}${REF_SUFFIX}`);
+  const stat = statOf(ref);
+  if (stat === undefined || Date.now() - stat.mtimeMs > STATE_MAX_AGE_MS) writeAtomic(ref, String(Date.now()));
 }
 
-/** PostToolUse: notes the files the model wrote that some contract could claim, or that a shell ran. */
+/** PostToolUse: notes the files the model wrote that some contract could claim, or that a shell ran, in a mark of its own: calls running in parallel never share a file. */
 function mark(event) {
   const id = sessionOf(event);
   if (!id) return;
-  const entries = contracts();
-  const files = event.files.map((file) => path.resolve(event.cwd, file.path)).filter((file) => {
-    const rel = relative(event.cwd, file);
-    return rel !== null && entries.some((entry) => claims(entry, rel));
-  });
   const shell = event.files.length === 0 && typeof event.command === "string";
+  let files = [];
+  if (event.files.length > 0) {
+    const entries = contracts();
+    files = event.files.map((file) => path.resolve(event.cwd, file.path)).filter((file) => {
+      const rel = relative(event.cwd, file);
+      return rel !== null && entries.some((entry) => claims(entry, rel));
+    });
+  }
   if (files.length === 0 && !shell) return;
   const folder = stateFolder(true);
-  if (!folder) return;
-  const file = path.join(folder, id);
-  const before = readJson(file) ?? {};
-  const known = Array.isArray(before.files) ? before.files.filter((f) => typeof f === "string") : [];
-  writeAtomic(file, JSON.stringify({ files: [...new Set([...known, ...files])], shell: before.shell === true || shell }));
+  if (folder) writeAtomic(path.join(folder, `${id}.${process.pid}-${crypto.randomBytes(6).toString("hex")}${MARK_SUFFIX}`), JSON.stringify({ files, shell }));
+}
+
+/** The session's marks, merged and removed: each one is read once and consumed. */
+function takeMarks(folder, id) {
+  const turn = { files: [], shell: false };
+  let found = false;
+  for (const name of listOf(folder)) {
+    if (!name.startsWith(`${id}.`) || !name.endsWith(MARK_SUFFIX)) continue;
+    const file = path.join(folder, name);
+    const mark = readJson(file);
+    attempt(() => fs.rmSync(file, { force: true }));
+    if (mark === null) continue;
+    found = true;
+    if (Array.isArray(mark.files)) turn.files.push(...mark.files.filter((f) => typeof f === "string"));
+    if (mark.shell === true) turn.shell = true;
+  }
+  return found ? turn : null;
 }
 
 /** The line of a failure that stops a contract from judging, never silenced. */
@@ -234,25 +264,25 @@ function unitsOf(contract, globs, cwd, rel) {
 function judge(cwd, entries, written) {
   const lines = new Set();
   const done = new Set();
-  const loaded = new Map();
   for (const file of written) {
     const rel = relative(cwd, file);
     if (rel === null || !fs.existsSync(file)) continue;
     for (const entry of entries) {
       if (!claims(entry, rel)) continue;
+      if (entry.broken) {
+        lines.add(brokenLine(entry, entry.error));
+        continue;
+      }
       try {
-        if (entry.broken) throw new Error(`${entry.file} cannot be loaded`);
-        if (!loaded.has(entry.name)) loaded.set(entry.name, entry.engine.loadContract(entry.file));
-        const contract = loaded.get(entry.name);
-        for (const target of unitsOf(contract, entry.globs, cwd, rel)) {
+        for (const target of unitsOf(entry.contract, entry.globs, cwd, rel)) {
           if (done.has(`${entry.name}\0${target}`)) continue;
           done.add(`${entry.name}\0${target}`);
-          for (const found of entry.engine.check(contract, target)) {
+          for (const found of entry.engine.check(entry.contract, target)) {
             if (written.has(found.path)) lines.add(`${posix(path.relative(cwd, found.path))}:${found.line} ${found.id} ${found.message}`);
           }
         }
       } catch (error) {
-        lines.add(brokenLine(entry, error));
+        lines.add(`${rel}: ${brokenLine(entry, error)}`);
       }
     }
   }
@@ -267,18 +297,16 @@ function atStop(event) {
   const id = sessionOf(event);
   const folder = id && stateFolder(false);
   if (!folder) return "";
-  const markFile = path.join(folder, id);
   const refFile = path.join(folder, `${id}${REF_SUFFIX}`);
   try {
     sweepState(folder);
-    const turn = readJson(markFile);
-    if (turn === null) return "";
-    fs.rmSync(markFile, { force: true });
-    if (event.stopActive === true) return "";
+    const turn = takeMarks(folder, id);
+    if (turn === null || event.stopActive === true) return "";
     const entries = contracts();
-    const written = new Set((Array.isArray(turn.files) ? turn.files : []).filter((f) => typeof f === "string").map((f) => path.resolve(f)));
-    const since = Number(fs.existsSync(refFile) ? fs.readFileSync(refFile, "utf8") : Number.NaN);
-    if (turn.shell === true && Number.isFinite(since)) for (const file of modifiedSince(event.cwd, entries, since)) written.add(file);
+    const written = new Set(turn.files.map((f) => path.resolve(f)));
+    const since = Number(attempt(() => fs.readFileSync(refFile, "utf8"), Number.NaN));
+    // a shell scan that fails must not lose the files the model's own writes marked
+    if (turn.shell && Number.isFinite(since)) for (const file of attempt(() => modifiedSince(event.cwd, entries, since), [])) written.add(file);
     return judge(event.cwd, entries, written);
   } finally {
     try {

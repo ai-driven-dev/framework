@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
+const { spawn, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -29,17 +29,17 @@ function tempDir(prefix) {
 
 /** A plugin's generated hooks folder with one host's adapter where the build puts it, as each tool receives it. */
 const installed = new Map();
+function install(plugin, host, dir) {
+  fs.cpSync(path.join(REPO, "plugins", plugin, "hooks"), dir, { recursive: true });
+  const adapter = BRIDGED.has(host)
+    ? fs.readFileSync(path.join(RUNTIME, "host-bridge.cjs"), "utf8").replace('const HOST = "unstamped";', `const HOST = "${host}";`)
+    : fs.readFileSync(path.join(RUNTIME, `host-${host}.cjs`), "utf8");
+  fs.writeFileSync(path.join(dir, "lib/host.cjs"), adapter);
+  return dir;
+}
 function hookFor(plugin, host) {
   const key = `${plugin}/${host}`;
-  if (!installed.has(key)) {
-    const dir = path.join(tempDir(`artifact-hook-${plugin}-${host}-`), "hooks");
-    fs.cpSync(path.join(REPO, "plugins", plugin, "hooks"), dir, { recursive: true });
-    const adapter = BRIDGED.has(host)
-      ? fs.readFileSync(path.join(RUNTIME, "host-bridge.cjs"), "utf8").replace('const HOST = "unstamped";', `const HOST = "${host}";`)
-      : fs.readFileSync(path.join(RUNTIME, `host-${host}.cjs`), "utf8");
-    fs.writeFileSync(path.join(dir, "lib/host.cjs"), adapter);
-    installed.set(key, dir);
-  }
+  if (!installed.has(key)) installed.set(key, install(plugin, host, path.join(tempDir(`artifact-hook-${plugin}-${host}-`), "hooks")));
   return installed.get(key);
 }
 
@@ -86,10 +86,10 @@ function stopPayload(host, root, { active = false } = {}) {
 }
 
 /** One hook run in its own system temp folder: nothing a run leaves there may reach another. */
-function run(plugin, host, goal, payload, { tmp, cwd = os.tmpdir() }) {
+function run(plugin, host, goal, payload, { tmp, cwd = os.tmpdir(), dir = hookFor(plugin, host) }) {
   // aidd-context has one Stop entry: memory.cjs answers the turn end and carries the artifacts' findings.
   const args = plugin === "aidd-context" && goal === "check" ? ["memory.cjs", "sync"] : ["artifacts.cjs", goal];
-  const result = spawnSync(process.execPath, [path.join(hookFor(plugin, host), args[0]), args[1]], {
+  const result = spawnSync(process.execPath, [path.join(dir, args[0]), args[1]], {
     input: typeof payload === "string" ? payload : JSON.stringify(payload),
     encoding: "utf8",
     cwd,
@@ -204,7 +204,12 @@ test("silent: a conforming phase beside its plan", () => {
 });
 
 test("a finding on a plan.md the turn did not write is dropped", () => {
-  const s = session("aidd-dev", "claude", { [PLAN]: GOOD_PLAN, [PHASE]: GOOD_PHASE });
+  const files = { [PLAN]: GOOD_PLAN.replace("## Impact", "## Impakt"), [PHASE]: GOOD_PHASE };
+  const written = session("aidd-dev", "claude", files);
+  written.start();
+  written.wrote(PLAN);
+  assert.ok(lines(written.stop()).some((line) => line.startsWith(`${PLAN}:`)), "the plan is broken");
+  const s = session("aidd-dev", "claude", files);
   s.start();
   s.wrote(PHASE);
   assert.equal(s.stop(), "");
@@ -311,6 +316,102 @@ test("the reference is the previous turn's end: a file modified before it is not
   assert.ok(lines(s.stop()));
   s.shell();
   assert.equal(s.stop(), "");
+});
+
+test("a compaction's second start keeps the reference: a shell write before it is still answered", () => {
+  const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
+  s.start();
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+  s.put(STORY, BROKEN_STORY);
+  s.shell();
+  s.start();
+  assert.ok(lines(s.stop()).every((line) => line.startsWith(`${STORY}:`)));
+});
+
+test("a bad entry in scope does not silence the turn: a dangling link, an unreadable folder", (t) => {
+  const s = session("aidd-dev", "claude", { [PLAN]: "# Plan\n", [PHASE]: "# nope\n" });
+  try {
+    fs.symlinkSync("/nonexistent", path.join(s.root, "aidd_docs/gone.md"));
+  } catch {
+    t.skip("symlinks cannot be created here");
+    return;
+  }
+  const locked = path.join(s.root, "aidd_docs/locked");
+  s.put("aidd_docs/locked/x.md", "x");
+  const lock = typeof process.getuid === "function" && process.getuid() !== 0;
+  if (lock) fs.chmodSync(locked, 0o000);
+  try {
+    s.start();
+    s.wrote(PHASE);
+    s.shell();
+    assert.ok(lines(s.stop()).some((line) => line.includes(" PLAN-02 ")));
+  } finally {
+    if (lock) fs.chmodSync(locked, 0o700);
+  }
+});
+
+test("a custom check that throws on a file names the file, the contract and the message", () => {
+  const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
+  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/02-user-stories/scripts/lib/engine.cjs");
+  const original = fs.readFileSync(engine, "utf8");
+  fs.writeFileSync(engine, `${original}\nmodule.exports.check = () => {\n  throw new Error("boom");\n};\n`);
+  try {
+    s.start();
+    s.wrote(STORY);
+    assert.deepEqual(lines(s.stop()), [`${STORY}: 02-user-stories: boom`]);
+  } finally {
+    fs.writeFileSync(engine, original);
+  }
+});
+
+/** Hook runs of one session, sharing one project and one system temp folder, in installs placed by `dirs` (plugin to folder). */
+function shared(dirs) {
+  const root = tempDir("artifact-project-");
+  const tmp = tempDir("artifact-state-");
+  fs.mkdirSync(path.join(root, path.dirname(STORY)), { recursive: true });
+  fs.writeFileSync(path.join(root, STORY), BROKEN_STORY);
+  const at = (plugin, goal, payload) => {
+    const result = run(plugin, "claude", goal, payload, { tmp, dir: dirs[plugin] });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout;
+  };
+  return { root, at };
+}
+
+const LAYOUTS = {
+  flat: (base, plugin) => path.join(base, ".claude/hooks", plugin),
+  "plugin install": (base, plugin) => path.join(base, ".claude/plugins/cache/aidd", plugin, "2.8.0/hooks"),
+};
+for (const [layout, place] of Object.entries(LAYOUTS)) {
+  for (const order of [["aidd-pm", "aidd-dev"], ["aidd-dev", "aidd-pm"]]) {
+    test(`${layout}: two plugins marking the same story keep their own state, Stops in ${order.join(", ")} order`, () => {
+      const base = tempDir("artifact-install-");
+      const dirs = Object.fromEntries(["aidd-pm", "aidd-dev"].map((plugin) => [plugin, install(plugin, "claude", place(base, plugin))]));
+      const s = shared(dirs);
+      for (const plugin of ["aidd-pm", "aidd-dev"]) s.at(plugin, "start", startPayload("claude", s.root));
+      for (const plugin of ["aidd-pm", "aidd-dev"]) s.at(plugin, "mark", writePayload("claude", s.root, STORY));
+      const answers = Object.fromEntries(order.map((plugin) => [plugin, s.at(plugin, "check", stopPayload("claude", s.root))]));
+      assert.ok(lines(answers["aidd-pm"]).every((line) => line.startsWith(`${STORY}:`)));
+    });
+  }
+}
+
+/** One hook run that does not block the test: parallel tool calls run their hooks at the same time. */
+function runAsync(plugin, goal, payload, tmp) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [path.join(hookFor(plugin, "claude"), "artifacts.cjs"), goal], { cwd: os.tmpdir(), env: { ...ENV, TMPDIR: tmp, TEMP: tmp, TMP: tmp } });
+    child.on("close", resolve);
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+test("marks written by parallel tool calls are all judged", async () => {
+  const names = Array.from({ length: 24 }, (_, i) => `aidd_docs/backlog/stories/p${i}.md`);
+  const s = session("aidd-pm", "claude", Object.fromEntries(names.map((rel) => [rel, BROKEN_STORY])));
+  s.start();
+  await Promise.all(names.map((rel) => runAsync("aidd-pm", "mark", writePayload("claude", s.root, rel), s.tmp)));
+  const found = lines(s.stop());
+  for (const rel of names) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
 });
 
 // ---- a broken contract, the state folder ------------------------------------------------------------
