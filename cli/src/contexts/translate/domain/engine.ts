@@ -33,6 +33,9 @@ export type TranslateLayout =
  * the sink never reads the plugin's source again. */
 export interface Translation {
   readonly files: OutputFile[];
+  /** The canon file each of `files` is written from, by its path. A file the layout generates has
+   * none, so an install and a build of one plugin can be read against each other. */
+  readonly sources: ReadonlyMap<string, string>;
   readonly componentPaths: ReadonlyMap<string, string>;
   readonly flatHookPaths: ReadonlySet<string>;
   readonly skipped: ReadonlySkipList;
@@ -45,7 +48,7 @@ export interface Translation {
 }
 
 /** What a layout plans for one plugin, before any rule runs. */
-interface LayoutPlan extends Omit<Translation, "files"> {
+interface LayoutPlan extends Omit<Translation, "files" | "sources"> {
   readonly plans: ComponentPlan[];
 }
 
@@ -53,7 +56,11 @@ interface LayoutPlan extends Omit<Translation, "files"> {
  * layout plans each file as data, and `applyPlan` runs the rules, so a rule is written once. */
 export function translate(dist: PluginDistribution, layout: TranslateLayout): Translation {
   const { plans, ...rest } = planLayout(dist, layout);
-  return { ...rest, files: plans.map(applyPlan) };
+  const files = plans.map(applyPlan);
+  const sources = new Map(
+    plans.flatMap(({ source }, at) => (source === "" ? [] : [[files[at].relativePath, source]]))
+  );
+  return { ...rest, files, sources };
 }
 
 function planLayout(dist: PluginDistribution, layout: TranslateLayout): LayoutPlan {

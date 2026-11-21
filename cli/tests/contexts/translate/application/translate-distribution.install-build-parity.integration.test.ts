@@ -1,13 +1,9 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { buildPlans } from "../../../../src/contexts/translate/domain/layouts/build-layout.js";
-import { installPlan } from "../../../../src/contexts/translate/domain/layouts/install-layout.js";
-import {
-  applyPlan,
-  type ComponentPlan,
-} from "../../../../src/contexts/translate/domain/rules/component-pipeline.js";
+import { translate } from "../../../../src/contexts/translate/domain/engine.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
+import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
@@ -97,6 +93,26 @@ const DIFFERENCES: readonly Difference[] = [
   })),
 ];
 
+/** A file only one side writes through the engine, and why: the other side writes it elsewhere or
+ * not at all. Each entry names a side, so a file one side starts writing alone is a failure, and an
+ * entry whose file no side writes any more fails too. */
+interface OneSided {
+  readonly cell: string;
+  readonly side: "install" | "build";
+  readonly file: RegExp;
+  readonly reason: string;
+}
+
+const MANIFEST_REASON =
+  "an install writes the plugin's manifest among its files; a build synthesizes it in the sink, which folds it with the marketplace catalog";
+
+const ONE_SIDED: readonly OneSided[] = ["claude", "copilot", "codex"].map((tool) => ({
+  cell: `${tool}:marketplace`,
+  side: "install",
+  file: /^generated:.*\/plugins\/[^/]+\/plugin\.json$/,
+  reason: MANIFEST_REASON,
+}));
+
 const tools = registeredTools();
 const CELLS = tools.idsInCanonicalOrder("ai").flatMap((id) => {
   const tool = tools.aiProfile(id);
@@ -106,10 +122,28 @@ const CELLS = tools.idsInCanonicalOrder("ai").flatMap((id) => {
   return contract === null ? [] : [{ id, tool, mode, contract, cell: `${id}:${mode}` }];
 });
 
-function bySource(plans: readonly ComponentPlan[]): Map<string, string> {
-  const files = new Map<string, string>();
-  for (const plan of plans) if (plan.source !== "") files.set(plan.source, applyPlan(plan).content);
-  return files;
+/** What the engine writes for a plugin, by the canon file each comes from, and by its own path for
+ * a file the layout generates: nothing the engine writes is left out of the comparison. */
+function written(
+  dist: PluginDistribution,
+  layout: Parameters<typeof translate>[1]
+): Map<string, string> {
+  const { files, sources } = translate(dist, layout);
+  return new Map(
+    files.map(({ relativePath, content }) => [
+      sources.get(relativePath) ?? `generated:${relativePath}`,
+      content,
+    ])
+  );
+}
+
+function withoutOneSided(
+  cell: string,
+  side: OneSided["side"],
+  files: ReadonlyMap<string, string>
+): Map<string, string> {
+  const named = ONE_SIDED.filter((entry) => entry.cell === cell && entry.side === side);
+  return new Map([...files].filter(([key]) => !named.some((entry) => entry.file.test(key))));
 }
 
 const componentOf = (source: string): string => source.split("/")[0];
@@ -137,17 +171,33 @@ describe("an install against a build of the same plugin", () => {
     await seedFromDirectory(tree, FRAMEWORK_SOURCE, { useAbsolutePaths: true });
   });
 
-  function pairs(cell: (typeof CELLS)[number]) {
+  /** What each side writes for every plugin, all of it. */
+  function writtenBy(cell: (typeof CELLS)[number]) {
+    const manifestPaths = registeredManifestPaths();
     return readdirSync(join(FRAMEWORK_SOURCE, "plugins")).map((name) => {
       const dist = distributionOf(tree, name);
-      const manifestPaths = registeredManifestPaths();
-      const install = bySource(installPlan(dist, { tool: cell.tool, manifestPaths }).plans);
-      const build = bySource(buildPlans(dist, cell.contract, cell.mode));
-      return { name, install, build };
+      return {
+        name,
+        install: written(dist, { kind: "install", tool: cell.tool, manifestPaths }),
+        build: written(dist, {
+          kind: "build",
+          contract: cell.contract,
+          mode: cell.mode,
+          outDir: "out",
+        }),
+      };
     });
   }
 
-  it.each(CELLS)("$cell: both write the same canon files, two ways", (cell) => {
+  function pairs(cell: (typeof CELLS)[number]) {
+    return writtenBy(cell).map(({ name, install, build }) => ({
+      name,
+      install: withoutOneSided(cell.cell, "install", install),
+      build: withoutOneSided(cell.cell, "build", build),
+    }));
+  }
+
+  it.each(CELLS)("$cell: both write the same files, two ways", (cell) => {
     for (const { name, install, build } of pairs(cell)) {
       const onlyInstalled = [...install.keys()].filter((source) => !build.has(source));
       const onlyBuilt = [...build.keys()].filter((source) => !install.has(source));
@@ -182,5 +232,16 @@ describe("an install against a build of the same plugin", () => {
       );
     });
     expect(stale.map((d) => `${d.cell}:${d.component}`)).toEqual([]);
+  });
+
+  it("names no file only one side writes that no side writes any more", () => {
+    const stale = ONE_SIDED.filter((entry) => {
+      const cell = CELLS.find((c) => c.cell === entry.cell);
+      if (cell === undefined) return true;
+      return !writtenBy(cell).some((plugin) =>
+        [...plugin[entry.side].keys()].some((key) => entry.file.test(key))
+      );
+    });
+    expect(stale.map((entry) => `${entry.cell}:${entry.side}`)).toEqual([]);
   });
 });
