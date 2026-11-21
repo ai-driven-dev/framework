@@ -2,6 +2,7 @@ import type * as auth from "../../contexts/auth/domain/auth.error.js";
 import type * as distribution from "../../contexts/distribution/domain/distribution.error.js";
 import { MAX_IDENTITY_LENGTH } from "../../contexts/telemetry/contract/identity-limit.js";
 import type * as telemetry from "../../contexts/telemetry/domain/telemetry.error.js";
+import type * as translate from "../../contexts/translate/domain/translate.error.js";
 import type * as update from "../../contexts/update/domain/update.error.js";
 import type { AiddError } from "../../shared/domain/shared.error.js";
 
@@ -12,6 +13,7 @@ type Catalogued = InstanceType<
   | Classes<typeof update>
   | Classes<typeof telemetry>
   | Classes<typeof distribution>
+  | Classes<typeof translate>
 >;
 type ByCode = { [Error in Catalogued as Error["code"]]: Error };
 
@@ -61,6 +63,21 @@ const entries: { [Code in keyof ByCode]: (error: ByCode[Code]) => string } = {
   "unreadable-marketplace-registry": (error) =>
     `Cannot read the marketplace registry at ${error.path}: ${error.reason}. Repair the file, or ` +
     `delete it to start from an empty registry.`,
+  "flat-merge-target-not-json": (error) =>
+    `${error.shownPath} is not valid JSON (${error.parseMessage}); left untouched.`,
+  "flat-target-exists": (error) =>
+    `Flat build conflict: '${error.targetPath}' already exists (plugin '${error.pluginName}'). ` +
+    "Re-run with --force to overwrite.",
+  "framework-placeholder-in-plugin": (error) =>
+    `Framework placeholder '@{{TOOLS}}/' is not allowed inside plugin '${error.pluginName}' (file: ${error.relativePath}).`,
+  "invalid-build-paths": (error) =>
+    `Refusing to build: --out '${error.outDir}' and --source '${error.sourceDir}' must not contain each other.`,
+  "json-schema-validation": (error) => `Manifest validation failed: ${error.errors.join("; ")}`,
+  "marketplace-out-dir-not-empty": (error) =>
+    `Refusing to build: '${error.outDir}' is not empty. ` +
+    "Re-run with --force to overwrite files this build produces, or choose an empty --out directory.",
+  "out-dir-not-directory": (error) =>
+    `Refusing to build: --out '${error.outDir}' does not exist or is not a directory.`,
   update: () =>
     "Update failed. If you saw a 403 error above, ensure your GitHub token includes both repo and read:packages scopes.\n" +
     "Update your token at https://github.com/settings/tokens, then re-run `aidd auth login`.",

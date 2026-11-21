@@ -114,8 +114,7 @@ describe("a flat build for antigravity into a hooks file that is not JSON", () =
     const build = buildFlat(TOOL.antigravity, { source: FRAMEWORK_REAL });
 
     await expect(build).rejects.toBeInstanceOf(FlatMergeTargetNotJsonError);
-    await expect(build).rejects.toThrow(".agents/hooks.json is not valid JSON");
-    await expect(build).rejects.toThrow("left untouched");
+    await expect(build).rejects.toMatchObject({ shownPath: ".agents/hooks.json" });
     expect(await readFile(hooksFile, "utf-8")).toBe("{ not json");
   });
 });
