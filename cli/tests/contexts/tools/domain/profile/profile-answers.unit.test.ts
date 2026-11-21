@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   configAnswers,
@@ -37,7 +38,10 @@ describe("the answers a profile reads from its sections", () => {
   });
 
   it("locates the signal directory under a project root, or none", () => {
-    expect(signalDirectoryOf(".x/", "/p")).toEqual({ absolute: "/p/.x/", relative: ".x/" });
+    expect(signalDirectoryOf(".x/", "/p")).toEqual({
+      absolute: join("/p", ".x/"),
+      relative: ".x/",
+    });
     expect(signalDirectoryOf(null, "/p")).toBeNull();
   });
 });

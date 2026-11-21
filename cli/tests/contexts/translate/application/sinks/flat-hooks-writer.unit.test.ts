@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { writeFlatHooks } from "../../../../../src/contexts/translate/application/sinks/flat-hooks-writer.js";
 import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
@@ -42,7 +43,7 @@ describe("one plugin's flat hooks", () => {
   it("refuses a script another build already wrote", async () => {
     const fs = seeded({ "/out/flat/hooks/run.sh": "old" });
     await expect(writeFlatHooks(fs, new CapturingLogger(), stepFor(false))).rejects.toThrow(
-      new FlatTargetExistsError("/out/flat/hooks/run.sh", "plug")
+      new FlatTargetExistsError(join("/out", "flat/hooks/run.sh"), "plug")
     );
   });
 

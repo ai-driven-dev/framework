@@ -21,7 +21,7 @@ describe("readBuiltUserPluginFiles", () => {
     const files = await readBuiltUserPluginFiles(fs, {
       builtDir: BUILT,
       name: "aidd-dev",
-      platform: "posix",
+      platform: process.platform,
     });
 
     expect(files.map((f) => f.relativePath)).toEqual(["aidd-dev/skills/a.md"]);
@@ -61,7 +61,7 @@ describe("readBuiltFlatFiles", () => {
 
     const files = await readBuiltFlatFiles(
       fs,
-      { builtDir: BUILT, platform: "posix" },
+      { builtDir: BUILT, platform: process.platform },
       { name: "aidd-dev", tool, extraPaths: new Set(["hooks/extra.js"]) }
     );
 
