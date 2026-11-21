@@ -33,6 +33,6 @@ describe("one flat skill file", () => {
       [`${SKILLS}/hello/SKILL.md`]: "---\nname: 01-hello\n---\nbody\n",
     });
     await writeFlatSkill(fs, stepFor("hello/SKILL.md", { rewriteSkillName: true }));
-    expect(fs.getFile("/out/flat/skills/hello/SKILL.md")).toContain("name: hello");
+    expect(fs.getFile("/out/flat/skills/hello/SKILL.md")).toContain("name: 'hello'");
   });
 });
