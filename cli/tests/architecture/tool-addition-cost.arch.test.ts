@@ -207,7 +207,7 @@ describe("the guard itself", () => {
 
   it("flags a planted dotfile literal outside the baseline the way a real one would be", () => {
     const ids = ["cursor"];
-    const file = "src/contexts/framework/application/some-new-helper.ts";
+    const file = "src/contexts/framework/application/some-new-module.ts";
     const content = 'const hooksPath = join(projectRoot, ".cursor", "hooks.json");';
 
     expect(isAllowed(file, ids), "the planted file is not inside cursor's own profile").toBe(false);

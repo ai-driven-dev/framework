@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Files that reshape every scope's run at once, relative to the repository root. A change to
- * a dependency, the workflow or a test helper is not one: it moves only the scopes whose
+ * a dependency, the workflow or a test kit file is not one: it moves only the scopes whose
  * source it modifies. */
 export const HARNESS = [
   "cli/mutation-scopes.json",

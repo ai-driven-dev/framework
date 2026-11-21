@@ -59,7 +59,7 @@ export function sourceFiles(): string[] {
   return srcFiles();
 }
 
-/** Every `.ts` file under a `cli/`-relative directory, kits and helpers included, as a `cli/`-relative path, sorted. */
+/** Every `.ts` file under a `cli/`-relative directory, kits and support files included, as a `cli/`-relative path, sorted. */
 export function tsFilesUnder(dir: string): string[] {
   return readdirSync(join(CLI_ROOT, dir), { recursive: true, encoding: "utf8" })
     .map((entry) => canonicalPath(join(dir, entry)))

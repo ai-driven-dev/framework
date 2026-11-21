@@ -16,7 +16,7 @@ import { sandboxedEnv } from "./cli-sandbox.builder.js";
  *
  * It runs on the main thread only. On a worker thread `os.homedir()` reads the main process's
  * environment, not the substituted HOME, so the product would resolve the runner's real home.
- * Stryker runs Vitest on worker threads, so the tests that use this helper are left out of the
+ * Stryker runs Vitest on worker threads, so the tests that use this builder are left out of the
  * mutation run (`vitest.mutation.config.ts`).
  *
  * It restores what it changed and nothing else: a spy or an environment stub the caller made

@@ -8,7 +8,7 @@ import { textLoader } from "./tests/setup/vitest-text-loader.js";
 const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
 /**
- * Every test file that drives the CLI in process, directly or through a helper that does.
+ * Every test file that drives the CLI in process, directly or through a kit that does.
  * Those tests replace e2e tests that never ran under mutation either, and they cannot run here:
  * Stryker runs Vitest on worker threads, where `os.homedir()` ignores the substituted HOME.
  * Scanned at load, so a new such test is left out without anyone remembering to list it.

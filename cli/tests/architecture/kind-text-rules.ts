@@ -10,7 +10,7 @@ import { present } from "../shared/testing/present.builder.js";
 import { literalsOf, readEach, violation } from "./kind-rule-support.js";
 import type { Violation } from "./kinds.js";
 
-// A test reaches the repository through one helper.
+// A test reaches the repository through the repository-root builder.
 
 const CLIMB = /["'`]((?:\.\.\/)+)[^"'`]*["'`]/g;
 const CWD_PARENT = /process\.cwd\(\)\s*,\s*["']\.\.["']/g;

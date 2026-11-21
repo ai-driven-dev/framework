@@ -52,7 +52,7 @@ describe("rewriteRelativeLinks", () => {
     });
   });
 
-  describe("leaves @{{TOOLS}}/... untouched in this helper", () => {
+  describe("leaves @{{TOOLS}}/... untouched by the rewrite", () => {
     it("does not rewrite @{{TOOLS}}/ placeholders", () => {
       const input = "Use @{{TOOLS}}/skills/foo.md";
       expect(rewriteRelativeLinks(input, STABLE_OPTS)).toBe(input);
