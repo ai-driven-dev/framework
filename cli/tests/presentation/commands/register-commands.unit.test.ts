@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { expect, it } from "vitest";
-import { bindContainer } from "../../../src/composition/container.js";
+import { bindContainer } from "../../../src/composition/orchestration/deps-graph.js";
 import { wireTelemetryRequests } from "../../../src/composition/telemetry.js";
 import { wireTools } from "../../../src/composition/tools.js";
 import { registerCommands } from "../../../src/presentation/commands/register-commands.js";

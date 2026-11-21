@@ -123,6 +123,24 @@ export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execu
   };
 }
 
+/** Removing a plugin from the machine, under its home directory. */
+function wireUserPluginRemoval(base: Base, inst: Installation) {
+  const { tools, fs, logger, userManifestRepo, withdrawFromHost } = base;
+  return underMachineHome(
+    new RemoveUserPlugin(
+      {
+        userRepo: userManifestRepo,
+        withdrawFromHost: claimedRefWithdrawal(withdrawFromHost),
+        records: inst.registrationRecordRules,
+        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+        ),
+      },
+      tools
+    )
+  );
+}
+
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
 function wirePluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
@@ -150,34 +168,27 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     },
     tools
   );
-  const userPluginRemove = underMachineHome(
-    new RemoveUserPlugin(
-      {
-        userRepo: userManifestRepo,
-        withdrawFromHost: claimedRefWithdrawal(withdrawFromHost),
-        records: registrationRecordRules,
-        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
-          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-        ),
-      },
-      tools
-    )
-  );
+  const userPluginRemove = wireUserPluginRemoval(base, inst);
   return { pluginRemoveUseCase, userPluginRemove };
+}
+
+/** Writing a plugin's files under the machine's user scope, from the build it was fetched into. */
+function pluginMaterializerOf(base: Base, inst: Installation) {
+  return new PluginMaterializer({
+    fs: base.fs,
+    loader: new PluginDistributionLoader(base.pluginFetcher, base.pluginDistributionReader),
+    guard: userScopeFileGuard,
+    builtDeps: inst.builtMaterializationDeps,
+    globalCacheDir: pluginCacheDir,
+  });
 }
 
 /** Updating a plugin in a project or on the machine. */
 function wirePluginUpdate(base: Base, inst: Installation) {
-  const { tools, fs, logger, manifestRepo, userManifestRepo, pluginDistributionReader } = base;
-  const { pluginFetcher } = base;
+  const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
+  const { pluginFetcher, pluginDistributionReader } = base;
   const { installRuntimeConfigUseCase, builtMaterializationDeps, registrationRecordRules } = inst;
-  const pluginMaterializer = new PluginMaterializer({
-    fs,
-    loader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    guard: userScopeFileGuard,
-    builtDeps: builtMaterializationDeps,
-    globalCacheDir: pluginCacheDir,
-  });
+  const pluginMaterializer = pluginMaterializerOf(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
       manifestRepo,
@@ -211,13 +222,12 @@ function wirePluginUpdate(base: Base, inst: Installation) {
   };
 }
 
-/** The plugin lifecycle: add, install, update and remove. */
-export function wirePlugin(base: Base, inst: Installation) {
-  const { tools, fs, logger, prompter, manifestRepo, userManifestRepo } = base;
-  const { pluginDistributionReader, pluginFetcher, marketplaceRegistry } = base;
-  const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
+/** Adding a plugin to a project or to the machine, resolving its source and placing its files. */
+function pluginAddOf(base: Base, inst: Installation) {
+  const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
   const { installRuntimeConfigUseCase, builtMaterializationDeps } = inst;
-  const pluginAddUseCase = new AddPlugin(
+  const { pluginFetcher, pluginDistributionReader } = base;
+  return new AddPlugin(
     {
       fs,
       manifests: { project: manifestRepo, user: userManifestRepo },
@@ -236,6 +246,13 @@ export function wirePlugin(base: Base, inst: Installation) {
     },
     tools
   );
+}
+
+/** The plugin lifecycle: add, install, update and remove. */
+export function wirePlugin(base: Base, inst: Installation) {
+  const { tools, logger, prompter, manifestRepo, marketplaceRegistry } = base;
+  const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
+  const pluginAddUseCase = pluginAddOf(base, inst);
   const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace({
     resolvePluginSource: new ResolvePluginSource(marketplaceRegistry, resolveMarketplaceUseCase),
     addPlugin: pluginAddUseCase,

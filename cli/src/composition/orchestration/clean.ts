@@ -87,39 +87,11 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
   });
 }
 
-/** Clean and uninstall. */
-export function wireClean(base: Base, inst: Installation) {
-  const {
-    fs,
-    logger,
-    prompter,
-    manifestRepo,
-    userManifestRepo,
-    userSourceReferences,
-    marketplaceRegistry,
-    withdrawFromHost,
-    tools,
-  } = base;
+/** What a project clean removes: its files, with the records the registrations left. */
+function wireCleanProjectFiles(base: Base, inst: Installation) {
+  const { fs, logger, manifestRepo, tools } = base;
   const { updateGitignore, registrationRecordRules } = inst;
-  const uninstallTools = new UninstallTools(
-    {
-      manifestRepo,
-      detachClaims: detachProjectClaims(userManifestRepo, fs),
-      records: registrationRecordRules,
-      removeToolFiles: new RemoveToolFiles(fs, logger, tools),
-    },
-    tools
-  );
-  const purgeCache = new PurgeDeclaredCache(fs, logger);
-  const claims = wireCleanClaims({
-    fs,
-    logger,
-    userManifestRepo,
-    userSourceReferences,
-    purgeCache,
-  });
-  const cleanUserScopeUseCase = wireCleanUserScope(base, purgeCache, claims);
-  const cleanProjectFiles = new CleanProjectFiles(
+  return new CleanProjectFiles(
     {
       fs,
       manifestRepo,
@@ -136,12 +108,35 @@ export function wireClean(base: Base, inst: Installation) {
     },
     tools
   );
+}
+
+/** Clean and uninstall. */
+export function wireClean(base: Base, inst: Installation) {
+  const { fs, logger, prompter, manifestRepo, userManifestRepo, marketplaceRegistry, tools } = base;
+  const uninstallTools = new UninstallTools(
+    {
+      manifestRepo,
+      detachClaims: detachProjectClaims(userManifestRepo, fs),
+      records: inst.registrationRecordRules,
+      removeToolFiles: new RemoveToolFiles(fs, logger, tools),
+    },
+    tools
+  );
+  const purgeCache = new PurgeDeclaredCache(fs, logger);
+  const claims = wireCleanClaims({
+    fs,
+    logger,
+    userManifestRepo,
+    userSourceReferences: base.userSourceReferences,
+    purgeCache,
+  });
   const cleanUseCase = new CleanProject({
-    cleanProject: cleanProjectFiles,
-    withdrawFromHost,
+    cleanProject: wireCleanProjectFiles(base, inst),
+    withdrawFromHost: base.withdrawFromHost,
     claims,
     marketplaces: new ListMarketplaces(marketplaceRegistry),
     prompter,
   });
+  const cleanUserScopeUseCase = wireCleanUserScope(base, purgeCache, claims);
   return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
 }

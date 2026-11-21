@@ -1,6 +1,7 @@
 import { platform } from "node:os";
 import { Command } from "commander";
-import { bindContainer, createContainer } from "./composition/container.js";
+import { createContainer } from "./composition/container.js";
+import { bindContainer } from "./composition/orchestration/deps-graph.js";
 import { createOutput as createOutputWith } from "./composition/shared.js";
 import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";

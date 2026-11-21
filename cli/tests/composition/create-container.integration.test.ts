@@ -2,8 +2,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bindContainer, createContainer } from "../../src/composition/container.js";
+import { createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
+import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { createOutput } from "../../src/composition/shared.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 

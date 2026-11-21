@@ -140,7 +140,7 @@ export async function runInProcess(
     const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    const { bindContainer } = await import("../../../src/composition/container.js");
+    const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
     const depsFactory: DepsFactory = bindContainer(tools);
     const { registerCommands } = await import(
       "../../../src/presentation/commands/register-commands.js"

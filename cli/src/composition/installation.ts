@@ -152,19 +152,9 @@ function wireConfigInstallation(base: Base, assetProvider: BundledAssetProviderA
   };
 }
 
-/** The installation context's shared commands and the build cache they read. */
-export function wireInstallation(base: Base) {
-  const {
-    tools,
-    fs,
-    logger,
-    currentVersionProvider,
-    manifestRepo,
-    userManifestRepo,
-    marketplaceRegistry,
-    resolveMarketplaceUseCase,
-  } = base;
-  const assetProvider = new BundledAssetProviderAdapter(tools);
+/** The build cache a marketplace is materialized through, and the agent models it bakes in. */
+function wireBuiltMarketplace(base: Base, assetProvider: BundledAssetProviderAdapter) {
+  const { tools, fs, logger, currentVersionProvider, resolveMarketplaceUseCase } = base;
   // `force: true` is safe here: `outDir` is always an aidd-owned disposable cache, never a
   // user-owned directory, so a collision only means a previous build's cache exists. Its
   // diagnostics drop to debug because this build runs behind almost every command, where
@@ -185,10 +175,17 @@ export function wireInstallation(base: Base) {
     resolveMarketplaceUseCase,
     cacheBuiltMarketplace
   );
-  const detectPluginDriftUseCase = new DetectPluginDrift(fs, tools);
-  const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
-  const readMachineInstallation = new ReadMachineInstallation(userManifestRepo);
-  const pluginListUseCase = new ListPlugins(manifestRepo, tools);
+  return { agentModelStore, ensureBuiltMarketplaceUseCase };
+}
+
+/** The installation context's shared commands and the build cache they read. */
+export function wireInstallation(base: Base) {
+  const { tools, fs, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
+  const assetProvider = new BundledAssetProviderAdapter(tools);
+  const { agentModelStore, ensureBuiltMarketplaceUseCase } = wireBuiltMarketplace(
+    base,
+    assetProvider
+  );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
   const builtMaterializationDeps = builtMaterializationDepsOf(
@@ -201,11 +198,11 @@ export function wireInstallation(base: Base) {
     agentModelStore,
     ensureBuiltMarketplaceUseCase,
     ...wireConfigInstallation(base, assetProvider),
-    listInstalledRulesUseCase,
-    readMachineInstallation,
-    pluginListUseCase,
+    listInstalledRulesUseCase: new ListInstalledRules(fs, process.platform, tools),
+    readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
+    pluginListUseCase: new ListPlugins(manifestRepo, tools),
     builtMaterializationDeps,
-    detectPluginDriftUseCase,
+    detectPluginDriftUseCase: new DetectPluginDrift(fs, tools),
     registrationRecordRules,
   };
 }

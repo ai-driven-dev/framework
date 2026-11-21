@@ -3,8 +3,9 @@ import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promi
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bindContainer, createContainer } from "../../src/composition/container.js";
+import { createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
+import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
 import { createOutput, wireBase } from "../../src/composition/shared.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";

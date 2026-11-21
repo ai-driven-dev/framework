@@ -47,9 +47,28 @@ interface GlobalParts {
   plugin: Plugin;
 }
 
+/** Updating every installed tool, asking before a changed file is overwritten. */
+function wireUpdateTools(base: Base, installation: Installation) {
+  const { fs, prompter, manifestRepo, currentVersionProvider, tools } = base;
+  return new UpdateTools({
+    listInstalledTools: new ListInstalledTools(manifestRepo, tools),
+    updateTool: new UpdateTool(
+      {
+        installRuntimeConfig: installation.installRuntimeConfigUseCase,
+        installIdeConfig: installation.installIdeConfig,
+        resolveSyncConflict: new ResolveSyncConflict(fs),
+        manifestRepo,
+      },
+      tools
+    ),
+    resolveUpdateDecision: new ResolveUpdateDecision(prompter),
+    versionReader: currentVersionProvider,
+  });
+}
+
 /** Installing and updating a tool, and the setup of its tools. */
 function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalParts) {
-  const { fs, logger, prompter, manifestRepo, currentVersionProvider, tools } = base;
+  const { logger, manifestRepo } = base;
   const { installRuntimeConfigUseCase, installIdeConfig, propagateAiSettingsToIde } = installation;
   const installIdeToolUseCase = new InstallIdeTool(
     manifestRepo,
@@ -68,20 +87,7 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
     installRuntimeConfigUseCase,
     installIdeConfig
   );
-  const updateToolsUseCase = new UpdateTools({
-    listInstalledTools: new ListInstalledTools(manifestRepo, tools),
-    updateTool: new UpdateTool(
-      {
-        installRuntimeConfig: installRuntimeConfigUseCase,
-        installIdeConfig,
-        resolveSyncConflict: new ResolveSyncConflict(fs),
-        manifestRepo,
-      },
-      tools
-    ),
-    resolveUpdateDecision: new ResolveUpdateDecision(prompter),
-    versionReader: currentVersionProvider,
-  });
+  const updateToolsUseCase = wireUpdateTools(base, installation);
   return { installAiToolUseCase, installIdeToolUseCase, setupToolsUseCase, updateToolsUseCase };
 }
 
@@ -123,11 +129,9 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
   return { restoreAllUseCase, restoreToolUseCase };
 }
 
-/** The machine-wide commands: install and update tools, setup machine scope, status and restore. */
-export function wireGlobal(parts: GlobalParts) {
-  const { base, installation, marketplace, plugin } = parts;
-  const { fs, logger, currentVersionProvider, manifestRepo, userManifestRepo, tools } = base;
-  const { syncSettingsUseCase, resolveSetupSource, registerSetupSource } = marketplace;
+/** Setting the machine scope up: its settings, its source and the plugins installed for it. */
+function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
+  const { logger, currentVersionProvider, userManifestRepo, tools } = base;
   const installGlobalPlugins = new InstallGlobalPlugins(
     new ListFrameworkPlugins(base.marketplaceRegistry, base.resolveMarketplaceUseCase),
     new InstallUserPlugins(
@@ -135,13 +139,20 @@ export function wireGlobal(parts: GlobalParts) {
       tools
     )
   );
-  const setupMachineScope = new SetupMachineScope({
+  return new SetupMachineScope({
     configureMachineScope: new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
-    resolveSource: resolveSetupSource,
-    register: registerSetupSource,
-    syncMachineScope: userScopeSyncOf(syncSettingsUseCase),
+    resolveSource: marketplace.resolveSetupSource,
+    register: marketplace.registerSetupSource,
+    syncMachineScope: userScopeSyncOf(marketplace.syncSettingsUseCase),
     installPlugins: installGlobalPlugins,
   });
+}
+
+/** The machine-wide commands: install and update tools, setup machine scope, status and restore. */
+export function wireGlobal(parts: GlobalParts) {
+  const { base, installation, marketplace, plugin } = parts;
+  const { fs, manifestRepo, tools } = base;
+  const { syncSettingsUseCase } = marketplace;
   const statusUseCase = new ReportStatus(
     { fs, manifestRepo, detectPluginDrift: installation.detectPluginDriftUseCase },
     tools
@@ -164,7 +175,7 @@ export function wireGlobal(parts: GlobalParts) {
       tools
     ),
     projectContextDetector: new DetectProjectContext(fs),
-    setupMachineScope,
+    setupMachineScope: wireMachineScope(parts),
     statusUseCase,
     statusAllUseCase: new ReportAllStatus(statusUseCase),
   };

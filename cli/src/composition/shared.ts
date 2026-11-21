@@ -70,10 +70,10 @@ function wireHost(parts: { tools: ToolCatalog; fs: JsonFileMergerAdapter; logger
   };
 }
 
-/** The adapters and context wirings every area reads: the file system, the manifests, auth, host
- * registration and distribution. Built once per graph. */
-export function wireBase({ projectRoot, verbose, token, output, tools }: BaseOptions) {
-  const logger = output ?? createOutput(verbose);
+type Logging = ReturnType<typeof createOutput>;
+
+/** The file system and the manifests kept on it. */
+function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
@@ -86,22 +86,17 @@ export function wireBase({ projectRoot, verbose, token, output, tools }: BaseOpt
     atomicWriteFile,
     resolveToolId
   );
+  return { fs, pluginDistributionReader, manifestRepo, userManifestRepo };
+}
+
+/** What reaches beyond the machine: the network, the token and the marketplaces. */
+function wireRemote(
+  { projectRoot, token }: BaseOptions,
+  { logger, fs }: { logger: Logging; fs: MergingFileSystem }
+) {
   const http = new HttpClient();
   const environment = new EnvironmentAdapter();
-  const auth = wireAuth({
-    projectRoot,
-    logger,
-    http,
-    environment,
-    explicitToken: token,
-  });
-  const currentVersionProvider = new CurrentVersionAdapter();
-  const platform = new PlatformAdapter();
-  const prompter = terminalPrompter();
-  const host = wireHost({ tools, fs, logger });
-  // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
-  // and `userConfigDir`, neither of which distribution's own wiring produces.
-  const { userSourceReferences } = wireMachineClaims(fs);
+  const auth = wireAuth({ projectRoot, logger, http, environment, explicitToken: token });
   const distribution = wireDistribution({
     fs,
     http,
@@ -109,22 +104,32 @@ export function wireBase({ projectRoot, verbose, token, output, tools }: BaseOpt
     logger,
     projectRoot,
   });
+  return { http, environment, ...auth, ...distribution };
+}
+
+type MergingFileSystem = ReturnType<typeof wireStorage>["fs"];
+
+/** The adapters and context wirings every area reads: the file system, the manifests, auth, host
+ * registration and distribution. Built once per graph. */
+export function wireBase(options: BaseOptions) {
+  const { projectRoot, verbose, output, tools } = options;
+  const logger = output ?? createOutput(verbose);
+  const storage = wireStorage(options, logger);
+  const remote = wireRemote(options, { logger, fs: storage.fs });
+  const host = wireHost({ tools, fs: storage.fs, logger });
+  // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
+  // and `userConfigDir`, neither of which distribution's own wiring produces.
+  const { userSourceReferences } = wireMachineClaims(storage.fs);
   return {
     ...host,
-    ...auth,
-    ...distribution,
+    ...remote,
+    ...storage,
     tools,
     projectRoot,
-    fs,
     logger,
-    http,
-    environment,
-    currentVersionProvider,
-    platform,
-    prompter,
-    manifestRepo,
-    userManifestRepo,
-    pluginDistributionReader,
+    currentVersionProvider: new CurrentVersionAdapter(),
+    platform: new PlatformAdapter(),
+    prompter: terminalPrompter(),
     userSourceReferences,
   };
 }

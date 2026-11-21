@@ -1,7 +1,4 @@
 import { homedir } from "node:os";
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import type { Deps, FactoryOptions } from "../orchestration/deps.js";
-import type { Output } from "../orchestration/domain/output.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
@@ -15,7 +12,6 @@ import { wireAgentModels, wireSetup } from "./orchestration/setup.js";
 import { wireRecipes } from "./recipes.js";
 import { type BaseOptions, currentVersion, wireBase } from "./shared.js";
 import { wireTelemetry } from "./telemetry.js";
-import { createFrameworkBuildUseCase } from "./translate.js";
 import { wireUpdate } from "./update.js";
 
 /** Each context's wiring is built the first time it is read, then handed back unchanged. */
@@ -86,253 +82,60 @@ function scenariosOf({ shared, installation, marketplace, plugin }: Foundation) 
 
 /** The wiring of one project root and token. Every context is a getter that builds it on first
  * read, so a command pays only for the contexts it reads and two containers share nothing. */
-export function createContainer(options: BaseOptions) {
-  const base = foundationOf(options);
-  const scenarios = scenariosOf(base);
-  const { shared, installation, update, marketplace, plugin } = base;
-  const { global, setup, agentModels, doctor, clean, recipes, telemetry } = scenarios;
-  return {
-    get shared() {
-      return shared();
-    },
-    get installation() {
-      return installation();
-    },
-    get update() {
-      return update();
-    },
-    get marketplace() {
-      return marketplace();
-    },
-    get plugin() {
-      return plugin();
-    },
-    get global() {
-      return global();
-    },
-    get setup() {
-      return setup();
-    },
-    get agentModels() {
-      return agentModels();
-    },
-    get doctor() {
-      return doctor();
-    },
-    get clean() {
-      return clean();
-    },
-    get telemetry() {
-      return telemetry();
-    },
-    get recipes() {
-      return recipes();
-    },
-    /** The menu loop of this project, given the terminal the loop runs commands on. */
-    menu(terminal: { runner: CommandRunner; pause: Pause }): MenuLoop {
-      const { prompter, manifestRepo } = shared();
-      const menu = new BuildMenu(projectSetupOf(manifestRepo), prompter, options.tools);
-      return new MenuLoop(menu, terminal.runner, terminal.pause);
-    },
-  };
-}
+export class Container {
+  private readonly foundation: Foundation;
+  private readonly scenarios: ReturnType<typeof scenariosOf>;
 
-type Container = ReturnType<typeof createContainer>;
+  constructor(private readonly options: BaseOptions) {
+    this.foundation = foundationOf(options);
+    this.scenarios = scenariosOf(this.foundation);
+  }
 
-/** What the composition hands out: the members a command reads, plus the ones only wiring and
- * its tests read, which the presentation's `Deps` leaves out. */
-export type Graph = Deps &
-  Pick<
-    Container["shared"],
-    | "fs"
-    | "manifestRepo"
-    | "userManifestRepo"
-    | "userSourceReferences"
-    | "registerFrameworkMarketplace"
-  > &
-  Pick<Container["installation"], "assetProvider"> &
-  Pick<Container["marketplace"], "askMarketplaceSource"> &
-  Pick<Container["setup"], "choosePlugins">;
-
-/** The members a command reads, each one wired by its context the first time it is read. */
-class ContainerGraph implements Graph {
-  constructor(
-    private readonly container: Container,
-    private readonly tools: ToolCatalog
-  ) {}
-
-  get selfUpdate() {
-    return this.container.update.selfUpdate;
+  get shared() {
+    return this.foundation.shared();
   }
-  get printUpdateNotice() {
-    return this.container.update.printUpdateNotice;
+  get installation() {
+    return this.foundation.installation();
   }
-  get refreshUpdateCheck() {
-    return this.container.update.refreshUpdateCheck;
+  get update() {
+    return this.foundation.update();
   }
-  get logger() {
-    return this.container.shared.logger;
+  get marketplace() {
+    return this.foundation.marketplace();
   }
-  get prompter() {
-    return this.container.shared.prompter;
+  get plugin() {
+    return this.foundation.plugin();
   }
-  get logIn() {
-    return this.container.shared.logIn;
+  get global() {
+    return this.scenarios.global();
   }
-  get logOut() {
-    return this.container.shared.logOut;
+  get setup() {
+    return this.scenarios.setup();
   }
-  get checkStatus() {
-    return this.container.shared.checkStatus;
+  get agentModels() {
+    return this.scenarios.agentModels();
   }
-  get manifestRepo() {
-    return this.container.shared.manifestRepo;
+  get doctor() {
+    return this.scenarios.doctor();
   }
-  get userManifestRepo() {
-    return this.container.shared.userManifestRepo;
-  }
-  get fs() {
-    return this.container.shared.fs;
-  }
-  get userSourceReferences() {
-    return this.container.shared.userSourceReferences;
-  }
-  get assetProvider() {
-    return this.container.installation.assetProvider;
-  }
-  get registerFrameworkMarketplace() {
-    return this.container.shared.registerFrameworkMarketplace;
-  }
-  get askMarketplaceSource() {
-    return this.container.marketplace.askMarketplaceSource;
-  }
-  get choosePlugins() {
-    return this.container.setup.choosePlugins;
-  }
-  get runSync() {
-    return this.container.global.runSync;
-  }
-  get runUserScopeSync() {
-    return this.container.global.runUserScopeSync;
-  }
-  get syncSettingsUseCase() {
-    return this.container.marketplace.syncSettingsUseCase;
-  }
-  get syncNativeActivation() {
-    return this.container.marketplace.syncNativeActivation;
-  }
-  get runSetup() {
-    return this.container.setup.runSetup;
-  }
-  get setAgentModels() {
-    return this.container.agentModels.setAgentModels;
-  }
-  get pluginRemoveUseCase() {
-    return this.container.plugin.pluginRemoveUseCase;
-  }
-  get userPluginRemove() {
-    return this.container.plugin.userPluginRemove;
-  }
-  get pluginListUseCase() {
-    return this.container.installation.pluginListUseCase;
-  }
-  get pluginInstallUseCase() {
-    return this.container.plugin.pluginInstallUseCase;
-  }
-  get searchPlugins() {
-    return this.container.plugin.searchPlugins;
-  }
-  get userPluginUpdateUseCase() {
-    return this.container.plugin.userPluginUpdateUseCase;
-  }
-  get pluginUpdateUseCase() {
-    return this.container.plugin.pluginUpdateUseCase;
-  }
-  get addMarketplace() {
-    return this.container.marketplace.addMarketplace;
-  }
-  get listMarketplaces() {
-    return this.container.shared.listMarketplaces;
-  }
-  get userMarketplaceRemoveUseCase() {
-    return this.container.marketplace.userMarketplaceRemoveUseCase;
-  }
-  get marketplaceRemoveUseCase() {
-    return this.container.marketplace.marketplaceRemoveUseCase;
-  }
-  get refreshMarketplace() {
-    return this.container.shared.refreshMarketplace;
-  }
-  get marketplaceCheckUseCase() {
-    return this.container.marketplace.marketplaceCheckUseCase;
-  }
-  get doctorAllUseCase() {
-    return this.container.doctor.doctorAllUseCase;
-  }
-  get statusAllUseCase() {
-    return this.container.global.statusAllUseCase;
-  }
-  get doctorUseCase() {
-    return this.container.doctor.doctorUseCase;
-  }
-  get statusUseCase() {
-    return this.container.global.statusUseCase;
-  }
-  get homedir() {
-    return homedir;
-  }
-  get environment() {
-    return this.container.shared.environment;
-  }
-  get runUserScopeDoctor() {
-    return this.container.doctor.runUserScopeDoctor;
-  }
-  get cleanUseCase() {
-    return this.container.clean.cleanUseCase;
-  }
-  get cleanUserScopeUseCase() {
-    return this.container.clean.cleanUserScopeUseCase;
-  }
-  get currentVersionProvider() {
-    return this.container.shared.currentVersionProvider;
-  }
-  get installAiToolUseCase() {
-    return this.container.global.installAiToolUseCase;
-  }
-  get installIdeToolUseCase() {
-    return this.container.global.installIdeToolUseCase;
-  }
-  get uninstallTools() {
-    return this.container.clean.uninstallTools;
-  }
-  get updateToolsUseCase() {
-    return this.container.global.updateToolsUseCase;
-  }
-  get listInstalledRulesUseCase() {
-    return this.container.installation.listInstalledRulesUseCase;
-  }
-  get validateRecipes() {
-    return this.container.recipes.validateRecipes;
+  get clean() {
+    return this.scenarios.clean();
   }
   get telemetry() {
-    return this.container.telemetry;
+    return this.scenarios.telemetry();
   }
-  get frameworkBuild() {
-    const { fs, logger } = this.container.shared;
-    const { assetProvider } = this.container.installation;
-    const build: Deps["frameworkBuild"] = (ctx) =>
-      createFrameworkBuildUseCase(this.tools, { fs, assetProvider, logger }, ctx);
-    return build;
+  get recipes() {
+    return this.scenarios.recipes();
+  }
+
+  /** The menu loop of this project, given the terminal the loop runs commands on. */
+  menu(terminal: { runner: CommandRunner; pause: Pause }): MenuLoop {
+    const { prompter, manifestRepo } = this.shared;
+    const menu = new BuildMenu(projectSetupOf(manifestRepo), prompter, this.options.tools);
+    return new MenuLoop(menu, terminal.runner, terminal.pause);
   }
 }
 
-/** The factory those commands receive: each call builds one container, and a member wires its
- * context when the command first reads it. */
-export function bindContainer(tools: ToolCatalog) {
-  return async (
-    projectRoot: string,
-    options: FactoryOptions,
-    output: Output | undefined
-  ): Promise<Graph> =>
-    new ContainerGraph(createContainer({ projectRoot, ...options, output, tools }), tools);
+export function createContainer(options: BaseOptions): Container {
+  return new Container(options);
 }

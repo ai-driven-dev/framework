@@ -109,7 +109,7 @@ async function writeSource(source: string): Promise<void> {
 type Deps = Awaited<ReturnType<typeof deps>>;
 
 async function deps(project: string) {
-  const { bindContainer } = await import("../../../src/composition/container.js");
+  const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
   return bindContainer(catalogOf())(project, { verbose: false }, createOutput(false));
 }
 

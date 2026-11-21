@@ -232,9 +232,28 @@ function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
   };
 }
 
+/** Forgetting what was measured: the stores, the legacy locations and every remembered clone. */
+function forgetTelemetryOf(stores: Stores, git: Git, homedir: () => string) {
+  const { resolutionStore, consentHistory, ledger } = stores;
+  return new ForgetTelemetry({
+    erasure: new MeasurementErasureAdapter(
+      stores.root,
+      legacyLocations({
+        env: process.env,
+        home: homedir(),
+        platform: process.platform,
+        telemetryDir: stores.root,
+      })
+    ),
+    declarations: new RepositoryDeclarationsAdapter(git.gitEnv),
+    remembered: new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
+    ledger,
+  });
+}
+
 /** Turning measurement on and off for a repository, and forgetting what was measured. */
 function wireConsent(stores: Stores, git: Git, homedir: () => string) {
-  const { locator, consents, gitEnv } = git;
+  const { locator, consents } = git;
   const { ledger, resolutionStore, consentHistory } = stores;
   return {
     readTranscriptRetention: new ReadTranscriptRetention(
@@ -266,20 +285,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
         now: environment.now,
       })
     ),
-    forgetTelemetry: new ForgetTelemetry({
-      erasure: new MeasurementErasureAdapter(
-        stores.root,
-        legacyLocations({
-          env: process.env,
-          home: homedir(),
-          platform: process.platform,
-          telemetryDir: stores.root,
-        })
-      ),
-      declarations: new RepositoryDeclarationsAdapter(gitEnv),
-      remembered: new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
-      ledger,
-    }),
+    forgetTelemetry: forgetTelemetryOf(stores, git, homedir),
   };
 }
 

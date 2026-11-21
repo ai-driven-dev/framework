@@ -50,6 +50,13 @@ export function nativeRegistrationsOf(
   return registrations;
 }
 
+interface MutableWiring {
+  hostActions: Map<string, HostActions>;
+  pluginRegistries: Map<AiToolId, HostPluginRegistry>;
+  marketplaceRegistries: Map<AiToolId, HostMarketplaceRegistry>;
+  marketplaceSources: Map<AiToolId, HostMarketplaceSources>;
+}
+
 export interface HostRegistrationDeps {
   /** Keyed by the binary each activation declares. */
   hostActions: ReadonlyMap<string, HostActions>;
@@ -65,33 +72,51 @@ export function wireHostRegistration(
   home: string = resolveHomeDir(),
   registrations: ReadonlyMap<ToolId, NativeActivation> = nativeRegistrationsOf(REGISTERED_PROFILES)
 ): HostRegistrationDeps {
-  const hostActions = new Map<string, HostActions>();
-  const pluginRegistries = new Map<AiToolId, HostPluginRegistry>();
-  const marketplaceRegistries = new Map<AiToolId, HostMarketplaceRegistry>();
-  const marketplaceSources = new Map<AiToolId, HostMarketplaceSources>();
+  const wiring: MutableWiring = {
+    hostActions: new Map(),
+    pluginRegistries: new Map(),
+    marketplaceRegistries: new Map(),
+    marketplaceSources: new Map(),
+  };
   for (const aiId of tools.inHelpOrder("ai")) {
     if (tools.aiProfile(aiId).nativeActivation() === undefined) continue;
     const activation = registrations.get(aiId);
     if (activation === undefined) throw new UnregisteredToolError(aiId);
-    const binary = activation.hostBinary();
-    hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
-    const pluginRegistry = activation.pluginRegistryAt(home);
-    const marketplaceRegistry = activation.marketplaceRegistryAt(home);
-    const sources = activation.marketplaceSourcesDeclaration();
-    if (pluginRegistry !== undefined)
-      pluginRegistries.set(aiId, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
-    if (marketplaceRegistry !== undefined) {
-      const registry = MARKETPLACE_READERS[marketplaceRegistry.layout](marketplaceRegistry.path);
-      marketplaceRegistries.set(aiId, registry);
-      if (sources?.from === "marketplace-registry")
-        marketplaceSources.set(aiId, new HostRegistryMarketplaceSourceReaderAdapter(registry));
-    }
-    if (sources?.from === "list-command") {
-      marketplaceSources.set(
-        aiId,
-        new NativeMarketplaceSourceReaderAdapter(marketplaceListContract(binary, sources))
-      );
-    }
+    wireHost({ aiId, activation, home }, wiring);
   }
-  return { hostActions, pluginRegistries, marketplaceRegistries, marketplaceSources };
+  return wiring;
+}
+
+interface HostToWire {
+  aiId: AiToolId;
+  activation: NativeActivation;
+  home: string;
+}
+
+function wireHost({ aiId, activation, home }: HostToWire, wiring: MutableWiring): void {
+  const binary = activation.hostBinary();
+  wiring.hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
+  const pluginRegistry = activation.pluginRegistryAt(home);
+  if (pluginRegistry !== undefined)
+    wiring.pluginRegistries.set(aiId, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
+  const registry = marketplaceRegistryOf({ aiId, activation, home }, wiring);
+  const sources = activation.marketplaceSourcesDeclaration();
+  if (sources?.from === "marketplace-registry" && registry !== undefined)
+    wiring.marketplaceSources.set(aiId, new HostRegistryMarketplaceSourceReaderAdapter(registry));
+  if (sources?.from === "list-command")
+    wiring.marketplaceSources.set(
+      aiId,
+      new NativeMarketplaceSourceReaderAdapter(marketplaceListContract(binary, sources))
+    );
+}
+
+function marketplaceRegistryOf(
+  { aiId, activation, home }: HostToWire,
+  wiring: MutableWiring
+): HostMarketplaceRegistry | undefined {
+  const declared = activation.marketplaceRegistryAt(home);
+  if (declared === undefined) return undefined;
+  const registry = MARKETPLACE_READERS[declared.layout](declared.path);
+  wiring.marketplaceRegistries.set(aiId, registry);
+  return registry;
 }

@@ -162,7 +162,9 @@ describe("running a command in process", () => {
     vi.doMock("../../src/presentation/commands/clean.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(async () => {
-          const { bindContainer } = await import("../../src/composition/container.js");
+          const { bindContainer } = await import(
+            "../../src/composition/orchestration/deps-graph.js"
+          );
           const { createOutput } = await import("../../src/composition/shared.js");
           const { registeredTools } = await import("../shared/testing/registered-tools.builder.js");
           built.push(
