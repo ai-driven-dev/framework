@@ -1,57 +1,27 @@
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { ResolvePluginSource } from "../../../src/contexts/distribution/application/plugin-source/resolve-plugin-source.js";
-import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { describe, expect, it } from "vitest";
 import { PluginNotInMarketplaceError } from "../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { AmbiguousPluginMatchError } from "../../../src/orchestration/orchestration.error.js";
-import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { VersionMismatchError } from "../../../src/shared/domain/shared.error.js";
-import type { Logger } from "../../../src/shared/ports/logger.js";
-import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";
-import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import {
-  buildInstallationDeps,
-  initAndInstall,
-} from "../../shared/testing/installation-deps.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
+import {
+  type AddPluginFor,
+  buildUseCase as buildUseCaseWith,
+  MKT1_DIR,
+  MKT2_DIR,
+  PLUGIN_FIXTURE,
+  PROJECT_ROOT,
+  seedMarketplaceFile,
+} from "../testing/install-from-marketplace.builder.js";
 
-const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
-const EXTRA_PLUGIN_FIXTURE = join(
-  process.cwd(),
-  "tests/fixtures/plugins/claude-format/extra-plugin"
-);
-const PROJECT_ROOT = "/test-project";
-const MKT1_DIR = "/mkt1";
-const MKT2_DIR = "/mkt2";
-
-function seedMarketplaceFile(
-  fs: InMemoryFileAdapter,
-  dir: string,
-  plugins: Array<Record<string, unknown>>
-): void {
-  fs.writeFile(join(dir, ".claude-plugin/marketplace.json"), JSON.stringify({ plugins }));
-}
-
-async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompter } = {}) {
-  const deps = await buildInstallationDeps();
-  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-  await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-  const registry = new InMemoryMarketplaceRegistry();
-  const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
-  const pluginAdd = buildAddPlugin(
+const addPluginOver: AddPluginFor = (deps, registry) =>
+  buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
@@ -64,42 +34,9 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
     },
     registeredTools()
   );
-  const fetchMarketplaceSource = new FetchMarketplaceSource({ pluginFetcher: deps.pluginFetcher });
-  const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);
-  const useCase = new InstallFromMarketplace({
-    resolvePluginSource: new ResolvePluginSource(
-      registry,
-      new ResolveMarketplace(fetchMarketplaceSource, catalogRepo)
-    ),
-    addPlugin: pluginAdd,
-    prompter: options.prompter ?? new KeepPrompter(),
-    logger,
-  });
-  return { useCase, deps, registry };
-}
 
-async function saveLocalMarketplace(
-  registry: InMemoryMarketplaceRegistry,
-  name: string,
-  dir: string
-): Promise<void> {
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name,
-      source: { kind: "local", path: dir },
-      scope: "project",
-      addedAt: "2026-04-29T10:00:00.000Z",
-    })
-  );
-}
-
-function installedSamplePlugin(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
-  return deps.manifestRepo
-    .getCurrent()
-    ?.getPlugins(TOOL.claude)
-    .find((p) => p.name === "sample-plugin");
-}
+const buildUseCase = (options: Parameters<typeof buildUseCaseWith>[1] = {}) =>
+  buildUseCaseWith(addPluginOver, options);
 
 describe("InstallFromMarketplace", () => {
   it("installs a plugin found in a single marketplace and tags it", async () => {
@@ -330,107 +267,6 @@ describe("InstallFromMarketplace", () => {
     expect(installed?.files.size).toBe(0);
   });
 
-  describe("version policy", () => {
-    it("throws VersionMismatchError with strict policy (default) when catalog version differs from requested", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "2.0.0",
-        },
-      ]);
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "mkt1",
-          source: { kind: "local", path: MKT1_DIR },
-          scope: "project",
-          addedAt: "2026-04-29T10:00:00.000Z",
-        })
-      );
-
-      await expect(
-        useCase.execute({
-          pluginName: "sample-plugin",
-          version: "1.0.0",
-          toolIds: [TOOL.claude],
-          projectRoot: PROJECT_ROOT,
-          interactive: false,
-        })
-      ).rejects.toThrow(VersionMismatchError);
-    });
-
-    it("succeeds and logs info with prefer-catalog policy when catalog version differs from requested", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      const infoSpy = vi.spyOn(deps.logger, "info");
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "2.0.0",
-        },
-      ]);
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "mkt1",
-          source: { kind: "local", path: MKT1_DIR },
-          scope: "project",
-          addedAt: "2026-04-29T10:00:00.000Z",
-        })
-      );
-
-      await expect(
-        useCase.execute({
-          pluginName: "sample-plugin",
-          version: "1.0.0",
-          requestedVersionPolicy: "prefer-catalog",
-          toolIds: [TOOL.claude],
-          projectRoot: PROJECT_ROOT,
-          interactive: false,
-        })
-      ).resolves.toBeDefined();
-      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("2.0.0"));
-      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("1.0.0"));
-    });
-
-    it("does not log info with prefer-catalog policy when catalog and requested versions match", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      const infoSpy = vi.spyOn(deps.logger, "info");
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "1.0.0",
-        },
-      ]);
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "mkt1",
-          source: { kind: "local", path: MKT1_DIR },
-          scope: "project",
-          addedAt: "2026-04-29T10:00:00.000Z",
-        })
-      );
-
-      await useCase.execute({
-        pluginName: "sample-plugin",
-        version: "1.0.0",
-        requestedVersionPolicy: "prefer-catalog",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-
-      const driftCalls = infoSpy.mock.calls.filter(
-        (args) => typeof args[0] === "string" && args[0].includes("differs from")
-      );
-      expect(driftCalls).toHaveLength(0);
-    });
-  });
-
   it("autoSelect resolves multi-match in non-interactive mode", async () => {
     const { useCase, deps, registry } = await buildUseCase();
     const entry = {
@@ -468,160 +304,5 @@ describe("InstallFromMarketplace", () => {
     });
 
     expect(result.marketplaceName).toBe("mkt1");
-  });
-
-  describe("choosing among several matches", () => {
-    const entryIn = (version?: string) => ({
-      name: "sample-plugin",
-      source: { kind: "local", path: PLUGIN_FIXTURE },
-      ...(version === undefined ? {} : { version }),
-    });
-
-    it("lets an interactive user pick among the marketplaces that match", async () => {
-      const prompter = new ChoosingPrompter("mkt2 — ?");
-      const { useCase, deps, registry } = await buildUseCase({ prompter });
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [entryIn("1.0.0")]);
-      seedMarketplaceFile(deps.fs, MKT2_DIR, [entryIn()]);
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-      await saveLocalMarketplace(registry, "mkt2", MKT2_DIR);
-
-      const result = await useCase.execute({
-        pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: true,
-      });
-
-      expect(result.marketplaceName).toBe("mkt2");
-      expect(prompter.selectCalls).toStrictEqual([
-        {
-          message: "Multiple matches for 'sample-plugin'. Select one:",
-          choiceNames: ["mkt1 — 1.0.0", "mkt2 — ?"],
-        },
-      ]);
-    });
-
-    it("names every matching marketplace when refusing a non-interactive install", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [entryIn("1.0.0")]);
-      seedMarketplaceFile(deps.fs, MKT2_DIR, [entryIn("1.0.0")]);
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-      await saveLocalMarketplace(registry, "mkt2", MKT2_DIR);
-
-      await expect(
-        useCase.execute({
-          pluginName: "sample-plugin",
-          toolIds: [TOOL.claude],
-          projectRoot: PROJECT_ROOT,
-          interactive: false,
-        })
-      ).rejects.toThrow(
-        expect.objectContaining({ plugin: "sample-plugin", marketplaces: ["mkt1", "mkt2"] })
-      );
-    });
-
-    it("matches a catalog entry by name alone", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        { name: "extra-plugin", source: { kind: "local", path: EXTRA_PLUGIN_FIXTURE } },
-        entryIn("1.0.0"),
-      ]);
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-
-      const result = await useCase.execute({
-        pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-
-      expect(result.entry.name).toBe("sample-plugin");
-    });
-
-    it("passes over a marketplace that has no catalog", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [entryIn("1.0.0")]);
-      await saveLocalMarketplace(registry, "no-catalog", "/no-catalog");
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-
-      const result = await useCase.execute({
-        pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-
-      expect(result.marketplaceName).toBe("mkt1");
-    });
-  });
-
-  describe("requested version against the catalog", () => {
-    it("accepts a requested version equal to the catalog's", async () => {
-      const { useCase, deps, registry } = await buildUseCase();
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "1.0.0",
-        },
-      ]);
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-
-      await useCase.execute({
-        pluginName: "sample-plugin",
-        version: "1.0.0",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-
-      expect(installedSamplePlugin(deps)?.version).toBe("1.0.0");
-    });
-
-    it("logs nothing under prefer-catalog when no version was requested", async () => {
-      const logger = new CapturingLogger();
-      const { useCase, deps, registry } = await buildUseCase({ logger });
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "2.0.0",
-        },
-      ]);
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-
-      await useCase.execute({
-        pluginName: "sample-plugin",
-        requestedVersionPolicy: "prefer-catalog",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-
-      expect(logger.allMessages).toStrictEqual([]);
-    });
-
-    it("tolerates having no logger when the catalog version differs under prefer-catalog", async () => {
-      const { useCase, deps, registry } = await buildUseCase({ logger: null });
-      seedMarketplaceFile(deps.fs, MKT1_DIR, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "2.0.0",
-        },
-      ]);
-      await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
-
-      await useCase.execute({
-        pluginName: "sample-plugin",
-        version: "1.0.0",
-        requestedVersionPolicy: "prefer-catalog",
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-      });
-
-      expect(installedSamplePlugin(deps)?.marketplace).toBe("mkt1");
-    });
   });
 });

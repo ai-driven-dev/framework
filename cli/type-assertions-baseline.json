@@ -100,7 +100,6 @@
   "tests/orchestration/doctor/check-registration-sources.integration.test.ts": 1,
   "tests/orchestration/doctor/doctor-use-case.unit.test.ts": 1,
   "tests/orchestration/global/report-all-status.unit.test.ts": 1,
-  "tests/orchestration/global/restore-all.integration.test.ts": 2,
   "tests/presentation/commands/antigravity-hooks.integration.test.ts": 2,
   "tests/presentation/commands/clean.integration.test.ts": 1,
   "tests/presentation/commands/setup-scope-user.integration.test.ts": 3,
