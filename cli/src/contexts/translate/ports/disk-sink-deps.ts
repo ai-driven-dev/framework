@@ -1,3 +1,4 @@
+import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
@@ -12,6 +13,8 @@ export interface DiskSinkDeps {
   readonly assetProvider: AssetProvider;
   readonly logger: Logger;
   readonly flat: FlatPluginWriter;
+  /** The tool whose layout the framework's source plugins are written in. */
+  readonly canonFormat: AiToolId;
 }
 
 /** One plugin of a build: its name and the folder of its source. */

@@ -79,6 +79,7 @@ async function flatMerge(
     assetProvider: unused,
     logger,
     flat: new FlatWriter(fs, unused, logger),
+    canonFormat: TOOL.claude,
   });
   await sink.writePlugin(
     { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },

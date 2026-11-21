@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../domain/canon-format.js";
@@ -11,7 +12,7 @@ import type { DiskTarget, PluginTreeSink } from "../../ports/plugin-tree-sink.js
 import { writeMarketplaceCatalog } from "./marketplace-catalog-writer.js";
 import { writePluginAgents, writePluginSkills } from "./plugin-content-writer.js";
 import { writePluginHooks, writePluginMcp } from "./plugin-runtime-writer.js";
-import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";
+import { presenceOf, readPluginCanon } from "./plugin-source-tree-reader.js";
 
 /**
  * Writes a built plugin tree to disk, in the marketplace layout or the flat one. It holds no
@@ -46,7 +47,8 @@ export class DiskSink implements PluginTreeSink {
   async writePlugin(t: DiskTarget, pluginName: string, pluginSrc: string): Promise<number> {
     await this.validateSourceManifest(pluginSrc);
     const plugin = { name: pluginName, src: pluginSrc };
-    const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, pluginName, pluginSrc);
+    const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
+    const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
     return (
       manifest +
       (await writePluginAgents(this.deps, t, plugin)) +
@@ -76,20 +78,19 @@ export class DiskSink implements PluginTreeSink {
     );
   }
 
-  private async writeManifest(t: DiskTarget, pluginName: string, pluginSrc: string) {
+  private async writeManifest(t: DiskTarget, canon: PluginDistribution, pluginSrc: string) {
     const { contract } = t;
     if (!contract.synthesizeManifest || !contract.manifestFileRelative) return 0;
     const raw = await this.deps.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
     const source = asPlainObject(JSON.parse(raw)) ?? {};
-    const presence = await detectPluginPresenceFlags(this.deps.fs, pluginSrc);
-    const synthesized = contract.synthesizeManifest(source, presence);
+    const synthesized = contract.synthesizeManifest(source, presenceOf(canon));
     if (contract.manifestSchemaName) {
       this.deps.jsonSchemaValidator.validate(
         this.deps.assetProvider.loadSchema(contract.manifestSchemaName),
         synthesized
       );
     }
-    const dest = join(t.outDir, "plugins", pluginName, contract.manifestFileRelative);
+    const dest = join(t.outDir, "plugins", canon.manifest.name, contract.manifestFileRelative);
     await this.deps.fs.writeFile(dest, `${JSON.stringify(synthesized, null, 2)}\n`);
     return 1;
   }
