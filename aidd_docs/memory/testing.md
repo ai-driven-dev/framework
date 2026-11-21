@@ -9,7 +9,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | Surface | Validated by |
 | --- | --- |
 | Skills, agents, hook configs, plugin manifests | the contract of each kind, run over the tree by `node scripts/check/run.cjs` (CI job `contracts`): only findings absent from the baseline in `scripts/check/baseline.json` fail. Skills and agents are also read by the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
-| Plans, runs, rules, commands, stories | the contract beside the skill that writes them, run by its `validate-<kind>.cjs`; archived plans are not validated in CI |
+| Plans, runs, rules, commands, stories | the contract beside the skill that writes them, run by its `validate-<kind>.cjs`; archived plans are not validated in CI. New kind: copy `02-user-stories/scripts/` (`contract.json`, `validate-story.cjs`), then run `node scripts/check/engine/sync.cjs` |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
