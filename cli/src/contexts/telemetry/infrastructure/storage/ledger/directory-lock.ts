@@ -2,19 +2,21 @@ import { join } from "node:path";
 import type { PrivateStorage } from "../../../ports/private-storage.js";
 import { LedgerLock, type LockOptions } from "./ledger-lock.js";
 
+interface DirectoryLockDeps {
+  readonly dir: string;
+  readonly file: string;
+  readonly storage: PrivateStorage;
+  readonly options: Partial<LockOptions>;
+}
+
 /** A lock on a file in a directory kept private, taken around some work. */
 export class DirectoryLock {
-  constructor(
-    private readonly dir: string,
-    private readonly file: string,
-    private readonly storage: PrivateStorage,
-    private readonly options: Partial<LockOptions>
-  ) {}
+  constructor(private readonly deps: DirectoryLockDeps) {}
 
   async exclusively<T>(work: () => Promise<T>, waitMs?: number): Promise<T> {
-    await this.storage.ensureDirectory(this.dir);
-    const release = await new LedgerLock(join(this.dir, this.file), {
-      ...this.options,
+    await this.deps.storage.ensureDirectory(this.deps.dir);
+    const release = await new LedgerLock(join(this.deps.dir, this.deps.file), {
+      ...this.deps.options,
       ...(waitMs === undefined ? {} : { waitMs }),
     }).acquire();
     try {

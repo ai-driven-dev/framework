@@ -68,7 +68,8 @@ export function daysAround(records: readonly UsageRecord[]): ReadonlySet<string>
   return days;
 }
 
-function id(record: UsageRecord): string {
+/** What makes two records one call: its tool and key. */
+export function usageId(record: UsageRecord): string {
   return `${record.tool}\u0000${record.key}`;
 }
 
@@ -89,13 +90,13 @@ export function upsertUsage(
   held: readonly StoredUsage[],
   incoming: readonly StoredUsage[]
 ): Upserted {
-  const before = new Map(held.map((record) => [id(record), record]));
+  const before = new Map(held.map((record) => [usageId(record), record]));
   const records = foldUsage([...held, ...incoming]);
   const days = new Set<string>();
   let added = 0;
   let updated = 0;
   for (const record of records) {
-    const was = before.get(id(record));
+    const was = before.get(usageId(record));
     if (was === record) continue;
     if (was === undefined) added += 1;
     else updated += 1;
@@ -125,7 +126,8 @@ export function partitionByDay(
   }[] = [];
   for (const record of records) {
     const day = dayOf(record.at);
-    if (day !== null) dated.push({ record, day, instant: Date.parse(record.at), id: id(record) });
+    if (day !== null)
+      dated.push({ record, day, instant: Date.parse(record.at), id: usageId(record) });
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
   const days = new Map<string, StoredUsage[]>();

@@ -71,29 +71,35 @@ export class LedgerLock {
 
   /** Resolves with the function that releases the lock. */
   async acquire(): Promise<() => Promise<void>> {
-    const { now, waitMs, name, sleep, pollMs } = this.options;
+    const { now, waitMs, sleep, pollMs } = this.options;
     const deadline = now() + waitMs;
     for (;;) {
-      const created = await this.tryCreate(now() >= deadline);
-      if (created === "taken") return () => this.release();
-      if (created === "removing") {
-        await sleep(pollMs);
-        continue;
-      }
-      const holder = await this.holder();
-      if (holder === null) continue;
-      if (this.isStale(holder)) {
-        await rm(this.path, { force: true });
-        continue;
-      }
-      if (now() >= deadline) {
-        throw new Error(
-          `The ${name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
-            `Wait for it to finish, or remove ${this.path} if that process is not an aidd command.`
-        );
-      }
-      await sleep(pollMs);
+      const step = await this.attempt(deadline);
+      if (step === "taken") return () => this.release();
+      if (step === "wait") await sleep(pollMs);
     }
+  }
+
+  /** One try at the lock: taken, to wait before the next try, or to try again at once. */
+  private async attempt(deadline: number): Promise<"taken" | "wait" | "again"> {
+    const created = await this.tryCreate(this.options.now() >= deadline);
+    if (created === "taken") return "taken";
+    if (created === "removing") return "wait";
+    const holder = await this.holder();
+    if (holder === null) return "again";
+    if (this.isStale(holder)) {
+      await rm(this.path, { force: true });
+      return "again";
+    }
+    if (this.options.now() >= deadline) throw this.lockedBy(holder);
+    return "wait";
+  }
+
+  private lockedBy(holder: Holder): Error {
+    return new Error(
+      `The ${this.options.name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
+        `Wait for it to finish, or remove ${this.path} if that process is not an aidd command.`
+    );
   }
 
   private async tryCreate(pastDeadline: boolean): Promise<"taken" | "held" | "removing"> {
