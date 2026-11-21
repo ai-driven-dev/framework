@@ -252,6 +252,9 @@ export function sandboxedEnv(
     // Codex reads `CODEX_HOME` before `HOME`, and so does the telemetry reader of its sessions.
     CODEX_HOME: join(fakeHome, ".codex"),
     ...extra,
+    // Windows reads `Path`, and an in-process run folds both spellings into one variable: a
+    // caller's `PATH` has to win under either name.
+    ...(extra?.PATH === undefined ? {} : { Path: extra.PATH }),
     HOME: fakeHome,
     XDG_CONFIG_HOME: join(fakeHome, ".config"),
     // `HOME` alone only sandboxes POSIX: `os.homedir()` reads `USERPROFILE` on Windows, and

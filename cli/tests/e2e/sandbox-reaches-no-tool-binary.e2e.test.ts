@@ -115,4 +115,11 @@ describe("the sandbox a test spawns into", () => {
       else process.env.CODEX_HOME = set;
     }
   });
+
+  it("gives a caller's PATH to the Windows spelling too, so one variable never shadows the other", () => {
+    const env = sandboxedEnv(join("/sandbox", "home"), { PATH: "/the/caller/bin" });
+
+    expect(env.PATH).toBe("/the/caller/bin");
+    expect(env.Path).toBe("/the/caller/bin");
+  });
 });
