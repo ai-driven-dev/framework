@@ -132,7 +132,6 @@ export class GitHubAdapter {
 
   private rethrowAsCatalogError(err: unknown, url: string): never {
     if (err instanceof AuthenticationError) throw new CatalogFetchAuthError(url);
-    const detail = err instanceof Error ? err.message : String(err);
-    throw new CatalogFetchError(url, detail);
+    throw new CatalogFetchError(url, err);
   }
 }

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { render } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import "../../../../../src/composition/translate.js";
 import { McpConfigError } from "../../../../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -117,7 +118,7 @@ describe("a flat build that folds MCP servers into the tool's own config", () =>
       const failure = await build(tool, fs).catch((error: unknown) => error);
 
       expect(failure).toBeInstanceOf(McpConfigError);
-      expect(String(failure)).toContain("'plug'");
+      expect(render(failure)).toContain("'plug'");
     }
   );
 });

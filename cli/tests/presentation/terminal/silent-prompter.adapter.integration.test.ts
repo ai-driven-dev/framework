@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 
 describe("SilentPrompterAdapter", () => {
   const adapter = new SilentPrompterAdapter();
@@ -41,7 +42,7 @@ describe("SilentPrompterAdapter", () => {
     it("throws when all choices are disabled", async () => {
       await expect(
         adapter.select("Pick one:", [{ name: "A", value: "a", disabled: true }])
-      ).rejects.toThrow("No enabled choices available");
+      ).rejects.toThrow(saying("No enabled choices available"));
     });
   });
 

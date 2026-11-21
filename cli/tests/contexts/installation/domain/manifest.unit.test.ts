@@ -246,7 +246,7 @@ describe("Manifest", () => {
 
     it("updateToolMergeFiles throws for uninstalled tool", () => {
       const manifest = Manifest.create();
-      expect(() => manifest.updateToolMergeFiles(TOOL.claude, [])).toThrow(/not installed/);
+      expect(() => manifest.updateToolMergeFiles(TOOL.claude, [])).toThrow(saying(/not installed/));
     });
   });
 

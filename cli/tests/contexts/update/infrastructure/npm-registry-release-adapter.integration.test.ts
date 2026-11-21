@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { FrameworkResolutionError } from "../../../../src/contexts/update/domain/update.error.js";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
 import type { HttpGet, HttpGetOptions } from "../../../../src/shared/ports/http-get.js";
 import type { ReleaseLister } from "../../../../src/shared/ports/release-lister.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 
 const NPM_URL = "https://registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags";
 
@@ -63,7 +63,7 @@ describe("NpmRegistryReleaseAdapter", () => {
     await expect(
       new NpmRegistryReleaseAdapter(client, releasesAnswering(null).releases).fetchLatestRelease()
     ).rejects.toThrow(
-      new FrameworkResolutionError(`Unexpected npm registry response from ${NPM_URL}`)
+      expect.objectContaining({ detail: `Unexpected npm registry response from ${NPM_URL}` })
     );
   });
 
@@ -73,9 +73,7 @@ describe("NpmRegistryReleaseAdapter", () => {
     await expect(
       new NpmRegistryReleaseAdapter(client, releasesAnswering(null).releases).fetchLatestRelease()
     ).rejects.toThrow(
-      new FrameworkResolutionError(
-        `Could not resolve the latest CLI version from ${NPM_URL}: socket hang up`
-      )
+      saying(`Could not resolve the latest CLI version from ${NPM_URL}: socket hang up`)
     );
   });
 
@@ -101,6 +99,6 @@ describe("NpmRegistryReleaseAdapter", () => {
     ).fetchLatestRelease();
 
     expect(release.changelog).toBeNull();
-    expect(logger.debugMessages).toStrictEqual(["Changelog unavailable: offline"]);
+    expect(logger.debugMessages).toStrictEqual(["Changelog unavailable: Error: offline"]);
   });
 });

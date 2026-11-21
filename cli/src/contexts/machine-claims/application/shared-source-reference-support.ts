@@ -115,7 +115,7 @@ export async function toleratingUnreadableSourceReferences<T>(
     return await action();
   } catch (error) {
     if (!(error instanceof UnreadableUserSourceReferencesError)) throw error;
-    logger.warn(error.message);
+    logger.warn("", error);
     return fallback;
   }
 }

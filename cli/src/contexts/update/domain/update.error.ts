@@ -9,7 +9,10 @@ export class ElevatedPermissionUpdateError extends AiddError {
 
 export class FrameworkResolutionError extends AiddError {
   readonly code = "framework-resolution";
-  constructor(readonly detail: string) {
+  constructor(
+    readonly detail: string,
+    readonly reason?: unknown
+  ) {
     super();
   }
 }

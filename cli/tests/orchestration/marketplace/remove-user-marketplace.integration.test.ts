@@ -119,7 +119,7 @@ for (const toolId of [TOOL.codex]) {
           ...options(),
           name: FRAMEWORK_MARKETPLACE_NAME,
         })
-      ).rejects.toThrow(/shared by every project.*aidd clean --scope user/);
+      ).rejects.toThrow(saying(/shared by every project.*aidd clean --scope user/));
       expect(list).not.toHaveBeenCalled();
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);

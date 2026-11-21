@@ -6,8 +6,8 @@ export class CapturingLogger implements Logger {
   readonly infoMessages: string[] = [];
   readonly warnMessages: string[] = [];
 
-  debug(message: string): void {
-    this.debugMessages.push(message);
+  debug(message: string, cause?: unknown): void {
+    this.debugMessages.push(cause === undefined ? message : message + describeCause(cause));
   }
 
   info(message: string): void {

@@ -13,6 +13,7 @@ import { hostRecord } from "../../shared/testing/host-record-reading.builder.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import {
   CLAUDE_CACHE,
   CODEX_CACHE,
@@ -157,7 +158,7 @@ describe("clean --scope user: host cli", () => {
       });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
-        /Cannot read.*references.json/
+        saying(/Cannot read.*references.json/)
       );
       expect(await fs.fileExists(join(USER_CONFIG_DIR, "references.json"))).toBe(true);
     });

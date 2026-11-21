@@ -54,9 +54,9 @@ export class NpmRegistryReleaseAdapter implements CliReleaseSource {
       return latest;
     } catch (err) {
       if (err instanceof FrameworkResolutionError) throw err;
-      const detail = err instanceof Error ? err.message : String(err);
       throw new FrameworkResolutionError(
-        `Could not resolve the latest CLI version from ${url}: ${detail}`
+        `Could not resolve the latest CLI version from ${url}: `,
+        err
       );
     }
   }
@@ -67,8 +67,7 @@ export class NpmRegistryReleaseAdapter implements CliReleaseSource {
     try {
       return await this.releases.readReleaseBody(CLI_REPO, `${CLI_TAG_PREFIX}${version}`);
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      this.logger?.debug(`Changelog unavailable: ${detail}`);
+      this.logger?.debug("Changelog unavailable: ", err);
       return null;
     }
   }

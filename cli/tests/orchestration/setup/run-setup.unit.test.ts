@@ -43,6 +43,7 @@ import {
   initProject,
 } from "../../shared/testing/installation-deps.builder.js";
 import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
@@ -250,7 +251,7 @@ describe("setup validates before any side effect", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow)).rejects.toThrow(/--source/);
+    await expect(useCase.execute(flow)).rejects.toThrow(saying(/--source/));
 
     expect(await deps.manifestRepo.load()).toBeNull();
     expect(deps.fs.has(join(PROJECT_ROOT, ".gitignore"))).toBe(false);

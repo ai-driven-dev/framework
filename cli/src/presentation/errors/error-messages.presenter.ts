@@ -8,6 +8,7 @@ import type * as tools from "../../contexts/tools/domain/tools.error.js";
 import type * as translate from "../../contexts/translate/domain/translate.error.js";
 import type * as update from "../../contexts/update/domain/update.error.js";
 import type * as orchestration from "../../orchestration/orchestration.error.js";
+import type * as shared from "../../shared/domain/shared.error.js";
 import type { AiddError } from "../../shared/domain/shared.error.js";
 
 type Classes<Module> = Module[keyof Module];
@@ -22,6 +23,7 @@ type Catalogued = InstanceType<
   | Classes<typeof orchestration>
   | Classes<typeof hostRegistration>
   | Classes<typeof installation>
+  | Extract<Classes<typeof shared>, new (...args: never[]) => AiddError>
 >;
 type ByCode = { [Error in Catalogued as Error["code"]]: Error };
 
@@ -33,6 +35,37 @@ interface Words {
 const entries: {
   [Code in keyof ByCode]: (error: ByCode[Code], words: (cause: unknown) => string) => string;
 } = {
+  "asset-not-found": (error) => `Bundled asset not found: '${error.assetName}'`,
+  authentication: (error) =>
+    `Authentication failed (${error.source}). Run \`aidd auth login\` to authenticate.`,
+  "catalog-fetch-auth": (error) =>
+    `Authentication required to fetch catalog from "${error.url}". Run \`aidd auth login\` first or use \`--source local --path <dir>\`.`,
+  "catalog-fetch": (error, words) =>
+    `Failed to fetch catalog from "${error.url}": ${words(error.reason)}`,
+  "catalog-fetch-not-found": (error) => `Catalog not found (HTTP 404): ${error.url}`,
+  http: (error) => `Unexpected HTTP ${error.statusCode} from ${error.url}`,
+  "http-not-found": (error) => `Resource not found (HTTP 404): ${error.url}`,
+  "http-redirect": (error) => `HTTP redirect without location header from ${error.url}`,
+  "input-required": (error) => error.detail,
+  "invalid-install-scope": (error) =>
+    `Invalid scope '${error.value}'. Expected 'project' or 'user'.`,
+  "invalid-marketplace-name": (error) =>
+    `Invalid marketplace name: "${error.detail}". Use lowercase alphanumeric characters and hyphens only.`,
+  "invalid-plugin-manifest": (error) =>
+    error.detail ? `Invalid plugin manifest: ${error.detail}` : "Invalid plugin manifest.",
+  "invalid-plugin-source": (error) =>
+    error.detail ? `Invalid plugin source: ${error.detail}` : "Invalid plugin source.",
+  "invalid-source-marketplace": (error) => `Invalid source marketplace: ${error.detail}.`,
+  "json-parse": (error) => `Cannot parse existing JSON at ${error.path}: ${error.reason}`,
+  "manifest-validation": (error) => error.detail,
+  "mcp-config": (error) => error.detail,
+  "tool-not-in-manifest": (error) => `Tool '${error.toolId}' is not installed in the manifest.`,
+  "unreadable-user-source-references": (error) =>
+    `Cannot read the shared-source reference registry at ${error.path}: ${error.reason}. Repair the ` +
+    `file, or delete it to start from an empty registry.`,
+  "unregistered-tool": (error) => `Tool '${error.toolId}' is not registered.`,
+  "version-mismatch": (error) =>
+    `Plugin '${error.plugin}': requested version '${error.requested}' does not match catalog version '${error.actual}'.`,
   "auth-storage": (error) => error.detail,
   "active-machine-dependents": (error) =>
     `Cannot remove ${error.target}: active projects still depend on it: ${error.projects.join(", ")}.`,
@@ -120,7 +153,8 @@ const entries: {
     "     Windows:  npm config set prefix %APPDATA%\\npm\n" +
     "     macOS/Linux:  npm config set prefix ~/.npm-global\n" +
     `  3. Run the update directly: ${error.installCommand}`,
-  "framework-resolution": (error) => error.detail,
+  "framework-resolution": (error, words) =>
+    error.reason === undefined ? error.detail : error.detail + words(error.reason),
   "package-manager-detection": (error) =>
     `Could not detect package manager. Run manually:\n  ${error.commands.join("\n  ")}`,
   "conflicting-identity-flags": () =>

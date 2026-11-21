@@ -314,7 +314,7 @@ describe("restore", () => {
         interactive: false,
         force: false,
       })
-    ).rejects.toThrow("--force");
+    ).rejects.toThrow(saying("--force"));
   });
 
   it("restores deleted files without prompting the user", async () => {
@@ -458,7 +458,7 @@ describe("restore", () => {
           force: false,
           interactive: false,
         })
-      ).rejects.toThrow("--force");
+      ).rejects.toThrow(saying("--force"));
     });
 
     it("file filter skips merge files not matching the filter", async () => {
@@ -506,7 +506,7 @@ describe("restore — consent to overwrite", () => {
         version: "test",
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow("--force");
+    ).rejects.toThrow(saying("--force"));
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isScope, parseScope } from "../../../src/shared/domain/scope.js";
+import { saying } from "../testing/saying.builder.js";
 
 describe("scope value object", () => {
   describe("isScope", () => {
@@ -26,7 +27,7 @@ describe("scope value object", () => {
     });
 
     it("throws on invalid value", () => {
-      expect(() => parseScope("global")).toThrow(/Invalid scope/);
+      expect(() => parseScope("global")).toThrow(saying(/Invalid scope/));
     });
   });
 });

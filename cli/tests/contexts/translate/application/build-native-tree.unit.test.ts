@@ -7,6 +7,7 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.j
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 import { RecordingSink } from "../testing/recording-sink.builder.js";
 
 const SOURCE = resolve("/source");
@@ -101,14 +102,14 @@ describe("BuildNativeTree", () => {
     const refused = run();
 
     await expect(refused).rejects.toBeInstanceOf(InvalidSourceMarketplaceError);
-    await expect(refused).rejects.toThrow(detail);
+    await expect(refused).rejects.toThrow(saying(detail));
     expect(sink.calls).toEqual([]);
   });
 
   it("refuses a plugin the catalog lists and the source lacks", async () => {
     const { run } = buildOver({ [CATALOG]: catalogOf("ghost") });
 
-    await expect(run()).rejects.toThrow(/plugin 'ghost' not found/);
+    await expect(run()).rejects.toThrow(saying(/plugin 'ghost' not found/));
   });
 
   it("warns about the sections it leaves out and reports them", async () => {
