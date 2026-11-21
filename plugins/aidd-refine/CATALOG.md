@@ -7,6 +7,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
+- [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/01-brainstorm`](#skills01-brainstorm)
   - [`skills/02-challenge`](#skills02-challenge)
@@ -21,6 +23,19 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
+
+### `hooks`
+
+| File |
+|------|
+| [artifacts.cjs](hooks/artifacts.cjs) |
+| [hooks.json](hooks/hooks.json) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [host.cjs](hooks/lib/host.cjs) |
 
 ### `skills`
 
@@ -45,6 +60,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [report-template.md](skills/02-challenge/assets/report-template.md) | - |
 | `references` | [decision.md](skills/02-challenge/references/decision.md) | - |
 | `references` | [techniques.md](skills/02-challenge/references/techniques.md) | - |
+| `scripts` | [contract.json](skills/02-challenge/scripts/contract.json) | - |
+| `scripts` | [validate-challenge.cjs](skills/02-challenge/scripts/validate-challenge.cjs) | - |
 | `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Challenges finished work and what it was asked to do, when the user wants to know what breaks it before relying on it.` |
 
 #### `skills/03-shadow-areas`

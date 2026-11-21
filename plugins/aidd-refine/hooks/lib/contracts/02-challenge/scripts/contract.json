@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "kind": "challenge",
+  "unit": "file",
+  "scope": ["aidd_docs/**/challenge.md"],
+  "rules": {
+    "CHALLENGE-01": { "op": "custom", "in": "challenge.md", "check": "rounds", "why": "each pass is a round, numbered from 1, appended after the last" },
+    "CHALLENGE-02": { "op": "custom", "in": "challenge.md", "check": "aim", "why": "every finding is judged against the aim" },
+    "CHALLENGE-03": { "op": "custom", "in": "challenge.md", "check": "sections", "why": "whoever acts on the report reads every round the same way" },
+    "CHALLENGE-04": { "op": "custom", "in": "challenge.md", "check": "items", "why": "an empty section must say None, so silence never reads as a pass" },
+    "CHALLENGE-05": { "op": "custom", "in": "challenge.md", "check": "most", "why": "a report keeps only what changes a decision" },
+    "CHALLENGE-06": { "op": "custom", "in": "challenge.md", "check": "evidence", "why": "a deal breaker blocks only on evidence someone can re-run or re-read" },
+    "CHALLENGE-07": { "op": "custom", "in": "challenge.md", "check": "change", "why": "a finding without its change cannot be acted on" },
+    "CHALLENGE-08": { "op": "custom", "in": "challenge.md", "check": "question", "why": "a To decide goes to whoever owns the request, as a question" }
+  }
+}
