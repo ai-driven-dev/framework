@@ -85,6 +85,13 @@ const LABELS = {
     copied: "Copied",
     clear: "Clear",
     allOk: "All OK",
+    confirmAll: "Confirm {count} states?",
+    confirmAllOne: "Confirm 1 state?",
+    cancel: "Cancel",
+    reviewed: "{done}/{total} states reviewed",
+    nextState: "Next state \u2192",
+    nextRecord: "Next item \u2192",
+    backToOverview: "Back to the overview \u2192",
     close: "Close",
     nothing: "Nothing to review.",
     overviewNext: "{count} to review, in {steps}.",
@@ -192,6 +199,13 @@ const LABELS = {
     copied: "Copié",
     clear: "Effacer",
     allOk: "Tout OK",
+    confirmAll: "Valider les {count} \u00e9tats\u202f?",
+    confirmAllOne: "Valider 1 \u00e9tat\u202f?",
+    cancel: "Annuler",
+    reviewed: "{done}/{total} \u00e9tats revus",
+    nextState: "\u00c9tat suivant \u2192",
+    nextRecord: "\u00c9l\u00e9ment suivant \u2192",
+    backToOverview: "Retour \u00e0 l'aper\u00e7u \u2192",
     close: "Fermer",
     nothing: "Rien à relire.",
     overviewNext: "{count} à relire, dans {steps}.",
@@ -411,9 +425,19 @@ label { font-size: var(--t-sm); color: var(--muted); }
 .colvote:hover { color: var(--text); }
 .colvote[aria-pressed="true"] { background: var(--surface); color: var(--ok); }
 .colvote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
-.verdict-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
-.verdict-bar .choose { margin-left: 0; }
-.verdict-bar .verdict { height: 30px; padding: 0 var(--s4); font-size: var(--t-md); }
+.verdict-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); border-top: 1px solid var(--line); }
+.verdict-bar .choose { margin-left: 0; padding: 0; gap: var(--s2); background: transparent; }
+.verdict-bar .verdict { height: 36px; padding: 0 var(--s5); border: 1px solid var(--control); border-radius: var(--r2); background: var(--surface); color: var(--text); font-size: var(--t-md); }
+.verdict-bar .verdict:hover { background: var(--sunken); color: var(--text); }
+.verdict-bar .verdict[aria-pressed="true"]::before { content: "\\2713\\00a0"; }
+.verdict-bar .verdict[data-verdict="revise"][aria-pressed="true"]::before { content: "\\270E\\00a0"; }
+.verdict-bar .verdict[data-verdict="ok"][aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
+.verdict-bar .verdict[data-verdict="revise"][aria-pressed="true"] { background: var(--revise); border-color: var(--revise); color: #fff; font-weight: 600; }
+.verdict-bar .reviewed { color: var(--muted); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+.verdict-bar .next-state, .verdict-bar .next-record { display: inline-flex; align-items: center; height: 36px; padding: 0 var(--s4); border-radius: var(--r2); font-size: var(--t-md); font-weight: 600; }
+.verdict-bar .next-state { margin-left: auto; }
+.verdict-bar .next-record { margin-left: auto; background: var(--accent); color: #fff; }
+.verdict-bar .next-record:hover { background: var(--accent-hover); text-decoration: none; }
 .verdict-bar textarea.comment { max-inline-size: 520px; }
 textarea.comment, textarea.colcomment { display: block; flex-basis: 100%; inline-size: 100%; font: inherit; font-size: var(--t-md); color: var(--text); background: var(--surface); border: 1px solid var(--control); border-radius: var(--r2); padding: var(--s2) var(--s3); resize: vertical; }
 textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
@@ -456,11 +480,12 @@ textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--acc
 .mini-card:hover { text-decoration: none; border-color: #c7cdfb; }
 .mini-card b { font-size: var(--t-md); font-weight: 600; }
 .mini-card .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
-.open-review { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); inline-size: 100%; height: 34px; padding: 0 var(--s4); background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.open-review { position: fixed; right: var(--s5); bottom: var(--s5); z-index: 20; display: flex; align-items: center; gap: var(--s3); height: 44px; padding: 0 var(--s5); border-radius: 999px; box-shadow: var(--shadow); background: var(--accent); border-color: var(--accent); color: #fff; font-size: var(--t-md); font-weight: 600; }
 .open-review:hover { background: var(--accent-hover); }
 .open-review .pending { padding: 0 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); color: #fff; font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .open-review[aria-expanded="true"] { display: none; }
-.review-foot { flex: none; padding: var(--s3) 0 0; background: var(--surface); }
+.review-foot { flex: none; }
+@media (min-width: 769px) { .shell > nav { z-index: 15; } .shell > main { padding-bottom: calc(var(--s6) + 64px); } }
 .tally { padding: 0 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .scrim { display: none; }
 body[data-drawer="open"] .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: rgba(29, 29, 27, 0.4); }
@@ -483,6 +508,8 @@ body[data-drawer="open"] .scrim { display: block; position: fixed; inset: 0; z-i
 .step-group > summary::-webkit-details-marker { display: none; }
 .step-group .step-count { color: var(--faint); font-weight: 500; }
 .step-group .step-ok { margin-left: auto; height: 26px; }
+.step-group .step-ok[data-asking] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step-group .step-cancel { height: 26px; }
 .agreeing { padding: var(--s3) var(--s5); border-bottom: 1px solid var(--line); font-size: var(--t-md); }
 .agreeing ul { margin: 0 0 var(--s2); padding-left: var(--s4); }
 .agreeing .note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
@@ -518,7 +545,7 @@ ${rowBoards()}
   .shell > nav[data-open] .nav-scroll { display: block; position: fixed; inset: 56px 0 0 0; padding: var(--s4); background: var(--surface); }
   .nav-scroll .brand { display: none; }
   .review-foot { padding: 0; }
-  .open-review { inline-size: auto; gap: var(--s3); }
+  .open-review { position: static; height: 34px; padding: 0 var(--s4); border-radius: var(--r2); box-shadow: none; font-size: var(--t-sm); }
   .shell > main { padding: calc(56px + var(--s4)) var(--s4) var(--s6); }
   .pair { padding: var(--s3); }
   .state .render iframe[data-platform="mobile"] { flex: 0 1 390px; min-inline-size: 0; }
@@ -694,6 +721,29 @@ function pickedOf(picks, axis, variant) {
   return next;
 }
 
+/** The next record to review after `id` in the review's `order`: the first, wrapping at the end and never `id` itself,
+ * with a state that is neither settled nor given a verdict in `choices`, as `{record, state}` with its first such state;
+ * null when none is left. A page the order does not hold starts from its head. */
+function nextToReviewOf(order, known, choices, id) {
+  const at = order.indexOf(id);
+  const after = order.slice(at + 1).concat(order.slice(0, Math.max(at, 0)));
+  for (const record of after) {
+    const entry = known.find((each) => each.record === record);
+    const open = entry && entry.states.find((one) => !one.settled && !(choices[entry.record + "@" + entry.version] || {})[one.state]);
+    if (open) return { record, state: open.state };
+  }
+  return null;
+}
+
+/** The next state of a record with no verdict, after `shown` in the order of `states` and wrapping, never `shown`:
+ * `states` are `{state, settled}`, `decided` the verdicts given by state. Null when none is left. */
+function nextOpenOf(states, decided, shown) {
+  const at = states.findIndex((one) => one.state === shown);
+  const after = states.slice(at + 1).concat(states.slice(0, Math.max(at, 0)));
+  const open = after.find((one) => one.state !== shown && !one.settled && !decided[one.state]);
+  return open ? open.state : null;
+}
+
 /** Whether a verdict to revise has no comment, in a state or in a variant: the copy waits for it. */
 function blockedOf(entries) {
   const bare = (each) => each.verdict === "revise" && !String(each.comment || "").trim();
@@ -726,6 +776,8 @@ ${blockedOf.toString()}
 ${remainingOf.toString()}
 ${decisionsOf.toString()}
 ${pickedOf.toString()}
+${nextToReviewOf.toString()}
+${nextOpenOf.toString()}
 const STORE = "aidd-ui-review";
 const drawer = document.getElementById("review");
 const opener = document.getElementById("open-review");
@@ -734,6 +786,7 @@ const clear = document.getElementById("clear");
 const note = document.getElementById("note");
 const items = [...drawer.querySelectorAll("details.item")];
 const stepButtons = [...drawer.querySelectorAll(".step-ok")];
+const stepCancels = [...drawer.querySelectorAll(".step-cancel")];
 const sets = [...drawer.querySelectorAll("details.choice")];
 const reviews = [...document.querySelectorAll("section.review[data-record]")];
 const pickers = [...document.querySelectorAll(".variants[data-set]")];
@@ -754,10 +807,12 @@ function keep(name, value) {
 }
 const known = (() => { try { return JSON.parse(document.getElementById("review-records").textContent); } catch (error) { return []; } })();
 const knownKeyOf = (each) => each.record + "@" + each.version;
+const order = (() => { try { return JSON.parse(document.getElementById("review-order").textContent); } catch (error) { return []; } })();
 let choices = {};
 try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf).concat(reviews.map(reviewKeyOf), sets.map(setKeyOf), known.map(knownKeyOf))); } catch (error) { choices = {}; }
 const choiceOf = (key, name) => (choices[key] || {})[name];
 function choose(key, name, choice) {
+  unconfirm();
   const own = Object.assign({}, choices[key]);
   if (choice) own[name] = choice;
   else delete own[name];
@@ -878,7 +933,10 @@ function paint() {
 }
 /** The state a record's tabs show, or null without tabs. */
 const shownOf = (review) => { const tab = review.querySelector('[role="tab"][aria-selected="true"]'); return tab ? tab.dataset.tab : null; };
-/** The verdict bar of each record on the page, showing the verdict of the state its tabs show, and each tab its own. */
+/** The tabs of a record as the order of their states, each settled or not by the review file. */
+const statesOf = (review) => [...review.querySelectorAll('[role="tab"]')].map((tab) => ({ state: tab.dataset.tab, settled: tab.dataset.current === "ok" || tab.dataset.current === "revise" }));
+/** The verdict bar of each record on the page, showing the verdict of the state its tabs show, and each tab its own,
+ * with the count of states reviewed and the way on: the next state, else the next record, once every state has a verdict. */
 function paintBars() {
   for (const review of reviews) {
     const key = reviewKeyOf(review);
@@ -896,7 +954,33 @@ function paintBars() {
     const field = bar.querySelector(".comment");
     field.hidden = verdict !== "revise";
     if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
+    const states = statesOf(review);
+    const own = choices[key] || {};
+    const open = states.filter((one) => !one.settled && !own[one.state]);
+    const bare = Object.values(own).some((each) => each.verdict === "revise" && !String(each.comment || "").trim());
+    const reviewed = bar.querySelector(".reviewed");
+    if (reviewed) reviewed.textContent = reviewed.dataset.template.replace("{done}", String(states.length - open.length)).replace("{total}", reviewed.dataset.total);
+    const nextState = bar.querySelector(".next-state");
+    if (nextState) {
+      nextState.hidden = nextOpenOf(states, own, state) === null;
+      nextState.disabled = verdict === "revise" && !String(choice.comment || "").trim();
+    }
+    const nextRecord = bar.querySelector(".next-record");
+    if (nextRecord) {
+      nextRecord.hidden = open.length > 0 || bare;
+      const target = nextToReviewOf(order, known, choices, review.dataset.record);
+      nextRecord.href = target ? target.record + ".html#tab-" + target.state : "index.html";
+      nextRecord.textContent = target ? nextRecord.dataset.next : nextRecord.dataset.overview;
+    }
   }
+}
+/** Opens the next state of the record with no verdict, from the one shown; false when there is none or no tabs to open. */
+function advance(review) {
+  const next = nextOpenOf(statesOf(review), choices[reviewKeyOf(review)] || {}, shownOf(review));
+  const tab = [...review.querySelectorAll('[role="tab"]')].find((each) => each.dataset.tab === next);
+  if (!tab || typeof openTab !== "function") return false;
+  openTab(tab);
+  return true;
 }
 /** Marks the state of the page's own record that its tabs show, in the drawer and beside the tabs. */
 function marked(state) {
@@ -904,6 +988,7 @@ function marked(state) {
   paintBars();
 }
 function show(on) {
+  if (!on) unconfirm();
   drawer.hidden = !on;
   document.body.dataset.drawer = on ? "open" : "closed";
   opener.setAttribute("aria-expanded", String(on));
@@ -949,9 +1034,12 @@ reviews.forEach((review) => {
   const bar = review.querySelector(".verdict-bar");
   if (!bar) return;
   const field = bar.querySelector(".comment");
+  const nextState = bar.querySelector(".next-state");
   bar.querySelectorAll(".verdict").forEach((button) => button.addEventListener("click", () => {
     if (vote(reviewKeyOf(review), shownOf(review), button.dataset.verdict)) field.focus();
+    else if ((choiceOf(reviewKeyOf(review), shownOf(review)) || {}).verdict === "ok") advance(review);
   }));
+  if (nextState) nextState.addEventListener("click", () => advance(review));
   field.addEventListener("input", () => {
     choose(reviewKeyOf(review), shownOf(review), { verdict: "revise", comment: field.value });
     paint();
@@ -976,12 +1064,38 @@ pickers.forEach((holder) => holder.querySelectorAll(".take").forEach((button) =>
 opener.addEventListener("click", () => show(true));
 document.getElementById("close-review").addEventListener("click", () => { show(false); opener.focus(); });
 document.getElementById("scrim").addEventListener("click", () => { show(false); opener.focus(); });
-document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !drawer.hidden) { show(false); opener.focus(); } });
-stepButtons.forEach((button) => button.addEventListener("click", (event) => {
-  event.preventDefault();
-  for (const { key, state } of remainingOf(model(), choices, button.dataset.step)) choose(key, state, { verdict: "ok", comment: "" });
-  paint();
-}));
+/** Takes back the question of every "all OK" of the drawer, each button with its own words again; true when one was asked. */
+function unconfirm() {
+  const asked = stepButtons.filter((button) => button.dataset.asking);
+  stepButtons.forEach((button, at) => {
+    delete button.dataset.asking;
+    button.textContent = button.dataset.label;
+    if (stepCancels[at]) stepCancels[at].hidden = true;
+  });
+  return asked.length > 0;
+}
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || drawer.hidden || unconfirm()) return;
+  show(false);
+  opener.focus();
+});
+stepButtons.forEach((button, at) => {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    const asked = button.dataset.asking;
+    const left = remainingOf(model(), choices, button.dataset.step);
+    unconfirm();
+    if (!asked) {
+      button.dataset.asking = "1";
+      button.textContent = (left.length === 1 ? button.dataset.confirmOne : button.dataset.confirm).replace("{count}", String(left.length));
+      if (stepCancels[at]) stepCancels[at].hidden = false;
+      return;
+    }
+    for (const { key, state } of left) choose(key, state, { verdict: "ok", comment: "" });
+    paint();
+  });
+  if (stepCancels[at]) stepCancels[at].addEventListener("click", (event) => { event.preventDefault(); unconfirm(); });
+});
 copy.addEventListener("click", () => {
   if (blocked()) return;
   const content = copiedOf(entries());
@@ -1124,6 +1238,17 @@ function screenGroupsOf(records, journeys) {
   const rest = records.filter((record) => !placedIds.has(fm(record).id)).sort(byRecordId);
   if (rest.length) groups.push({ journey: null, records: rest, sketches: new Set() });
   return groups;
+}
+
+/** The ids of the records to review, in the order the sidebar lists them: step by step, a step's records as it lists them,
+ * the screens by journey. A wireframe a screen dresses is left out: it is reviewed through that screen. */
+function reviewOrderOf(project, held, journeys) {
+  const ordered = ({ step, records: own }) => {
+    if (step === "screens") return screenGroupsOf(own, journeys).flatMap((group) => group.records.filter((record) => !group.sketches.has(fm(record).id)));
+    return [...own].sort(step === "components" ? byCategory : byRecordId);
+  };
+  const dressed = new Set(held.flatMap((each) => [...each.dressedBy.keys()]));
+  return held.flatMap(ordered).filter((record) => reviewable(project, record) && !dressed.has(fm(record).id)).map((record) => fm(record).id);
 }
 
 /** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
@@ -1357,8 +1482,9 @@ function orderedStates(rows, record) {
 /** How many states of a record a verdict at its version already settles, ok or revise. */
 const settledOf = (states) => states.filter(({ verdict }) => !UNRESOLVED.includes(verdict.current)).length;
 
-/** The verdict of the state the tabs show, given beside them: the same choice, key and values as the drawer's row, its comment asked in place. */
-const verdictBarOf = (labels) => `<div class="verdict-bar"><span class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></div>`;
+/** The verdict of the state the tabs show, given after the states it judges: the same choice, key and values as the drawer's row,
+ * its comment asked in place, with the count of states reviewed and the way on, which the page script shows as the review goes. */
+const verdictBarOf = (labels, states) => `<div class="verdict-bar"><span class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></span><span class="reviewed" data-template="${escaped(labels.reviewed)}" data-total="${states.length}">${escaped(filled(labels.reviewed, { done: settledOf(states), total: states.length }))}</span><button type="button" class="next-state" hidden>${labels.nextState}</button><a class="next-record" href="index.html" data-next="${escaped(labels.nextRecord)}" data-overview="${escaped(labels.backToOverview)}" hidden>${labels.nextRecord}</a><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></div>`;
 
 /** The review of a record: each state as a tab, the ones still to review first. */
 function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
@@ -1370,8 +1496,8 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
     toolbarOf(system, labels),
     widthOf(system, labels),
     tabsOf(ordered, labels),
-    verdictBarOf(labels),
     ...ordered.map(({ state, verdict }, at) => stateOf({ record, title: titleOf(project, record, labels), state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
+    verdictBarOf(labels, ordered),
     "</section>",
   ].join("\n");
 }
@@ -1380,7 +1506,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
  * with something left to review, each record awaiting review with only its states not settled, each state with a
  * link to its tab, its verdict pair and a comment field, then one copy of all that is decided. A group carries its
  * own "all OK". Opened by the button at the foot of the sidebar, which counts what awaits review. */
-function drawerOf({ project, held, here, rows, labels, current }) {
+function drawerOf({ project, held, here, rows, labels, current, order }) {
   const item = (record) => {
     const { id, version } = fm(record);
     const wanted = awaitingOf(rows, record);
@@ -1411,12 +1537,13 @@ function drawerOf({ project, held, here, rows, labels, current }) {
   };
   const choices = (each) => (each.open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${each.open.map(choice).join("")}</section>` : "");
   const agreeing = (each) => (each.todo ? "" : `<section class="agreeing"><ul>${each.listed.map((record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`).join("")}</ul><p class="note">${labels.agreeInChat}</p></section>`);
-  const ok = (each) => (each.awaiting.length ? `<button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button>` : "");
+  const ok = (each) => (each.awaiting.length ? `<button type="button" class="step-ok" data-step="${each.step}" data-label="${escaped(labels.allOk)}" data-confirm="${escaped(labels.confirmAll)}" data-confirm-one="${escaped(labels.confirmAllOne)}">${labels.allOk}</button><button type="button" class="step-cancel" data-step="${each.step}" hidden>${labels.cancel}</button>` : "");
   const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.count})</span>${ok(each)}</summary>${choices(each)}${each.awaiting.map(item).join("\n")}${agreeing(each)}</details>`;
   const groups = held.filter((each) => each.count).map(group).join("\n");
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
     '<div class="scrim" id="scrim"></div>',
+    `<script type="application/json" id="review-order">${JSON.stringify(order)}</script>`,
     `<script type="application/json" id="review-records">${JSON.stringify(known).replaceAll("<", "\\u003c")}</script>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
@@ -1622,7 +1749,8 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
     return charteSectionsOf({ entries: tokens === null ? [] : catalog(project), values: resolvedValues(project).get(BASE_CONTEXT) ?? new Map(), citations: citations(project), primitives: list(fm(record).primitives), rows: breakpointRows(record), notes, tokens, labels, language });
   };
   const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
-  const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current });
+  const order = reviewOrderOf(project, held, journeys);
+  const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, order });
   const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
@@ -1657,4 +1785,4 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   return pages;
 }
 
-module.exports = { showcaseOf, stateDocument, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };
+module.exports = { showcaseOf, stateDocument, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, nextToReviewOf, nextOpenOf, languageOf, LABELS };

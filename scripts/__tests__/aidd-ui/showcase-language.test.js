@@ -94,6 +94,19 @@ describe("a French showcase", () => {
     assert.deepEqual([...new Set(options(pagesOf("en")["button.html"]))], ["light", "dark"]);
   });
 
+  it("words the review flow in French, in the bar of a record and in the drawer's confirmation", () => {
+    const keys = ["confirmAll", "confirmAllOne", "cancel", "reviewed", "nextState", "nextRecord", "backToOverview"];
+    for (const key of keys) assert.ok(LABELS.en[key] && LABELS.fr[key] && LABELS.en[key] !== LABELS.fr[key], key);
+    const pages = pagesOf("fr");
+    const bar = pages["home.html"].match(/<div class="verdict-bar"[\s\S]*?<\/div>\s*<\/section>/)[0];
+    const heard = readOf(bar).all.join(" | ");
+    assert.ok(heard.includes(LABELS.fr.nextState), heard);
+    assert.match(bar, /class="reviewed"[^>]*>\d+\/\d+ états revus</);
+    assert.ok(bar.includes(`data-next="${LABELS.fr.nextRecord}"`) && bar.includes(`data-overview="${LABELS.fr.backToOverview}"`));
+    const drawer = pages["index.html"].match(/<aside class="drawer"[\s\S]*?<\/aside>/)[0];
+    assert.ok(drawer.includes(`data-confirm="${LABELS.fr.confirmAll}"`) && readOf(drawer).all.includes(LABELS.fr.cancel));
+  });
+
   it("writes none of the English labels the engine translates", () => {
     const english = Object.entries(LABELS.en).filter(([key, value]) => typeof value === "string" && value !== LABELS.fr[key]).flatMap(([, value]) => value.split(/\{\w+\}/)).map((piece) => piece.trim()).filter((piece) => piece.length >= 5);
     for (const [name, html] of Object.entries(pagesOf("fr"))) {

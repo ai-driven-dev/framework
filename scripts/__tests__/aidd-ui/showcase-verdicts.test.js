@@ -3,7 +3,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
-const { showcaseOf, decisionsOf, copiedOf, entriesOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
+const { showcaseOf, decisionsOf, copiedOf, entriesOf, nextToReviewOf, nextOpenOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The verdict of a state is given beside the tabs of the record, and the drawer only recaps it: the page script
 // is run here on a stand-in for the page, as the sets' tests do.
@@ -19,12 +19,12 @@ const reviewOf = (html) => html.match(/<section class="review"[\s\S]*?<\/section
 const barOf = (html) => reviewOf(html).match(/<div class="verdict-bar">[\s\S]*?<\/div>/)?.[0];
 
 describe("the verdicts beside the state tabs", () => {
-  it("puts OK and Revise under the tabs of a reviewed record, with a comment field, in the language", () => {
+  it("puts OK and Revise after the rendered states of a reviewed record, with a comment field, in the language", () => {
     for (const [lang, words] of [["en", ["OK", "Revise"]], ["fr", ["OK", "À revoir"]]]) {
       const html = pagesOf(lang)["home.html"];
       const review = reviewOf(html);
-      assert.ok(review.indexOf('role="tablist"') < review.indexOf('class="verdict-bar"'), "after the tabs");
-      assert.ok(review.indexOf('class="verdict-bar"') < review.indexOf('<article class="state"'), "before the states");
+      assert.ok(review.indexOf('role="tablist"') < review.indexOf('<article class="state"'), "tabs, then states");
+      assert.ok(review.lastIndexOf('</article>') < review.indexOf('class="verdict-bar"'), "the verdict comes after the rendered states, not above them");
       assert.deepEqual([...barOf(html).matchAll(/class="verdict" data-verdict="(\w+)" aria-pressed="false">([^<]+)</g)].map((match) => [match[1], match[2]]), [["ok", words[0]], ["revise", words[1]]]);
       assert.match(barOf(html), /<textarea class="comment"[^>]* hidden>/);
     }
@@ -100,6 +100,57 @@ describe("the verdicts beside the state tabs", () => {
     }
   });
 
+  it("counts the states reviewed of a record beside the verdict, in the language, with the template the page script refills", () => {
+    for (const [lang, template] of [["en", "{done}/{total} states reviewed"], ["fr", "{done}/{total} \u00e9tats revus"]]) {
+      const bar = barOf(pagesOf(lang)["home.html"]);
+      const match = bar.match(/<span class="reviewed" data-template="([^"]*)" data-total="(\d+)">(\d+)\/(\d+) ([^<]*)<\/span>/);
+      assert.ok(match, `${lang}: ${bar}`);
+      assert.equal(match[1], template);
+      assert.equal(match[2], match[4]);
+      assert.equal(Number(match[2]), 4);
+      assert.equal(match[5], template.replace("{done}/{total} ", ""));
+    }
+  });
+
+  it("offers the next state and the next item beside the verdict, both hidden until the page script has something to offer", () => {
+    for (const lang of ["en", "fr"]) {
+      const bar = barOf(pagesOf(lang)["home.html"]);
+      assert.match(bar, new RegExp(`<button type="button" class="next-state" hidden>${LABELS[lang].nextState}</button>`), lang);
+      assert.match(bar, new RegExp(`<a class="next-record" href="index.html" data-next="${LABELS[lang].nextRecord}" data-overview="${LABELS[lang].backToOverview}" hidden>${LABELS[lang].nextRecord}</a>`), lang);
+    }
+  });
+
+  it("hands every page the order to review the records in: by step, then as the sidebar lists them, a wireframe a screen dresses left out", () => {
+    const orderOf = (html) => JSON.parse(html.match(/<script type="application\/json" id="review-order">([^<]*)<\/script>/)[1]);
+    const pages = pagesOf();
+    const order = orderOf(pages["home.html"]);
+    assert.deepEqual(orderOf(pages["button.html"]), order, "the same on every page");
+    assert.deepEqual(orderOf(pagesOf()["home.html"]), order, "the same on every generation");
+    assert.ok(order.indexOf("button") !== -1 && order.indexOf("button") < order.indexOf("home"), `components before screens: ${order}`);
+    assert.equal(new Set(order).size, order.length);
+    const known = JSON.parse(pages["home.html"].match(/id="review-records">([^<]*)</)[1]).map((each) => each.record);
+    for (const id of order) assert.ok(known.includes(id), `${id} is a reviewable record`);
+  });
+
+  it("names the next record to review: the first after the current in the order with a state neither settled nor decided, wrapping at the end", () => {
+    const known = ["a", "b", "c", "d"].map((record) => ({ record, version: "1", states: [{ state: "x", settled: record === "b" }, { state: "y", settled: false }] }));
+    const order = ["a", "b", "c", "d"];
+    assert.deepEqual(nextToReviewOf(order, known, {}, "a"), { record: "b", state: "y" }, "b has only y left");
+    assert.deepEqual(nextToReviewOf(order, known, { "b@1": { y: { verdict: "ok" } } }, "a"), { record: "c", state: "x" }, "a decided state is not left");
+    assert.deepEqual(nextToReviewOf(order, known, {}, "d"), { record: "a", state: "x" }, "wraps to the start");
+    assert.deepEqual(nextToReviewOf(order, known, { "a@1": { x: { verdict: "ok" }, y: { verdict: "ok" } }, "b@1": { y: { verdict: "ok" } }, "c@1": { x: { verdict: "ok" }, y: { verdict: "revise" } } }, "d"), null, "none left but the current");
+    assert.deepEqual(nextToReviewOf(["a"], known, {}, "a"), null, "the current record is never its own next");
+    assert.deepEqual(nextToReviewOf(order, known, {}, "other"), { record: "a", state: "x" }, "a page outside the order starts from its head");
+  });
+
+  it("names the next state of a record with no verdict, after the shown one, wrapping, never the shown one", () => {
+    const states = [{ state: "a", settled: false }, { state: "b", settled: true }, { state: "c", settled: false }];
+    assert.equal(nextOpenOf(states, {}, "a"), "c");
+    assert.equal(nextOpenOf(states, {}, "c"), "a");
+    assert.equal(nextOpenOf(states, { a: { verdict: "ok" } }, "c"), null);
+    assert.equal(nextOpenOf(states, { c: { verdict: "ok" } }, "a"), null);
+  });
+
   it("puts none on a page with no state tabs", () => {
     const pages = pagesOf();
     for (const name of ["index.html", "onboarding.html", "brand.html", "system.html"]) assert.doesNotMatch(pages[name], /class="verdict-bar"/, name);
@@ -126,12 +177,15 @@ describe("the verdicts beside the state tabs", () => {
       own.closest = () => ({ dataset: { step: "screens" } });
       return own;
     };
-    const open = (memory = {}, { drawerHoldsIt = true, beside = [], known, decisions = false } = {}) => {
+    const open = (memory = {}, { drawerHoldsIt = true, beside = [], known, decisions = false, steps = false, order } = {}) => {
       const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
       const votes = ["ok", "revise"].map((verdict) => element({ verdict }));
-      const bar = element({}, { below: { ".verdict": votes, ".comment": [field] } });
+      const reviewed = element({ template: "{done}/{total} states reviewed", total: "2" });
+      const nextState = element({}, { hidden: true });
+      const nextRecord = element({ next: "Next item", overview: "Overview" }, { hidden: true, href: "index.html" });
+      const bar = element({}, { below: { ".verdict": votes, ".comment": [field], ".reviewed": [reviewed], ".next-state": [nextState], ".next-record": [nextRecord] } });
       const review = element({ record: "home", version: "1" }, { below: { '[role="tab"]': tabs, '[role="tab"][aria-selected="true"]': [tabs[0]], ".verdict-bar": [bar] } });
       const rowField = element();
       const rowVotes = ["ok", "revise"].map((verdict) => element({ verdict }));
@@ -143,13 +197,23 @@ describe("the verdicts beside the state tabs", () => {
       const list = element({}, { children: [], replaceChildren: (...nodes) => { list.children = nodes; } });
       const decided = element({ copy: "{count} to copy", words: JSON.stringify({ ok: "OK", revise: "Revise" }) }, { hidden: undefined, below: { ul: [list] } });
       const nothing = element();
-      const by = { scrim: element(), review: element({}, { hidden: true, below: { ".nothing": [nothing], "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element(), ...(decisions ? { decisions: decided } : {}), ...(known ? { "review-records": element({}, { textContent: JSON.stringify(known) }) } : {}) };
-      const document = { createElement: () => element(), body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : []), querySelector: () => null };
+      const stepOk = element({ step: "screens", label: "All OK", confirm: "Confirm {count} states?", confirmOne: "Confirm 1 state?" }, { textContent: "All OK" });
+      const stepCancel = element({}, { hidden: true });
+      const by = { scrim: element(), review: element({}, { hidden: true, below: { ".nothing": [nothing], "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": steps ? [stepOk] : [], ".step-cancel": steps ? [stepCancel] : [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element(), ...(decisions ? { decisions: decided } : {}), ...(order ? { "review-order": element({}, { textContent: JSON.stringify(order) }) } : {}), ...(known ? { "review-records": element({}, { textContent: JSON.stringify(known) }) } : {}) };
+      const keys = {};
+      const document = { createElement: () => element(), body: { dataset: {} }, addEventListener(type, listener) { keys[type] = listener; }, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : []), querySelector: () => null };
       const written = [];
       const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
       const navigator = { clipboard: { writeText: async (content) => { written.push(content); } } };
-      const api = new Function("document", "window", "navigator", "setTimeout", `${script}\nreturn { marked };`)(document, window, navigator, () => {});
-      return { tally, list, decided, nothing, votes, field, rowVotes, rowField, tabs, review, by, memory, written, api };
+      const opened = [];
+      let api;
+      const openTab = (tab) => { opened.push(tab.dataset.tab); review.below['[role="tab"][aria-selected="true"]'] = [tab]; api.marked(tab.dataset.tab); };
+      api = new Function("document", "window", "navigator", "setTimeout", "openTab", `${script}\nreturn { marked };`)(document, window, navigator, () => {}, openTab);
+      return { reviewed, nextState, nextRecord, opened, keys, stepOk, stepCancel, tally, list, decided, nothing, votes, field, rowVotes, rowField, tabs, review, by, memory, written, api };
+    };
+    const shown = (page, index) => {
+      page.review.below['[role="tab"][aria-selected="true"]'] = [page.tabs[index]];
+      page.api.marked(page.tabs[index].dataset.tab);
     };
     const copiedStates = async (page) => {
       page.by.copy.listeners.click();
@@ -168,6 +232,7 @@ describe("the verdicts beside the state tabs", () => {
       const page = open();
       page.votes[0].listeners.click();
       assert.deepEqual(JSON.parse(page.memory["aidd-ui-review"]), { "home@1": { default: { verdict: "ok", comment: "" } } });
+      shown(page, 0);
       assert.equal(page.votes[0].attrs["aria-pressed"], "true");
       page.votes[0].listeners.click();
       assert.equal(page.memory["aidd-ui-review"], undefined);
@@ -191,6 +256,7 @@ describe("the verdicts beside the state tabs", () => {
       page.api.marked("empty");
       assert.equal(page.votes[0].attrs["aria-pressed"], "false");
       page.votes[0].listeners.click();
+      shown(page, 1);
       assert.equal(page.rowVotes[0].attrs["aria-pressed"], "true");
       page.rowVotes[1].listeners.click();
       assert.equal(page.votes[0].attrs["aria-pressed"], "false");
@@ -242,11 +308,113 @@ describe("the verdicts beside the state tabs", () => {
       assert.deepEqual(page.list.children.map((each) => each.textContent), ["Home \u00b7 empty \u00b7 Revise : wider", "Home \u00b7 default \u00b7 OK"]);
       assert.equal(page.decided.hidden, false);
       assert.equal(page.tally.textContent, "2 to copy", "nothing left to review, two decisions to copy");
+      shown(page, 0);
       page.votes[0].listeners.click();
       page.rowVotes[1].listeners.click();
       assert.equal(page.tally.textContent, "1 to review");
       assert.equal(page.decided.hidden, true);
       assert.equal(page.nothing.hidden, false);
+    });
+
+    const KNOWN = [
+      { record: "home", version: "1", title: "Home", states: [{ state: "default", name: "default", settled: false }, { state: "empty", name: "empty", settled: false }] },
+      { record: "button", version: "1", title: "Button", states: [{ state: "focus", name: "focus", settled: false }] },
+    ];
+
+    it("refills the count of the states reviewed as verdicts are given", () => {
+      const page = open();
+      assert.equal(page.reviewed.textContent, "0/2 states reviewed");
+      page.votes[0].listeners.click();
+      assert.equal(page.reviewed.textContent, "1/2 states reviewed");
+      page.votes[0].listeners.click();
+      assert.equal(page.reviewed.textContent, "2/2 states reviewed");
+    });
+
+    it("moves to the next state with no verdict after an OK, and stays after a revise or a verdict taken back", () => {
+      const ok = open();
+      ok.votes[0].listeners.click();
+      assert.deepEqual(ok.opened, ["empty"]);
+      const revise = open();
+      revise.votes[1].listeners.click();
+      assert.deepEqual(revise.opened, [], "a revise waits for its comment");
+      const back = open({ "aidd-ui-review": JSON.stringify({ "home@1": { default: { verdict: "ok", comment: "" } } }) });
+      back.votes[0].listeners.click();
+      assert.deepEqual(back.opened, []);
+    });
+
+    it("offers the next state while one has no verdict, held back on a revise with no comment, and opens it", () => {
+      const page = open();
+      assert.equal(page.nextState.hidden, false);
+      page.votes[1].listeners.click();
+      assert.equal(page.nextState.disabled, true);
+      page.field.value = "wider";
+      page.field.listeners.input();
+      assert.equal(page.nextState.disabled, false);
+      page.nextState.listeners.click();
+      assert.deepEqual(page.opened, ["empty"]);
+      page.votes[0].listeners.click();
+      assert.equal(page.nextState.hidden, true, "every state has a verdict");
+    });
+
+    it("offers the next record only once every state of this one has a verdict, at the state of it still to review", () => {
+      const page = open({}, { known: KNOWN, order: ["home", "button"] });
+      assert.equal(page.nextRecord.hidden, true);
+      page.votes[0].listeners.click();
+      assert.equal(page.nextRecord.hidden, true, "a state is left");
+      page.votes[0].listeners.click();
+      assert.equal(page.nextRecord.hidden, false);
+      assert.equal(page.nextRecord.href, "button.html#tab-focus");
+      assert.equal(page.nextRecord.textContent, "Next item");
+    });
+
+    it("sends to the overview when no record is left to review", () => {
+      const page = open({}, { known: [KNOWN[0]], order: ["home"] });
+      page.votes[0].listeners.click();
+      page.votes[0].listeners.click();
+      assert.equal(page.nextRecord.hidden, false);
+      assert.equal(page.nextRecord.href, "index.html");
+      assert.equal(page.nextRecord.textContent, "Overview");
+    });
+
+    it("holds the next record back while a revise has no comment", () => {
+      const page = open({}, { known: KNOWN, order: ["home", "button"] });
+      page.votes[0].listeners.click();
+      page.votes[1].listeners.click();
+      assert.equal(page.nextRecord.hidden, true);
+      page.field.value = "wider";
+      page.field.listeners.input();
+      assert.equal(page.nextRecord.hidden, false);
+    });
+
+    it("asks to confirm a step's all OK with the count it would mark, and applies it on the second click only", () => {
+      const page = open({}, { steps: true });
+      const click = () => page.stepOk.listeners.click({ preventDefault() {} });
+      click();
+      assert.equal(page.stepOk.textContent, "Confirm 2 states?");
+      assert.equal(page.stepCancel.hidden, false);
+      assert.equal(page.memory["aidd-ui-review"], undefined, "nothing marked by the first click");
+      click();
+      assert.deepEqual(Object.keys(JSON.parse(page.memory["aidd-ui-review"])["home@1"]).sort(), ["default", "empty"]);
+      assert.equal(page.stepOk.textContent, "All OK");
+      assert.equal(page.stepCancel.hidden, true);
+    });
+
+    it("cancels a step's confirmation with Cancel or with Escape, which then leaves the drawer open", () => {
+      const page = open({}, { steps: true });
+      const click = () => page.stepOk.listeners.click({ preventDefault() {} });
+      click();
+      page.stepCancel.listeners.click({ preventDefault() {} });
+      assert.equal(page.stepOk.textContent, "All OK");
+      assert.equal(page.stepCancel.hidden, true);
+      assert.equal(page.memory["aidd-ui-review"], undefined);
+      page.by["open-review"].listeners.click();
+      click();
+      page.keys.keydown({ key: "Escape" });
+      assert.equal(page.stepOk.textContent, "All OK");
+      assert.equal(page.by.review.hidden, false, "the first Escape only cancels");
+      page.keys.keydown({ key: "Escape" });
+      assert.equal(page.by.review.hidden, true, "with nothing to cancel, Escape closes it");
+      assert.equal(page.memory["aidd-ui-review"], undefined);
     });
 
     it("copies a verdict given on a state the drawer holds no row for, and keeps it across a reload", async () => {

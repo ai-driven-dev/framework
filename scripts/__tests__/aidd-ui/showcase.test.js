@@ -629,6 +629,27 @@ describe("aidd-ui showcase", () => {
       assert.match(home, /\.drawer \{ position: fixed;/);
     });
 
+    it("floats the one review button at the bottom right on a wide window, and keeps it in the top bar of a narrow one", () => {
+      for (const [name, html] of Object.entries(pagesOf())) {
+        if (!name.endsWith(".html")) continue;
+        assert.equal(html.match(/id="open-review"/g).length, 1, `${name}: one entry point`);
+        assert.match(html, /<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">/, name);
+      }
+      const home = pagesOf()["home.html"];
+      const style = home.match(/<style>([\s\S]*?)<\/style>/)[1];
+      assert.match(style, /\n\.open-review \{[^}]*position: fixed; right: [^;]+; bottom: [^;]+;/, "fixed bottom right");
+      const narrow = style.match(/@media \(max-width: 768px\) \{([\s\S]*?)\n\}\n/)[1];
+      assert.match(narrow, /\.open-review \{[^}]*position: static;/, "back in the top bar");
+    });
+
+    it("fills the chosen verdict of a record, with a mark, and leaves the other outlined", () => {
+      const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
+      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="ok"\]\[aria-pressed="true"\] \{[^}]*background: var\(--ok\);/);
+      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="revise"\]\[aria-pressed="true"\] \{[^}]*background: var\(--revise\);/);
+      assert.match(style, /\.verdict-bar \.verdict\[aria-pressed="true"\]::before \{ content: "/);
+      assert.match(style, /\.verdict-bar \.verdict \{[^}]*border: 1px solid var\(--control\);/);
+    });
+
     it("shows the comment of a verdict, and a pending one as pending", () => {
       verdicts(["home", "loading", "1", "revise", "spinner too small"], ["home", "error", "1", "pending", ""]);
       const home = pagesOf()["home.html"];
@@ -944,7 +965,9 @@ describe("aidd-ui showcase", () => {
     it("offers marking the remaining states OK only as an explicit action of a step of the panel, never one for all", () => {
       for (const [lang, label] of [["en", "All OK"], ["fr", "Tout OK"]]) {
         const index = pagesOf({ lang })["index.html"];
-        assert.deepEqual([...drawerOf(index).matchAll(/<button type="button" class="step-ok" data-step="(\w+)">([^<]*)<\/button>/g)].map((match) => [match[1], match[2]]), [["components", label], ["screens", label]]);
+        assert.deepEqual([...drawerOf(index).matchAll(/<button type="button" class="step-ok" data-step="(\w+)" data-label="[^"]*" data-confirm="[^"]*" data-confirm-one="[^"]*">([^<]*)<\/button>/g)].map((match) => [match[1], match[2]]), [["components", label], ["screens", label]]);
+        assert.deepEqual([...drawerOf(index).matchAll(/<button type="button" class="step-cancel" data-step="(\w+)" hidden>([^<]*)<\/button>/g)].map((match) => [match[1], match[2]]), [["components", LABELS[lang].cancel], ["screens", LABELS[lang].cancel]]);
+        assert.ok(drawerOf(index).includes(`data-confirm="${LABELS[lang].confirmAll}" data-confirm-one="${LABELS[lang].confirmAllOne}"`), lang);
         assert.doesNotMatch(index, /id="all-ok"/);
       }
     });
@@ -1019,7 +1042,7 @@ describe("aidd-ui showcase", () => {
 
     it("closes on Escape and on the scrim, and gives the focus back to the review button", () => {
       const script = scriptOf(css());
-      assert.match(script, /document\.addEventListener\("keydown", \(event\) => \{ if \(event\.key === "Escape" && !drawer\.hidden\) \{ show\(false\); opener\.focus\(\); \} \}\);/);
+      assert.match(script, /document\.addEventListener\("keydown", \(event\) => \{\n  if \(event\.key !== "Escape" \|\| drawer\.hidden \|\| unconfirm\(\)\) return;\n  show\(false\);\n  opener\.focus\(\);\n\}\);/);
       assert.match(script, /getElementById\("scrim"\)\.addEventListener\("click"/);
       assert.match(script, /document\.body\.dataset\.drawer = on \? "open" : "closed"/);
     });
@@ -1171,12 +1194,11 @@ describe("aidd-ui showcase", () => {
       assert.match(narrow[2], /\.board \.card \{ grid-template-columns: minmax\(0, 1fr\)/);
     });
 
-    it("holds the review button at the foot of the sidebar instead of floating over the page", () => {
+    it("leaves the sidebar no entry of its own for the review: the button floats, and the page keeps room for it", () => {
       const html = pagesOf()["onboarding.html"];
-      assert.match(rule(html, ".review-foot"), /flex: none/);
-      assert.doesNotMatch(rule(html, ".review-foot"), /position: (fixed|sticky)/);
-      assert.doesNotMatch(rule(html, ".open-review"), /position: fixed/);
-      assert.doesNotMatch(rule(html, ".shell > main"), /34px/);
+      assert.match(rule(html, ".review-foot"), /^\s*flex: none;\s*$/);
+      assert.match(rule(html, ".open-review"), /position: fixed/);
+      assert.match(html, /@media \(min-width: 769px\) \{[^\n]*\.shell > main \{ padding-bottom: calc\(var\(--s6\) \+ 64px\); \}/);
     });
 
     it("splits the elements by category, in the order of the table, a record under its role", () => {
