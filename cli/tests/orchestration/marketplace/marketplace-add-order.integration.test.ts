@@ -130,7 +130,7 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
 }
 
 describe("marketplace add, the order it takes its steps in", () => {
-  it("with overwrite, removes the registered entry before it resolves, then asks for trust, then saves", async () => {
+  it("with overwrite, resolves, then asks for trust, then removes the registered entry, then saves", async () => {
     const { add, command, events, removals, registry } = await marketplaceAdd(
       (recorded) => new AnsweringPrompter(recorded, true)
     );
@@ -142,7 +142,7 @@ describe("marketplace add, the order it takes its steps in", () => {
 
     await add.execute({ ...command, autoTrust: false, overwrite: true });
 
-    expect(events).toEqual(["remove", "resolve", TRUST_QUESTION, "save"]);
+    expect(events).toEqual(["resolve", TRUST_QUESTION, "remove", "save"]);
     expect(removals).toEqual([{ autoConfirm: true, scope: "project" }]);
   });
 
@@ -172,8 +172,8 @@ describe("marketplace add, the order it takes its steps in", () => {
     expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
   });
 
-  it("with overwrite, a fetch failure leaves the previous entry removed (current behaviour, not the wanted one)", async () => {
-    const { add, command, events, registry } = await marketplaceAdd(
+  it("with overwrite, a fetch failure leaves the previous entry recorded and removes nothing", async () => {
+    const { add, command, events, removals, registry } = await marketplaceAdd(
       (recorded) => new AnsweringPrompter(recorded, true)
     );
     await registry.save(
@@ -191,8 +191,9 @@ describe("marketplace add, the order it takes its steps in", () => {
       })
     ).rejects.toThrow(InvalidPluginManifestError);
 
-    expect(events).toEqual(["remove", "resolve"]);
-    expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
+    expect(events).toEqual(["resolve"]);
+    expect(removals).toEqual([]);
+    expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
   });
 
   it.each([false, true])(

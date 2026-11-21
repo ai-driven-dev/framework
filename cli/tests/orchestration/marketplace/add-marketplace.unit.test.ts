@@ -44,12 +44,12 @@ const COMMAND = {
 } as const;
 
 describe("AddMarketplace", () => {
-  it("removes the registered marketplace first, then prepares with the name accepted, when overwriting", async () => {
+  it("prepares with the name accepted, then removes the registered marketplace, when overwriting", async () => {
     const { useCase, removeRegistered, prepare, calls } = addWith(true);
 
     await useCase.execute({ ...COMMAND, overwrite: true });
 
-    expect(calls).toEqual(["remove", "prepare", "record"]);
+    expect(calls).toEqual(["prepare", "remove", "record"]);
     expect(removeRegistered.execute).toHaveBeenCalledWith({
       name: "market",
       projectRoot: PROJECT_ROOT,

@@ -11,7 +11,7 @@ import type { RemoveRegisteredMarketplace } from "./remove-registered-marketplac
 export interface AddMarketplaceCommand extends Omit<PrepareMarketplaceCommand, "replace"> {
   /** Trusts the source without asking. */
   autoTrust: boolean;
-  /** Removes the registered marketplace of the same name, with what was installed from it, first. */
+  /** Removes the registered marketplace of the same name, with what was installed from it, once the new one is fetched. */
   overwrite?: boolean;
 }
 
@@ -26,24 +26,24 @@ export interface AddMarketplaceDeps {
   readonly prompter: Prompter;
 }
 
-/** Adds a marketplace. With `overwrite`, the registered one is removed first: removing deletes
- * installed plugin files, which distribution does not own. An untrusted source is asked about
- * before the marketplace is saved. */
+/** Adds a marketplace. With `overwrite`, the registered one is removed only once the new one is
+ * fetched and trusted, so a failure keeps it: removing deletes installed plugin files, which
+ * distribution does not own. An untrusted source is asked about before anything is removed. */
 export class AddMarketplace {
   constructor(private readonly deps: AddMarketplaceDeps) {}
 
   async execute(command: AddMarketplaceCommand): Promise<AddMarketplaceResult> {
+    const { marketplace, trusted } = await this.deps.prepare.execute({
+      ...command,
+      replace: command.overwrite,
+    });
+    const trust = !trusted && (command.autoTrust || (await this.confirmTrust(command.name)));
     if (command.overwrite) {
       await this.deps.removeRegistered.execute({
         name: command.name,
         projectRoot: command.projectRoot,
       });
     }
-    const { marketplace, trusted } = await this.deps.prepare.execute({
-      ...command,
-      replace: command.overwrite,
-    });
-    const trust = !trusted && (command.autoTrust || (await this.confirmTrust(command.name)));
     await this.deps.record.execute({ marketplace, projectRoot: command.projectRoot, trust });
     return { marketplace };
   }
