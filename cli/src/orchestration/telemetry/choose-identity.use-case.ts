@@ -1,8 +1,9 @@
 import type { CheckIdentity } from "../../contexts/telemetry/application/identity/check-identity.use-case.js";
-import type { ManageIdentity } from "../../contexts/telemetry/application/identity/manage-identity.use-case.js";
-import type { ProposeIdentity } from "../../contexts/telemetry/application/identity/propose-identity.use-case.js";
+import type {
+  DecideIdentity,
+  IdentityDecision,
+} from "../../contexts/telemetry/application/identity/decide-identity.use-case.js";
 import type { IdentityChoice } from "../../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
-import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { Prompter } from "../ports/prompter.js";
 
 export interface ChooseIdentityRequest {
@@ -15,39 +16,29 @@ export interface ChooseIdentityRequest {
 }
 
 interface ChooseIdentityDeps {
-  readonly manageIdentity: Pick<ManageIdentity, "execute">;
-  readonly proposeIdentity: Pick<ProposeIdentity, "execute">;
+  readonly decideIdentity: Pick<DecideIdentity, "execute">;
   readonly checkIdentity: Pick<CheckIdentity, "execute">;
   readonly prompter: Prompter;
 }
 
-/** Who the clone is measured as: a flag's answer, the identity already set, or the person's
- * answer. Refused when `--yes` leaves none of them. */
+type Asked = Extract<IdentityDecision, { readonly ask: unknown }>;
+
+const isAsked = (decision: IdentityDecision): decision is Asked =>
+  typeof decision === "object" && "ask" in decision;
+
+/** Who the clone is measured as: what the telemetry context decides, or the person's answer when
+ * it leaves the question open. */
 export class ChooseIdentity {
   constructor(private readonly deps: ChooseIdentityDeps) {}
 
-  async execute({
-    cwd,
-    yes,
-    as,
-    anonymous,
-    onRefused,
-  }: ChooseIdentityRequest): Promise<IdentityChoice> {
-    if (as !== undefined) return { set: as };
-    if (anonymous) return "none";
-    if ((await this.deps.manageIdentity.execute({ action: "show" })).status === "set")
-      return "keep";
-    if (yes) {
-      throw new InputRequiredError(
-        "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."
-      );
-    }
-    const answer = await this.ask(cwd);
+  async execute({ onRefused, ...request }: ChooseIdentityRequest): Promise<IdentityChoice> {
+    const decision = await this.deps.decideIdentity.execute(request);
+    if (!isAsked(decision)) return decision;
+    const answer = await this.ask(decision.ask.proposal);
     return answer === "another" ? this.typed(onRefused) : answer;
   }
 
-  private async ask(cwd: string): Promise<IdentityChoice | "another"> {
-    const proposal = await this.deps.proposeIdentity.execute({ cwd });
+  private ask(proposal: string | null): Promise<IdentityChoice | "another"> {
     return this.deps.prompter.select<IdentityChoice | "another">(
       "How should your own measurement name you? The identity stays on this machine.",
       [

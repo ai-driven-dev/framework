@@ -4327,7 +4327,7 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
-                    "group": ["**/shared/ports/prompter.js"],
+                    "group": ["**/orchestration/ports/prompter.js"],
                     "message": "distribution asks no question: it returns a result and orchestration asks (target 05:64)"
                   }
                 ]
@@ -4373,7 +4373,7 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
-                    "group": ["**/shared/ports/prompter.js"],
+                    "group": ["**/orchestration/ports/prompter.js"],
                     "message": "distribution asks no question: it returns a result and orchestration asks (target 05:64)"
                   }
                 ]

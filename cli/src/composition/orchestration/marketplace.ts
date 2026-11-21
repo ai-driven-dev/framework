@@ -37,9 +37,8 @@ import { ActivateNativeTools } from "../../orchestration/sync/activate-native-to
 import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
-import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Installation } from "../installation.js";
-import type { Base } from "../shared.js";
+import { type Base, userConfigDir } from "../shared.js";
 
 /** Detaches what a removal's plugins held on the machine, from the removal's own summary. */
 export function detachClaimsOf(cleanup: Pick<RemoveProjectPlugin, "detachClaims">) {

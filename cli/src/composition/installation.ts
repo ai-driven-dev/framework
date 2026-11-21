@@ -42,9 +42,8 @@ import type { PluginTranslation } from "../contexts/installation/ports/plugin/pl
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
-import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
-import type { Base } from "./shared.js";
+import { type Base, userConfigDir } from "./shared.js";
 import {
   createFrameworkBuildUseCase,
   createPluginTranslation,
