@@ -7,9 +7,9 @@ import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
+import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
-import type { UserScopePluginFiles } from "./user-scope-plugin-files.js";
 
 export interface UserPluginRemoveOptions {
   pluginName: string;
@@ -28,7 +28,7 @@ export class RemoveUserPlugin<Proof> {
       "proveClaimedRef" | "uninstallProven"
     >,
     private readonly records: RegistrationRecordRules,
-    private readonly userScopePluginFiles: UserScopePluginFiles,
+    private readonly userScopePluginFiles: UserScopePluginFileRemoval,
     private readonly tools: ToolCatalog
   ) {}
 
