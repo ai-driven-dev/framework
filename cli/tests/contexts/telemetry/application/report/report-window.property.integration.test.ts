@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import {
   IngestUsage,
@@ -211,6 +213,7 @@ const NOTHING_NEW: IngestUsageResult = {
 };
 /** An ingest that reads no tool, so it finds nothing new: `NOTHING_NEW`. */
 function ingestOf(ledger: UsageLedger): IngestUsage {
+  const consentHistory = new InMemoryConsentHistory();
   const now = () => new Date("2026-10-09T00:00:00.000Z");
   return new IngestUsage({
     readers: [],
@@ -219,7 +222,10 @@ function ingestOf(ledger: UsageLedger): IngestUsage {
       locator: new FakeLocator(),
       consentSource: new FakeConsents(),
       store: new InMemoryResolutions(),
-      history: new InMemoryConsentHistory(),
+      consent: {
+        load: new LoadConsentLog(consentHistory),
+        record: new RecordConsentEvent(consentHistory),
+      },
       environment: { caseInsensitiveFileSystem: false, now },
     }),
     snapshots: new SnapshotBindings({

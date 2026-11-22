@@ -89,6 +89,7 @@ src/
 │   │   └── ports/
 │   ├── telemetry/    # what each billed model call consumed
 │   │   ├── application/
+│   │   │   ├── consent/
 │   │   │   ├── declaration/
 │   │   │   ├── forget/
 │   │   │   ├── identity/

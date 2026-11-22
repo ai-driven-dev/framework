@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
 import { DeclareOnBranch } from "../../../../../src/contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
 import { DeclareTask } from "../../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
 import { FindConsentedRepository } from "../../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
@@ -47,7 +48,7 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
     now: () => new Date("2026-10-09T10:00:01.000Z"),
   });
   const useCase = new DeclareTask({
-    repositories: new FindConsentedRepository(locator, consents, history),
+    repositories: new FindConsentedRepository(locator, consents, new LoadConsentLog(history)),
     sessions,
     branches: new DeclareOnBranch(branches, snapshots),
     lock,

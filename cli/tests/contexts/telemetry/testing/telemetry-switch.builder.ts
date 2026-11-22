@@ -1,4 +1,7 @@
+import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DisableTelemetry } from "../../../../src/contexts/telemetry/application/switch/disable-telemetry.use-case.js";
+
 import { EnableTelemetry } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import { GrantConsent } from "../../../../src/contexts/telemetry/application/switch/grant-consent.use-case.js";
 import { ReadCloneConsent } from "../../../../src/contexts/telemetry/application/switch/read-clone-consent.use-case.js";
@@ -64,14 +67,19 @@ export function setup() {
   const grant = new GrantConsent({
     consents,
     writer,
-    history,
+    consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
     ledger,
     newInterval: () => ({
       token: `tok-${++minted}`,
       at: clock.now,
     }),
   });
-  const withdraw = new WithdrawConsent({ writer, history, ledger, now: () => clock.now });
+  const withdraw = new WithdrawConsent({
+    writer,
+    consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+    ledger,
+    now: () => clock.now,
+  });
   const cloneConsent = new ReadCloneConsent(locator, consents);
   const on = new EnableTelemetry({
     cloneConsent,

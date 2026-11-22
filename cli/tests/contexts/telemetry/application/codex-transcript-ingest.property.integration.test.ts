@@ -4,6 +4,8 @@ import { join } from "node:path";
 import * as zlib from "node:zlib";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import {
   IngestUsage,
@@ -73,7 +75,7 @@ function machine(sessions: string, projects?: string) {
       locator,
       consentSource: consents,
       store: new InMemoryResolutions(),
-      history,
+      consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
       environment: {
         caseInsensitiveFileSystem: false,
         now: () => NOW,

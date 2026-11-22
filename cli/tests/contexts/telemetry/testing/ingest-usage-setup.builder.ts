@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
@@ -106,7 +108,7 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
       locator,
       consentSource: consents,
       store: resolutions,
-      history,
+      consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
       environment: {
         caseInsensitiveFileSystem: options.caseInsensitive ?? false,
         now: () => NOW,
@@ -131,7 +133,7 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
         locator,
         consentSource: consents,
         store: resolutions,
-        history,
+        consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
         environment: {
           caseInsensitiveFileSystem: options.caseInsensitive ?? false,
           now: () => NOW,

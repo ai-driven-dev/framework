@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { LoadConsentLog } from "../contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DeclareOnBranch } from "../contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
 import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
@@ -62,6 +64,7 @@ import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/sto
 import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
+import type { ConsentHistory } from "../contexts/telemetry/ports/consent-history.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
 import type { Prompter } from "../orchestration/ports/prompter.js";
@@ -72,6 +75,11 @@ import type { PrivateStorage } from "../shared/ports/private-storage.js";
 import { userConfigDirOf } from "./user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
+const consentLogOver = (history: ConsentHistory) => ({
+  load: new LoadConsentLog(history),
+  record: new RecordConsentEvent(history),
+});
+
 export function wireTelemetryRequests(): TelemetryRequests {
   return {
     parseTaskFlags: new ParseTaskFlags(),
@@ -156,7 +164,11 @@ function wireGit(stores: Stores) {
     consents,
     branchSource,
     branchStore: new GitBranchBindingStoreAdapter(gitEnv),
-    repositories: new FindConsentedRepository(locator, consents, stores.consentHistory),
+    repositories: new FindConsentedRepository(
+      locator,
+      consents,
+      new LoadConsentLog(stores.consentHistory)
+    ),
     snapshotBindings: new SnapshotBindings({
       source: branchSource,
       store: stores.snapshotStore,
@@ -218,7 +230,7 @@ function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
       locator: git.locator,
       consentSource: git.consents,
       store: stores.resolutionStore,
-      history: stores.consentHistory,
+      consent: consentLogOver(stores.consentHistory),
       environment,
     }),
     snapshots: git.snapshotBindings,
@@ -287,7 +299,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
       grant: new GrantConsent({
         consents,
         writer: consents,
-        history: consentHistory,
+        consent: consentLogOver(consentHistory),
         ledger,
         newInterval: () => ({
           token: randomUUID(),
@@ -301,7 +313,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
       cloneConsent,
       new WithdrawConsent({
         writer: consents,
-        history: consentHistory,
+        consent: consentLogOver(consentHistory),
         ledger,
         now: environment.now,
       })
