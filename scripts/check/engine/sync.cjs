@@ -2,7 +2,8 @@
 "use strict";
 // Usage: node scripts/check/engine/sync.cjs [--check] [--root <dir>]
 // Copies the engine files of this folder into the scripts/lib folder of every skill holding scripts/contract.json.
-// It also generates, for each plugin holding a contract with a `scope`, hooks/artifacts.cjs (from hook.cjs) and hooks/lib/contracts/<skill>/ (the contract, its lib, its custom checks and the files its rules name), and names the files there with no source.
+// It also generates, for each plugin holding a contract with a `scope`, hooks/artifacts.cjs (from hook.cjs), hooks/lib/contracts/lib/ (the one engine every contract there runs on) and hooks/lib/contracts/<skill>/ (the contract, its custom checks and the files its rules name), and names the files there with no source.
+// It writes hooks/lib/host.cjs (the CLI's Claude adapter, cli/assets/hooks-runtime/host-claude.cjs) into each plugin whose hooks require it, and names one a plugin does not require.
 // It names a plugin whose hooks.json does not call the generated artifacts.cjs; that one it cannot repair.
 // With --check it writes nothing and names each copy that differs, is missing or has no source; exit 1 when any does.
 const fs = require("node:fs");
@@ -44,6 +45,10 @@ function sync({ root = ROOT, write = false } = {}) {
 }
 
 const HOOK_SOURCE = path.join(__dirname, "hook.cjs");
+// The CLI builds every tool's adapter from this one; each plugin whose hooks require lib/host.cjs ships the Claude one.
+const HOST_SOURCE = path.join(ROOT, "cli", "assets", "hooks-runtime", "host-claude.cjs");
+const HOST_COPY = path.join("hooks", "lib", "host.cjs");
+const HOST_REQUIRE = /require\(\s*["']\.\/(?:lib\/)?host\.cjs["']\s*\)/u;
 
 const readJson = (file) => {
   try {
@@ -58,13 +63,18 @@ const filesUnder = (dir) =>
     ? fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry) => (entry.isDirectory() ? filesUnder(path.join(dir, entry.name)) : [path.join(dir, entry.name)]))
     : [];
 
-/** The files a skill's contract hands its plugin's hook, keyed by their path under the plugin: the contract, its lib and custom checks, and each template or schema a rule names. */
+const SHARED = path.join("hooks", "lib", "contracts", "lib");
+
+/** A custom check reaches the engine at ../lib in its skill; in the hook, the one engine sits three folders up. */
+const toSharedEngine = (text) => text.replaceAll('require("../lib/', 'require("../../../lib/');
+
+/** The files a skill's contract hands its plugin's hook, keyed by their path under the plugin: the contract, its custom checks, and each template or schema a rule names. The engine is shared, see SHARED. */
 function contractCopies(skill, contract) {
   const copies = new Map();
   const target = (...parts) => path.join("hooks", "lib", "contracts", path.basename(skill), ...parts);
-  const add = (file) => copies.set(target(path.relative(skill, file)), file);
+  const add = (file, transform) => copies.set(target(path.relative(skill, file)), { file, transform });
   add(path.join(skill, "scripts", "contract.json"));
-  for (const dir of ["lib", "custom"]) for (const file of filesUnder(path.join(skill, "scripts", dir))) add(file);
+  for (const file of filesUnder(path.join(skill, "scripts", "custom"))) add(file, toSharedEngine);
   for (const rule of Object.values(contract.rules ?? {})) {
     for (const name of [rule.template, rule.schema]) {
       if (typeof name !== "string") continue;
@@ -84,16 +94,22 @@ function syncHooks({ root = ROOT, write = false } = {}) {
     const contract = readJson(path.join(skill, "scripts", "contract.json"));
     if (!Array.isArray(contract?.scope)) continue;
     const plugin = path.resolve(skill, "..", "..");
-    if (!wanted.has(plugin)) wanted.set(plugin, new Map([[path.join("hooks", "artifacts.cjs"), HOOK_SOURCE]]));
+    if (!wanted.has(plugin)) wanted.set(plugin, new Map([[path.join("hooks", "artifacts.cjs"), { file: HOOK_SOURCE }], ...ENGINE_FILES.map((name) => [path.join(SHARED, name), { file: path.join(__dirname, name) }])]));
     for (const [copy, source] of contractCopies(skill, contract)) wanted.get(plugin).set(copy, source);
   }
   const plugins = path.join(root, "plugins");
   for (const name of fs.existsSync(plugins) ? fs.readdirSync(plugins).sort() : []) {
     const plugin = path.join(plugins, name);
     const copies = wanted.get(plugin) ?? new Map();
-    for (const [copy, source] of copies) {
+    const scoped = copies.size > 0;
+    if (scoped || requiresHost(plugin)) copies.set(HOST_COPY, { file: HOST_SOURCE });
+    else if (fs.existsSync(path.join(plugin, HOST_COPY))) {
+      found.push({ path: rel(path.join(plugin, HOST_COPY)), kind: "orphan" });
+      if (write) fs.rmSync(path.join(plugin, HOST_COPY));
+    }
+    for (const [copy, { file: source, transform }] of copies) {
       const file = path.join(plugin, copy);
-      const content = fs.readFileSync(source);
+      const content = transform ? Buffer.from(transform(fs.readFileSync(source, "utf8"))) : fs.readFileSync(source);
       if (fs.existsSync(file) && fs.readFileSync(file).equals(content)) continue;
       found.push({ path: rel(file), kind: "stale" });
       if (write) {
@@ -108,8 +124,8 @@ function syncHooks({ root = ROOT, write = false } = {}) {
       if (write) fs.rmSync(file);
     }
     if (write && fs.existsSync(generated)) pruneEmpty(generated);
-    if (copies.size) for (const goal of unwired(plugin)) found.push({ path: rel(path.join(plugin, "hooks", "hooks.json")), kind: "unwired", goal });
-    if (!copies.size && fs.existsSync(path.join(plugin, "hooks", "artifacts.cjs"))) {
+    if (scoped) for (const goal of unwired(plugin)) found.push({ path: rel(path.join(plugin, "hooks", "hooks.json")), kind: "unwired", goal });
+    if (!scoped && fs.existsSync(path.join(plugin, "hooks", "artifacts.cjs"))) {
       found.push({ path: rel(path.join(plugin, "hooks", "artifacts.cjs")), kind: "orphan" });
       if (write) fs.rmSync(path.join(plugin, "hooks", "artifacts.cjs"));
     }
@@ -127,6 +143,12 @@ function unwired(plugin) {
   const config = read(path.join(hooks, "hooks.json"));
   const relayed = fs.existsSync(hooks) && fs.readdirSync(hooks).some((file) => file.endsWith(".cjs") && file !== "artifacts.cjs" && read(path.join(hooks, file)).includes('require("./artifacts.cjs")'));
   return Object.keys(GOAL_EVENTS).filter((goal) => !config.includes(`hooks/artifacts.cjs ${goal}`) && !(goal === "check" && relayed));
+}
+
+/** Whether a script of the plugin's hooks, other than the generated contracts, requires the host adapter. */
+function requiresHost(plugin) {
+  const generated = path.join(plugin, "hooks", "lib", "contracts");
+  return filesUnder(path.join(plugin, "hooks")).some((file) => /\.c?js$/u.test(file) && !file.startsWith(generated + path.sep) && HOST_REQUIRE.test(fs.readFileSync(file, "utf8")));
 }
 
 /** Removes empty folders below `dir`, and `dir` itself when it ends empty. */

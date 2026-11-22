@@ -1,6 +1,6 @@
 "use strict";
 // Reads the plan's phase table; shared by the plan checks. Mirrors phase parsing in 02-implement scripts/custom/state.cjs on purpose: skills stay self-contained.
-const { shape, cells } = require("../lib/ops.cjs");
+const { shape, cells } = require("../../../lib/ops.cjs");
 
 const section = (ctx, name) => shape(ctx.text, ctx.prose, ctx.fm).sections.find((s) => s.name === name);
 

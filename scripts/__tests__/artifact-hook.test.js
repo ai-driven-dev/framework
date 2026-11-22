@@ -261,9 +261,9 @@ test("no generated contract scope matches a raw template under a plugin's assets
   let globs = 0;
   for (const plugin of ["aidd-context", "aidd-dev", "aidd-pm"]) {
     const root = path.join(REPO, "plugins", plugin, "hooks/lib/contracts");
-    for (const name of fs.readdirSync(root)) {
+    for (const name of fs.readdirSync(root).filter((entry) => entry !== "lib")) {
       const contract = JSON.parse(fs.readFileSync(path.join(root, name, "scripts/contract.json"), "utf8"));
-      const { globRegex } = require(path.join(root, name, "scripts/lib/engine.cjs"));
+      const { globRegex } = require(path.join(root, "lib/engine.cjs"));
       for (const glob of contract.scope ?? []) {
         globs += 1;
         const regex = globRegex(glob);
@@ -415,7 +415,7 @@ test("a bad entry in scope does not silence the turn: a dangling link, an unread
 
 test("a custom check that throws on a file names the file, the contract and the message", () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
-  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/02-user-stories/scripts/lib/engine.cjs");
+  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/lib/engine.cjs");
   const original = fs.readFileSync(engine, "utf8");
   fs.writeFileSync(engine, `${original}\nmodule.exports.check = () => {\n  throw new Error("boom");\n};\n`);
   try {

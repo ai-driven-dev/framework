@@ -81,19 +81,20 @@ function sweepState(folder) {
   }
 }
 
-// ---- contracts: the copies under ./lib/contracts, each with its own engine -----------------------------
+// ---- contracts: the copies under ./lib/contracts, all judged by the one engine in ./lib/contracts/lib -----------------------------
 
-/** Every carried contract, loaded and validated by its own engine. One that cannot be loaded is `broken` with its `error`: it claims every file, so it is reported. */
+/** Every carried contract, loaded and validated by the shared engine. One that cannot be loaded is `broken` with its `error`: it claims every file, so it is reported. */
 function contracts() {
   if (!fs.existsSync(CONTRACTS)) return [];
   return fs
     .readdirSync(CONTRACTS)
+    .filter((name) => name !== "lib")
     .sort()
     .map((name) => ({ name, file: path.join(CONTRACTS, name, "scripts", "contract.json") }))
     .filter((entry) => fs.existsSync(entry.file))
     .map((entry) => {
       try {
-        entry.engine = require(path.join(CONTRACTS, entry.name, "scripts", "lib", "engine.cjs"));
+        entry.engine = require(path.join(CONTRACTS, "lib", "engine.cjs"));
         entry.contract = entry.engine.loadContract(entry.file);
         entry.scope = entry.contract.scope ?? [];
         entry.globs = entry.scope.map((glob) => entry.engine.globRegex(glob));

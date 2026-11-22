@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const { readText } = require("../lib/markdown.cjs");
+const { readText } = require("../../../lib/markdown.cjs");
 const { readState } = require("./state.cjs");
 
 const HEAD_LINE = /^- Head:\s*`([0-9a-f]{7,40})`\s*$/mu;

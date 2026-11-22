@@ -1,6 +1,6 @@
 "use strict";
 // Each edge between two actions is a link in the source action or a transversal rule naming the target; a node with several exits labels all but the default.
-const { LINK } = require("../lib/ops.cjs");
+const { LINK } = require("../../../lib/ops.cjs");
 const { flowOf, lineOf, edges, actionBoxes } = require("./mermaid.cjs");
 
 module.exports = function routerEdges(ctx) {
