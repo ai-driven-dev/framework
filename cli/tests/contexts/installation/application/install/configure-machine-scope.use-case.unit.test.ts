@@ -6,7 +6,7 @@ import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 function setup(seed: Manifest | null = null) {
   const repo = new InMemoryManifestRepository(seed);
-  return { repo, useCase: new ConfigureMachineScope(repo, { get: () => "9.9.9" }) };
+  return { repo, useCase: new ConfigureMachineScope(repo, "9.9.9") };
 }
 
 const held = async (created: boolean) => created;

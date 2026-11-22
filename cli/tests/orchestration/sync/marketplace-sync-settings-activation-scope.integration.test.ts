@@ -5,7 +5,6 @@ import type { UserSourceReferences } from "../../../src/contexts/machine-claims/
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -282,7 +281,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      currentVersionProvider: new FakeCurrentVersion(),
+      currentVersion: "0.0.0-test",
     });
 
     await useCase.execute({
@@ -315,7 +314,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      currentVersionProvider: new FakeCurrentVersion(),
+      currentVersion: "0.0.0-test",
       hostPluginRegistries: proof.plugins,
       nativeSources: proof.sources,
     });

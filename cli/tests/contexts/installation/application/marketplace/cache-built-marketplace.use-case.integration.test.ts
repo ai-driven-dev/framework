@@ -13,7 +13,6 @@ import type { DeclaredMarketplace } from "../../../../../src/contexts/installati
 import { EnsureBuiltMarketplace } from "../../../../../src/orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { builtMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -67,10 +66,6 @@ function buildsOf(buildFor: BuildFor, variant?: string): FrameworkBuilds {
   return { variant: async () => variant, buildFor };
 }
 
-function fakeVersion(value: string): VersionReader {
-  return { get: () => value };
-}
-
 const USER_CACHE_ROOT = "/user-cache";
 const TMP = "/tmp/given";
 
@@ -80,7 +75,7 @@ function buildEnsurer(
   fs: InMemoryFileAdapter,
   resolveMarketplace: Pick<ResolveMarketplace, "execute">,
   builds: FrameworkBuilds,
-  version: VersionReader = fakeVersion("5.0.0")
+  version: string = "5.0.0"
 ): EnsureBuiltMarketplace {
   const cache = new CacheBuiltMarketplace({
     fs,

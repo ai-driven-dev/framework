@@ -219,7 +219,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
 
 /** Syncing a project's settings and native activation against its marketplaces. */
 function wireMarketplaceSync(base: Base, inst: Installation) {
-  const { tools, fs, logger, currentVersionProvider } = base;
+  const { tools, fs, logger, currentVersion } = base;
   const { ensureBuiltMarketplaceUseCase } = inst;
   const buildMarketplaceForTool = new BuildMarketplaceForTool(
     ensureBuiltMarketplaceUseCase,
@@ -228,7 +228,7 @@ function wireMarketplaceSync(base: Base, inst: Installation) {
   );
   const recordSourceReference = new RecordSourceReference({
     fs,
-    currentVersionProvider,
+    currentVersion,
     logger,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     userSourceReferences: base.userSourceReferences,

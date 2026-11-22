@@ -8,7 +8,6 @@ import {
   userBuiltMarketplaceDir,
 } from "../../../../src/shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
-import { FakeCurrentVersion } from "../../../shared/testing/fake-current-version.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { SYNTHETIC_TOOL } from "../../../shared/testing/synthetic-tool-id.builder.js";
@@ -44,7 +43,7 @@ async function resolverOver(
     fs,
     registry,
     userCacheRoot: () => USER_ROOT,
-    currentVersion: new FakeCurrentVersion(VERSION),
+    currentVersion: VERSION,
   });
 }
 

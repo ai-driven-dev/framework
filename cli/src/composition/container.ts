@@ -10,7 +10,7 @@ import { wireMarketplace } from "./orchestration/marketplace.js";
 import { wirePlugin } from "./orchestration/plugin.js";
 import { wireAgentModels, wireSetup } from "./orchestration/setup.js";
 import { wireRecipes } from "./recipes.js";
-import { type BaseOptions, currentVersion, wireBase } from "./shared.js";
+import { type BaseOptions, wireBase } from "./shared.js";
 import { wireTelemetry } from "./telemetry.js";
 import { wireUpdate } from "./update.js";
 
@@ -23,20 +23,17 @@ function memoized<T extends object>(build: () => T): () => T {
 /** The wirings the others build on: the shared adapters, installation, and the marketplace and
  * plugin areas. */
 function foundationOf({ projectRoot, verbose, token, output, tools }: BaseOptions) {
-  const shared = memoized(() => ({
-    ...wireBase({ projectRoot, verbose, token, output, tools }),
-    version: currentVersion(),
-  }));
+  const shared = memoized(() => wireBase({ projectRoot, verbose, token, output, tools }));
   const installation = memoized(() => wireInstallation(shared()));
   const update = memoized(() => {
-    const { logger, http, fs, environment, tokenProvider, currentVersionProvider } = shared();
+    const { logger, http, fs, environment, tokenProvider, currentVersion } = shared();
     return wireUpdate({
       logger,
       http,
       fs,
       environment,
       tokenProvider,
-      version: currentVersionProvider,
+      version: currentVersion,
     });
   });
   const marketplace = memoized(() => wireMarketplace(shared(), installation()));

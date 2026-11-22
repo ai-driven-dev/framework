@@ -40,7 +40,7 @@ const outDir = resolveOutDir();
 
 /**
  * The binary reads one field of this package's manifest: `version`, in
- * `src/shared/infrastructure/current-version-adapter.ts`. Importing the manifest would otherwise
+ * `src/composition/shared.ts`. Importing the manifest would otherwise
  * ship all of it, scripts and dev dependencies included. Limit: a new reader of another field
  * gets `undefined` from the binary while the tests, which load the real file, still pass.
  */

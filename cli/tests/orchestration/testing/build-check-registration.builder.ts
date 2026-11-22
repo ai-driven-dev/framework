@@ -10,7 +10,6 @@ import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-cata
 import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
-import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 
 /** The registration check wired as the composition root wires it. */
@@ -21,7 +20,7 @@ export function checkRegistrationOver(
   hostAvailable: (binary: string) => boolean,
   inspectHost: InspectHostRegistration,
   userCacheRoot: () => string,
-  currentVersion: VersionReader,
+  currentVersion: string,
   tools: ToolCatalog
 ): CheckRegistration {
   return new CheckRegistration(

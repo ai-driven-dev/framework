@@ -11,7 +11,6 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -93,7 +92,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      currentVersion: VERSION,
       hostPluginRegistries: proof.pluginRegistries,
       nativeSources: proof.sources,
     });
@@ -130,7 +129,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      currentVersion: VERSION,
       hostPluginRegistries: proof.pluginRegistries,
       nativeSources: proof.sources,
     });
@@ -170,7 +169,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      currentVersion: VERSION,
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -211,7 +210,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegisterFrameworkUseCase: registerFramework,
       userSourceReferences,
-      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      currentVersion: VERSION,
       hostPluginRegistries: proof.pluginRegistries,
       nativeSources: proof.sources,
     });
@@ -279,7 +278,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegisterFrameworkUseCase: registerFramework,
       userSourceReferences: new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd"),
-      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      currentVersion: VERSION,
     });
 
     // No `recreateFrameworkIfMissing` - the same call shape `syncNativeActivation` uses.

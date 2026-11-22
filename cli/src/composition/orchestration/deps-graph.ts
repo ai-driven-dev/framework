@@ -66,7 +66,7 @@ const OWNER: { [Member in Passthrough]: OwnerOf<Member> } = {
   choosePlugins: "setup",
   runSetup: "setup",
   checkStatus: "shared",
-  currentVersionProvider: "shared",
+  currentVersion: "shared",
   environment: "shared",
   fs: "shared",
   listMarketplaces: "shared",

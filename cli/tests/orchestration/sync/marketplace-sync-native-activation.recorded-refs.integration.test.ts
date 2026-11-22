@@ -56,7 +56,7 @@ describe("native activation: recorded refs", () => {
           marketplaceRegistries: new Map(),
         }),
         () => "/user-cache",
-        { get: () => "1.0.0" },
+        "1.0.0",
         registeredTools()
       );
       // `SyncSettings.execute` mutates the loaded manifest in place, so one

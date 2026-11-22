@@ -29,7 +29,6 @@ import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
@@ -38,7 +37,7 @@ import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
-export const CURRENT_VERSION = new FakeCurrentVersion();
+export const CURRENT_VERSION = "0.0.0-test";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {

@@ -7,7 +7,6 @@ import { pathsOverlap } from "../../../../shared/domain/paths.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type {
   EnsureBuiltMarketplaceRequest,
@@ -61,7 +60,7 @@ const UNVERSIONED = "unversioned";
 export interface CacheBuiltMarketplaceDeps {
   readonly fs: FileReader & FileWriter;
   readonly builds: FrameworkBuilds;
-  readonly version: VersionReader;
+  readonly version: string;
   /**
    * Where a user-scope marketplace's built tree belongs. Building it under the project that
    * happened to register it would tie a declaration meant for every project to the life of one
@@ -92,7 +91,7 @@ export class CacheBuiltMarketplace {
       options.marketplace.scope === "user"
         ? userBuiltMarketplaceDir({
             userConfigDir: this.deps.userCacheRoot(),
-            cliVersion: this.deps.version.get(),
+            cliVersion: this.deps.version,
             marketplaceName: options.marketplace.name,
             target: options.target,
           })
@@ -117,7 +116,7 @@ export class CacheBuiltMarketplace {
   }
 
   private sentinelValue(catalogVersion: string | undefined, variant: string | undefined): string {
-    const base = `${this.deps.version.get()}:${catalogVersion ?? UNVERSIONED}`;
+    const base = `${this.deps.version}:${catalogVersion ?? UNVERSIONED}`;
     return variant === undefined ? base : `${base}:${variant}`;
   }
 

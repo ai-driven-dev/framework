@@ -100,7 +100,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
           marketplaceRegistries: new Map(),
         }),
         () => "/user-cache",
-        { get: () => "1.0.0" },
+        "1.0.0",
         catalogOf()
       ),
       authentication: { execute: async () => [] },

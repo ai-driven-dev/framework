@@ -4,7 +4,6 @@ import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve
 import { UpdateTools } from "../../../src/orchestration/global/update-tools.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import {
   buildInstallationDeps,
   buildUpdateTool,
@@ -13,7 +12,7 @@ import {
 } from "../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
-const CURRENT_VERSION = new FakeCurrentVersion();
+const CURRENT_VERSION = "0.0.0-test";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -40,7 +39,7 @@ function build(deps: Deps, prompter: Prompter = promptingWith("overwrite-all").p
     listInstalledTools: new ListInstalledTools(deps.manifestRepo, registeredTools()),
     updateTool,
     resolveUpdateDecision: new ResolveUpdateDecision(prompter),
-    versionReader: CURRENT_VERSION,
+    version: CURRENT_VERSION,
   });
   return { useCase, updateTool };
 }

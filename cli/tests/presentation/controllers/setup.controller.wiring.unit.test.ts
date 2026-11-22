@@ -38,7 +38,7 @@ const createDeps = vi.fn(async () => {
         register: registerIfPresent,
         installTools: { execute: setupTools },
         syncSettings: activation,
-        version: { get: () => "5.2.2" },
+        version: "5.2.2",
         detectContext: { execute: detectContext },
         machineScope: { execute: setupMachineScope },
       },

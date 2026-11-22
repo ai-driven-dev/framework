@@ -13,7 +13,6 @@ import type { RegisterFrameworkSource } from "../../../src/orchestration/setup/s
 import type { Environment } from "../../../src/shared/ports/environment.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
-import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 
 /** The setup marketplace registration as composition wires it. */
 export function setupMarketplaceRegistrar(
@@ -21,7 +20,7 @@ export function setupMarketplaceRegistrar(
   source: Pick<AskMarketplaceSource, "execute">,
   register: Pick<RegisterFrameworkMarketplace, "execute">,
   refresh: Pick<RefreshMarketplaces, "execute">,
-  currentVersionProvider: VersionReader,
+  currentVersion: string,
   logger: Logger,
   environment: Environment,
   tokenProvider: TokenProvider = { resolve: async () => "token" },
@@ -32,7 +31,7 @@ export function setupMarketplaceRegistrar(
     ensure: new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
     recordReference: new RecordSourceReference({
       fs,
-      currentVersionProvider,
+      currentVersion,
       logger,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       userSourceReferences,

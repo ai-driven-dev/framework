@@ -37,7 +37,7 @@ function registrationCheckOver(base: Base, inst: Installation, manifests: LoadMa
         fs,
         registry: base.marketplaceRegistry,
         userCacheRoot: userConfigDir,
-        currentVersion: base.currentVersionProvider,
+        currentVersion: base.currentVersion,
       }),
       declared: new InspectDeclaredMarketplaces(
         fs,

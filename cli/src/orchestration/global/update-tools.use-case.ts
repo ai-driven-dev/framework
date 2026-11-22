@@ -6,7 +6,6 @@ import type {
 } from "../../contexts/installation/application/update/update-tool.use-case.js";
 import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
-import type { VersionReader } from "../../shared/ports/version-reader.js";
 import { BulkConflictState } from "../domain/bulk-conflict-state.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
 import type { ResolveUpdateDecision } from "./resolve-update-decision.use-case.js";
@@ -29,7 +28,7 @@ export interface UpdateToolsDeps {
   readonly listInstalledTools: ListInstalledTools;
   readonly updateTool: UpdateTool;
   readonly resolveUpdateDecision: ResolveUpdateDecision;
-  readonly versionReader: VersionReader;
+  readonly version: string;
 }
 
 /**
@@ -58,7 +57,7 @@ export class UpdateTools {
     targetIds: ToolId[]
   ): Promise<UpdateToolsResult> {
     const { projectRoot, userForce, interactive } = command;
-    const version = this.deps.versionReader.get();
+    const version = this.deps.version;
     // Scoped to this run only, never a field, so an "overwrite all" choice cannot leak
     // into a later, unrelated update run.
     const bulkState = new BulkConflictState();

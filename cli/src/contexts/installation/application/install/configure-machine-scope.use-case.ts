@@ -1,6 +1,5 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 
@@ -19,7 +18,7 @@ export interface ConfigureMachineScopeRequest<T> {
 export class ConfigureMachineScope {
   constructor(
     private readonly userManifestRepo: ManifestRepository & Lock,
-    private readonly currentVersionProvider: VersionReader
+    private readonly currentVersion: string
   ) {}
 
   execute<T>({ toolIds, whileHeld }: ConfigureMachineScopeRequest<T>): Promise<T> {
@@ -44,7 +43,7 @@ export class ConfigureMachineScope {
   private async registerTools(toolIds: readonly AiToolId[]): Promise<void> {
     const manifest = await this.userManifestRepo.load();
     if (manifest === null) return;
-    const version = this.currentVersionProvider.get();
+    const version = this.currentVersion;
     let changed = false;
     for (const toolId of toolIds) {
       if (manifest.hasTool(toolId)) continue;

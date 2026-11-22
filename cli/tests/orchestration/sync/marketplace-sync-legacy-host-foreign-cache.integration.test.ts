@@ -21,7 +21,6 @@ import { registeredTools, TOOL } from "../../shared/testing/registered-tools.bui
 import {
   CATALOG_RELATIVE,
   canonicallyOwned,
-  fakeVersion,
   noSourceReferences,
   PROJECT_ROOT,
   readableHostPlugins,
@@ -90,7 +89,7 @@ describe("settings migration: legacy host entries", () => {
         hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
-        currentVersionProvider: fakeVersion(CURRENT_VERSION),
+        currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(TOOL.claude),
         userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
       });
@@ -151,7 +150,7 @@ describe("settings migration: legacy host entries", () => {
         hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
-        currentVersionProvider: fakeVersion(CURRENT_VERSION),
+        currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(TOOL.claude),
         userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
       });

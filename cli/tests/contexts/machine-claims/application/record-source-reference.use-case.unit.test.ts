@@ -16,7 +16,7 @@ function recorder(
 ) {
   return new RecordSourceReference({
     fs,
-    currentVersionProvider: { get: () => "1.2.3" },
+    currentVersion: "1.2.3",
     logger,
     frameworkMarketplaceName: NAME,
     userSourceReferences: references,

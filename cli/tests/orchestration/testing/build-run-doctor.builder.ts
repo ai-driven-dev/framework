@@ -44,7 +44,7 @@ export function buildRunDoctor(
           marketplaceRegistries: new Map(),
         }),
         () => "/user-cache",
-        { get: () => "1.0.0" },
+        "1.0.0",
         deps.tools
       ),
       authentication: { execute: async () => [] },

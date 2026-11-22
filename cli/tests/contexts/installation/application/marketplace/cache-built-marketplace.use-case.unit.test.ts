@@ -14,7 +14,6 @@ import {
   BUILT_CACHE_SUBDIR,
   builtMarketplaceDir,
 } from "../../../../../src/shared/domain/layout/aidd-layout.js";
-import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -57,10 +56,6 @@ function buildsOf(buildFor: BuildFor, variant?: string): FrameworkBuilds {
   return { variant: async () => variant, buildFor };
 }
 
-function fakeVersion(value: string): VersionReader {
-  return { get: () => value };
-}
-
 const USER_CACHE_ROOT = "/user-cache";
 const TMP = "/tmp/given";
 
@@ -70,7 +65,7 @@ function buildEnsurer(
   fs: InMemoryFileAdapter,
   resolved: ReturnType<typeof fakeResolve>,
   builds: FrameworkBuilds,
-  version: VersionReader = fakeVersion("5.0.0")
+  version: string = "5.0.0"
 ): {
   execute(command: EnsureBuiltMarketplaceRequest): Promise<EnsureBuiltMarketplaceResult>;
 } {
@@ -448,7 +443,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
         memFs,
         fakeResolve("/src/framework", "1.0.0"),
         buildsOf(capturing),
-        fakeVersion(version)
+        version
       );
       return uc.execute({
         projectRoot: PROJECT,

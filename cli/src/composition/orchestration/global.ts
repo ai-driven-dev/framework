@@ -50,7 +50,7 @@ interface GlobalParts {
 
 /** Updating every installed tool, asking before a changed file is overwritten. */
 function wireUpdateTools(base: Base, installation: Installation) {
-  const { fs, prompter, manifestRepo, currentVersionProvider, tools } = base;
+  const { fs, prompter, manifestRepo, currentVersion, tools } = base;
   return new UpdateTools({
     listInstalledTools: new ListInstalledTools(manifestRepo, tools),
     updateTool: new UpdateTool(
@@ -63,7 +63,7 @@ function wireUpdateTools(base: Base, installation: Installation) {
       tools
     ),
     resolveUpdateDecision: new ResolveUpdateDecision(prompter),
-    versionReader: currentVersionProvider,
+    version: currentVersion,
   });
 }
 
@@ -96,7 +96,7 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
 
 /** Restoring a project from its manifest, one tool or all of them. */
 function wireRestore(base: Base, installation: Installation, statusUseCase: ReportStatus) {
-  const { fs, prompter, logger, manifestRepo, currentVersionProvider, platform, tools } = base;
+  const { fs, prompter, logger, manifestRepo, currentVersion, platform, tools } = base;
   const restoreToolFiles = new RestoreToolFiles(
     {
       generateToolDistribution: new GenerateToolDistribution(
@@ -127,13 +127,13 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
     statusUseCase,
     new RestoreGlobal(manifestRepo, restoreUseCase)
   );
-  const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersionProvider);
+  const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersion);
   return { restoreAllUseCase, restoreToolUseCase };
 }
 
 /** Setting the machine scope up: its settings, its source and the plugins installed for it. */
 function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
-  const { logger, currentVersionProvider, userManifestRepo, tools } = base;
+  const { logger, currentVersion, userManifestRepo, tools } = base;
   const installGlobalPlugins = new InstallGlobalPlugins(
     new ListFrameworkPlugins(base.marketplaceRegistry, base.resolveMarketplaceUseCase),
     new InstallUserPlugins(
@@ -142,7 +142,7 @@ function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
     )
   );
   return new SetupMachineScope({
-    configureMachineScope: new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
+    configureMachineScope: new ConfigureMachineScope(userManifestRepo, currentVersion),
     resolveSource: marketplace.resolveSetupSource,
     register: marketplace.registerSetupSource,
     syncMachineScope: userScopeSyncOf(marketplace.syncSettingsUseCase),

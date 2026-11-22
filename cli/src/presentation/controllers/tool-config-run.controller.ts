@@ -5,7 +5,7 @@ import type { ToolId } from "../../shared/domain/tool.js";
 
 /** What this command reads of the graph. */
 export type ToolConfigKeys =
-  | "currentVersionProvider"
+  | "currentVersion"
   | "installAiToolUseCase"
   | "installIdeToolUseCase"
   | "uninstallTools"

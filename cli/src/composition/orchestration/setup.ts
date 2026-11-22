@@ -24,7 +24,7 @@ import type { Plugin } from "./plugin.js";
 
 /** What a project-scope setup does at each stage. */
 export function setupStepsOf(
-  base: Pick<Base, "currentVersionProvider">,
+  base: Pick<Base, "currentVersion">,
   m: {
     readonly resolveSetupSource: SetupSteps["resolveSource"];
     readonly registerSetupSource: SetupSteps["register"];
@@ -37,7 +37,7 @@ export function setupStepsOf(
     register: m.registerSetupSource,
     installTools: g.setupToolsUseCase,
     syncSettings: (options) => m.syncSettingsUseCase.execute(options),
-    version: base.currentVersionProvider,
+    version: base.currentVersion,
     detectContext: g.projectContextDetector,
     machineScope: g.setupMachineScope,
   };

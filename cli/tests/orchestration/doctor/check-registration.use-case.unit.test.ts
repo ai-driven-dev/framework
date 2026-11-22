@@ -72,7 +72,7 @@ async function issuesFor(
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
-    { get: () => "1.0.0" },
+    "1.0.0",
     catalogOf()
   ).execute({
     manifest,
@@ -203,7 +203,7 @@ async function nativeIssuesFor(
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
-    { get: () => "1.0.0" },
+    "1.0.0",
     catalogOf()
   ).execute({
     manifest,
