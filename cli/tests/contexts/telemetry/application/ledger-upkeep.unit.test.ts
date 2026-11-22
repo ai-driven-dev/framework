@@ -8,7 +8,7 @@ import { aUsageRecord } from "../testing/usage-record.builder.js";
 
 const CALL = aUsageRecord().withAt("2026-10-07T10:00:00.000Z").build();
 
-describe("storeCalls", () => {
+describe("when new calls are stored", () => {
   it("adds a new call and rewrites only its own day", async () => {
     const ledger = new InMemoryLedger();
     const stored = await storeCalls(ledger, [CALL]);
@@ -45,7 +45,7 @@ describe("storeCalls", () => {
   });
 });
 
-describe("settleLedger", () => {
+describe("when the ledger is settled", () => {
   it("settles each day read that was unsettled and returns what it read", async () => {
     const ledger = new InMemoryLedger();
     ledger.records = [CALL];

@@ -391,7 +391,7 @@ function snapshot(): Record<string, string> {
   return found;
 }
 
-describe("forgetting", () => {
+describe("when measured data is forgotten", () => {
   async function measured(): Promise<void> {
     await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     declare("main", "checkout");

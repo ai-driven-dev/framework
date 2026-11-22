@@ -44,7 +44,7 @@ function reading(
   };
 }
 
-describe("judgeReading", () => {
+describe("judging what a reading holds", () => {
   it("stores a call of a live consenting clone and notes the repository as alive", async () => {
     const call = aUsageRecord().with({ cwd: DIR, at: AT }).build();
     const verdicts = await judgeReading(runWith(repository(DIR)), reading([call]));

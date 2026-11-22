@@ -4,7 +4,7 @@ import { IdentityOffWithIdentifierError } from "../../../../../src/contexts/tele
 
 const resolve = new ParseIdentityFlags();
 
-describe("ParseIdentityFlags", () => {
+describe("reading the identity flags", () => {
   it("shows the identity when nothing is typed", () => {
     expect(resolve.execute({ off: false, id: undefined })).toEqual({ action: "show" });
   });

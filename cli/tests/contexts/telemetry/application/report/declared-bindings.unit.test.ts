@@ -4,7 +4,7 @@ import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
 import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
 
-describe("DeclaredBindings", () => {
+describe("gathering the declared bindings", () => {
   it("gathers what people declared, wherever each kind is kept", async () => {
     const sessions = new InMemorySessions();
     await sessions.append("s1", {

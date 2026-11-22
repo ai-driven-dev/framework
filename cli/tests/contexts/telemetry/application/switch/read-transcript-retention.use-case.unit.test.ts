@@ -5,7 +5,7 @@ function reading(texts: readonly (string | null)[]) {
   return new ReadTranscriptRetention({ texts: async () => texts }).execute({ root: "/work/a" });
 }
 
-describe("ReadTranscriptRetention", () => {
+describe("reading how long transcripts are kept", () => {
   it("reads the first setting that names a period", async () => {
     expect(await reading([null, '{"cleanupPeriodDays": 5}', '{"cleanupPeriodDays": 9}'])).toEqual({
       days: 5,
