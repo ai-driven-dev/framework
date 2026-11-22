@@ -178,10 +178,11 @@ export async function buildUseCase(
             execute: async () => ({ plugins: [] }),
           },
         });
-  const useCase = runSetupOf(
-    deps.fs,
-    deps.manifestRepo,
-    {
+  const useCase = runSetupOf({
+    tools: registeredTools(),
+    fs: deps.fs,
+    manifestRepo: deps.manifestRepo,
+    steps: {
       ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
@@ -190,14 +191,14 @@ export async function buildUseCase(
         options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
       machineScope,
     },
-    {
+    questions: {
       plugins: (promptOptions) => choosePlugins.execute(promptOptions),
       tools:
         chooseTools === undefined
           ? undefined
           : (promptOptions) => chooseTools.execute(promptOptions),
-    }
-  );
+    },
+  });
   return {
     useCase,
     deps,

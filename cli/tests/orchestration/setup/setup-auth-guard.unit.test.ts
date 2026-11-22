@@ -120,17 +120,18 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     tokenProvider,
     makeReleaseResolver(isRepoPublic)
   );
-  return runSetupOf(
-    deps.fs,
-    deps.manifestRepo,
-    {
+  return runSetupOf({
+    tools: registeredTools(),
+    fs: deps.fs,
+    manifestRepo: deps.manifestRepo,
+    steps: {
       ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => makeNoOpSyncSettings().execute(options),
       version: CURRENT_VERSION,
     },
-    { plugins: (options) => choosePlugins.execute(options) }
-  );
+    questions: { plugins: (options) => choosePlugins.execute(options) },
+  });
 }
 
 describe("RunSetup - auth guard for remote source", () => {

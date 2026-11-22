@@ -114,17 +114,18 @@ async function buildUseCaseWithConflict() {
     deps.logger,
     new InMemoryEnvironment()
   );
-  const useCase = runSetupOf(
-    deps.fs,
-    deps.manifestRepo,
-    {
+  const useCase = runSetupOf({
+    tools: registeredTools(),
+    fs: deps.fs,
+    manifestRepo: deps.manifestRepo,
+    steps: {
       ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => syncSettingsUseCase.execute(options),
       version: CURRENT_VERSION,
     },
-    { plugins: (options) => choosePlugins.execute(options) }
-  );
+    questions: { plugins: (options) => choosePlugins.execute(options) },
+  });
   return { useCase, activator };
 }
 

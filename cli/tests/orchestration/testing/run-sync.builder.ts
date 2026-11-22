@@ -2,7 +2,7 @@ import type { RestoreTool } from "../../../src/contexts/installation/application
 import type { SyncSettingsResult } from "../../../src/orchestration/domain/sync-settings.model.js";
 import type { RestoreAllResult } from "../../../src/orchestration/global/restore-all.use-case.js";
 import { RunSync, type RunSyncReport } from "../../../src/orchestration/sync/run-sync.use-case.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 
 type ToolRestoreResult = Awaited<ReturnType<RestoreTool["execute"]>>;
 
@@ -24,26 +24,25 @@ export const ACTIVATED_NOTHING: SyncSettingsResult = {
   failed: false,
 };
 
-const TOOL_RESTORED_NOTHING: ToolRestoreResult = {
-  tools: [
-    { toolId: TOOL.claude, nothingToRestore: true, restored: [], kept: [], unrestorable: [] },
-  ],
-  totalRestored: 0,
-  totalKept: 0,
-  totalPluginFilesRestored: 0,
-  restoredPluginNames: [],
-  unrestorable: [],
-  nativeOnlyToolIds: [],
-};
+function toolRestoredNothing(claude: AiToolId): ToolRestoreResult {
+  return {
+    tools: [{ toolId: claude, nothingToRestore: true, restored: [], kept: [], unrestorable: [] }],
+    totalRestored: 0,
+    totalKept: 0,
+    totalPluginFilesRestored: 0,
+    restoredPluginNames: [],
+    unrestorable: [],
+    nativeOnlyToolIds: [],
+  };
+}
 
 /** A `RunSync` over fakes that record every call and report, in the order they happened. */
-export function aRunSync(
-  answers: {
-    restoreAll?: RestoreAllResult;
-    restoreTool?: ToolRestoreResult;
-    activation?: SyncSettingsResult;
-  } = {}
-) {
+export function aRunSync(answers: {
+  claude: AiToolId;
+  restoreAll?: RestoreAllResult;
+  restoreTool?: ToolRestoreResult;
+  activation?: SyncSettingsResult;
+}) {
   const calls: string[] = [];
   const restoreAllArgs: unknown[][] = [];
   const restoreToolCommands: unknown[] = [];
@@ -65,7 +64,7 @@ export function aRunSync(
       execute: async (command) => {
         calls.push("restoreTool");
         restoreToolCommands.push(command);
-        return answers.restoreTool ?? TOOL_RESTORED_NOTHING;
+        return answers.restoreTool ?? toolRestoredNothing(answers.claude);
       },
     },
     {
