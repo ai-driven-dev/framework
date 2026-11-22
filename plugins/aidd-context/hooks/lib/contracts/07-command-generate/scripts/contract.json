@@ -3,6 +3,7 @@
   "kind": "command",
   "unit": "file",
   "scope": [".claude/commands/*.md"],
+  "shell": false,
   "rules": {
     "COMMAND-01": {
       "op": "template",
