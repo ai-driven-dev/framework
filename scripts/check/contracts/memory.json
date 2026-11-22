@@ -4,7 +4,6 @@
   "unit": "folder",
   "targets": "plugins/aidd-context/skills/02-project-memory",
   "marker": "SKILL.md",
-  "retired": ["MEMORY-04"],
   "rules": {
     "MEMORY-01": {
       "op": "custom",
