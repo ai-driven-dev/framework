@@ -2,6 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import pkg from "../../package.json" with { type: "json" };
 import { createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/installation.js";
 import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
@@ -55,7 +56,7 @@ describe("createContainer", () => {
   it("reads the version of the running binary from its shared context", () => {
     const container = createContainer({ projectRoot: root, verbose: false, tools });
 
-    expect(container.shared.version).toMatch(/^\d+\.\d+\.\d+/);
+    expect(container.shared.currentVersion).toBe(pkg.version);
   });
 
   it("logs through the output it was handed", () => {

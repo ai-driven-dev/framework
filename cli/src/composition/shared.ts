@@ -1,3 +1,4 @@
+import pkg from "../../package.json" with { type: "json" };
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
@@ -12,7 +13,6 @@ import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
 import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
 import type { HintedMessage } from "../shared/domain/describe-error.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
-import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../shared/infrastructure/http-client.js";
@@ -21,11 +21,6 @@ import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
 import { wireMachineClaims } from "./machine-claims.js";
 import { userConfigDir } from "./user-config-dir.js";
-
-/** The version of the running binary, for the entry point that may not import infrastructure. */
-export function currentVersion(): string {
-  return new CurrentVersionAdapter().get();
-}
 
 const plainText = (message: string | HintedMessage): string =>
   typeof message === "string" ? message : message.text;
@@ -132,7 +127,7 @@ export function wireBase(options: BaseOptions) {
     tools,
     projectRoot,
     logger,
-    currentVersionProvider: new CurrentVersionAdapter(),
+    currentVersion: pkg.version,
     platform: new PlatformAdapter(),
     prompter: terminalPrompter(),
     userSourceReferences,

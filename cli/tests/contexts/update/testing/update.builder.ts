@@ -27,7 +27,7 @@ export function aSelfUpdate() {
       installer = value;
       return builder;
     },
-    build: () => new SelfUpdate(releases, installer, { get: () => current }),
+    build: () => new SelfUpdate(releases, installer, current),
   };
   return builder;
 }
@@ -45,7 +45,7 @@ export function aPrintUpdateNotice() {
       current = version;
       return builder;
     },
-    build: () => new PrintUpdateNotice(cache, { get: () => current }),
+    build: () => new PrintUpdateNotice(cache, current),
   };
   return builder;
 }

@@ -6,7 +6,6 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
-import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -17,10 +16,6 @@ import {
   syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
-
-function fakeVersion(value: string): VersionReader {
-  return { get: () => value };
-}
 
 // resolve(): compared in `marketplaceSourceDrift` against an already-resolved source, so a
 // drive-less literal makes win32 misclassify this project's own pre-migration cache as foreign.
@@ -75,7 +70,7 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
         marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
       }),
       () => USER_CACHE_ROOT,
-      fakeVersion(CURRENT_VERSION),
+      CURRENT_VERSION,
       syntheticNativeFamilyCatalog()
     );
     return useCase.execute({

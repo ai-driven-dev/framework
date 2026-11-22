@@ -144,3 +144,28 @@ describe("PluginCatalogRepositoryAdapter.load - malformed catalog recovery", () 
     }
   });
 });
+
+describe("PluginCatalogRepositoryAdapter.load - a framework carrying both catalogs", () => {
+  it("reads the Copilot catalog and leaves the Claude one", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "aidd-catalog-both-"));
+    const copilot = JSON.stringify({
+      metadata: { pluginRoot: "./plugins" },
+      plugins: [{ name: "from-copilot", source: "p" }],
+    });
+    const claude = JSON.stringify({
+      plugins: [{ name: "from-claude", source: { kind: "local", path: "./p" } }],
+    });
+    try {
+      await mkdir(join(tmp, ".plugin"), { recursive: true });
+      await mkdir(join(tmp, ".claude-plugin"), { recursive: true });
+      await writeFile(join(tmp, ".plugin/marketplace.json"), copilot, "utf-8");
+      await writeFile(join(tmp, ".claude-plugin/marketplace.json"), claude, "utf-8");
+
+      const catalog = await makeAdapter().load(tmp);
+
+      expect(catalog?.plugins.map((p) => p.name)).toEqual(["from-copilot"]);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+});

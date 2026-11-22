@@ -23,7 +23,6 @@ import {
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   canonicallyOwned,
-  fakeVersion,
   noSourceReferences,
   PROJECT_ROOT,
   readableHostPlugins,
@@ -95,7 +94,7 @@ describe("settings migration: legacy host entries", () => {
         hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
-        currentVersionProvider: fakeVersion(CURRENT_VERSION),
+        currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(tool),
         userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
       });
@@ -156,7 +155,7 @@ describe("settings migration: legacy host entries", () => {
         hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
-        currentVersionProvider: fakeVersion(CURRENT_VERSION),
+        currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(tool),
         userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
       });

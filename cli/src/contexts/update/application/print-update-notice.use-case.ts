@@ -1,4 +1,3 @@
-import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import { noticeFor, type UpdateNotice } from "../domain/update-notice.js";
 import type { UpdateCheckCache } from "../ports/update-check-cache.js";
 
@@ -11,12 +10,12 @@ export interface PrintUpdateNoticeResult {
 export class PrintUpdateNotice {
   constructor(
     private readonly cache: UpdateCheckCache,
-    private readonly version: VersionReader
+    private readonly version: string
   ) {}
 
   async execute(): Promise<PrintUpdateNoticeResult> {
     const entry = await this.cache.read();
     if (entry === null) return { notice: null };
-    return { notice: noticeFor(entry, this.version.get()) };
+    return { notice: noticeFor(entry, this.version) };
   }
 }

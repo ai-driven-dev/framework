@@ -5,7 +5,6 @@ import {
 } from "../../../shared/domain/layout/aidd-layout.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import type { BuiltMarketplace, MarketplaceBuilds } from "../contract/built-marketplaces.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 import type { Marketplace } from "../domain/marketplace.js";
@@ -27,7 +26,7 @@ export interface ResolveBuiltMarketplacesDeps {
    * the expected path needs the same version a build would use. No default: an empty version
    * collapses `join(…, "", …)` to the pre-version path shape, a different, wrong path silently
    * recomputed rather than a failure. */
-  readonly currentVersion: VersionReader;
+  readonly currentVersion: string;
 }
 
 /**
@@ -75,7 +74,7 @@ export class ResolveBuiltMarketplaces {
       marketplace.scope === "user" || marketplace.name === FRAMEWORK_MARKETPLACE_NAME
         ? userBuiltMarketplaceDir({
             userConfigDir: this.deps.userCacheRoot(),
-            cliVersion: this.deps.currentVersion.get(),
+            cliVersion: this.deps.currentVersion,
             marketplaceName: marketplace.name,
             target: toolId,
           })

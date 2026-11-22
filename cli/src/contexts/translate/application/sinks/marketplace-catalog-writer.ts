@@ -3,7 +3,7 @@ import type { SourceMarketplaceRef } from "../../../../shared/domain/plugin/sour
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
 
-type CatalogDeps = Pick<DiskSinkDeps, "fs" | "jsonSchemaValidator" | "assetProvider">;
+type CatalogDeps = Pick<DiskSinkDeps, "fs" | "jsonSchemaValidator" | "schemaProvider">;
 
 /** The source marketplace and the plugins a build wrote from it. */
 export interface CatalogBuild {
@@ -37,7 +37,7 @@ export async function writeMarketplaceCatalog(
     deps.fs
   );
   if (schemaName) {
-    deps.jsonSchemaValidator.validate(deps.assetProvider.loadSchema(schemaName), catalog);
+    deps.jsonSchemaValidator.validate(deps.schemaProvider.loadSchema(schemaName), catalog);
   }
   await deps.fs.writeFile(join(t.outDir, destRelPath), `${JSON.stringify(catalog, null, 2)}\n`);
   return 1;

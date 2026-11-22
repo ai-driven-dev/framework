@@ -3,7 +3,6 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import type { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
@@ -49,10 +48,6 @@ export function freshClaudeSource(claude: AiToolId, activator: FakeHostActions, 
       ),
     ],
   ]);
-}
-
-export function fakeVersion(value: string): VersionReader {
-  return { get: () => value };
 }
 
 export function catalogFixture(builtDir: string): Record<string, string> {

@@ -13,23 +13,6 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.j
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { aDiskSink } from "./disk-sink.builder.js";
 
-const MINIMAL_MANIFEST_SCHEMA = {
-  type: "object",
-  required: ["name"],
-  properties: { name: { type: "string" } },
-};
-
-const MINIMAL_MARKETPLACE_SCHEMA = {
-  type: "object",
-  required: ["name", "metadata", "owner", "plugins"],
-  properties: {
-    name: { type: "string" },
-    metadata: { type: "object" },
-    owner: { type: "object" },
-    plugins: { type: "array" },
-  },
-};
-
 export function makeValidator(fail = false): JsonSchemaValidator {
   return {
     validate(_schema: object, _data: unknown): void {
@@ -51,11 +34,6 @@ export function makeAssetProvider(): AssetProvider {
         };
       }
       throw new Error("not used");
-    },
-    loadSchema: (name) => {
-      if (name === "plugin-manifest") return MINIMAL_MANIFEST_SCHEMA;
-      if (name === "marketplace") return MINIMAL_MARKETPLACE_SCHEMA;
-      return {};
     },
   };
 }

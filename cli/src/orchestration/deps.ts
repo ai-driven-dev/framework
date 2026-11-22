@@ -34,7 +34,6 @@ import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-
 import type { SelfUpdate } from "../contexts/update/application/self-update.use-case.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { Logger } from "../shared/ports/logger.js";
-import type { VersionReader } from "../shared/ports/version-reader.js";
 import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js";
 import type { CleanProject } from "./clean/clean-project.use-case.js";
 import type { CleanUserScope } from "./clean/clean-user-scope.use-case.js";
@@ -101,7 +100,7 @@ export interface Deps {
   homedir: () => string;
   environment: Environment;
   logger: Logger;
-  currentVersionProvider: VersionReader;
+  currentVersion: string;
   prompter: Prompter;
   logIn: Pick<LogIn, "execute">;
   logOut: Pick<LogOut, "execute">;

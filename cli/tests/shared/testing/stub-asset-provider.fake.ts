@@ -1,4 +1,4 @@
-import type { ConfigAsset, SchemaName } from "../../../src/shared/domain/config-asset.js";
+import type { ConfigAsset } from "../../../src/shared/domain/config-asset.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 
@@ -13,10 +13,5 @@ export class StubAssetProvider implements AssetProvider {
     if (asset !== undefined) return asset;
     if (this.fallback === undefined) throw new Error(`no stub asset for ${toolId}/${fileName}`);
     return this.fallback.loadConfigAsset(toolId, fileName);
-  }
-
-  loadSchema(name: SchemaName): object {
-    if (this.fallback === undefined) throw new Error(`no stub schema for ${name}`);
-    return this.fallback.loadSchema(name);
   }
 }

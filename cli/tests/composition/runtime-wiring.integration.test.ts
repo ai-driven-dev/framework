@@ -330,11 +330,11 @@ describe("setupStepsOf", () => {
   const installTools = {} as Guards["setupToolsUseCase"];
   const detectContext = {} as Guards["projectContextDetector"];
   const machineScope = {} as Guards["setupMachineScope"];
-  const version = {} as Base["currentVersionProvider"];
+  const version = {} as Base["currentVersion"];
 
   it("names each stage after what runs it", () => {
     const steps = setupStepsOf(
-      { currentVersionProvider: version },
+      { currentVersion: version },
       {
         resolveSetupSource: resolveSource,
         registerSetupSource: register,
@@ -360,7 +360,7 @@ describe("setupStepsOf", () => {
   it("syncs settings through the marketplace's sync", async () => {
     const execute = vi.fn().mockResolvedValue({ binaryMissing: [], errors: [] });
     const steps = setupStepsOf(
-      { currentVersionProvider: version },
+      { currentVersion: version },
       {
         resolveSetupSource: resolveSource,
         registerSetupSource: register,

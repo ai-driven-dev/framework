@@ -1,7 +1,6 @@
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import {
   frameworkSourceIsShared,
@@ -16,7 +15,7 @@ export interface RecordSourceReferenceRequest {
 
 export interface RecordSourceReferenceDeps {
   readonly fs: FileReader;
-  readonly currentVersionProvider: VersionReader;
+  readonly currentVersion: string;
   readonly logger: Logger;
   readonly frameworkMarketplaceName: string;
   readonly userSourceReferences?: UserSourceReferences;
@@ -34,13 +33,13 @@ export class RecordSourceReference {
     // `references.json`: always true today, but a future change must not silently start writing a
     // reference for a registration that is no longer the shared one.
     const { name, scope } = command.marketplace;
-    const { fs, currentVersionProvider, logger, frameworkMarketplaceName, userSourceReferences } =
+    const { fs, currentVersion, logger, frameworkMarketplaceName, userSourceReferences } =
       this.deps;
     if (!frameworkSourceIsShared(name, scope, frameworkMarketplaceName)) return;
     if (userSourceReferences === undefined) return;
     await toleratingUnreadableRefs(logger, undefined, async () => {
       const resolvedRoot = await resolveReferenceRoot(fs, command.projectRoot);
-      await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
+      await userSourceReferences.addReference(currentVersion, resolvedRoot);
     });
   }
 }

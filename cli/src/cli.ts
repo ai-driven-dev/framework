@@ -25,7 +25,7 @@ const createOutput = (verbose: boolean) =>
 
 // The composition edge: commands receive these factories and never import the wiring.
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
-  .version;
+  .currentVersion;
 const createSlice = bindContainer(tools);
 const terminal = { runner: { run: spawnCliCommand }, pause: { untilEnter: waitForEnter } };
 const menuOfProject = (projectRoot: string) =>

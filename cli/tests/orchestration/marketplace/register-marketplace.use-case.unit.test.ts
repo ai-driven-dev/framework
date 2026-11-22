@@ -14,7 +14,6 @@ import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { saying } from "../../shared/testing/saying.builder.js";
@@ -62,7 +61,7 @@ function makeUseCase(
     askMarketplaceSource(new KeepPrompter(), makeNoOpLatestResolver()),
     register,
     refresh,
-    new FakeCurrentVersion(),
+    "0.0.0-test",
     new CapturingLogger(),
     environment,
     collaborators.tokenProvider,

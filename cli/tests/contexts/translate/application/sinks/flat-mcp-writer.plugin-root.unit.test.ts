@@ -26,7 +26,6 @@ const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 const ASSETS: AssetProvider = {
   loadConfigAsset: (_tool, name) =>
     name.endsWith(".js") ? "export async function setupOpencodeEvents() {}" : "{}",
-  loadSchema: () => ({}),
 };
 
 function flatTools(): AiToolId[] {

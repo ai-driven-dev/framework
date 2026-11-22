@@ -5,9 +5,9 @@ import {
   MarketplaceOutDirNotEmptyError,
 } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SchemaName } from "../../../../../src/shared/domain/config-asset.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
-  assetProviderNaming,
   CLAUDE_ROOT_TOKEN,
   OUT_DIR,
   PLUGIN,
@@ -19,6 +19,7 @@ import {
   supportedArtifact,
   writtenUnder,
 } from "../../testing/marketplace-sink-world.builder.js";
+import { schemasNaming } from "../../testing/schema-provider.builder.js";
 
 describe("preparing a marketplace output directory", () => {
   it("accepts a directory holding no entry yet", async () => {
@@ -103,7 +104,7 @@ describe("the plugin manifest a marketplace layout synthesizes", () => {
     const fs = new InMemoryFileAdapter({
       [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: sourceManifest,
     });
-    const loaded: string[] = [];
+    const loaded: SchemaName[] = [];
     // The source manifest is validated first and must pass: only what the layout synthesized
     // (it alone carries `skills`) is refused.
     const refusing: JsonSchemaValidator = {
@@ -116,7 +117,7 @@ describe("the plugin manifest a marketplace layout synthesizes", () => {
     await expect(
       sinkFor(fs, manifestContract({ manifestSchemaName: "plugin-manifest" }), {
         validator: refusing,
-        assetProvider: assetProviderNaming(loaded),
+        schemaProvider: schemasNaming(loaded),
       }).write()
     ).rejects.toThrow(JsonSchemaValidationError);
     expect(loaded).toEqual(["plugin-manifest", "plugin-manifest"]);

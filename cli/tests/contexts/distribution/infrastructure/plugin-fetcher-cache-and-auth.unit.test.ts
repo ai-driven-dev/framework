@@ -23,29 +23,13 @@ vi.mock("simple-git", () => ({
   simpleGit: (...args: unknown[]) => mockSimpleGit(...args),
 }));
 
-const mockExecFile = vi.fn().mockResolvedValue({ stdout: "", stderr: "" });
-
-vi.mock("node:child_process", () => ({
-  execFile: (
-    cmd: string,
-    args: string[],
-    cb: (err: unknown, result?: { stdout: string; stderr: string }) => void
-  ) => {
-    try {
-      mockExecFile(cmd, args);
-      cb(null, { stdout: "", stderr: "" });
-    } catch (err) {
-      cb(err);
-    }
-  },
-}));
-
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { FakeNpmInstaller } from "../testing/npm-installer.fake.js";
 
 const CACHE = "/tmp/cache";
 
@@ -54,17 +38,18 @@ function reset(): void {
   mockRawFn.mockClear().mockResolvedValue(undefined);
   mockCheckoutFn.mockClear().mockResolvedValue(undefined);
   mockSimpleGit.mockClear();
-  mockExecFile.mockClear().mockReturnValue(undefined);
 }
 
 let lastFs: InMemoryFileAdapter;
+let lastNpm: FakeNpmInstaller;
 
 function adapter(token?: string, files: Record<string, string> = {}): PluginFetcherAdapter {
   reset();
   lastFs = new InMemoryFileAdapter(files);
   const provider: TokenProvider | undefined =
     token === undefined ? undefined : { resolve: async () => token };
-  return new PluginFetcherAdapter(lastFs, new GitCloner(), provider);
+  lastNpm = new FakeNpmInstaller(lastFs, ["@acme/plugin"]);
+  return new PluginFetcherAdapter(lastFs, new GitCloner(), lastNpm, provider);
 }
 
 function clonedInto(): string {
@@ -243,31 +228,22 @@ describe("an npm package as a source", () => {
   it("asks for the pinned version", async () => {
     await adapter().fetch({ kind: "npm", package: "@acme/plugin", version: "1.2.3" }, CACHE);
 
-    expect(mockExecFile).toHaveBeenCalledWith("pnpm", [
-      "add",
-      "--prefix",
-      CACHE,
-      "--",
-      "@acme/plugin@1.2.3",
-    ]);
+    expect(lastNpm.installs).toEqual([{ spec: "@acme/plugin@1.2.3", prefix: CACHE }]);
   });
 
   it("falls back to latest when no version is pinned", async () => {
     await adapter().fetch({ kind: "npm", package: "@acme/plugin" }, CACHE);
 
-    expect(mockExecFile.mock.calls[0]?.[1]?.at(-1)).toBe("@acme/plugin@latest");
+    expect(lastNpm.installs.map((i) => i.spec)).toEqual(["@acme/plugin@latest"]);
   });
 
   it("names the spec it could not install", async () => {
     const fetcher = adapter();
-    mockExecFile.mockImplementation(() => {
-      throw new Error("ERR_PNPM_FETCH_404");
-    });
 
     await expect(
-      fetcher.fetch({ kind: "npm", package: "@acme/plugin", version: "9.9.9" }, CACHE)
+      fetcher.fetch({ kind: "npm", package: "@absent/plugin", version: "9.9.9" }, CACHE)
     ).rejects.toThrow(
-      expect.objectContaining({ detail: expect.stringMatching(/@acme\/plugin@9\.9\.9/) })
+      expect.objectContaining({ detail: expect.stringMatching(/@absent\/plugin@9\.9\.9/) })
     );
   });
 });
@@ -386,18 +362,18 @@ describe("a tree already in the cache", () => {
 describe("an npm package already installed in the cache", () => {
   const source: PluginSource = { kind: "npm", package: "@acme/plugin" };
   const installed = { [`${CACHE}/node_modules/@acme/plugin/package.json`]: "{}" };
+  const stale = `${CACHE}/node_modules/@acme/plugin/removed-upstream.js`;
 
   it("is reinstalled from scratch when the caller forces a refresh", async () => {
-    const fetcher = adapter(undefined, installed);
+    const fetcher = adapter(undefined, { ...installed, [stale]: "" });
 
     const result = await fetcher.fetch(source, CACHE, { forceRefresh: true });
 
-    expect(
-      await lastFs.fileExists(`${CACHE}/node_modules/@acme/plugin/package.json`),
-      "the stale install is wiped, not installed over"
-    ).toBe(false);
+    expect(await lastFs.fileExists(stale), "the stale install is wiped, not installed over").toBe(
+      false
+    );
+    expect(lastNpm.installs, "the reinstall still happens after the wipe").toHaveLength(1);
     expect(result).toBe(join(CACHE, "node_modules", "@acme", "plugin"));
-    expect(mockExecFile, "the reinstall still happens after the wipe").toHaveBeenCalledTimes(1);
   });
 
   it("is left in place when no refresh is asked for", async () => {

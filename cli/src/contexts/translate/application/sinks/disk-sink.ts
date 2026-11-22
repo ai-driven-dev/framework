@@ -85,7 +85,7 @@ export class DiskSink implements PluginTreeSink {
   private async validateSourceManifest(pluginSrc: string): Promise<void> {
     const raw = await this.deps.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
     this.deps.jsonSchemaValidator.validate(
-      this.deps.assetProvider.loadSchema("plugin-manifest"),
+      this.deps.schemaProvider.loadSchema("plugin-manifest"),
       JSON.parse(raw)
     );
   }
@@ -106,7 +106,7 @@ export class DiskSink implements PluginTreeSink {
     const synthesized = contract.synthesizeManifest(source, presenceOf(canon));
     if (contract.manifestSchemaName) {
       this.deps.jsonSchemaValidator.validate(
-        this.deps.assetProvider.loadSchema(contract.manifestSchemaName),
+        this.deps.schemaProvider.loadSchema(contract.manifestSchemaName),
         synthesized
       );
     }

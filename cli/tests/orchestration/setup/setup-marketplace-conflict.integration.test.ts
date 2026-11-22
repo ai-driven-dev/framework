@@ -13,7 +13,6 @@ import { render } from "../../../src/presentation/errors/error-translator.presen
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
@@ -32,7 +31,7 @@ import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
-const CURRENT_VERSION = new FakeCurrentVersion();
+const CURRENT_VERSION = "0.0.0-test";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY("/home");

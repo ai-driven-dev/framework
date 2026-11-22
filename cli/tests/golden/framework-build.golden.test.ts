@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
 import { translate } from "../../src/contexts/translate/domain/engine.js";
+import { BundledSchemaProviderAdapter } from "../../src/contexts/translate/infrastructure/schema-provider.js";
 import { AjvSchemaValidatorAdapter } from "../../src/contexts/translate/infrastructure/schema-validator.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { foldFilesOf } from "../contexts/translate/testing/build-only-folds.builder.js";
@@ -87,7 +88,9 @@ async function captureInMemory(
     assets,
     new CapturingLogger(),
     contract,
-    mode
+    mode,
+    false,
+    new BundledSchemaProviderAdapter()
   );
   await build.execute({ sourceDir: FRAMEWORK_FIXTURE, outDir: OUT, target: id, mode });
   return Object.fromEntries(

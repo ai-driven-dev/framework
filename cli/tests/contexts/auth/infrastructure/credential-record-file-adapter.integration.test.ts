@@ -1,15 +1,9 @@
-import { execFileSync } from "node:child_process";
 import { chmod, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-vi.mock("node:child_process", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:child_process")>();
-  return { ...actual, execFileSync: vi.fn() };
-});
-
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CredentialRecordFileAdapter } from "../../../../src/contexts/auth/infrastructure/credential-record-file-adapter.js";
+import { aMachineWith, type StubBinary } from "../testing/stub-binary.builder.js";
 
 /**
  * `process.platform` is a plain value property, so it is redefined rather than spied on; the
@@ -36,6 +30,7 @@ describe("CredentialRecordFileAdapter", () => {
   let root: string;
   let userDir: string;
   let records: CredentialRecordFileAdapter;
+  const machines: StubBinary[] = [];
   const projectFile = (): string => join(root, "project", ".aidd", "auth.json");
   const userFile = (): string => join(userDir, "auth.json");
 
@@ -50,6 +45,7 @@ describe("CredentialRecordFileAdapter", () => {
   });
 
   afterEach(async () => {
+    for (const machine of machines.splice(0)) await machine.dispose();
     await rm(root, { recursive: true, force: true });
   });
 
@@ -126,24 +122,27 @@ describe("CredentialRecordFileAdapter", () => {
     });
   });
 
-  describe("on win32", () => {
-    beforeEach(() => {
-      vi.mocked(execFileSync).mockClear();
-    });
+  describe.skipIf(process.platform === "win32")("on win32, with an icacls script", () => {
+    async function givenIcacls(): Promise<StubBinary> {
+      const machine = await aMachineWith("icacls", {});
+      machines.push(machine);
+      return machine;
+    }
 
     it("restricts the file through an icacls argument list, never a shell command line", async () => {
+      const machine = await givenIcacls();
       await asWin32(() => records.save(STORED, "user"));
 
-      expect(execFileSync).toHaveBeenCalledTimes(1);
-      const [command, args] = vi.mocked(execFileSync).mock.calls[0] ?? [];
-      expect(command).toBe("icacls");
-      expect(args).toStrictEqual([userFile(), "/inheritance:r", "/grant:r", "tester:(R,W)"]);
+      expect(await machine.invocations()).toStrictEqual([
+        [userFile(), "/inheritance:r", "/grant:r", "tester:(R,W)"],
+      ]);
     });
 
     it("names the account from the environment, not the %USERNAME% only a shell would expand", async () => {
+      const machine = await givenIcacls();
       await asWin32(() => records.save(STORED, "user"), "Ada Lovelace");
 
-      expect(vi.mocked(execFileSync).mock.calls[0]?.[1]).toContain("Ada Lovelace:(R,W)");
+      expect((await machine.invocations())[0]).toContain("Ada Lovelace:(R,W)");
     });
 
     it.each([
@@ -152,11 +151,13 @@ describe("CredentialRecordFileAdapter", () => {
     ])(
       "refuses to leave inheritance stripped with no grant when the account is %s",
       async (_state, account) => {
+        const machine = await givenIcacls();
         await expect(asWin32(() => records.save(STORED, "user"), account)).rejects.toThrow(
           expect.objectContaining({
             detail: `Failed to set restrictive permissions on ${userFile()}: USERNAME is not set, so no account can be granted access`,
           })
         );
+        expect(await machine.invocations()).toStrictEqual([]);
       }
     );
 
@@ -164,10 +165,11 @@ describe("CredentialRecordFileAdapter", () => {
       // No `"`: the file is really written to disk, and that is illegal on NTFS. `&`, the
       // space, `;` and `$` are legal there and still split under a real shell.
       userDir = join(root, "a & echo pwned; $HOME & b");
+      const machine = await givenIcacls();
 
       await asWin32(() => records.save(STORED, "user"));
 
-      expect(vi.mocked(execFileSync).mock.calls[0]?.[1]?.[0]).toBe(userFile());
+      expect((await machine.invocations())[0]?.[0]).toBe(userFile());
     });
   });
 });

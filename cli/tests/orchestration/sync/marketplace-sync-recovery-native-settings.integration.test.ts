@@ -190,7 +190,7 @@ describe("shared framework references follow any successful native tool outcome"
         ]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         userSourceReferences: references,
-        currentVersionProvider: { get: () => "2.0.0" },
+        currentVersion: "2.0.0",
         hostPluginRegistries: new Map([
           [tool, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
           [other, { read: async () => ({ location: "host plugins", refs: new Map() }) }],

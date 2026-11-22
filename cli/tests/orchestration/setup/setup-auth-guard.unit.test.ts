@@ -19,7 +19,6 @@ import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plu
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
-import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
@@ -32,7 +31,7 @@ import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
-const CURRENT_VERSION = new FakeCurrentVersion();
+const CURRENT_VERSION = "0.0.0-test";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {

@@ -1,4 +1,3 @@
-import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import { decideUpdate, type UpdateFlags } from "../domain/update-decision.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 import type { CliReleaseSource } from "../ports/cli-release-source.js";
@@ -16,11 +15,11 @@ export class SelfUpdate {
   constructor(
     private readonly releases: CliReleaseSource,
     private readonly installer: CliInstaller,
-    private readonly version: VersionReader
+    private readonly version: string
   ) {}
 
   async execute(command: SelfUpdateRequest): Promise<SelfUpdateResult> {
-    const currentVersion = this.version.get();
+    const currentVersion = this.version;
     const { version: latestVersion, changelog } = await this.releases.fetchLatestRelease();
     const decision = decideUpdate(currentVersion, latestVersion, command);
     switch (decision) {

@@ -236,7 +236,7 @@ describe("setup without TTY", () => {
       await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL] }));
 
       expect(userSourceReferences.added).toEqual([
-        { version: CURRENT_VERSION.get(), projectRoot: PROJECT_ROOT },
+        { version: CURRENT_VERSION, projectRoot: PROJECT_ROOT },
       ]);
     });
 

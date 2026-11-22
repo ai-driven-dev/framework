@@ -1,135 +1,112 @@
-import { spawnSync } from "node:child_process";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { GhCliAdapter } from "../../../../src/contexts/auth/infrastructure/gh-cli-adapter.js";
 import { AuthenticationError } from "../../../../src/shared/domain/shared.error.js";
+import {
+  aMachineWith,
+  type StubBehaviour,
+  type StubBinary,
+} from "../testing/stub-binary.builder.js";
 
-vi.mock("node:child_process", () => ({
-  spawnSync: vi.fn(),
-}));
+describe.skipIf(process.platform === "win32")("GhCliAdapter on a machine with a gh script", () => {
+  let machine: StubBinary;
 
-const mockSpawnSync = vi.mocked(spawnSync);
-
-function answer(overrides: Partial<ReturnType<typeof spawnSync>>): ReturnType<typeof spawnSync> {
-  return {
-    pid: 1,
-    output: [],
-    stdout: "",
-    stderr: "",
-    status: 0,
-    signal: null,
-    error: undefined,
-    ...overrides,
-  };
-}
-
-describe("GhCliAdapter, the commands it runs", () => {
-  it("reads the token through `gh auth token` within 3 s", () => {
-    mockSpawnSync.mockReturnValue(answer({ stdout: "ghp_abc\n" }));
-
-    new GhCliAdapter().read();
-
-    expect(mockSpawnSync.mock.calls.at(-1)).toStrictEqual([
-      "gh",
-      ["auth", "token"],
-      { timeout: 3000, encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] },
-    ]);
+  afterEach(async () => {
+    await machine.dispose();
   });
 
-  it("reads the login through `gh api user` within 5 s", async () => {
-    mockSpawnSync.mockReturnValue(answer({ stdout: "octocat\n" }));
+  async function givenGh(behaviour: StubBehaviour | null): Promise<GhCliAdapter> {
+    machine = await aMachineWith("gh", behaviour);
+    return new GhCliAdapter();
+  }
 
-    await new GhCliAdapter().verify();
+  describe("the commands it runs", () => {
+    it("reads the token through `gh auth token`", async () => {
+      const gh = await givenGh({ stdout: "ghp_abc\n" });
 
-    expect(mockSpawnSync.mock.calls.at(-1)).toStrictEqual([
-      "gh",
-      ["api", "user", "--jq", ".login"],
-      { timeout: 5000, encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] },
-    ]);
-  });
-});
+      gh.read();
 
-describe("GhCliAdapter, resolving a token", () => {
-  it("answers the token gh prints, trimmed", () => {
-    mockSpawnSync.mockReturnValue(answer({ stdout: "ghp_abc123\n" }));
+      expect(await machine.invocations()).toStrictEqual([["auth", "token"]]);
+    });
 
-    expect(new GhCliAdapter().read()).toBe("ghp_abc123");
-  });
+    it("reads the login through `gh api user`", async () => {
+      const gh = await givenGh({ stdout: "octocat\n" });
 
-  it("answers null when gh is absent", () => {
-    mockSpawnSync.mockReturnValue(answer({ error: new Error("ENOENT"), status: null }));
+      await gh.verify();
 
-    expect(new GhCliAdapter().read()).toBeNull();
-  });
+      expect(await machine.invocations()).toStrictEqual([["api", "user", "--jq", ".login"]]);
+    });
 
-  it("answers null when gh prints nothing", () => {
-    mockSpawnSync.mockReturnValue(answer({ stdout: "   " }));
+    it("gives up on a gh that never answers a token read, after 3 s", async () => {
+      const gh = await givenGh({ hangs: true });
+      const started = Date.now();
 
-    expect(new GhCliAdapter().read()).toBeNull();
-  });
-});
+      expect(gh.read()).toBeNull();
 
-describe("GhCliAdapter, when gh fails", () => {
-  it("names the exit code when gh wrote nothing", () => {
-    mockSpawnSync.mockReturnValue(answer({ status: 1, stderr: "" }));
+      expect(Date.now() - started).toBeGreaterThanOrEqual(2900);
+      expect(Date.now() - started).toBeLessThan(4500);
+    }, 10_000);
 
-    expect(() => new GhCliAdapter().read()).toThrow(
-      expect.objectContaining({ detail: expect.stringContaining("exited with code 1") })
-    );
-  });
+    it("gives up on a gh that never answers a login read, after 5 s", async () => {
+      const gh = await givenGh({ hangs: true });
+      const started = Date.now();
 
-  it("names the upgrade when gh lacks `auth token`", () => {
-    mockSpawnSync.mockReturnValue(
-      answer({ status: 1, stderr: 'unknown command "token" for "gh auth"' })
-    );
+      await expect(gh.verify()).rejects.toThrow(new AuthenticationError("gh CLI"));
 
-    expect(() => new GhCliAdapter().read()).toThrow(
-      expect.objectContaining({ detail: expect.stringContaining("gh CLI is too old to support") })
-    );
+      expect(Date.now() - started).toBeGreaterThanOrEqual(4900);
+      expect(Date.now() - started).toBeLessThan(6500);
+    }, 12_000);
   });
 
-  it("copes with no stderr stream", () => {
-    mockSpawnSync.mockReturnValue(answer({ status: 2, stderr: undefined }));
+  describe("resolving a token", () => {
+    it("answers the token gh prints, trimmed", async () => {
+      expect((await givenGh({ stdout: "ghp_abc123\n" })).read()).toBe("ghp_abc123");
+    });
 
-    expect(() => new GhCliAdapter().read()).toThrow(
-      expect.objectContaining({
-        detail: expect.stringContaining("gh auth token exited with code 2"),
-      })
-    );
+    it("answers null when gh is absent", async () => {
+      expect((await givenGh(null)).read()).toBeNull();
+    });
+
+    it("answers null when gh prints nothing", async () => {
+      expect((await givenGh({ stdout: "   " })).read()).toBeNull();
+    });
   });
 
-  it("says the code is unknown when gh left none", () => {
-    mockSpawnSync.mockReturnValue(answer({ status: null, stderr: "" }));
+  describe("when gh fails", () => {
+    it.each([
+      ["names the exit code when gh wrote nothing", { status: 1 }, "exited with code 1"],
+      [
+        "names the upgrade when gh lacks `auth token`",
+        { status: 1, stderr: 'unknown command "token" for "gh auth"' },
+        "gh CLI is too old to support",
+      ],
+      ["says the code is unknown when gh left none", { killed: true }, "exited with code unknown"],
+      [
+        "names its stderr, trimmed",
+        { status: 1, stderr: "  boom  \n" },
+        "gh auth token failed: boom",
+      ],
+    ])("%s", async (_case, behaviour, detail) => {
+      const gh = await givenGh(behaviour);
 
-    expect(() => new GhCliAdapter().read()).toThrow(
-      expect.objectContaining({
-        detail: expect.stringContaining("gh auth token exited with code unknown"),
-      })
-    );
+      expect(() => gh.read()).toThrow(
+        expect.objectContaining({ detail: expect.stringContaining(detail) })
+      );
+    });
   });
 
-  it("names its stderr, trimmed", () => {
-    mockSpawnSync.mockReturnValue(answer({ status: 1, stderr: "  boom  \n" }));
+  describe("verifying", () => {
+    it("answers the login gh prints, trimmed", async () => {
+      expect(await (await givenGh({ stdout: "  octocat\n" })).verify()).toBe("octocat");
+    });
 
-    expect(() => new GhCliAdapter().read()).toThrow(
-      expect.objectContaining({ detail: expect.stringContaining("gh auth token failed: boom") })
-    );
-  });
-});
+    it.each([
+      ["is absent", null],
+      ["exits non-zero", { status: 1, stderr: "not logged in", stdout: "octocat\n" }],
+      ["prints an empty login", { stdout: "  \n" }],
+    ])("refuses when gh %s", async (_situation, behaviour) => {
+      const gh = await givenGh(behaviour);
 
-describe("GhCliAdapter, verifying", () => {
-  it("answers the login gh prints, trimmed", async () => {
-    mockSpawnSync.mockReturnValue(answer({ stdout: "  octocat\n" }));
-
-    expect(await new GhCliAdapter().verify()).toBe("octocat");
-  });
-
-  it.each([
-    ["is absent", { error: new Error("ENOENT"), status: null, stdout: "octocat\n" }],
-    ["exits non-zero", { status: 1, stderr: "not logged in", stdout: "octocat\n" }],
-    ["prints an empty login", { stdout: "  \n" }],
-  ])("refuses when gh %s", async (_situation, overrides) => {
-    mockSpawnSync.mockReturnValue(answer(overrides));
-
-    await expect(new GhCliAdapter().verify()).rejects.toThrow(new AuthenticationError("gh CLI"));
+      await expect(gh.verify()).rejects.toThrow(new AuthenticationError("gh CLI"));
+    });
   });
 });

@@ -2,6 +2,7 @@ import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.use-case.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
@@ -16,12 +17,13 @@ export function buildTree(
   logger: Logger,
   contract: ToolBuildContract,
   mode: FrameworkBuildMode,
-  force = false
+  force = false,
+  schemaProvider?: SchemaProvider
 ): BuildNativeTree {
   return new BuildNativeTree({
     fs,
     logger,
-    sink: aDiskSink(fs, validator, assetProvider, logger),
+    sink: aDiskSink(fs, validator, assetProvider, logger, schemaProvider),
     layout: { contract, mode, force },
   });
 }

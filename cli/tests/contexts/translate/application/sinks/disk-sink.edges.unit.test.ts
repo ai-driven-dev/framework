@@ -31,10 +31,6 @@ const FOREIGN_PLACEHOLDER = "@{{TOOLS}}/";
 
 const ASSETS: AssetProvider = {
   loadConfigAsset: () => "{}",
-  loadSchema: (name) => {
-    if (typeof name !== "string") throw new Error("no schema was asked for");
-    return {};
-  },
 };
 
 const COPY_DIR = ".out/";

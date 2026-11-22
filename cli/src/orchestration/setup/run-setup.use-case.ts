@@ -7,7 +7,6 @@ import type {
 } from "../../contexts/installation/application/install/install-tools.use-case.js";
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
-import type { VersionReader } from "../../shared/ports/version-reader.js";
 import type { PluginInstallMode, SetupFlow } from "../domain/setup-flow.model.js";
 import { UserScopeUnavailableError } from "../orchestration.error.js";
 import type { ResolveSetupSource } from "./resolve-setup-source.use-case.js";
@@ -23,7 +22,7 @@ export interface SetupSteps {
   readonly syncSettings: (options: {
     readonly projectRoot: string;
   }) => Promise<NativeActivationReport>;
-  readonly version: VersionReader;
+  readonly version: string;
   readonly detectContext?: Pick<DetectProjectContext, "execute">;
   /** Handles `flow.scope === "user"` entirely. Absent, `execute` refuses a request it has
    * nothing to serve. */
@@ -91,7 +90,7 @@ export class RunSetup {
       aiTools,
       ideTools,
       force: flow.force,
-      version: this.steps.version.get(),
+      version: this.steps.version,
     });
   }
 

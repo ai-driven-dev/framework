@@ -30,7 +30,6 @@ import {
 import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/build-marketplace-for-tool.use-case.js";
 import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
-import { FakeCurrentVersion } from "./fake-current-version.fake.js";
 
 type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
@@ -46,7 +45,7 @@ export interface MarketplaceSyncParts {
   userCacheRoot?: ActivationMarketplace["userCacheRoot"];
   marketplaceRegisterFrameworkUseCase?: Loader["marketplaceRegisterFrameworkUseCase"];
   userSourceReferences?: RecordSourceReferenceDeps["userSourceReferences"];
-  currentVersionProvider?: RecordSourceReferenceDeps["currentVersionProvider"];
+  currentVersion?: RecordSourceReferenceDeps["currentVersion"];
   userManifestRepo?: Loader["userManifestRepo"];
   activators?: Deps["activators"];
   hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
@@ -110,7 +109,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       logger: parts.logger,
       recordReference: new RecordSourceReference({
         fs: parts.fs,
-        currentVersionProvider: parts.currentVersionProvider ?? new FakeCurrentVersion(),
+        currentVersion: parts.currentVersion ?? "0.0.0-test",
         logger: parts.logger,
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
         userSourceReferences: parts.userSourceReferences,

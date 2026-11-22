@@ -20,7 +20,6 @@ export interface ToolConfigHarness {
   readonly updateTools: Mock;
   readonly listInstalledRules: Mock;
   readonly validateRecipes: Mock;
-  readonly currentVersion: Mock;
   readonly createDeps: Mock;
   readonly written: string[];
   readonly errors: string[];
@@ -48,7 +47,6 @@ export function toolConfigHarness({
   const updateTools: Mock = vi.fn();
   const listInstalledRules: Mock = vi.fn();
   const validateRecipes: Mock = vi.fn();
-  const currentVersion: Mock = vi.fn(() => "5.2.2");
   const createDeps: Mock = vi.fn(async () => ({
     installAiToolUseCase: { execute: installAiTool },
     installIdeToolUseCase: { execute: installIdeTool },
@@ -56,7 +54,7 @@ export function toolConfigHarness({
     updateToolsUseCase: { execute: updateTools },
     listInstalledRulesUseCase: { execute: listInstalledRules },
     validateRecipes: { execute: validateRecipes },
-    currentVersionProvider: { get: currentVersion },
+    currentVersion: "5.2.2",
   }));
   const written: string[] = [];
   const errors: string[] = [];
@@ -74,7 +72,6 @@ export function toolConfigHarness({
       errors.push(String(chunk));
       return true;
     });
-    currentVersion.mockReturnValue("5.2.2");
     installAiTool.mockResolvedValue({
       runtimeResult: { skipped: false, fileCount: 5, warnings: [] },
       propagationWarnings: [],
@@ -114,7 +111,6 @@ export function toolConfigHarness({
     updateTools,
     listInstalledRules,
     validateRecipes,
-    currentVersion,
     createDeps,
     written,
     errors,

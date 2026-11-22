@@ -1,6 +1,4 @@
-import { execFile as execFileCb } from "node:child_process";
 import { join, resolve } from "node:path";
-import { promisify } from "node:util";
 import type {
   PluginSource,
   PluginSourceGitHub,
@@ -12,16 +10,16 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import { PluginFetchError } from "../domain/distribution.error.js";
+import type { NpmInstaller } from "../ports/npm-installer.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
 import type { GitCloner } from "./git-cloner-adapter.js";
 import { injectTokenIntoUrl, withoutCredentials } from "./inject-token.js";
-
-const execFile = promisify(execFileCb);
 
 export class PluginFetcherAdapter implements PluginFetcher {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly git: GitCloner,
+    private readonly npm: NpmInstaller,
     private readonly tokenProvider?: TokenProvider
   ) {}
 
@@ -134,7 +132,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
     await this.bustCacheIfNeeded(pkgDir, forceRefresh);
     const spec = `${pkg}@${version ?? "latest"}`;
     try {
-      await execFile("pnpm", ["add", "--prefix", cacheDir, "--", spec]);
+      await this.npm.install(spec, cacheDir);
     } catch (err) {
       throw new PluginFetchError(`npm install failed for "${spec}": ${String(err)}`);
     }

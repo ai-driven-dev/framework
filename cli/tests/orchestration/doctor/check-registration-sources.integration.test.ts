@@ -4,7 +4,6 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
-import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -16,10 +15,6 @@ import {
   syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
-
-function fakeVersion(value: string): VersionReader {
-  return { get: () => value };
-}
 
 // resolve(): compared in `marketplaceSourceDrift` against an already-resolved source, so a
 // drive-less literal makes win32 misclassify this project's own pre-migration cache as foreign.
@@ -128,7 +123,7 @@ async function issuesFor(
       marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
     }),
     () => "/user-cache",
-    fakeVersion("1.0.0"),
+    "1.0.0",
     syntheticNativeFamilyCatalog()
   );
   const issues = await useCase.execute({
@@ -304,7 +299,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
         marketplaceRegistries: new Map(),
       }),
       () => "/user-cache",
-      fakeVersion("1.0.0"),
+      "1.0.0",
       syntheticNativeFamilyCatalog()
     );
 
@@ -353,7 +348,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
         marketplaceRegistries: new Map([[SYNTHETIC_UPDATING_NATIVE_TOOL, hostReader]]),
       }),
       () => "/user-cache",
-      fakeVersion("1.0.0"),
+      "1.0.0",
       syntheticNativeFamilyCatalog()
     );
 
@@ -411,7 +406,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
         marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
       }),
       () => "/user-cache",
-      fakeVersion("1.0.0"),
+      "1.0.0",
       syntheticNativeFamilyCatalog()
     );
 

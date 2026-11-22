@@ -26,7 +26,6 @@ import {
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 import {
   canonicallyOwned,
-  fakeVersion,
   PROJECT_ROOT,
   readableHostPlugins,
 } from "../testing/marketplace-sync-settings-migration.builder.js";
@@ -144,7 +143,7 @@ describe("settings migration: legacy host entries", () => {
           marketplaceRegistries: new Map([[tool, hostReader]]),
         }),
         () => USER_CACHE_ROOT,
-        fakeVersion(CURRENT_VERSION),
+        CURRENT_VERSION,
         syntheticNativeCatalog(tool)
       );
 
@@ -196,7 +195,7 @@ describe("settings migration: legacy host entries", () => {
         hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
-        currentVersionProvider: fakeVersion(CURRENT_VERSION),
+        currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(tool),
         userManifestRepo: new InMemoryManifestRepository(machine),
         nativeSources: new Map([

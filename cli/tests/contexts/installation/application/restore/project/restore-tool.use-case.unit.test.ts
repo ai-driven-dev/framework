@@ -21,7 +21,7 @@ function setup(manifest: Manifest | null) {
   const restore = vi.fn<Restore["execute"]>().mockResolvedValue(RESTORED);
   const repo = new InMemoryManifestRepository(manifest);
   const load = vi.spyOn(repo, "load");
-  const useCase = new RestoreTool(repo, { execute: restore }, { get: () => CURRENT });
+  const useCase = new RestoreTool(repo, { execute: restore }, CURRENT);
   return { useCase, restore, load };
 }
 

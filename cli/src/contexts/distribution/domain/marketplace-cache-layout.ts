@@ -5,6 +5,14 @@ import { SOURCE_MARKETPLACE_RELATIVE } from "../../../shared/domain/plugin/canon
 /** Where the catalog sits inside a fetched marketplace. */
 export const MARKETPLACE_CATALOG_RELATIVE = SOURCE_MARKETPLACE_RELATIVE;
 
+/** Where a framework may keep its catalog, in the order they are tried: the first one present
+ * is the catalog. `plugin-root` entries name a bare subdirectory under `metadata.pluginRoot`;
+ * `typed-source` entries carry a typed source each. */
+export const CATALOG_LOCATIONS = [
+  { format: "plugin-root", relative: ".plugin/marketplace.json" },
+  { format: "typed-source", relative: MARKETPLACE_CATALOG_RELATIVE },
+] as const;
+
 export const MARKETPLACE_CACHE_SUBDIR = join(AIDD_DIR, "cache", "marketplaces");
 
 export function marketplaceCacheDir(projectRoot: string, marketplaceName: string): string {

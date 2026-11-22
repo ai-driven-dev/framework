@@ -36,7 +36,7 @@ async function installAiTool({
   toolId: AiToolId;
   cmdOptions: { force: boolean; plugins: boolean };
 }): Promise<void> {
-  const version = deps.currentVersionProvider.get();
+  const version = deps.currentVersion;
   const result = await deps.installAiToolUseCase.execute({
     toolId,
     projectRoot,
@@ -68,7 +68,7 @@ async function installIdeTool({
   toolId,
   cmdOptions,
 }: ToolRun & { toolId: IdeToolId; cmdOptions: { force: boolean } }): Promise<void> {
-  const version = deps.currentVersionProvider.get();
+  const version = deps.currentVersion;
   const result = await deps.installIdeToolUseCase.execute({
     toolId,
     projectRoot,

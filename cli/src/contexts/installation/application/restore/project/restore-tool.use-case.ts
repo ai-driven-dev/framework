@@ -1,4 +1,3 @@
-import type { VersionReader } from "../../../../../shared/ports/version-reader.js";
 import type { ManifestRepository } from "../../../ports/manifest-repository.js";
 import { requireManifest } from "../../shared/require-manifest.js";
 import type { Restore } from "../restore.use-case.js";
@@ -19,13 +18,13 @@ export class RestoreTool {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly restore: Pick<Restore, "execute">,
-    private readonly currentVersion: VersionReader
+    private readonly currentVersion: string
   ) {}
 
   async execute(command: RestoreToolRequest): ReturnType<Restore["execute"]> {
     const manifest = await requireManifest(this.manifestRepo);
     return this.restore.execute({
-      version: manifest.getToolVersion(command.toolId) ?? this.currentVersion.get(),
+      version: manifest.getToolVersion(command.toolId) ?? this.currentVersion,
       projectRoot: command.projectRoot,
       toolIds: [command.toolId],
       files: command.files,

@@ -6,10 +6,10 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SchemaName } from "../../../../../src/shared/domain/config-asset.js";
 import type { SourcePluginEntryRef } from "../../../../../src/shared/domain/plugin/source-refs.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
-  assetProviderNaming,
   OUT_DIR,
   PLUGIN,
   PLUGIN_SRC,
@@ -17,6 +17,7 @@ import {
   stubContract,
   writtenUnder,
 } from "../../testing/marketplace-sink-world.builder.js";
+import { schemasNaming } from "../../testing/schema-provider.builder.js";
 
 describe("the catalog a marketplace layout writes once every plugin is built", () => {
   const sourceMarketplace = {
@@ -83,7 +84,7 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
 
   it("validates it against the schema the layout names", async () => {
     const fs = new InMemoryFileAdapter({});
-    const loaded: string[] = [];
+    const loaded: SchemaName[] = [];
     const refusing: JsonSchemaValidator = {
       validate(_schema: object, _data: unknown): void {
         throw new JsonSchemaValidationError(["refused"]);
@@ -92,7 +93,7 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
     await expect(
       sinkFor(fs, catalogContract([], "marketplace"), {
         validator: refusing,
-        assetProvider: assetProviderNaming(loaded),
+        schemaProvider: schemasNaming(loaded),
       }).finish(sourceMarketplace, [{ name: PLUGIN }])
     ).rejects.toThrow(JsonSchemaValidationError);
     expect(loaded).toEqual(["marketplace"]);

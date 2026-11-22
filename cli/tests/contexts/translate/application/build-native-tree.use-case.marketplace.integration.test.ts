@@ -15,6 +15,7 @@ import {
   SOURCE_DIR,
 } from "../testing/build-native-tree-world.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
+import { minimalSchemas } from "../testing/schema-provider.builder.js";
 
 describe("BuildNativeTree marketplace", () => {
   let fs: InMemoryFileAdapter;
@@ -235,7 +236,9 @@ describe("BuildNativeTree marketplace", () => {
         ap,
         logger,
         buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
-        "marketplace"
+        "marketplace",
+        false,
+        minimalSchemas
       );
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })

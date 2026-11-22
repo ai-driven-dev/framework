@@ -158,7 +158,7 @@ function wireConfigInstallation(base: Base, assetProvider: BundledAssetProviderA
 
 /** The build cache a marketplace is materialized through, and the agent models it bakes in. */
 function wireBuiltMarketplace(base: Base, assetProvider: BundledAssetProviderAdapter) {
-  const { tools, fs, logger, currentVersionProvider, resolveMarketplaceUseCase } = base;
+  const { tools, fs, logger, currentVersion, resolveMarketplaceUseCase } = base;
   // `force: true` is safe here: `outDir` is always an aidd-owned disposable cache, never a
   // user-owned directory, so a collision only means a previous build's cache exists. Its
   // diagnostics drop to debug because this build runs behind almost every command, where
@@ -172,7 +172,7 @@ function wireBuiltMarketplace(base: Base, assetProvider: BundledAssetProviderAda
   const cacheBuiltMarketplace = new CacheBuiltMarketplace({
     fs,
     builds: frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
-    version: currentVersionProvider,
+    version: currentVersion,
     userCacheRoot: userConfigDir,
     tmpdir,
   });
