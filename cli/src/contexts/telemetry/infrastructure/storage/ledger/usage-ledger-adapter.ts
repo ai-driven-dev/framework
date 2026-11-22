@@ -18,13 +18,11 @@ import {
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
 import type { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
-import { DirectoryLock } from "./directory-lock.js";
-import type { LockOptions } from "./ledger-lock.js";
+import type { DirectoryLock } from "./directory-lock.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";
 const OFFSETS_FILE = "offsets.json";
-const LOCK_FILE = ".lock";
 
 function isNamed(partitions: ReadonlySet<string> | undefined, day: string): boolean {
   return partitions === undefined || partitions.has(day);
@@ -56,25 +54,26 @@ interface Held {
 export class UsageLedgerAdapter implements UsageLedger {
   readonly leftOut: LeftOutStore;
   private readonly aliases: RepositoryAliasStoreAdapter;
+  private readonly lock: DirectoryLock;
 
-  /** `parts` are this directory's left-out store and alias table, read at every load. */
+  /** `parts` are this directory's left-out store and alias table, read at every load, and the
+   * lock on its `.lock` file. */
   constructor(
     private readonly dir: string,
     private readonly storage: PrivateStorage,
-    parts: { readonly leftOut: LeftOutStore; readonly aliases: RepositoryAliasStoreAdapter },
-    private readonly lockOptions: Partial<LockOptions> = {}
+    parts: {
+      readonly leftOut: LeftOutStore;
+      readonly aliases: RepositoryAliasStoreAdapter;
+      readonly lock: DirectoryLock;
+    }
   ) {
     this.leftOut = parts.leftOut;
     this.aliases = parts.aliases;
+    this.lock = parts.lock;
   }
 
   exclusively<T>(work: () => Promise<T>): Promise<T> {
-    return new DirectoryLock({
-      dir: this.dir,
-      file: LOCK_FILE,
-      storage: this.storage,
-      options: this.lockOptions,
-    }).exclusively(work);
+    return this.lock.exclusively(work);
   }
 
   async load(holds?: (day: string) => boolean): Promise<LoadedLedger> {

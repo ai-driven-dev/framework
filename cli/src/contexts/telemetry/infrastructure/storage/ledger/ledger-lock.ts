@@ -69,9 +69,10 @@ export class LedgerLock {
     this.options = { ...DEFAULTS, ...options };
   }
 
-  /** Resolves with the function that releases the lock. */
-  async acquire(): Promise<() => Promise<void>> {
-    const { now, waitMs, sleep, pollMs } = this.options;
+  /** Resolves with the function that releases the lock. `waitMs` replaces, for this call, how
+   * long to wait on a lock that is held. */
+  async acquire(waitMs: number = this.options.waitMs): Promise<() => Promise<void>> {
+    const { now, sleep, pollMs } = this.options;
     const deadline = now() + waitMs;
     for (;;) {
       const step = await this.attempt(deadline);

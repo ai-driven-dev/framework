@@ -51,6 +51,8 @@ import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storag
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
 import { SessionBindingStoreAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
+import { DirectoryLock } from "../contexts/telemetry/infrastructure/storage/ledger/directory-lock.js";
+import { LedgerLock } from "../contexts/telemetry/infrastructure/storage/ledger/ledger-lock.js";
 import { LeftOutAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
 import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
@@ -62,6 +64,7 @@ import type { Prompter } from "../orchestration/ports/prompter.js";
 import { ChooseIdentity } from "../orchestration/telemetry/choose-identity.use-case.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { PrivateStorageAdapter } from "../shared/infrastructure/private-storage-adapter.js";
+import type { PrivateStorage } from "../shared/ports/private-storage.js";
 import { userConfigDirOf } from "./user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
@@ -103,6 +106,16 @@ export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
   return platform === "darwin" || platform === "win32";
 }
 
+/** The lock on `.lock` in `dir`; it names what it guards in the error of a lock that stays held,
+ * the ledger when it names nothing. */
+function directoryLock(dir: string, storage: PrivateStorage, name?: string): DirectoryLock {
+  return new DirectoryLock({
+    dir,
+    storage,
+    lock: new LedgerLock(join(dir, ".lock"), name === undefined ? {} : { name }),
+  });
+}
+
 /** What lives on disk: the ledger, the bindings, the consents and the person's identity. */
 function wireStores(root: string) {
   const ledgerDir = join(root, "ledger");
@@ -114,11 +127,14 @@ function wireStores(root: string) {
     ledger: new UsageLedgerAdapter(ledgerDir, storage, {
       leftOut: new LeftOutAdapter(ledgerDir, storage),
       aliases,
+      lock: directoryLock(ledgerDir, storage),
     }),
     resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage, aliases),
     consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
     snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
-    bindingsLock: new BindingsLockAdapter(bindingsDir, storage),
+    bindingsLock: new BindingsLockAdapter(
+      directoryLock(bindingsDir, storage, "telemetry bindings store")
+    ),
     sessions: new SessionBindingStoreAdapter(bindingsDir, storage),
     identity: new PersonIdentityAdapter(root, storage),
   };
