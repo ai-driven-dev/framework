@@ -6,7 +6,7 @@ import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.fake.js";
 import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
-describe("CheckStatus", () => {
+describe("checking who is logged in", () => {
   describe("when nothing is stored", () => {
     it("reports not authenticated and verifies nothing", async () => {
       const identity = new FakeIdentityVerifier();

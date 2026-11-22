@@ -104,7 +104,7 @@ describe("GhCliAdapter on a machine with a gh script", () => {
     }
   );
 
-  describe("verifying", () => {
+  describe("when the gh CLI is asked who is logged in", () => {
     it("answers the login gh prints, trimmed", async () => {
       expect(await (await givenGh({ stdout: "  octocat\n" })).verify()).toBe("octocat");
     });

@@ -91,7 +91,7 @@ function aProviderOver(
   return builder.build();
 }
 
-describe("CachedTokenProvider", () => {
+describe("resolving a token through the cache", () => {
   describe("the order of sources", () => {
     it.each(ROWS)("%s answers its token and logs where it came from", async (_row, row) => {
       const logger = new CapturingLogger();
@@ -116,7 +116,7 @@ describe("CachedTokenProvider", () => {
     });
   });
 
-  describe("logging", () => {
+  describe("when the token is resolved with a logger attached", () => {
     it.each([
       ["the command line", { commandLine: "my-secret" }],
       ["AIDD_TOKEN", { environment: "my-secret" }],
