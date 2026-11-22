@@ -117,6 +117,12 @@ const ops = {
     });
     return found;
   },
+  /**
+   * The file follows a template: front matter, one title, then the heading tree (levels 2-6) read outside fences and comments.
+   * Under each heading matched to a template heading, its child headings are checked: unknown, out of order (unless the template heading holds a {{slot}} and repeats), missing.
+   * `optional` lists bare heading and front matter names that may be omitted at any level; a name shared by two parents is ambiguous and omits both.
+   * A second level-1 heading is flagged, one title only. Table headers are checked on every instance of a matched heading.
+   */
   template(ctx, rule) {
     const model = parseTemplate(path.resolve(ctx.contractDir, rule.template));
     const doc = shape(ctx.text, ctx.prose, ctx.fm);
@@ -130,22 +136,8 @@ const ops = {
     if (slot >= 0) say(slot + 1, ctx.lines[slot], "placeholder left, fill it or omit its section");
     frontMatterIssues(ctx, model, rule, say);
     if (model.hasTitle && (!doc.title.text || !doc.title.text.startsWith(model.titlePrefix))) say(doc.title.line, doc.title.text, `title must start with "${model.titlePrefix}"`);
-    const rankOf = (name) => model.sections.findIndex((s) => s.match.test(name));
-    let last = -1;
-    for (const section of doc.sections) {
-      const rank = rankOf(section.name);
-      if (rank < 0) say(section.line, `## ${section.name}`, `section "${section.name}" is not in the template`);
-      else if (rank < last && !model.sections[rank].repeat) say(section.line, `## ${section.name}`, `section "${section.name}" is out of order`);
-      else last = rank;
-    }
-    for (const expected of model.sections) {
-      const actual = doc.sections.find((s) => expected.match.test(s.name));
-      if (!actual) {
-        if (!(rule.optional ?? []).includes(expected.name)) say(1, undefined, `section "${expected.name}" missing`);
-        continue;
-      }
-      for (const header of expected.headers) if (!actual.headers.includes(header)) say(actual.line, header, `section "${expected.name}": table header differs from the template`);
-    }
+    if (model.hasTitle) for (const extra of doc.extraTitles) say(extra.line, extra.text, "one title only, delete or demote this heading");
+    checkChildren(model.sections, doc.sections, null, rule.optional ?? [], say);
     return found;
   },
   json(ctx, rule) {
@@ -161,6 +153,31 @@ const ops = {
     return require(path.join(ctx.customDir, `${rule.check}.cjs`))(ctx, rule);
   },
 };
+
+/** Doc headings against the template headings of one parent: unknown, out of order (unless it repeats), missing (unless optional), table headers on every instance, then each matched pair one level down. */
+function checkChildren(expectedList, actualList, parent, optional, say) {
+  const kind = (node) => (node.level === 2 ? "section" : "heading");
+  const rankOf = (name) => expectedList.findIndex((e) => e.match.test(name));
+  let last = -1;
+  for (const actual of actualList) {
+    const rank = rankOf(actual.name);
+    const shown = `${"#".repeat(actual.level)} ${actual.name}`;
+    if (rank < 0) say(actual.line, shown, `${kind(actual)} "${actual.name}" is not in the template${parent ? ` under "${parent.name}"` : ""}`);
+    else if (rank < last && !expectedList[rank].repeat) say(actual.line, shown, `${kind(actual)} "${actual.name}" is out of order`);
+    else last = rank;
+  }
+  for (const expected of expectedList) {
+    const actuals = actualList.filter((a) => expected.match.test(a.name));
+    if (!actuals.length) {
+      if (!optional.includes(expected.name)) say(parent ? parent.line : 1, undefined, `${kind(expected)} "${expected.name}" missing${parent ? ` under "${parent.name}"` : ""}`);
+      continue;
+    }
+    for (const actual of actuals) {
+      for (const header of expected.headers) if (!actual.headers.includes(header)) say(actual.line, header, `${kind(expected)} "${expected.name}": table header differs from the template`);
+      checkChildren(expected.children, actual.children, actual, optional, say);
+    }
+  }
+}
 
 /** Front matter keys and values the template expects, as `say(line, offending, fix)` calls. */
 function frontMatterIssues(ctx, model, rule, say) {
@@ -280,20 +297,35 @@ function lineOf(lines, at) {
 const unquote = (value) => String(value).replace(/^"|"$/gu, "");
 const cells = (line) => line.split("|").slice(1, -1).map((c) => c.replace(/\s+/gu, " ").trim());
 
-/** Title, level-2 sections with line, body lines and table headers, read from prose (comments and fences blanked). */
+/** Title and the heading tree (levels 2-6, each with line, body lines, table headers and children), read from prose (comments and fences blanked); further level-1 headings are listed apart. */
 function shape(text, prose, fm) {
   const raw = text.split("\n");
-  const doc = { title: { text: "", line: 1 }, sections: [] };
+  const doc = { title: { text: "", line: 1 }, extraTitles: [], sections: [] };
+  const stack = [];
   prose.forEach((line, index) => {
     if (index < fm.span) return;
-    const h = /^(#{1,2}) (.*)$/u.exec(line);
-    if (h?.[1] === "#" && !doc.title.text) doc.title = { text: raw[index], line: index + 1 };
-    else if (h?.[1] === "##") doc.sections.push({ name: raw[index].slice(3).replace(/\s+/gu, " ").trim(), line: index + 1, body: [] });
-    else doc.sections.at(-1)?.body.push(raw[index]);
+    const h = /^(#{1,6}) (.*)$/u.exec(line);
+    if (h?.[1] === "#") {
+      if (!doc.title.text) doc.title = { text: raw[index], line: index + 1 };
+      else doc.extraTitles.push({ text: raw[index], line: index + 1 });
+      return;
+    }
+    if (h) {
+      const level = h[1].length;
+      while (stack.length && stack.at(-1).level >= level) stack.pop();
+      const node = { level, name: raw[index].slice(level + 1).replace(/\s+/gu, " ").trim(), line: index + 1, body: [], children: [] };
+      (stack.at(-1)?.children ?? doc.sections).push(node);
+      stack.push(node);
+    }
+    stack.at(-1)?.body.push(raw[index]);
   });
-  for (const s of doc.sections) {
-    s.headers = s.body.filter((l, i) => l.startsWith("|") && /^\|[\s:|-]+\|$/u.test(s.body[i + 1] ?? "")).map((l) => cells(l).join("|"));
-  }
+  const finish = (nodes) => {
+    for (const s of nodes) {
+      s.headers = s.body.filter((l, i) => l.startsWith("|") && /^\|[\s:|-]+\|$/u.test(s.body[i + 1] ?? "")).map((l) => cells(l).join("|"));
+      finish(s.children);
+    }
+  };
+  finish(doc.sections);
   return doc;
 }
 
@@ -306,8 +338,9 @@ function parseTemplate(file) {
     const fm = frontmatter(text);
     const doc = shape(text, proseLines(text).map((l, i) => (i < fm.span ? "" : l)), fm);
     const values = Object.fromEntries(Object.entries(fm.fields).map(([k, v]) => [k, unquote(v)]));
-    // A section named with a slot, such as `## Run {{number}}`, matches every name of that shape and may repeat.
-    const sections = doc.sections.map((s) => ({ ...s, repeat: SLOT.test(s.name), match: new RegExp(`^${s.name.split(slotG).map((p) => p.replace(/[.*+?^$()|[\]\\{}]/gu, "\\$&")).join(".+")}$`, "u") }));
+    // A heading named with a slot, such as `## Run {{number}}`, matches every name of that shape and may repeat.
+    const withMatch = (nodes) => nodes.map((s) => ({ ...s, repeat: SLOT.test(s.name), match: new RegExp(`^${s.name.split(slotG).map((p) => p.replace(/[.*+?^$()|[\]\\{}]/gu, "\\$&")).join(".+")}$`, "u"), children: withMatch(s.children) }));
+    const sections = withMatch(doc.sections);
     templates.set(file, { slots: [...new Set(text.replace(COMMENT, "").match(slotG) ?? [])], hasTitle: Boolean(doc.title.text), fm: values, titlePrefix: doc.title.text.split(SLOT)[0].trim(), sections });
   }
   return templates.get(file);
