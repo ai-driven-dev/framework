@@ -5,8 +5,10 @@ import { ResolvePluginSource } from "../../../src/contexts/distribution/applicat
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -15,7 +17,6 @@ import {
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
 import { cloneRequiringRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 
@@ -49,10 +50,10 @@ export type AddPluginFor = (
 
 export async function buildUseCase(
   addPluginFor: AddPluginFor,
-  options: { logger?: Logger | null; prompter?: Prompter } = {}
+  options: { tools: ToolCatalog; claude: AiToolId; logger?: Logger | null; prompter?: Prompter }
 ) {
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
-  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  const deps = await buildInstallationDeps({ tools: options.tools });
+  await initAndInstall(deps, PROJECT_ROOT, options.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
@@ -89,9 +90,9 @@ export async function saveLocalMarketplace(
   );
 }
 
-export function installedSamplePlugin(deps: InstallationDeps) {
+export function installedSamplePlugin(deps: InstallationDeps, claude: AiToolId) {
   return deps.manifestRepo
     .getCurrent()
-    ?.getRecordedPlugins(TOOL.claude)
+    ?.getRecordedPlugins(claude)
     .find(({ plugin }) => plugin.name === "sample-plugin");
 }

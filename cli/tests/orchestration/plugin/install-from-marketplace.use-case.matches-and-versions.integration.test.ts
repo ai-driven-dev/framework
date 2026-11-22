@@ -37,8 +37,9 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     registeredTools()
   );
 
-const buildUseCase = (options: Parameters<typeof buildUseCaseWith>[1] = {}) =>
-  buildUseCaseWith(addPluginOver, options);
+const buildUseCase = (
+  options: Omit<Parameters<typeof buildUseCaseWith>[1], "tools" | "claude"> = {}
+) => buildUseCaseWith(addPluginOver, { tools: registeredTools(), claude: TOOL.claude, ...options });
 
 describe("InstallFromMarketplace: matches and versions", () => {
   describe("choosing among several matches", () => {
@@ -247,7 +248,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps)?.plugin.version).toBe("1.0.0");
+      expect(installedSamplePlugin(deps, TOOL.claude)?.plugin.version).toBe("1.0.0");
     });
 
     it("logs nothing under prefer-catalog when no version was requested", async () => {
@@ -293,7 +294,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps)?.marketplace).toBe("mkt1");
+      expect(installedSamplePlugin(deps, TOOL.claude)?.marketplace).toBe("mkt1");
     });
   });
 });

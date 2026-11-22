@@ -172,7 +172,6 @@
     "rule": "real-tool-list:builder",
     "closesWhen": "the builder takes the registry from its caller instead of wiring the registered catalog",
     "entries": {
-      "tests/orchestration/testing/install-from-marketplace.builder.ts": 1,
       "tests/orchestration/testing/machine-projection.builder.ts": 1,
       "tests/orchestration/testing/manifest-writes.builder.ts": 1,
       "tests/orchestration/testing/marketplace-sync-native-activation.builder.ts": 1,

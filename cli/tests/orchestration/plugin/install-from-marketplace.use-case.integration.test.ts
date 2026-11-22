@@ -35,8 +35,9 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     registeredTools()
   );
 
-const buildUseCase = (options: Parameters<typeof buildUseCaseWith>[1] = {}) =>
-  buildUseCaseWith(addPluginOver, options);
+const buildUseCase = (
+  options: Omit<Parameters<typeof buildUseCaseWith>[1], "tools" | "claude"> = {}
+) => buildUseCaseWith(addPluginOver, { tools: registeredTools(), claude: TOOL.claude, ...options });
 
 describe("InstallFromMarketplace", () => {
   it("installs a plugin found in a single marketplace and tags it", async () => {
